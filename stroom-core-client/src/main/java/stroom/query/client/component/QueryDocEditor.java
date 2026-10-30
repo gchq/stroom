@@ -17,8 +17,8 @@
 package stroom.query.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.query.shared.QueryDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -38,7 +38,7 @@ public class QueryDocEditor extends DocumentEditor<QueryDoc> {
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final QueryDocEditController queryDocEdit;
+    private final QueryTabController queryDocEdit;
     private Runnable saveInterceptor;
 
     /// Makes the editor, with its Query, Documentation and Permissions tabs.
@@ -46,20 +46,20 @@ public class QueryDocEditor extends DocumentEditor<QueryDoc> {
     /// @param eventBus             The application's event bus.
     /// @param view                 Its component.
     /// @param queryDocEdit         The query doc edit.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public QueryDocEditor(final EventBus eventBus,
                           final LinkTabPanel view,
-                          final QueryDocEditController queryDocEdit,
-                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final QueryTabController queryDocEdit,
+                          final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         // Made up front, as the key actions reach it
         this.queryDocEdit = own(queryDocEdit);
-        addOwnedTab(QUERY, queryDocEdit, QueryDocEditController::read, QueryDocEditController::write);
+        addOwnedTab(QUERY, queryDocEdit, QueryTabController::read, QueryTabController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 QueryDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

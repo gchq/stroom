@@ -33,7 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// The password reset page ([ResetPassword]), served for the link in a password reset email: asks
 /// for a new password with the token the link carries, then goes to the sign in page.
-public class ResetPasswordController extends SignInPageController {
+public class ResetPasswordController extends AbstractSignInPageController {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 

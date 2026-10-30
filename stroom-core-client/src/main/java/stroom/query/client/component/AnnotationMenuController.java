@@ -21,8 +21,8 @@ import stroom.annotation.client.AnnotationResourceClient;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.ShowFindAnnotationEvent;
-import stroom.annotation.client.component.ChangeAssignedToDialogController;
-import stroom.annotation.client.component.ChangeStatusDialogController;
+import stroom.annotation.client.component.ChangeAssigneeController;
+import stroom.annotation.client.component.ChangeStatusController;
 import stroom.annotation.shared.AddAnnotationTable;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTable;
@@ -67,8 +67,8 @@ import java.util.stream.Collectors;
 /// own; the dialogs it opens are its own until they are hidden.
 public class AnnotationMenuController extends Controller {
 
-    private final Provider<ChangeStatusDialogController> changeStatusProvider;
-    private final Provider<ChangeAssignedToDialogController> changeAssignedToProvider;
+    private final Provider<ChangeStatusController> changeStatusProvider;
+    private final Provider<ChangeAssigneeController> changeAssignedToProvider;
     private final AnnotationResourceClient annotationResourceClient;
     private final boolean enabled;
 
@@ -85,8 +85,8 @@ public class AnnotationMenuController extends Controller {
     /// @param securityContext           Says whether the user may annotate.
     @Inject
     public AnnotationMenuController(final EventBus eventBus,
-                                    final Provider<ChangeStatusDialogController> changeStatusProvider,
-                                    final Provider<ChangeAssignedToDialogController> changeAssignedToProvider,
+                                    final Provider<ChangeStatusController> changeStatusProvider,
+                                    final Provider<ChangeAssigneeController> changeAssignedToProvider,
                                     final AnnotationResourceClient annotationResourceClient,
                                     final ClientSecurityContext securityContext) {
         super(eventBus);

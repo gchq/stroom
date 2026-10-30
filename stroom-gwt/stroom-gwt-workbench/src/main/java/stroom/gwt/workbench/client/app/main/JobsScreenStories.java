@@ -32,7 +32,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.job.client.component.JobsController;
 import stroom.node.client.event.OpenNodeEvent;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenServerTasksEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -63,12 +63,12 @@ import java.util.Set;
 /// | `PUT /jobNode/v1/schedule` | setting several job nodes' schedules |
 ///
 /// The requests made are checked on the request spy. `onOpenNode`/`onShowTasks` are spies
-/// on Stroom's `OpenNodeEvent`/`OpenTaskManagerEvent`. The controller comes from GIN.
+/// on Stroom's `OpenNodeEvent`/`OpenServerTasksEvent`. The controller comes from GIN.
 public final class JobsScreenStories {
 
     /// The name of the spy recording the nodes opened (Stroom's `OpenNodeEvent`).
     static final String ON_OPEN_NODE = "onOpenNode";
-    /// The name of the spy recording the server tasks shown (Stroom's `OpenTaskManagerEvent`).
+    /// The name of the spy recording the server tasks shown (Stroom's `OpenServerTasksEvent`).
     static final String ON_SHOW_TASKS = "onShowTasks";
 
     // The name of node1's Node link's 'open' button
@@ -239,7 +239,7 @@ public final class JobsScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
-                // Cross navigation (OpenNodeEvent / OpenTaskManagerEvent)
+                // Cross navigation (OpenNodeEvent / OpenServerTasksEvent)
                 .story("CrossNavigation", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -256,7 +256,7 @@ public final class JobsScreenStories {
                     play.waitFor(() -> play.expect(screen.getByRole("menuitem", "Edit Schedule")).toHaveFocus());
                     play.expect(screen.getByText("Run Job on 'node1' Now")).toBeInTheDocument();
                     play.click(screen.findByText("Show in Server Tasks (node1)"));
-                    // The spy records OpenTaskManagerEvent's node and task names;
+                    // The spy records OpenServerTasksEvent's node and task names;
                     // the 'node:node1 name:"Data Retention"' filter is built from them by the Server
                     // Tasks screen (ServerTasksController.changeNameFilter)
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_TASKS))
@@ -437,7 +437,7 @@ public final class JobsScreenStories {
                 harness.spy(ON_OPEN_NODE, event.getJobNode() != null
                         ? event.getJobNode().getNodeName()
                         : event.getNodeName()));
-        harness.getEventBus().addHandler(OpenTaskManagerEvent.getType(), event ->
+        harness.getEventBus().addHandler(OpenServerTasksEvent.getType(), event ->
                 harness.spy(ON_SHOW_TASKS, "node=" + event.getNodeName() + ", task=" + event.getTaskName()));
 
         harness.show(injector.getJobsController());

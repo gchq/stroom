@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <tab:CurveTabLayoutPanel ui:field="layout" styleName="curve-tab-layout__layout">
         <g:FlowPanel styleName="curve-tab-layout__bar">
@@ -13,7 +14,7 @@
             </g:SimplePanel>
         </g:FlowPanel>
         <g:SimplePanel styleName="curve-tab-layout__layer-container-outer">
-            <tab:LayerContainerImpl ui:field="layerContainer" styleName="curve-tab-layout__content"/>
+            <c:LayerContainer ui:field="layerContainer" styleName="curve-tab-layout__content"/>
         </g:SimplePanel>
     </tab:CurveTabLayoutPanel>
 </ui:UiBinder> 

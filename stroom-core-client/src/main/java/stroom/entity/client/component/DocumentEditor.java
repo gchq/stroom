@@ -117,13 +117,13 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     /// @param description     Gets the description from the document.
     /// @param withDescription Makes a copy of the document with a description.
     protected final void addDocumentationTab(final TabData tab,
-                                             final Provider<MarkdownEditController> provider,
+                                             final Provider<DocumentationTabController> provider,
                                              final Function<D, String> description,
                                              final BiFunction<D, String, D> withDescription) {
         addTab(tab,
                 () -> {
                     // It tells the editor of changes itself (Contexts.DIRTY)
-                    final MarkdownEditController documentation = provider.get();
+                    final DocumentationTabController documentation = provider.get();
                     documentation.followReadOnly();
                     return documentation;
                 },

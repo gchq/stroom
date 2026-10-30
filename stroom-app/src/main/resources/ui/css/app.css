@@ -26,7 +26,7 @@
 @import url("layout-helpers.css");
 @import url("iframe.css");
 @import url("clipboard.css");
-@import url("query-data-pane.css");
+@import url("query-data-tab.css");
 /* Where stroom.css's text box rules it replaces were, so later rules still win */
 @import url("text-field.css");
 @import url("radio-button.css");
@@ -44,7 +44,7 @@
 @import url("split-pane.css");
 @import url("tab-bar.css");
 @import url("tab-selector.css");
-@import url("annotation-edit.css");
+@import url("annotation-editor.css");
 @import url("annotation-setting.css");
 @import url("annotation-history.css");
 @import url("duration-label.css");
@@ -60,8 +60,8 @@
 @import url("floor-map-cell.css");
 @import url("floor-map-set-scale.css");
 @import url("floor-map-group-edit.css");
-@import url("floor-map-map.css");
-@import url("floor-map-editor.css");
+@import url("floor-map-map-tab.css");
+@import url("floor-map-editor-tab.css");
 @import url("floormap-list.css");
 @import url("tab-session-chooser.css");
 @import url("marker-list.css");
@@ -78,7 +78,7 @@
 @import url("histogram.css");
 @import url("text-pane.css");
 @import url("code-editor.css");
-@import url("code-editor-indicator.css");
+@import url("code-editor-overview-tooltip.css");
 @import url("scrollbar-metrics.css");
 @import url("editor-themes.css");
 @import url("tick-box.css");
@@ -103,7 +103,7 @@
 @import url("time-range-selector.css");
 @import url("about.css");
 @import url("splash.css");
-@import url("git-repo-commit-dialog.css");
+@import url("git-repo-commit.css");
 @import url("query-toolbar.css");
 @import url("analytic-email-destination.css");
 @import url("floor-map-event-store-settings.css");
@@ -129,8 +129,8 @@
 @import url("busy-spinner.css");
 @import url("task-spinner.css");
 @import url("draggable-tree.css");
-@import url("pipeline-tree.css");
-@import url("pipeline-element.css");
+@import url("pipeline-tree-diagram.css");
+@import url("pipeline-element-box.css");
 @import url("pipeline-path-bar.css");
 @import url("stepping-screen.css");
 @import url("step-location-link.css");
@@ -152,7 +152,7 @@
 @import url("doc-ref-link.css");
 @import url("command-link.css");
 @import url("pager-panel.css");
-@import url("doc-ref-selection.css");
+@import url("save-changed-documents.css");
 @import url("inline-label-icon.css");
 @import url("button-group.css");
 @import url("key-binding-preferences.css");
@@ -179,7 +179,7 @@
 @import url("table-filter.css");
 @import url("table-filter-column.css");
 @import url("filter-cell.css");
-@import url("navigation.css");
+@import url("explorer.css");
 @import url("content-store-tab.css");
 @import url("link-tab-panel.css");
 @import url("elastic-index-field-list.css");
@@ -194,12 +194,13 @@
 @import url("explorer-node-edit-tags.css");
 @import url("explorer-node-remove-tags.css");
 @import url("search-result-stores.css");
-@import url("global-property-edit.css");
+@import url("global-property-editor.css");
 @import url("column-function-editor.css");
-@import url("batch-document-permissions-edit.css");
-@import url("http-config.css");
-@import url("batch-execution-schedule-edit.css");
-@import url("user-preferences-dialog.css");
+@import url("batch-document-permissions-editor.css");
+@import url("http-client-config-editor.css");
+@import url("http-tls-config-editor.css");
+@import url("batch-execution-schedule-editor.css");
+@import url("user-preferences-editor.css");
 @import url("stepping-filter-editor.css");
 @import url("floor-map-object-edit.css");
 @import url("conditional-formatting-rule-editor.css");
@@ -223,7 +224,7 @@
 @import url("list-input-item.css");
 @import url("full-screen.css");
 @import url("result-table.css");
-@import url("query-edit.css");
+@import url("query-editor.css");
 @import url("dashboard-body.css");
 @import url("vis-toolbar-row.css");
 @import url("query-cell.css");
@@ -248,18 +249,18 @@
 @import url("ai-message.css");
 @import url("ai-chat-cell.css");
 @import url("advanced-quick-filter.css");
-@import url("credentials-manager-dialog.css");
+@import url("credentials-picker.css");
 @import url("floor-map-cluster-dialog.css");
 @import url("floor-map-settings.css");
 @import url("document-assets-tab.css");
 @import url("duplicate-management.css");
 @import url("imports-tab.css");
-@import url("user-and-groups.css");
+@import url("users-and-groups.css");
 @import url("pipeline-structure.css");
 @import url("scheduled-processing.css");
 @import url("annotation-tag-text.css");
 @import url("query-pane.css");
-@import url("unknown-component.css");
+@import url("unknown-pane.css");
 @import url("iframe-content.css");
 /* Last, so a scroll pane fills its parent whatever other classes it has */
 @import url("scroll-pane.css");

@@ -59,7 +59,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stories of `App/Main/AppShell`: Stroom's app shell put together by [ShellScreen] from Stroom's
-/// real controllers and plugins: the main view (its main menu), the explorer (`NavigationController`:
+/// real controllers and plugins: the main view (its main menu), the explorer (`ExplorerController`:
 /// the tree, its toolbar and the current activity), the document tabs (`ContentTabPaneController`),
 /// the explorer's and tabs' menus and document actions (`DocumentPluginEventManager`), keyboard
 /// shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary, Feed and Folder editors.
@@ -87,8 +87,8 @@ public final class AppShellStories {
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
-    // The explorer panel is Navigation's '.navigation'
-    private static final String NAVIGATION = ".navigation";
+    // The explorer panel is Explorer's '.explorer'
+    private static final String NAVIGATION = ".explorer";
     // The document tabs' labels
     private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
     // A menu item's row (MenuItemCell), inside the element with its role and aria-disabled
@@ -223,7 +223,7 @@ public final class AppShellStories {
                 .story("Embedded", AppShellStories::renderEmbedded)
                 .withPlay(play -> {
                     // Stroom shows a document without the shell for a URL that
-                    // names it without the open-doc action (CoreController); with open-doc (a deep
+                    // names it without the open-doc action (AppPageController); with open-doc (a deep
                     // link) it shows the whole shell, embedded or not. So the story opens the
                     // document as Stroom's embedded view does: its editor, without the explorer or
                     // the Ask Stroom AI button

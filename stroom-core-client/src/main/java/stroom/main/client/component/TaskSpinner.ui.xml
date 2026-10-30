@@ -4,6 +4,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:sp="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="task-spinner">
-        <sp:SpinnerLarge ui:field="spinner" soft="true" visible="false"/>
+        <sp:LargeBusySpinner ui:field="spinner" soft="true" visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

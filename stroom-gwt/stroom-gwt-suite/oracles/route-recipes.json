@@ -157,7 +157,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -171,7 +171,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -185,7 +185,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -199,7 +199,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -213,7 +213,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -227,7 +227,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -241,7 +241,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -255,7 +255,7 @@
   {
    "presenter": "NavigationPresenter",
    "via": "menu",
-   "owner": "NavigationPlugin",
+   "owner": "ExplorerPlugin",
    "route": [
     {
      "via": "menu",
@@ -689,7 +689,7 @@
   {
    "presenter": "TaskManagerPresenter",
    "via": "menu",
-   "owner": "TaskManagerPlugin",
+   "owner": "ServerTasksPlugin",
    "route": [
     {
      "via": "menu",
@@ -2623,7 +2623,7 @@
    "caption": "Edit HTTP TLS Configuration"
   },
   {
-   "shower": "HyperlinkEventHandlerImpl",
+   "shower": "HyperlinkOpener",
    "presenter": "IFramePresenter"
   },
   {
@@ -3390,12 +3390,12 @@
    "via": "ExportConfigEvent"
   },
   {
-   "shower": "NavigationPlugin",
+   "shower": "ExplorerPlugin",
    "presenter": "FindPresenter",
    "via": "ShowFindEvent"
   },
   {
-   "shower": "NavigationPlugin",
+   "shower": "ExplorerPlugin",
    "presenter": "RecentItemsPresenter",
    "via": "ShowRecentItemsEvent"
   },

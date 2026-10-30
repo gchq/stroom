@@ -22,15 +22,15 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
-import stroom.widget.xsdbrowser.client.XSDModel;
-import stroom.widget.xsdbrowser.client.component.XSDBrowserController;
+import stroom.widget.xsdbrowser.client.XsdModel;
+import stroom.widget.xsdbrowser.client.component.XsdBrowserController;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 import stroom.xmlschema.shared.XmlSchemaValidationResponse;
@@ -64,7 +64,7 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
 
     private final RestFactory restFactory;
     // The schema the Graphical tab browses
-    private final XSDModel data = new XSDModel();
+    private final XsdModel data = new XsdModel();
     private final ToolbarButton validationIndicator;
     private final Timer validationDebounceTimer;
     private CodeTabController text;
@@ -79,16 +79,16 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
     /// @param settingsProvider     Makes the Settings tab.
     /// @param xsdBrowserProvider   Makes the xsd browser.
     /// @param codeTabProvider      Makes the code tab.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     /// @param restFactory          Makes REST requests.
     @Inject
     public XMLSchemaEditor(final EventBus eventBus,
                            final LinkTabPanel view,
                            final Provider<XMLSchemaSettingsController> settingsProvider,
-                           final Provider<XSDBrowserController> xsdBrowserProvider,
+                           final Provider<XsdBrowserController> xsdBrowserProvider,
                            final Provider<CodeTabController> codeTabProvider,
-                           final Provider<MarkdownEditController> markdownEditProvider,
+                           final Provider<DocumentationTabController> documentationTabProvider,
                            final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                            final RestFactory restFactory) {
         super(eventBus, view);
@@ -107,7 +107,7 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
 
         addTab(GRAPHICAL,
                 () -> {
-                    final XSDBrowserController xsdBrowser = xsdBrowserProvider.get();
+                    final XsdBrowserController xsdBrowser = xsdBrowserProvider.get();
                     xsdBrowser.setModel(data);
                     return xsdBrowser;
                 },
@@ -132,7 +132,7 @@ public class XMLSchemaEditor extends DocumentEditor<XmlSchemaDoc> {
                 XMLSchemaSettingsController::read,
                 XMLSchemaSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 XmlSchemaDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

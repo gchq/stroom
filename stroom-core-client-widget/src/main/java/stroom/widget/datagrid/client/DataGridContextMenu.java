@@ -18,7 +18,7 @@ package stroom.widget.datagrid.client;
 
 import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.AskStroomAiTableRequest;
-import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.LinkValue;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
@@ -85,7 +85,7 @@ final class DataGridContextMenu<R> {
             final List<Item> cellItems = getCellMenuItems(rowIndex, colIndex);
             menuItems.addAll(cellItems);
 
-            final Hyperlink hyperlink = findHyperlink(target);
+            final LinkValue hyperlink = findHyperlink(target);
             if (hyperlink != null) {
                 addSeparator(menuItems);
                 addLinkItems(menuItems, hyperlink);
@@ -149,7 +149,7 @@ final class DataGridContextMenu<R> {
                 : Collections.emptyList();
     }
 
-    private static Hyperlink findHyperlink(final Element target) {
+    private static LinkValue findHyperlink(final Element target) {
         Element element = target;
         while (element != null && !"a".equalsIgnoreCase(element.getTagName())) {
             element = element.getParentElement();
@@ -157,7 +157,7 @@ final class DataGridContextMenu<R> {
         if (element != null) {
             final String href = element.getAttribute("href");
             if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
-                return new Hyperlink(TableText.normaliseWhitespace(element.getInnerText()),
+                return new LinkValue(TableText.normaliseWhitespace(element.getInnerText()),
                         URL.decodeQueryString(href),
                         null,
                         null,
@@ -172,13 +172,13 @@ final class DataGridContextMenu<R> {
         if (element != null) {
             final String link = element.getAttribute("link");
             if (link != null) {
-                return Hyperlink.create(link);
+                return LinkValue.create(link);
             }
         }
         return null;
     }
 
-    private void addLinkItems(final List<Item> menuItems, final Hyperlink hyperlink) {
+    private void addLinkItems(final List<Item> menuItems, final LinkValue hyperlink) {
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
                 .text("Copy Link URL")
@@ -206,7 +206,7 @@ final class DataGridContextMenu<R> {
         }
     }
 
-    private void fireHyperlink(final Hyperlink hyperlink) {
+    private void fireHyperlink(final LinkValue hyperlink) {
         grid.followHyperlink(hyperlink);
     }
 

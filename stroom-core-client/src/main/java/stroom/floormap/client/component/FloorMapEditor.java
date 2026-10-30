@@ -16,88 +16,294 @@
 
 package stroom.floormap.client.component;
 
+import stroom.document.asset.client.component.DocumentAssetsTabController;
+import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.widget.component.client.Component;
-import stroom.widget.layout.client.SplitPane;
+import stroom.floormap.client.FloorMapEventQuery;
+import stroom.floormap.shared.FloorMapDoc;
+import stroom.security.client.component.DocumentUserPermissionsTabController;
+import stroom.widget.tab.client.TabData;
+import stroom.widget.tab.client.TabDataImpl;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
-/// A floor map's Editor tab (all its parts shown here by its controller):
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+/// A floor map's editor: its Map, Editor, Events Query, Settings, Assets, Documentation and
+/// Permissions tabs (see [DocumentEditor]), and what passes between them.
 ///
-/// ```
-/// ┌─────────────────────────────────────────┬────────────┐
-/// │            Map Canvas                   │    Dock    │  canvas fills,
-/// │                                         │            │  dock east
-/// ├─────────────────────────────────────────┴────────────┤  ◄─ draggable
-/// │              Timeline                                │  fixed height
-/// ├───────────────────────────┬──────────────────────────┤
-/// │      Fact List            │        Time List         │  ~1/3 total height
-/// └───────────────────────────┴──────────────────────────┘
-///          ~50% width         ▲         ~50% width
-///                             └── draggable
-/// ```
-public class FloorMapEditor extends Component {
+/// It coordinates the save across them: the Editor tab's staged fact changes and the assets aren't
+/// in the document, so they make it dirty too, and [#getPostSaveCallback()] flushes the Editor's
+/// changes and then saves the assets, so a single save persists both.
+public class FloorMapEditor extends DocumentEditor<FloorMapDoc> {
 
-    private static final Binder BINDER = GWT.create(Binder.class);
+    private static final TabData MAP = new TabDataImpl("Map");
+    private static final TabData EDITOR = new TabDataImpl("Editor");
+    private static final TabData EVENTS_QUERY = new TabDataImpl("Events Query");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData ASSETS = new TabDataImpl("Assets");
+    private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
+    private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    @UiField
-    SplitPane topSplitPane;
-    @UiField
-    FloorMapCanvas canvas;
-    @UiField
-    LinkTabPanel dock;
-    @UiField
-    FloorMapTimeline timeline;
-    @UiField
-    FloorMapFactList factList;
-    @UiField
-    FloorMapTimeList timeList;
+    private final DocumentAssetsTabController<FloorMapDoc> assetsTab;
+    private FloorMapMapTabController map;
+    private FloorMapEditorTabController editor;
+    private FloorMapSettingsController settings;
 
-    /// Makes the tab, with nothing in it.
-    public FloorMapEditor() {
-        initWidget(BINDER.createAndBindUi(this));
-    }
+    /// The tab that was showing before the most recent switch, to pause the timeline when the user
+    /// leaves the Map or Editor tab.
+    private TabData previousTab;
 
-    /// @return The map canvas, which its controller attaches the canvas's controller to.
-    public FloorMapCanvas getCanvas() {
-        return canvas;
-    }
+    /// Set when the Editor tab enables area support on this document, so a Settings tab made
+    /// *afterwards* still gets its grid patched (see [FloorMapSettingsController#applyAreaPatch()]).
+    private boolean areaSupportEnabled;
 
-    /// @return The right-hand dock, for its controller to attach to.
-    public LinkTabPanel getDock() {
-        return dock;
-    }
+    /// Set when the Editor tab enables status support on this document, so a Settings tab made
+    /// *afterwards* still gets its grid patched (see
+    /// [FloorMapSettingsController#applyStatusPatch()]).
+    private boolean statusSupportEnabled;
 
-    /// @return The timeline, which its controller attaches the timeline's controller to.
-    public FloorMapTimeline getTimeline() {
-        return timeline;
-    }
+    /// The initial view `{scale, offsetX, offsetY}` the Map tab zoomed to fit on open, stashed so
+    /// the Editor tab (opened afterwards) adopts the same zoom and translation and nothing jumps on
+    /// the switch. `null` until the Map has fitted, or when the Editor is opened first (it fits
+    /// locally).
+    private double[] sharedInitialView;
 
-    /// @return The Fact List, which its controller attaches the list's controller to.
-    public FloorMapFactList getFactList() {
-        return factList;
-    }
-
-    /// @return The Time List, which its controller attaches the list's controller to.
-    public FloorMapTimeList getTimeList() {
-        return timeList;
-    }
-
-    /// Shows or hides the dock and its splitter, keeping the width it was dragged to.
+    /// Makes the editor, with its tabs.
     ///
-    /// @param visible Whether the dock shows.
-    public void setDockVisible(final boolean visible) {
-        topSplitPane.setPaneHidden(dock, !visible);
+    /// @param eventBus             The application's event bus.
+    /// @param view                 Its component.
+    /// @param mapProvider          Makes the map.
+    /// @param editorProvider       Makes the editor.
+    /// @param settingsProvider     Makes the Settings tab.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
+    /// @param queryProvider        Makes the query.
+    /// @param permissionsProvider  Makes the Permissions tab.
+    /// @param assetsTab            The assets tab.
+    @Inject
+    public FloorMapEditor(final EventBus eventBus,
+                             final LinkTabPanel view,
+                             final Provider<FloorMapMapTabController> mapProvider,
+                             final Provider<FloorMapEditorTabController> editorProvider,
+                             final Provider<FloorMapSettingsController> settingsProvider,
+                             final Provider<DocumentationTabController> documentationTabProvider,
+                             final Provider<FloorMapQueryController> queryProvider,
+                             final Provider<DocumentUserPermissionsTabController> permissionsProvider,
+                             final DocumentAssetsTabController<FloorMapDoc> assetsTab) {
+        super(eventBus, view);
+        this.assetsTab = own(assetsTab);
+
+        addTab(MAP,
+                () -> {
+                    map = mapProvider.get();
+                    // Its events' types surface as provisional layers in the Editor's Layers panel
+                    map.setOnEventData(objects -> {
+                        if (editor != null) {
+                            editor.addEventTypes(objects);
+                        }
+                    });
+                    // Stash the Map's zoom-to-fit initial view so the Editor tab adopts the same
+                    // zoom and translation (no jump on the first switch)
+                    map.setInitialViewListener(initialView -> {
+                        sharedInitialView = initialView;
+                        if (editor != null) {
+                            editor.setInitialViewState(initialView);
+                        }
+                    });
+                    return map;
+                },
+                FloorMapMapTabController::read,
+                FloorMapMapTabController::write);
+
+        addTab(EDITOR,
+                () -> {
+                    editor = editorProvider.get();
+                    // Its staged fact edits aren't in the written document: the document asks it
+                    // for them (hasAssociatedDirty), so it is told of each change directly
+                    editor.setOnChange(this::onChange);
+                    // Adopt the Map tab's initial zoom and translation, if it has fitted already,
+                    // so the Editor opens on the same view. If the Editor is opened first this is
+                    // null and it fits its own content locally.
+                    if (sharedInitialView != null) {
+                        editor.setInitialViewState(sharedInitialView);
+                    }
+                    // When the Editor enables area support (schema/type-style upgrade), the
+                    // Settings tab's grid must be patched again or its wholesale write would
+                    // silently revert the upgrade on save
+                    editor.setAreaSupportEnabledListener(() -> {
+                        areaSupportEnabled = true;
+                        if (settings != null) {
+                            settings.applyAreaPatch();
+                        }
+                    });
+                    // Likewise when the Editor enables status support (a Status mapping, so facts
+                    // can be deleted from a point in time)
+                    editor.setStatusSupportEnabledListener(() -> {
+                        statusSupportEnabled = true;
+                        if (settings != null) {
+                            settings.applyStatusPatch();
+                        }
+                    });
+                    // Type styles are owned by the Editor's Layers panel and written by the Editor
+                    // itself. The Settings tab doesn't manage them, so no cross-tab sync is needed.
+                    return editor;
+                },
+                FloorMapEditorTabController::read,
+                FloorMapEditorTabController::write);
+
+        addTab(EVENTS_QUERY,
+                () -> {
+                    final FloorMapQueryController query = queryProvider.get();
+                    // Only an edit on this tab (its query, or its column dropdowns) marks the floor
+                    // map dirty
+                    query.setOnChange(this::onChange);
+                    // Its results are drawn on the Map tab, and their types surface as provisional
+                    // layers in the Editor's Layers panel
+                    query.setOnEventData(objects -> {
+                        if (map != null) {
+                            map.showQueryEvents(objects);
+                        }
+                        if (editor != null) {
+                            editor.addEventTypes(objects);
+                        }
+                    });
+                    return query;
+                },
+                (query, docRef, doc) -> query.read(docRef,
+                        doc.getEventsQuery(),
+                        doc.getEventsQueryTimeRange(),
+                        doc.getEventsQueryTablePreferences(),
+                        doc.getEventColumns(),
+                        true,
+                        FloorMapEventQuery.buildQueryVariables(doc)),
+                (query, doc) -> doc.copy()
+                        .eventsQuery(query.getQuery())
+                        .eventsQueryTimeRange(query.getQueryTimeRange())
+                        .eventsQueryTablePreferences(query.getQueryTablePreferences())
+                        .eventColumns(query.getEventColumns())
+                        .build());
+
+        addTab(SETTINGS,
+                () -> {
+                    settings = settingsProvider.get();
+                    if (areaSupportEnabled) {
+                        // Area support was enabled before this tab was first opened: keep its
+                        // grid patched (idempotent; also applied again on read)
+                        settings.applyAreaPatch();
+                    }
+                    if (statusSupportEnabled) {
+                        settings.applyStatusPatch();
+                    }
+                    return settings;
+                },
+                FloorMapSettingsController::read,
+                FloorMapSettingsController::write);
+        // The assets are saved after the document (getPostSaveCallback), so it writes nothing
+        addOwnedTab(ASSETS, assetsTab, DocumentAssetsTabController::read);
+        addDocumentationTab(DOCUMENTATION,
+                documentationTabProvider,
+                FloorMapDoc::getDescription,
+                (doc, description) -> doc.copy().description(description).build());
+        addPermissionsTab(PERMISSIONS, permissionsProvider);
+        setDefaultTab(MAP);
     }
 
+    /// Reacts to this document's tab being shown or hidden.
+    ///
+    /// Without this, a switch to another Stroom document left whichever timeline was playing still
+    /// playing, its result stores churning on a document nobody was looking at, and on return gave
+    /// the Map no chance to catch up on facts or events that had arrived meanwhile. The query and
+    /// dashboard editors, which also run searches, do the same.
+    ///
+    /// Both branches act on the inner tab actually showing, rather than on the Map
+    /// unconditionally: two tabs carry a timeline, so hiding must pause whichever one is showing,
+    /// and refreshing a Map that isn't the visible inner tab would issue reads for something the
+    /// user can't see. This mirrors [#afterSelectTab(TabData)].
+    ///
+    /// @param visible Whether the document's tab is showing.
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        if (MAP.equals(previousTab)) {
+            map.onContentTabVisible(visible);
+        } else if (EDITOR.equals(previousTab) && !visible) {
+            // The Editor has a timeline to pause but no held state to catch up, so it is
+            // deliberately one-sided, as afterSelectTab is
+            editor.pauseTimeline();
+        }
+    }
 
-    // --------------------------------------------------------------------------------
+    /// Pauses the Map's or Editor's timeline when the user leaves its tab, catches the Map up when
+    /// they return to it, and checks the assets for changes when their tab is shown.
+    ///
+    /// @param tab The tab now showing.
+    @Override
+    protected void afterSelectTab(final TabData tab) {
+        // Pause whichever timeline-bearing tab the user just left
+        if (!tab.equals(previousTab)) {
+            if (MAP.equals(previousTab)) {
+                // Not just pauseTimeline(): leaving the Map for a sibling tab hides it just as
+                // surely as leaving the document does, and its facts cadence should stop either way
+                map.onContentTabVisible(false);
+            } else if (EDITOR.equals(previousTab)) {
+                editor.pauseTimeline();
+            }
 
+            // Returning to the Map tab reads facts again so edits saved from the Editor tab (moved
+            // objects, new icons and backgrounds) are visible, and restarts the cadence the branch
+            // above stopped
+            if (MAP.equals(tab) && previousTab != null) {
+                map.onContentTabVisible(true);
+            }
 
-    interface Binder extends UiBinder<Widget, FloorMapEditor> {
+            previousTab = tab;
+        }
 
+        if (ASSETS.equals(tab)) {
+            onChange();
+        }
+    }
+
+    /// @return Whether the Map, the Editor's staged changes or the assets have changes that aren't
+    /// saved.
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return (map != null && map.hasAssociatedDirty())
+               || (editor != null && editor.hasPendingChanges())
+               || assetsTab.isDirty();
+    }
+
+    /// @return The Editor tab's flush of its staged changes, then the save of the assets, run once
+    /// the document is saved, so a single save persists both.
+    @Override
+    public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveCallback() {
+        return this::flushEditorThenSaveAssets;
+    }
+
+    /// @return The save of the assets to the copy, run once a copy of the document is saved.
+    @Override
+    public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveAsCallback() {
+        // The assets are copied from the document being saved, even if its Assets tab was never shown
+        return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
+    }
+
+    // Flushes the Editor's staged changes, if any, and only once that succeeds saves the assets
+    private void flushEditorThenSaveAssets(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
+        if (editor != null && editor.hasPendingChanges()) {
+            editor.onSave(document, doc -> {
+                // The flush has landed in the temporal store: refresh the Map tab so it picks up
+                // the newly persisted facts (it might be the visible tab, e.g. when saving with
+                // the keyboard shortcut)
+                if (map != null) {
+                    map.refresh();
+                }
+                assetsTab.onSave(doc, callback);
+            });
+        } else {
+            assetsTab.onSave(document, callback);
+        }
     }
 }

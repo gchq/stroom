@@ -18,11 +18,11 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
-import stroom.statistics.impl.sql.client.State;
-import stroom.statistics.impl.sql.client.State.Field;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Field;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -54,7 +54,7 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final State state = new State();
+    private final StatisticFieldsAndMasks state = new StatisticFieldsAndMasks();
 
     /// Makes the editor, with its Settings, Fields, Custom Roll-ups, Documentation and Permissions
     /// tabs.
@@ -64,7 +64,7 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
     /// @param settingsProvider     Makes the Settings tab.
     /// @param fieldList            The field list.
     /// @param customMaskList       The custom mask list.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public StatisticsDataSourceEditor(
@@ -73,7 +73,7 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
             final Provider<StatisticsDataSourceSettingsController> settingsProvider,
             final StatisticsFieldListController fieldList,
             final StatisticsCustomMaskListController customMaskList,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         own(fieldList);
@@ -95,7 +95,7 @@ public class StatisticsDataSourceEditor extends DocumentEditor<StatisticStoreDoc
                 customMaskList,
                 StatisticsCustomMaskListController::read);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 StatisticStoreDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

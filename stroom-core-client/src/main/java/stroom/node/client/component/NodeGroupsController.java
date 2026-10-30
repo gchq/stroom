@@ -35,7 +35,7 @@ public class NodeGroupsController extends ContentTabController {
     public static final String TAB_TYPE = "NodeGroups";
 
     private final NodeGroupListController nodeGroupList;
-    private final Provider<NodeGroupEditController> editProvider;
+    private final Provider<NodeGroupEditorController> editProvider;
     private final NodeGroupClient nodeGroupClient;
     private final Provider<NewNodeGroupController> newNodeGroupControllerProvider;
 
@@ -50,7 +50,7 @@ public class NodeGroupsController extends ContentTabController {
     public NodeGroupsController(
             final EventBus eventBus,
             final NodeGroupListController nodeGroupList,
-            final Provider<NodeGroupEditController> editProvider,
+            final Provider<NodeGroupEditorController> editProvider,
             final NodeGroupClient nodeGroupClient,
             final Provider<NewNodeGroupController> newNodeGroupControllerProvider) {
 

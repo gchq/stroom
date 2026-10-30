@@ -18,7 +18,6 @@ package stroom.receive.rules.client.component;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.LayerContainer;
-import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.LinkTabBar;
 
 import com.google.gwt.core.client.GWT;
@@ -34,7 +33,7 @@ public class DataRetention extends Component {
     @UiField
     LinkTabBar tabBar;
     @UiField
-    LayerContainerImpl layerContainer;
+    LayerContainer layerContainer;
 
     /// Makes the screen, with no content until it is given it.
     public DataRetention() {

@@ -90,7 +90,7 @@ public class FloorMapEditorModel {
     /// [#setSelectedFactKey(String)]) and the multi-select API
     /// ([#getSelectedFactKeys()] etc.). Both are live: marquee and
     /// Shift/Ctrl multi-select have shipped in the canvas, and
-    /// `FloorMapEditorController` reads `getSelectedFactKeys()` to
+    /// `FloorMapEditorTabController` reads `getSelectedFactKeys()` to
     /// drive the canvas selection, the Fact List, and a
     /// `size() > 1` branch for the multi-object context menu.
     /// A [java.util.LinkedHashSet]

@@ -19,7 +19,7 @@ package stroom.task.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeClient;
-import stroom.task.client.TaskManagerTreeAction;
+import stroom.task.client.ServerTaskTreeAction;
 import stroom.task.client.TaskProgressUtil;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -60,7 +60,7 @@ public class UserTaskManagerController extends Controller {
     private final Set<String> refreshing = new HashSet<>();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final FindTaskProgressCriteria criteria;
-    private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+    private final ServerTaskTreeAction treeAction = new ServerTaskTreeAction();
     private final DelayedUpdate delayedUpdate = new DelayedUpdate(this::update);
     private final Timer refreshTimer = new Timer() {
         @Override

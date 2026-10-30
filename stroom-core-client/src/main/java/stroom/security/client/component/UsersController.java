@@ -17,8 +17,8 @@
 package stroom.security.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.security.client.UserAndGroupHelper;
 import stroom.security.client.UserScreen;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.client.component.UserListController.Mode;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
@@ -41,7 +41,7 @@ public class UsersController extends ContentTabController {
 
     private final UserListController userList;
     private final Provider<CreateUserController> createUserProvider;
-    private final UserAndGroupActions actions;
+    private final UsersAndGroupsActionsController actions;
 
     private final ToolbarButton deleteButton;
 
@@ -55,7 +55,7 @@ public class UsersController extends ContentTabController {
     public UsersController(final EventBus eventBus,
                            final UserListController userList,
                            final Provider<CreateUserController> createUserProvider,
-                           final UserAndGroupActions actions) {
+                           final UsersAndGroupsActionsController actions) {
         super(eventBus);
         // A screen that is the list and nothing else, so shows the list as its own
         this.userList = own(userList).attach(new UserList());
@@ -89,7 +89,7 @@ public class UsersController extends ContentTabController {
     }
 
     private void onCreateUserOrGroup() {
-        createUserProvider.get().show(this, UserAndGroupHelper.createAfterChangeConsumer(userList), false);
+        createUserProvider.get().show(this, UsersAndGroupsHelper.createAfterChangeConsumer(userList), false);
     }
 
     private void onEditUserOrGroup() {

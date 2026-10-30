@@ -79,7 +79,7 @@ public final class AnnotationEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
-                    final Query title = play.querySelector(".annotation-edit__title");
+                    final Query title = play.querySelector(".annotation-editor__title");
                     // The history renders the entries
                     play.findByText("Looking into it.");
                     play.clear(title);
@@ -98,7 +98,7 @@ public final class AnnotationEditorStories {
                     // box's label 'Add a comment'
                     play.click(play.getByRole("button", StroomDom.button("Choose Comment")));
                     play.click(screen.findByText("Escalate"));
-                    play.waitFor(() -> play.expect(play.querySelector("textarea.annotation-edit__comment").value())
+                    play.waitFor(() -> play.expect(play.querySelector("textarea.annotation-editor__comment").value())
                             .toMatch(TextMatch.containing("Escalating to on-call.")));
                     ContentStorySupport.expectNoProblems(play);
                 })

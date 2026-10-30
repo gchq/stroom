@@ -44,7 +44,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.popup.client.PopupSize;
 
@@ -74,21 +74,21 @@ public class MetaBrowserController
     private final MetaRelationListController metaRelationList;
     private final DataViewerController dataController;
     private final Provider<DataUploadController> dataUploadProvider;
-    private final Provider<ExpressionDialogController> filterDialogProvider;
-    private final ButtonView streamListFilter;
-    private final ButtonView streamListInfo;
+    private final Provider<FilterExpressionController> filterDialogProvider;
+    private final IsButton streamListFilter;
+    private final IsButton streamListInfo;
     private final ClientSecurityContext securityContext;
 
     private DocRef feedRef;
-    private ButtonView streamListUpload;
-    private ButtonView streamListDownload;
-    private ButtonView streamListDelete;
-    private ButtonView streamListRestore;
-    private ButtonView streamListProcess;
-    private ButtonView streamRelationListDownload;
-    private ButtonView streamRelationListDelete;
-    private ButtonView streamRelationListRestore;
-    private ButtonView streamRelationListProcess;
+    private IsButton streamListUpload;
+    private IsButton streamListDownload;
+    private IsButton streamListDelete;
+    private IsButton streamListRestore;
+    private IsButton streamListProcess;
+    private IsButton streamRelationListDownload;
+    private IsButton streamRelationListDelete;
+    private IsButton streamRelationListRestore;
+    private IsButton streamRelationListProcess;
 
     private boolean hasSetCriteria;
 
@@ -111,7 +111,7 @@ public class MetaBrowserController
                                  final MetaListController metaList,
                                  final MetaRelationListController metaRelationList,
                                  final DataViewerController dataController,
-                                 final Provider<ExpressionDialogController> filterDialogProvider,
+                                 final Provider<FilterExpressionController> filterDialogProvider,
                                  final Provider<DataUploadController> dataUploadProvider,
                                  final ClientSecurityContext securityContext,
                                  final RestFactory restFactory,
@@ -409,9 +409,9 @@ public class MetaBrowserController
     public void setStreamListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaList, streamIdSet);
 
-        ButtonView.setEnabled(streamListInfo, someSelected);
-        ButtonView.setEnabled(streamListDownload, someSelected);
-        ButtonView.setEnabled(streamListProcess, someSelected);
+        IsButton.setEnabled(streamListInfo, someSelected);
+        IsButton.setEnabled(streamListDownload, someSelected);
+        IsButton.setEnabled(streamListProcess, someSelected);
         if (streamListDelete != null) {
             shouldEnableDelete(metaList, streamIdSet, streamListDelete::setEnabled);
         }
@@ -423,8 +423,8 @@ public class MetaBrowserController
     private void setStreamRelationListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaRelationList, streamIdSet);
 
-        ButtonView.setEnabled(streamRelationListDownload, someSelected);
-        ButtonView.setEnabled(streamRelationListProcess, someSelected);
+        IsButton.setEnabled(streamRelationListDownload, someSelected);
+        IsButton.setEnabled(streamRelationListProcess, someSelected);
         if (streamRelationListDelete != null) {
             shouldEnableDelete(metaRelationList, streamIdSet, streamRelationListDelete::setEnabled);
         }

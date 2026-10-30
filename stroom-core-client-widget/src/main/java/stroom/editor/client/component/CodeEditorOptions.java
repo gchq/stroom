@@ -16,64 +16,64 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.Option;
-import stroom.editor.client.ace.Editor;
+import stroom.editor.client.CodeEditorOption;
+import stroom.editor.client.ace.AceEditorPane;
 
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.function.Consumer;
 
 /// A code editor's options, each a setting the user can turn on or off from the editor's menu
-/// (e.g. Line Numbers), applied to its [Editor] as they change, and the mode the editor's text is
+/// (e.g. Line Numbers), applied to its [AceEditorPane] as they change, and the mode the editor's text is
 /// in (e.g. XML), which it is highlighted for while Syntax Highlighting is on.
 public class CodeEditorOptions {
 
     private static final boolean SHOW_INDICATORS_DEFAULT = false;
 
-    private final Editor editor;
+    private final AceEditorPane editor;
     private AceEditorMode mode = AceEditorMode.XML;
-    private final Option stylesOption;
-    private final Option lineNumbersOption;
-    private final Option indicatorsOption;
-    private final Option lineWrapOption;
-    private final Option showIndentGuides;
-    private final Option showInvisiblesOption;
-    private final Option basicAutoCompletionOption;
-    private final Option snippetsOption;
-    private final Option highlightActiveLineOption;
-    private final Option viewAsHexOption;
-    private Option useVimBindingsOption;
-    private Option liveAutoCompletionOption;
+    private final CodeEditorOption stylesOption;
+    private final CodeEditorOption lineNumbersOption;
+    private final CodeEditorOption indicatorsOption;
+    private final CodeEditorOption lineWrapOption;
+    private final CodeEditorOption showIndentGuides;
+    private final CodeEditorOption showInvisiblesOption;
+    private final CodeEditorOption basicAutoCompletionOption;
+    private final CodeEditorOption snippetsOption;
+    private final CodeEditorOption highlightActiveLineOption;
+    private final CodeEditorOption viewAsHexOption;
+    private CodeEditorOption useVimBindingsOption;
+    private CodeEditorOption liveAutoCompletionOption;
 
     /// Makes the options at their defaults, applying them to the editor.
     ///
     /// @param editor            The editor they apply to.
     /// @param onShowIndicators  Told whether the error and warning indicators are to be shown, as
     ///                          that option changes (and at once).
-    public CodeEditorOptions(final Editor editor, final Consumer<Boolean> onShowIndicators) {
+    public CodeEditorOptions(final AceEditorPane editor, final Consumer<Boolean> onShowIndicators) {
         this.editor = editor;
         // Don't forget to add any new options to CodeEditorController's menu
-        stylesOption = new Option(
+        stylesOption = new CodeEditorOption(
                 "Syntax Highlighting", true, true, on -> applyMode(on));
-        lineNumbersOption = new Option(
+        lineNumbersOption = new CodeEditorOption(
                 "Line Numbers", true, true, editor::setShowGutter);
-        indicatorsOption = new Option(
+        indicatorsOption = new CodeEditorOption(
                 "Error and Warning Indicators", SHOW_INDICATORS_DEFAULT, false, onShowIndicators::accept);
-        lineWrapOption = new Option(
+        lineWrapOption = new CodeEditorOption(
                 "Wrap Lines", false, true, editor::setUseWrapMode);
-        showIndentGuides = new Option(
+        showIndentGuides = new CodeEditorOption(
                 "Show Indent Guides", true, true, editor::setShowIndentGuides);
-        showInvisiblesOption = new Option(
+        showInvisiblesOption = new CodeEditorOption(
                 "Show Hidden Characters", false, true, editor::setShowInvisibles);
         useVimBindingsOption = buildVimBindingsOption(false);
-        basicAutoCompletionOption = new Option(
+        basicAutoCompletionOption = new CodeEditorOption(
                 "Basic Auto Completion", true, true, editor::setUseBasicAutoCompletion);
         liveAutoCompletionOption = buildLiveAutoCompleteOption(false);
-        snippetsOption = new Option(
+        snippetsOption = new CodeEditorOption(
                 "Snippets", true, true, editor::setUseSnippets);
-        highlightActiveLineOption = new Option(
+        highlightActiveLineOption = new CodeEditorOption(
                 "Highlight Active Line", true, true, editor::setHighlightActiveLine);
-        viewAsHexOption = new Option("View as Hex", false, false, null);
+        viewAsHexOption = new CodeEditorOption("View as Hex", false, false, null);
     }
 
     /// @return The mode the editor's text is in.
@@ -126,62 +126,62 @@ public class CodeEditorOptions {
     }
 
     /// @return Syntax Highlighting.
-    public Option getStylesOption() {
+    public CodeEditorOption getStylesOption() {
         return stylesOption;
     }
 
     /// @return Line Numbers.
-    public Option getLineNumbersOption() {
+    public CodeEditorOption getLineNumbersOption() {
         return lineNumbersOption;
     }
 
     /// @return Error and Warning Indicators.
-    public Option getIndicatorsOption() {
+    public CodeEditorOption getIndicatorsOption() {
         return indicatorsOption;
     }
 
     /// @return Wrap Lines.
-    public Option getLineWrapOption() {
+    public CodeEditorOption getLineWrapOption() {
         return lineWrapOption;
     }
 
     /// @return Show Indent Guides.
-    public Option getShowIndentGuides() {
+    public CodeEditorOption getShowIndentGuides() {
         return showIndentGuides;
     }
 
     /// @return Show Hidden Characters.
-    public Option getShowInvisiblesOption() {
+    public CodeEditorOption getShowInvisiblesOption() {
         return showInvisiblesOption;
     }
 
     /// @return Vim Key Bindings.
-    public Option getUseVimBindingsOption() {
+    public CodeEditorOption getUseVimBindingsOption() {
         return useVimBindingsOption;
     }
 
     /// @return Basic Auto Completion.
-    public Option getBasicAutoCompletionOption() {
+    public CodeEditorOption getBasicAutoCompletionOption() {
         return basicAutoCompletionOption;
     }
 
     /// @return Snippets.
-    public Option getSnippetsOption() {
+    public CodeEditorOption getSnippetsOption() {
         return snippetsOption;
     }
 
     /// @return Live Auto Completion.
-    public Option getLiveAutoCompletionOption() {
+    public CodeEditorOption getLiveAutoCompletionOption() {
         return liveAutoCompletionOption;
     }
 
     /// @return Highlight Active Line.
-    public Option getHighlightActiveLineOption() {
+    public CodeEditorOption getHighlightActiveLineOption() {
         return highlightActiveLineOption;
     }
 
     /// @return View as Hex.
-    public Option getViewAsHexOption() {
+    public CodeEditorOption getViewAsHexOption() {
         return viewAsHexOption;
     }
 
@@ -193,16 +193,16 @@ public class CodeEditorOptions {
         }
     }
 
-    private Option buildVimBindingsOption(final boolean useVimBindings) {
-        return new Option(
+    private CodeEditorOption buildVimBindingsOption(final boolean useVimBindings) {
+        return new CodeEditorOption(
                 "Vim Key Bindings",
                 useVimBindings,
                 true,
                 editor::setUseVimBindings);
     }
 
-    private Option buildLiveAutoCompleteOption(final boolean isOn) {
-        return new Option(
+    private CodeEditorOption buildLiveAutoCompleteOption(final boolean isOn) {
+        return new CodeEditorOption(
                 "Live Auto Completion",
                 isOn,
                 true,

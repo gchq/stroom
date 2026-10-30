@@ -18,7 +18,7 @@ package stroom.query.client.component;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.structure.client.component.Box;
-import stroom.pipeline.structure.client.component.DraggableTreePanel;
+import stroom.pipeline.structure.client.component.DraggableTree;
 import stroom.pipeline.structure.client.component.TreeKeyboard;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionItemRenderer;
@@ -31,7 +31,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -65,7 +65,7 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    DraggableTreePanel<Item> layoutPanel;
+    DraggableTree<Item> layoutPanel;
     // The tree, which the template declares in the draggable panel
     @UiField
     ExpressionTreePanel treePanel;
@@ -73,7 +73,7 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
     // The copy of what is dragged, on the page only while dragging, so not declared
     private final ExpressionTreePanel subTreePanel = new ExpressionTreePanel();
     private final TreeKeyboard<Item> keyboard;
-    private MySingleSelectionModel<Item> selectionModel;
+    private SingleItemSelectionModel<Item> selectionModel;
     private Consumer<Item> removeHandler;
     private Runnable onChange = () -> {
     };
@@ -271,7 +271,7 @@ public class ExpressionTree extends Component implements HasContextMenuHandlers 
 
     /// @param selectionModel The selection, or null for a tree only to be read, which can't be
     ///                       rearranged either.
-    public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
+    public void setSelectionModel(final SingleItemSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
         keyboard.setSelectionModel(selectionModel);

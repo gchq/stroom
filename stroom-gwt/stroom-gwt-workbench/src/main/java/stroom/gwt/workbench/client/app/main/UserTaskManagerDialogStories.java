@@ -43,7 +43,7 @@ import java.util.List;
 /// poll with the same reply. Its timer only stops when the dialog is asked to close, so the story
 /// registers it with `ScreenHarness.ownPopup`. Terminating a task is
 /// `POST /task/v1/terminate/{node}`, checked with the request spy. The controller comes from GIN and
-/// is opened by its event, as `TaskManagerPlugin` opens it.
+/// is opened by its event, as `ServerTasksPlugin` opens it.
 public final class UserTaskManagerDialogStories {
 
     // TaskResource.userTasks()
@@ -125,7 +125,7 @@ public final class UserTaskManagerDialogStories {
                 .realAlerts()
                 .build();
 
-        // As TaskManagerPlugin does when the 'Task Manager' button is pressed; its polling stops
+        // As ServerTasksPlugin does when the 'Task Manager' button is pressed; its polling stops
         // when the story's dialogs are closed
         injector.getUserTaskManagerController().show(harness.getAppRoot());
         return harness.asWidget();

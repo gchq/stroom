@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
-import stroom.dashboard.client.component.RulesController;
+import stroom.dashboard.client.component.ConditionalFormattingRulesController;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.query.api.Column;
@@ -66,7 +66,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private final EventBus eventBus;
     private final QueryResultTableController tableController;
     private final Provider<ColumnFormatController> columnFormatProvider;
-    private final Provider<RulesController> rulesProvider;
+    private final Provider<ConditionalFormattingRulesController> rulesProvider;
     private final Provider<ColumnFilterEditorController> columnFilterEditorProvider;
     private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
@@ -77,7 +77,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     public QueryTableColumnsManager(final EventBus eventBus,
                                     final QueryResultTableController tableController,
                                     final Provider<ColumnFormatController> columnFormatProvider,
-                                    final Provider<RulesController> rulesProvider,
+                                    final Provider<ConditionalFormattingRulesController> rulesProvider,
                                     final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                     final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
@@ -626,7 +626,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                 .command(() -> {
                     final QueryTablePreferences queryTablePreferences = tableController.getQueryTablePreferences();
                     // Made for one use, and owned by the table until it is closed
-                    final RulesController rules = rulesProvider.get();
+                    final ConditionalFormattingRulesController rules = rulesProvider.get();
                     rules.read(queryTablePreferences);
 
                     final PopupSize popupSize = PopupSize.resizable(800, 650);

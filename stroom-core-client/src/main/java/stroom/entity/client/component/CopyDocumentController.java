@@ -19,7 +19,7 @@ package stroom.entity.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.ShowCopyDocumentDialogEvent;
-import stroom.explorer.client.component.EntityTreeController;
+import stroom.explorer.client.component.DocumentPickerController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -42,21 +42,21 @@ import java.util.List;
 public class CopyDocumentController extends Controller {
 
     private final CopyDocument view;
-    private final EntityTreeController folders;
+    private final DocumentPickerController folders;
 
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                     The application's event bus.
     /// @param view                         The content.
-    /// @param entityTreeControllerProvider Makes the folder picker's controller.
+    /// @param documentPickerControllerProvider Makes the folder picker's controller.
     @Inject
     public CopyDocumentController(final EventBus eventBus,
                                   final CopyDocument view,
-                                  final Provider<EntityTreeController> entityTreeControllerProvider) {
+                                  final Provider<DocumentPickerController> documentPickerControllerProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        folders = make(entityTreeControllerProvider).attach(view.getFolders());
+        folders = make(documentPickerControllerProvider).attach(view.getFolders());
         folders.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
         folders.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
     }

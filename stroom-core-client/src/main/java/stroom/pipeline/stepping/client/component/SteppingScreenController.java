@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.ExpressionValidator;
-import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.FilterExpressionController;
 import stroom.data.client.component.MetaList;
 import stroom.data.client.component.SourceViewerController;
 import stroom.data.client.component.SteppingMetaListController;
@@ -60,7 +60,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.Layer;
@@ -111,7 +111,7 @@ public class SteppingScreenController extends Controller {
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
     private final SteppingMetaListController steppingMetaList;
-    private final Provider<ExpressionDialogController> filterDialogProvider;
+    private final Provider<FilterExpressionController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
     // elementId => SteppingElementController
     private final Map<ElementId, SteppingElementController> elementMap = new HashMap<>();
@@ -128,7 +128,7 @@ public class SteppingScreenController extends Controller {
     private SteppingResult currentResult;
     private boolean runStepping = true;
 
-    final ButtonView streamListFilter;
+    final IsButton streamListFilter;
 
     private Meta meta;
     private String childStreamType;
@@ -167,7 +167,7 @@ public class SteppingScreenController extends Controller {
                                     final SteppingFilterEditorController steppingFilterEditor,
                                     final PipelineElementTypesFactory pipelineElementTypesFactory,
                                     final Provider<SteppingMetaListController> metaListControllerProvider,
-                                    final Provider<ExpressionDialogController> filterDialogProvider,
+                                    final Provider<FilterExpressionController> filterDialogProvider,
                                     final ExpressionValidator expressionValidator) {
         super(eventBus);
         this.view = view;

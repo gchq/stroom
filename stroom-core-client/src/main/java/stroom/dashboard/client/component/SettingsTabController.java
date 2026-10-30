@@ -16,8 +16,8 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.main.ComponentDataModifier;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.PaneDataModifier;
 import stroom.widget.component.client.LayerController;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,7 +25,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// The base of the controller of a tab of a dashboard pane's settings dialog: it reads the pane's
 /// config into its component, writes it back, and says whether it is valid and changed. It is given
 /// the dashboard's context, e.g. to list the other panes.
-public abstract class SettingsTabController extends LayerController implements ComponentDataModifier {
+public abstract class SettingsTabController extends LayerController implements PaneDataModifier {
 
     private DashboardContext dashboardContext;
 

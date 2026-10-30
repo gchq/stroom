@@ -17,8 +17,8 @@
 package stroom.widget.datagrid.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.hyperlink.client.OpenHyperlinkRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.util.shared.Expander;
@@ -102,7 +102,7 @@ import java.util.function.Function;
 ///
 /// @param <R> The row type.
 public class DataGrid<R> extends Widget
-        implements DataGridView<R>, HasKeyboardSelectionPolicy, Focusable {
+        implements GridDisplay<R>, HasKeyboardSelectionPolicy, Focusable {
 
     /// The default page size.
     public static final int DEFAULT_LIST_PAGE_SIZE = 100;
@@ -1221,7 +1221,7 @@ public class DataGrid<R> extends Widget
     /// dashboard it is in), else with an [OpenHyperlinkRequest] for the app to open it.
     ///
     /// @param hyperlink The link.
-    void followHyperlink(final Hyperlink hyperlink) {
+    void followHyperlink(final LinkValue hyperlink) {
         if (hyperlinkHandlerCount > 0) {
             HyperlinkEvent.fire(this, hyperlink, new DefaultTaskMonitorFactory(this));
         } else {

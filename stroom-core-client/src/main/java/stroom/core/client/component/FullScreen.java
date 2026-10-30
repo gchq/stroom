@@ -42,9 +42,9 @@ public class FullScreen extends Component {
 
     /// Shows the document.
     ///
-    /// @param view Its view.
-    public void setContentView(final IsWidget view) {
-        contentPanel.setWidget(view.asWidget());
+    /// @param content The document's widget.
+    public void setContent(final IsWidget content) {
+        contentPanel.setWidget(content.asWidget());
     }
 
     interface Binder extends UiBinder<Widget, FullScreen> {

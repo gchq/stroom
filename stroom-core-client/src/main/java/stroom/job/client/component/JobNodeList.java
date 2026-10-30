@@ -174,7 +174,7 @@ public class JobNodeList extends Component {
 
     /// @return Whether only the enabled job nodes are to be shown.
     public boolean isShowEnabledOnly() {
-        return showEnabled.isOn();
+        return showEnabled.isPressed();
     }
 
     /// @param onShowEnabledChange Run when the filter to the enabled job nodes is turned on or off.

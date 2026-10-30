@@ -41,7 +41,7 @@ import stroom.importexport.client.component.DependenciesTabController;
 import stroom.importexport.client.component.ImportConfigConfirmController;
 import stroom.importexport.client.component.ImportConfigController;
 import stroom.index.client.component.IndexVolumeGroupsController;
-import stroom.monitoring.client.component.DatabaseTablesMonitoringController;
+import stroom.monitoring.client.component.DatabaseTablesController;
 import stroom.pathways.client.component.TracesEditor;
 import stroom.query.client.component.SearchResultStoresController;
 import stroom.receive.content.client.component.ContentTemplateTabController;
@@ -66,7 +66,7 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     CachesController getCachesController();
 
     /// @return The 'Database Tables' tab.
-    DatabaseTablesMonitoringController getDatabaseTablesController();
+    DatabaseTablesController getDatabaseTablesController();
 
     /// @return The 'Index Volumes' tab.
     IndexVolumeGroupsController getIndexVolumeGroupsController();
@@ -119,10 +119,10 @@ public interface ContentScreenGinjector extends ScreenGinjector {
     /// @return The 'New ...' / 'Save As' dialog, shown by firing `ShowCreateDocumentDialogEvent`.
     CreateDocumentController getCreateDocumentController();
 
-    /// @return The 'Find' dialog, as `NavigationPlugin` shows it for `ShowFindEvent`.
+    /// @return The 'Find' dialog, as `ExplorerPlugin` shows it for `ShowFindEvent`.
     FindController getFindController();
 
-    /// @return The 'Find In Content' dialog, as `NavigationPlugin` shows it for
+    /// @return The 'Find In Content' dialog, as `ExplorerPlugin` shows it for
     /// `ShowFindInContentEvent`.
     FindInContentController getFindInContentController();
 

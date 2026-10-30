@@ -19,8 +19,8 @@ package stroom.datagen.client.component;
 import stroom.analytics.client.component.ScheduledProcessingController;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
@@ -44,14 +44,14 @@ public class DataGenEditor extends DocumentEditor<DataGenDoc> {
     /// @param view                        Its component.
     /// @param dataGenSettingsProvider     Makes the data gen settings.
     /// @param scheduledProcessingProvider Makes the scheduled processing.
-    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param documentationTabProvider        Makes the Documentation tab's editor.
     /// @param permissionsProvider         Makes the Permissions tab.
     @Inject
     public DataGenEditor(final EventBus eventBus,
                          final LinkTabPanel view,
                          final Provider<DataGenSettingsController> dataGenSettingsProvider,
                          final Provider<ScheduledProcessingController> scheduledProcessingProvider,
-                         final Provider<MarkdownEditController> markdownEditProvider,
+                         final Provider<DocumentationTabController> documentationTabProvider,
                          final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         addTab(SETTINGS,
@@ -66,7 +66,7 @@ public class DataGenEditor extends DocumentEditor<DataGenDoc> {
                 },
                 (scheduledProcessing, docRef, doc) -> scheduledProcessing.read(docRef));
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 DataGenDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

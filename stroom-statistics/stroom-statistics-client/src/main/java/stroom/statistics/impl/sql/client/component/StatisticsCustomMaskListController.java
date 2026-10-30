@@ -18,8 +18,8 @@ package stroom.statistics.impl.sql.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.client.State;
-import stroom.statistics.impl.sql.client.State.Mask;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Mask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -37,7 +37,7 @@ import java.util.Objects;
 public class StatisticsCustomMaskListController extends Controller {
 
     private final StatisticsCustomMaskList view;
-    private State state = new State();
+    private StatisticFieldsAndMasks state = new StatisticFieldsAndMasks();
 
     /// Made by GIN, with its tab.
     ///
@@ -56,7 +56,7 @@ public class StatisticsCustomMaskListController extends Controller {
     }
 
     /// @param state The fields and custom roll-ups the statistic store's tabs share.
-    public void setState(final State state) {
+    public void setState(final StatisticFieldsAndMasks state) {
         this.state = Objects.requireNonNull(state, "state");
         view.setMasks(state.getMasks());
     }

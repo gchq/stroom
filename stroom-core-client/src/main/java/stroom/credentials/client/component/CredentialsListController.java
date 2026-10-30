@@ -18,7 +18,7 @@ package stroom.credentials.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.credentials.client.CredentialClient;
-import stroom.credentials.client.component.CredentialEditController.CreationState;
+import stroom.credentials.client.component.CredentialEditorController.CreationState;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 public class CredentialsListController extends Controller {
 
     private final CredentialClient credentialClient;
-    private final Provider<CredentialEditController> credentialEditProvider;
+    private final Provider<CredentialEditorController> credentialEditProvider;
     private final Provider<ReplaceSecretController> replaceSecretProvider;
     private final ClientSecurityContext securityContext;
     private final ExpiryFormatter expiryFormatter;
@@ -64,7 +64,7 @@ public class CredentialsListController extends Controller {
     @Inject
     public CredentialsListController(final EventBus eventBus,
                                      final CredentialClient credentialClient,
-                                     final Provider<CredentialEditController> credentialEditProvider,
+                                     final Provider<CredentialEditorController> credentialEditProvider,
                                      final Provider<ReplaceSecretController> replaceSecretProvider,
                                      final ClientSecurityContext securityContext,
                                      final ExpiryFormatter expiryFormatter) {

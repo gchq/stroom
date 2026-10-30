@@ -16,13 +16,13 @@
 
 package stroom.cache.client.gin;
 
-import stroom.cache.client.CacheMonitoringPlugin;
+import stroom.cache.client.CachesPlugin;
 import stroom.core.client.gin.PluginModule;
 
 public class CacheModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPlugin(CacheMonitoringPlugin.class);
+        bindPlugin(CachesPlugin.class);
     }
 }

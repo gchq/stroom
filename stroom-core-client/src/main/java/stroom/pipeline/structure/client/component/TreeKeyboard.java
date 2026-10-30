@@ -20,8 +20,8 @@ import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
-import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.Rect;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -56,7 +56,7 @@ import java.util.function.Function;
 public class TreeKeyboard<E> {
 
     private final TreePanel<E> treePanel;
-    private final DraggableTreePanel<E> root;
+    private final DraggableTree<E> root;
     // Tells screen reader users what detaching and attaching did
     private final Element liveRegion;
     // What the tree's items are called, e.g. "element" and "elements"
@@ -84,7 +84,7 @@ public class TreeKeyboard<E> {
     /// @param itemName  What one of the tree's items is called, e.g. "element".
     /// @param itemsName What more than one are called, e.g. "elements".
     public TreeKeyboard(final TreePanel<E> treePanel,
-                           final DraggableTreePanel<E> root,
+                           final DraggableTree<E> root,
                            final String itemName,
                            final String itemsName) {
         this.treePanel = treePanel;
@@ -247,7 +247,7 @@ public class TreeKeyboard<E> {
     /// Attaches the item detached to another (or its own) parent, if that can take it, keeping
     /// the focus on it; else says that it can't. Attached to its own parent, it is left where it
     /// was, or moved to the parent's end where dragging it there does that (see
-    /// [DraggableTreePanel#setPutBackOnOwnParent]).
+    /// [DraggableTree#setPutBackOnOwnParent]).
     ///
     /// @param target Its new parent.
     public void attach(final E target) {
@@ -455,7 +455,7 @@ public class TreeKeyboard<E> {
         if (tree == null) {
             return;
         }
-        final E target = selectionModel instanceof final MySingleSelectionModel<E> single
+        final E target = selectionModel instanceof final SingleItemSelectionModel<E> single
                 ? single.getSelectedObject()
                 : null;
         for (final E item : getAllItems(tree)) {

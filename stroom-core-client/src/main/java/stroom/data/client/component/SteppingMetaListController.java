@@ -20,7 +20,7 @@ import stroom.core.client.LocationManager;
 import stroom.data.client.ExpressionValidator;
 import stroom.data.client.component.MetaList.Columns;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.preferences.client.DateTimeFormatter;
 
 import com.google.inject.Inject;
@@ -37,7 +37,7 @@ public class SteppingMetaListController extends MetaListController {
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
     /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
-    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param createProcessorsProvider        Makes the dialog that chooses how to process them.
     /// @param pipelineSelection                  Makes the popup that picks a pipeline.
     /// @param expressionValidator                Checks an expression with the server.
     /// @param refCells                           Lets the feed and pipeline cells open them.
@@ -47,8 +47,8 @@ public class SteppingMetaListController extends MetaListController {
                                       final LocationManager locationManager,
                                       final DateTimeFormatter dateTimeFormatter,
                                       final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
-                                      final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
-                                      final Provider<ExplorerPopupController> pipelineSelection,
+                                      final Provider<CreateProcessorsController> createProcessorsProvider,
+                                      final Provider<DocumentChooserController> pipelineSelection,
                                       final ExpressionValidator expressionValidator,
                                       final RefCellsController refCells) {
         super(eventBus,
@@ -56,7 +56,7 @@ public class SteppingMetaListController extends MetaListController {
                 locationManager,
                 dateTimeFormatter,
                 selectionSummaryControllerProvider,
-                processChoiceDialogProvider,
+                createProcessorsProvider,
                 pipelineSelection,
                 expressionValidator,
                 refCells,

@@ -21,8 +21,8 @@ import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -90,7 +90,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
     /// @param structureProvider           Makes the structure.
     /// @param processors                  The processors.
     /// @param taskControllerProvider      Makes the task controller.
-    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param documentationTabProvider        Makes the Documentation tab's editor.
     /// @param permissionsProvider         Makes the Permissions tab.
     /// @param securityContext             The user's permissions.
     /// @param steppingProvider            Makes the stepping.
@@ -103,7 +103,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
                           final Provider<PipelineStructureController> structureProvider,
                           final ProcessorsController processors,
                           final Provider<ProcessorTasksTabController> taskControllerProvider,
-                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                           final ClientSecurityContext securityContext,
                           final Provider<SteppingScreenController> steppingProvider,
@@ -151,7 +151,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
         }
 
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 PipelineDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);
@@ -190,7 +190,7 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
         } else {
             replaceTab(STRUCTURE, pipelineStructure, this::readStructure, PipelineStructureController::write);
         }
-        steppingModeButton.setState(steppingMode);
+        steppingModeButton.setPressed(steppingMode);
     }
 
     /// Steps through a stream.

@@ -19,7 +19,7 @@ package stroom.dashboard.client.gin;
 import stroom.about.client.gin.AboutModule;
 import stroom.alert.client.gin.AlertModule;
 import stroom.annotation.client.gin.AnnotationModule;
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityModule;
@@ -28,8 +28,8 @@ import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
-import stroom.security.identity.client.gin.ChangePasswordGinjector;
-import stroom.security.identity.client.gin.ChangePasswordModule;
+import stroom.security.identity.client.gin.IdentityGinjector;
+import stroom.security.identity.client.gin.IdentityModule;
 import stroom.widget.popup.client.gin.PopupGinjector;
 import stroom.widget.popup.client.gin.PopupModule;
 
@@ -46,7 +46,7 @@ import com.google.web.bindery.event.shared.EventBus;
         AnnotationModule.class,
         AlertModule.class,
         SecurityModule.class,
-        ChangePasswordModule.class,
+        IdentityModule.class,
         EntityModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
@@ -57,13 +57,13 @@ public interface DashboardAppGinjectorUser extends
         SecurityGinjector,
         DashboardGinjector,
         UserPreferencesGinjector,
-        ChangePasswordGinjector {
+        IdentityGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();
 
     // Controllers
-    Provider<CoreController> getCoreController();
+    Provider<AppPageController> getAppPageController();
 
     Provider<FullScreenController> getFullScreenController();
 }

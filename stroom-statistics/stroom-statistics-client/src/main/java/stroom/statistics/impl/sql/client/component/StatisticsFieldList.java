@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.client.component;
 
-import stroom.statistics.impl.sql.client.State.Field;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Field;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;

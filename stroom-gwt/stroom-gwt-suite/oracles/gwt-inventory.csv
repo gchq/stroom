@@ -724,9 +724,9 @@ stroom-core-client/src/main/java/stroom/annotation/client/ShowFindAnnotationEven
 stroom-core-client/src/main/java/stroom/annotation/client/component/Chooser.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
 stroom-core-client/src/main/java/stroom/annotation/client/component/Chooser.ui.xml,stroom-core-client,client,annotation,,ui.xml,Screen/Dialog,Annotation
 stroom-core-client/src/main/java/stroom/annotation/client/component/ChooserController.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
-stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEdit.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
-stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEdit.ui.xml,stroom-core-client,client,annotation,,ui.xml,Screen/Dialog,Annotation
-stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEditController.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
+stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEditor.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
+stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEditor.ui.xml,stroom-core-client,client,annotation,,ui.xml,Screen/Dialog,Annotation
+stroom-core-client/src/main/java/stroom/annotation/client/component/CommentEditorController.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
 stroom-core-client/src/main/java/stroom/annotation/client/component/MultiChooserController.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
 stroom-core-client/src/main/java/stroom/annotation/client/component/OpenChooser.java,stroom-core-client,client,annotation,,java,Screen/Dialog,Annotation
 stroom-core-client/src/main/java/stroom/annotation/client/gin/AnnotationModule.java,stroom-core-client,client,annotation,Module,java,Framework,Dependency injection (GIN wiring)
@@ -1205,12 +1205,12 @@ stroom-core-client/src/main/java/stroom/documentation/client/presenter/Documenta
 stroom-core-client/src/main/java/stroom/entity/client/DocumentDialogScreens.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/component/DocumentEditor.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/component/DocumentEditorHost.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEdit.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEdit.ui.xml,stroom-core-client,client,entity,,ui.xml,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEditController.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreview.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreview.ui.xml,stroom-core-client,client,entity,,ui.xml,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownPreviewController.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/DocumentationTab.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/DocumentationTab.ui.xml,stroom-core-client,client,entity,,ui.xml,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/DocumentationTabController.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEditor.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEditor.ui.xml,stroom-core-client,client,entity,,ui.xml,Shared Screen/Dialog,Entity
+stroom-core-client/src/main/java/stroom/entity/client/component/MarkdownEditorController.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/component/TabbedController.java,stroom-core-client,client,entity,,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/gin/EntityGinjector.java,stroom-core-client,client,entity,Ginjector,java,Framework,Dependency injection (GIN wiring)
 stroom-core-client/src/main/java/stroom/entity/client/gin/EntityModule.java,stroom-core-client,client,entity,Module,java,Framework,Dependency injection (GIN wiring)
@@ -1244,15 +1244,15 @@ stroom-core-client/src/main/java/stroom/entity/client/view/InfoDocumentViewImpl.
 stroom-core-client/src/main/java/stroom/entity/client/view/LinkTabPanelViewImpl.java,stroom-core-client,client,entity,ViewImpl,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/view/MoveDocumentViewImpl.java,stroom-core-client,client,entity,ViewImpl,java,Shared Screen/Dialog,Entity
 stroom-core-client/src/main/java/stroom/entity/client/view/NameDocumentViewImpl.java,stroom-core-client,client,entity,ViewImpl,java,Shared Screen/Dialog,Entity
-stroom-core-client/src/main/java/stroom/explorer/client/NavigationPlugin.java,stroom-core-client,client,explorer,Plugin,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/ExplorerPlugin.java,stroom-core-client,client,explorer,Plugin,java,Shared Screen/Dialog,Explorer
 stroom-core-client/src/main/java/stroom/explorer/client/component/DocSelectionController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/EntityCheckTreeController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTree.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTree.ui.xml,stroom-core-client,client,explorer,,ui.xml,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/EntityTreeController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopup.java,stroom-core-client,client,explorer,Popup,java,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopup.ui.xml,stroom-core-client,client,explorer,Popup,ui.xml,Shared Screen/Dialog,Explorer
-stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerPopupController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentTickTreeController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentPicker.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentPicker.ui.xml,stroom-core-client,client,explorer,,ui.xml,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentPickerController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentChooser.java,stroom-core-client,client,explorer,Popup,java,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentChooser.ui.xml,stroom-core-client,client,explorer,Popup,ui.xml,Shared Screen/Dialog,Explorer
+stroom-core-client/src/main/java/stroom/explorer/client/component/DocumentChooserController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
 stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTree.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
 stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTree.ui.xml,stroom-core-client,client,explorer,,ui.xml,Shared Screen/Dialog,Explorer
 stroom-core-client/src/main/java/stroom/explorer/client/component/ExplorerTreeController.java,stroom-core-client,client,explorer,,java,Shared Screen/Dialog,Explorer
@@ -1466,7 +1466,7 @@ stroom-core-client/src/main/java/stroom/http/client/presenter/HttpClientConfigUi
 stroom-core-client/src/main/java/stroom/http/client/presenter/HttpTlsConfigPresenter.java,stroom-core-client,client,http,Presenter,java,Screen/Dialog,HTTP
 stroom-core-client/src/main/java/stroom/http/client/view/HttpClientConfigViewImpl.java,stroom-core-client,client,http,ViewImpl,java,Screen/Dialog,HTTP
 stroom-core-client/src/main/java/stroom/http/client/view/HttpTlsConfigViewImpl.java,stroom-core-client,client,http,ViewImpl,java,Screen/Dialog,HTTP
-stroom-core-client/src/main/java/stroom/hyperlink/client/HyperlinkEventHandlerImpl.java,stroom-core-client,client,hyperlink,,java,Framework,Application shell
+stroom-core-client/src/main/java/stroom/hyperlink/client/HyperlinkOpener.java,stroom-core-client,client,hyperlink,,java,Framework,Application shell
 stroom-core-client/src/main/java/stroom/hyperlink/client/HyperlinkName.java,stroom-core-client,client,hyperlink,,java,Framework,Application shell
 stroom-core-client/src/main/java/stroom/hyperlink/client/HyperlinkType.java,stroom-core-client,client,hyperlink,Type,java,Framework,Application shell
 stroom-core-client/src/main/java/stroom/hyperlink/client/ShowDashboardEvent.java,stroom-core-client,client,hyperlink,Event,java,Framework,Client events (event bus)
@@ -1561,7 +1561,7 @@ stroom-core-client/src/main/java/stroom/node/client/JobNodeListHelper.java,stroo
 stroom-core-client/src/main/java/stroom/node/client/ManageGlobalPropertiesPlugin.java,stroom-core-client,client,node,Plugin,java,Screen/Dialog,Node / cluster
 stroom-core-client/src/main/java/stroom/node/client/NodeClient.java,stroom-core-client,client,node,Client,java,Screen/Dialog,Node / cluster
 stroom-core-client/src/main/java/stroom/node/client/NodeGroupClient.java,stroom-core-client,client,node,Client,java,Screen/Dialog,Node / cluster
-stroom-core-client/src/main/java/stroom/node/client/NodeToolsContentPlugin.java,stroom-core-client,client,node,Plugin,java,Screen/Dialog,Node / cluster
+stroom-core-client/src/main/java/stroom/node/client/ToolsContentPlugin.java,stroom-core-client,client,node,Plugin,java,Screen/Dialog,Node / cluster
 stroom-core-client/src/main/java/stroom/node/client/event/NodeChangeEvent.java,stroom-core-client,client,node,Event,java,Screen/Dialog,Node / cluster
 stroom-core-client/src/main/java/stroom/node/client/event/OpenNodeEvent.java,stroom-core-client,client,node,Event,java,Screen/Dialog,Node / cluster
 stroom-core-client/src/main/java/stroom/node/client/presenter/NewNodeGroupPresenter.java,stroom-core-client,client,node,Presenter,java,Screen/Dialog,Node / cluster
@@ -1652,7 +1652,7 @@ stroom-core-client/src/main/java/stroom/pipeline/stepping/client/view/StepContro
 stroom-core-client/src/main/java/stroom/pipeline/stepping/client/view/SteppingFilterViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/stepping/client/view/SteppingViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/stepping/client/view/XPathFilterViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
-stroom-core-client/src/main/java/stroom/pipeline/structure/client/component/AbstractPipelineTree.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
+stroom-core-client/src/main/java/stroom/pipeline/structure/client/component/PipelinePicture.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/component/PipelineTree.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/component/PipelineTree.ui.xml,stroom-core-client,client,pipeline,,ui.xml,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/presenter/DefaultPipelineTreeBuilder.java,stroom-core-client,client,pipeline,Builder,java,Screen/Dialog,Pipeline
@@ -1671,8 +1671,8 @@ stroom-core-client/src/main/java/stroom/pipeline/structure/client/presenter/Prop
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/presenter/SimplePipelineTreeBuilder.java,stroom-core-client,client,pipeline,Builder,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/presenter/StructureValidationUtil.java,stroom-core-client,client,pipeline,Util,java,Utility,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/Box.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
-stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/DraggableTreePanel.java,stroom-core-client,client,pipeline,Panel,java,Screen/Dialog,Pipeline
-stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/DraggableTreePanel.ui.xml,stroom-core-client,client,pipeline,Panel,ui.xml,Screen/Dialog,Pipeline
+stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/DraggableTree.java,stroom-core-client,client,pipeline,Panel,java,Screen/Dialog,Pipeline
+stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/DraggableTree.ui.xml,stroom-core-client,client,pipeline,Panel,ui.xml,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/NewElementViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/NewPipelineReferenceViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/NewPropertyUiHandlers.java,stroom-core-client,client,pipeline,UiHandlers,java,Screen/Dialog,Pipeline
@@ -1684,8 +1684,8 @@ stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineE
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineElementBoxFactory.java,stroom-core-client,client,pipeline,Factory,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineElementRenderer.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineStructureViewImpl.java,stroom-core-client,client,pipeline,ViewImpl,java,Screen/Dialog,Pipeline
-stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineTreePanel.java,stroom-core-client,client,pipeline,Panel,java,Screen/Dialog,Pipeline
-stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineTreePanel.ui.xml,stroom-core-client,client,pipeline,Panel,ui.xml,Screen/Dialog,Pipeline
+stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineTreeDiagram.java,stroom-core-client,client,pipeline,Panel,java,Screen/Dialog,Pipeline
+stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/PipelineTreeDiagram.ui.xml,stroom-core-client,client,pipeline,Panel,ui.xml,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/TreeKeyboard.java,stroom-core-client,client,pipeline,,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/pipeline/structure/client/view/TreePanel.java,stroom-core-client,client,pipeline,Panel,java,Screen/Dialog,Pipeline
 stroom-core-client/src/main/java/stroom/planb/client/PlanBPlugin.java,stroom-core-client,client,planb,Plugin,java,Screen/Dialog,State (Plan B)
@@ -2105,17 +2105,17 @@ stroom-core-client/src/main/java/stroom/sqlstore/client/gin/SqlTemporalStoreModu
 stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStoreDataPresenter.java,stroom-core-client,client,sqlstore,Presenter,java,Screen/Dialog,Sqlstore
 stroom-core-client/src/main/java/stroom/sqlstore/client/presenter/SqlTemporalStorePresenter.java,stroom-core-client,client,sqlstore,Presenter,java,Screen/Dialog,Sqlstore
 stroom-core-client/src/main/java/stroom/sqlstore/client/view/SqlTemporalStoreDataViewImpl.java,stroom-core-client,client,sqlstore,ViewImpl,java,Screen/Dialog,Sqlstore
-stroom-core-client/src/main/java/stroom/task/client/TaskManagerPlugin.java,stroom-core-client,client,task,Plugin,java,Screen/Dialog,Tasks
+stroom-core-client/src/main/java/stroom/task/client/ServerTasksPlugin.java,stroom-core-client,client,task,Plugin,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/component/UserTask.java,stroom-core-client,client,task,,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/component/UserTask.ui.xml,stroom-core-client,client,task,,ui.xml,Screen/Dialog,Tasks
-stroom-core-client/src/main/java/stroom/task/client/event/OpenTaskManagerEvent.java,stroom-core-client,client,task,Event,java,Screen/Dialog,Tasks
+stroom-core-client/src/main/java/stroom/task/client/event/OpenServerTasksEvent.java,stroom-core-client,client,task,Event,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/event/OpenUserTaskManagerEvent.java,stroom-core-client,client,task,Event,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/event/OpenUserTaskManagerHandler.java,stroom-core-client,client,task,Handler,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/gin/TaskModule.java,stroom-core-client,client,task,Module,java,Framework,Dependency injection (GIN wiring)
 stroom-core-client/src/main/java/stroom/task/client/presenter/TaskInfoParser.java,stroom-core-client,client,task,,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/presenter/TaskManagerListPresenter.java,stroom-core-client,client,task,Presenter,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/presenter/TaskManagerPresenter.java,stroom-core-client,client,task,Presenter,java,Screen/Dialog,Tasks
-stroom-core-client/src/main/java/stroom/task/client/presenter/TaskManagerTreeAction.java,stroom-core-client,client,task,,java,Screen/Dialog,Tasks
+stroom-core-client/src/main/java/stroom/task/client/presenter/ServerTaskTreeAction.java,stroom-core-client,client,task,,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/presenter/TaskManagerUiHandlers.java,stroom-core-client,client,task,UiHandlers,java,Screen/Dialog,Tasks
 stroom-core-client/src/main/java/stroom/task/client/presenter/TaskProgressUtil.java,stroom-core-client,client,task,Util,java,Utility,Tasks
 stroom-core-client/src/main/java/stroom/task/client/presenter/UserTaskManagerPresenter.java,stroom-core-client,client,task,Presenter,java,Screen/Dialog,Tasks
@@ -3325,7 +3325,7 @@ stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/da
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/dashboard/VisTooltipStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/data/DataUploadDialogStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/data/MetaBrowserStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
-stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/data/ProcessChoiceDialogStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
+stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/data/CreateProcessorsStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/dictionary/DictionaryEditorStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/AnalyticRuleEditorStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/app/editors/CodeDocumentEditorStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
@@ -3616,7 +3616,7 @@ stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widget
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/DialogTitleStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/DialogWidgets.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/EscapeStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
-stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/ExplorerDropdownPopupStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
+stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/DocumentChooserStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/ModalStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/NameDialogStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/dialogs/PromptDialogStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
@@ -3639,7 +3639,7 @@ stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widget
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/SourcePresenterStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/SourceViewerStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/editorsandviewers/XsdBrowserStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
-stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/entitychecktree/EntityCheckTreeStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
+stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/entitychecktree/DocumentTickTreeStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/SourceProgressBarStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/SpinnerStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt
 stroom-gwt/stroom-gwt-workbench/src/main/java/stroom/gwt/workbench/client/widgets/feedback/TaskCounterStories.java,stroom-gwt,client,gwt,,java,Screen/Dialog,Gwt

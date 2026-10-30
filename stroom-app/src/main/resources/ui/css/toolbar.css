@@ -36,7 +36,7 @@
 }
 
 /* The explorer's toolbar, without margins, as it sits in the explorer's own row (its buttons take
-   the explorer's colours, as all buttons in the explorer do: see navigation.css) */
+   the explorer's colours, as all buttons in the explorer do: see explorer.css) */
 .toolbar--navigation {
     margin: 0;
 }

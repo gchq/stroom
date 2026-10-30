@@ -31,7 +31,7 @@ import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.text.client.Frame;
 import stroom.widget.text.client.InlineLabel;
 import stroom.widget.text.client.Label;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -281,8 +281,8 @@ public final class QuickFilterStories {
         quickFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                 "Server Tasks Quick Filter",
                 tableBuilder -> tableBuilder
-                        .row(TableCell.data("Matched tasks are shown in black.", 2))
-                        .row(TableCell.data("Related tasks are shown in grey.", 2))
+                        .row(HtmlTableCell.data("Matched tasks are shown in black.", 2))
+                        .row(HtmlTableCell.data("Related tasks are shown in grey.", 2))
                         .row(),
                 Arrays.asList(
                         FilterFieldDefinition.defaultField("Name", "name"),

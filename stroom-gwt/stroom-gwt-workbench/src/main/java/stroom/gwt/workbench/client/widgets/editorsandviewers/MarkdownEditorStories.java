@@ -20,9 +20,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.CurrentPreferences;
 import stroom.entity.client.MarkdownConverter;
-import stroom.entity.client.component.MarkdownEdit;
-import stroom.entity.client.component.MarkdownEditController;
-import stroom.entity.client.component.MarkdownPreviewController;
+import stroom.entity.client.component.DocumentationTab;
+import stroom.entity.client.component.DocumentationTabController;
+import stroom.entity.client.component.MarkdownEditorController;
 import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Stories for Stroom's Markdown editor ([MarkdownEditController], as used for documentation
+/// Stories for Stroom's Markdown editor ([DocumentationTabController], as used for documentation
 /// tabs).
 ///
 /// Its toolbar (Edit Documentation and Help with Documentation), which Stroom shows in the document
@@ -187,34 +187,34 @@ public final class MarkdownEditorStories {
         final UserPreferencesManager userPreferencesManager = new PageThemeUserPreferencesManager(
                 harness.getRestFactory(), currentPreferences);
         final MarkdownConverter markdownConverter = new MarkdownConverter(userPreferencesManager);
-        final MarkdownEditController markdownEdit = new MarkdownEditController(
+        final DocumentationTabController documentationTab = new DocumentationTabController(
                 eventBus,
-                new MarkdownEdit(),
-                () -> new MarkdownPreviewController(
+                new DocumentationTab(),
+                () -> new MarkdownEditorController(
                         eventBus,
                         () -> EditorWidgets.codeEditorController(eventBus),
                         markdownConverter),
                 harness.getUiConfigCache(),
                 markdownConverter);
-        harness.own(markdownEdit);
+        harness.own(documentationTab);
 
         final Spy onDirty = harness.fn(ON_DIRTY);
-        harness.addRegistration(markdownEdit.addDirtyListener(onDirty::call));
+        harness.addRegistration(documentationTab.addDirtyListener(onDirty::call));
 
         // As the document tab does: read only first, then the text
-        markdownEdit.setReadOnly(readOnly);
-        markdownEdit.setText(text);
+        documentationTab.setReadOnly(readOnly);
+        documentationTab.setText(text);
 
         // A 520px high flex column
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("height", "520px");
         frame.getElement().getStyle().setProperty("display", "flex");
         frame.getElement().getStyle().setProperty("flexDirection", "column");
-        for (final Widget toolbar : markdownEdit.getDocumentButtons()) {
+        for (final Widget toolbar : documentationTab.getDocumentButtons()) {
             toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
             frame.add(toolbar);
         }
-        final Widget content = markdownEdit.asWidget();
+        final Widget content = documentationTab.asWidget();
         content.getElement().getStyle().setProperty("flex", "1 1 auto");
         content.getElement().getStyle().setProperty("minHeight", "0");
         content.getElement().getStyle().setProperty("position", "relative");

@@ -22,7 +22,7 @@ import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.main.client.component.MainController;
 import stroom.main.client.event.ShowMainEvent;
 
@@ -38,20 +38,20 @@ public class MainScreens {
     ///
     /// @param eventBus The application's event bus.
     /// @param contentTabPaneControllerProvider Makes the ContentTabPaneController.
-    /// @param coreControllerProvider Makes the CoreController.
+    /// @param appPageControllerProvider Makes the AppPageController.
     /// @param mainControllerProvider Makes the MainController.
     @Inject
     public MainScreens(final EventBus eventBus,
                        final Provider<ContentTabPaneController> contentTabPaneControllerProvider,
-                       final Provider<CoreController> coreControllerProvider,
+                       final Provider<AppPageController> appPageControllerProvider,
                        final Provider<MainController> mainControllerProvider) {
         // The main screen first, so that it is shown before a tab opens in it
         eventBus.addHandler(ShowMainEvent.getType(), event -> {
-            coreControllerProvider.get().setContent(mainControllerProvider.get());
+            appPageControllerProvider.get().setContent(mainControllerProvider.get());
             mainControllerProvider.get().onShowMain(event);
         });
         eventBus.addHandler(OpenContentTabEvent.getType(), event ->
-                coreControllerProvider.get().setContent(mainControllerProvider.get()));
+                appPageControllerProvider.get().setContent(mainControllerProvider.get()));
         // The content tabs
         eventBus.addHandler(OpenContentTabEvent.getType(), event ->
                 contentTabPaneControllerProvider.get().onOpen(event));

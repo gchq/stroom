@@ -1,7 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A dashboard pane of a type Stroom doesn't know (unknown-component.css): a message naming its type -->
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tx="urn:import:stroom.widget.text.client">
-    <tx:Label ui:field="message" styleName="unknown-component" text="Unknown component"/>
-</ui:UiBinder>

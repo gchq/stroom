@@ -18,7 +18,7 @@ package stroom.processor.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.processor.client.ProcessorProfileClient;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
@@ -32,12 +32,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 
 /// Shows the processor profiles, and adds, edits and deletes them.
-public class ProcessorProfilesController extends ContentTabController implements Refreshable {
+public class ProcessorProfilesController extends ContentTabController implements HasRefresh {
 
     public static final String TAB_TYPE = "ProcessorProfiles";
 
     private final ProcessorProfileListController processorProfileList;
-    private final Provider<ProcessorProfileEditController> editProvider;
+    private final Provider<ProcessorProfileEditorController> editProvider;
     private final ProcessorProfileClient processorProfileClient;
 
     /// Made by GIN, with its parts.
@@ -50,7 +50,7 @@ public class ProcessorProfilesController extends ContentTabController implements
     public ProcessorProfilesController(
             final EventBus eventBus,
             final ProcessorProfileListController processorProfileList,
-            final Provider<ProcessorProfileEditController> editProvider,
+            final Provider<ProcessorProfileEditorController> editProvider,
             final ProcessorProfileClient processorProfileClient) {
 
         super(eventBus);

@@ -44,7 +44,7 @@ import java.util.List;
 public class NotificationListController extends Controller {
 
     private final NotificationList view;
-    private final Provider<AnalyticNotificationEditController> editProvider;
+    private final Provider<AnalyticNotificationEditorController> editProvider;
     private final ListDataProvider<NotificationConfig> dataProvider;
     private final List<NotificationConfig> list = new ArrayList<>();
     private boolean initialised;
@@ -59,7 +59,7 @@ public class NotificationListController extends Controller {
     @Inject
     public NotificationListController(final EventBus eventBus,
                                       final NotificationList view,
-                                      final Provider<AnalyticNotificationEditController> editProvider) {
+                                      final Provider<AnalyticNotificationEditorController> editProvider) {
         super(eventBus);
         this.view = view;
         this.editProvider = editProvider;

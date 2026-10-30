@@ -16,7 +16,7 @@
 
 package stroom.data.client.component;
 
-import stroom.editor.client.Action;
+import stroom.editor.client.CodeEditorAction;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.component.CodeEditorOptions;
 import stroom.util.shared.TextRange;
@@ -85,7 +85,7 @@ public class DataTextPaneController extends Controller {
     }
 
     /// @return Format, which formats the text.
-    public Action getFormatAction() {
+    public CodeEditorAction getFormatAction() {
         return editor.getFormatAction();
     }
 

@@ -24,12 +24,12 @@ import stroom.util.shared.UserRef;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// The User Groups screen ([UserAndGroupsController]) in a main content tab of its own.
+/// The User Groups screen ([UsersAndGroupsController]) in a main content tab of its own.
 public class UsersAndGroupsTabController extends ContentTabController {
 
     public static final String TAB_TYPE = "UsersAndGroups";
 
-    private final UserAndGroupsController userAndGroups;
+    private final UsersAndGroupsController userAndGroups;
 
     /// Made by GIN.
     ///
@@ -37,7 +37,7 @@ public class UsersAndGroupsTabController extends ContentTabController {
     /// @param userAndGroups The screen.
     @Inject
     public UsersAndGroupsTabController(final EventBus eventBus,
-                                       final UserAndGroupsController userAndGroups) {
+                                       final UsersAndGroupsController userAndGroups) {
         super(eventBus);
         this.userAndGroups = own(userAndGroups);
         initWidget(userAndGroups.asWidget());

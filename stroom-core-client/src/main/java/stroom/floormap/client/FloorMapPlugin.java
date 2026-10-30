@@ -25,8 +25,8 @@ import stroom.document.client.DocInitialisationHandler;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.floormap.client.component.FloorMapDocEditor;
-import stroom.floormap.client.component.FloorMapInitController;
+import stroom.floormap.client.component.FloorMapEditor;
+import stroom.floormap.client.component.NewFloorMapStoresController;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -52,15 +52,15 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
     private static final FloorMapResource FLOOR_MAP_RESOURCE = GWT.create(FloorMapResource.class);
 
     private final EventBus eventBus;
-    private final Provider<FloorMapDocEditor> editorProvider;
-    private final Provider<FloorMapInitController> initProvider;
+    private final Provider<FloorMapEditor> editorProvider;
+    private final Provider<NewFloorMapStoresController> initProvider;
     private final AppRoot appRoot;
     private final RestFactory restFactory;
 
     @Inject
     public FloorMapPlugin(final EventBus eventBus,
-                          final Provider<FloorMapDocEditor> editorProvider,
-                          final Provider<FloorMapInitController> initProvider,
+                          final Provider<FloorMapEditor> editorProvider,
+                          final Provider<NewFloorMapStoresController> initProvider,
                           final AppRoot appRoot,
                           final RestFactory restFactory,
                           final ContentManager contentManager,
@@ -155,7 +155,7 @@ public class FloorMapPlugin extends DocumentPlugin<FloorMapDoc> {
 
     /// {@inheritDoc}
     ///
-    /// Returns a handler that shows a [FloorMapInitController], made for one use, prompting the
+    /// Returns a handler that shows a [NewFloorMapStoresController], made for one use, prompting the
     /// user to select Facts Store and Events Store references before the FloorMap editor opens.
     ///
     /// @return a non-null initialisation handler

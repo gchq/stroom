@@ -27,7 +27,7 @@ import stroom.widget.datagrid.client.FindResultLists;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.LargeBusySpinner;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -77,7 +77,7 @@ public class FindInContent extends Component {
     @UiField
     ToolbarToggleButton toggleRegex;
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
     @UiField
     CodeEditor text;
 
@@ -131,12 +131,12 @@ public class FindInContent extends Component {
 
     /// @return Whether the pattern's case must match.
     public boolean isMatchCase() {
-        return toggleMatchCase.getState();
+        return toggleMatchCase.isPressed();
     }
 
     /// @return Whether the pattern is a regular expression.
     public boolean isRegex() {
-        return toggleRegex.getState();
+        return toggleRegex.isPressed();
     }
 
     /// @param onPatternChange Run whenever the pattern, Match case or Regex changes.
@@ -217,7 +217,7 @@ public class FindInContent extends Component {
     }
 
     private void updateHint() {
-        patternHint.setText(toggleRegex.getState()
+        patternHint.setText(toggleRegex.isPressed()
                 ? REGEX_HINT
                 : TEXT_HINT);
     }

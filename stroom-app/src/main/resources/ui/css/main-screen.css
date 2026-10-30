@@ -16,6 +16,8 @@
 
 /*
    The main screen (stroom.main.client.component.Main), named BEM style. Its rules were in `components.css`.
+   Its block is main-screen, not main: a bare `main` would read as the HTML element and is too
+   general a name for one component's block.
 */
 
 /* Docked AI panel styles */

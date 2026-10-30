@@ -16,7 +16,7 @@
 
 package stroom.main.client.component;
 
-import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.LargeBusySpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -37,7 +37,7 @@ public class TaskSpinner extends Composite {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
 
     private boolean spinning;
     private Runnable onClick;

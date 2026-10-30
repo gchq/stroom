@@ -17,7 +17,7 @@
                 <svg:Icon ui:field="icon" addStyleNames="dialog__icon"/>
                 <tx:Label ui:field="titleText" styleName="dialog__title">Caption</tx:Label>
                 <g:SimplePanel styleName="dialog__spinner">
-                    <spinner:SpinnerLarge ui:field="spinner" visible="false"/>
+                    <spinner:LargeBusySpinner ui:field="spinner" visible="false"/>
                 </g:SimplePanel>
                 <b:Toolbar ui:field="windowToolbar" name="Window" addStyleNames="dialog__toolbar toolbar--text-colour">
                     <b:ToolbarButton ui:field="windowButton" svg="ELLIPSES_VERTICAL" title="Window Options"

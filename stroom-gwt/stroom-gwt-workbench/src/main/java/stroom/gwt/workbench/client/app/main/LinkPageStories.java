@@ -24,15 +24,15 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.iframe.client.component.IFrameContentController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/LinkPage`: the page a link opens in Stroom, as a dialog (a link of type
-/// `dialog`, which `HyperlinkEventHandlerImpl` shows in an `IFrameController`) or as a tab
+/// `dialog`, which `HyperlinkOpener` shows in an `IFrameController`) or as a tab
 /// ([IFrameContentController], for a link of type `tab`). The page is `about:blank`, so the frame
 /// shows nothing and the link's own title names it.
 public final class LinkPageStories {
@@ -79,8 +79,8 @@ public final class LinkPageStories {
                 .injector(injector)
                 .build();
         // Stroom's handler of links, as the app makes it at start up
-        injector.getHyperlinkEventHandler();
-        harness.afterStartUp(() -> HyperlinkEvent.fire(harness.getHasHandlers(), Hyperlink.builder()
+        injector.getHyperlinkOpener();
+        harness.afterStartUp(() -> HyperlinkEvent.fire(harness.getHasHandlers(), LinkValue.builder()
                 .text("Help")
                 .href("about:blank")
                 .type("dialog|" + TITLE)
@@ -94,7 +94,7 @@ public final class LinkPageStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As HyperlinkEventHandlerImpl opens a tab link's page. Shown as a page: the tab itself
+            // As HyperlinkOpener opens a tab link's page. Shown as a page: the tab itself
             // holds nothing to focus (its frame is on the page's body), so the runner's check that a
             // tab takes the focus doesn't apply
             final IFrameContentController tab = harness.showPage(injector.getIFrameContentController());

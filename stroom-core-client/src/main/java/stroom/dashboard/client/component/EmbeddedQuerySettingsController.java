@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 /// An Embedded Query pane's settings: Basic, Conditional Formatting, Selection Query and Selection
 /// Filter. The selection tabs' fields are the data source of the query chosen (or embedded),
 /// fetched once for each.
-public class EmbeddedQuerySettingsController extends ComponentSettingsDialogController {
+public class EmbeddedQuerySettingsController extends PaneSettingsController {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -51,9 +51,9 @@ public class EmbeddedQuerySettingsController extends ComponentSettingsDialogCont
     /// @param restFactory     Makes REST requests.
     @Inject
     public EmbeddedQuerySettingsController(final EventBus eventBus,
-                                           final ComponentSettingsDialog view,
+                                           final PaneSettings view,
                                            final BasicEmbeddedQuerySettingsController basicSettings,
-                                           final RulesController rules,
+                                           final ConditionalFormattingRulesController rules,
                                            final SelectionHandlersController selectionQuery,
                                            final SelectionHandlersController selectionFilter,
                                            final RestFactory restFactory) {

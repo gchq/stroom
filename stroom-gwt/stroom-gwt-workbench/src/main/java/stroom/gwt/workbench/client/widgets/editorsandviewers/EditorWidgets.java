@@ -19,7 +19,7 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 import stroom.data.client.component.DataTextPaneController;
 import stroom.editor.client.CurrentPreferences;
 import stroom.editor.client.DelegatingAceCompleter;
-import stroom.editor.client.component.AceEditorController;
+import stroom.editor.client.component.AceEditorPaneController;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
@@ -62,7 +62,7 @@ public final class EditorWidgets {
     public static CodeEditorController codeEditorController(final EventBus eventBus) {
         return new CodeEditorController(
                 eventBus,
-                new AceEditorController(
+                new AceEditorPaneController(
                         eventBus,
                         getDelegatingAceCompleter(),
                         currentPreferences(),

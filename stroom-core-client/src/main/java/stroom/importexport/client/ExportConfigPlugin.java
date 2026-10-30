@@ -18,7 +18,7 @@ package stroom.importexport.client;
 
 import stroom.core.client.MenuKeys;
 import stroom.core.client.Plugin;
-import stroom.importexport.client.component.ExportConfigDialogController;
+import stroom.importexport.client.component.ExportConfigController;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -43,7 +43,7 @@ public class ExportConfigPlugin extends Plugin {
     public ExportConfigPlugin(final EventBus eventBus,
                               final ClientSecurityContext securityContext,
                               final AppRoot appRoot,
-                              final Provider<ExportConfigDialogController> exportConfigProvider) {
+                              final Provider<ExportConfigController> exportConfigProvider) {
         super(eventBus);
         this.securityContext = securityContext;
 

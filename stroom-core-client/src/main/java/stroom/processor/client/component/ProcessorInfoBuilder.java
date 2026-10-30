@@ -35,9 +35,9 @@ import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -61,11 +61,11 @@ public class ProcessorInfoBuilder {
     /// @param row The processor's or filter's row.
     /// @return The info, a table of it.
     public SafeHtml get(final ProcessorListRow row) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
         if (row instanceof ProcessorRow) {
             final ProcessorRow processorRow = (ProcessorRow) row;
             final Processor processor = processorRow.getProcessor();
-            tb.row(TableCell.header("Stream Processor", 2))
+            tb.row(HtmlTableCell.header("Stream Processor", 2))
                     .row("Id", String.valueOf(processor.getId()))
                     .row("Created By", processor.getCreateUser());
             addRowDateString(tb, "Created On", processor.getCreateTimeMs());
@@ -84,9 +84,9 @@ public class ProcessorInfoBuilder {
             final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
 
             if (filter.isReprocess()) {
-                tb.row(TableCell.header("Stream Processor Filter (reprocessing)", 2));
+                tb.row(HtmlTableCell.header("Stream Processor Filter (reprocessing)", 2));
             } else {
-                tb.row(TableCell.header("Stream Processor Filter", 2));
+                tb.row(HtmlTableCell.header("Stream Processor Filter", 2));
             }
 
             if (filter.getMinMetaCreateTimeMs() != null ||
@@ -190,7 +190,7 @@ public class ProcessorInfoBuilder {
         return htmlBuilder.toSafeHtml();
     }
 
-    private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
+    private void addRowDateString(final HtmlTableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
             tb.row(label, dateTimeFormatter.formatWithDuration(ms));
         }

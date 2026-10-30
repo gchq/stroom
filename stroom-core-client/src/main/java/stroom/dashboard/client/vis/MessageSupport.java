@@ -19,7 +19,7 @@ package stroom.dashboard.client.vis;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.PostMessage.FrameListener;
 import stroom.dashboard.client.vis.VisTooltipPlacement.Direction;
-import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.LinkValue;
 import stroom.query.client.VisComponentSelection;
 import stroom.util.client.JSONUtil;
 import stroom.widget.util.client.Rect;
@@ -51,8 +51,8 @@ public class MessageSupport implements FrameListener {
     private final Element frame;
     private final int frameId;
     private Consumer<List<ComponentSelection>> onSelection;
-    private Consumer<Hyperlink> onHyperlink;
-    private Consumer<List<VisToolbarButton>> toolbarHandler;
+    private Consumer<LinkValue> onHyperlink;
+    private Consumer<List<VisButtonSpec>> toolbarHandler;
     private BiFunction<String, List<String>, List<String>> coloursHandler;
 
     /// Passes messages between Stroom and a visualisation's frame.
@@ -74,7 +74,7 @@ public class MessageSupport implements FrameListener {
     /// Sets what opens a link the visualisation asks to follow.
     ///
     /// @param onHyperlink Given the link.
-    public void setOnHyperlink(final Consumer<Hyperlink> onHyperlink) {
+    public void setOnHyperlink(final Consumer<LinkValue> onHyperlink) {
         this.onHyperlink = onHyperlink;
     }
 
@@ -83,7 +83,7 @@ public class MessageSupport implements FrameListener {
     ///
     /// @param toolbarHandler Given the buttons it wants, replacing any it asked for before; an empty
     ///                       list when it wants none.
-    public void setToolbarHandler(final Consumer<List<VisToolbarButton>> toolbarHandler) {
+    public void setToolbarHandler(final Consumer<List<VisButtonSpec>> toolbarHandler) {
         this.toolbarHandler = toolbarHandler;
     }
 
@@ -130,7 +130,7 @@ public class MessageSupport implements FrameListener {
         if ("link".equals(functionName)) {
             final String href = JSONUtil.getString(message.get("href"));
             final String target = JSONUtil.getString(message.get("target"));
-            final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
+            final LinkValue hyperlink = LinkValue.builder().href(href).type(target).build();
             if (onHyperlink != null) {
                 onHyperlink.accept(hyperlink);
             }
@@ -228,8 +228,8 @@ public class MessageSupport implements FrameListener {
     }
 
     // The buttons of a setToolbarButtons message, leaving out any without an id
-    private static List<VisToolbarButton> toolbarButtons(final JSONObject message) {
-        final List<VisToolbarButton> buttons = new ArrayList<>();
+    private static List<VisButtonSpec> toolbarButtons(final JSONObject message) {
+        final List<VisButtonSpec> buttons = new ArrayList<>();
         final JSONArray array = JSONUtil.getArray(message.get("buttons"));
         if (array != null) {
             for (int i = 0; i < array.size(); i++) {
@@ -240,7 +240,7 @@ public class MessageSupport implements FrameListener {
                 if (id != null) {
                     final JSONValue pressed = button.get("pressed");
                     final JSONValue enabled = button.get("enabled");
-                    buttons.add(new VisToolbarButton(
+                    buttons.add(new VisButtonSpec(
                             id,
                             JSONUtil.getString(button.get("title")),
                             JSONUtil.getString(button.get("icon")),

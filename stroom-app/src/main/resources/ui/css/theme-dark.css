@@ -168,10 +168,10 @@
     /*--code-editor__background-color--highlight: #d9d900;*/
 
 
-    --xsdbrowser-box__background-color: #16181b;
-    --xsdbrowser-box__border-color: #363a43;
-    --xsdbrowser-title__background-color: #555;
-    --xsdbrowser-title__background-color--selected: #1164a3;
+    --xsd-browser__box-background-color: #16181b;
+    --xsd-browser__box-border-color: #363a43;
+    --xsd-browser__title-background-color: #555;
+    --xsd-browser__title-background-color--selected: #1164a3;
 
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;

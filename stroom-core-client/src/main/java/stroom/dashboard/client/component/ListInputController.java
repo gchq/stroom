@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.HasParams;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /// A dashboard's List Input pane ([ListInput]): the value chosen, with the key from its settings,
 /// is a query parameter of the dashboard. Its values are typed in its settings or are a
 /// dictionary's words.
-public class ListInputController extends DashboardComponentController implements HasParams {
+public class ListInputController extends DashboardPaneController implements HasParams {
 
     /// The tab type of the pane.
     public static final String TAB_TYPE = "list-input-component";

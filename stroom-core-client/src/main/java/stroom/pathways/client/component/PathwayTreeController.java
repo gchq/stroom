@@ -24,7 +24,7 @@ import stroom.pathways.shared.pathway.Pathway;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -78,7 +78,7 @@ public class PathwayTreeController extends Controller {
     }
 
     /// @return The chosen node.
-    public MySingleSelectionModel<PathNode> getSelectionModel() {
+    public SingleItemSelectionModel<PathNode> getSelectionModel() {
         return view.getSelectionModel();
     }
 

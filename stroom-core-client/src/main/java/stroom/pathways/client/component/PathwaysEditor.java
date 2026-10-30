@@ -17,8 +17,8 @@
 package stroom.pathways.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -43,26 +43,26 @@ public class PathwaysEditor extends DocumentEditor<PathwaysDoc> {
     /// @param view                     Its component.
     /// @param pathwaysSettingsProvider Makes the pathways settings.
     /// @param pathwaysSplitProvider    Makes the pathways split.
-    /// @param markdownEditProvider     Makes the Documentation tab's editor.
+    /// @param documentationTabProvider     Makes the Documentation tab's editor.
     /// @param permissionsProvider      Makes the Permissions tab.
     @Inject
     public PathwaysEditor(final EventBus eventBus,
                           final LinkTabPanel view,
                           final Provider<PathwaysSettingsController> pathwaysSettingsProvider,
-                          final Provider<PathwaysSplitController> pathwaysSplitProvider,
-                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final Provider<PathwaysTabController> pathwaysSplitProvider,
+                          final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
         addTab(PATHWAYS,
                 pathwaysSplitProvider::get,
-                PathwaysSplitController::read);
+                PathwaysTabController::read);
         addTab(SETTINGS,
                 pathwaysSettingsProvider::get,
                 PathwaysSettingsController::read,
                 PathwaysSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 PathwaysDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

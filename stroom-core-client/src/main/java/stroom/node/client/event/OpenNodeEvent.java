@@ -17,7 +17,6 @@
 package stroom.node.client.event;
 
 import stroom.job.shared.JobNode;
-import stroom.node.client.event.OpenNodeEvent.OpenNodeHandler;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,9 +24,9 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.Objects;
 
-public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
+public class OpenNodeEvent extends GwtEvent<OpenNodeEvent.Handler> {
 
-    private static Type<OpenNodeHandler> TYPE;
+    private static Type<Handler> TYPE;
     private final String nodeName;
     private final JobNode jobNode;
 
@@ -44,7 +43,7 @@ public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
         handlers.fireEvent(new OpenNodeEvent(jobNode));
     }
 
-    public static Type<OpenNodeHandler> getType() {
+    public static Type<Handler> getType() {
         if (TYPE == null) {
             TYPE = new Type<>();
         }
@@ -52,12 +51,12 @@ public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
     }
 
     @Override
-    public Type<OpenNodeHandler> getAssociatedType() {
+    public Type<Handler> getAssociatedType() {
         return getType();
     }
 
     @Override
-    protected void dispatch(final OpenNodeHandler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onOpen(this);
     }
 
@@ -81,7 +80,7 @@ public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
     // --------------------------------------------------------------------------------
 
 
-    public interface OpenNodeHandler extends EventHandler {
+    public interface Handler extends EventHandler {
 
         void onOpen(OpenNodeEvent event);
     }

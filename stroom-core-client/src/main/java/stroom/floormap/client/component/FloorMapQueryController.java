@@ -25,7 +25,7 @@ import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.query.api.TableResult;
 import stroom.query.api.TimeRange;
-import stroom.query.client.component.QueryEditController;
+import stroom.query.client.component.QueryEditorController;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.client.Console;
@@ -41,7 +41,7 @@ import javax.inject.Inject;
 
 /// The Floor Map query tab ([FloorMapQuery]).
 ///
-/// Embeds a [QueryEditController] for authoring and executing StroomQL
+/// Embeds a [QueryEditorController] for authoring and executing StroomQL
 /// queries, parses the resulting [TableResult] rows into
 /// [FloorMapObject] lists, and gives them to its owner ([#setOnEventData]) so the
 /// canvas can display the matched entities.  Also provides column-mapping
@@ -55,7 +55,7 @@ public class FloorMapQueryController
         implements HasToolbar {
 
     private final FloorMapQuery view;
-    private final QueryEditController queryEditController;
+    private final QueryEditorController queryEditController;
     /// Which result column carries each event role. Never `null` once `read` has run.
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
     /// UUID of the document being queried.
@@ -71,7 +71,7 @@ public class FloorMapQueryController
     @Inject
     public FloorMapQueryController(final EventBus eventBus,
                                    final FloorMapQuery view,
-                                   final QueryEditController queryEditController) {
+                                   final QueryEditorController queryEditController) {
         super(eventBus);
         this.view = view;
         initWidget(view);
@@ -133,7 +133,7 @@ public class FloorMapQueryController
         }));
 
         // This tab does NOT follow the timeline. The playback events query is
-        // owned by FloorMapMapController, because this controller is created
+        // owned by FloorMapMapTabController, because this controller is created
         // lazily (only when its tab is first opened) and the Map tab's animated
         // entity overlay must not depend on that. Running it here as well would
         // fire a second, identical query per playback tick.

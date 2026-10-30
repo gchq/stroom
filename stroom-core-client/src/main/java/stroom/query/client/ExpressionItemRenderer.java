@@ -16,14 +16,14 @@
 
 package stroom.query.client;
 
-import stroom.widget.htree.client.CellRenderer2;
+import stroom.widget.htree.client.CellRenderer;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.CssProperties;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
@@ -31,7 +31,7 @@ import com.google.gwt.view.client.SelectionModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeExtentProvider<Item> {
+public final class ExpressionItemRenderer implements CellRenderer<Item>, NodeExtentProvider<Item> {
 
     private final FlowPanel panel;
     private final OperatorEditor operatorEditor;
@@ -55,8 +55,8 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     public void render(final TreeLayout<Item> treeLayout, final Bounds bounds, final Item item) {
         final boolean selected = selectionModel != null && selectionModel.isSelected(item);
         Item selectedItem = null;
-        if (selectionModel != null && selectionModel instanceof MySingleSelectionModel<?>) {
-            selectedItem = ((MySingleSelectionModel<Item>) selectionModel).getSelectedObject();
+        if (selectionModel != null && selectionModel instanceof SingleItemSelectionModel<?>) {
+            selectedItem = ((SingleItemSelectionModel<Item>) selectionModel).getSelectedObject();
         }
         final Item editing = selectedItem != null && selectedItem.equals(editingItem)
                 ? selectedItem

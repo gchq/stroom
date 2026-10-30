@@ -21,8 +21,8 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
@@ -46,7 +46,7 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final AnalyticQueryEditController analyticQueryEdit;
+    private final AnalyticQueryEditorController analyticQueryEdit;
     private final NotificationListController notificationList;
 
     /// Makes the editor, with its tabs.
@@ -59,18 +59,18 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
     /// @param analyticProcessingProvider  Makes the analytic processing.
     /// @param analyticDataShardsProvider  Makes the analytic data shards.
     /// @param duplicateManagementProvider Makes the duplicate management.
-    /// @param markdownEditProvider        Makes the Documentation tab's editor.
+    /// @param documentationTabProvider        Makes the Documentation tab's editor.
     /// @param permissionsProvider         Makes the Permissions tab.
     @Inject
     public AnalyticRuleEditor(final EventBus eventBus,
                               final LinkTabPanel view,
-                              final AnalyticQueryEditController analyticQueryEdit,
+                              final AnalyticQueryEditorController analyticQueryEdit,
                               final Provider<AnalyticSettingsController> settingsProvider,
                               final Provider<NotificationListController> notificationListProvider,
                               final Provider<AnalyticProcessingController> analyticProcessingProvider,
                               final Provider<AnalyticDataShardsController> analyticDataShardsProvider,
                               final Provider<DuplicateManagementController> duplicateManagementProvider,
-                              final Provider<MarkdownEditController> markdownEditProvider,
+                              final Provider<DocumentationTabController> documentationTabProvider,
                               final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.analyticQueryEdit = own(analyticQueryEdit);
@@ -87,8 +87,8 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
 
         addOwnedTab(QUERY,
                 analyticQueryEdit,
-                AnalyticQueryEditController::read,
-                AnalyticQueryEditController::write);
+                AnalyticQueryEditorController::read,
+                AnalyticQueryEditorController::write);
         addTab(SETTINGS,
                 settingsProvider::get,
                 AnalyticSettingsController::read,
@@ -118,7 +118,7 @@ public class AnalyticRuleEditor extends DocumentEditor<AnalyticRuleDoc> {
                 DuplicateManagementController::read,
                 DuplicateManagementController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 AnalyticRuleDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

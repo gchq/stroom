@@ -18,7 +18,7 @@ package stroom.security.client.component;
 
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.ColumnSizeConstants;
-import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.UserFields;
@@ -91,12 +91,12 @@ public class ApiKeysList extends Component {
         if (showOwner) {
             dataGrid.addColumn(
                     DataGridUtil.cellIconColumnBuilder(false, (HashedApiKey row) ->
-                                    UserAndGroupHelper.mapUserRefTypeToIcon(row.getOwner()))
+                                    UsersAndGroupsHelper.mapUserRefTypeToIcon(row.getOwner()))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .centerAligned()
                             .build(),
                     DataGridUtil.headingBuilder("")
-                            .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                            .headingText(UsersAndGroupsHelper.buildUserAndGroupIconHeader())
                             .centerAligned()
                             .withToolTip("Whether this key is for a single user or a named user group.")
                             .build(),
@@ -191,7 +191,7 @@ public class ApiKeysList extends Component {
                         () -> new ActionMenuCell<>(
                                 actionMenuItems,
                                 null,
-                                (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildActionsForMsg(
+                                (HashedApiKey hashedApiKey) -> UsersAndGroupsHelper.buildActionsForMsg(
                                         NullSafe.get(hashedApiKey, HashedApiKey::getOwner))))
                 .build();
 

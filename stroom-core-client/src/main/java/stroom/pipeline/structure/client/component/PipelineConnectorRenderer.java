@@ -37,7 +37,7 @@ import java.util.function.Predicate;
 /// theme's (`--pipeline-connector__*` in the theme's CSS), read when each connector is drawn, so
 /// that they follow a change of theme; in forced colours they are the user's text colour. A
 /// connector into a faded element is drawn on the faded context instead (one faded as a whole with
-/// the faded elements' boxes, see [PipelineTreePanel]).
+/// the faded elements' boxes, see [PipelineTreeDiagram]).
 public class PipelineConnectorRenderer implements ConnectorRenderer<PipelineElement> {
 
     private static final double LINE_WIDTH = 2;

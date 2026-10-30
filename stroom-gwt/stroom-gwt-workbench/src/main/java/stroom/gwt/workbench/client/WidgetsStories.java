@@ -16,15 +16,15 @@
 
 package stroom.gwt.workbench.client;
 
-import stroom.gwt.workbench.client.widgets.aceeditor.FormatStories;
+import stroom.gwt.workbench.client.widgets.aceeditor.AceEditorFormatStories;
 import stroom.gwt.workbench.client.widgets.actionmenucell.ActionMenuCellStories;
 import stroom.gwt.workbench.client.widgets.buttons.ButtonGroupStories;
 import stroom.gwt.workbench.client.widgets.buttons.ButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.FabButtonStories;
-import stroom.gwt.workbench.client.widgets.buttons.IconButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.RefreshButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.StepControlsStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStateStories;
+import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.ToolbarStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocumentTypeCellStories;
@@ -48,8 +48,8 @@ import stroom.gwt.workbench.client.widgets.dateandtime.TimePickerStories;
 import stroom.gwt.workbench.client.widgets.dialogs.AlertDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.DialogTitleStories;
+import stroom.gwt.workbench.client.widgets.dialogs.DocumentChooserStories;
 import stroom.gwt.workbench.client.widgets.dialogs.EscapeStories;
-import stroom.gwt.workbench.client.widgets.dialogs.ExplorerDropdownPopupStories;
 import stroom.gwt.workbench.client.widgets.dialogs.ModalStories;
 import stroom.gwt.workbench.client.widgets.dialogs.NameDialogStories;
 import stroom.gwt.workbench.client.widgets.dialogs.StaticDialogStories;
@@ -68,9 +68,9 @@ import stroom.gwt.workbench.client.widgets.editorsandviewers.MarkdownEditorStori
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.SourceViewerStories;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.XsdBrowserStories;
-import stroom.gwt.workbench.client.widgets.entitychecktree.EntityCheckTreeStories;
+import stroom.gwt.workbench.client.widgets.entitychecktree.DocumentTickTreeStories;
+import stroom.gwt.workbench.client.widgets.feedback.BusySpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.SourceProgressBarStories;
-import stroom.gwt.workbench.client.widgets.feedback.SpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.TaskCounterStories;
 import stroom.gwt.workbench.client.widgets.formatdatetime.FormatDateTimeStories;
 import stroom.gwt.workbench.client.widgets.inputs.DynamicSettingsPaneStories;
@@ -92,20 +92,20 @@ import stroom.gwt.workbench.client.widgets.layout.SplitPaneContentStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneResizingStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStateStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStories;
-import stroom.gwt.workbench.client.widgets.menu.MenuItemWidgetStories;
+import stroom.gwt.workbench.client.widgets.menu.MenuItemCellStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuPanelStories;
 import stroom.gwt.workbench.client.widgets.menu.TextContextMenuStories;
+import stroom.gwt.workbench.client.widgets.overlays.InfoTooltipStories;
 import stroom.gwt.workbench.client.widgets.overlays.TooltipStories;
-import stroom.gwt.workbench.client.widgets.overlays.TooltipWidgetStories;
-import stroom.gwt.workbench.client.widgets.popover.InfoPopoverCellStories;
+import stroom.gwt.workbench.client.widgets.popover.InfoColumnStories;
 import stroom.gwt.workbench.client.widgets.popover.PopoverStories;
 import stroom.gwt.workbench.client.widgets.popuppositioner.PopupContractStories;
-import stroom.gwt.workbench.client.widgets.query.ExpressionBuilderStories;
-import stroom.gwt.workbench.client.widgets.selectors.DocSelectionBoxStories;
-import stroom.gwt.workbench.client.widgets.selectors.DropDownSelectorStories;
+import stroom.gwt.workbench.client.widgets.query.ExpressionEditorStories;
+import stroom.gwt.workbench.client.widgets.selectors.DocSelectionStories;
+import stroom.gwt.workbench.client.widgets.selectors.DropDownBoxStories;
 import stroom.gwt.workbench.client.widgets.selectors.SelectionBoxStories;
 import stroom.gwt.workbench.client.widgets.selectors.SelectionListStateStories;
-import stroom.gwt.workbench.client.widgets.selectors.UserRefSelectionBoxStories;
+import stroom.gwt.workbench.client.widgets.selectors.UserRefSelectionStories;
 import stroom.gwt.workbench.client.widgets.tabs.CurveTabBarStories;
 import stroom.gwt.workbench.client.widgets.tabs.LinkTabPanelStories;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerTreeStories;
@@ -152,12 +152,12 @@ public final class WidgetsStories {
         SourceStories.addTo(registry);
         // Widgets/Editors & Viewers/SourceViewer
         SourceViewerStories.addTo(registry);
-        // Widgets/Editors & Viewers/TextPresenter
+        // Widgets/Editors & Viewers/DataTextPane
         DataTextPaneStories.addTo(registry);
         // Widgets/Editors & Viewers/XsdBrowser
         XsdBrowserStories.addTo(registry);
         // Widgets/AceEditor/format
-        FormatStories.addTo(registry);
+        AceEditorFormatStories.addTo(registry);
         // Widgets/ActionMenuCell
         ActionMenuCellStories.addTo(registry);
         // Widgets/Dialogs/AlertDialog
@@ -171,7 +171,7 @@ public final class WidgetsStories {
         // Widgets/Dialogs/Escape
         EscapeStories.addTo(registry);
         // Widgets/Dialogs/ExplorerDropdownPopup
-        ExplorerDropdownPopupStories.addTo(registry);
+        DocumentChooserStories.addTo(registry);
         // Widgets/Dialogs/StaticDialog
         StaticDialogStories.addTo(registry);
         // Widgets/Dialogs/NameDialog
@@ -183,7 +183,7 @@ public final class WidgetsStories {
         // Widgets/Buttons/FabButton
         FabButtonStories.addTo(registry);
         // Widgets/Buttons/IconButton
-        IconButtonStories.addTo(registry);
+        ToolbarButtonStories.addTo(registry);
         // Widgets/Buttons/RefreshButton
         RefreshButtonStories.addTo(registry);
         // Widgets/Buttons/StepControls
@@ -248,23 +248,23 @@ public final class WidgetsStories {
         // Widgets/Cell Renderers/ValueSpinnerCell
         ValueSpinnerCellStories.addTo(registry);
         // Widgets/Selectors/DocSelectionBox
-        DocSelectionBoxStories.addTo(registry);
+        DocSelectionStories.addTo(registry);
         // Widgets/Selectors/DropDownSelector
-        DropDownSelectorStories.addTo(registry);
+        DropDownBoxStories.addTo(registry);
         // Widgets/Selectors/SelectionBox
         SelectionBoxStories.addTo(registry);
         SelectionListStateStories.addTo(registry);
         // Widgets/Selectors/UserRefSelectionBox
-        UserRefSelectionBoxStories.addTo(registry);
+        UserRefSelectionStories.addTo(registry);
         // Widgets/Tree/EntityCheckList
         // Widgets/Tree/ExplorerTree
         ExplorerTreeStories.addTo(registry);
         // Widgets/Tree/TypeFilter
         TypeFilterStories.addTo(registry);
         // Widgets/EntityCheckTree
-        EntityCheckTreeStories.addTo(registry);
+        DocumentTickTreeStories.addTo(registry);
         // Widgets/Query/ExpressionBuilder
-        ExpressionBuilderStories.addTo(registry);
+        ExpressionEditorStories.addTo(registry);
         // Widgets/Inputs/DynamicSettingsPane
         DynamicSettingsPaneStories.addTo(registry);
         // Widgets/Inputs/FieldEnds
@@ -294,15 +294,15 @@ public final class WidgetsStories {
         // Widgets/Overlays/Tooltip
         TooltipStories.addTo(registry);
         // Widgets/Overlays/TooltipWidget
-        TooltipWidgetStories.addTo(registry);
+        InfoTooltipStories.addTo(registry);
         // Widgets/Menu/MenuPanel
         MenuPanelStories.addTo(registry);
         // Widgets/Menu/MenuItemWidget
-        MenuItemWidgetStories.addTo(registry);
+        MenuItemCellStories.addTo(registry);
         // Widgets/Menu/TextContextMenu
         TextContextMenuStories.addTo(registry);
         // Widgets/Popover/InfoPopoverCell
-        InfoPopoverCellStories.addTo(registry);
+        InfoColumnStories.addTo(registry);
         // Widgets/Popover/Popover
         PopoverStories.addTo(registry);
         // Widgets/PopupPositioner/Popup contract
@@ -310,7 +310,7 @@ public final class WidgetsStories {
         // Widgets/Feedback/SourceProgressBar
         SourceProgressBarStories.addTo(registry);
         // Widgets/Feedback/Spinner
-        SpinnerStories.addTo(registry);
+        BusySpinnerStories.addTo(registry);
         // Widgets/Feedback/TaskCounter
         TaskCounterStories.addTo(registry);
         // Widgets/Layout/RoundedPanel

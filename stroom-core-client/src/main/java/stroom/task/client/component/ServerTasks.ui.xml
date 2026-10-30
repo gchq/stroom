@@ -7,7 +7,7 @@
             <v:QuickFilter accessibleName="Filter server tasks" ui:field="nameFilter"/>
         </g:SimplePanel>
         <g:SimplePanel styleName="dock-max">
-            <t:TaskManagerList ui:field="list"/>
+            <t:ServerTaskList ui:field="list"/>
         </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder> 

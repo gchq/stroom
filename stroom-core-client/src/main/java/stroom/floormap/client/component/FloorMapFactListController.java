@@ -62,7 +62,7 @@ public class FloorMapFactListController extends Controller {
     /// Shows the facts in place of those shown; the selection is left as it is.
     ///
     /// @param facts The facts.
-    public void setFacts(final List<FactObject> facts) {
+    public void setFacts(final List<FactListRow> facts) {
         view.setFacts(facts);
     }
 
@@ -83,12 +83,12 @@ public class FloorMapFactListController extends Controller {
     }
 
     /// @return The first fact selected, or null if none is.
-    public FactObject getSelectedFact() {
+    public FactListRow getSelectedFact() {
         return view.getSelectedFact();
     }
 
     /// @param onSelectionChange Given every fact selected, each time the user changes the selection.
-    public void setOnSelectionChange(final Consumer<List<FactObject>> onSelectionChange) {
+    public void setOnSelectionChange(final Consumer<List<FactListRow>> onSelectionChange) {
         view.setOnSelectionChange(onSelectionChange);
     }
 

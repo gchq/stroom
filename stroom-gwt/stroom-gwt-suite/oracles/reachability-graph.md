@@ -39,7 +39,7 @@ then each child is one affordance away. Depth beyond 1 is where the long tail li
 * **ExecutionScheduleManager** → ExpressionPresenter
 * **FeedDependencyListPresenter** → EditFeedDependencyPresenter
 * **GitRepoSettingsPresenter** → GitRepoCommitDialogPresenter
-* **HyperlinkEventHandlerImpl** → IFrameContentPresenter
+* **HyperlinkOpener** → IFrameContentPresenter
 * **JobNodeListHelper** → MenuPresenter
 * **Menu** → MenuPresenter
 * **MenuPresenter** → MenuPresenter
@@ -117,7 +117,7 @@ An entry with no opener is genuinely unreached and needs manual research.
 * **FieldEditPresenter** ← opened by FieldListPresenter
 * **FindAnnotationPresenter** ← opened by AnnotationLinkPresenter, AnnotationManager
 * **FindInContentPresenter** ← opened by AppGinjectorUser
-* **FindPresenter** ← opened by DocumentPluginEventManager, NavigationPlugin
+* **FindPresenter** ← opened by DocumentPluginEventManager, ExplorerPlugin
 * **FormatPresenter** ← opened by ColumnsManager, QueryResultTablePresenter, QueryTableColumnsManager, TablePresenter
 * **FsVolumeEditPresenter** ← opened by FsVolumeGinjector, FsVolumeGroupEditPresenter
 * **FsVolumeGroupEditPresenter** ← opened by FsVolumeGroupPresenter
@@ -150,7 +150,7 @@ An entry with no opener is genuinely unreached and needs manual research.
 * **QueryFavouritesPresenter** ← opened by QueryPresenter
 * **QueryHistoryPresenter** ← opened by QueryPresenter
 * **QueryInfoPresenter** ← opened by QueryInfo
-* **RecentItemsPresenter** ← opened by DocumentPluginEventManager, NavigationPlugin
+* **RecentItemsPresenter** ← opened by DocumentPluginEventManager, ExplorerPlugin
 * **RenameColumnPresenter** ← opened by ColumnsManager, TablePresenter
 * **RenameTabPresenter** ← opened by DashboardPresenter, TabManager
 * **ResultStorePresenter** ← opened by ResultStorePlugin

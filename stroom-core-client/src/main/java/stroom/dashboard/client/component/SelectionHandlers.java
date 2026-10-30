@@ -17,7 +17,7 @@
 package stroom.dashboard.client.component;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 
@@ -39,7 +39,7 @@ public class SelectionHandlers extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final Map<SelectionHandlersAction, ButtonView> buttons = new EnumMap<>(SelectionHandlersAction.class);
+    private final Map<SelectionHandlersAction, IsButton> buttons = new EnumMap<>(SelectionHandlersAction.class);
     private Consumer<SelectionHandlersAction> onAction = action -> {
     };
 
@@ -96,7 +96,7 @@ public class SelectionHandlers extends Component {
                            final SelectionHandlersAction action,
                            final SvgImage icon,
                            final String title) {
-        final ButtonView button = toolbar.button(icon, title, () -> onAction.accept(action));
+        final IsButton button = toolbar.button(icon, title, () -> onAction.accept(action));
         buttons.put(action, button);
     }
 

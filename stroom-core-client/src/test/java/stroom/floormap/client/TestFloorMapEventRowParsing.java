@@ -19,7 +19,7 @@ package stroom.floormap.client;
 import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.model.FloorMapLocationResolver;
 import stroom.floormap.client.model.FloorMapObject;
-import stroom.floormap.client.playback.FloorMapEventsQuery;
+import stroom.floormap.client.playback.FloorMapDefaultEventsQuery;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
@@ -41,10 +41,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// the outside: the entities just stop appearing.
 class TestFloorMapEventRowParsing {
 
-    private static final String ENTITY_COLUMN = FloorMapEventsQuery.ENTITY_ID_COLUMN;
-    private static final String LOCATION_COLUMN = FloorMapEventsQuery.LOCATION_COLUMN;
-    private static final String REF_COLUMN = FloorMapEventsQuery.LOCATION_REF_COLUMN;
-    private static final String TIME_COLUMN = FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN;
+    private static final String ENTITY_COLUMN = FloorMapDefaultEventsQuery.ENTITY_ID_COLUMN;
+    private static final String LOCATION_COLUMN = FloorMapDefaultEventsQuery.LOCATION_COLUMN;
+    private static final String REF_COLUMN = FloorMapDefaultEventsQuery.LOCATION_REF_COLUMN;
+    private static final String TIME_COLUMN = FloorMapDefaultEventsQuery.EFFECTIVE_TIME_COLUMN;
 
     /// The mapping a new document gets, which is what the default query aliases.
     private static final FloorMapEventColumns DEFAULTS = FloorMapEventColumns.defaults();
@@ -58,7 +58,7 @@ class TestFloorMapEventRowParsing {
     /// exactly this pairing coming apart.
     @Test
     void testDefaultQueryAliasesEveryRolesDefaultColumn() {
-        final String query = FloorMapEventsQuery.defaultQuery();
+        final String query = FloorMapDefaultEventsQuery.defaultQuery();
 
         for (final FloorMapEventRole role : FloorMapEventRole.values()) {
             assertThat(query)
@@ -218,7 +218,7 @@ class TestFloorMapEventRowParsing {
 
     /// Both location roles pointing at columns the query does not select yields nothing at all —
     /// the silent failure that looks like animation being switched off, and the reason
-    /// `FloorMapMapController` logs this case.
+    /// `FloorMapMapTabController` logs this case.
     @Test
     void testBothLocationRolesUnmappedYieldsNoEntities() {
         final FloorMapEventColumns mapping = DEFAULTS

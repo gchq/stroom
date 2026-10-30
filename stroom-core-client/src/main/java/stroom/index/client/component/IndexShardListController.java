@@ -41,7 +41,7 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.HtmlTableBuilder;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
@@ -139,7 +139,7 @@ public class IndexShardListController extends Controller {
     private void showInfo(final IndexShard indexShard,
                           final PopupPosition popupPosition,
                           final Element anchor) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
 
         if (index != null) {
             tb.row("Index UUID", String.valueOf(index.getUuid()));

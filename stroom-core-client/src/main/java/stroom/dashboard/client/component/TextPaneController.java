@@ -17,9 +17,9 @@
 package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
@@ -31,8 +31,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.editor.client.component.HtmlPane;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -66,7 +66,7 @@ import java.util.Set;
 
 /// A dashboard's Text pane ([TextPane]): fetches and shows the source of the row selected in a table
 /// (or in any table), as text with its matches highlighted or as HTML, and steps it.
-public class TextPaneController extends DashboardComponentController {
+public class TextPaneController extends DashboardPaneController {
 
     /// The tab type of the pane.
     public static final String TAB_TYPE = "text-component";
@@ -223,7 +223,7 @@ public class TextPaneController extends DashboardComponentController {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");
                 if (link != null) {
-                    final Hyperlink hyperlink = Hyperlink.create(link);
+                    final LinkValue hyperlink = LinkValue.create(link);
                     if (hyperlink != null) {
                         HyperlinkEvent.fire(TextPaneController.this, hyperlink, view.getTaskMonitor());
                     }

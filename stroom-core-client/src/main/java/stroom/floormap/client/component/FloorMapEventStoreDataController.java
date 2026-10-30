@@ -23,7 +23,7 @@ import stroom.query.api.Column;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.AbstractQueryDataController;
-import stroom.query.client.component.QueryDataPane;
+import stroom.query.client.component.QueryDataTab;
 import stroom.query.client.component.QueryResultTableController;
 
 import com.google.inject.Inject;
@@ -58,7 +58,7 @@ public class FloorMapEventStoreDataController
     /// @param resultStoreModel        The result stores.
     @Inject
     public FloorMapEventStoreDataController(final EventBus eventBus,
-                                            final QueryDataPane view,
+                                            final QueryDataTab view,
                                             final QueryResultTableController tableController,
                                             final RestFactory restFactory,
                                             final DateTimeSettingsFactory dateTimeSettingsFactory,

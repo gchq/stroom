@@ -5,18 +5,18 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form-padding form http-tls-config-editor">
         <form:FormGroup identity="httpTlsConfigProtocol"
                         label="Protocol"
                         helpText="The TLS protocol used to create the secure connection, e.g. TLSv1.2. Default is TLSv1.3."
                         screenReaderText="TLS protocol name. Default is TLSv1.3.">
-            <form:TextBox ui:field="protocol" addStyleNames="http-config__text"/>
+            <form:TextBox ui:field="protocol" addStyleNames="http-tls-config-editor__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigProvider"
                         label="Provider"
                         helpText="The name of the Java security provider to use for TLS, e.g. SunJSSE. Leave blank to use the Java default."
                         screenReaderText="Leave blank for the Java default.">
-            <form:TextBox ui:field="provider" addStyleNames="http-config__text"/>
+            <form:TextBox ui:field="provider" addStyleNames="http-tls-config-editor__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigKeyStore"
                         label="Key Store"
@@ -44,19 +44,19 @@
                         label="Supported Protocols"
                         helpText="The TLS protocol versions that may be used, one per line, e.g. TLSv1.2. Leave blank to allow the Java defaults."
                         screenReaderText="One per line, e.g. TLSv1.2. Blank allows Java defaults.">
-            <form:TextArea ui:field="supportedProtocols" addStyleNames="http-config__text"/>
+            <form:TextArea ui:field="supportedProtocols" addStyleNames="http-tls-config-editor__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigSupportedCiphers"
                         label="Supported Ciphers"
                         helpText="The cipher suites that may be used, one per line, e.g. TLS_AES_256_GCM_SHA384. Leave blank to allow the Java defaults."
                         screenReaderText="One per line. Blank allows Java defaults.">
-            <form:TextArea ui:field="supportedCiphers" addStyleNames="http-config__text"/>
+            <form:TextArea ui:field="supportedCiphers" addStyleNames="http-tls-config-editor__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigCertAlias"
                         label="Certificate Alias"
                         helpText="The alias of the client certificate to use when the key store holds more than one. Leave blank to choose automatically."
                         screenReaderText="Needed only if the key store has several certificates.">
-            <form:TextBox ui:field="certAlias" addStyleNames="http-config__text"/>
+            <form:TextBox ui:field="certAlias" addStyleNames="http-tls-config-editor__text"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

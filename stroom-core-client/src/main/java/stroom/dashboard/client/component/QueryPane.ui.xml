@@ -27,7 +27,7 @@
                 <b:ToolbarButton ui:field="messages" svg="ERROR" title="Show Errors"
                                  addStyleNames="toolbar-button--invisible"/>
             </b:Toolbar>
-            <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
+            <q:RunQueryButton ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-max query-pane__expression-tree">
             <q:ExpressionTree ui:field="expressionTree"/>

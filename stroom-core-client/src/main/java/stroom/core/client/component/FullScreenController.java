@@ -52,7 +52,7 @@ public class FullScreenController extends Controller
     @Override
     public void onShowFullScreen(final ShowFullScreenEvent e) {
         final Controller content = e.getController();
-        view.setContentView(content);
+        view.setContent(content);
 
         final String title = urlParameters.getTitle();
         if (title != null && title.trim().length() > 0) {

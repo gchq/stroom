@@ -33,7 +33,7 @@ public class AppPermissionsController extends ContentTabController {
     public static final String TAB_TYPE = "ApplicationPermissions";
 
     private final AppUserPermissionsListController appUserPermissionsList;
-    private final AppPermissionsEditController appPermissionsEdit;
+    private final AppPermissionsEditorController appPermissionsEdit;
 
     /// Made by GIN, with its screen and its parts.
     ///
@@ -46,7 +46,7 @@ public class AppPermissionsController extends ContentTabController {
             final EventBus eventBus,
             final AppPermissions view,
             final AppUserPermissionsListController appUserPermissionsList,
-            final AppPermissionsEditController appPermissionsEdit) {
+            final AppPermissionsEditorController appPermissionsEdit) {
 
         super(eventBus);
 

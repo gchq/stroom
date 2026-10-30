@@ -21,8 +21,8 @@ import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.Panes;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.svg.client.IconColour;
@@ -53,7 +53,7 @@ import java.util.function.Consumer;
 public class TabMenuController extends Controller {
 
     private final Provider<RenameTabController> renameTabControllerProvider;
-    private Components components;
+    private Panes components;
     private TabActions dashboard;
 
     private FlexLayout flexLayout;
@@ -73,7 +73,7 @@ public class TabMenuController extends Controller {
 
     /// @param components The dashboard's panes, one per tab.
     /// @param dashboard  What the menu's actions do to the dashboard.
-    public void setDashboard(final Components components, final TabActions dashboard) {
+    public void setDashboard(final Panes components, final TabActions dashboard) {
         this.components = components;
         this.dashboard = dashboard;
     }

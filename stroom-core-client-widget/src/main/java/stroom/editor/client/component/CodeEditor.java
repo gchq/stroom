@@ -16,11 +16,11 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.ace.Editor;
+import stroom.editor.client.ace.AceEditorPane;
 import stroom.editor.client.ace.IndicatorLines;
-import stroom.editor.client.ace.IndicatorPopup;
 import stroom.editor.client.ace.Marker;
-import stroom.editor.client.ace.RightBar;
+import stroom.editor.client.ace.OverviewBar;
+import stroom.editor.client.ace.OverviewTooltip;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
@@ -51,9 +51,9 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-/// A code editor (BEM block `code-editor`, `code-editor.css`): text in Ace ([Editor]), e.g. XSLT or a
-/// query, with an overview bar ([RightBar]) of its errors and warnings beside it, which shows them
-/// in a popup ([IndicatorPopup]) as the mouse moves over it. An error loading the text is shown in
+/// A code editor (BEM block `code-editor`, `code-editor.css`): text in Ace ([AceEditorPane]), e.g. XSLT or a
+/// query, with an overview bar ([OverviewBar]) of its errors and warnings beside it, which shows them
+/// in a popup ([OverviewTooltip]) as the mouse moves over it. An error loading the text is shown in
 /// its place ([#setErrorText]).
 ///
 /// It is dumb: its [CodeEditorController] sets its text and options, and shows its menu, which it
@@ -66,13 +66,13 @@ public class CodeEditor extends Component {
     @UiField
     FlowPanel content;
     @UiField
-    Editor editor;
+    AceEditorPane editor;
     @UiField
     ScrollPanel errorPanel;
     @UiField
     Html errorText;
     @UiField
-    RightBar rightBar;
+    OverviewBar rightBar;
 
     private IndicatorLines indicators;
     private boolean showIndicators;
@@ -97,7 +97,7 @@ public class CodeEditor extends Component {
     }
 
     /// @return The Ace editor the text is in, for the controller to set it up and act on it.
-    public Editor getEditor() {
+    public AceEditorPane getEditor() {
         return editor;
     }
 

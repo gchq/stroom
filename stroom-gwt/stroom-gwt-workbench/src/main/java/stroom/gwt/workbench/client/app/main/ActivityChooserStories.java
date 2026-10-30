@@ -42,11 +42,11 @@ import com.google.gwt.user.client.ui.Widget;
 /// activity chooser (`ManageActivityController`, opened by [CurrentActivity]) with fake REST
 /// replies.
 ///
-/// Stroom has no separate badge widget: the summary button is built by `NavigationController`
-/// (`activityButton`, `updateActivitySummary`), whose code the story copies; clicking it opens the
-/// chooser (`CurrentActivity.showActivityChooser`), and choosing an activity fires
-/// `ActivityChangedEvent`, which updates the summary. The activities are the `GET /activity/v1`
-/// reply (see [ActivityFixtures]). The plays check what each story renders.
+/// Stroom has no separate badge widget: the summary button is declared in `Explorer.ui.xml`
+/// (`activityButton`) and filled by `ExplorerController.updateActivitySummary`, which the story
+/// copies; clicking it opens the chooser (`CurrentActivity.showActivityChooser`), and choosing an
+/// activity fires `ActivityChangedEvent`, which updates the summary. The activities are the
+/// `GET /activity/v1` reply (see [ActivityFixtures]). The plays check what each story renders.
 public final class ActivityChooserStories {
 
     private static final String[] ACTIVITIES = {
@@ -109,13 +109,13 @@ public final class ActivityChooserStories {
                 .uiConfig(ActivityFixtures.uiConfig(title))
                 .build();
 
-        // As NavigationController builds its activity button
+        // As ExplorerController builds its activity button
         final CurrentActivity currentActivity = injector.getCurrentActivity();
         final Button activityButton = new Button();
         activityButton.setContent(SafeHtmlUtils.EMPTY_SAFE_HTML);
-        activityButton.setStyleName("navigation__activity-button");
+        activityButton.setStyleName("explorer__activity-button");
         final SimplePanel activityOuter = new SimplePanel(activityButton);
-        activityOuter.setStyleName("navigation__activity");
+        activityOuter.setStyleName("explorer__activity");
         activityButton.setOnClick(currentActivity::showActivityChooser);
         harness.addRegistration(harness.getEventBus().addHandler(ActivityChangedEvent.getType(), event ->
                 activityButton.setContent(ActivitySummary.toHtml(event.getActivity()))));

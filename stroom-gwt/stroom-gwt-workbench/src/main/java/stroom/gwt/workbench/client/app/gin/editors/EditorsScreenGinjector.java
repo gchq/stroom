@@ -23,11 +23,11 @@ import stroom.document.asset.client.component.DocumentAssetSelectionController;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.documentation.client.component.DocumentationEditor;
 import stroom.feed.client.component.FeedEditor;
-import stroom.floormap.client.component.FloorMapEditorController;
+import stroom.floormap.client.component.FloorMapEditorTabController;
 import stroom.floormap.client.component.FloorMapEventStoreEditor;
-import stroom.floormap.client.component.FloorMapInitController;
-import stroom.floormap.client.component.FloorMapMapController;
+import stroom.floormap.client.component.FloorMapMapTabController;
 import stroom.floormap.client.component.FloorMapSettingsController;
+import stroom.floormap.client.component.NewFloorMapStoresController;
 import stroom.folder.client.FolderTabs;
 import stroom.gitrepo.client.component.GitRepoEditor;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
@@ -75,18 +75,18 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
     ElasticClusterEditor getElasticClusterEditor();
 
     /// @return A Floor Map's 'Editor' tab (the map canvas, its timeline and its Layers panel), as
-    /// `FloorMapDocEditor` creates it.
-    FloorMapEditorController getFloorMapEditor();
+    /// `FloorMapEditor` creates it.
+    FloorMapEditorTabController getFloorMapEditorTab();
 
     /// @return The dialog that asks for a new Floor Map's facts and events stores, made for one use
     /// as `FloorMapPlugin`'s `DocInitialisationHandler` makes it.
-    FloorMapInitController getFloorMapInitController();
+    NewFloorMapStoresController getNewFloorMapStoresController();
 
     /// @return A Floor Map's 'Map' tab (the read-only map canvas, its timeline and its Tracking,
-    /// Layers and Groups panels), as `FloorMapDocEditor` creates it.
-    FloorMapMapController getFloorMapMap();
+    /// Layers and Groups panels), as `FloorMapEditor` creates it.
+    FloorMapMapTabController getFloorMapMapTab();
 
-    /// @return A Floor Map's 'Settings' tab, as `FloorMapDocEditor` creates it.
+    /// @return A Floor Map's 'Settings' tab, as `FloorMapEditor` creates it.
     FloorMapSettingsController getFloorMapSettingsController();
 
     /// @return A Git Repository's editor, as `GitRepoPlugin` opens it.

@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/DataScreen`, showing Stroom's real data tabs for a query result's data link
-/// (`HyperlinkEventHandlerImpl.openData` with display type `STROOM_TAB`): [DataPreviewTabController]
+/// (`HyperlinkOpener.openData` with display type `STROOM_TAB`): [DataPreviewTabController]
 /// for a `PREVIEW` link and [SourceTabController] for a `SOURCE` link, as `DataDisplaySupport` opens
 /// them.
 ///
@@ -139,7 +139,7 @@ public final class DataScreenStories {
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
-    // The source location HyperlinkEventHandlerImpl.openData builds for the story's link
+    // The source location HyperlinkOpener.openData builds for the story's link
     // (id 1001, part 0, record 4, lines 2:1 to 3:9)
     private static SourceLocation sourceLocation(final DataViewType dataViewType) {
         final SourceLocation.Builder builder = SourceLocation.builder(1001)

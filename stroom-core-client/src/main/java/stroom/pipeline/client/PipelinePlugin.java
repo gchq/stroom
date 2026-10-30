@@ -25,7 +25,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.meta.shared.FindMetaCriteria;
@@ -33,8 +33,8 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
-import stroom.pipeline.client.component.DocRefSelectionController;
 import stroom.pipeline.client.component.PipelineEditor;
+import stroom.pipeline.client.component.SaveChangedDocumentsController;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
@@ -70,12 +70,12 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private final Provider<ExplorerPopupController> pipelineSelection;
+    private final Provider<DocumentChooserController> pipelineSelection;
     private final AppRoot appRoot;
     private final EventBus eventBus;
     private final Provider<PipelineEditor> editorProvider;
     private final RestFactory restFactory;
-    private final Provider<DocRefSelectionController> docRefSelectionProvider;
+    private final Provider<SaveChangedDocumentsController> saveChangedDocumentsProvider;
 
     @Inject
     public PipelinePlugin(final EventBus eventBus,
@@ -84,15 +84,15 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager,
                           final ClientSecurityContext securityContext,
-                          final Provider<ExplorerPopupController> pipelineSelection,
-                          final Provider<DocRefSelectionController> docRefSelectionProvider,
+                          final Provider<DocumentChooserController> pipelineSelection,
+                          final Provider<SaveChangedDocumentsController> saveChangedDocumentsProvider,
                           final AppRoot appRoot) {
         super(eventBus, contentManager, entityPluginEventManager, securityContext);
         this.eventBus = eventBus;
         this.editorProvider = editorProvider;
         this.restFactory = restFactory;
         this.pipelineSelection = pipelineSelection;
-        this.docRefSelectionProvider = docRefSelectionProvider;
+        this.saveChangedDocumentsProvider = saveChangedDocumentsProvider;
         this.appRoot = appRoot;
 
         getEventBus().addHandler(CreateProcessorEvent.getType(), event -> {
@@ -122,7 +122,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final DocRef pipeline = pipelineEditor.getDocRef();
 
             if (!(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
-                docRefSelectionProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
+                saveChangedDocumentsProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
                         selectedDocRefs -> {
                             final AtomicInteger completedSaves = new AtomicInteger(0);
                             final Runnable onSaved = () -> {
@@ -226,7 +226,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     private void choosePipeline(final BeginPipelineSteppingEvent event, final ExplorerNode pipelineNode) {
-        final ExplorerPopupController chooser = pipelineSelection.get();
+        final DocumentChooserController chooser = pipelineSelection.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);

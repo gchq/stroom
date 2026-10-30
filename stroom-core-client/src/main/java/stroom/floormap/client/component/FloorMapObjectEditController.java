@@ -47,7 +47,7 @@ import java.util.function.Function;
 /// The properties form ([FloorMapObjectEdit]) used to edit individual floor-map object
 /// entries (temporal versions of a fact), in a dialog its owner keeps and shows again.
 ///
-/// Used by the **Editor tab** ([FloorMapEditorController]) only, always as a
+/// Used by the **Editor tab** ([FloorMapEditorTabController]) only, always as a
 /// modal OK/Cancel dialog via [#show(String, TemporalEntry, Consumer)]. The Map tab held an
 /// inline copy of this form once; it no longer does.
 ///
@@ -402,7 +402,7 @@ public class FloorMapObjectEditController extends Controller {
     /// Loads a temporal entry into the form.
     ///
     /// Called internally when the dialog opens, and by
-    /// [stroom.floormap.client.component.FloorMapEditorController] with `null` to clear
+    /// [stroom.floormap.client.component.FloorMapEditorTabController] with `null` to clear
     /// the form after a delete. It is not driven by the Time List selection. Populates all form
     /// fields and enables or disables the form based on whether `entry` is non-null.
     ///

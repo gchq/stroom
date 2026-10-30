@@ -19,7 +19,7 @@ package stroom.security.client.component;
 import stroom.cell.info.client.ActionMenuCell;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.UserFields;
@@ -91,13 +91,13 @@ public class AppUserPermissionsList extends Component {
         // Icon
         dataGrid.addColumn(
                 DataGridUtil.cellIconColumnBuilder(false, (AppUserPermissions row) ->
-                                UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
+                                UsersAndGroupsHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
                         .enabledWhen(this::isUserEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("")
-                        .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                        .headingText(UsersAndGroupsHelper.buildUserAndGroupIconHeader())
                         .centerAligned()
                         .withToolTip("Whether this row is a single user or a named user group.")
                         .build(),
@@ -117,7 +117,7 @@ public class AppUserPermissionsList extends Component {
 
         dataGrid.addResizableColumn(
                 displayNameCol,
-                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
@@ -144,7 +144,7 @@ public class AppUserPermissionsList extends Component {
                                 actionMenuItems,
                                 null,
                                 (AppUserPermissions appUsrPerms) ->
-                                        UserAndGroupHelper.buildActionsForMsg(appUsrPerms.getUserRef())))
+                                        UsersAndGroupsHelper.buildActionsForMsg(appUsrPerms.getUserRef())))
                 .build();
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar
         dataGrid.addColumn(

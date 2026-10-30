@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Stories of `App/Main/NodeGroupMembersDialog`, showing Stroom's real [NodeGroupEditController]
+/// Stories of `App/Main/NodeGroupMembersDialog`, showing Stroom's real [NodeGroupEditorController]
 /// (the 'Edit Node Group - name' dialog, as `NodeGroupsController` opens it) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -162,7 +162,7 @@ public final class NodeGroupMembersDialogStories {
                 .build();
         final NodeGroup group = NodeGroup.builder().id(7).version(1).name("Indexers").enabled(true).build();
         // As NodeGroupsController.edit(nodeGroup) shows it
-        harness.afterStartUp(() -> injector.getNodeGroupEditController().show(harness.getAppRoot(),
+        harness.afterStartUp(() -> injector.getNodeGroupEditorController().show(harness.getAppRoot(),
                 group,
                 "Edit Node Group - " + group.getName(),
                 result -> {

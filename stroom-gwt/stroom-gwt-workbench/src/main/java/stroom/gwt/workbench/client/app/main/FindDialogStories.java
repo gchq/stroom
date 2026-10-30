@@ -124,7 +124,7 @@ public final class FindDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector)
                 .build();
-        // As NavigationPlugin does, made once and kept
+        // As ExplorerPlugin does, made once and kept
         final FindController find = harness.own(injector.getFindController());
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindEvent.getType(), event -> find.show()));
         harness.afterStartUp(() -> ShowFindEvent.fire(harness.getHasHandlers()));

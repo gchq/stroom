@@ -33,7 +33,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
 import stroom.query.client.QueryModel;
-import stroom.query.client.ResultComponent;
+import stroom.query.client.QueryResultConsumer;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
@@ -74,7 +74,7 @@ import java.util.Set;
 /// selects in it.
 public class QueryResultVisController
         extends LayerController
-        implements StatusHandler, ResultComponent, HasComponentSelection {
+        implements StatusHandler, QueryResultConsumer, HasComponentSelection {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);

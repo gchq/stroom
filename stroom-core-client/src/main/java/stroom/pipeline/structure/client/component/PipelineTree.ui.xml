@@ -6,9 +6,9 @@
       element's children doesn't matter (the model moves nothing), so dropping an element where it
       came from leaves it as it was
     -->
-    <pv:DraggableTreePanel ui:field="layoutPanel" addStyleNames="max" putBackOnOwnParent="true">
+    <pv:DraggableTree ui:field="layoutPanel" addStyleNames="max" putBackOnOwnParent="true">
         <pv:tree>
-            <pv:PipelineTreePanel ui:field="treePanel"/>
+            <pv:PipelineTreeDiagram ui:field="treePanel"/>
         </pv:tree>
-    </pv:DraggableTreePanel>
+    </pv:DraggableTree>
 </ui:UiBinder>

@@ -20,8 +20,8 @@ import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
@@ -47,19 +47,19 @@ public class DashboardEditor extends DocumentEditor<DashboardDoc> {
     /// @param eventBus             The application's event bus.
     /// @param view                 Its component.
     /// @param dashboardBody        The dashboard body.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public DashboardEditor(final EventBus eventBus,
                            final LinkTabPanel view,
                            final DashboardBodyController dashboardBody,
-                           final Provider<MarkdownEditController> markdownEditProvider,
+                           final Provider<DocumentationTabController> documentationTabProvider,
                            final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.dashboardBody = own(dashboardBody);
         addOwnedTab(DASHBOARD, dashboardBody, DashboardBodyController::read, DashboardBodyController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 DashboardDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

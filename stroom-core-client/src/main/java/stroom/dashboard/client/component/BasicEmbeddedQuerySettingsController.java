@@ -24,7 +24,7 @@ import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
 import stroom.explorer.client.component.DocSelectionController;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.query.client.QueryClient;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
@@ -43,7 +43,7 @@ public class BasicEmbeddedQuerySettingsController
         extends BasicSettingsTabController<BasicEmbeddedQuerySettings> {
 
     private final DocSelectionController querySelection;
-    private final Provider<ExplorerPopupController> docSelectionPopupProvider;
+    private final Provider<DocumentChooserController> docSelectionPopupProvider;
     private final QueryClient queryClient;
     private QueryDoc loaded;
     private QueryDoc readEmbeddedQueryDoc;
@@ -59,7 +59,7 @@ public class BasicEmbeddedQuerySettingsController
     public BasicEmbeddedQuerySettingsController(final EventBus eventBus,
                                                 final BasicEmbeddedQuerySettings view,
                                                 final Provider<DocSelectionController> docSelectionProvider,
-                                                final Provider<ExplorerPopupController> docSelectionPopupProvider,
+                                                final Provider<DocumentChooserController> docSelectionPopupProvider,
                                                 final QueryClient queryClient) {
         super(eventBus, view);
         this.querySelection = make(docSelectionProvider);
@@ -178,7 +178,7 @@ public class BasicEmbeddedQuerySettingsController
     }
 
     private void onCopyQuery() {
-        final ExplorerPopupController chooser = docSelectionPopupProvider.get();
+        final DocumentChooserController chooser = docSelectionPopupProvider.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Query To Copy");
         chooser.setIncludedTypes(QueryDoc.TYPE);

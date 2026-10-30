@@ -18,7 +18,7 @@ package stroom.script.client.component;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.widget.component.client.Contexts;
@@ -36,7 +36,7 @@ import java.util.Objects;
 public class ScriptDependencyListController extends Controller {
 
     private ScriptDependencyList view;
-    private final ExplorerPopupController scriptPicker;
+    private final DocumentChooserController scriptPicker;
     private List<DocRef> scripts;
 
     private Runnable onChange = () -> {
@@ -48,7 +48,7 @@ public class ScriptDependencyListController extends Controller {
     /// @param scriptPicker Picks a script to depend on.
     @Inject
     public ScriptDependencyListController(final EventBus eventBus,
-                                          final ExplorerPopupController scriptPicker) {
+                                          final DocumentChooserController scriptPicker) {
         super(eventBus);
         this.scriptPicker = own(scriptPicker);
 

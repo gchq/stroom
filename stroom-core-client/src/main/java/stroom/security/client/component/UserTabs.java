@@ -77,8 +77,8 @@ public class UserTabs extends TabbedController<UserRef> {
                     final Provider<UserPermissionReportController> userPermissionReportProvider,
                     final Provider<UserDependenciesListController> userDependenciesListProvider,
                     final Provider<ApiKeysController> apiKeysProvider,
-                    final Provider<AppPermissionsEditController> appPermissionsEditProvider,
-                    final Provider<UserAndGroupsController> userAndGroupsProvider) {
+                    final Provider<AppPermissionsEditorController> appPermissionsEditProvider,
+                    final Provider<UsersAndGroupsController> userAndGroupsProvider) {
         super(eventBus, view);
         addOwnedTab(INFO_TAB, own(userInfo), (info, docRef, userRef) -> info.setUserRef(userRef));
         addTab(USER_GROUPS_TAB,
@@ -87,7 +87,7 @@ public class UserTabs extends TabbedController<UserRef> {
         // It was decided that a user should not see their own app perms.
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)) {
             addTab(APP_PERMS_TAB,
-                    () -> appPermissionsEditProvider.get().attach(new AppPermissionsEdit()),
+                    () -> appPermissionsEditProvider.get().attach(new AppPermissionsEditor()),
                     (appPermissionsEdit, docRef, userRef) -> appPermissionsEdit.setUserRef(userRef));
         }
         addTab(DOC_PERMS_TAB,

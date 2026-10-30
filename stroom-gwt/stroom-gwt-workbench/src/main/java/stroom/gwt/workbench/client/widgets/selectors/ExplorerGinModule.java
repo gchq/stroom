@@ -30,7 +30,7 @@ import java.util.Objects;
 
 /// The bindings of [ExplorerGinjector]: the explorer popup's view as Stroom binds it, and the
 /// services of the harness that the controller is being created for (see
-/// [SelectorWidgets#explorerPopup]), so the popup shares them with the rest of the story.
+/// [SelectorWidgets#documentChooser]), so the popup shares them with the rest of the story.
 public class ExplorerGinModule extends AbstractGinModule {
 
     // The harness the controller being created belongs to, set only while it is created

@@ -18,28 +18,28 @@ package stroom.gwt.workbench.client.app.gin.processing;
 
 import stroom.analytics.client.component.ExecutionSchedulesController;
 import stroom.dashboard.client.component.ProcessorLimitsController;
+import stroom.data.client.component.CreateProcessorsController;
 import stroom.data.client.component.DataPreviewTabController;
 import stroom.data.client.component.DataUploadController;
 import stroom.data.client.component.MetaBrowserController;
-import stroom.data.client.component.ProcessChoiceDialogController;
 import stroom.data.client.component.ProcessorTasksListController;
 import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.data.client.component.SourceTabController;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.node.client.component.NodeGroupEditController;
+import stroom.node.client.component.NodeGroupEditorController;
 import stroom.node.client.component.NodeGroupsController;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.XsltPlugin;
-import stroom.pipeline.client.component.DocRefSelectionController;
 import stroom.pipeline.client.component.PipelineEditor;
+import stroom.pipeline.client.component.SaveChangedDocumentsController;
 import stroom.pipeline.stepping.client.component.SteppingFilterEditorController;
 import stroom.pipeline.stepping.client.component.SteppingScreenController;
 import stroom.pipeline.structure.client.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.PipelineModelFactory;
 import stroom.pipeline.structure.client.component.PipelineTree;
-import stroom.processor.client.component.ProcessorEditController;
+import stroom.processor.client.component.ProcessorEditorController;
 import stroom.processor.client.component.ProcessorProfilesController;
 import stroom.processor.client.component.ProcessorsController;
 import stroom.processor.task.client.component.ProcessorFilterTasksController;
@@ -67,23 +67,23 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     NodeGroupsController getNodeGroupsController();
 
     /// @return The node group members dialog ('Edit Node Group - name').
-    NodeGroupEditController getNodeGroupEditController();
+    NodeGroupEditorController getNodeGroupEditorController();
 
     // Execution schedules
 
-    /// @return The 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it.
+    /// @return The 'Execution Schedule Manager' tab, as `ExecutionSchedulesPlugin` opens it.
     ExecutionSchedulesController getExecutionSchedulesController();
 
     // Processors
 
-    /// @return The 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it.
+    /// @return The 'Processor Profiles' tab, as `ProcessorProfilesPlugin` opens it.
     ProcessorProfilesController getProcessorProfilesController();
 
     /// @return A pipeline's 'Processors' tab (the processor and filter tree).
     ProcessorsController getProcessors();
 
     /// @return The 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it.
-    ProcessorEditController getProcessorEditController();
+    ProcessorEditorController getProcessorEditorController();
 
     /// @return The 'Process Search Results' dialog, as `QueryPaneController` shows it.
     ProcessorLimitsController getProcessorLimitsController();
@@ -110,10 +110,10 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     SourceTabController getSourceTabController();
 
     /// @return The 'Create Processors' dialog, as the data browser's meta list shows it.
-    ProcessChoiceDialogController getProcessChoiceDialogController();
+    CreateProcessorsController getCreateProcessorsController();
 
     /// @return The dialog that asks which changed documents to save, as `PipelinePlugin` shows it.
-    DocRefSelectionController getDocRefSelectionController();
+    SaveChangedDocumentsController getSaveChangedDocumentsController();
 
     /// @return A feed's 'Upload' dialog, as the data browser shows it.
     DataUploadController getDataUploadController();
@@ -127,7 +127,7 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
     SteppingScreenController getSteppingScreen();
 
     /// @return A document chooser, e.g. 'Choose Pipeline To Step With' (`PipelinePlugin`).
-    ExplorerPopupController getExplorerPopupController();
+    DocumentChooserController getDocumentChooserController();
 
     /// @return The 'Change Step Filters' dialog, as `SteppingScreenController` shows it.
     SteppingFilterEditorController getSteppingFilterEditorController();

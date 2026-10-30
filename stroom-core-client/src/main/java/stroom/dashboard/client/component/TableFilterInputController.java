@@ -17,9 +17,9 @@
 package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TableFilterComponentSettings;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /// A dashboard's Table Filter pane ([TableFilterInput]): a value filter for each column chosen in
 /// its settings of the table it filters, kept up to date as the table's columns change.
-public class TableFilterInputController extends DashboardComponentController {
+public class TableFilterInputController extends DashboardPaneController {
 
     /// The tab type of the pane.
     public static final String TAB_TYPE = "TableFilter";

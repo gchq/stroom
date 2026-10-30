@@ -45,7 +45,7 @@
 export const TARGETS = [
   { sel: '.explorer-cell', what: 'an explorer row', skip: /^(Favourites|System)$/ },
   { sel: '.expression-item', what: 'an expression term' },
-  { sel: '.pipeline-element', what: 'a pipeline element' },
+  { sel: '.pipeline-element-box', what: 'a pipeline element' },
   { sel: '.ace_content', what: 'the editor' },
   { sel: '.data-grid [role=row][data-row]', what: 'a grid row' },
 ];

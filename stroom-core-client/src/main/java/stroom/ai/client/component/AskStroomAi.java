@@ -25,7 +25,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.TextArea;
-import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.spinner.client.SmallBusySpinner;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
@@ -92,7 +92,7 @@ public class AskStroomAi extends Component implements Focus, TaskMonitorFactory 
     @UiField
     DropDownBox modelRef;
     @UiField
-    SpinnerSmall spinner;
+    SmallBusySpinner spinner;
 
     // The user's message as shown when it was sent, until the stored one replaces it
     private Widget pendingMessage;

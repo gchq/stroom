@@ -38,7 +38,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 /// The help is only wired up by the Editor tab, so it does not appear on the
 /// read-only Map tab (which shares the canvas and timeline widgets).
 ///
-/// @see stroom.floormap.client.component.FloorMapEditorController
+/// @see stroom.floormap.client.component.FloorMapEditorTabController
 public final class FloorMapEditorHelp {
 
     private FloorMapEditorHelp() {

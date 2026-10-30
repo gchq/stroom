@@ -26,13 +26,13 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.monitoring.client.component.DatabaseTablesMonitoringController;
+import stroom.monitoring.client.component.DatabaseTablesController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/DatabaseTablesScreen`, showing Stroom's real
-/// [DatabaseTablesMonitoringController] (the 'Database Tables' tab) with fake REST replies.
+/// [DatabaseTablesController] (the 'Database Tables' tab) with fake REST replies.
 ///
 /// The tables come from `POST /dbStatus/v1` (`DbStatusResource.findSystemTableStatus`). Stroom
 /// sorts server side, so the reply honours the criteria's sort: a request sorted by `Table` gets

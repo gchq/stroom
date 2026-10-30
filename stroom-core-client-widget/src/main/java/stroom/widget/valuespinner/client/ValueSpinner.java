@@ -59,7 +59,7 @@ public class ValueSpinner
     // The steps Page Up and Page Down take
     private static final int PAGE_STEPS = 10;
 
-    private final Spinner spinner;
+    private final ValueSpinnerModel spinner;
     @UiField
     TextBox valueBox;
     @UiField
@@ -86,7 +86,7 @@ public class ValueSpinner
 
     public ValueSpinner() {
         initWidget(BINDER.createAndBindUi(this));
-        spinner = new Spinner();
+        spinner = new ValueSpinnerModel();
         spinner.addValueChangeHandler(event -> {
             showValue(event.getValue());
             // A value accepted, so any rejection no longer applies

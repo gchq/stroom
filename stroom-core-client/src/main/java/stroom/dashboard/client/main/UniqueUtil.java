@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.util.shared.RandomId;
 
 import java.util.Set;

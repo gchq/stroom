@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// A Visualisation pane's settings: its Basic tab, which adds a tab for each of the
 /// visualisation's own settings.
-public class VisSettingsController extends ComponentSettingsDialogController {
+public class VisSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -31,7 +31,7 @@ public class VisSettingsController extends ComponentSettingsDialogController {
     /// @param basicSettings The basic settings.
     @Inject
     public VisSettingsController(final EventBus eventBus,
-                                 final ComponentSettingsDialog view,
+                                 final PaneSettings view,
                                  final BasicVisSettingsController basicSettings) {
         super(eventBus, view);
         own(basicSettings);

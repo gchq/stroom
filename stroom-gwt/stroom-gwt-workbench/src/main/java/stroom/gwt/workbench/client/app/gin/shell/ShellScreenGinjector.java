@@ -26,7 +26,7 @@ import stroom.annotation.client.AnnotationCommentPlugin;
 import stroom.annotation.client.AnnotationCreatePlugin;
 import stroom.annotation.client.AnnotationLabelPlugin;
 import stroom.annotation.client.AnnotationStatusPlugin;
-import stroom.cache.client.CacheMonitoringPlugin;
+import stroom.cache.client.CachesPlugin;
 import stroom.content.client.component.ContentTabPaneController;
 import stroom.contentstore.client.ContentStorePlugin;
 import stroom.core.client.ContentManager;
@@ -38,11 +38,11 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.entity.client.DocumentDialogScreens;
 import stroom.entity.client.component.CreateDocumentController;
 import stroom.entity.client.component.InfoDocumentController;
-import stroom.explorer.client.NavigationPlugin;
+import stroom.explorer.client.ExplorerPlugin;
 import stroom.explorer.client.TabSessionManager;
+import stroom.explorer.client.component.ExplorerController;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
 import stroom.explorer.client.component.ExplorerNodeRemoveTagsController;
-import stroom.explorer.client.component.NavigationController;
 import stroom.feed.client.FeedPlugin;
 import stroom.folder.client.FolderFavouritesPlugin;
 import stroom.folder.client.FolderPlugin;
@@ -56,11 +56,11 @@ import stroom.importexport.client.ImportConfigPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
-import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
-import stroom.monitoring.client.JobListPlugin;
+import stroom.monitoring.client.ExecutionSchedulesPlugin;
+import stroom.monitoring.client.JobsPlugin;
 import stroom.monitoring.client.NodeGroupsPlugin;
-import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.ProcessorProfilePlugin;
+import stroom.monitoring.client.NodesPlugin;
+import stroom.monitoring.client.ProcessorProfilesPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.pathways.client.TracesPlugin;
 import stroom.preferences.client.UserPreferencesPlugin;
@@ -80,7 +80,7 @@ import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.UsersPlugin;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.ChangePasswordPlugin;
-import stroom.task.client.TaskManagerPlugin;
+import stroom.task.client.ServerTasksPlugin;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -101,7 +101,7 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     // The shell
 
     /// @return The explorer (Stroom's navigation panel), shown in the main view.
-    NavigationController getNavigationController();
+    ExplorerController getExplorerController();
 
     /// @return Stroom's app-wide key handler (keyboard shortcuts), which the story gives its `MainController`.
     GlobalKeyHandlerImpl getGlobalKeyHandlerImpl();
@@ -134,10 +134,10 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return The document 'Info' dialog, shown for `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
 
-    /// @return The 'Edit Tags' dialog, as `NavigationPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
+    /// @return The 'Edit Tags' dialog, as `ExplorerPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
     ExplorerNodeEditTagsController getExplorerNodeEditTagsController();
 
-    /// @return The 'Remove Tags' dialog, as `NavigationPlugin` shows it for
+    /// @return The 'Remove Tags' dialog, as `ExplorerPlugin` shows it for
     /// `ShowRemoveNodeTagsDialogEvent`.
     ExplorerNodeRemoveTagsController getExplorerNodeRemoveTagsController();
 
@@ -164,8 +164,8 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's `AnnotationStatusPlugin`, registered as it is created.
     AnnotationStatusPlugin getAnnotationStatusPlugin();
 
-    /// @return Stroom's `CacheMonitoringPlugin`, registered as it is created.
-    CacheMonitoringPlugin getCacheMonitoringPlugin();
+    /// @return Stroom's `CachesPlugin`, registered as it is created.
+    CachesPlugin getCachesPlugin();
 
     /// @return Stroom's `ContentStorePlugin`, registered as it is created.
     ContentStorePlugin getContentStorePlugin();
@@ -176,8 +176,8 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's `ManageFsVolumesPlugin`, registered as it is created.
     ManageFsVolumesPlugin getManageFsVolumesPlugin();
 
-    /// @return Stroom's `NavigationPlugin`, registered as it is created.
-    NavigationPlugin getNavigationPlugin();
+    /// @return Stroom's `ExplorerPlugin`, registered as it is created.
+    ExplorerPlugin getExplorerPlugin();
 
     /// @return The document dialogs' wiring, which Stroom's `EntityModule` makes eagerly.
     DocumentDialogScreens getDocumentDialogScreens();
@@ -200,20 +200,20 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's `DatabaseTablesMonitoringPlugin`, registered as it is created.
     DatabaseTablesMonitoringPlugin getDatabaseTablesMonitoringPlugin();
 
-    /// @return Stroom's `ExecutionScheduleManagerPlugin`, registered as it is created.
-    ExecutionScheduleManagerPlugin getExecutionScheduleManagerPlugin();
+    /// @return Stroom's `ExecutionSchedulesPlugin`, registered as it is created.
+    ExecutionSchedulesPlugin getExecutionSchedulesPlugin();
 
-    /// @return Stroom's `JobListPlugin`, registered as it is created.
-    JobListPlugin getJobListPlugin();
+    /// @return Stroom's `JobsPlugin`, registered as it is created.
+    JobsPlugin getJobsPlugin();
 
     /// @return Stroom's `NodeGroupsPlugin`, registered as it is created.
     NodeGroupsPlugin getNodeGroupsPlugin();
 
-    /// @return Stroom's `NodeMonitoringPlugin`, registered as it is created.
-    NodeMonitoringPlugin getNodeMonitoringPlugin();
+    /// @return Stroom's `NodesPlugin`, registered as it is created.
+    NodesPlugin getNodesPlugin();
 
-    /// @return Stroom's `ProcessorProfilePlugin`, registered as it is created.
-    ProcessorProfilePlugin getProcessorProfilePlugin();
+    /// @return Stroom's `ProcessorProfilesPlugin`, registered as it is created.
+    ProcessorProfilesPlugin getProcessorProfilesPlugin();
 
     /// @return Stroom's `ManageGlobalPropertiesPlugin`, registered as it is created.
     ManageGlobalPropertiesPlugin getManageGlobalPropertiesPlugin();
@@ -272,8 +272,8 @@ public interface ShellScreenGinjector extends ScreenGinjector {
     /// @return Stroom's `ChangePasswordPlugin`, registered as it is created.
     ChangePasswordPlugin getChangePasswordPlugin();
 
-    /// @return Stroom's `TaskManagerPlugin`, registered as it is created.
-    TaskManagerPlugin getTaskManagerPlugin();
+    /// @return Stroom's `ServerTasksPlugin`, registered as it is created.
+    ServerTasksPlugin getServerTasksPlugin();
 
     // Document plugins (opening and saving documents of their type)
 

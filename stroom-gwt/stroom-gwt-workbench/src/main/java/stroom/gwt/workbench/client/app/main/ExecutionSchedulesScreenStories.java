@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/ExecutionSchedulesScreen`, showing Stroom's real [ExecutionSchedulesController]
-/// (the 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it) with fake
+/// (the 'Execution Schedule Manager' tab, as `ExecutionSchedulesPlugin` opens it) with fake
 /// REST replies.
 ///
 /// | Stroom endpoint | Used for |
@@ -69,7 +69,7 @@ public final class ExecutionSchedulesScreenStories {
     private static final String RUN_NOW_PATH = BASE + "/executeSchedulesNow";
     private static final String SET_CONFIG_PATH = "/config/v1/setConfigValue";
 
-    // The schedules have no scheduleBounds (BatchExecutionScheduleEdit once read them
+    // The schedules have no scheduleBounds (BatchExecutionScheduleEditor once read them
     // without a null check)
     private static final String HOURLY = """
             {"uuid": "s1", "name": "Hourly rollup", "enabled": true, "nodeName": "node1",

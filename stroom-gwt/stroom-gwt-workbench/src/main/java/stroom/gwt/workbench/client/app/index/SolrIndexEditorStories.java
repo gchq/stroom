@@ -74,7 +74,7 @@ public final class SolrIndexEditorStories {
     private static final String UPDATE = "/solrIndex/v1/solr-events";
 
     // A FormGroup gives its control the group's identity as its id
-    // (SolrIndexFieldEditViewImpl.ui.xml)
+    // (SolrIndexFieldEditor.ui.xml)
     private static final String FIELD_NAME = "#solrIndexFieldName";
 
     private SolrIndexEditorStories() {

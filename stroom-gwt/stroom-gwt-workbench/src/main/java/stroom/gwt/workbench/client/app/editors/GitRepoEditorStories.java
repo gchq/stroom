@@ -103,7 +103,7 @@ public final class GitRepoEditorStories {
 
     // A FormGroup gives its control the group's identity as its id
     // (GitRepoSettings.ui.xml)
-    private static final String URL_INPUT = "#txtGitUrl";
+    private static final String URL_INPUT = "#gitUrl";
     private static final String COMMIT_MESSAGE = "#commitMessage";
 
     private GitRepoEditorStories() {

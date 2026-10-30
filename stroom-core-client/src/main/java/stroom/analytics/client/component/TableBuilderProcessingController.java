@@ -31,8 +31,8 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.datepicker.client.DateTimeBoxController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.HtmlTableBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -129,7 +129,7 @@ public class TableBuilderProcessingController extends Controller {
 
 
     private SafeHtml getInfo(final AnalyticTracker tracker) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
 
         if (tracker != null) {
             final AnalyticTrackerData trackerData = tracker.getAnalyticTrackerData();
@@ -156,7 +156,7 @@ public class TableBuilderProcessingController extends Controller {
         return htmlBuilder.toSafeHtml();
     }
 
-    private void addRowDateString(final TableBuilder tb, final String label, final Long ms) {
+    private void addRowDateString(final HtmlTableBuilder tb, final String label, final Long ms) {
         if (ms != null) {
             if (ms == 0) {
                 tb.row(label, "---");

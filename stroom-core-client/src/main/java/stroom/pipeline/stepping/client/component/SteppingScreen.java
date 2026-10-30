@@ -20,7 +20,7 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
-import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
@@ -56,7 +56,7 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
     @UiField
     ToolbarButton terminate;
     @UiField
-    LayerContainerImpl layerContainer;
+    LayerContainer layerContainer;
 
     private Consumer<Boolean> onToggleLogPane = on -> {
     };
@@ -67,7 +67,7 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
     public SteppingScreen() {
         initWidget(BINDER.createAndBindUi(this));
         toggleLogPane.setOnToggle(on -> onToggleLogPane.accept(on));
-        toggleLogPane.setOn();
+        toggleLogPane.setPressed(true);
         terminate.setOnClick(() -> onTerminate.run());
     }
 
@@ -133,7 +133,7 @@ public class SteppingScreen extends Component implements RequiresResize, Provide
         }
         toggleLogPane.setVisible(visible);
         if (visible) {
-            toggleLogPane.setState(on);
+            toggleLogPane.setPressed(on);
         }
     }
 

@@ -16,8 +16,8 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
+import stroom.dashboard.client.main.DashboardResultPane;
 import stroom.dashboard.client.main.IndexLoader;
-import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
@@ -49,7 +49,7 @@ import java.util.Objects;
 /// The `App/Dashboard/PausePolling` stories: a dashboard search whose paused component is polled
 /// for no data.
 ///
-/// The story drives Stroom's real dashboard `SearchModel` with two `ResultComponent`s, one paused
+/// The story drives Stroom's real dashboard `SearchModel` with two `DashboardResultPane`s, one paused
 /// (as a paused table or visualisation reports), and checks the `componentResultRequests` of its
 /// `POST /dashboard/v1/search/{node}` request. The story shows only an empty host.
 public final class PausePollingStories {
@@ -126,7 +126,7 @@ public final class PausePollingStories {
 
 
     // A result component that may be paused
-    private static final class Sink implements ResultComponent {
+    private static final class Sink implements DashboardResultPane {
 
         private final String id;
         private final boolean paused;

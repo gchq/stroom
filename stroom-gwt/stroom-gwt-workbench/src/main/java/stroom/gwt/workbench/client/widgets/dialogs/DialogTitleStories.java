@@ -71,7 +71,7 @@ public final class DialogTitleStories {
                 // With a leading icon in the title bar
                 .story("WithIcon", DialogTitleStories::fromArgs)
                 .withArgs(Args.of(TITLE, "Information", ICON_HTML, "INFO"))
-                // Busy — the title-bar spinner (GWT SpinnerLarge) fades in
+                // Busy — the title-bar spinner (GWT LargeBusySpinner) fades in
                 .story("Busy", DialogTitleStories::fromArgs)
                 .withArgs(Args.of(TITLE, "Loading data", ICON_HTML, "QUESTION", BUSY, true))
                 // Its status (a live region) says it is busy only once it shows, so that a screen

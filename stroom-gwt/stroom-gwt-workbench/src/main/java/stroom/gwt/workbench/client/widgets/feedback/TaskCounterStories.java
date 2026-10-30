@@ -28,7 +28,7 @@ import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.Button;
-import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.spinner.client.SmallBusySpinner;
 import stroom.widget.text.client.InlineLabel;
 import stroom.widget.text.client.Label;
 
@@ -40,9 +40,9 @@ import java.util.List;
 
 /// Stories for Stroom's task counting.
 ///
-/// Stroom has no task counter widget: a `TaskMonitorFactory` such as [SpinnerSmall] counts the
+/// Stroom has no task counter widget: a `TaskMonitorFactory` such as [SmallBusySpinner] counts the
 /// tasks its [TaskMonitor]s start and end, and shows its spinner while the count is above zero.
-/// The stories start and end tasks with a [SpinnerSmall]'s monitor and show the count (kept by
+/// The stories start and end tasks with a [SmallBusySpinner]'s monitor and show the count (kept by
 /// the story, as the spinner's is private) beside it.
 public final class TaskCounterStories {
 
@@ -108,10 +108,10 @@ public final class TaskCounterStories {
     // --------------------------------------------------------------------------------
 
 
-    /// A [SpinnerSmall] with a label showing how many tasks its monitor has running.
+    /// A [SmallBusySpinner] with a label showing how many tasks its monitor has running.
     private static final class TaskCounter {
 
-        private final SpinnerSmall spinner = new SpinnerSmall();
+        private final SmallBusySpinner spinner = new SmallBusySpinner();
         private final TaskMonitor taskMonitor = spinner.createTaskMonitor();
         private final List<Task> running = new ArrayList<>();
         private final Label label = new Label();

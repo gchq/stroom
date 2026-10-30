@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A Text Input pane's settings: its Basic tab.
-public class TextInputSettingsController extends ComponentSettingsDialogController {
+public class TextInputSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -30,7 +30,7 @@ public class TextInputSettingsController extends ComponentSettingsDialogControll
     /// @param basicSettings The basic settings.
     @Inject
     public TextInputSettingsController(final EventBus eventBus,
-                                       final ComponentSettingsDialog view,
+                                       final PaneSettings view,
                                        final BasicTextInputSettingsController basicSettings) {
         super(eventBus, view);
         own(basicSettings);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* An annotation's history, built as HTML by AnnotationEditController: its comments and
+/* An annotation's history, built as HTML by AnnotationEditorController: its comments and
    changes, their actions buttons, the event tables and the links in comments. */
 
 .annotation-history {

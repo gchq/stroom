@@ -17,8 +17,8 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.Panes;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConstraints;
 import stroom.util.shared.NullSafe;
@@ -79,7 +79,7 @@ public class FlexLayout extends Composite {
     private final Map<SplitInfo, Splitter> splitToWidgetMap = new HashMap<>();
     private final Map<MutableLayoutConfig, TabLayout> layoutToWidgetMap = new HashMap<>();
     private final Element designSurfaceElement;
-    private Components components;
+    private Panes components;
     private final LayoutConfigContainer layoutConfigContainer = new LayoutConfigContainer();
     private boolean maximised;
     private LayoutConstraints layoutConstraints;
@@ -1481,7 +1481,7 @@ public class FlexLayout extends Composite {
         return null;
     }
 
-    public void setComponents(final Components components) {
+    public void setComponents(final Panes components) {
         this.components = components;
     }
 

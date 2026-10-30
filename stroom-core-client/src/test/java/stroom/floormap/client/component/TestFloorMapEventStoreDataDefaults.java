@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.playback.FloorMapEventsQuery;
+import stroom.floormap.client.playback.FloorMapDefaultEventsQuery;
 import stroom.query.api.Column;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// outside a browser. Holding them apart is what makes them reachable at all.
 ///
 /// What is worth pinning is agreement with the events query. A default that drifts from it is the
-/// defect [FloorMapEventsQuery] exists to prevent, and it surfaces as columns that read as
+/// defect [FloorMapDefaultEventsQuery] exists to prevent, and it surfaces as columns that read as
 /// empty rather than as anything that looks like a fault.
 class TestFloorMapEventStoreDataDefaults {
 
@@ -61,12 +61,12 @@ class TestFloorMapEventStoreDataDefaults {
 
     @Test
     void keepsThePlanBColumnsAheadOfTheEventColumns() {
-        assertThat(QUERY.indexOf(FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN))
+        assertThat(QUERY.indexOf(FloorMapDefaultEventsQuery.EFFECTIVE_TIME_COLUMN))
                 .isLessThan(QUERY.indexOf("Key,"));
         assertThat(QUERY.indexOf("Key,")).isLessThan(QUERY.indexOf("Value,"));
         assertThat(QUERY.indexOf("Value,"))
                 .as("Value is third, before the properties pulled out of it")
-                .isLessThan(QUERY.indexOf(FloorMapEventsQuery.LOCATION_COLUMN));
+                .isLessThan(QUERY.indexOf(FloorMapDefaultEventsQuery.LOCATION_COLUMN));
     }
 
     /// The key column keeps Plan B's name rather than the events query's `Entity ID` alias.
@@ -81,7 +81,7 @@ class TestFloorMapEventStoreDataDefaults {
 
     /// The whole query sits on one line, because the editor cannot hold more than one.
     ///
-    /// `QueryDataPane` declares a `form:TextBox`, a single-line `<input>`, so
+    /// `QueryDataTab` declares a `form:TextBox`, a single-line `<input>`, so
     /// `setText` silently drops newlines and fuses whatever sat either side of them. A
     /// multi-line default reached the parser as `limit 100select` and failed with a syntax
     /// error naming a column the user could not see a problem at.
@@ -93,11 +93,11 @@ class TestFloorMapEventStoreDataDefaults {
     @Test
     void pullsTheFiveEventPropertiesOutOfTheValue() {
         assertThat(QUERY)
-                .contains("jq(Value, '.location') as \"" + FloorMapEventsQuery.LOCATION_COLUMN + "\"")
-                .contains("jq(Value, '.locationRef') as \"" + FloorMapEventsQuery.LOCATION_REF_COLUMN + "\"")
-                .contains("jq(Value, '.type') as \"" + FloorMapEventsQuery.EVENT_TYPE_COLUMN + "\"")
-                .contains("jq(Value, '.status') as \"" + FloorMapEventsQuery.STATUS_COLUMN + "\"")
-                .contains("jq(Value, '.message') as \"" + FloorMapEventsQuery.MESSAGE_COLUMN + "\"");
+                .contains("jq(Value, '.location') as \"" + FloorMapDefaultEventsQuery.LOCATION_COLUMN + "\"")
+                .contains("jq(Value, '.locationRef') as \"" + FloorMapDefaultEventsQuery.LOCATION_REF_COLUMN + "\"")
+                .contains("jq(Value, '.type') as \"" + FloorMapDefaultEventsQuery.EVENT_TYPE_COLUMN + "\"")
+                .contains("jq(Value, '.status') as \"" + FloorMapDefaultEventsQuery.STATUS_COLUMN + "\"")
+                .contains("jq(Value, '.message') as \"" + FloorMapDefaultEventsQuery.MESSAGE_COLUMN + "\"");
     }
 
     // ------------------------------------------------------------------
@@ -106,19 +106,19 @@ class TestFloorMapEventStoreDataDefaults {
 
     /// Every event property this tab shows is aliased exactly as the events query aliases it.
     ///
-    /// Both are built from [FloorMapEventsQuery]'s constants, so renaming one moves both.
+    /// Both are built from [FloorMapDefaultEventsQuery]'s constants, so renaming one moves both.
     /// This asserts the outcome rather than the mechanism, so replacing a constant with literal text
     /// fails here rather than silently later.
     @Test
     void eventColumnAliasesMatchTheEventsQuery() {
-        final String eventsQuery = FloorMapEventsQuery.defaultQuery();
+        final String eventsQuery = FloorMapDefaultEventsQuery.defaultQuery();
         for (final String alias : List.of(
-                FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN,
-                FloorMapEventsQuery.LOCATION_COLUMN,
-                FloorMapEventsQuery.LOCATION_REF_COLUMN,
-                FloorMapEventsQuery.EVENT_TYPE_COLUMN,
-                FloorMapEventsQuery.STATUS_COLUMN,
-                FloorMapEventsQuery.MESSAGE_COLUMN)) {
+                FloorMapDefaultEventsQuery.EFFECTIVE_TIME_COLUMN,
+                FloorMapDefaultEventsQuery.LOCATION_COLUMN,
+                FloorMapDefaultEventsQuery.LOCATION_REF_COLUMN,
+                FloorMapDefaultEventsQuery.EVENT_TYPE_COLUMN,
+                FloorMapDefaultEventsQuery.STATUS_COLUMN,
+                FloorMapDefaultEventsQuery.MESSAGE_COLUMN)) {
             assertThat(QUERY).as("Data tab aliases " + alias).contains("\"" + alias + "\"");
             assertThat(eventsQuery).as("events query aliases " + alias).contains("\"" + alias + "\"");
         }

@@ -20,8 +20,8 @@ import stroom.data.client.component.ClassificationLabelController;
 import stroom.data.shared.DataResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.component.CodeEditorController;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -101,7 +101,7 @@ public class QueryTextPaneController extends Controller {
         editor.getOptions().getLineWrapOption().setOn(true);
 
         view.setOnLink(link -> {
-            final Hyperlink hyperlink = Hyperlink.create(link);
+            final LinkValue hyperlink = LinkValue.create(link);
             if (hyperlink != null) {
                 HyperlinkEvent.fire(this, hyperlink, view);
             }

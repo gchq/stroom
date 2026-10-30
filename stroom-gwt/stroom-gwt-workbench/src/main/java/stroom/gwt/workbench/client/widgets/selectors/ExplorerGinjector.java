@@ -17,20 +17,20 @@
 
 package stroom.gwt.workbench.client.widgets.selectors;
 
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
-/// Creates Stroom's [ExplorerPopupController] (the explorer's chooser that a document picker
+/// Creates Stroom's [DocumentChooserController] (the explorer's chooser that a document picker
 /// opens), as GIN does in Stroom, with its chooser and the controllers it makes.
 ///
-/// Use [SelectorWidgets#explorerPopup] rather than this directly, as the controller's
+/// Use [SelectorWidgets#documentChooser] rather than this directly, as the controller's
 /// dependencies come from the story's harness.
 @GinModules(ExplorerGinModule.class)
 public interface ExplorerGinjector extends Ginjector {
 
     /// @return A new explorer chooser, with the current harness's event bus, REST factory and UI
     /// config cache.
-    ExplorerPopupController getExplorerPopupController();
+    DocumentChooserController getDocumentChooserController();
 }

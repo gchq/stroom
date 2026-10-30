@@ -205,7 +205,7 @@ for (const name of SEED.tabSessions) {
   });
 }
 
-// ── One tag of each type: Annotations › Statuses / Labels / Collections / Comments › Edit (AnnotationTagEdit) ──
+// ── One tag of each type: Annotations › Statuses / Labels / Collections / Comments › Edit (AnnotationTagEditor) ──
 for (const [type, displayValue, name, tagText] of SEED.tags) {
   await item('tags', `annotation ${displayValue.toLowerCase()} "${name}"`, {
     have: async () => (await findTags(displayValue)).find((t) => t.name === name),

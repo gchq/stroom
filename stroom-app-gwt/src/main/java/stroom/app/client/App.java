@@ -57,9 +57,7 @@ public class App implements EntryPoint {
                 userPreferencesManager.setCurrentPreferences(preferences);
 
                 // Show the application panel.
-                Page.show(ginjector.getCoreController().get());
-
-                // Register all plugins that will respond to
+                Page.show(ginjector.getAppPageController().get());
 
                 // Start the login manager. This will attempt to auto login with PKI and
                 // will therefore start the rest of the application.
@@ -67,7 +65,7 @@ public class App implements EntryPoint {
             }, new QuietTaskMonitorFactory());
 
             ginjector.getTabSessionManager().getTabSessionsThenAccept(s ->
-                    ginjector.getNavigationPlugin().setTabSessions(s));
+                    ginjector.getExplorerPlugin().setTabSessions(s));
         }
     }
 }

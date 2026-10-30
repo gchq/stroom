@@ -32,7 +32,7 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.MenuBuilder;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -70,7 +70,7 @@ public class ContentTemplateTabController extends ContentTabController
     private final ContentTemplateTab view;
     private final ContentTemplateListController contentTemplateList;
     private final ExpressionTreeController expressionTree;
-    private final Provider<ContentTemplateEditController> templateEditorProvider;
+    private final Provider<ContentTemplateEditorController> templateEditorProvider;
     private final RestFactory restFactory;
 
     // Immutable list of templates
@@ -78,14 +78,14 @@ public class ContentTemplateTabController extends ContentTabController
     // The mutable working list of templates
     private List<ContentTemplate> contentTemplates;
 
-    private final ButtonView saveButton;
-    private final ButtonView addAboveButton;
-    private final ButtonView addBelowButton;
-    private final ButtonView editButton;
-    private final ButtonView copyButton;
-    private final ButtonView deleteButton;
-    private final ButtonView moveUpButton;
-    private final ButtonView moveDownButton;
+    private final IsButton saveButton;
+    private final IsButton addAboveButton;
+    private final IsButton addBelowButton;
+    private final IsButton editButton;
+    private final IsButton copyButton;
+    private final IsButton deleteButton;
+    private final IsButton moveUpButton;
+    private final IsButton moveDownButton;
 
     private boolean dirty;
     private String lastLabel;
@@ -103,7 +103,7 @@ public class ContentTemplateTabController extends ContentTabController
                                         final ContentTemplateTab view,
                                         final ContentTemplateListController contentTemplateList,
                                         final ExpressionTreeController expressionTree,
-                                        final Provider<ContentTemplateEditController> templateEditorProvider,
+                                        final Provider<ContentTemplateEditorController> templateEditorProvider,
                                         final RestFactory restFactory) {
         super(eventBus);
         this.view = view;

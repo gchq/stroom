@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A Table pane's settings: Basic, Conditional Formatting and Selection Filter.
-public class TableSettingsController extends ComponentSettingsDialogController {
+public class TableSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -32,9 +32,9 @@ public class TableSettingsController extends ComponentSettingsDialogController {
     /// @param selectionFilter The selection filter.
     @Inject
     public TableSettingsController(final EventBus eventBus,
-                                   final ComponentSettingsDialog view,
+                                   final PaneSettings view,
                                    final BasicTableSettingsController basicSettings,
-                                   final RulesController rules,
+                                   final ConditionalFormattingRulesController rules,
                                    final SelectionHandlersController selectionFilter) {
         super(eventBus, view);
         own(basicSettings);

@@ -48,7 +48,7 @@ import java.util.Objects;
 /// ### UI Tabs
 ///
 /// When a user opens a Floor Map document in the Stroom UI, the
-/// `FloorMapDocEditor`
+/// `FloorMapEditor`
 /// builds several tabs, each backed by a controller:
 ///
 /// Floor Map tabs and their controllers
@@ -57,8 +57,8 @@ import java.util.Objects;
 /// |---|---|---|
 /// | Settings | `FloorMapSettingsController` | Configures store references, value format, and value schema |
 /// | Events Query | `FloorMapQueryController` | Edits the StroomQL query for the events store |
-/// | Map | `FloorMapMapController` | Read-only (or light-edit) canvas rendering of facts at a point in time |
-/// | Editor | `FloorMapEditorController` | Full authoring environment with staged (pending) saves |
+/// | Map | `FloorMapMapTabController` | Read-only (or light-edit) canvas rendering of facts at a point in time |
+/// | Editor | `FloorMapEditorTabController` | Full authoring environment with staged (pending) saves |
 ///
 /// ### Two-Store Architecture
 ///
@@ -189,7 +189,7 @@ public class FloorMapDoc extends AbstractDoc {
 
     /// StroomQL query string for the events store.
     /// Executed by
-    /// `FloorMapMapController` to
+    /// `FloorMapMapTabController` to
     /// populate the events overlay on the canvas.
     /// May be `null` if not configured.
     @JsonProperty
@@ -235,7 +235,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// May be `null` for documents created before the value
     /// schema feature was introduced. New documents are always seeded
     /// with [FloorMapFieldMapping#initialValueSchema()] by
-    /// `FloorMapInitController`.
+    /// `NewFloorMapStoresController`.
     @JsonProperty
     private final List<FloorMapFieldMapping> valueSchema;
 

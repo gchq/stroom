@@ -23,7 +23,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
-import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.LargeBusySpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -50,7 +50,7 @@ public class QueryTextPane extends Component implements TaskMonitorFactory {
     @UiField
     ClassificationLabel classification;
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
 
     private Consumer<String> onLink;
 

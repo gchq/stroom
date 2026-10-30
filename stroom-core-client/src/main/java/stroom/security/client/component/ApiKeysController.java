@@ -19,7 +19,7 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.ApiKeyResource;
@@ -28,7 +28,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -42,17 +42,17 @@ import java.util.stream.Collectors;
 
 /// Shows the API keys, and creates, edits and deletes them.
 public class ApiKeysController extends ContentTabController
-        implements Refreshable {
+        implements HasRefresh {
 
     private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
     public static final String TAB_TYPE = "ApiKeys";
 
     private final ApiKeysListController apiKeysList;
-    private final Provider<EditApiKeyController> editApiKeyProvider;
+    private final Provider<ApiKeyEditorController> editApiKeyProvider;
     private final RestFactory restFactory;
-    private final ButtonView addButton;
-    private final ButtonView editButton;
-    private final ButtonView deleteButton;
+    private final IsButton addButton;
+    private final IsButton editButton;
+    private final IsButton deleteButton;
     private UserRef owner = null;
 
     /// Made by GIN, with its screen and its parts.
@@ -67,7 +67,7 @@ public class ApiKeysController extends ContentTabController
                              final ApiKeysListController apiKeysList,
                              final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
-                             final Provider<EditApiKeyController> editApiKeyProvider) {
+                             final Provider<ApiKeyEditorController> editApiKeyProvider) {
         super(eventBus);
         own(apiKeysList);
         this.apiKeysList = apiKeysList;
@@ -121,14 +121,14 @@ public class ApiKeysController extends ContentTabController
         final boolean allowOwnerSelection = owner == null;
         editApiKeyProvider.get().showCreateDialog(
                 this,
-                EditApiKeyMode.PRE_CREATE,
+                ApiKeyEditorMode.PRE_CREATE,
                 apiKeysList::refresh,
                 allowOwnerSelection);
     }
 
     private void editSelectedKey() {
         final HashedApiKey apiKey = getSelectionModel().getSelected();
-        editApiKeyProvider.get().showEditDialog(this, apiKey, EditApiKeyMode.EDIT, apiKeysList::refresh);
+        editApiKeyProvider.get().showEditDialog(this, apiKey, ApiKeyEditorMode.EDIT, apiKeysList::refresh);
     }
 
     private void deleteSelectedKeys() {

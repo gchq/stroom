@@ -44,9 +44,9 @@ import com.google.gwt.user.client.ui.ButtonBase;
 /// Made by [Toolbar#button], or declared in a template inside a toolbar as
 /// `<b:ToolbarButton svg="SAVE" title="Save"/>`.
 ///
-/// It is a [ButtonView], so controllers that are given their buttons as button views (as views give
+/// It is a [IsButton], so controllers that are given their buttons as button views (as views give
 /// them the older buttons) work with it unchanged; that interface goes when they no longer need it.
-public class ToolbarButton extends ButtonBase implements ButtonView {
+public class ToolbarButton extends ButtonBase implements IsButton {
 
     // Marks focus that a mouse press gave the button, which toolbar-button.css draws no focus ring for: the
     // button focuses itself from code (see onBrowserEvent), which browsers treat as keyboard focus

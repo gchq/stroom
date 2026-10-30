@@ -23,10 +23,10 @@ import java.util.Set;
 
 public class SelectionMap {
 
-    private final Map<XSDNode, Set<SelectableItem>> selectionMap = new HashMap<>();
-    private XSDNode selectedItem;
+    private final Map<XsdNode, Set<SelectableItem>> selectionMap = new HashMap<>();
+    private XsdNode selectedItem;
 
-    public void addSelectionItem(final XSDNode node, final SelectableItem selectable) {
+    public void addSelectionItem(final XsdNode node, final SelectableItem selectable) {
         if (node != null && selectable != null) {
             Set<SelectableItem> items = selectionMap.get(node);
             if (items == null) {
@@ -38,7 +38,7 @@ public class SelectionMap {
         }
     }
 
-    public void setSelectedItem(final XSDNode item) {
+    public void setSelectedItem(final XsdNode item) {
         // Deselect current selected item if any.
         if (selectedItem != null) {
             final Set<SelectableItem> items = selectionMap.get(selectedItem);

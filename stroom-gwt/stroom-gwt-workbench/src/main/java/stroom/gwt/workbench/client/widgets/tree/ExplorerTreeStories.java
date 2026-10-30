@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.widgets.tree;
 
-import stroom.explorer.client.component.EntityTree;
+import stroom.explorer.client.component.DocumentPicker;
 import stroom.explorer.client.component.ExplorerTree;
 import stroom.explorer.client.component.ExplorerTreeController;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -49,7 +49,7 @@ import java.util.function.Consumer;
 /// `ExplorerTreeController` fetches the nodes from the explorer service), answered by an
 /// [ExplorerFixture] of a fixed tree.
 ///
-/// The quick filter bar is the filter of Stroom's [EntityTreeViewImpl] (the explorer
+/// The quick filter bar is the filter of Stroom's [DocumentPicker] (the explorer
 /// tree with a quick filter, used in Stroom's explorer popups), shown with the stories' tree in it.
 public final class ExplorerTreeStories {
 
@@ -224,9 +224,9 @@ public final class ExplorerTreeStories {
                                final ExplorerFixture fixture,
                                final Options options) {
         final ScreenHarness harness = ScreenHarness.create(context, TreeFixtures.explorerRoutes(fixture).build());
-        // With a quick filter, the tree is the one Stroom's folder picker (EntityTree) declares
-        final EntityTree view = options.quickFilter
-                ? new EntityTree()
+        // With a quick filter, the tree is the one Stroom's folder picker (DocumentPicker) declares
+        final DocumentPicker view = options.quickFilter
+                ? new DocumentPicker()
                 : null;
         final ExplorerTree tree = view != null
                 ? view.getTree()
@@ -281,7 +281,7 @@ public final class ExplorerTreeStories {
                 controller.changeNameFilter(filter);
             });
             if (options.nameFilter != null) {
-                // The filter's text, as Stroom's ExplorerPopupController.setInitialQuickFilter shows it
+                // The filter's text, as Stroom's DocumentChooserController.setInitialQuickFilter shows it
                 final NodeList<Element> inputs = view.asWidget().getElement().getElementsByTagName("input");
                 if (inputs.getLength() > 0) {
                     InputElement.as(inputs.getItem(0)).setValue(options.nameFilter);

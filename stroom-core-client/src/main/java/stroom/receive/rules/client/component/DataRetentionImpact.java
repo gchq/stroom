@@ -212,7 +212,7 @@ public class DataRetentionImpact extends Component {
         runButton.setEnabled(!running);
         stopButton.setEnabled(running);
         filterButton.setEnabled(!running);
-        nestedButton.setState(nested);
+        nestedButton.setPressed(nested);
         expandAllButton.setEnabled(canExpand);
         collapseAllButton.setEnabled(canCollapse);
     }

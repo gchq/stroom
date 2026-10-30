@@ -19,8 +19,8 @@ package stroom.feed.client.component;
 import stroom.data.client.component.MetaBrowserController;
 import stroom.data.client.component.ProcessorTasksTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -51,7 +51,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
     /// @param settingsProvider       Makes the Settings tab.
     /// @param metaBrowserProvider    Makes the meta browser.
     /// @param taskControllerProvider Makes the task controller.
-    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param documentationTabProvider   Makes the Documentation tab's editor.
     /// @param permissionsProvider    Makes the Permissions tab.
     @Inject
     public FeedEditor(final EventBus eventBus,
@@ -60,7 +60,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                       final Provider<FeedSettingsController> settingsProvider,
                       final Provider<MetaBrowserController> metaBrowserProvider,
                       final Provider<ProcessorTasksTabController> taskControllerProvider,
-                      final Provider<MarkdownEditController> markdownEditProvider,
+                      final Provider<DocumentationTabController> documentationTabProvider,
                       final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         TabData selectedTab = SETTINGS;
@@ -87,7 +87,7 @@ public class FeedEditor extends DocumentEditor<FeedDoc> {
                 FeedSettingsController::read,
                 FeedSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 FeedDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

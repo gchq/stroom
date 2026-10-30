@@ -38,8 +38,8 @@ import stroom.visualisation.shared.VisColourList;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -64,7 +64,7 @@ import java.util.stream.Collectors;
 public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
     private final EventBus eventBus;
-    private final Components components;
+    private final Panes components;
     private final QueryToolbarController queryToolbar;
     // The colours of the values the visualisations colour by
     private final VisColourList visColourList = new VisColourList();
@@ -77,7 +77,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     private final Listeners<DashboardContext> contextChangeListeners = new Listeners<>();
 
     public DashboardContextImpl(final EventBus eventBus,
-                                final Components components,
+                                final Panes components,
                                 final QueryToolbarController queryToolbar) {
         this.eventBus = eventBus;
         this.components = components;
@@ -106,7 +106,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     @Override
-    public Components getComponents() {
+    public Panes getComponents() {
         return components;
     }
 
@@ -134,7 +134,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     public SafeHtml toSafeHtml(final boolean showInsert) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
         final List<ComponentState> componentStates = getComponentStates();
         printContext(tb, componentStates, showInsert);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -178,7 +178,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         Collections.emptyList()));
             }
 
-            final Components components = dashboardContext.getComponents();
+            final Panes components = dashboardContext.getComponents();
             final Collection<DashboardPane> componentList = components
                     .getComponents()
                     .stream()
@@ -246,29 +246,29 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return list;
     }
 
-    private void printContext(final TableBuilder tb,
+    private void printContext(final HtmlTableBuilder tb,
                               final List<ComponentState> componentStates,
                               final boolean showInsert) {
         if (componentStates != null) {
             for (final ComponentState componentState : componentStates) {
-                tb.row(TableCell.header(componentState.name));
+                tb.row(HtmlTableCell.header(componentState.name));
                 for (final Param param : componentState.params) {
                     final String key = ParamUtil.create(param.getKey());
-                    tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                            TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
+                    tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                            HtmlTableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                 }
 
                 if (NullSafe.hasItems(componentState.selectionList)) {
                     boolean first = true;
                     for (final List<Param> selection : componentState.selectionList) {
                         if (!first) {
-                            tb.row(TableCell.data("------"));
+                            tb.row(HtmlTableCell.data("------"));
                         }
                         for (final Param param : selection) {
                             final String key = ParamUtil.create(param.getKey());
 
-                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                                    TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
+                            tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    HtmlTableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                         }
                         first = false;
                     }
@@ -277,7 +277,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                 if (NullSafe.hasItems(componentState.filterList)) {
                     for (final ColumnSelectionFilter filter : componentState.filterList) {
                         if (filter.selection.isEnabled()) {
-                            tb.row(TableCell.header(filter.name));
+                            tb.row(HtmlTableCell.header(filter.name));
                             String value = filter
                                     .selection
                                     .getValues()
@@ -290,8 +290,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                             }
 
                             final String key = ParamUtil.create(filter.id);
-                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
-                                    TableCell.data(CopyTextUtil.render(value, showInsert)));
+                            tb.row(HtmlTableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    HtmlTableCell.data(CopyTextUtil.render(value, showInsert)));
                         }
                     }
                 }

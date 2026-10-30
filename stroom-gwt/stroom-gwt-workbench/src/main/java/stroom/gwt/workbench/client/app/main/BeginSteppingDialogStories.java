@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -45,7 +45,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/BeginSteppingDialog`, showing what Stroom shows for a
-/// `BeginPipelineSteppingEvent` with no pipeline: the real [ExplorerPopupController] captioned 'Choose
+/// `BeginPipelineSteppingEvent` with no pipeline: the real [DocumentChooserController] captioned 'Choose
 /// Pipeline To Step With', with the pipeline the server guesses for the stream selected, as
 /// `PipelinePlugin.onBeginStepping` shows it (the story does the same as the plugin, which needs
 /// the whole app to be created).
@@ -128,7 +128,7 @@ public final class BeginSteppingDialogStories {
         final String childStreamType = "RAW";
 
         // As PipelinePlugin.onBeginStepping does for an event with no pipeline
-        final ExplorerPopupController chooser = injector.getExplorerPopupController();
+        final DocumentChooserController chooser = injector.getDocumentChooserController();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption(CAPTION);
         chooser.setIncludedTypes(PipelineDoc.TYPE);

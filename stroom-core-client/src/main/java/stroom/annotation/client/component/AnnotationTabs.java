@@ -22,8 +22,8 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.TabbedController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
@@ -51,8 +51,8 @@ public class AnnotationTabs extends TabbedController<Annotation> {
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final AnnotationResourceClient annotationResourceClient;
-    private final AnnotationEditController annotationEdit;
-    private MarkdownEditController description;
+    private final AnnotationEditorController annotationEditor;
+    private DocumentationTabController description;
     // Made in the Documentation tab's toolbar when it is first shown
     private ToolbarButton saveButton;
     private boolean descriptionDirty;
@@ -66,31 +66,31 @@ public class AnnotationTabs extends TabbedController<Annotation> {
     /// @param eventBus                 The application's event bus.
     /// @param view                     Its component.
     /// @param annotationResourceClient The annotation resource client.
-    /// @param annotationEdit           The annotation edit.
+    /// @param annotationEditor           The annotation edit.
     /// @param annotationLinksProvider  Makes the annotation links.
     /// @param linkedEvents             The linked events.
-    /// @param markdownEditProvider     Makes the Documentation tab's editor.
+    /// @param documentationTabProvider     Makes the Documentation tab's editor.
     /// @param permissionsProvider      Makes the Permissions tab.
     @Inject
     public AnnotationTabs(final EventBus eventBus,
                           final LinkTabPanel view,
                           final AnnotationResourceClient annotationResourceClient,
-                          final AnnotationEditController annotationEdit,
+                          final AnnotationEditorController annotationEditor,
                           final Provider<AnnotationLinksController> annotationLinksProvider,
                           final LinkedEventsController linkedEvents,
-                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.annotationResourceClient = annotationResourceClient;
-        this.annotationEdit = own(annotationEdit);
+        this.annotationEditor = own(annotationEditor);
         own(linkedEvents);
         getToolbar().setName("Annotation actions");
         showReadOnlyStatus();
-        annotationEdit.setOnTitleChange(() -> onTitleChange.run());
-        annotationEdit.setOnDelete(() -> onDelete.run());
+        annotationEditor.setOnTitleChange(() -> onTitleChange.run());
+        annotationEditor.setOnDelete(() -> onDelete.run());
         linkedEvents.setOnChange(this::updateHistory);
 
-        addOwnedTab(ANNOTATION, annotationEdit, AnnotationEditController::read);
+        addOwnedTab(ANNOTATION, annotationEditor, AnnotationEditorController::read);
         addOwnedTab(EVENTS, linkedEvents, LinkedEventsController::read);
         addTab(LINK_TO,
                 () -> {
@@ -108,7 +108,7 @@ public class AnnotationTabs extends TabbedController<Annotation> {
                 AnnotationLinksController::read);
         addTab(DOCUMENTATION,
                 () -> {
-                    description = markdownEditProvider.get();
+                    description = documentationTabProvider.get();
                     description.followReadOnly();
                     description.setAddButtonsFirst(toolbar -> {
                         saveButton = toolbar.button(SvgImage.SAVE, "Save Annotation Description",
@@ -136,7 +136,7 @@ public class AnnotationTabs extends TabbedController<Annotation> {
 
     /// @param initialComment The comment the annotation was made with, to show until it is saved.
     public void setInitialComment(final String initialComment) {
-        annotationEdit.setInitialComment(initialComment);
+        annotationEditor.setInitialComment(initialComment);
     }
 
     /// @param onTitleChange What to run when the annotation's title changes, e.g. to label its tab
@@ -157,14 +157,14 @@ public class AnnotationTabs extends TabbedController<Annotation> {
             return null;
         }
         // Its title as it now is: it may have been changed since it was read
-        final String title = annotationEdit.getAnnotationTitle();
+        final String title = annotationEditor.getAnnotationTitle();
         return "#" + annotation.getId() + " " + (title != null
                 ? title
                 : annotation.getName());
     }
 
     private void updateHistory() {
-        annotationEdit.updateHistory();
+        annotationEditor.updateHistory();
     }
 
     private void saveDescription() {

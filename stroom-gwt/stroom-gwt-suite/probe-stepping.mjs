@@ -75,7 +75,7 @@ console.log('after refresh — dialogs:', JSON.stringify(await dialogs()));
 console.log('api:', JSON.stringify(api, null, 1));
 await closeDialogs(page);
 // select the xslt element in the stepping tree
-const box = await page.evaluate(() => { const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0); const el = boxes.find((e) => /xslt/i.test(e.textContent)); if (!el) return { n: boxes.length, labels: boxes.map((b) => b.textContent) }; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, labels: boxes.map((b) => b.textContent) }; });
+const box = await page.evaluate(() => { const boxes = [...document.querySelectorAll('.pipeline-element-box__label')].filter((e) => e.offsetWidth > 0); const el = boxes.find((e) => /xslt/i.test(e.textContent)); if (!el) return { n: boxes.length, labels: boxes.map((b) => b.textContent) }; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, labels: boxes.map((b) => b.textContent) }; });
 console.log('tree:', JSON.stringify(box));
 if (box.x) { await page.mouse.move(box.x, box.y); await page.mouse.down(); await page.mouse.up(); await page.waitForTimeout(2500); }
 console.log('after select — dialogs:', JSON.stringify(await dialogs()));

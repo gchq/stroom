@@ -17,7 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.component.KeyValueInputController;
-import stroom.dashboard.client.main.ComponentRegistry;
+import stroom.dashboard.client.main.PaneRegistry;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,8 +26,8 @@ import com.google.web.bindery.event.shared.EventBus;
 public class KeyValueInputPlugin {
 
     @Inject
-    public KeyValueInputPlugin(final EventBus eventBus, final ComponentRegistry componentRegistry,
+    public KeyValueInputPlugin(final EventBus eventBus, final PaneRegistry paneRegistry,
                                final Provider<KeyValueInputController> provider) {
-        componentRegistry.register(KeyValueInputController.TYPE, provider);
+        paneRegistry.register(KeyValueInputController.TYPE, provider);
     }
 }

@@ -25,12 +25,12 @@ import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardPane;
+import stroom.dashboard.client.main.DashboardResultPane;
 import stroom.dashboard.client.main.IndexLoader;
-import stroom.dashboard.client.main.ResultComponent;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
@@ -102,7 +102,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Listeners;
@@ -138,8 +138,8 @@ import java.util.stream.Collectors;
 
 /// A dashboard's table pane ([Table]): the results of its query as rows, grouped and expandable,
 /// with its columns' menus and filters, downloads, annotations and conditional formatting.
-public class TableController extends DashboardComponentController
-        implements ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
+public class TableController extends DashboardPaneController
+        implements DashboardResultPane, HasComponentSelection, HasHandlers, FilterableTable {
 
     public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -159,10 +159,10 @@ public class TableController extends DashboardComponentController
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ToolbarButton addColumnButton;
     private final GroupLevelButtons groupLevelButtons;
-    private final ButtonView downloadButton;
+    private final IsButton downloadButton;
     private final ToolbarToggleButton valueFilterButton;
     private final ToolbarButton annotateButton;
-    private final ButtonView askAiButton;
+    private final IsButton askAiButton;
     private final DownloadSearchResultsController downloadOptions;
     private final AnnotationMenuController annotationManager;
     private final RestFactory restFactory;
@@ -202,7 +202,7 @@ public class TableController extends DashboardComponentController
     /// @param renameColumnControllerProvider Makes the rename column controller.
     /// @param expressionProvider             Makes the expression.
     /// @param columnFormatProvider           Makes the column format.
-    /// @param columnFilterDialog             The column filter dialog.
+    /// @param columnFilterTabs             The column filter dialog.
     /// @param settingsControllerProvider     Makes the settings controller.
     /// @param downloadOptions                The download options.
     /// @param annotationManager              The annotation manager.
@@ -222,7 +222,7 @@ public class TableController extends DashboardComponentController
                            final Provider<RenameColumnController> renameColumnControllerProvider,
                            final Provider<ColumnFunctionEditorController> expressionProvider,
                            final Provider<ColumnFormatController> columnFormatProvider,
-                           final ColumnFilterDialogController columnFilterDialog,
+                           final ColumnFilterTabsController columnFilterTabs,
                            final Provider<TableSettingsController> settingsControllerProvider,
                            final DownloadSearchResultsController downloadOptions,
                            final AnnotationMenuController annotationManager,
@@ -236,7 +236,7 @@ public class TableController extends DashboardComponentController
                            final UiConfigCache uiConfigCache) {
         super(eventBus, settingsControllerProvider);
         initWidget(view);
-        own(columnFilterDialog);
+        own(columnFilterTabs);
         own(downloadOptions);
         own(columnValuesFilter);
         this.eventBus = eventBus;
@@ -292,7 +292,7 @@ public class TableController extends DashboardComponentController
                 renameColumnControllerProvider,
                 expressionProvider,
                 columnFormatProvider,
-                columnFilterDialog,
+                columnFilterTabs,
                 columnValuesFilter);
         dataGrid.setHeadingListener(columnsManager);
 
@@ -482,7 +482,7 @@ public class TableController extends DashboardComponentController
     }
 
     private void setShowValueFilters(final boolean showValueFilters) {
-        valueFilterButton.setState(showValueFilters);
+        valueFilterButton.setPressed(showValueFilters);
         if (showValueFilters) {
             dataGrid.addStyleName("result-table__grid--value-filters");
         } else {

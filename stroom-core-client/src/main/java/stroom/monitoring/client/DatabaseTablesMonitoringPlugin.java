@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.monitoring.client.component.DatabaseTablesMonitoringController;
+import stroom.monitoring.client.component.DatabaseTablesController;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -36,11 +36,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTablesMonitoringController> {
+public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTablesController> {
 
     @Inject
     public DatabaseTablesMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                          final Provider<DatabaseTablesMonitoringController> controllerProvider,
+                                          final Provider<DatabaseTablesController> controllerProvider,
                                           final ClientSecurityContext securityContext,
                                           final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, eventManager, controllerProvider, securityContext, documentPluginRegistry);
@@ -72,6 +72,6 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
 
     @Override
     public String getType() {
-        return DatabaseTablesMonitoringController.TAB_TYPE;
+        return DatabaseTablesController.TAB_TYPE;
     }
 }

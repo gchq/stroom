@@ -10,64 +10,64 @@
     <g:FlowPanel styleName="max form-padding form git-repo-settings">
 
         <!-- Content Store stuff -->
-        <form:FormGroup identity="lblContentStore"
+        <form:FormGroup identity="contentStore"
                         label="Content Store"
                         helpText="Content store that this content pack came from. Read-only."
-                        ui:field="fgContentStore">
+                        ui:field="contentStoreGroup">
             <tx:Label title="The name of the Content Store that specified this Content Pack"
-                     ui:field="lblContentStore"/>
+                     ui:field="contentStore"/>
         </form:FormGroup>
-        <form:FormGroup identity="lblContentPack"
+        <form:FormGroup identity="contentPack"
                         label="Content Pack Name"
                         helpText="Name of this content pack. Read-only."
-                        ui:field="fgContentPack">
+                        ui:field="contentPackGroup">
             <tx:Label title="The name of this Content Pack"
-                     ui:field="lblContentPack"/>
+                     ui:field="contentPack"/>
         </form:FormGroup>
 
         <!-- Git basic settings -->
-        <form:FormGroup identity="txtGitUrl"
+        <form:FormGroup identity="gitUrl"
                         label="Git repository URL"
                         helpText="URL of the Git repository, using HTTPS or SSH, e.g. https://github.com/org/repo.git. Read-only for content packs."
                         screenReaderText="HTTPS or SSH URL. Read-only for content packs.">
             <form:TextBox title="The URL of the GIT repository"
-                       ui:field="txtGitUrl"
+                       ui:field="urlBox"
                        addStyleNames="git-repo-settings__field"/>
         </form:FormGroup>
-        <form:FormGroup identity="txtGitBranch"
+        <form:FormGroup identity="gitBranch"
                         label="Git branch"
                         helpText="Branch of the Git repository to pull from and push to, e.g. main. Read-only for content packs."
                         screenReaderText="Branch to pull from and push to. Read-only for content packs.">
             <form:TextBox title="The branch of the GIT repository"
-                       ui:field="txtGitBranch"
+                       ui:field="branchBox"
                        addStyleNames="git-repo-settings__field"/>
         </form:FormGroup>
-        <form:FormGroup identity="txtGitPath"
+        <form:FormGroup identity="gitPath"
                         label="Git path"
                         helpText="Folder within the Git repository that holds the Stroom content, e.g. stroom/content. Leave blank to use the root of the repository. Read-only for content packs."
                         screenReaderText="Leave blank for the repository root. Read-only for content packs.">
             <form:TextBox title="The path within the GIT repository"
-                       ui:field="txtGitPath"
+                       ui:field="pathBox"
                        addStyleNames="git-repo-settings__field"/>
         </form:FormGroup>
 
         <!-- Specify the commit hash to pull from Git => readonly; cannot push -->
-        <form:FormGroup identity="txtGitCommitToPull"
+        <form:FormGroup identity="gitCommitToPull"
                         label="Git commit"
                         helpText="Hash of a Git commit to pull instead of the latest commit on the branch. While it is set, Push to Git and Automatically push are not available. Leave blank to pull the latest commit. Read-only for content packs."
                         screenReaderText="While set, pushing is not available.">
             <form:TextBox title="The commit you want to pull from Git"
-                       ui:field="txtGitCommitToPull"
+                       ui:field="commitToPullBox"
                        addStyleNames="git-repo-settings__field"/>
         </form:FormGroup>
 
         <!-- Whether to automatically push to Git whenever something changes -->
-        <form:FormGroup identity="chkGitAutoPush"
+        <form:FormGroup identity="gitAutoPush"
                         helpText="Tick to push any changes to Git automatically. The Git Repo Push job does this, every minute by default, with a generic commit message. Not available while a commit hash is set."
-                        ui:field="fgGitAutoPush"
+                        ui:field="autoPushGroup"
                         screenReaderText="Pushed by the Git Repo Push job, every minute by default.">
             <tickbox:TickBox title="Automatically push changes to the Git repository"
-                                    ui:field="chkGitAutoPush" label="Automatically push" />
+                                    ui:field="autoPushBox" label="Automatically push" />
         </form:FormGroup>
 
         <!-- Button to set credentials -->
@@ -88,19 +88,19 @@
                   title="Configure the HTTP client used to talk to the Git repository"/>
 
         <!-- Button to push into Git -->
-        <b:Button ui:field="btnGitRepoPush"
+        <b:Button ui:field="pushButton"
                   text="Push to Git"
                   addStyleNames="allow-focus git-repo-settings__button"
                   title="Push any changes into the Git repository"/>
 
         <!-- Button to check whether updates are available -->
-        <b:Button ui:field="btnCheckForUpdates"
+        <b:Button ui:field="checkForUpdatesButton"
                   text="Check for updates"
                   addStyleNames="allow-focus git-repo-settings__button"
                   title="Check if there are updates that could be pulled"/>
 
         <!-- Button to pull from Git -->
-        <b:Button ui:field="btnGitRepoPull"
+        <b:Button ui:field="pullButton"
                   text="Pull from Git"
                   addStyleNames="allow-focus git-repo-settings__button"
                   title="Pull remote changes into Stroom"/>

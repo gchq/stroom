@@ -9,11 +9,11 @@
     -->
     <g:FlowPanel styleName="code-editor max dock-container-horizontal">
         <g:FlowPanel ui:field="content" styleName="code-editor__text dock-max">
-            <e:Editor ui:field="editor" styleName="code-editor__ace"/>
+            <e:AceEditorPane ui:field="editor" styleName="code-editor__ace"/>
             <g:ScrollPanel ui:field="errorPanel" styleName="code-editor__load-error-container max" visible="false">
                 <tx:Html ui:field="errorText" styleName="code-editor__load-error"/>
             </g:ScrollPanel>
         </g:FlowPanel>
-        <e:RightBar ui:field="rightBar" styleName="code-editor__overview dock-min"/>
+        <e:OverviewBar ui:field="rightBar" styleName="code-editor__overview dock-min"/>
     </g:FlowPanel>
 </ui:UiBinder>

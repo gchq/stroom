@@ -1,0 +1,49 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
+             xmlns:v="urn:import:stroom.widget.quickfilter.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:e="urn:import:stroom.explorer.client.component">
+    <g:FlowPanel styleName="max dock-container-vertical explorer">
+        <g:FlowPanel styleName="dock-min explorer__title-bar">
+            <!-- A click on the logo opens the main menu, as the Main Menu button beside it does, so
+                 for the keyboard and screen readers it would be a second, nameless Main Menu: it is
+                 left out of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and
+                 hidden from them -->
+            <b:Button ui:field="logo" styleName="explorer__logo" tabIndex="-2" ariaHidden="true"/>
+            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet explorer__menu">
+                <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
+            </b:Toolbar>
+        </g:FlowPanel>
+
+        <g:SimplePanel styleName="dock-min explorer__name-filter-panel">
+            <v:QuickFilter accessibleName="Filter explorer" ui:field="nameFilter" addStyleNames="dock-min explorer__name-filter"/>
+        </g:SimplePanel>
+        <b:ToolbarRow addStyleNames="explorer__toolbar">
+            <!-- The explorer's buttons: one toolbar, so one tab stop -->
+            <b:Toolbar name="Explorer" addStyleNames="toolbar--navigation">
+                <b:ToolbarButton ui:field="add" svg="ADD" title="New Document" opensMenu="true" enabled="false"/>
+                <b:ToolbarButton ui:field="delete" svg="DELETE" title="Delete Selected Documents" enabled="false"/>
+                <b:ToolbarToggleButton ui:field="showAlerts" svg="EXCLAMATION" title="Show Alerts"/>
+                <b:ToolbarButton ui:field="locate" svg="LOCATE" title="Locate Current Item" enabled="false"/>
+                <b:ToolbarButton ui:field="expandAll" svg="EXPAND_ALL" title="Expand All Folders"/>
+                <b:ToolbarButton ui:field="collapseAll" svg="COLLAPSE_ALL" title="Collapse All Folders"/>
+                <b:ToolbarToggleButton ui:field="filter" svg="FILTER" title="Filter Document Types"/>
+                <b:ToolbarButton ui:field="find" svg="FIND" title="Find in Content"/>
+            </b:Toolbar>
+            <spinner:SmallBusySpinner ui:field="spinner"/>
+        </b:ToolbarRow>
+        <!-- The tree, shown once the explorer is first shown -->
+        <layout:ScrollPane addStyleNames="dock-max">
+            <e:ExplorerTree ui:field="explorerTree" multiSelect="true" visible="false"/>
+        </layout:ScrollPane>
+        <!-- The current activity, when activities are used: pressing it chooses another -->
+        <g:SimplePanel styleName="dock-min">
+            <g:SimplePanel ui:field="activityOuter" styleName="explorer__activity" visible="false">
+                <b:Button ui:field="activityButton" styleName="explorer__activity-button"/>
+            </g:SimplePanel>
+        </g:SimplePanel>
+    </g:FlowPanel>
+</ui:UiBinder>

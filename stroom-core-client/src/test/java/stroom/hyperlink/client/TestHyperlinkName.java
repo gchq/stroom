@@ -26,7 +26,7 @@ class TestHyperlinkName {
 
     @Test
     void testTextNamesTheLink() {
-        final Hyperlink hyperlink = link(" Orange ", "https://colours.example.com/orange", "browser");
+        final LinkValue hyperlink = link(" Orange ", "https://colours.example.com/orange", "browser");
 
         assertThat(HyperlinkName.getDisplayText(hyperlink)).isEqualTo("Orange");
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isNull();
@@ -35,14 +35,14 @@ class TestHyperlinkName {
     @Test
     void testTextThatOnlyMentionsAUrlNamesTheLink() {
         // Text with spaces is a sentence, not just a URL
-        final Hyperlink hyperlink = link("See https://example.com for more", "https://example.com", null);
+        final LinkValue hyperlink = link("See https://example.com for more", "https://example.com", null);
 
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isNull();
     }
 
     @Test
     void testUrlTextIsNamedByHostAndPath() {
-        final Hyperlink hyperlink = link(
+        final LinkValue hyperlink = link(
                 "https://example.com/docs/page?q=1#top",
                 "https://example.com/docs/page?q=1#top",
                 null);
@@ -54,14 +54,14 @@ class TestHyperlinkName {
 
     @Test
     void testUrlTextDifferentToHrefIsNamedByHref() {
-        final Hyperlink hyperlink = link("http://old.example.com", "https://new.example.com/landing/", null);
+        final LinkValue hyperlink = link("http://old.example.com", "https://new.example.com/landing/", null);
 
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isEqualTo("new.example.com/landing");
     }
 
     @Test
     void testTextThatIsItsAddressButForTrailingSlash() {
-        final Hyperlink hyperlink = link("https://example.com/a/", "https://example.com/a", null);
+        final LinkValue hyperlink = link("https://example.com/a/", "https://example.com/a", null);
 
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isEqualTo("example.com/a");
     }
@@ -69,21 +69,21 @@ class TestHyperlinkName {
     @Test
     void testTextThatIsItsRelativeAddress() {
         // The address with no scheme is already brief, so it names the link as it is shown
-        final Hyperlink hyperlink = link("/stroom/a", "/stroom/a", "tab");
+        final LinkValue hyperlink = link("/stroom/a", "/stroom/a", "tab");
 
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isNull();
     }
 
     @Test
     void testUrlTextWithTitleIsNamedByTitle() {
-        final Hyperlink hyperlink = link("https://example.com/a", "https://example.com/a", "tab|Example Page");
+        final LinkValue hyperlink = link("https://example.com/a", "https://example.com/a", "tab|Example Page");
 
         assertThat(HyperlinkName.getAccessibleName(hyperlink)).isEqualTo("Example Page");
     }
 
     @Test
     void testEmptyTextShowsHostAndPath() {
-        final Hyperlink hyperlink = link("", "https://user:secret@example.com:8443/a/b/", "browser");
+        final LinkValue hyperlink = link("", "https://user:secret@example.com:8443/a/b/", "browser");
 
         // Not dropped: shown, and named, by its host and path
         assertThat(HyperlinkName.getDisplayText(hyperlink)).isEqualTo("example.com:8443/a/b");
@@ -92,14 +92,14 @@ class TestHyperlinkName {
 
     @Test
     void testBlankTextShowsTitle() {
-        final Hyperlink hyperlink = link("   ", "https://example.com/a", "dialog| My Dialog ");
+        final LinkValue hyperlink = link("   ", "https://example.com/a", "dialog| My Dialog ");
 
         assertThat(HyperlinkName.getDisplayText(hyperlink)).isEqualTo("My Dialog");
     }
 
     @Test
     void testNullTextShowsWhatAStroomLinkOpens() {
-        final Hyperlink hyperlink = link(null, "?uuid=abc&params=x", "dashboard");
+        final LinkValue hyperlink = link(null, "?uuid=abc&params=x", "dashboard");
 
         assertThat(HyperlinkName.getDisplayText(hyperlink)).isEqualTo("Dashboard");
     }
@@ -156,13 +156,13 @@ class TestHyperlinkName {
 
     @Test
     void testUrlWithNoHostIsNamedByHref() {
-        final Hyperlink hyperlink = link("", "https://", null);
+        final LinkValue hyperlink = link("", "https://", null);
 
         assertThat(HyperlinkName.getDisplayText(hyperlink)).isEqualTo("https://");
     }
 
-    private static Hyperlink link(final String text, final String href, final String type) {
-        return Hyperlink.builder()
+    private static LinkValue link(final String text, final String href, final String type) {
+        return LinkValue.builder()
                 .text(text)
                 .href(href)
                 .type(type)

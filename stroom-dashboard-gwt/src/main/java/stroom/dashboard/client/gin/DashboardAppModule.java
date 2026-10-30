@@ -18,12 +18,12 @@ package stroom.dashboard.client.gin;
 
 import stroom.core.client.CoreScreens;
 import stroom.core.client.UrlParameters;
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.data.client.DataDisplaySupport;
 import stroom.editor.client.DelegatingAceCompleter;
 import stroom.event.client.StaticEventBus;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
+import stroom.hyperlink.client.HyperlinkOpener;
 import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.widget.util.client.GlobalKeyHandler;
 
@@ -46,12 +46,12 @@ public class DashboardAppModule extends AbstractGinModule {
         bind(DelegatingAceCompleter.class).asEagerSingleton();
         bind(DataDisplaySupport.class).asEagerSingleton();
         // Follows the hyperlinks in dashboards' tables and text, as the app's AppModule does
-        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
+        bind(HyperlinkOpener.class).asEagerSingleton();
 
         // Controllers
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
-        bind(CoreController.class).in(Singleton.class);
+        bind(AppPageController.class).in(Singleton.class);
 
         bind(FullScreenController.class).in(Singleton.class);
     }

@@ -23,7 +23,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.SpecialColumns;
 import stroom.query.client.QueryModel;
-import stroom.query.client.ResultComponent;
+import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.TableRow;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.widget.component.client.LayerController;
@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 /// row has a stream and an event id.
 public class QueryResultTableSplitController
         extends LayerController
-        implements ResultComponent {
+        implements QueryResultConsumer {
 
     private final QueryResultTableSplit view;
     private final QueryResultTableController tableController;

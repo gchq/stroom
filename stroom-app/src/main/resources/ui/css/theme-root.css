@@ -137,11 +137,11 @@
     --expression-item__drop-target: var(--icon-colour__dark-green);
     --expression-item__drop-refused: var(--icon-colour__red);
 
-    /* Pipeline elements, in the pipeline structure tree (pipeline-element.css) and the stepping
+    /* Pipeline elements, in the pipeline structure tree (pipeline-element-box.css) and the stepping
        screen's pipeline bar (pipeline-path-bar.css) */
     --pipeline-element__background-color: #f5f9fd;
     --pipeline-element__text-color: #444;
-    /* The names of pipeline elements held down with the mouse (pipeline-element.css,
+    /* The names of pipeline elements held down with the mouse (pipeline-element-box.css,
        pipeline-path-bar.css), at least 4.5:1 against the pressed fill */
     --pipeline-element__text-color--pressed: var(--pipeline-element__text-color);
     --pipeline-element__border-color: #918e8c;
@@ -155,11 +155,11 @@
     --pipeline-connector__raw: var(--orange-900);
     --pipeline-connector__xml: var(--purple-600);
     --pipeline-connector__bytes: var(--blue-700);
-    /* The pipeline tree's drop target's border (pipeline-element.css), and that of an element
+    /* The pipeline tree's drop target's border (pipeline-element-box.css), and that of an element
        that refuses what is dropped, at least 3:1 against the page as the bar's */
     --pipeline-element__drop-target: var(--icon-colour__dark-green);
     --pipeline-element__drop-refused: var(--icon-colour__red);
-    /* A selected pipeline element (pipeline-element.css, pipeline-path-bar.css), as a selected row */
+    /* A selected pipeline element (pipeline-element-box.css, pipeline-path-bar.css), as a selected row */
     --pipeline-element__background-color--selected: var(--row__background-color--selected);
     --pipeline-element__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element__text-color--selected: var(--text-color--selected);
@@ -197,11 +197,11 @@
     --code-editor__background-color--fatal: #000000;
     --code-editor__background-color--highlight: yellow;
 
-    --xsdbrowser-box__background-color: white;
-    --xsdbrowser-box__border-color: #404e60;
+    --xsd-browser__box-background-color: white;
+    --xsd-browser__box-border-color: #404e60;
     /* Dark enough for the titles' white text to be 4.5:1 */
-    --xsdbrowser-title__background-color: #6b6b6b;
-    --xsdbrowser-title__background-color--selected: var(--blue-700);
+    --xsd-browser__title-background-color: #6b6b6b;
+    --xsd-browser__title-background-color--selected: var(--blue-700);
 
     --scrollbar__background-color: transparent;
     --scrollbar-corner__background-color: transparent;

@@ -16,7 +16,7 @@
 
 package stroom.core.client;
 
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
@@ -34,19 +34,19 @@ public class CoreScreens {
     /// Adds the handlers of the events that open the screens.
     ///
     /// @param eventBus The application's event bus.
-    /// @param coreControllerProvider Makes the CoreController.
+    /// @param appPageControllerProvider Makes the AppPageController.
     /// @param fullScreenControllerProvider Makes the FullScreenController.
     @Inject
     public CoreScreens(final EventBus eventBus,
-                       final Provider<CoreController> coreControllerProvider,
+                       final Provider<AppPageController> appPageControllerProvider,
                        final Provider<FullScreenController> fullScreenControllerProvider) {
-        eventBus.addHandler(TaskStartEvent.getType(), event -> coreControllerProvider.get().onTaskStart(event));
-        eventBus.addHandler(TaskEndEvent.getType(), event -> coreControllerProvider.get().onTaskEnd(event));
+        eventBus.addHandler(TaskStartEvent.getType(), event -> appPageControllerProvider.get().onTaskStart(event));
+        eventBus.addHandler(TaskEndEvent.getType(), event -> appPageControllerProvider.get().onTaskEnd(event));
         eventBus.addHandler(CurrentUserChangedEvent.getType(), event ->
-                coreControllerProvider.get().onCurrentUserChanged(event));
+                appPageControllerProvider.get().onCurrentUserChanged(event));
         eventBus.addHandler(ShowFullScreenEvent.getType(), event -> {
             fullScreenControllerProvider.get().onShowFullScreen(event);
-            coreControllerProvider.get().setContent(fullScreenControllerProvider.get());
+            appPageControllerProvider.get().setContent(fullScreenControllerProvider.get());
         });
     }
 }

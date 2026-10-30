@@ -18,8 +18,8 @@ package stroom.pathways.client.component;
 
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.client.component.PlanBSettingsController;
@@ -52,14 +52,14 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
     /// @param view                  Its component.
     /// @param tracesListTab         The traces list tab.
     /// @param planBSettingsProvider Makes the plan bsettings.
-    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param documentationTabProvider  Makes the Documentation tab's editor.
     /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public TracesEditor(final EventBus eventBus,
                         final LinkTabPanel view,
                         final TracesListTabController tracesListTab,
                         final Provider<PlanBSettingsController> planBSettingsProvider,
-                        final Provider<MarkdownEditController> markdownEditProvider,
+                        final Provider<DocumentationTabController> documentationTabProvider,
                         final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.tracesListTab = own(tracesListTab);
@@ -80,7 +80,7 @@ public class TracesEditor extends DocumentEditor<TracesDoc> {
                         .settings(planBSettings.writeSettings())
                         .build());
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 TracesDoc::getDescription,
                 (doc, description) -> doc.copyTraces().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

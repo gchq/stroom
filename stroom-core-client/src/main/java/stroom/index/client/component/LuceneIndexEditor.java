@@ -17,8 +17,8 @@
 package stroom.index.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -49,7 +49,7 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
     /// @param indexFieldListProvider Makes the index field list.
     /// @param indexShardListProvider Makes the index shard list.
     /// @param indexDataProvider      Makes the index data.
-    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param documentationTabProvider   Makes the Documentation tab's editor.
     /// @param permissionsProvider    Makes the Permissions tab.
     /// @param securityContext        The user's permissions.
     @Inject
@@ -59,7 +59,7 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
                              final Provider<IndexFieldListController> indexFieldListProvider,
                              final Provider<IndexShardListController> indexShardListProvider,
                              final Provider<IndexDataController> indexDataProvider,
-                             final Provider<MarkdownEditController> markdownEditProvider,
+                             final Provider<DocumentationTabController> documentationTabProvider,
                              final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, view);
@@ -84,7 +84,7 @@ public class LuceneIndexEditor extends DocumentEditor<LuceneIndexDoc> {
                 indexDataProvider::get,
                 IndexDataController::read);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 LuceneIndexDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

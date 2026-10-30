@@ -228,7 +228,7 @@ export async function nudge(page, f) {
     return 'typed';
   }
   if (f.kind === 'spinner') {
-    // One short press: `Spinner` starts a repeating timer at 30ms, so a long hold would run the
+    // One short press: `ValueSpinnerModel` starts a repeating timer at 30ms, so a long hold would run the
     // value away. The value is NOT put back — the document is dirty either way, exactly as for a
     // tick or a selection, and the walker's tab-close machinery answers the discard prompt.
     await page.mouse.move(f.x, f.y);

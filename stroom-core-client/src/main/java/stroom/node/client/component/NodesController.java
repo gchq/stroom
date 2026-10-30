@@ -17,7 +17,7 @@
 package stroom.node.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.job.shared.JobNode;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
@@ -30,7 +30,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// Shows the nodes, and the selected node's jobs.
 public class NodesController extends ContentTabController
-        implements Refreshable {
+        implements HasRefresh {
 
     public static final String TAB_TYPE = "Nodes";
 

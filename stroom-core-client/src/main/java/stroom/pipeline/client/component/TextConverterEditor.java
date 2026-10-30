@@ -18,8 +18,8 @@ package stroom.pipeline.client.component;
 
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -50,14 +50,14 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
     /// @param view                 Its component.
     /// @param settingsProvider     Makes the Settings tab.
     /// @param codeTabProvider      Makes the code tab.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public TextConverterEditor(final EventBus eventBus,
                                final LinkTabPanel view,
                                final Provider<TextConverterSettingsController> settingsProvider,
                                final Provider<CodeTabController> codeTabProvider,
-                               final Provider<MarkdownEditController> markdownEditProvider,
+                               final Provider<DocumentationTabController> documentationTabProvider,
                                final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         addTab(CONVERSION,
@@ -80,7 +80,7 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
                 TextConverterSettingsController::read,
                 TextConverterSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 TextConverterDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

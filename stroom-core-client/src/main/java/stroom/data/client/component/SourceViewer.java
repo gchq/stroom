@@ -19,7 +19,7 @@ package stroom.data.client.component;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.component.client.Component;
 import stroom.widget.progress.client.component.SourceProgressBar;
-import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.LargeBusySpinner;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
@@ -55,7 +55,7 @@ public class SourceViewer extends Component {
     @UiField
     SourceProgressBar progressBar;
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
     @UiField
     ClassificationWrapper classification;
     @UiField

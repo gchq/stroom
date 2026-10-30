@@ -16,13 +16,13 @@
 
 package stroom.app.client.gin;
 
-import stroom.explorer.client.NavigationPlugin;
+import stroom.explorer.client.ExplorerPlugin;
 import stroom.explorer.client.TabSessionManager;
 
 public interface PluginsGinjector {
 
     TabSessionManager getTabSessionManager();
 
-    NavigationPlugin getNavigationPlugin();
+    ExplorerPlugin getExplorerPlugin();
 
 }

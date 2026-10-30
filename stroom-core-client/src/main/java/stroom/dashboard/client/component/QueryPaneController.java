@@ -22,10 +22,10 @@ import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.dashboard.client.component.QueryPane.QueryPaneAction;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
@@ -38,7 +38,7 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -86,7 +86,7 @@ import java.util.stream.Collectors;
 /// the search's messages, its history and favourites, downloading it and processing it with a
 /// pipeline.
 public class QueryPaneController
-        extends RefreshableDashboardComponentController
+        extends RefreshableDashboardPaneController
         implements SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
@@ -100,7 +100,7 @@ public class QueryPaneController
     private final ExpressionTreeController expressionTree;
     private final QueryHistoryController history;
     private final QueryFavouritesController favourites;
-    private final Provider<ExplorerPopupController> pipelineSelection;
+    private final Provider<DocumentChooserController> pipelineSelection;
     private final Provider<ProcessorLimitsController> processorLimitsControllerProvider;
     private final RestFactory restFactory;
     private final UiConfigCache clientPropertyCache;
@@ -140,7 +140,7 @@ public class QueryPaneController
                                final ExpressionTreeController expressionTree,
                                final QueryHistoryController history,
                                final QueryFavouritesController favourites,
-                               final Provider<ExplorerPopupController> pipelineSelection,
+                               final Provider<DocumentChooserController> pipelineSelection,
                                final Provider<ProcessorLimitsController> processorLimitsControllerProvider,
                                final IndexLoader indexLoader,
                                final RestFactory restFactory,
@@ -374,7 +374,7 @@ public class QueryPaneController
                 .timeRange(dashboardContext.getResolvedTimeRange())
                 .build();
 
-        final ExplorerPopupController chooser = pipelineSelection.get();
+        final DocumentChooserController chooser = pipelineSelection.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);

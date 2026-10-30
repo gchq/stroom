@@ -21,8 +21,8 @@ import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
@@ -43,7 +43,7 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ReportQueryEditController reportQueryEdit;
+    private final ReportQueryEditorController reportQueryEdit;
     private final NotificationListController notificationList;
 
     /// Makes the editor, with its Query, Settings, Notifications, Execution, Documentation and
@@ -55,16 +55,16 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
     /// @param reportSettingsProvider     Makes the report settings.
     /// @param notificationListProvider   Makes the notification list.
     /// @param analyticProcessingProvider Makes the analytic processing.
-    /// @param markdownEditProvider       Makes the Documentation tab's editor.
+    /// @param documentationTabProvider       Makes the Documentation tab's editor.
     /// @param permissionsProvider        Makes the Permissions tab.
     @Inject
     public ReportEditor(final EventBus eventBus,
                         final LinkTabPanel view,
-                        final ReportQueryEditController reportQueryEdit,
+                        final ReportQueryEditorController reportQueryEdit,
                         final Provider<ReportSettingsTabController> reportSettingsProvider,
                         final Provider<NotificationListController> notificationListProvider,
                         final Provider<AnalyticProcessingController> analyticProcessingProvider,
-                        final Provider<MarkdownEditController> markdownEditProvider,
+                        final Provider<DocumentationTabController> documentationTabProvider,
                         final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         this.reportQueryEdit = own(reportQueryEdit);
@@ -75,7 +75,7 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
         // the tab has been opened
         this.notificationList = make(notificationListProvider);
 
-        addOwnedTab(QUERY, reportQueryEdit, ReportQueryEditController::read, ReportQueryEditController::write);
+        addOwnedTab(QUERY, reportQueryEdit, ReportQueryEditorController::read, ReportQueryEditorController::write);
         addTab(SETTINGS,
                 reportSettingsProvider::get,
                 ReportSettingsTabController::read,
@@ -98,7 +98,7 @@ public class ReportEditor extends DocumentEditor<ReportDoc> {
                         .analyticProcessConfig(processing.writeProcessConfig())
                         .build());
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 ReportDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

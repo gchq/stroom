@@ -119,10 +119,10 @@
     color: var(--icon-button__color);
 }
 
-/* In the explorer (navigation.css), the icons are in the explorer's colours, a quiet toolbar's too
+/* In the explorer (explorer.css), the icons are in the explorer's colours, a quiet toolbar's too
    (so three classes, to outweigh toolbar.css's toolbar--quiet), but not a pressed button's (after
    this) */
-.navigation .toolbar-button .toolbar-button__icon {
+.explorer .toolbar-button .toolbar-button__icon {
     color: var(--navigation-icon-button__color);
 }
 
@@ -175,14 +175,14 @@
     height: 10px;
 }
 
-/* In the explorer (navigation.css), the hover and pressed fills are the explorer's: last, so that its
+/* In the explorer (explorer.css), the hover and pressed fills are the explorer's: last, so that its
    hover outweighs a press (:active, above), and shows over a pressed button's fill too */
-.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
+.explorer .toolbar-button:not([aria-disabled="true"]):hover::before {
     background-color: var(--navigation-icon-button__background-color--hover);
     border: thin solid var(--navigation-icon-button__border-color--hover);
 }
 
-.navigation .toolbar-button[aria-pressed="true"]::before {
+.explorer .toolbar-button[aria-pressed="true"]::before {
     background-color: var(--navigation-icon-button__background-color--on);
     border: thin solid var(--navigation-icon-button__border-color--on);
 }

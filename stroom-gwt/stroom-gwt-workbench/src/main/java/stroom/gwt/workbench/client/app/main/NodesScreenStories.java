@@ -189,7 +189,7 @@ public final class NodesScreenStories {
                 .build();
         final NodesController controller = harness.show(injector.getNodesController());
         if (selectedNode != null) {
-            // As NodeMonitoringPlugin does for an OpenNodeEvent (the Jobs screen's 'Node' link)
+            // As NodesPlugin does for an OpenNodeEvent (the Jobs screen's 'Node' link)
             controller.setSelected(JobNode.builder().nodeName(selectedNode).build());
         }
         return harness.asWidget();

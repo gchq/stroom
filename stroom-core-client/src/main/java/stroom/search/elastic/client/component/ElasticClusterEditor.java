@@ -17,8 +17,8 @@
 package stroom.search.elastic.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -41,14 +41,14 @@ public class ElasticClusterEditor extends DocumentEditor<ElasticClusterDoc> {
     /// @param eventBus                The application's event bus.
     /// @param view                    Its component.
     /// @param clusterSettingsProvider Makes the cluster settings.
-    /// @param markdownEditProvider    Makes the Documentation tab's editor.
+    /// @param documentationTabProvider    Makes the Documentation tab's editor.
     /// @param permissionsProvider     Makes the Permissions tab.
     @Inject
     public ElasticClusterEditor(
             final EventBus eventBus,
             final LinkTabPanel view,
             final Provider<ElasticClusterSettingsController> clusterSettingsProvider,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -57,7 +57,7 @@ public class ElasticClusterEditor extends DocumentEditor<ElasticClusterDoc> {
                 ElasticClusterSettingsController::read,
                 ElasticClusterSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 ElasticClusterDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

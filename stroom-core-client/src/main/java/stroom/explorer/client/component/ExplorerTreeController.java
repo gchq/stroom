@@ -444,7 +444,7 @@ public class ExplorerTreeController extends Controller {
     private void onDataChanged(final FetchExplorerNodeResult result) {
         explorerTree.setRootNodes(result.getRootNodes());
         // A rejected filter comes back as an empty tree like any other, so surface the reason on
-        // whichever quick filter is driving this tree. Every explorer surface - navigation, entity
+        // whichever quick filter is driving this tree. Every explorer surface - the explorer, document
         // tree, the explorer popup, export config - shares this one callback. See
         // FetchExplorerNodeResult.filterError.
         if (onFilterError != null) {

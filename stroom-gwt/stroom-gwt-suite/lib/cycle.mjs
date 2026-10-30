@@ -101,7 +101,7 @@ export async function clickButton(page, label) {
     // The screen's button before the explorer's: the explorer's New and Delete come first on the page
     // and are enabled whenever something is selected in the tree, which an earlier cycle leaves so.
     // Pressing its New opened the explorer's menu where Annotation Labels' New was meant.
-    const el = matches.find((b) => !b.closest('.navigation')) ?? matches[0];
+    const el = matches.find((b) => !b.closest('.explorer')) ?? matches[0];
     if (!el) return null;
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1245,7 +1245,7 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
       await annotate('Edit Annotation');
       await toTab(new RegExp(`#${id} `));
       // The history as shown (it has no hidden copy of its text since gchq/stroom#5897)
-      return page.locator('.annotation-edit__history-outer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
+      return page.locator('.annotation-editor__history-outer').filter({ visible: true }).first().innerText({ timeout: 5_000 });
     };
     if (spec.comment && await phase('add a comment', async () => {
       if (!(await tabs()).some((t) => t.startsWith(`#${id} `))) {
@@ -1368,7 +1368,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   const press = async (title) => {
     const box = await page.evaluate((t) => {
       const b = [...document.querySelectorAll('button')].find((e) => e.offsetWidth > 0 && e.title === t
-        && !e.closest('.navigation') && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
+        && !e.closest('.explorer') && !e.disabled && e.getAttribute('aria-disabled') !== 'true');
       if (!b) return null;
       const r = b.getBoundingClientRect();
       return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
@@ -1409,7 +1409,7 @@ export async function runStreamCycle(page, spec, { guard, settle, log = () => {}
   const tick = async () => {
     const box = await page.evaluate((text) => {
       const row = [...document.querySelectorAll('.data-grid [role=row][data-row]')]
-        .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.navigation'));
+        .find((r) => r.offsetWidth > 0 && r.textContent.includes(text) && !r.closest('.explorer'));
       const t = row?.querySelector('.tick-box--cell');
       if (!t) return null;
       t.scrollIntoView({ block: 'center' });

@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.gin.dashboard;
 
-import stroom.dashboard.client.main.ComponentRegistry;
+import stroom.dashboard.client.main.PaneRegistry;
 import stroom.visualisation.client.VisFunctionCache;
 
 import com.google.gwt.inject.client.AbstractGinModule;
@@ -27,15 +27,15 @@ import com.google.inject.Singleton;
 /// A story shows a screen that Stroom opens on an app-wide event by adding a handler for
 /// the event, as the screen's area plugin does in Stroom.
 ///
-/// Unlike the other mirrors, it keeps the dashboard's singletons: the `ComponentRegistry` (which the
-/// component plugins fill, and every dashboard's `Components` reads) and the `VisFunctionCache`
+/// Unlike the other mirrors, it keeps the dashboard's singletons: the `PaneRegistry` (which the
+/// component plugins fill, and every dashboard's `Panes` reads) and the `VisFunctionCache`
 /// (bound by Stroom's `VisModule` and `EmbeddedQueryModule`).
 public class DashboardScreenModule extends AbstractGinModule {
 
     /// Binds the controllers and components.
     @Override
     protected void configure() {
-        bind(ComponentRegistry.class).in(Singleton.class);
+        bind(PaneRegistry.class).in(Singleton.class);
         bind(VisFunctionCache.class).in(Singleton.class);
 
     }

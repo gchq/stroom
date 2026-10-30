@@ -26,8 +26,8 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.UserAndGroupHelper;
 import stroom.security.client.UserScreen;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
@@ -139,7 +139,7 @@ public class UserListController extends Controller {
                         .copy()
                         .enabled(enabled)
                         .build()))
-                .onSuccess(UserAndGroupHelper.createAfterChangeConsumer(this))
+                .onSuccess(UsersAndGroupsHelper.createAfterChangeConsumer(this))
                 .owner(this)
                 .taskMonitorFactory(view.getTaskMonitor())
                 .exec();
@@ -211,7 +211,7 @@ public class UserListController extends Controller {
     /// @param userRef The user, or `null` to leave the list as it is.
     public void showUser(final UserRef userRef) {
         if (userRef != null) {
-            setQuickFilterText(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
+            setQuickFilterText(UsersAndGroupsHelper.buildDisplayNameFilterInput(userRef));
         }
     }
 
@@ -247,7 +247,7 @@ public class UserListController extends Controller {
                 showEnabledCol,
                 showUniqueUserIdCol,
                 () -> refCells.configure(new UserRefCell.Builder<User>()),
-                (User user) -> UserAndGroupHelper.buildUserActionMenu(
+                (User user) -> UsersAndGroupsHelper.buildUserActionMenu(
                         NullSafe.get(user, User::asRef),
                         isExternalIdp,
                         Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),

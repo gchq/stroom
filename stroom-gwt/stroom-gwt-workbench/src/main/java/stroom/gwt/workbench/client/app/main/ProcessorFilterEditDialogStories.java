@@ -35,7 +35,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.client.component.ProcessorEditController;
+import stroom.processor.client.component.ProcessorEditorController;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
@@ -50,7 +50,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditController]
+/// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditorController]
 /// (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorsController` shows it) with fake REST
 /// replies.
 ///
@@ -71,7 +71,7 @@ public final class ProcessorFilterEditDialogStories {
 
     private static final String VALIDATE_PATH = "/expression/v1/validate";
 
-    // ProcessorEditController's confirmations
+    // ProcessorEditorController's confirmations
     private static final String ALL_FEEDS = "about to process all feeds";
     private static final String UPDATE_EXISTING = "update an existing filter";
 
@@ -371,7 +371,7 @@ public final class ProcessorFilterEditDialogStories {
         final DocRef pipelineRef = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("My Pipeline").build();
         harness.afterStartUp(() -> {
             // As ProcessorsController adds or edits a filter
-            injector.getProcessorEditController().show(harness.getAppRoot(),
+            injector.getProcessorEditorController().show(harness.getAppRoot(),
                     ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
                     harness.spy(ON_SAVED, result == null
                             ? null

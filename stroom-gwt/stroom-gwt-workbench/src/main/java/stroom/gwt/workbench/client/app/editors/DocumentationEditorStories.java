@@ -20,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.documentation.client.component.DocumentationEditor;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
-import stroom.entity.client.component.MarkdownEditController;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -54,7 +54,7 @@ public final class DocumentationEditorStories {
                     "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
             .build();
 
-    // The preview is an iframe with no title, identified by its id (MarkdownEditController's
+    // The preview is an iframe with no title, identified by its id (DocumentationTabController's
     // MARKDOWN_FRAME_ID)
     private static final String PREVIEW = "iframe#markdown-frame";
 

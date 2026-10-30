@@ -24,13 +24,13 @@ import stroom.dashboard.client.input.KeyValueInputPlugin;
 import stroom.dashboard.client.input.ListInputPlugin;
 import stroom.dashboard.client.input.TableFilterPlugin;
 import stroom.dashboard.client.input.TextInputPlugin;
-import stroom.dashboard.client.query.QueryPlugin;
+import stroom.dashboard.client.query.QueryPanePlugin;
 import stroom.dashboard.client.table.TablePlugin;
 import stroom.dashboard.client.text.TextPlugin;
 import stroom.dashboard.client.vis.VisPlugin;
 import stroom.data.client.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
+import stroom.hyperlink.client.HyperlinkOpener;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -38,14 +38,14 @@ import com.google.gwt.inject.client.GinModules;
 /// dashboard table's expression editor and `App/Dashboard/TableFilterSettings`), creating Stroom's
 /// controllers and components as Stroom's GIN modules do, as `AppScreenGinjector` does for the pilot.
 /// Create one each time the story renders: its singletons (e.g. the dashboard's
-/// `ComponentRegistry`) belong to that rendering's harness.
+/// `PaneRegistry`) belong to that rendering's harness.
 ///
 /// It reuses the query batch's mirrors of the modules a dashboard's components share with
 /// StroomQL queries (the dashboard Table, Query and Vis modules, pipelines, annotations, streams)
 /// and the editors batch's mirror of the Ask Stroom AI module, and adds mirrors of Stroom's
 /// `DashboardModule`, `EmbeddedQueryModule`, `InputModule` and `TextModule`.
 ///
-/// A dashboard creates its components through the `ComponentRegistry`, which Stroom's component
+/// A dashboard creates its components through the `PaneRegistry`, which Stroom's component
 /// plugins (eager singletons in Stroom) fill: get every plugin before reading a dashboard
 /// (`DashboardStories.registerComponentTypes`).
 @GinModules({
@@ -61,7 +61,7 @@ public interface DashboardScreenGinjector extends ScreenGinjector {
     AskStroomAiController getAskStroomAiController();
 
     /// @return Stroom's handler of `HyperlinkEvent`s (a table's links), which Stroom creates eagerly.
-    HyperlinkEventHandlerImpl getHyperlinkEventHandler();
+    HyperlinkOpener getHyperlinkOpener();
 
     /// @return Stroom's handler of `ShowDataEvent`s (a data link's dialog), which Stroom creates
     /// eagerly.
@@ -70,7 +70,7 @@ public interface DashboardScreenGinjector extends ScreenGinjector {
     // The component plugins, which register their component types as they are created
 
     /// @return The plugin of Query components.
-    QueryPlugin getQueryPlugin();
+    QueryPanePlugin getQueryPanePlugin();
 
     /// @return The plugin of Table components.
     TablePlugin getTablePlugin();

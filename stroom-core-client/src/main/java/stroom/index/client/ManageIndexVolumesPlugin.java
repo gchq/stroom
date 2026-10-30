@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.index.client.component.IndexVolumeGroupsController;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
+import stroom.node.client.ToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -36,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolumeGroupsController> {
+public class ManageIndexVolumesPlugin extends ToolsContentPlugin<IndexVolumeGroupsController> {
 
     @Inject
     ManageIndexVolumesPlugin(final EventBus eventBus,

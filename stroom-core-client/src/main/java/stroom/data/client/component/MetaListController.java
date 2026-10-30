@@ -29,7 +29,7 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -94,8 +94,8 @@ public class MetaListController extends Controller {
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryController> selectionSummaryControllerProvider;
-    private final Provider<ProcessChoiceDialogController> processChoiceDialogProvider;
-    private final Provider<ExplorerPopupController> pipelineSelection;
+    private final Provider<CreateProcessorsController> createProcessorsProvider;
+    private final Provider<DocumentChooserController> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
     private final RefCellsController refCells;
@@ -117,7 +117,7 @@ public class MetaListController extends Controller {
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
     /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
-    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param createProcessorsProvider        Makes the dialog that chooses how to process them.
     /// @param pipelineSelection                  Makes the popup that picks a pipeline.
     /// @param expressionValidator                Checks an expression with the server.
     /// @param refCells                           Lets the feed and pipeline cells open them.
@@ -127,8 +127,8 @@ public class MetaListController extends Controller {
                               final LocationManager locationManager,
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
-                              final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
-                              final Provider<ExplorerPopupController> pipelineSelection,
+                              final Provider<CreateProcessorsController> createProcessorsProvider,
+                              final Provider<DocumentChooserController> pipelineSelection,
                               final ExpressionValidator expressionValidator,
                               final RefCellsController refCells) {
         this(eventBus,
@@ -136,7 +136,7 @@ public class MetaListController extends Controller {
                 locationManager,
                 dateTimeFormatter,
                 selectionSummaryControllerProvider,
-                processChoiceDialogProvider,
+                createProcessorsProvider,
                 pipelineSelection,
                 expressionValidator,
                 refCells,
@@ -150,7 +150,7 @@ public class MetaListController extends Controller {
     /// @param locationManager                    Opens a download.
     /// @param dateTimeFormatter                  Formats the times shown.
     /// @param selectionSummaryControllerProvider Makes the summary of the streams chosen.
-    /// @param processChoiceDialogProvider        Makes the dialog that chooses how to process them.
+    /// @param createProcessorsProvider        Makes the dialog that chooses how to process them.
     /// @param pipelineSelection                  Makes the popup that picks a pipeline.
     /// @param expressionValidator                Checks an expression with the server.
     /// @param refCells                           Lets the feed and pipeline cells open them.
@@ -160,8 +160,8 @@ public class MetaListController extends Controller {
                                  final LocationManager locationManager,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final Provider<SelectionSummaryController> selectionSummaryControllerProvider,
-                                 final Provider<ProcessChoiceDialogController> processChoiceDialogProvider,
-                                 final Provider<ExplorerPopupController> pipelineSelection,
+                                 final Provider<CreateProcessorsController> createProcessorsProvider,
+                                 final Provider<DocumentChooserController> pipelineSelection,
                                  final ExpressionValidator expressionValidator,
                                  final RefCellsController refCells,
                                  final Columns columns) {
@@ -172,7 +172,7 @@ public class MetaListController extends Controller {
         this.locationManager = locationManager;
         this.dateTimeFormatter = dateTimeFormatter;
         this.selectionSummaryControllerProvider = selectionSummaryControllerProvider;
-        this.processChoiceDialogProvider = processChoiceDialogProvider;
+        this.createProcessorsProvider = createProcessorsProvider;
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
@@ -427,7 +427,7 @@ public class MetaListController extends Controller {
     public void process() {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
-            processChoiceDialogProvider.get().show(this, selection, choice -> {
+            createProcessorsProvider.get().show(this, selection, choice -> {
                 if (choice.isReprocess()) {
                     doReprocess(choice);
                 } else {
@@ -499,7 +499,7 @@ public class MetaListController extends Controller {
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final ExplorerPopupController chooser = pipelineSelection.get();
+        final DocumentChooserController chooser = pipelineSelection.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);

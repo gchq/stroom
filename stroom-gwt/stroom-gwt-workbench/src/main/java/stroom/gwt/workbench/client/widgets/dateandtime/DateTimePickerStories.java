@@ -217,7 +217,7 @@ public final class DateTimePickerStories {
     private static DateTimeBox dateTimeBox(final StoryContext context,
                                            final ScreenHarness harness,
                                            final Long valueMs) {
-        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditController
+        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditorController
         final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         // Named, as a form group's label names it on Stroom's screens
         AccessibleName.set(box, "Start Time");

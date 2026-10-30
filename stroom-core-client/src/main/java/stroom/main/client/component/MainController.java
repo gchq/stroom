@@ -21,7 +21,7 @@ import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.data.client.event.ShowAskStroomAiEvent;
-import stroom.explorer.client.component.NavigationController;
+import stroom.explorer.client.component.ExplorerController;
 import stroom.main.client.PageTitle;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.event.DockResizeEvent;
@@ -64,7 +64,7 @@ public class MainController extends Controller {
     private final Timer refreshTimer;
     private boolean click;
     private final MenuItems menuItems;
-    private final NavigationController navigation;
+    private final ExplorerController explorer;
     private int taskCount;
     private boolean showingAi;
     private String baseTitle = "Stroom";
@@ -77,7 +77,7 @@ public class MainController extends Controller {
     /// @param menuItems        The menu items.
     /// @param uiConfigCache    The UI's configuration.
     /// @param globalKeyHandler The global key handler.
-    /// @param navigation       The navigation.
+    /// @param explorer         The explorer.
     /// @param contentTabPane   The content tab pane.
     @Inject
     public MainController(final EventBus eventBus,
@@ -85,14 +85,14 @@ public class MainController extends Controller {
                          final MenuItems menuItems,
                          final UiConfigCache uiConfigCache,
                          final GlobalKeyHandler globalKeyHandler,
-                         final NavigationController navigation,
+                         final ExplorerController explorer,
                          final ContentTabPaneController contentTabPane) {
         super(eventBus);
         this.view = view;
         initWidget(view);
         this.menuItems = menuItems;
         own(contentTabPane).attach(view.getContent());
-        this.navigation = own(navigation).attach(view.getExplorer());
+        this.explorer = own(explorer).attach(view.getExplorer());
         view.setOnDockResize(size -> DockResizeEvent.fire(getEventBus()::fireEvent, size));
         view.getMainToolBar().setOnShowMenu(this::showMenu);
         view.getMainToolBar().setOnShowAi(() -> ShowAskStroomAiEvent.fire(this, !showingAi));
@@ -171,7 +171,7 @@ public class MainController extends Controller {
         });
         listen(ShowAskStroomAiEvent.getType(), event -> {
             showingAi = event.isShow();
-            view.getMainToolBar().getShowAi().setState(showingAi);
+            view.getMainToolBar().getShowAi().setPressed(showingAi);
         });
 
         refreshTimer = new Timer() {
@@ -190,7 +190,7 @@ public class MainController extends Controller {
     ///
     /// @param event The event.
     public void onShowMain(final ShowMainEvent event) {
-        navigation.onShowMain(event);
+        explorer.onShowMain(event);
     }
 
     private void updatePageTitle() {

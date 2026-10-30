@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Node actions">
-        <b:ToolbarToggleButton ui:field="autoRefreshButton" svg="AUTO_REFRESH" title="Auto Refresh" state="true"/>
+        <b:ToolbarToggleButton ui:field="autoRefreshButton" svg="AUTO_REFRESH" title="Auto Refresh" pressed="true"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Nodes"/>
     </dg:PagerPanel>
 </ui:UiBinder>

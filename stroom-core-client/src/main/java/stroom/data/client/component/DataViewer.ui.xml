@@ -5,6 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:d="urn:import:stroom.data.client.component"
              xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:pb="urn:import:stroom.widget.progress.client.component"
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:btn="urn:import:stroom.widget.button.client">
@@ -28,8 +29,8 @@
                 <g:SimplePanel styleName="dock-min data-viewer__progress-bar-panel">
                     <pb:SourceProgressBar ui:field="progressBar" visible="false"/>
                 </g:SimplePanel>
-                <tab:LayerContainerImpl ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"/>
-                <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
+                <c:LayerContainer ui:field="layerContainer" styleName="data-viewer__layer-container dock-max"/>
+                <spinner:LargeBusySpinner ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
             </g:FlowPanel>
         </d:content>
     </d:ClassificationWrapper>

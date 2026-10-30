@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.credentials.client.component.CredentialsManagerDialogController;
+import stroom.credentials.client.component.CredentialsPickerController;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -33,7 +33,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/CredentialPickerDialog`, showing Stroom's real
-/// [CredentialsManagerDialogController] (the 'Credentials' picker) with fake REST replies.
+/// [CredentialsPickerController] (the 'Credentials' picker) with fake REST replies.
 ///
 /// The controller comes from GIN ([AppScreenGinjector]), as Stroom injects it into
 /// `ContentStoreContentPackDetailsController`, and the story shows it as that controller does. The
@@ -77,7 +77,7 @@ public final class CredentialPickerDialogStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/CredentialPickerDialog", CredentialPickerDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Pick a stored credential -> returns its name (GWT CredentialsManagerDialog)
+                // Pick a stored credential -> returns its name (GWT CredentialsPicker)
                 .story("Pick", CredentialPickerDialogStories::render)
                 .withPlay(play -> {
                     final Play screen = play.screen();

@@ -9,7 +9,7 @@
                         addStyleNames="dock-max overflow-hidden focus-ring-room"
                         helpText="The folder to create the new item in.">
             <g:SimplePanel styleName="dock-max overflow-hidden default-min-sizes focus-ring-room">
-                <ex:EntityTree ui:field="folders"/>
+                <ex:DocumentPicker ui:field="folders"/>
             </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup ui:field="nameGroup" identity="createDocumentName" label="Name" addStyleNames="dock-min" required="true"

@@ -39,7 +39,7 @@ public class AnnotationTagsController extends ContentTabController {
 
     private final AnnotationTagListController annotationTagList;
     private final Provider<AnnotationTagCreateController> createProvider;
-    private final Provider<AnnotationTagEditController> editProvider;
+    private final Provider<AnnotationTagEditorController> editProvider;
     private final AnnotationResourceClient annotationResourceClient;
 
     private String tabLabel;
@@ -57,7 +57,7 @@ public class AnnotationTagsController extends ContentTabController {
             final EventBus eventBus,
             final AnnotationTagListController annotationTagList,
             final Provider<AnnotationTagCreateController> createProvider,
-            final Provider<AnnotationTagEditController> editProvider,
+            final Provider<AnnotationTagEditorController> editProvider,
             final AnnotationResourceClient annotationResourceClient) {
 
         super(eventBus);

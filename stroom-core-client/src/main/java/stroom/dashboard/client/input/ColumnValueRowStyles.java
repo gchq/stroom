@@ -16,11 +16,11 @@
 
 package stroom.dashboard.client.input;
 
-import stroom.dashboard.client.table.AbstractRowStyles;
+import stroom.dashboard.client.table.ConditionalRowStyles;
 import stroom.dashboard.shared.ColumnValue;
 import stroom.preferences.client.UserPreferencesManager;
 
-public class ColumnValueRowStyles extends AbstractRowStyles<ColumnValue> {
+public class ColumnValueRowStyles extends ConditionalRowStyles<ColumnValue> {
 
     public ColumnValueRowStyles(final UserPreferencesManager userPreferencesManager) {
         super(userPreferencesManager,

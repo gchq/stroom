@@ -17,8 +17,8 @@
 package stroom.floormap.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -43,7 +43,7 @@ public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreD
     /// @param view                 Its component.
     /// @param settingsProvider     Makes the Settings tab.
     /// @param dataProvider         Makes the data.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public FloorMapEventStoreEditor(
@@ -51,7 +51,7 @@ public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreD
             final LinkTabPanel view,
             final Provider<FloorMapEventStoreSettingsController> settingsProvider,
             final Provider<FloorMapEventStoreDataController> dataProvider,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -63,7 +63,7 @@ public class FloorMapEventStoreEditor extends DocumentEditor<FloorMapEventStoreD
                 dataProvider::get,
                 FloorMapEventStoreDataController::read);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 FloorMapEventStoreDoc::getDescription,
                 (doc, description) -> doc.copyEventStore().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

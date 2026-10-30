@@ -16,7 +16,7 @@
 
 package stroom.hyperlink.client;
 
-/// What a [Hyperlink] in a table cell shows, and what screen readers call it.
+/// What a [LinkValue] in a table cell shows, and what screen readers call it.
 ///
 /// A link is shown with its text and named by it. A link with no text is still shown, with a name
 /// made from the rest of the link, so that it can be seen and followed. A link whose text is just
@@ -45,7 +45,7 @@ public final class HyperlinkName {
     /// @param hyperlink A link.
     /// @return The text to show for the link: its text, or, when it has none, a name made from
     /// the rest of the link. Never null or blank.
-    public static String getDisplayText(final Hyperlink hyperlink) {
+    public static String getDisplayText(final LinkValue hyperlink) {
         final String text = trimToNull(hyperlink.getText());
         return text != null
                 ? text
@@ -55,7 +55,7 @@ public final class HyperlinkName {
     /// @param hyperlink A link.
     /// @return The link's accessible name when it should differ from the text shown (when the
     /// text is just its URL), or null when the text shown names it.
-    public static String getAccessibleName(final Hyperlink hyperlink) {
+    public static String getAccessibleName(final LinkValue hyperlink) {
         final String text = trimToNull(hyperlink.getText());
         if (text != null && isUrlText(text, hyperlink.getHref())) {
             final String name = describe(hyperlink);
@@ -68,7 +68,7 @@ public final class HyperlinkName {
 
     /// @param hyperlink A link.
     /// @return A name for the link made from all but its text. Never null or blank.
-    static String describe(final Hyperlink hyperlink) {
+    static String describe(final LinkValue hyperlink) {
         final String title = getTitle(hyperlink.getType());
         if (title != null) {
             return title;
@@ -113,7 +113,7 @@ public final class HyperlinkName {
         return trimToNull(stripTrailingSlashes(rest));
     }
 
-    // The title given after the type, e.g. 'My Tab' for 'tab|My Tab', as HyperlinkEventHandlerImpl
+    // The title given after the type, e.g. 'My Tab' for 'tab|My Tab', as HyperlinkOpener
     // reads it
     private static String getTitle(final String type) {
         if (type == null) {

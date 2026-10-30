@@ -16,8 +16,8 @@
 
 package stroom.query.client;
 
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkName;
+import stroom.hyperlink.client.LinkValue;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -130,7 +130,7 @@ public class TableRow {
 
     private void appendValue(final String value, final StringBuilder sb) {
         appendValue(value, part -> {
-            if (part instanceof final Hyperlink hyperlink) {
+            if (part instanceof final LinkValue hyperlink) {
                 // As the link is shown, which a link with no text still is
                 sb.append(NullSafe.isNonBlankString(hyperlink.getText())
                         ? hyperlink.getText()
@@ -142,7 +142,7 @@ public class TableRow {
         });
     }
 
-    private String buildTitle(final Hyperlink hyperlink) {
+    private String buildTitle(final LinkValue hyperlink) {
         final StringBuilder sb = new StringBuilder()
                 .append("Link to: '")
                 .append(hyperlink.getHref())
@@ -157,7 +157,7 @@ public class TableRow {
 
     private void appendValue(final String value, final SafeHtmlBuilder sb) {
         appendValue(value, part -> {
-            if (part instanceof final Hyperlink hyperlink) {
+            if (part instanceof final LinkValue hyperlink) {
                 // Title for the link tells you what it is linking to
                 final String title = buildTitle(hyperlink);
                 // A link with no text is shown with a name made from the rest of it, rather than
@@ -210,7 +210,7 @@ public class TableRow {
                 final char c = value.charAt(i);
                 if (c == '[') {
                     // Might be the start of a hyperlink or could just be a square bracket
-                    final Hyperlink hyperlink = Hyperlink.create(value, i);
+                    final LinkValue hyperlink = LinkValue.create(value, i);
                     if (hyperlink != null) {
                         //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
                         if (sb.length() > 0) {

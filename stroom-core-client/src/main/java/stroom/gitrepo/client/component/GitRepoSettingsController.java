@@ -51,7 +51,7 @@ public class GitRepoSettingsController extends Controller {
     private final GitRepoSettings view;
     private final RestFactory restFactory;
     // Makes the commit message dialog box
-    private final Provider<GitRepoCommitDialogController> commitDialogProvider;
+    private final Provider<GitRepoCommitController> commitDialogProvider;
     private final CredentialClient credentialClient;
     private final Provider<HttpClientConfigEditorController> httpClientConfigProvider;
 
@@ -74,7 +74,7 @@ public class GitRepoSettingsController extends Controller {
     public GitRepoSettingsController(final EventBus eventBus,
                                      final GitRepoSettings view,
                                      final RestFactory restFactory,
-                                     final Provider<GitRepoCommitDialogController> commitDialogProvider,
+                                     final Provider<GitRepoCommitController> commitDialogProvider,
                                      final CredentialClient credentialClient,
                                      final Provider<HttpClientConfigEditorController> httpClientConfigProvider) {
         super(eventBus);

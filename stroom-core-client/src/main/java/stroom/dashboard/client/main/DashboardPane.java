@@ -18,7 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.docref.HasDisplayValue;
 import stroom.widget.component.client.Layer;

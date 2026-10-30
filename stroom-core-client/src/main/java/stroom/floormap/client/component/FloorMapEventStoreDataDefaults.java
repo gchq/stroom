@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.component;
 
-import stroom.floormap.client.playback.FloorMapEventsQuery;
+import stroom.floormap.client.playback.FloorMapDefaultEventsQuery;
 import stroom.query.api.Column;
 
 import java.util.Arrays;
@@ -41,34 +41,34 @@ final class FloorMapEventStoreDataDefaults {
     // then changes does persist, because it is built from those real columns.
     private static final Column TIME_COL = Column.builder()
             .id("EffectiveTime")
-            .name(FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN)
+            .name(FloorMapDefaultEventsQuery.EFFECTIVE_TIME_COLUMN)
             .expression("EffectiveTime")
             .build();
     private static final Column KEY_COL = Column.builder().id("Key").name("Key").expression("Key").build();
     private static final Column VALUE_COL = Column.builder().id("Value").name("Value").expression("Value").build();
     private static final Column LOCATION_COL = Column.builder()
             .id("Location")
-            .name(FloorMapEventsQuery.LOCATION_COLUMN)
+            .name(FloorMapDefaultEventsQuery.LOCATION_COLUMN)
             .expression("jq(Value, '.location')")
             .build();
     private static final Column LOCATION_REF_COL = Column.builder()
             .id("LocationRef")
-            .name(FloorMapEventsQuery.LOCATION_REF_COLUMN)
+            .name(FloorMapDefaultEventsQuery.LOCATION_REF_COLUMN)
             .expression("jq(Value, '.locationRef')")
             .build();
     private static final Column TYPE_COL = Column.builder()
             .id("Type")
-            .name(FloorMapEventsQuery.EVENT_TYPE_COLUMN)
+            .name(FloorMapDefaultEventsQuery.EVENT_TYPE_COLUMN)
             .expression("jq(Value, '.type')")
             .build();
     private static final Column STATUS_COL = Column.builder()
             .id("Status")
-            .name(FloorMapEventsQuery.STATUS_COLUMN)
+            .name(FloorMapDefaultEventsQuery.STATUS_COLUMN)
             .expression("jq(Value, '.status')")
             .build();
     private static final Column MESSAGE_COL = Column.builder()
             .id("Message")
-            .name(FloorMapEventsQuery.MESSAGE_COLUMN)
+            .name(FloorMapDefaultEventsQuery.MESSAGE_COLUMN)
             .expression("jq(Value, '.message')")
             .build();
 
@@ -82,12 +82,12 @@ final class FloorMapEventStoreDataDefaults {
     /// `<input>` - so `setText` discards newlines rather than wrapping. A multi-line
     /// default does not come back multi-line; it comes back with the line breaks removed and the
     /// tokens either side fused, which is how `limit 100` became `limit 100select`.
-    /// `FloorMapEventsQuery.defaultQuery()` may span lines because the Events Query tab has a
+    /// `FloorMapDefaultEventsQuery.defaultQuery()` may span lines because the Events Query tab has a
     /// real editor. This one may not.
     ///
     /// `Key` keeps its Plan B name rather than the floor map's `Entity ID` alias: this
     /// tab reads the store, and the store's column is `Key`. The five aliases come from
-    /// [FloorMapEventsQuery] rather than literal text so that renaming one changes the events
+    /// [FloorMapDefaultEventsQuery] rather than literal text so that renaming one changes the events
     /// query and this tab together - the same reason that class exists at all.
     ///
     /// The store is named directly rather than through `param('EventStore')`: the Data tab
@@ -99,14 +99,14 @@ final class FloorMapEventStoreDataDefaults {
     /// @return the default query text, on a single line; never null
     static String query(final String storeName) {
         return "from \"" + storeName + "\" limit 100"
-               + " select EffectiveTime as \"" + FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN + "\""
+               + " select EffectiveTime as \"" + FloorMapDefaultEventsQuery.EFFECTIVE_TIME_COLUMN + "\""
                + ", Key"
                + ", Value"
-               + ", jq(Value, '.location') as \"" + FloorMapEventsQuery.LOCATION_COLUMN + "\""
-               + ", jq(Value, '.locationRef') as \"" + FloorMapEventsQuery.LOCATION_REF_COLUMN + "\""
-               + ", jq(Value, '.type') as \"" + FloorMapEventsQuery.EVENT_TYPE_COLUMN + "\""
-               + ", jq(Value, '.status') as \"" + FloorMapEventsQuery.STATUS_COLUMN + "\""
-               + ", jq(Value, '.message') as \"" + FloorMapEventsQuery.MESSAGE_COLUMN + "\"";
+               + ", jq(Value, '.location') as \"" + FloorMapDefaultEventsQuery.LOCATION_COLUMN + "\""
+               + ", jq(Value, '.locationRef') as \"" + FloorMapDefaultEventsQuery.LOCATION_REF_COLUMN + "\""
+               + ", jq(Value, '.type') as \"" + FloorMapDefaultEventsQuery.EVENT_TYPE_COLUMN + "\""
+               + ", jq(Value, '.status') as \"" + FloorMapDefaultEventsQuery.STATUS_COLUMN + "\""
+               + ", jq(Value, '.message') as \"" + FloorMapDefaultEventsQuery.MESSAGE_COLUMN + "\"";
     }
 
     /// The eight columns, in the order the grid shows them.

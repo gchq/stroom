@@ -22,7 +22,6 @@ import stroom.widget.component.client.Component;
 import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.CurveTabBar;
 import stroom.widget.tab.client.CurveTabLayoutPanel;
-import stroom.widget.tab.client.LayerContainerImpl;
 import stroom.widget.tab.client.TabBar;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 
@@ -49,7 +48,7 @@ public class CurveTabLayout extends Component {
     @UiField
     CurveTabBar tabBar;
     @UiField
-    LayerContainerImpl layerContainer;
+    LayerContainer layerContainer;
 
     private boolean menuVisible = true;
     private Runnable onToggleSidebar = () -> {

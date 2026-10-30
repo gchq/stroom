@@ -16,7 +16,7 @@
 
 package stroom.entity.client.component;
 
-import stroom.explorer.client.component.EntityTree;
+import stroom.explorer.client.component.DocumentPicker;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.SelectionBox;
 import stroom.widget.component.client.Component;
@@ -37,7 +37,7 @@ public class CreateDocument extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    EntityTree folders;
+    DocumentPicker folders;
     @UiField
     FormGroup nameGroup;
     @UiField
@@ -76,7 +76,7 @@ public class CreateDocument extends Component {
     }
 
     /// @return The folder picker, for its controller to attach to.
-    public EntityTree getFolders() {
+    public DocumentPicker getFolders() {
         return folders;
     }
 

@@ -26,7 +26,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.dateandtime.DateTimeWidgets;
 import stroom.gwt.workbench.client.widgets.editorsandviewers.EditorWidgets;
-import stroom.gwt.workbench.client.widgets.query.ExpressionBuilderStories;
+import stroom.gwt.workbench.client.widgets.query.ExpressionEditorStories;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -241,9 +241,9 @@ public final class ViewStateStories {
 
         table.setWidget(row, 0, label("Expression", true));
         // The expression editor draws its own border, as a field does
-        table.setWidget(row, 1, frame(ExpressionBuilderStories.expressionEditor(harness, false), "300px", "170px",
+        table.setWidget(row, 1, frame(ExpressionEditorStories.expressionEditor(harness, false), "300px", "170px",
                 false));
-        table.setWidget(row, 2, frame(ExpressionBuilderStories.expressionEditor(harness, true), "300px", "170px",
+        table.setWidget(row, 2, frame(ExpressionEditorStories.expressionEditor(harness, true), "300px", "170px",
                 false));
         table.setWidget(row, 3, note("No disabled state"));
         row++;
@@ -372,7 +372,7 @@ public final class ViewStateStories {
         final ToolbarToggleButton button = new ToolbarToggleButton();
         button.setSvg(SvgImage.FILTER);
         button.setTitle(on ? "Filter on" : "Filter off");
-        button.setState(on);
+        button.setPressed(on);
         button.setEnabled(enabled);
         return button;
     }
@@ -454,7 +454,7 @@ public final class ViewStateStories {
     }
 
     private static Widget dateTimeBox(final ScreenHarness harness) {
-        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditController
+        // As Stroom's controllers give it the dialog, e.g. ScheduledProcessEditorController
         final DateTimeBox box = DateTimeWidgets.withPicker(harness, new DateTimeBox());
         box.setValue(DATE_TIME);
         return box;

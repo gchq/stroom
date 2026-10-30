@@ -20,10 +20,10 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.component.client.Layer;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.progress.client.component.SourceProgressBar;
-import stroom.widget.spinner.client.SpinnerLarge;
-import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.spinner.client.LargeBusySpinner;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
 
@@ -52,9 +52,9 @@ public class DataViewer extends Component {
     @UiField
     SourceProgressBar progressBar;
     @UiField
-    LayerContainerImpl layerContainer;
+    LayerContainer layerContainer;
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
 
     private Runnable onSourceLink = () -> {
     };

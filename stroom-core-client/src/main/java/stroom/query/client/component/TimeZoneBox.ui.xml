@@ -7,21 +7,21 @@
              xmlns:form="urn:import:stroom.widget.form.client">
 
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="userPreferencesTimeZone"
+        <form:FormGroup identity="timeZone"
                         label="Time Zone"
                         helpText="Time zone used for times in this setting: Local, UTC, Id (a named zone) or Offset (a fixed offset from UTC). Default is UTC."
                         screenReaderText="Local, UTC, Id or Offset. Default is UTC.">
             <item:SelectionBox ui:field="timeZoneUse"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userPreferencesTimeZoneId"
-                        identity="userPreferencesTimeZoneId"
+        <form:FormGroup ui:field="timeZoneIdGroup"
+                        identity="timeZoneId"
                         label="Time Zone Id"
                         helpText="Named time zone, e.g. Europe/London. Shown when Time Zone is set to Id."
                         screenReaderText="e.g. Europe/London.">
             <item:SelectionBox ui:field="timeZoneId"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userPreferencesTimeZoneOffset"
-                        identity="userPreferencesTimeZoneOffset"
+        <form:FormGroup ui:field="timeZoneOffsetGroup"
+                        identity="timeZoneOffset"
                         label="Time Zone Offset"
                         helpText="Fixed offset from UTC in whole hours, from -12 to +12. Shown when Time Zone is set to Offset."
                         screenReaderText="Whole hours from -12 to +12.">

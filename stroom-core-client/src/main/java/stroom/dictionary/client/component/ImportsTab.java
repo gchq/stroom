@@ -30,7 +30,7 @@ public class ImportsTab extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    DocRefList imports;
+    ImportList imports;
     @UiField
     EffectiveWordsList words;
 
@@ -40,7 +40,7 @@ public class ImportsTab extends Component {
     }
 
     /// @return The dictionaries imported, which its controller attaches the list's controller to.
-    public DocRefList getImports() {
+    public ImportList getImports() {
         return imports;
     }
 

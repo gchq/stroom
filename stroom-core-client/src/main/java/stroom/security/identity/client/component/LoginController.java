@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// The sign in page ([Login]): signs the user in, asks for a new password when the server
 /// requires one, and goes back to where the user was going.
-public class LoginController extends SignInPageController {
+public class LoginController extends AbstractSignInPageController {
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 

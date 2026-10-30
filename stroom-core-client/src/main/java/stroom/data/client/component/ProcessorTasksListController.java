@@ -44,8 +44,8 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -147,9 +147,9 @@ public class ProcessorTasksListController extends Controller {
                              final ProcessorTask processorTask,
                              final Meta meta) {
 
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
         tb
-                .row(TableCell.header("Stream Task", 2))
+                .row(HtmlTableCell.header("Stream Task", 2))
                 .row("Stream Task Id", String.valueOf(processorTask.getId()))
                 .row("Status", processorTask.getStatus().getDisplayValue());
 
@@ -168,7 +168,7 @@ public class ProcessorTasksListController extends Controller {
 
         if (meta != null) {
             tb
-                    .row(TableCell.header("Stream", 2))
+                    .row(HtmlTableCell.header("Stream", 2))
                     .row(SafeHtmlUtils.fromString("Stream Id"),
                             OpenLinkUtil.render(String.valueOf(meta.getId()), LinkType.STREAM))
                     .row("Status", meta.getStatus().getDisplayValue());
@@ -184,7 +184,7 @@ public class ProcessorTasksListController extends Controller {
                     .row("Stream Type", meta.getTypeName());
         } else {
             tb
-                    .row(TableCell.data("[Physically deleted]", 2));
+                    .row(HtmlTableCell.data("[Physically deleted]", 2));
         }
 
         if (processorTask.getProcessorFilter() != null) {
@@ -192,7 +192,7 @@ public class ProcessorTasksListController extends Controller {
                 if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
                     tb
                             .row()
-                            .row(TableCell.header("Stream Processor", 2))
+                            .row(HtmlTableCell.header("Stream Processor", 2))
                             .row("Stream Processor Id",
                                     String.valueOf(processorTask.getProcessorFilter().getProcessor().getId()))
                             .row("Stream Processor Filter Id",

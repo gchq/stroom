@@ -26,7 +26,7 @@ import stroom.query.api.Result;
 import stroom.query.api.TableResult;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryModel;
-import stroom.query.client.ResultComponent;
+import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.ResultStoreModel;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
@@ -167,7 +167,7 @@ class FloorMapFullReadQueryHelper {
                 () -> QueryTablePreferences.builder().build());
         this.queryModel.setTimeout(TIMEOUT_MS);
 
-        this.queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, new ResultComponent() {
+        this.queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, new QueryResultConsumer() {
             @Override
             public OffsetRange getRequestedRange() {
                 return new OffsetRange(0, maxRows);

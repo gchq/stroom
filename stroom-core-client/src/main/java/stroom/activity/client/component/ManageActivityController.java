@@ -26,7 +26,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -55,13 +55,13 @@ public class ManageActivityController extends Controller {
 
     private final ManageActivity view;
     private final ActivityListController activityList;
-    private final Provider<ActivityEditController> editProvider;
+    private final Provider<ActivityEditorController> editProvider;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final UrlParameters urlParameters;
     private final CurrentActivity currentActivity;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
+    private final IsButton openButton;
+    private final IsButton deleteButton;
 
     private final NameFilterTimer timer = new NameFilterTimer();
     private Supplier<SafeHtml> quickFilterTooltipSupplier = () -> null;
@@ -82,7 +82,7 @@ public class ManageActivityController extends Controller {
     public ManageActivityController(final EventBus eventBus,
                                     final ManageActivity view,
                                     final ActivityListController activityList,
-                                    final Provider<ActivityEditController> editProvider,
+                                    final Provider<ActivityEditorController> editProvider,
                                     final RestFactory restFactory,
                                     final UiConfigCache uiConfigCache,
                                     final UrlParameters urlParameters,

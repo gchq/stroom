@@ -50,7 +50,7 @@ public class CopyFeedUrlEvent extends GwtEvent<Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onOpen(this);
+        handler.onCopyUrl(this);
     }
 
     public String getName() {
@@ -62,6 +62,6 @@ public class CopyFeedUrlEvent extends GwtEvent<Handler> {
 
     public interface Handler extends EventHandler {
 
-        void onOpen(final CopyFeedUrlEvent event);
+        void onCopyUrl(final CopyFeedUrlEvent event);
     }
 }

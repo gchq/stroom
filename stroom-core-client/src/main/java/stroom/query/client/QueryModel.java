@@ -85,7 +85,7 @@ public class QueryModel implements HasHandlers {
     private final List<SearchStateListener> searchStateListeners = new ArrayList<>();
     private final List<SearchErrorListener> errorListeners = new ArrayList<>();
     private final List<TokenErrorListener> tokenErrorListeners = new ArrayList<>();
-    private final Map<String, ResultComponent> resultComponents = new HashMap<>();
+    private final Map<String, QueryResultConsumer> resultComponents = new HashMap<>();
 
     public QueryModel(final EventBus eventBus,
                       final RestFactory restFactory,
@@ -99,7 +99,7 @@ public class QueryModel implements HasHandlers {
         this.queryTablePreferencesSupplier = queryTablePreferencesSupplier;
     }
 
-    public void addResultComponent(final String componentId, final ResultComponent resultComponent) {
+    public void addResultComponent(final String componentId, final QueryResultConsumer resultComponent) {
         resultComponent.setQueryModel(this);
         resultComponents.put(componentId, resultComponent);
     }
@@ -135,7 +135,7 @@ public class QueryModel implements HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultComponents.values().forEach(ResultComponent::endSearch);
+        resultComponents.values().forEach(QueryResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -157,7 +157,7 @@ public class QueryModel implements HasHandlers {
 
         // Stop the spinner from spinning and tell components that they no
         // longer want data.
-        resultComponents.values().forEach(ResultComponent::endSearch);
+        resultComponents.values().forEach(QueryResultConsumer::endSearch);
 
         // Stop polling.
         polling = false;
@@ -218,8 +218,8 @@ public class QueryModel implements HasHandlers {
 
             // Reset all result components and tell them that search is
             // starting.
-            resultComponents.values().forEach(ResultComponent::reset);
-            resultComponents.values().forEach(ResultComponent::startSearch);
+            resultComponents.values().forEach(QueryResultConsumer::reset);
+            resultComponents.values().forEach(QueryResultConsumer::startSearch);
 
             // Start polling.
             polling = true;
@@ -256,7 +256,7 @@ public class QueryModel implements HasHandlers {
     private boolean exec(final String componentId,
                          final Consumer<Result> resultConsumer,
                          final QueryKey queryKey) {
-        final ResultComponent resultComponent = resultComponents.get(componentId);
+        final QueryResultConsumer resultComponent = resultComponents.get(componentId);
         if (resultComponent == null) {
             return false;
         }
@@ -327,11 +327,11 @@ public class QueryModel implements HasHandlers {
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
-            final ResultComponent tableController = resultComponents.get(TABLE_COMPONENT_ID);
+            final QueryResultConsumer tableController = resultComponents.get(TABLE_COMPONENT_ID);
             final GroupSelection groupSelection = NullSafe
-                    .getOrElse(tableController, ResultComponent::getGroupSelection, new GroupSelection());
+                    .getOrElse(tableController, QueryResultConsumer::getGroupSelection, new GroupSelection());
             final OffsetRange requestedRange = NullSafe
-                    .getOrElse(tableController, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
+                    .getOrElse(tableController, QueryResultConsumer::getRequestedRange, OffsetRange.UNBOUNDED);
 
             final QuerySearchRequest request = currentSearch
                     .copy()
@@ -366,7 +366,7 @@ public class QueryModel implements HasHandlers {
                                 // Tell all components if we are complete.
                                 // Stop the spinner from spinning and tell components that they
                                 // no longer want data.
-                                resultComponents.values().forEach(ResultComponent::endSearch);
+                                resultComponents.values().forEach(QueryResultConsumer::endSearch);
 
                                 // Let the query controller know search is inactive.
                                 setSearching(false);
@@ -401,7 +401,7 @@ public class QueryModel implements HasHandlers {
         // Give results to the right components.
         if (response.getResults() != null) {
             for (final Result componentResult : response.getResults()) {
-                final ResultComponent resultComponent =
+                final QueryResultConsumer resultComponent =
                         resultComponents.get(componentResult.getComponentId());
                 if (resultComponent != null) {
                     resultComponent.setData(componentResult);
@@ -413,7 +413,7 @@ public class QueryModel implements HasHandlers {
         if (response.isComplete()) {
             // Stop the spinner from spinning and tell components that they
             // no longer want data.
-            resultComponents.values().forEach(ResultComponent::endSearch);
+            resultComponents.values().forEach(QueryResultConsumer::endSearch);
         }
 
         setErrors(response.getErrorMessages());
@@ -439,7 +439,7 @@ public class QueryModel implements HasHandlers {
     private void endSearchWithError(final String message) {
         polling = false;
         terminate(currentNode, currentQueryKey);
-        resultComponents.values().forEach(ResultComponent::endSearch);
+        resultComponents.values().forEach(QueryResultConsumer::endSearch);
         setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, message)));
         setSearching(false);
     }

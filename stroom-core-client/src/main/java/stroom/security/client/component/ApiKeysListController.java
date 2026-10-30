@@ -22,8 +22,8 @@ import stroom.data.client.RestDataProvider;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.UserAndGroupHelper;
 import stroom.security.client.UserScreen;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
@@ -197,7 +197,7 @@ public class ApiKeysListController extends Controller {
                 securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION) && owner == null,
                 (HashedApiKey hashedApiKey) -> expiryFormatter.formatWithDuration(
                         NullSafe.get(hashedApiKey, HashedApiKey::getExpireTimeMs)),
-                (HashedApiKey hashedApiKey) -> UserAndGroupHelper.buildUserActionMenu(
+                (HashedApiKey hashedApiKey) -> UsersAndGroupsHelper.buildUserActionMenu(
                         NullSafe.get(hashedApiKey, HashedApiKey::getOwner),
                         isExternalIdp,
                         getActionScreensToInclude(),

@@ -18,8 +18,8 @@ package stroom.dashboard.client.component;
 
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.vis.MessageSupport;
-import stroom.dashboard.client.vis.VisToolbarButton;
-import stroom.hyperlink.client.Hyperlink;
+import stroom.dashboard.client.vis.VisButtonSpec;
+import stroom.hyperlink.client.LinkValue;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.VisFunction;
@@ -176,14 +176,14 @@ public class VisFrame extends Component implements RequiresResize {
     /// Sets what opens a link the visualisation asks to follow (its controller sets it).
     ///
     /// @param onHyperlink Given the link.
-    public void setOnHyperlink(final Consumer<Hyperlink> onHyperlink) {
+    public void setOnHyperlink(final Consumer<LinkValue> onHyperlink) {
         messageSupport.setOnHyperlink(onHyperlink);
     }
 
     /// Sets what to do when the visualisation asks for buttons in its toolbar.
     ///
     /// @param toolbarHandler Given the buttons it wants, replacing any it asked for before.
-    public void setToolbarHandler(final Consumer<List<VisToolbarButton>> toolbarHandler) {
+    public void setToolbarHandler(final Consumer<List<VisButtonSpec>> toolbarHandler) {
         messageSupport.setToolbarHandler(toolbarHandler);
     }
 

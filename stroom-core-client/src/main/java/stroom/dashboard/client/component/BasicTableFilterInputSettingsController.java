@@ -42,7 +42,7 @@ public class BasicTableFilterInputSettingsController
         extends BasicSettingsTabController<BasicTableFilterInputSettings> {
 
     private final ColumnSelection columnSelection;
-    private MultiRulesController multiRules;
+    private TableFilterConditionalFormattingController multiRules;
 
     /// Made by GIN, with its content.
     ///
@@ -141,7 +141,7 @@ public class BasicTableFilterInputSettingsController
     }
 
     /// @param multiRules The Conditional Formatting tab, told the columns chosen.
-    public void setMultiRulesController(final MultiRulesController multiRules) {
+    public void setMultiRulesController(final TableFilterConditionalFormattingController multiRules) {
         this.multiRules = multiRules;
     }
 }

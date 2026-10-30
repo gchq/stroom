@@ -194,7 +194,7 @@ public final class AceEditorFeatureStories {
                             .toHaveAttribute("aria-label", "Fatal error, read annotations row 9"));
                     // Ace's tooltip, on hovering a marker, is checked with the real mouse
                     // (test-runner/lib/real-input/ace-editor.mjs)
-                    // The overview bar (RightBar) has a marker for each line, and its summary shows
+                    // The overview bar (OverviewBar) has a marker for each line, and its summary shows
                     // the worst severity
                     play.waitFor(() -> play.expect(play.querySelectorAll(".code-editor__marker").count())
                             .toBe(4));
@@ -203,7 +203,8 @@ public final class AceEditorFeatureStories {
                     play.expect(fatalMarker).toHaveAttribute("lineno", "9");
                     // Hovering a marker in the overview bar says where it is
                     play.hover(fatalMarker);
-                    play.waitFor(() -> play.expect(play.screen().querySelector(".code-editor-indicator[role=tooltip]"))
+                    play.waitFor(() -> play.expect(play.screen()
+                                    .querySelector(".code-editor-overview-tooltip[role=tooltip]"))
                             .toHaveTextContent(TextMatch.containing("at line 9, click to navigate.")));
                 })
                 // Stepping's and the data viewer's highlight of the current record (a

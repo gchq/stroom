@@ -45,33 +45,33 @@ public class GitRepoSettings extends Component {
     private static final String PUSH_TITLE = "Push any changes into the Git repository";
 
     @UiField
-    FormGroup fgContentStore;
+    FormGroup contentStoreGroup;
     @UiField
-    Label lblContentStore;
+    Label contentStore;
     @UiField
-    FormGroup fgContentPack;
+    FormGroup contentPackGroup;
     @UiField
-    Label lblContentPack;
+    Label contentPack;
     @UiField
-    TextBox txtGitUrl;
+    TextBox urlBox;
     @UiField
-    TextBox txtGitBranch;
+    TextBox branchBox;
     @UiField
-    TextBox txtGitPath;
+    TextBox pathBox;
     @UiField
     SelectionBox<Credential> credentialSelectionBox;
     @UiField
-    TextBox txtGitCommitToPull;
+    TextBox commitToPullBox;
     @UiField
-    FormGroup fgGitAutoPush;
+    FormGroup autoPushGroup;
     @UiField
-    TickBox chkGitAutoPush;
+    TickBox autoPushBox;
     @UiField
-    Button btnGitRepoPush;
+    Button pushButton;
     @UiField
-    Button btnGitRepoPull;
+    Button pullButton;
     @UiField
-    Button btnCheckForUpdates;
+    Button checkForUpdatesButton;
     @UiField
     Button setHttpClientConfig;
 
@@ -82,11 +82,11 @@ public class GitRepoSettings extends Component {
     public GitRepoSettings() {
         initWidget(BINDER.createAndBindUi(this));
         // Any change makes the document dirty, and may change what can be pushed or pulled
-        txtGitUrl.addValueChangeHandler(e -> onFieldChange());
-        txtGitBranch.addValueChangeHandler(e -> onFieldChange());
-        txtGitPath.addValueChangeHandler(e -> onFieldChange());
-        txtGitCommitToPull.addValueChangeHandler(e -> onFieldChange());
-        chkGitAutoPush.addValueChangeHandler(e -> onFieldChange());
+        urlBox.addValueChangeHandler(e -> onFieldChange());
+        branchBox.addValueChangeHandler(e -> onFieldChange());
+        pathBox.addValueChangeHandler(e -> onFieldChange());
+        commitToPullBox.addValueChangeHandler(e -> onFieldChange());
+        autoPushBox.addValueChangeHandler(e -> onFieldChange());
         credentialSelectionBox.addValueChangeHandler(e -> onChange.run());
         updateState();
     }
@@ -102,62 +102,62 @@ public class GitRepoSettings extends Component {
     /// @param contentStoreName The name of the content store, or empty if it isn't a content pack.
     /// @param contentPackName  The name of the content pack, or empty if it isn't one.
     public void setContentPack(final String contentStoreName, final String contentPackName) {
-        lblContentStore.setText(contentStoreName);
-        lblContentPack.setText(contentPackName);
+        contentStore.setText(contentStoreName);
+        contentPack.setText(contentPackName);
         updateState();
     }
 
     /// @return The repository's URL.
     public String getUrl() {
-        return txtGitUrl.getText();
+        return urlBox.getText();
     }
 
     /// @param url The repository's URL.
     public void setUrl(final String url) {
-        txtGitUrl.setText(url);
+        urlBox.setText(url);
         updateState();
     }
 
     /// @return The branch.
     public String getBranch() {
-        return txtGitBranch.getText();
+        return branchBox.getText();
     }
 
     /// @param branch The branch.
     public void setBranch(final String branch) {
-        txtGitBranch.setText(branch);
+        branchBox.setText(branch);
     }
 
     /// @return The path in the repository.
     public String getPath() {
-        return txtGitPath.getText();
+        return pathBox.getText();
     }
 
     /// @param path The path in the repository.
     public void setPath(final String path) {
-        txtGitPath.setText(path);
+        pathBox.setText(path);
     }
 
     /// @return The commit to pull, empty for the latest.
     public String getCommitToPull() {
-        return txtGitCommitToPull.getText();
+        return commitToPullBox.getText();
     }
 
     /// @param commit The commit to pull, or empty for the latest.
     public void setCommitToPull(final String commit) {
-        txtGitCommitToPull.setText(commit);
+        commitToPullBox.setText(commit);
         updateState();
     }
 
     /// @return Whether changes are pushed automatically.
     public boolean isAutoPush() {
-        return chkGitAutoPush.getValue();
+        return autoPushBox.getValue();
     }
 
     /// @param autoPush Whether changes are pushed automatically; `null` means not.
     public void setAutoPush(final Boolean autoPush) {
         // Objects.requireNonNullElse() not defined for GWT
-        chkGitAutoPush.setValue(autoPush != null && autoPush);
+        autoPushBox.setValue(autoPush != null && autoPush);
     }
 
     /// @param model The credentials the repository's can be chosen from.
@@ -178,17 +178,17 @@ public class GitRepoSettings extends Component {
 
     /// @return The Push to Git button, which spins while it pushes.
     public TaskMonitorFactory getPushTaskMonitor() {
-        return btnGitRepoPush;
+        return pushButton;
     }
 
     /// @return The Pull from Git button, which spins while it pulls.
     public TaskMonitorFactory getPullTaskMonitor() {
-        return btnGitRepoPull;
+        return pullButton;
     }
 
     /// @return The Check for updates button, which spins while it checks.
     public TaskMonitorFactory getCheckForUpdatesTaskMonitor() {
-        return btnCheckForUpdates;
+        return checkForUpdatesButton;
     }
 
     /// @param onChange Run when the user changes a setting.
@@ -203,96 +203,96 @@ public class GitRepoSettings extends Component {
 
     /// @param onPush Run when Push to Git is pressed.
     public void setOnPush(final Runnable onPush) {
-        btnGitRepoPush.setOnClick(onPush);
+        pushButton.setOnClick(onPush);
     }
 
     /// @param onPull Run when Pull from Git is pressed.
     public void setOnPull(final Runnable onPull) {
-        btnGitRepoPull.setOnClick(onPull);
+        pullButton.setOnClick(onPull);
     }
 
     /// @param onCheckForUpdates Run when Check for updates is pressed.
     public void setOnCheckForUpdates(final Runnable onCheckForUpdates) {
-        btnCheckForUpdates.setOnClick(onCheckForUpdates);
+        checkForUpdatesButton.setOnClick(onCheckForUpdates);
     }
 
     @Override
     protected void onReadOnlyChange(final boolean readOnly) {
         // Read only is independent of the enabled state that updateState() manages, so a later
         // updateState() can't make these fields editable
-        txtGitUrl.setReadOnly(readOnly);
-        txtGitBranch.setReadOnly(readOnly);
-        txtGitPath.setReadOnly(readOnly);
+        urlBox.setReadOnly(readOnly);
+        branchBox.setReadOnly(readOnly);
+        pathBox.setReadOnly(readOnly);
         credentialSelectionBox.setReadOnly(readOnly);
-        txtGitCommitToPull.setReadOnly(readOnly);
-        chkGitAutoPush.setReadOnly(readOnly);
+        commitToPullBox.setReadOnly(readOnly);
+        autoPushBox.setReadOnly(readOnly);
         updateState();
     }
 
     // Sets which fields are shown and enabled, from the values shown and whether it is read only
     private void updateState() {
-        if (!lblContentStore.getText().isEmpty()) {
+        if (!contentStore.getText().isEmpty()) {
             // We've got a Content Pack so everything (except credentials and buttons) is readonly
-            fgContentStore.setVisible(true);
-            fgContentPack.setVisible(true);
-            txtGitUrl.setVisible(true);
-            txtGitUrl.setEnabled(false);
-            txtGitBranch.setVisible(true);
-            txtGitBranch.setEnabled(false);
-            txtGitPath.setVisible(true);
-            txtGitPath.setEnabled(false);
+            contentStoreGroup.setVisible(true);
+            contentPackGroup.setVisible(true);
+            urlBox.setVisible(true);
+            urlBox.setEnabled(false);
+            branchBox.setVisible(true);
+            branchBox.setEnabled(false);
+            pathBox.setVisible(true);
+            pathBox.setEnabled(false);
             credentialSelectionBox.setVisible(true);
-            txtGitCommitToPull.setVisible(true);
-            txtGitCommitToPull.setEnabled(false);
-            fgGitAutoPush.setVisible(false);
-            btnGitRepoPush.setVisible(false);
+            commitToPullBox.setVisible(true);
+            commitToPullBox.setEnabled(false);
+            autoPushGroup.setVisible(false);
+            pushButton.setVisible(false);
 
         } else {
             // Not a Content Pack so allow editing
-            fgContentStore.setVisible(false);
-            fgContentPack.setVisible(false);
-            txtGitUrl.setVisible(true);
-            txtGitUrl.setEnabled(true);
-            txtGitBranch.setVisible(true);
-            txtGitBranch.setEnabled(true);
-            txtGitPath.setVisible(true);
-            txtGitPath.setEnabled(true);
+            contentStoreGroup.setVisible(false);
+            contentPackGroup.setVisible(false);
+            urlBox.setVisible(true);
+            urlBox.setEnabled(true);
+            branchBox.setVisible(true);
+            branchBox.setEnabled(true);
+            pathBox.setVisible(true);
+            pathBox.setEnabled(true);
             credentialSelectionBox.setVisible(true);
-            txtGitCommitToPull.setVisible(true);
-            txtGitCommitToPull.setEnabled(true);
+            commitToPullBox.setVisible(true);
+            commitToPullBox.setEnabled(true);
 
             // Pushing needs a URL, and isn't possible while pinned to a commit. The controls stay
             // shown, disabled with the reason, so it is clear that pushing exists
             final String pushUnavailableReason;
-            if (!txtGitCommitToPull.getText().isEmpty()) {
+            if (!commitToPullBox.getText().isEmpty()) {
                 pushUnavailableReason = "Not available while a commit hash is set";
-            } else if (txtGitUrl.getText().isEmpty()) {
+            } else if (urlBox.getText().isEmpty()) {
                 pushUnavailableReason = "Set the Git URL first";
             } else {
                 pushUnavailableReason = null;
             }
-            fgGitAutoPush.setVisible(true);
-            btnGitRepoPush.setVisible(true);
+            autoPushGroup.setVisible(true);
+            pushButton.setVisible(true);
             final boolean canPush = pushUnavailableReason == null;
-            chkGitAutoPush.setEnabled(canPush);
+            autoPushBox.setEnabled(canPush);
             // Pushing changes the repository, so not allowed for a read-only document
-            btnGitRepoPush.setEnabled(canPush && !isReadOnly());
-            chkGitAutoPush.setTitle(canPush
+            pushButton.setEnabled(canPush && !isReadOnly());
+            autoPushBox.setTitle(canPush
                     ? AUTO_PUSH_TITLE
                     : pushUnavailableReason);
-            btnGitRepoPush.setTitle(canPush
+            pushButton.setTitle(canPush
                     ? PUSH_TITLE
                     : pushUnavailableReason);
         }
 
         // Can pull and check for updates if URL is set
-        if (!txtGitUrl.getText().isEmpty()) {
+        if (!urlBox.getText().isEmpty()) {
             // Pulling changes the document's content, so not allowed for a read-only document
-            btnGitRepoPull.setEnabled(!isReadOnly());
-            btnCheckForUpdates.setEnabled(true);
+            pullButton.setEnabled(!isReadOnly());
+            checkForUpdatesButton.setEnabled(true);
         } else {
-            btnGitRepoPull.setEnabled(false);
-            btnCheckForUpdates.setEnabled(false);
+            pullButton.setEnabled(false);
+            checkForUpdatesButton.setEnabled(false);
         }
     }
 

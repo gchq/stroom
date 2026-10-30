@@ -24,7 +24,7 @@ import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -41,9 +41,9 @@ public class GlobalPropertyTabController extends ContentTabController {
     private final GlobalPropertyTab view;
 
     private final ManageGlobalPropertyListController manageGlobalPropertyList;
-    private final Provider<GlobalPropertyEditController> editProvider;
-    private final ButtonView openButton;
-    private final ButtonView warningsButton;
+    private final Provider<GlobalPropertyEditorController> editProvider;
+    private final IsButton openButton;
+    private final IsButton warningsButton;
     private String currentWarnings;
 
     /// Made by GIN, with its screen and its parts.
@@ -58,7 +58,7 @@ public class GlobalPropertyTabController extends ContentTabController {
     public GlobalPropertyTabController(final EventBus eventBus,
                                        final GlobalPropertyTab view,
                                        final ManageGlobalPropertyListController manageGlobalPropertyList,
-                                       final Provider<GlobalPropertyEditController> editProvider,
+                                       final Provider<GlobalPropertyEditorController> editProvider,
                                        final UiConfigCache uiConfigCache,
                                        final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);

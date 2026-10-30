@@ -17,8 +17,8 @@
 package stroom.planb.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -45,7 +45,7 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
     /// @param view                  Its component.
     /// @param planBDataProvider     Makes the plan bdata.
     /// @param planBSettingsProvider Makes the plan bsettings.
-    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param documentationTabProvider  Makes the Documentation tab's editor.
     /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public PlanBEditor(
@@ -53,7 +53,7 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
             final LinkTabPanel view,
             final Provider<PlanBDataController> planBDataProvider,
             final Provider<PlanBSettingsController> planBSettingsProvider,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -65,7 +65,7 @@ public class PlanBEditor extends DocumentEditor<PlanBDoc> {
                 planBDataProvider::get,
                 PlanBDataController::read);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 PlanBDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

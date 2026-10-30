@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* A user's or group's permissions, described (AppPermissionsEdit, DescriptionBuilder): its
+/* A user's or group's permissions, described (AppPermissionsEditor, DescriptionBuilder): its
    lines, inherited ones faded, headings bold, delimiters coloured. */
 
 .permission-details__line--inherited {

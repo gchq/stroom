@@ -17,7 +17,7 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.component.TextInputController;
-import stroom.dashboard.client.main.ComponentRegistry;
+import stroom.dashboard.client.main.PaneRegistry;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -27,8 +27,8 @@ public class TextInputPlugin {
 
     @Inject
     public TextInputPlugin(final EventBus eventBus,
-                           final ComponentRegistry componentRegistry,
+                           final PaneRegistry paneRegistry,
                            final Provider<TextInputController> provider) {
-        componentRegistry.register(TextInputController.TYPE, provider);
+        paneRegistry.register(TextInputController.TYPE, provider);
     }
 }

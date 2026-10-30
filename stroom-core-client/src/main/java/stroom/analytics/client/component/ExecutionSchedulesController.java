@@ -32,7 +32,7 @@ import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.CriteriaUtil;
 import stroom.data.client.ExpressionValidator;
 import stroom.data.client.RestDataProvider;
-import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.FilterExpressionController;
 import stroom.data.client.component.RefCellsController;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
@@ -86,10 +86,10 @@ public class ExecutionSchedulesController extends ContentTabController {
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final ExecutionScheduleRequest request;
-    private final ScheduledProcessEditController scheduledProcessEdit;
-    private final BatchExecutionScheduleEditController batchExecutionScheduleEdit;
+    private final ScheduledProcessEditorController scheduledProcessEditor;
+    private final BatchExecutionScheduleEditorController batchExecutionScheduleEditor;
     private final Provider<ExecutionScheduleRunNowController> runNowProvider;
-    private final Provider<ExpressionDialogController> filterDialogProvider;
+    private final Provider<FilterExpressionController> filterDialogProvider;
     private final ExpressionValidator expressionValidator;
 
     private final RefCellsController refCells;
@@ -100,8 +100,8 @@ public class ExecutionSchedulesController extends ContentTabController {
     /// @param view                       Its component.
     /// @param dateTimeFormatter          Formats dates and times.
     /// @param restFactory                Makes REST requests.
-    /// @param scheduledProcessEdit       The scheduled process edit.
-    /// @param batchExecutionScheduleEdit The batch execution schedule edit.
+    /// @param scheduledProcessEditor       The scheduled process edit.
+    /// @param batchExecutionScheduleEditor The batch execution schedule edit.
     /// @param runNowProvider             Makes the run now.
     /// @param filterDialogProvider       Makes the filter dialog.
     /// @param expressionValidator        The expression validator.
@@ -111,22 +111,22 @@ public class ExecutionSchedulesController extends ContentTabController {
                                         final ExecutionSchedules view,
                                         final DateTimeFormatter dateTimeFormatter,
                                         final RestFactory restFactory,
-                                        final ScheduledProcessEditController scheduledProcessEdit,
-                                        final BatchExecutionScheduleEditController batchExecutionScheduleEdit,
+                                        final ScheduledProcessEditorController scheduledProcessEditor,
+                                        final BatchExecutionScheduleEditorController batchExecutionScheduleEditor,
                                         final Provider<ExecutionScheduleRunNowController> runNowProvider,
-                                        final Provider<ExpressionDialogController> filterDialogProvider,
+                                        final Provider<FilterExpressionController> filterDialogProvider,
                                         final ExpressionValidator expressionValidator,
                                         final RefCellsController refCells) {
         super(eventBus);
         this.view = view;
         initWidget(view);
         this.refCells = own(refCells);
-        own(scheduledProcessEdit);
-        own(batchExecutionScheduleEdit);
+        own(scheduledProcessEditor);
+        own(batchExecutionScheduleEditor);
         this.restFactory = restFactory;
 
-        this.scheduledProcessEdit = scheduledProcessEdit;
-        this.batchExecutionScheduleEdit = batchExecutionScheduleEdit;
+        this.scheduledProcessEditor = scheduledProcessEditor;
+        this.batchExecutionScheduleEditor = batchExecutionScheduleEditor;
         this.runNowProvider = runNowProvider;
         this.filterDialogProvider = filterDialogProvider;
         this.expressionValidator = expressionValidator;
@@ -160,14 +160,14 @@ public class ExecutionSchedulesController extends ContentTabController {
             }
         }));
 
-        batchExecutionScheduleEdit.setOnApplySelection(() ->
-                batchExecutionScheduleEdit.validate(valid -> {
+        batchExecutionScheduleEditor.setOnApplySelection(() ->
+                batchExecutionScheduleEditor.validate(valid -> {
                     if (valid) {
                         onBatchEdit(false);
                     }
                 }));
-        batchExecutionScheduleEdit.setOnApplyFiltered(() ->
-                batchExecutionScheduleEdit.validate(valid -> {
+        batchExecutionScheduleEditor.setOnApplyFiltered(() ->
+                batchExecutionScheduleEditor.validate(valid -> {
                     if (valid) {
                         onBatchEdit(true);
                     }
@@ -177,7 +177,7 @@ public class ExecutionSchedulesController extends ContentTabController {
     private void onAction(final ExecutionSchedules.ScheduleAction action) {
         switch (action) {
             case EDIT -> onSingleEdit();
-            case BATCH_EDIT -> batchExecutionScheduleEdit.show();
+            case BATCH_EDIT -> batchExecutionScheduleEditor.show();
             case FILTER -> onFilter();
             case CLEAR_FILTER -> onClearFilter();
             case RUN_NOW -> runNowProvider.get().show(this, runNowAction ->
@@ -411,7 +411,7 @@ public class ExecutionSchedulesController extends ContentTabController {
     private void onSingleEdit() {
         final ExecutionSchedule selected = selectionModel.getSelected();
         if (selected != null) {
-            scheduledProcessEdit.show(selected, executionSchedule -> {
+            scheduledProcessEditor.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                         .create(EXECUTION_SCHEDULE_RESOURCE)
@@ -458,7 +458,7 @@ public class ExecutionSchedulesController extends ContentTabController {
             );
             return;
         }
-        if (!batchExecutionScheduleEdit.isAnyBoxEnabled()) {
+        if (!batchExecutionScheduleEditor.isAnyBoxEnabled()) {
             AlertEvent.fireWarn(
                     this,
                     "No changes selected.",
@@ -475,7 +475,7 @@ public class ExecutionSchedulesController extends ContentTabController {
         sb.append(executionSchedules.size());
         sb.append(executionSchedules.size() > 1 ? " schedules.\n" : " schedule.\n");
         sb.append("\nSetting:\n");
-        sb.append(batchExecutionScheduleEdit.getEditSummary());
+        sb.append(batchExecutionScheduleEditor.getEditSummary());
         sb.append("\nAre you sure?");
 
         ConfirmEvent.fireWarn(
@@ -497,7 +497,7 @@ public class ExecutionSchedulesController extends ContentTabController {
             restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(
-                            batchExecutionScheduleEdit.getUpdatedExecutionSchedule(executionSchedule)
+                            batchExecutionScheduleEditor.getUpdatedExecutionSchedule(executionSchedule)
                     ))
                     .onSuccess(result -> {
                         if (selectionModel.isSelected(executionSchedule)) {

@@ -15,8 +15,8 @@
  */
 
 /*
- * A schema's browser (XSDBrowser): its diagram of boxes (XSDDisplay, XSDDisplayBox), the selected
- * node's documentation and its constraints (XSDConstraintDisplay).
+ * A schema's browser (XsdBrowser): its diagram of boxes (XsdDiagram, XsdDiagramBox), the selected
+ * node's documentation and its constraints (XsdConstraints).
  */
 
 .xsd-browser * {
@@ -56,7 +56,7 @@
 .xsd-browser__box {
 	width: 100%;
 	height: 100%;
-	border: 1px solid var(--xsdbrowser-box__border-color);
+	border: 1px solid var(--xsd-browser__box-border-color);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -86,21 +86,21 @@
 
 .xsd-browser__box-title {
 	width: 100%;
-	background: var(--xsdbrowser-title__background-color);
+	background: var(--xsd-browser__title-background-color);
 	padding: 2px;
-	border: 1px solid var(--xsdbrowser-title__background-color);
+	border: 1px solid var(--xsd-browser__title-background-color);
 }
 
 .xsd-browser__box-title--selected {
-	background: var(--xsdbrowser-title__background-color--selected);
-	border-color: var(--xsdbrowser-title__background-color--selected);
+	background: var(--xsd-browser__title-background-color--selected);
+	border-color: var(--xsd-browser__title-background-color--selected);
 }
 
 .xsd-browser__outer-box {
 	display: flex;
 	flex-direction: column;
 	width: fit-content;
-	background-color: var(--xsdbrowser-box__background-color);
+	background-color: var(--xsd-browser__box-background-color);
 	border: 1px solid var(--control__background-color);
 	border-radius: .25rem;
 }

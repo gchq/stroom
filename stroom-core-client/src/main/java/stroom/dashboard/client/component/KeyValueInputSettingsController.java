@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A Key/Value Input pane's settings: its Basic tab.
-public class KeyValueInputSettingsController extends ComponentSettingsDialogController {
+public class KeyValueInputSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -30,7 +30,7 @@ public class KeyValueInputSettingsController extends ComponentSettingsDialogCont
     /// @param basicSettings The basic settings.
     @Inject
     public KeyValueInputSettingsController(final EventBus eventBus,
-                                           final ComponentSettingsDialog view,
+                                           final PaneSettings view,
                                            final BasicKeyValueInputSettingsController basicSettings) {
         super(eventBus, view);
         own(basicSettings);

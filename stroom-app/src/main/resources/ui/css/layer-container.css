@@ -15,7 +15,7 @@
  */
 
 /*
-   A layer container (stroom.widget.tab.client.LayerContainerImpl), named BEM style: the layers
+   A layer container (stroom.widget.component.client.LayerContainer), named BEM style: the layers
    of a tabbed screen, one over another (layer-container__layer), only the selected one shown
    (--visible, fading in where the container fades, --fade, from --base). A screen that gives the
    container a class of its own in its template replaces layer-container.

@@ -39,7 +39,7 @@ public final class OpenHyperlinkRequest {
     ///
     /// @param source    The element the link is in, which the request bubbles up from.
     /// @param hyperlink The link.
-    public static void fire(final Element source, final Hyperlink hyperlink) {
+    public static void fire(final Element source, final LinkValue hyperlink) {
         DomRequests.send(source, EVENT, hyperlink);
     }
 
@@ -50,7 +50,7 @@ public final class OpenHyperlinkRequest {
     ///                 `fireEvent`.
     /// @return The registration that stops the relay.
     public static HandlerRegistration relay(final HasHandlers handlers) {
-        return DomRequests.<Hyperlink>receive(EVENT, hyperlink ->
+        return DomRequests.<LinkValue>receive(EVENT, hyperlink ->
                 HyperlinkEvent.fire(handlers, hyperlink, new DefaultTaskMonitorFactory(handlers)));
     }
 }

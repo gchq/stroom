@@ -1,9 +1,0 @@
-/*
- * The Git Push dialog's content (GitRepoCommitDialog): the commit message.
- */
-
-.git-repo-commit-dialog .git-repo-commit-dialog__message {
-    width: 100%;
-    height: 220px;
-    resize: none;
-}

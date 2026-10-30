@@ -17,7 +17,7 @@
 package stroom.security.client.component;
 
 import stroom.data.client.ColumnSizeConstants;
-import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.UserFields;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
@@ -113,12 +113,12 @@ public class UserRefPopup extends Component {
     private void addColumns() {
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.cellIconColumnBuilder(false, UserAndGroupHelper::mapUserRefTypeToIcon)
+                DataGridUtil.cellIconColumnBuilder(false, UsersAndGroupsHelper::mapUserRefTypeToIcon)
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder()
-                        .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                        .headingText(UsersAndGroupsHelper.buildUserAndGroupIconHeader())
                         .centerAligned()
                         .withToolTip("Whether this row is a single user or a named user group.")
                         .build(),
@@ -130,7 +130,7 @@ public class UserRefPopup extends Component {
                 .build();
         dataGrid.addResizableColumn(
                 displayNameCol,
-                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
                 300);
@@ -141,7 +141,7 @@ public class UserRefPopup extends Component {
                 DataGridUtil.textColumnBuilder(UserRef::getFullName)
                         .withSorting(UserFields.FIELD_FULL_NAME, true)
                         .build(),
-                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
+                DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_FULL_NAME)
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);

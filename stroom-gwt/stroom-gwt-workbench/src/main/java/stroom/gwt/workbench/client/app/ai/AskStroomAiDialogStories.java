@@ -314,7 +314,7 @@ public final class AskStroomAiDialogStories {
         final boolean[] showing = {false};
         harness.addRegistration(harness.getEventBus().addHandler(ShowAskStroomAiEvent.getType(), event -> {
             showing[0] = event.isShow();
-            toolbar.getShowAi().setState(showing[0]);
+            toolbar.getShowAi().setPressed(showing[0]);
         }));
         // No main menu in a story
         toolbar.setOnShowAi(() -> ShowAskStroomAiEvent.fire(harness.getHasHandlers(), !showing[0]));

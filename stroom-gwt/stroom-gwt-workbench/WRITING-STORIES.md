@@ -195,10 +195,10 @@ harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), docR
 
 ### Finding the screen and its endpoints
 
-1. Read the screen's **plugin** (`XxxPlugin`, e.g. `UsersPlugin`, `TaskManagerPlugin`,
+1. Read the screen's **plugin** (`XxxPlugin`, e.g. `UsersPlugin`, `ServerTasksPlugin`,
    `DictionaryPlugin`) to see how Stroom opens the screen, and do the same in `render`:
-   `UsersPlugin.open` calls `refresh()`; `NodeMonitoringPlugin` calls `setSelected(node)` for an
-   `OpenNodeEvent`; `TaskManagerPlugin` calls `changeNameFilter(...)`; a `DocumentPlugin` loads the
+   `UsersPlugin.open` calls `refresh()`; `NodesPlugin` calls `setSelected(node)` for an
+   `OpenNodeEvent`; `ServerTasksPlugin` calls `changeNameFilter(...)`; a `DocumentPlugin` loads the
    document, checks `DocumentPermission.EDIT` and calls `read(docRef, doc, !allowUpdate)`. For a
    popup opened by an event (`ShowXxxEvent`, `OpenUserTaskManagerEvent`), register the controller as
    the event's handler and fire the event; where Stroom fetches what the event carries first (e.g.
@@ -507,14 +507,14 @@ RestFixtures.builder()
   with a JSNI method in the story, which ignores Java's access rules, on a real controller, rather
   than by opening the whole parent screen.
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`,
-  `DataDisplaySupport`, `HyperlinkEventHandlerImpl.openData`, `QueryPaneController.setProcessorLimits`)
+  `DataDisplaySupport`, `HyperlinkOpener.openData`, `QueryPaneController.setProcessorLimits`)
   are copied into the story's `render`, naming the source, when they only wire up controllers the
   injector can create.
 
 ### Polling and sequences
 
 * Stroom's lists that "poll" (Server Tasks, Nodes, Jobs) refresh when the content pane calls
-  `Refreshable.refresh()`, which nothing does in a story, so they make one round of requests.
+  `HasRefresh.refresh()`, which nothing does in a story, so they make one round of requests.
 * A screen with its own timer (`UserTaskManagerController` polls every second) gets the same reply
   each poll (a route's single reply repeats); use a sequence (`get(path, first, second)`) when the
   play needs the data to change. Stop the timer on re-render with `ownPopup(popup)` (or
@@ -547,7 +547,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `DocumentPlugin` does and then fires `ContentTabSelectionChangeEvent` for the editor, as the
   content pane does when it selects a tab (the query table only reacts to annotation changes while
   its tab is visible); `ownerPermissions(builder)` and `decorated(builder, docRefJson...)` answer the
-  Permissions tab and doc pickers. The ginjector also gives `HyperlinkEventHandlerImpl` and
+  Permissions tab and doc pickers. The ginjector also gives `HyperlinkOpener` and
   `DataDisplaySupport` (Stroom creates both eagerly), `DateTimeSettingsFactory` and
   `ResultStoreModel`.
 * **Searches** (`client/app/query/QueryFixtures`, also for dashboards): a search is a poll of
@@ -603,7 +603,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   adds it to the story, as `MainScreens` puts it in the page, and it shows the explorer
   (`MainController.onShowMain`). Stories that only need tabs can use `harness.show(tabPane)`
   instead. Its ginjector adds `ShellAppScreenModule` (the main view,
-  `NavigationController`, About, User Preferences, Welcome, current password and Feed), and it
+  `ExplorerController`, About, User Preferences, Welcome, current password and Feed), and it
   cancels `MainController`'s 30 second refresh timer on re-render. `MainController` adds `GlobalKeyHandler` DOM handlers to the
   page's body and never removes them, so the shell passes keys to Stroom's real
   `GlobalKeyHandlerImpl` only until the story renders again; `KeyBinding`'s commands are static, so
@@ -624,7 +624,7 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   `linkParams` (as `DashboardPlugin.openParameterisedDashboard`), `harness(...)`,
   `setup((harness, injector) -> ...)` and `afterOpen(...)`. `registerComponentTypes` gets every
   component plugin from the injector before the dashboard is read, as Stroom's eager singletons
-  fill `ComponentRegistry` (the ginjector keeps `ComponentRegistry` and `VisFunctionCache` as
+  fill `PaneRegistry` (the ginjector keeps `PaneRegistry` and `VisFunctionCache` as
   singletons, so they belong to the rendering's harness). `app/dashboard/DashboardDocs` builds dashboards in Stroom's JSON
   (`component`, `query`, `table`, `tabs`, `split`, `sized`, `operator`, `term`), adding what Stroom
   needs: a preferred size on every layout, an `automate`, `queryTablePreferences` and full

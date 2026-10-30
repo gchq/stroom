@@ -47,7 +47,7 @@ public class ScheduledProcessingController extends Controller {
     private final RestFactory restFactory;
     private final ScheduledProcessListController scheduleList;
     private final ScheduledProcessHistoryListController historyList;
-    private final ScheduledProcessEditController scheduledProcessEdit;
+    private final ScheduledProcessEditorController scheduledProcessEditor;
     // Whether the document has unsaved changes, which must be saved before a schedule is added
     private BooleanSupplier isDocumentDirty = () -> false;
     private DocRef ownerDocRef;
@@ -60,21 +60,21 @@ public class ScheduledProcessingController extends Controller {
     /// @param restFactory          Creates, changes and deletes schedules.
     /// @param scheduleList         The schedules.
     /// @param historyList          The history of the schedule selected.
-    /// @param scheduledProcessEdit The dialog that edits a schedule.
+    /// @param scheduledProcessEditor The dialog that edits a schedule.
     @Inject
     public ScheduledProcessingController(final EventBus eventBus,
                                          final ScheduledProcessing view,
                                          final RestFactory restFactory,
                                          final ScheduledProcessListController scheduleList,
                                          final ScheduledProcessHistoryListController historyList,
-                                         final ScheduledProcessEditController scheduledProcessEdit) {
+                                         final ScheduledProcessEditorController scheduledProcessEditor) {
         super(eventBus);
         initWidget(view);
-        own(scheduledProcessEdit);
+        own(scheduledProcessEditor);
         this.restFactory = restFactory;
         this.scheduleList = own(scheduleList).attach(view.getScheduleList());
         this.historyList = own(historyList).attach(view.getHistoryList());
-        this.scheduledProcessEdit = scheduledProcessEdit;
+        this.scheduledProcessEditor = scheduledProcessEditor;
         scheduleList.setOnAdd(this::add);
         scheduleList.setOnEdit(this::edit);
         scheduleList.setOnDelete(this::remove);
@@ -149,7 +149,7 @@ public class ScheduledProcessingController extends Controller {
                     null);
 
         } else {
-            scheduledProcessEdit.show(newSchedule, executionSchedule -> {
+            scheduledProcessEditor.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                             .create(EXECUTION_SCHEDULE_RESOURCE)
@@ -169,7 +169,7 @@ public class ScheduledProcessingController extends Controller {
     private void edit() {
         final ExecutionSchedule selected = scheduleList.getSelected();
         if (selected != null && !readOnly) {
-            scheduledProcessEdit.show(selected, executionSchedule -> {
+            scheduledProcessEditor.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
                             .create(EXECUTION_SCHEDULE_RESOURCE)

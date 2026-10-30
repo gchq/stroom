@@ -25,7 +25,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.document.asset.client.DocumentAssetAddFileCallback;
 import stroom.document.asset.client.DocumentAssetState;
 import stroom.document.asset.client.DocumentAssetUtils;
-import stroom.document.asset.client.component.DocumentAssetAddItemDialogController.DialogType;
+import stroom.document.asset.client.component.DocumentAssetAddItemController.DialogType;
 import stroom.document.asset.client.component.DocumentAssetsTab.AssetAction;
 import stroom.document.asset.shared.DocumentAssetResource;
 import stroom.document.asset.shared.DocumentAssetSaveAsParameters;
@@ -69,7 +69,7 @@ import java.util.function.Consumer;
 /// A document's Assets tab ([DocumentAssetsTab]): its images, CSS, scripts and so on, which the
 /// user adds, uploads, renames, deletes and edits as a draft on the server. The draft becomes the
 /// document's assets when the document is saved: its owner (e.g. `VisualisationEditor`,
-/// `FloorMapDocEditor`) calls [#onSave] or [#onSaveAs] from the document's post-save callback, and
+/// `FloorMapEditor`) calls [#onSave] or [#onSaveAs] from the document's post-save callback, and
 /// counts the tab's [#isDirty()] as its own.
 ///
 /// @param <D> The document's type.
@@ -93,13 +93,13 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     private final DocumentAssetTree tree;
 
     // Dialog that appears when user wants to upload a file
-    private final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider;
+    private final Provider<DocumentAssetUploadFileController> uploadFileDialogProvider;
 
     // Makes the dialog that adds a file or folder
-    private final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider;
+    private final Provider<DocumentAssetAddItemController> addItemDialogProvider;
 
     // Makes the dialog that renames the tree item
-    private final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider;
+    private final Provider<DocumentAssetRenameController> editAssetDialogProvider;
 
     // The selected file's editor
     private final CodeEditorController editor;
@@ -135,9 +135,9 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
             final EventBus eventBus,
             final DocumentAssetsTab view,
             final RestFactory restFactory,
-            final Provider<DocumentAssetUploadFileDialogController> uploadFileDialogProvider,
-            final Provider<DocumentAssetAddItemDialogController> addItemDialogProvider,
-            final Provider<DocumentAssetEditAssetDialogController> editAssetDialogProvider,
+            final Provider<DocumentAssetUploadFileController> uploadFileDialogProvider,
+            final Provider<DocumentAssetAddItemController> addItemDialogProvider,
+            final Provider<DocumentAssetRenameController> editAssetDialogProvider,
             final Provider<CodeEditorController> codeEditorProvider) {
         super(eventBus);
         this.view = view;
@@ -289,7 +289,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         this.fetchDraftAssets(document);
     }
 
-    /// Called by the owning controller (e.g. VisualisationEditor, FloorMapDocEditor) via the
+    /// Called by the owning controller (e.g. VisualisationEditor, FloorMapEditor) via the
     /// DocumentPlugin post-save callback, to save the assets.
     /// Requests the server to copy data from the draft area to the live area of the database.
     ///

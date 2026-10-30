@@ -27,7 +27,7 @@ import stroom.query.api.TableResult;
 import stroom.query.api.TimeRange;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryModel;
-import stroom.query.client.ResultComponent;
+import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.ResultStoreModel;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.client.Console;
@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 /**
  * Encapsulates a {@link QueryModel} for histogram queries against temporal stores.
  *
- * <p>This helper creates a lightweight {@link ResultComponent} that receives {@link TableResult}
+ * <p>This helper creates a lightweight {@link QueryResultConsumer} that receives {@link TableResult}
  * data and forwards it to the provided result handler.</p>
  *
  * <p><b>Failures are reported rather than drawn as an empty histogram.</b> Every way this query can
@@ -95,7 +95,7 @@ public class HistogramQueryHelper {
                 resultStoreModel,
                 () -> QueryTablePreferences.builder().build());
 
-        final ResultComponent resultComponent = new ResultComponent() {
+        final QueryResultConsumer resultComponent = new QueryResultConsumer() {
             @Override
             public OffsetRange getRequestedRange() {
                 return new OffsetRange(0, 10000);

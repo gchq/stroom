@@ -17,7 +17,7 @@
 package stroom.job.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Shows the jobs, and the selected job on each node.
-public class JobsController extends ContentTabController implements Refreshable {
+public class JobsController extends ContentTabController implements HasRefresh {
 
     public static final String TAB_TYPE = "Jobs";
 

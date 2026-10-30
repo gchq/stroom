@@ -56,7 +56,7 @@ public class TaskProgressUtil {
     public static ResultPage<TaskProgress> combine(final Range range,
                                                    final FindTaskProgressCriteria criteria,
                                                    final Collection<List<TaskProgress>> input,
-                                                   final TaskManagerTreeAction treeAction) {
+                                                   final ServerTaskTreeAction treeAction) {
         // Validate criteria.
         criteria.validateSortField();
 
@@ -81,7 +81,7 @@ public class TaskProgressUtil {
 
     static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap,
                                          final FindTaskProgressCriteria criteria,
-                                         final TaskManagerTreeAction treeAction) {
+                                         final ServerTaskTreeAction treeAction) {
         final Map<TaskId, TaskProgress> completeIdMap = new HashMap<>(taskProgressMap);
         final Map<TaskId, Set<TaskProgress>> childMap = new HashMap<>();
 
@@ -174,7 +174,7 @@ public class TaskProgressUtil {
                                   final int depth,
                                   final List<TaskProgress> returnList,
                                   final FindTaskProgressCriteria criteria,
-                                  final TaskManagerTreeAction treeAction) {
+                                  final ServerTaskTreeAction treeAction) {
         TaskId parentId = null;
         if (parent != null) {
             parentId = parent.getId();

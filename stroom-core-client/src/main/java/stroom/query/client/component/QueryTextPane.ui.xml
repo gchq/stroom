@@ -19,6 +19,6 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <l:ClassificationLabel ui:field="classification" styleName="dock-min classification-label classification-label--one-line"/>
-        <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
+        <spinner:LargeBusySpinner ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
     </g:FlowPanel>
 </ui:UiBinder>

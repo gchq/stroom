@@ -21,9 +21,9 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.pipeline.client.component.DocRefSelectionController;
+import stroom.pipeline.client.component.SaveChangedDocumentsController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -56,7 +56,7 @@ class TestPipelinePlugin {
 
     private final EventBus eventBus = new SimpleEventBus();
     private final FakeRestFactory restFactory = new FakeRestFactory();
-    private final List<ExplorerPopupController> choosers = new ArrayList<>();
+    private final List<DocumentChooserController> choosers = new ArrayList<>();
 
     @BeforeEach
     @SuppressWarnings("unchecked")
@@ -71,11 +71,11 @@ class TestPipelinePlugin {
                 Mockito.mock(DocumentPluginEventManager.class),
                 Mockito.mock(ClientSecurityContext.class),
                 () -> {
-                    final ExplorerPopupController chooser = Mockito.mock(ExplorerPopupController.class);
+                    final DocumentChooserController chooser = Mockito.mock(DocumentChooserController.class);
                     choosers.add(chooser);
                     return chooser;
                 },
-                (Provider<DocRefSelectionController>) Mockito.mock(Provider.class),
+                (Provider<SaveChangedDocumentsController>) Mockito.mock(Provider.class),
                 new AppRoot());
     }
 

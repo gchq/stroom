@@ -18,7 +18,7 @@ package stroom.node.client.component;
 
 import stroom.data.client.CriteriaUtil;
 import stroom.data.client.RestDataProvider;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
@@ -37,9 +37,9 @@ import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 /// The cluster's nodes ([NodeStatusList]): fetched, then each pinged; a node's info shown in a
 /// tooltip, its priority and whether it is enabled saved as they are changed. Refreshes only while
 /// auto refresh is on.
-public class NodeStatusListController extends Controller implements Refreshable {
+public class NodeStatusListController extends Controller implements HasRefresh {
 
     private final NodeClient nodeClient;
     private final InfoTooltipController infoTooltip;
@@ -199,13 +199,13 @@ public class NodeStatusListController extends Controller implements Refreshable 
                                     final ClusterNodeInfo result,
                                     final PopupPosition popupPosition,
                                     final Element anchor) {
-        final TableBuilder tb1 = new TableBuilder();
-        final TableBuilder tb2 = new TableBuilder();
+        final HtmlTableBuilder tb1 = new HtmlTableBuilder();
+        final HtmlTableBuilder tb2 = new HtmlTableBuilder();
 
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
             tb1
-                    .row(TableCell.header("Node Details", 2))
+                    .row(HtmlTableCell.header("Node Details", 2))
                     .row("Node Name", result.getNodeName());
             if (buildInfo != null) {
                 tb1
@@ -219,7 +219,7 @@ public class NodeStatusListController extends Controller implements Refreshable 
                     .row("Ping", ModelStringUtil.formatDurationString(result.getPing()))
                     .row("Error", result.getError());
 
-            tb2.row(TableCell.header("Node List"));
+            tb2.row(HtmlTableCell.header("Node List"));
             if (result.getItemList() != null) {
                 for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
                     String nodeValue = info.getNodeName();

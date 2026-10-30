@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 /// Stories of `App/Main/ProcessorProfilesScreen`, showing Stroom's real [ProcessorProfilesController]
-/// (the 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it) with fake REST replies.
+/// (the 'Processor Profiles' tab, as `ProcessorProfilesPlugin` opens it) with fake REST replies.
 ///
 /// | Stroom endpoint | Used for |
 /// |---|---|
@@ -238,7 +238,7 @@ public final class ProcessorProfilesScreenStories {
                     play.dblClick(play.getByText("Nightly"));
                     screen.findByText(TextMatch.containing("Edit Processor Profile"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
-                    // ProcessorProfileEditController closes an unchanged profile without saving it
+                    // ProcessorProfileEditorController closes an unchanged profile without saving it
                     // (Objects.equals(updated, processorProfile)), so its periods and time zone are kept
                     // by not being sent at all
                     play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Edit Processor Profile")))
@@ -304,7 +304,7 @@ public final class ProcessorProfilesScreenStories {
         harness.afterStartUp(() -> {
             final ProcessorProfilesController controller = injector.getProcessorProfilesController();
             harness.show(controller);
-            // As the content pane does when it shows a Refreshable tab
+            // As the content pane does when it shows a HasRefresh tab
             controller.refresh();
         });
         return harness.asWidget();

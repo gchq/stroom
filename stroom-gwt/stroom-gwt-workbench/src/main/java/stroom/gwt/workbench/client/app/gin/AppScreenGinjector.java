@@ -17,7 +17,7 @@
 
 package stroom.gwt.workbench.client.app.gin;
 
-import stroom.credentials.client.component.CredentialsManagerDialogController;
+import stroom.credentials.client.component.CredentialsPickerController;
 import stroom.dictionary.client.component.DictionaryEditor;
 import stroom.entity.client.component.InfoDocumentController;
 import stroom.explorer.client.component.ExplorerNodeEditTagsController;
@@ -56,17 +56,17 @@ public interface AppScreenGinjector extends ScreenGinjector {
 
     /// @return A new credential picker dialog, as `ContentStoreContentPackDetailsController` is
     /// given.
-    CredentialsManagerDialogController getCredentialsManagerDialogController();
+    CredentialsPickerController getCredentialsManagerDialogController();
 
     // Documents and the explorer
 
     /// @return The document 'Info' dialog, shown by firing `ShowInfoDocumentDialogEvent`.
     InfoDocumentController getInfoDocumentController();
 
-    /// @return The 'Edit Tags' dialog, as `NavigationPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
+    /// @return The 'Edit Tags' dialog, as `ExplorerPlugin` shows it for `ShowEditNodeTagsDialogEvent`.
     ExplorerNodeEditTagsController getExplorerNodeEditTagsController();
 
-    /// @return The 'Remove Tags' dialog, as `NavigationPlugin` shows it for
+    /// @return The 'Remove Tags' dialog, as `ExplorerPlugin` shows it for
     /// `ShowRemoveNodeTagsDialogEvent`.
     ExplorerNodeRemoveTagsController getExplorerNodeRemoveTagsController();
 
@@ -81,7 +81,7 @@ public interface AppScreenGinjector extends ScreenGinjector {
     /// @return The 'Server Tasks' tab.
     ServerTasksController getServerTasksController();
 
-    /// @return The user's task manager dialog, as `TaskManagerPlugin` shows it on `OpenUserTaskManagerEvent`.
+    /// @return The user's task manager dialog, as `ServerTasksPlugin` shows it on `OpenUserTaskManagerEvent`.
     UserTaskManagerController getUserTaskManagerController();
 
     // Security

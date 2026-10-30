@@ -17,7 +17,7 @@
 package stroom.security.identity.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 
@@ -26,7 +26,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// Shows the accounts of Stroom's internal identity provider.
 public class AccountsController extends ContentTabController
-        implements Refreshable {
+        implements HasRefresh {
 
     public static final String TAB_TYPE = "Accounts";
 

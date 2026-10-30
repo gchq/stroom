@@ -26,7 +26,7 @@ import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.component.NavigationController;
+import stroom.explorer.client.component.ExplorerController;
 import stroom.gwt.workbench.client.app.gin.shell.ShellScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -49,14 +49,14 @@ import java.util.function.Supplier;
 
 /// Stroom's app shell, put together for the `App/Main/AppShell` stories as Stroom's GIN modules and
 /// start-up put it together: the main view ([MainController], with the main menu button), the
-/// explorer ([NavigationController]) and the document tabs ([ContentTabPaneController]) in it, every
+/// explorer ([ExplorerController]) and the document tabs ([ContentTabPaneController]) in it, every
 /// plugin that adds to the main menu (and binds keyboard shortcuts), the Dictionary, Feed and Folder
 /// document plugins, the
 /// `DocumentPluginEventManager` (the explorer's and tabs' menus, opening, saving, renaming...) and
 /// the dialogs that the listeners would show for their events (Find, Recent Items, New, Copy, Move,
 /// Rename, Info, Export, Edit Tags, About).
 ///
-/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `CoreController` do once the harness has
+/// [#start(DocRef)] logs in as Stroom's `CurrentUser` and `AppPageController` do once the harness has
 /// loaded the UI config and preferences: the splash screen (if enabled), the initial activity
 /// chooser (if enabled), then `ShowMainEvent`, which shows the explorer and opens the initial
 /// document, if any.
@@ -113,7 +113,7 @@ final class ShellScreen {
         });
     }
 
-    /// Opens a document in a full screen view, as Stroom's `CoreController` does for a URL naming a
+    /// Opens a document in a full screen view, as Stroom's `AppPageController` does for a URL naming a
     /// document without the `open-doc` action (Stroom's embedded view), instead of showing the
     /// shell.
     ///
@@ -140,7 +140,7 @@ final class ShellScreen {
         harness.addRegistration(eventBus.addHandler(MoveContentTabEvent.getType(), tabPane));
         harness.addRegistration(eventBus.addHandler(RefreshContentTabEvent.getType(), tabPane));
 
-        final NavigationController navigation = injector.getNavigationController();
+        final ExplorerController explorer = injector.getExplorerController();
 
         // The main view, with the app's keyboard shortcuts, which owns the tabs and the explorer
         final StoryKeyHandler keyHandler = new StoryKeyHandler(injector.getGlobalKeyHandlerImpl());
@@ -150,7 +150,7 @@ final class ShellScreen {
                 new MenuItems(),
                 harness.getUiConfigCache(),
                 keyHandler,
-                navigation,
+                explorer,
                 tabPane);
         harness.own(main);
 
@@ -194,22 +194,22 @@ final class ShellScreen {
         injector.getAnnotationCommentPlugin();
         injector.getAnnotationLabelPlugin();
         injector.getAnnotationStatusPlugin();
-        injector.getCacheMonitoringPlugin();
+        injector.getCachesPlugin();
         injector.getContentStorePlugin();
         injector.getCredentialsPlugin();
         injector.getManageFsVolumesPlugin();
-        injector.getNavigationPlugin();
+        injector.getExplorerPlugin();
         injector.getHelpPlugin();
         injector.getDependenciesPlugin();
         injector.getExportConfigPlugin();
         injector.getImportConfigPlugin();
         injector.getManageIndexVolumesPlugin();
         injector.getDatabaseTablesMonitoringPlugin();
-        injector.getExecutionScheduleManagerPlugin();
-        injector.getJobListPlugin();
+        injector.getExecutionSchedulesPlugin();
+        injector.getJobsPlugin();
         injector.getNodeGroupsPlugin();
-        injector.getNodeMonitoringPlugin();
-        injector.getProcessorProfilePlugin();
+        injector.getNodesPlugin();
+        injector.getProcessorProfilesPlugin();
         injector.getManageGlobalPropertiesPlugin();
         injector.getTracesPlugin();
         injector.getUserPreferencesPlugin();
@@ -229,7 +229,7 @@ final class ShellScreen {
         injector.getUsersPlugin();
         injector.getAccountsPlugin();
         injector.getChangePasswordPlugin();
-        injector.getTaskManagerPlugin();
+        injector.getServerTasksPlugin();
 
         injector.getDictionaryPlugin();
         injector.getFeedPlugin();

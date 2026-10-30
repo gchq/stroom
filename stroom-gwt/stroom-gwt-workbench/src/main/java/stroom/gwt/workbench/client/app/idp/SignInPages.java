@@ -21,7 +21,7 @@ import stroom.gwt.workbench.client.app.gin.idp.IdpScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.security.identity.client.component.SignInPageController;
+import stroom.security.identity.client.component.AbstractSignInPageController;
 import stroom.widget.help.client.HelpManager;
 
 import com.google.gwt.core.client.GWT;
@@ -61,7 +61,7 @@ final class SignInPages {
                          final Map<String, String> parameters,
                          final Function<String, Widget> message,
                          final boolean replacePage,
-                         final BiFunction<IdpScreenGinjector, ScreenHarness, SignInPageController> page) {
+                         final BiFunction<IdpScreenGinjector, ScreenHarness, AbstractSignInPageController> page) {
         final IdpScreenGinjector injector = GWT.create(IdpScreenGinjector.class);
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -74,7 +74,7 @@ final class SignInPages {
         // events on the static event bus, which the help manager shows
         new StaticEventBus(harness.getEventBus());
         new HelpManager(harness.getEventBus());
-        final SignInPageController[] shown = new SignInPageController[1];
+        final AbstractSignInPageController[] shown = new AbstractSignInPageController[1];
         IdpPage.setUp(harness, parameters, url -> {
             if (replacePage && shown[0] != null) {
                 shown[0].asWidget().getParent().setVisible(false);
@@ -83,7 +83,7 @@ final class SignInPages {
         });
         // As Stroom's App.onModuleLoad does for '/signIn' and '/resetPassword'
         harness.afterStartUp(() -> {
-            final SignInPageController controller = page.apply(injector, harness);
+            final AbstractSignInPageController controller = page.apply(injector, harness);
             shown[0] = controller;
             // As its show() does, with the story as the page
             harness.showPage(controller);

@@ -397,7 +397,7 @@ public final class EditTagsDialogStories {
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures(nodeTags, allTags))
                 .injector(injector)
                 .build();
-        // As NavigationPlugin does
+        // As ExplorerPlugin does
         harness.addRegistration(harness.getEventBus().addHandler(ShowEditNodeTagsDialogEvent.getType(), event ->
                 injector.getExplorerNodeEditTagsController().show(harness.getAppRoot(), event.getExplorerNodes())));
         // As the explorer's 'Edit Tags'/'Add Tags' menu item does

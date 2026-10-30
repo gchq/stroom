@@ -17,7 +17,7 @@
 package stroom.app.client.gin;
 
 import stroom.about.client.gin.AboutModule;
-import stroom.ai.client.gin.AskStroomAIModule;
+import stroom.ai.client.gin.AskStroomAiModule;
 import stroom.alert.client.gin.AlertModule;
 import stroom.analytics.client.gin.AnalyticsModule;
 import stroom.analytics.client.gin.ReportModule;
@@ -25,7 +25,7 @@ import stroom.annotation.client.gin.AnnotationModule;
 import stroom.aws.s3.client.gin.S3ConfigModule;
 import stroom.cache.client.gin.CacheModule;
 import stroom.contentstore.client.gin.ContentStoreModule;
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.credentials.client.gin.CredentialsModule;
 import stroom.dashboard.client.gin.DashboardGinjector;
@@ -52,15 +52,15 @@ import stroom.preferences.client.gin.UserPreferencesGinjector;
 import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.gin.QueryModule;
 import stroom.receive.content.client.gin.ContentTemplateModule;
-import stroom.receive.rules.client.gin.PolicyModule;
+import stroom.receive.rules.client.gin.ReceiveRulesModule;
 import stroom.script.client.gin.ScriptModule;
 import stroom.search.elastic.client.gin.ElasticClusterModule;
 import stroom.search.elastic.client.gin.ElasticIndexModule;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
-import stroom.security.identity.client.gin.ChangePasswordGinjector;
-import stroom.security.identity.client.gin.ChangePasswordModule;
+import stroom.security.identity.client.gin.IdentityGinjector;
+import stroom.security.identity.client.gin.IdentityModule;
 import stroom.sqlstore.client.gin.SqlTemporalStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskModule;
@@ -81,7 +81,7 @@ import com.google.web.bindery.event.shared.EventBus;
         AlertModule.class,
         AnnotationModule.class,
         AppModule.class,
-        AskStroomAIModule.class,
+        AskStroomAiModule.class,
         ContentStoreModule.class,
         CacheModule.class,
         ContentTemplateModule.class,
@@ -101,13 +101,13 @@ import com.google.web.bindery.event.shared.EventBus;
         PathwaysModule.class,
         PipelineModule.class,
         PluginsModule.class,
-        PolicyModule.class,
+        ReceiveRulesModule.class,
         PopupModule.class,
         UserPreferencesModule.class,
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
-        ChangePasswordModule.class,
+        IdentityModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
@@ -134,14 +134,14 @@ public interface AppGinjectorUser extends
         PopupGinjector,
         UserPreferencesGinjector,
         SecurityGinjector,
-        ChangePasswordGinjector {
+        IdentityGinjector {
 
     // Default implementation of standard resources
     @SuppressWarnings("unused")
     EventBus getEventBus();
 
     // Controllers
-    Provider<CoreController> getCoreController();
+    Provider<AppPageController> getAppPageController();
 
     @SuppressWarnings("unused")
     Provider<FullScreenController> getFullScreenController();

@@ -49,7 +49,7 @@ class TestQueryModel {
     private final FakeRestFactory restFactory = new FakeRestFactory();
     private final List<Boolean> searching = new ArrayList<>();
     private final List<List<ErrorMessage>> errors = new ArrayList<>();
-    private ResultComponent table;
+    private QueryResultConsumer table;
     private ResultStoreModel resultStoreModel;
     private QueryModel queryModel;
 
@@ -64,7 +64,7 @@ class TestQueryModel {
                 Mockito.mock(DateTimeSettingsFactory.class),
                 resultStoreModel,
                 () -> null);
-        table = Mockito.mock(ResultComponent.class);
+        table = Mockito.mock(QueryResultConsumer.class);
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, table);
         queryModel.addSearchStateListener(searching::add);
         queryModel.addSearchErrorListener(errors::add);

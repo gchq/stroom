@@ -121,7 +121,7 @@ public final class FloorMapEventsQueryOrder {
     ///
     /// No client API can evaluate an arbitrary select expression, so this is deliberately a
     /// textual check for the one shape that is known safe — the shape
-    /// `FloorMapEventsQuery.defaultQuery()` generates. It errs towards `false`: a query
+    /// `FloorMapDefaultEventsQuery.defaultQuery()` generates. It errs towards `false`: a query
     /// that is safe but written differently loses the stronger ordering and nothing else, whereas
     /// erring the other way silently draws entities at stale positions.
     ///

@@ -48,7 +48,7 @@ import java.util.TreeSet;
 /// folder, in the 'Set Document Create Permissions' dialog) with fake REST replies.
 ///
 /// The user's create permissions report is given to the grid with `setup(report)`, as
-/// `DocumentUserCreatePermissionsEditController` gives it, and the document types come from
+/// `DocumentUserCreatePermissionsEditorController` gives it, and the document types come from
 /// `GET /explorer/v2/fetchDocumentTypes` (three types here). Stroom reads
 /// `getExplicitCreatePermissions()` when the dialog's OK is pressed; the story reports the working
 /// set to the `onChange` spy after each change.

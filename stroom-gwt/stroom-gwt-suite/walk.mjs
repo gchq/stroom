@@ -1368,7 +1368,7 @@ async function driveStep(step) {
     if (!(await setAce(page, step.text, step.index ?? 0))) throw new Error('no Ace editor to set');
     await page.waitForTimeout(300);
   } else if (step.via === 'select-element') {
-    // A pipeline element on the Structure canvas. Not a GWT Tree: `DraggableTreePanel` selects on
+    // A pipeline element on the Structure canvas. Not a GWT Tree: `DraggableTree` selects on
     // MOUSEUP when the target is the element the MOUSEDOWN landed on, and a drag between the two
     // moves the element — so press and release on one spot, no movement. The LAST box is the
     // deepest element (Source is first), which is the one whose Add/Edit/Remove all apply.
@@ -1377,7 +1377,7 @@ async function driveStep(step) {
       // `match` picks an element by name — the pipeline REFERENCE list is enabled only for an element
       // with a pipelineReference property, which is the XSLT filter, not the Reference Data Filter
       // (that one LOADS reference data; the XSLT filter CONSUMES it).
-      const boxes = [...document.querySelectorAll('.pipeline-element__label')].filter((e) => e.offsetWidth > 0);
+      const boxes = [...document.querySelectorAll('.pipeline-element-box__label')].filter((e) => e.offsetWidth > 0);
       const el = match ? boxes.find((e) => new RegExp(match, 'i').test(e.textContent)) : boxes[boxes.length - 1];
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -1851,7 +1851,7 @@ if (DIRECTED.includes('settings')) {
 }
 if (DIRECTED.includes('gitrepo')) {
   // The Git repository `seed-data.mjs` gave a URL: its Settings tab shows `Push to Git` (hidden on
-  // every content-pack repo here), whose click opens the commit dialog (GitRepoCommitDialog-
+  // every content-pack repo here), whose click opens the commit dialog (GitRepoCommit-
   // Presenter) before any push — the push is the dialog's OK, which the guard blocks.
   seeds.push({ kind: 'editor-tab', presenter: 'GitRepoPresenter', seedDepth: 2,
     path: ['GitRepo (document, with a URL)', 'Settings'],

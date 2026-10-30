@@ -108,7 +108,7 @@ plus targeted DOM updates gives the same benefit (§4.3).
 | multi-select / single-select / no selection | 30 / ~35 / ~11 |
 | server sort (`addColumnSortHandler` + `CriteriaUtil`) / client sort | 33 / ~7 |
 | server-paged (`RestDataProvider`) / client list (`setRowData`) | 46 / ~30 |
-| `setMultiLine(true)` | 16 (`TaskManagerList` toggles it at runtime) |
+| `setMultiLine(true)` | 16 (`ServerTaskList` toggles it at runtime) |
 | tick-box columns / select-all header | 21 / 7 |
 | in-cell editors (`TickBoxCell`, `ValueSpinnerCell`) | 21 / 3 |
 | expander (tree) columns | 8 |
@@ -152,7 +152,7 @@ Usage falls into eight categories:
    command links must not select the row (the `EventCell` / consumed-events rules,
    `DataGridSelectionEventManager.java:89-149`).
 3. **Meta browser.** Id-set selection kept across pages; a tri-state header; `redrawHeaders()`.
-4. **Server Tasks** (`TaskManagerList`). Pages of 1000 rows, auto-refresh, tree expanders,
+4. **Server Tasks** (`ServerTaskList`). Pages of 1000 rows, auto-refresh, tree expanders,
    and multi-line switched on and off at runtime.
 5. **ImportConfigConfirm.** A page of 100k rows with a select-all header.
 
@@ -163,7 +163,7 @@ Usage falls into eight categories:
 ### 4.1 Package and naming
 
 Package `stroom.widget.datagrid.client`, main class `DataGrid<R>` (decided, §10). During
-switch-over both `DataGrid` and `MyDataGrid` implement a `DataGridView<R>` interface.
+switch-over both `DataGrid` and `MyDataGrid` implement a `GridDisplay<R>` interface.
 
 * The pure-Java model classes go in `stroom.widget.datagrid.client.model`, in
   `stroom-core-client-widget` (decided, §10).
@@ -305,7 +305,7 @@ mostly changing a type:
   * `parent` is the `data-grid__cell` element.
   * `ColumnBuilder`, `HeadingBuilder` and `DataGridUtil` keep working.
 * **`MyDataGrid` method set.** All the `MyDataGrid` methods listed in §5.12. The plan is to extract an
-  interface `DataGridView<R>` that **both** widgets implement, so presenters can be switched by
+  interface `GridDisplay<R>` that **both** widgets implement, so presenters can be switched by
   changing one type, or one factory, at a time.
 
 ---
@@ -335,7 +335,7 @@ A requirement marked **R** goes beyond GWT and needs sign-off.
 | --- | --- | --- |
 | R-C1 | **Fixed column**: `addColumn(col, name[, width])`. Default width 200. Not resizable, not movable. | G `:912-922` |
 | R-C2 | **Resizable column**: `addResizableColumn(col, name/header, width)`. Resizable **and** movable. | G `:928, :992` |
-| R-C3 | **Fill column**: `addAutoResizableColumn(col, name/header, [fillWeight=100], initialMinimumWidth)`. Resizable and movable. Takes up the remaining space on the first layout, and that pixel width becomes its starting width. The declared width is a floor: fill only ever grows a column, never shrinks it. Usually the last column. Several fill columns share the space by weight (Dependencies has 4, DocRefList and PropertyList have 2 each). | G `:953-990` |
+| R-C3 | **Fill column**: `addAutoResizableColumn(col, name/header, [fillWeight=100], initialMinimumWidth)`. Resizable and movable. Takes up the remaining space on the first layout, and that pixel width becomes its starting width. The declared width is a floor: fill only ever grows a column, never shrinks it. Usually the last column. Several fill columns share the space by weight (Dependencies has 4, ImportList and PropertyList have 2 each). | G `:953-990` |
 | R-C3a | **Percent column** (new): a width given as a percentage of the grid's **initial visible width**. It is converted to pixels once, on the first layout, and is a plain pixel column from then on. It does not track later resizes. | New |
 | R-C4 | **Initial width resolution runs once, on the first layout with a non-zero width**, so a grid built in a hidden tab waits until it is shown. Order: (1) fixed columns use their declared pixels; (2) percent columns become `(int)(outerWidth × pct / 100)`; (3) fill columns share what is left. If steps 1–2 already overflow the grid, fill columns keep their declared floor and the grid scrolls horizontally. `remaining = outerWidth − Σ(widths after steps 1–2, including fill floors)`. If `remaining > 0`, each fill column gets `declared + (int)(remaining / Σweight × weight)`, **truncated, not rounded** (rounding was a source of drift found by the React port). After that, widths belong to the user. A container resize does **not** run the fill again. (Today it runs six times on timers; one run on the first non-zero `ResizeObserver` measurement replaces that.) | G `:1059, :1132-1151` |
 | R-C5 | `resizeTableToFitColumns()` is kept as a public method. Callers use it after rebuilding columns (`TableController`, `QueryResultTableController :731, :917`). | G |
@@ -657,7 +657,7 @@ interactive header cells, the context menu, copy, export and AI.
   * A header cell gets the same parent element as in GWT (the name holder of a sortable header,
     otherwise the header cell), so `FilterCell` finds its input.
 
-**Phase 3: the `DataGridView<R>` interface and opt-in switching.**
+**Phase 3: the `GridDisplay<R>` interface and opt-in switching.**
 
 * Extract the interface (§5.12) and have `MyDataGrid` implement it.
 * Switch screens one category at a time:
@@ -715,7 +715,7 @@ interactive header cells, the context menu, copy, export and AI.
     key or click. Its handler is now wrapped in `$entry`, which every resize listener gets. A play
     can't show it (its own steps run the pending work), so the regression check is a real-input
     one, on `Widgets/Data Grid/Behaviour/RowsFollowDensityVirtual`.
-* **The interface** (2026-10-21): `stroom.widget.datagrid.client.DataGridView<R>`, which `MyDataGrid` and
+* **The interface** (2026-10-21): `stroom.widget.datagrid.client.GridDisplay<R>`, which `MyDataGrid` and
   `DataGrid` both implement. It holds the §5.12 methods both grids have, plus
   `addColumn(ColSpec)` (new to `DataGrid`, sized by `ColumnSizing.fromColSettings`) and
   `getHeaderCellElement` (new to `MyDataGrid`). The code several screens share takes it rather
@@ -724,7 +724,7 @@ interactive header cells, the context menu, copy, export and AI.
   move one at a time. `MetaListController`'s grid moves with the meta browser.
 * **Small lists, first batch** (2026-10-21): 14 client-side lists, switched by type:
   * `LinkedEventPresenter`, `ScriptDependencyList`, `StatisticsFieldList`,
-    `ElasticIndexFieldList`, `SolrIndexFieldList`, `DocRefList`,
+    `ElasticIndexFieldList`, `SolrIndexFieldList`, `ImportList`,
     `SelectionHandlerList`, `SigningKeyList`, receive rules'
     `FieldList`, `RuleList` (conditional formatting),
     `UserSessionsList`, `WordListPresenter`, and the floor map editor's
@@ -734,7 +734,7 @@ interactive header cells, the context menu, copy, export and AI.
     the row itself), session by handle, floor map time entry by time (the list holds one fact's).
     `DocRef`, `QueryField`, the statistics `Field`, `EventId` and the fact rows already compare by
     their id.
-  * `DataGridComparatorFactory` takes a `DataGridView`; the floor map lists' row elements are plain
+  * `DataGridComparatorFactory` takes a `GridDisplay`; the floor map lists' row elements are plain
     `Element`s.
   * Found: the new grid's sticky header is opaque (rows scroll under it) in the page's colour, but
     a list in a control's box (`.stroom-control`, e.g. a dictionary's imports), a dialog or a popup
@@ -819,14 +819,14 @@ interactive header cells, the context menu, copy, export and AI.
   `IndexShard`, `ColumnSelection`, `NodeGroupStateList`,
   `StatisticsCustomMaskList`, `UserList`, `ConstraintList`,
   `NodeGroupList`, `ContentTemplateList`, `DataRetentionPolicyList`,
-  `XPathList`, `DocRefSelection`, and `ProcessorTaskSummary` (given
+  `XPathList`, `SaveChangedDocuments`, and `ProcessorTaskSummary` (given
   stories first, `App/Main/ProcessorTaskSummary`).
   * Key providers where a tick or refresh brings new, unequal rows: node groups and index shards
     by id, content templates and retention rules by number (their position), constraints by name,
     task summaries by their group (not their count).
   * The select-all headers (anonymous `Header`s with an updater) work as they are: the new grid
     gives header cells their events.
-  * `UserList.getDataGrid()` returns a `DataGridView`; `DocRefSelection.setDataWidget`
+  * `UserList.getDataGrid()` returns a `GridDisplay`; `SaveChangedDocuments.setDataWidget`
     takes a `Widget`.
   * The plays find rows, cells and headers with `StroomDom.GRID_ROW`, `GRID_HEADER_CELL`,
     `GRID_HEADER_TEXT` and `GRID_CELL_TEXT` (new), which match either grid.
@@ -847,7 +847,7 @@ interactive header cells, the context menu, copy, export and AI.
   `ManageGlobalPropertyList`, `ActivityList`, `CredentialsList`,
   `ContentStoreContentPackList`, `DocumentUserPermissionsList`,
   `AppUserPermissionsList`, `ScheduledProcessHistoryList`,
-  `AppPermissionsEdit`, `JobList`.
+  `AppPermissionsEditor`, `JobList`.
   * Key providers where an edit, refresh or node reply brings new rows: profile periods by uuid,
     pipeline properties by element and name, activities by id, global properties by name,
     content packs by their pack.
@@ -861,9 +861,9 @@ interactive header cells, the context menu, copy, export and AI.
     grid's tables hid.
 
 * **Trees** (2026-10-21): the five grids with an expander column, with all their columns as before:
-  `ProcessorList`, `TaskManagerList`, `MarkerList`,
+  `ProcessorList`, `ServerTaskList`, `MarkerList`,
   `ConfigPropertyClusterValuesList` and `DataRetentionImpactController`.
-  `TreeRowHandler` takes a `DataGridView`.
+  `TreeRowHandler` takes a `GridDisplay`.
   * **Tree grid semantics.** A grid with an `ExpanderCell` column is an ARIA `treegrid`: rows carry
     `aria-level` and, unless they're leaves, `aria-expanded`. On a row, Right expands a collapsed
     row (else enters the cells), and Left collapses an expanded one (else goes to its parent row).
@@ -935,7 +935,7 @@ interactive header cells, the context menu, copy, export and AI.
     two grids side by side (Behaviour's `…Old`, Row Updates' `CurrentGrid`, Row States' current
     grid, the benchmark's `old` kind) keep only the new grid's half; the cell renderer, view state
     and split pane stories use `DataGrid`, their plays its keys (a row's buttons are reached
-    with Right, not Tab). `DataGridView` stays, with one implementation, as the shared helpers take
+    with Right, not Tab). `GridDisplay` stays, with one implementation, as the shared helpers take
     it. None of the forked `cellview` classes could go: `MyCellTable` and the selection models
     still use them all.
   * **The old class names.** The grid no longer carries `MyDataGrid`'s classes. Its own are BEM
@@ -986,7 +986,7 @@ interactive header cells, the context menu, copy, export and AI.
 
 | # | Question | Decision |
 | --- | --- | --- |
-| 1 | Naming and package | `DataGrid<R>` in `stroom.widget.datagrid.client`, with a `DataGridView<R>` interface implemented by both grids during switch-over (§4.1). |
+| 1 | Naming and package | `DataGrid<R>` in `stroom.widget.datagrid.client`, with a `GridDisplay<R>` interface implemented by both grids during switch-over (§4.1). |
 | 2 | Scrollbars | Custom overlay thumbs that float over the grid as they do today. The implementation is a native scroller with its scrollbar hidden, plus overlay thumbs, with CSS scroll-driven animations as an enhancement (§4.2, D1). |
 | 3 | Live resize | Live reflow; persist on release (R-CR2, D8). |
 | 4 | Column minimum width | Per column, default 30px (R-CR7, D9). |
@@ -1048,7 +1048,7 @@ and a typed character to the filter where the host has one, else type-ahead.
 
 **What doesn't:** the menus (`MenuViewImpl`, then a `MyCellTable` with menu roles, done in session 3; since 23 October 2026 their own `Menu` widget),
 and the drawn trees (the pipeline tree and bar, the expression tree, pathways), which are layouts
-with their own agreed keys (`DraggableTreePanel`, `TreeKeyboard`). While the menus are on
+with their own agreed keys (`DraggableTree`, `TreeKeyboard`). While the menus are on
 `MyCellTable`, the forked `cellview` classes stay; moving the menus onto the grid too is for later.
 
 **Order:**

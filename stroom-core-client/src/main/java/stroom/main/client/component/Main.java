@@ -17,7 +17,7 @@
 package stroom.main.client.component;
 
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
-import stroom.explorer.client.component.Navigation;
+import stroom.explorer.client.component.Explorer;
 import stroom.main.client.DynamicStyles;
 import stroom.widget.component.client.AriaPanel;
 import stroom.widget.component.client.Component;
@@ -81,7 +81,7 @@ public class Main extends Component {
     @UiField
     SplitPane explorerSplit;
     @UiField
-    Navigation explorer;
+    Explorer explorer;
     @UiField
     CurveTabLayout content;
 
@@ -107,7 +107,7 @@ public class Main extends Component {
     }
 
     /// @return The explorer, which its controller attaches to.
-    public Navigation getExplorer() {
+    public Explorer getExplorer() {
         return explorer;
     }
 

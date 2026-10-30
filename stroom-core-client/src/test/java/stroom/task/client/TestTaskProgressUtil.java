@@ -37,7 +37,7 @@ class TestTaskProgressUtil {
     @Test
     void testSortByAge() {
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-        final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
+        final ServerTaskTreeAction treeAction = new ServerTaskTreeAction();
 
         final Map<TaskId, TaskProgress> totalMap = createMap(criteria);
         List<TaskProgress> sortedList;

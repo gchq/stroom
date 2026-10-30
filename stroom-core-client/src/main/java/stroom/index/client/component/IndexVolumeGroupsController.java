@@ -23,7 +23,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -40,13 +40,13 @@ public class IndexVolumeGroupsController extends ContentTabController {
             GWT.create(IndexVolumeGroupResource.class);
 
     private final IndexVolumeGroupListController indexVolumeGroupList;
-    private final Provider<IndexVolumeGroupEditController> editProvider;
+    private final Provider<IndexVolumeGroupEditorController> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider;
 
-    private final ButtonView newButton;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
+    private final IsButton newButton;
+    private final IsButton openButton;
+    private final IsButton deleteButton;
 
     /// Made by GIN, with its parts.
     ///
@@ -59,7 +59,7 @@ public class IndexVolumeGroupsController extends ContentTabController {
     public IndexVolumeGroupsController(
             final EventBus eventBus,
             final IndexVolumeGroupListController indexVolumeGroupList,
-            final Provider<IndexVolumeGroupEditController> editProvider,
+            final Provider<IndexVolumeGroupEditorController> editProvider,
             final RestFactory restFactory,
             final Provider<NewIndexVolumeGroupController> newIndexVolumeGroupControllerProvider) {
 

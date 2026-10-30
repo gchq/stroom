@@ -38,7 +38,7 @@ public class AppPermissions extends Component {
     @UiField
     AppUserPermissionsList appUserPermissionsList;
     @UiField
-    AppPermissionsEdit appPermissionsEdit;
+    AppPermissionsEditor appPermissionsEdit;
 
     private Consumer<PermissionShowLevel> onShowLevelChange = showLevel -> {
     };
@@ -68,7 +68,7 @@ public class AppPermissions extends Component {
     }
 
     /// @return The selected user's or group's permissions.
-    public AppPermissionsEdit getAppPermissionsEdit() {
+    public AppPermissionsEditor getAppPermissionsEdit() {
         return appPermissionsEdit;
     }
 

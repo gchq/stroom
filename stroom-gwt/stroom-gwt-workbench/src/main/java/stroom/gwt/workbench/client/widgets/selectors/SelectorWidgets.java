@@ -17,7 +17,7 @@
 package stroom.gwt.workbench.client.widgets.selectors;
 
 import stroom.explorer.client.component.DocSelectionController;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.component.UserRefPopup;
@@ -43,13 +43,13 @@ public final class SelectorWidgets {
     ///
     /// @param harness The story's harness.
     /// @return The chooser's controller.
-    public static ExplorerPopupController explorerPopup(final ScreenHarness harness) {
+    public static DocumentChooserController documentChooser(final ScreenHarness harness) {
         if (ginjector == null) {
             ginjector = GWT.create(ExplorerGinjector.class);
         }
         ExplorerGinModule.setCurrent(harness);
         try {
-            return ginjector.getExplorerPopupController();
+            return ginjector.getDocumentChooserController();
         } finally {
             ExplorerGinModule.setCurrent(null);
         }
@@ -73,17 +73,17 @@ public final class SelectorWidgets {
     /// @param harness The story's harness.
     /// @return The controller.
     public static DocSelectionController docSelectionBox(final ScreenHarness harness) {
-        return docSelectionBox(harness, explorerPopup(harness));
+        return docSelectionBox(harness, documentChooser(harness));
     }
 
     /// Creates a document selection box with the given explorer popup, e.g. one with its own
     /// caption.
     ///
     /// @param harness The story's harness.
-    /// @param popup   The popup, from [#explorerPopup(ScreenHarness)].
+    /// @param popup   The popup, from [#documentChooser(ScreenHarness)].
     /// @return The controller.
     public static DocSelectionController docSelectionBox(final ScreenHarness harness,
-                                                         final ExplorerPopupController popup) {
+                                                         final DocumentChooserController popup) {
         final DocSelectionController controller = new DocSelectionController(harness.getEventBus(),
                 popup,
                 harness.getRestFactory());
@@ -110,7 +110,7 @@ public final class SelectorWidgets {
     ///         term editor.
     public static Provider<DocSelectionController> docSelectionControllerProvider(final ScreenHarness harness) {
         return () -> new DocSelectionController(harness.getEventBus(),
-                explorerPopup(harness),
+                documentChooser(harness),
                 harness.getRestFactory());
     }
 

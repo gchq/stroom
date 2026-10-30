@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `DELETE /cache/v1?cacheName=&nodeName=` | clearing a cache |
 ///
 /// The requests made are checked on the request spy. The controller comes from GIN, and is
-/// shown as `CacheMonitoringPlugin` opens it.
+/// shown as `CachesPlugin` opens it.
 public final class CachesScreenStories {
 
     // CacheResource.list(nodeName): the same caches on every node (the controller merges them)

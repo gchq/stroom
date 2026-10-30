@@ -37,7 +37,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 /// A button (`button.css`) with an optional icon and a busy spinner. Its markup is `Button.ui.xml`.
-public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory {
+public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     // While the busy spinner spins (button.css), until it has shrunk away (as long as that takes)

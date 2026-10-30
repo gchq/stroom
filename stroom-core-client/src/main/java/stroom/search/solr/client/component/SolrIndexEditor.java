@@ -17,8 +17,8 @@
 package stroom.search.solr.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -43,14 +43,14 @@ public class SolrIndexEditor extends DocumentEditor<SolrIndexDoc> {
     /// @param view                   Its component.
     /// @param indexSettingsProvider  Makes the index settings.
     /// @param indexFieldListProvider Makes the index field list.
-    /// @param markdownEditProvider   Makes the Documentation tab's editor.
+    /// @param documentationTabProvider   Makes the Documentation tab's editor.
     /// @param permissionsProvider    Makes the Permissions tab.
     @Inject
     public SolrIndexEditor(final EventBus eventBus,
                            final LinkTabPanel view,
                            final Provider<SolrIndexSettingsController> indexSettingsProvider,
                            final Provider<SolrIndexFieldListController> indexFieldListProvider,
-                           final Provider<MarkdownEditController> markdownEditProvider,
+                           final Provider<DocumentationTabController> documentationTabProvider,
                            final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -63,7 +63,7 @@ public class SolrIndexEditor extends DocumentEditor<SolrIndexDoc> {
                 SolrIndexSettingsController::read,
                 SolrIndexSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 SolrIndexDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

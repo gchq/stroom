@@ -19,14 +19,14 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.identity.shared.SigningKeyResource;
 import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// editing the database. Withdrawing a key is not reversible: the reason to do it is that the key is
 /// not trustworthy, and a way to restore trust in a key somebody has already decided about would be a
 /// mistake waiting to happen.
-public class SigningKeysController extends ContentTabController implements Refreshable {
+public class SigningKeysController extends ContentTabController implements HasRefresh {
 
     private static final SigningKeyResource SIGNING_KEY_RESOURCE = GWT.create(SigningKeyResource.class);
     public static final String TAB_TYPE = "SigningKeys";
@@ -47,8 +47,8 @@ public class SigningKeysController extends ContentTabController implements Refre
     private final SigningKeyListController signingKeyList;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final ButtonView revokeButton;
-    private final ButtonView revokeAllButton;
+    private final IsButton revokeButton;
+    private final IsButton revokeAllButton;
 
     /// Made by GIN, with its screen and its parts.
     ///

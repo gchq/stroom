@@ -20,7 +20,7 @@ import stroom.cell.info.client.ActionMenuCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
-import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.task.client.TaskMonitorFactory;
@@ -114,13 +114,13 @@ public class UserList extends Component {
         if (mode == UserListController.Mode.USERS_AND_GROUPS) {
             dataGrid.addColumn(
                     DataGridUtil.cellIconColumnBuilder(false, (User user) ->
-                                    UserAndGroupHelper.mapUserTypeToIcon(user))
+                                    UsersAndGroupsHelper.mapUserTypeToIcon(user))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .enabledWhen(User::isEnabled)
                             .centerAligned()
                             .build(),
                     DataGridUtil.headingBuilder("")
-                            .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                            .headingText(UsersAndGroupsHelper.buildUserAndGroupIconHeader())
                             .centerAligned()
                             .withToolTip("Whether this row is a single user or a named user group.")
                             .build(),
@@ -128,12 +128,12 @@ public class UserList extends Component {
         } else {
             dataGrid.addColumn(
                     DataGridUtil.cellIconColumnBuilder(false, (User user) ->
-                                    UserAndGroupHelper.mapUserTypeToIcon(user))
+                                    UsersAndGroupsHelper.mapUserTypeToIcon(user))
                             .enabledWhen(User::isEnabled)
                             .centerAligned()
                             .build(),
                     DataGridUtil.headingBuilder("")
-                            .headingText(UserAndGroupHelper.buildSingleIconHeader(
+                            .headingText(UsersAndGroupsHelper.buildSingleIconHeader(
                                     mode == UserListController.Mode.GROUPS_ONLY))
                             .centerAligned()
                             .withToolTip(mode.includesUsers()
@@ -158,7 +158,7 @@ public class UserList extends Component {
                 .build();
         dataGrid.addResizableColumn(
                 displayNameCol,
-                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip(displayNameTooltip)
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
@@ -171,7 +171,7 @@ public class UserList extends Component {
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_FULL_NAME, true)
                             .build(),
-                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_FULL_NAME)
+                    DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_FULL_NAME)
                             .withToolTip(mode.includesGroups()
                                     ? "The full name of the user. Groups do not have a full name."
                                     : "The full name of the user.")
@@ -186,7 +186,7 @@ public class UserList extends Component {
                             .enabledWhen(User::isEnabled)
                             .withSorting(UserFields.FIELD_UNIQUE_ID, true)
                             .build(),
-                    DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_UNIQUE_USER_ID)
+                    DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_UNIQUE_USER_ID)
                             .withToolTip("The unique user ID on the identity provider.")
                             .build(),
                     ColumnSizeConstants.UUID_COL);
@@ -198,7 +198,7 @@ public class UserList extends Component {
                         () -> new ActionMenuCell<>(
                                 actionMenuItems,
                                 null,
-                                (User user) -> UserAndGroupHelper.buildActionsForMsg(user)))
+                                (User user) -> UsersAndGroupsHelper.buildActionsForMsg(user)))
                 .build();
 
         // x2 width so when it is hard right, it doesn't get in the way of the scroll bar

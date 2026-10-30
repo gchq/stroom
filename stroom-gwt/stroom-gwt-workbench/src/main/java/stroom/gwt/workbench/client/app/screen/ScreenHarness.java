@@ -235,7 +235,7 @@ public final class ScreenHarness {
         // and the edit menu on text fields, in place of the browser's
         addCleanUp(ContextMenuManager.install(eventBus::fireEvent));
         // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
-        // CoreController relays them
+        // AppPageController relays them
         addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
         // and the links and Stroom AI questions they ask for (a data grid's context menu's)
         addCleanUp(OpenHyperlinkRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);

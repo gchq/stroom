@@ -154,7 +154,7 @@ public final class FindInContentDialogStories {
                 .injector(injector)
                 .build();
         harness.afterStartUp(() -> {
-            // As NavigationPlugin does, made once and kept
+            // As ExplorerPlugin does, made once and kept
             final FindInContentController findInContent = harness.own(injector.getFindInContentController());
             harness.addRegistration(harness.getEventBus().addHandler(ShowFindInContentEvent.getType(),
                     event -> findInContent.show()));

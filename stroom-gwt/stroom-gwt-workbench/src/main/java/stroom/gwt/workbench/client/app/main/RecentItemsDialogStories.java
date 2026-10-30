@@ -167,7 +167,7 @@ public final class RecentItemsDialogStories {
         eventBus.addHandler(OpenDocumentEvent.getType(), event ->
                 harness.spy(OPEN_DOC_SPY, event.getDocRef().getType() + " " + event.getDocRef().getName()));
 
-        // Show the dialog as the app does, i.e. as NavigationPlugin would on the event
+        // Show the dialog as the app does, i.e. as ExplorerPlugin would on the event
         harness.addRegistration(eventBus.addHandler(ShowRecentItemsEvent.getType(), event -> dialog.show()));
         ShowRecentItemsEvent.fire(harness.getHasHandlers());
         return harness.asWidget();

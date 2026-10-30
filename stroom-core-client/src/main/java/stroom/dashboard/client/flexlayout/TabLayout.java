@@ -18,7 +18,7 @@ package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.tab.client.LayerContainerImpl;
+import stroom.widget.component.client.LayerContainer;
 import stroom.widget.tab.client.LinkTabBar;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.util.client.MouseUtil;
@@ -44,7 +44,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     @UiField
     LinkTabBar tabBar;
     @UiField
-    LayerContainerImpl layerContainer;
+    LayerContainer layerContainer;
 
     /// @param flexLayout      The layout the pane is in, which shows its tabs' menus.
     /// @param tabLayoutConfig The pane's tabs.

@@ -22,7 +22,7 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResource;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
-import stroom.credentials.client.component.CredentialsManagerDialogController;
+import stroom.credentials.client.component.CredentialsPickerController;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.MarkdownConverter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -48,7 +48,7 @@ public class ContentStoreContentPackDetailsController extends Controller {
     private ContentStoreContentPackDetails view;
     private final MarkdownConverter markdownConverter;
     private final RestFactory restFactory;
-    private final Provider<CredentialsManagerDialogController> credentialsDialogProvider;
+    private final Provider<CredentialsPickerController> credentialsDialogProvider;
     private final ClientSecurityContext securityContext;
 
     // The content pack selected, or null
@@ -68,7 +68,7 @@ public class ContentStoreContentPackDetailsController extends Controller {
             final EventBus eventBus,
             final MarkdownConverter markdownConverter,
             final RestFactory restFactory,
-            final Provider<CredentialsManagerDialogController> credentialsDialogProvider,
+            final Provider<CredentialsPickerController> credentialsDialogProvider,
             final ClientSecurityContext securityContext) {
         super(eventBus);
         this.markdownConverter = markdownConverter;

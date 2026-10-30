@@ -39,7 +39,7 @@ public class ServerTasks extends Component {
     @UiField
     QuickFilter nameFilter;
     @UiField
-    TaskManagerList list;
+    ServerTaskList list;
 
     private Consumer<String> onFilterChange = text -> {
     };
@@ -63,7 +63,7 @@ public class ServerTasks extends Component {
     }
 
     /// @return The tasks, which its controller attaches the list's controller to.
-    public TaskManagerList getList() {
+    public ServerTaskList getList() {
         return list;
     }
 

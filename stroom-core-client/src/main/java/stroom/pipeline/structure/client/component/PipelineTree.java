@@ -41,18 +41,18 @@ import java.util.function.Consumer;
 /// the keyboard (see [TreeKeyboard]), whose elements can be dragged to another parent or moved with
 /// the keyboard where it may be changed. It moves nothing itself: its owner is told of each move
 /// ([#setOnMove(BiConsumer)]) and moves the element in the model.
-public class PipelineTree extends AbstractPipelineTree {
+public class PipelineTree extends PipelinePicture {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    DraggableTreePanel<PipelineElement> layoutPanel;
+    DraggableTree<PipelineElement> layoutPanel;
     // The tree, which the template declares in the draggable panel
     @UiField
-    PipelineTreePanel treePanel;
+    PipelineTreeDiagram treePanel;
 
     // The copy of what is dragged, on the page only while dragging, so not declared
-    private final PipelineTreePanel subTreePanel = new PipelineTreePanel();
+    private final PipelineTreeDiagram subTreePanel = new PipelineTreeDiagram();
     private final TreeKeyboard<PipelineElement> keyboard;
     private boolean allowNullSelection = true;
     private boolean allowDragging;

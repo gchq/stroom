@@ -35,7 +35,7 @@
                 </dg:PagerPanel>
             </g:SimplePanel>
             <g:FlowPanel styleName="max control-box">
-                <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
+                <spinner:LargeBusySpinner ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
                 <ed:CodeEditor ui:field="text"/>
             </g:FlowPanel>
         </l:SplitPane>

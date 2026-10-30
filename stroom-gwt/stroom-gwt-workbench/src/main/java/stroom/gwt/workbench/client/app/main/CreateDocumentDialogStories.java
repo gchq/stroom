@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// in place of its listener.
 public final class CreateDocumentDialogStories {
 
-    // GWT's folder picker is an EntityTree: a quick filter above the tree
+    // GWT's folder picker is an DocumentPicker: a quick filter above the tree
     private static final String QUICK_FILTER = ".quick-filter__input";
     // The explorer tree's selected item
     private static final String TREE_SELECTED_ROW = "[role='treeitem'][aria-selected='true']";
@@ -76,7 +76,7 @@ public final class CreateDocumentDialogStories {
                     play.expect(dialog.querySelectorAll(":scope > .form-group")).toHaveLength(3);
                     play.expect(dialog.querySelectorAll(":scope > .form-group").nth(0)).toHaveClass("dock-max");
                     play.expect(dialog.querySelectorAll(":scope > .form-group").nth(1)).toHaveClass("dock-min");
-                    // The folder picker is GWT's EntityTree: its quick filter is inside the
+                    // The folder picker is GWT's DocumentPicker: its quick filter is inside the
                     // picker's form group. The picker's border classes are checked by the explorer
                     // tree widget stories
                     final Play picker = dialog.within(dialog.querySelectorAll(":scope > .form-group").nth(0));

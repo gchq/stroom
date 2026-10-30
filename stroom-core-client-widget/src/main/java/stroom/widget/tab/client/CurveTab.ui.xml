@@ -16,7 +16,7 @@
         </c:AriaPanel>
         <tx:Label ui:field="label" styleName="tab-bar__label"/>
         <g:FlowPanel styleName="tab-bar__end">
-            <sp:SpinnerSmall ui:field="spinner" addStyleNames="tab-bar__spinner"/>
+            <sp:SmallBusySpinner ui:field="spinner" addStyleNames="tab-bar__spinner"/>
             <c:AriaPanel ui:field="close" styleName="tab-bar__close" ariaHidden="true">
                 <svg:Icon image="TAB_CLOSE"/>
             </c:AriaPanel>

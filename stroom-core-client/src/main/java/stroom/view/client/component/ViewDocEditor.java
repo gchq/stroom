@@ -17,8 +17,8 @@
 package stroom.view.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.tab.client.TabData;
@@ -40,13 +40,13 @@ public class ViewDocEditor extends DocumentEditor<ViewDoc> {
     /// @param eventBus             The application's event bus.
     /// @param view                 Its component.
     /// @param settingsProvider     Makes the Settings tab.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public ViewDocEditor(final EventBus eventBus,
                          final LinkTabPanel view,
                          final Provider<ViewSettingsController> settingsProvider,
-                         final Provider<MarkdownEditController> markdownEditProvider,
+                         final Provider<DocumentationTabController> documentationTabProvider,
                          final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -55,7 +55,7 @@ public class ViewDocEditor extends DocumentEditor<ViewDoc> {
                 ViewSettingsController::read,
                 ViewSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 ViewDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

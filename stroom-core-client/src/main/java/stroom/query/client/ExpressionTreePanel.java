@@ -25,7 +25,7 @@ import stroom.widget.datagrid.client.MouseHelper;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
-import stroom.widget.htree.client.TreeRenderer2;
+import stroom.widget.htree.client.TreeRenderer;
 import stroom.widget.htree.client.treelayout.CenteredParentTreeLayout;
 import stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel;
 import stroom.widget.htree.client.treelayout.Configuration.Location;
@@ -67,7 +67,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     // Moved into whichever item's box is edited, so not in the layout
     private final OperatorEditor operatorEditor = new OperatorEditor();
     private final TermEditor termEditor = new TermEditor();
-    private TreeRenderer2<Item> renderer;
+    private TreeRenderer<Item> renderer;
     private TreeLayout<Item> treeLayout;
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
@@ -83,7 +83,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         // The canvas is made only where the browser can draw on one, so it is put in its slot here
         final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
-            final Context2d arrowContext = canvas.getLayer(TreeRenderer2.ARROW_LAYER).getContext2d();
+            final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 
             cellRenderer = new ExpressionItemRenderer(boxPanel, operatorEditor, termEditor);
             final ConnectorRenderer<Item> connectorRenderer = new BracketConnectorRenderer<>(arrowContext,
@@ -96,7 +96,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
             treeLayout = new CenteredParentTreeLayout<>(extentProvider, layoutConfig);
 
-            renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
+            renderer = new TreeRenderer<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
             canvas.addStyleName("expression-tree-panel__canvas");

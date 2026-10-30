@@ -23,8 +23,8 @@ import stroom.data.client.component.UserRefCell;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.security.client.UserAndGroupHelper;
 import stroom.security.client.UserScreen;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
@@ -110,7 +110,7 @@ public class AppUserPermissionsListController extends Controller {
                 UserFields.QUICK_FILTER_CONTEXT, this, view.getTaskMonitor()));
 
         view.addColumns(refCells.configure(new UserRefCell.Builder<AppUserPermissions>()),
-                (AppUserPermissions appUsrPerms) -> UserAndGroupHelper.buildUserActionMenu(
+                (AppUserPermissions appUsrPerms) -> UsersAndGroupsHelper.buildUserActionMenu(
                         appUsrPerms.getUserRef(),
                         isExternalIdp,
                         UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
@@ -213,7 +213,7 @@ public class AppUserPermissionsListController extends Controller {
     /// @param userRef The user or group.
     public void showUser(final UserRef userRef) {
         if (userRef != null) {
-            setQuickFilter(UserAndGroupHelper.buildDisplayNameFilterInput(userRef));
+            setQuickFilter(UsersAndGroupsHelper.buildDisplayNameFilterInput(userRef));
         }
     }
 }

@@ -7199,7 +7199,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7212,7 +7212,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7225,7 +7225,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7238,7 +7238,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7251,7 +7251,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7264,7 +7264,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7277,7 +7277,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -7290,7 +7290,7 @@
    ]
   },
   {
-   "class": "NavigationPlugin",
+   "class": "ExplorerPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -8129,7 +8129,7 @@
    ]
   },
   {
-   "class": "HyperlinkEventHandlerImpl",
+   "class": "HyperlinkOpener",
    "classKind": "widget",
    "kind": "dirty",
    "receiver": "presenter",
@@ -16099,7 +16099,7 @@
    "why": "view"
   },
   {
-   "class": "TaskManagerPlugin",
+   "class": "ServerTasksPlugin",
    "classKind": "plugin",
    "kind": "command",
    "receiver": "menu item",
@@ -19929,7 +19929,7 @@
     "observed": false
    },
    {
-    "class": "HyperlinkEventHandlerImpl",
+    "class": "HyperlinkOpener",
     "classKind": "widget",
     "kind": "confirm",
     "template": "Are you sure you want to close?",

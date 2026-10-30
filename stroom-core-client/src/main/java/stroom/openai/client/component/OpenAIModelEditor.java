@@ -17,8 +17,8 @@
 package stroom.openai.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -41,14 +41,14 @@ public class OpenAIModelEditor extends DocumentEditor<OpenAIModelDoc> {
     /// @param eventBus              The application's event bus.
     /// @param view                  Its component.
     /// @param modelSettingsProvider Makes the model settings.
-    /// @param markdownEditProvider  Makes the Documentation tab's editor.
+    /// @param documentationTabProvider  Makes the Documentation tab's editor.
     /// @param permissionsProvider   Makes the Permissions tab.
     @Inject
     public OpenAIModelEditor(
             final EventBus eventBus,
             final LinkTabPanel view,
             final Provider<OpenAIModelSettingsController> modelSettingsProvider,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -57,7 +57,7 @@ public class OpenAIModelEditor extends DocumentEditor<OpenAIModelDoc> {
                 OpenAIModelSettingsController::read,
                 OpenAIModelSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 OpenAIModelDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

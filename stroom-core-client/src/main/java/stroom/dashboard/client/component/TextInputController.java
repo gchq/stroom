@@ -16,9 +16,9 @@
 
 package stroom.dashboard.client.component;
 
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.HasParams;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextInputComponentSettings;
@@ -33,7 +33,7 @@ import java.util.List;
 
 /// A dashboard's Text Input pane ([TextInput]): its text, with the key from its settings, is a
 /// query parameter of the dashboard.
-public class TextInputController extends DashboardComponentController implements HasParams {
+public class TextInputController extends DashboardPaneController implements HasParams {
 
     /// The tab type of the pane.
     public static final String TAB_TYPE = "TextInput";

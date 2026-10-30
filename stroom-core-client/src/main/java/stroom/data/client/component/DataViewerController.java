@@ -22,8 +22,8 @@ import stroom.data.client.DataViewType;
 import stroom.data.client.DisplayMode;
 import stroom.data.client.OpenLinkUtil;
 import stroom.data.client.OpenLinkUtil.LinkType;
-import stroom.data.client.ShowDataEvent;
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.client.event.ShowDataEvent;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -59,8 +59,8 @@ import stroom.widget.tab.client.TabData;
 import stroom.widget.tab.client.TabDataImpl;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -1175,10 +1175,10 @@ public class DataViewerController
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
-        final TableBuilder tableBuilder = new TableBuilder();
+        final HtmlTableBuilder tableBuilder = new HtmlTableBuilder();
         for (final DataInfoSection section : dataInfoSections) {
             // Add the section header.
-            tableBuilder.row(TableCell.header(section.getTitle(), 2));
+            tableBuilder.row(HtmlTableCell.header(section.getTitle(), 2));
 
             // Add rows.
             section.getEntries()

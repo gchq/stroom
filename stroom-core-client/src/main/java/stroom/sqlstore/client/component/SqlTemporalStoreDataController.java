@@ -22,7 +22,7 @@ import stroom.query.api.Column;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.ResultStoreModel;
 import stroom.query.client.component.AbstractQueryDataController;
-import stroom.query.client.component.QueryDataPane;
+import stroom.query.client.component.QueryDataTab;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 
@@ -63,7 +63,7 @@ public class SqlTemporalStoreDataController
     /// @param resultStoreModel        The result stores.
     @Inject
     public SqlTemporalStoreDataController(final EventBus eventBus,
-                                          final QueryDataPane view,
+                                          final QueryDataTab view,
                                           final QueryResultTableController tableController,
                                           final RestFactory restFactory,
                                           final DateTimeSettingsFactory dateTimeSettingsFactory,

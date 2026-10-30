@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 public class CreateUserController extends Controller {
 
     private final CreateUser view;
-    private final CreateNewGroupController group;
+    private final GroupNameController group;
     private final CreateExternalUserController externalUser;
     private final CreateMultipleUsersController multipleUsers;
 
@@ -52,7 +52,7 @@ public class CreateUserController extends Controller {
     @Inject
     public CreateUserController(final EventBus eventBus,
                                 final CreateUser view,
-                                final Provider<CreateNewGroupController> groupProvider,
+                                final Provider<GroupNameController> groupProvider,
                                 final Provider<CreateExternalUserController> externalUserProvider,
                                 final Provider<CreateMultipleUsersController> multipleUsersProvider) {
         super(eventBus);

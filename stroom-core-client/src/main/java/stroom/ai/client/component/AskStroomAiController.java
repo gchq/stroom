@@ -82,7 +82,7 @@ public class AskStroomAiController extends Controller
     private final DocSelectionController modelSelection;
     private final MarkdownConverter markdownConverter;
     private final AskStroomAiClient askStroomAiClient;
-    private final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider;
+    private final Provider<AskStroomAiConfigEditorController> askStroomAiConfigProvider;
     private final Provider<AiChatHistoryController> aiChatHistoryProvider;
     private final Provider<DownloadChatController> downloadChatControllerProvider;
     private final Provider<AiAttachmentDataController> aiAttachmentDataProvider;
@@ -121,7 +121,7 @@ public class AskStroomAiController extends Controller
                                 final Provider<DocSelectionController> docSelectionProvider,
                                 final MarkdownConverter markdownConverter,
                                 final AskStroomAiClient askStroomAiClient,
-                                final Provider<AskStroomAiConfigDialogController> askStroomAiConfigProvider,
+                                final Provider<AskStroomAiConfigEditorController> askStroomAiConfigProvider,
                                 final Provider<AiChatHistoryController> aiChatHistoryProvider,
                                 final Provider<DownloadChatController> downloadChatControllerProvider,
                                 final Provider<AiAttachmentDataController> aiAttachmentDataProvider,

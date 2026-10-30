@@ -18,7 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity;
-import stroom.dashboard.client.component.QueryInfoDialogController;
+import stroom.dashboard.client.component.QueryInfoPromptController;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
@@ -28,13 +28,13 @@ import com.google.inject.Provider;
 
 import javax.inject.Inject;
 
-/// The info a query is run with: asks for it ([QueryInfoDialogController]) before a query is run,
+/// The info a query is run with: asks for it ([QueryInfoPromptController]) before a query is run,
 /// when the site asks for it and the current activity doesn't say it isn't needed, and keeps it.
 public class QueryInfo {
 
     private final CurrentActivity currentActivity;
     private final UiConfigCache uiConfigCache;
-    private final Provider<QueryInfoDialogController> queryInfoDialogProvider;
+    private final Provider<QueryInfoPromptController> queryInfoPromptProvider;
     private final AppRoot appRoot;
     private String message;
 
@@ -42,16 +42,16 @@ public class QueryInfo {
     ///
     /// @param currentActivity         Says whether the current activity needs query info.
     /// @param uiConfigCache           Says whether the site asks for query info, and how.
-    /// @param queryInfoDialogProvider Makes the dialog that asks for it.
+    /// @param queryInfoPromptProvider Makes the dialog that asks for it.
     /// @param appRoot                 Owns the dialog while it is shown.
     @Inject
     public QueryInfo(final CurrentActivity currentActivity,
                      final UiConfigCache uiConfigCache,
-                     final Provider<QueryInfoDialogController> queryInfoDialogProvider,
+                     final Provider<QueryInfoPromptController> queryInfoPromptProvider,
                      final AppRoot appRoot) {
         this.currentActivity = currentActivity;
         this.uiConfigCache = uiConfigCache;
-        this.queryInfoDialogProvider = queryInfoDialogProvider;
+        this.queryInfoPromptProvider = queryInfoPromptProvider;
         this.appRoot = appRoot;
     }
 
@@ -67,7 +67,7 @@ public class QueryInfo {
                     final QueryConfig queryConfig = uiConfig.getQuery();
                     if (queryConfig.getInfoPopup().isEnabled() && required) {
                         // The app owns the dialog while it is shown
-                        queryInfoDialogProvider.get().show(appRoot,
+                        queryInfoPromptProvider.get().show(appRoot,
                                 queryConfig.getInfoPopup().getTitle(),
                                 queryConfig.getInfoPopup().getValidationRegex(),
                                 message,

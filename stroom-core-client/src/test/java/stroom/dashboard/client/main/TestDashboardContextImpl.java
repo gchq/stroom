@@ -44,7 +44,7 @@ class TestDashboardContextImpl {
         GWTMockUtilities.disarm();
         final QueryToolbarController queryToolbar = Mockito.mock(QueryToolbarController.class);
         Mockito.when(queryToolbar.getTimeRange()).thenReturn(new TimeRange("All", null, null));
-        final Components components = Mockito.mock(Components.class);
+        final Panes components = Mockito.mock(Panes.class);
         Mockito.when(components.getComponents()).thenReturn(List.of());
         dashboardContext = new DashboardContextImpl(new SimpleEventBus(), components, queryToolbar);
     }

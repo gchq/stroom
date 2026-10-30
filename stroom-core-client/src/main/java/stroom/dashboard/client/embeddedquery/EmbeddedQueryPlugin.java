@@ -17,7 +17,7 @@
 package stroom.dashboard.client.embeddedquery;
 
 import stroom.dashboard.client.component.EmbeddedQueryController;
-import stroom.dashboard.client.main.ComponentRegistry;
+import stroom.dashboard.client.main.PaneRegistry;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -25,8 +25,8 @@ import com.google.inject.Provider;
 public class EmbeddedQueryPlugin {
 
     @Inject
-    public EmbeddedQueryPlugin(final ComponentRegistry componentRegistry,
+    public EmbeddedQueryPlugin(final PaneRegistry paneRegistry,
                                final Provider<EmbeddedQueryController> provider) {
-        componentRegistry.register(EmbeddedQueryController.TYPE, provider);
+        paneRegistry.register(EmbeddedQueryController.TYPE, provider);
     }
 }

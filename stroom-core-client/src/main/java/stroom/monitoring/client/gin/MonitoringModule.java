@@ -20,13 +20,13 @@ import stroom.core.client.gin.PluginModule;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
-import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
-import stroom.monitoring.client.JobListPlugin;
+import stroom.monitoring.client.ExecutionSchedulesPlugin;
+import stroom.monitoring.client.JobsPlugin;
 import stroom.monitoring.client.NodeGroupsPlugin;
-import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.ProcessorProfilePlugin;
+import stroom.monitoring.client.NodesPlugin;
+import stroom.monitoring.client.ProcessorProfilesPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
-import stroom.task.client.TaskManagerPlugin;
+import stroom.task.client.ServerTasksPlugin;
 import stroom.ui.config.client.UiConfigCache;
 
 public class MonitoringModule extends PluginModule {
@@ -38,18 +38,18 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(DatabaseTablesMonitoringPlugin.class);
 
         // Job management.
-        bindPlugin(JobListPlugin.class);
-        bindPlugin(ExecutionScheduleManagerPlugin.class);
+        bindPlugin(JobsPlugin.class);
+        bindPlugin(ExecutionSchedulesPlugin.class);
 
         // Node management.
         bindPlugin(NodeGroupsPlugin.class);
-        bindPlugin(NodeMonitoringPlugin.class);
-        bindPlugin(ProcessorProfilePlugin.class);
+        bindPlugin(NodesPlugin.class);
+        bindPlugin(ProcessorProfilesPlugin.class);
 
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);
         bindPlugin(ManageGlobalPropertiesPlugin.class);
 
-        bindPlugin(TaskManagerPlugin.class);
+        bindPlugin(ServerTasksPlugin.class);
     }
 }

@@ -18,7 +18,7 @@ package stroom.gwt.workbench.client;
 
 import stroom.gwt.workbench.client.app.ai.AskAiChatPanelStories;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiDialogStories;
-import stroom.gwt.workbench.client.app.annotations.DecorateCommentStories;
+import stroom.gwt.workbench.client.app.annotations.CommentDecorationStories;
 import stroom.gwt.workbench.client.app.core.AppPermissionsStories;
 import stroom.gwt.workbench.client.app.core.DeleteConfirmationStories;
 import stroom.gwt.workbench.client.app.dashboard.PausePollingStories;
@@ -28,10 +28,10 @@ import stroom.gwt.workbench.client.app.dashboard.TableFilterSettingsStories;
 import stroom.gwt.workbench.client.app.dashboard.VisSettingsStories;
 import stroom.gwt.workbench.client.app.dashboard.VisToolbarStories;
 import stroom.gwt.workbench.client.app.dashboard.VisTooltipStories;
+import stroom.gwt.workbench.client.app.data.CreateProcessorsStories;
 import stroom.gwt.workbench.client.app.data.DataUploadDialogStories;
-import stroom.gwt.workbench.client.app.data.DocRefSelectionDialogStories;
 import stroom.gwt.workbench.client.app.data.MetaBrowserStories;
-import stroom.gwt.workbench.client.app.data.ProcessChoiceDialogStories;
+import stroom.gwt.workbench.client.app.data.SaveChangedDocumentsStories;
 import stroom.gwt.workbench.client.app.dictionary.DictionaryEditorStories;
 import stroom.gwt.workbench.client.app.editors.AnalyticRuleEditorStories;
 import stroom.gwt.workbench.client.app.editors.CodeDocumentEditorStories;
@@ -39,14 +39,14 @@ import stroom.gwt.workbench.client.app.editors.DashboardEditorStories;
 import stroom.gwt.workbench.client.app.editors.DataGenEditorStories;
 import stroom.gwt.workbench.client.app.editors.DocumentationEditorStories;
 import stroom.gwt.workbench.client.app.editors.ElasticClusterEditorStories;
-import stroom.gwt.workbench.client.app.editors.FloorMapEditorStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapEditorTabStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapEventStoreSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapFormsStories;
-import stroom.gwt.workbench.client.app.editors.FloorMapInitStories;
-import stroom.gwt.workbench.client.app.editors.FloorMapMapStories;
+import stroom.gwt.workbench.client.app.editors.FloorMapMapTabStories;
 import stroom.gwt.workbench.client.app.editors.FloorMapSettingsStories;
 import stroom.gwt.workbench.client.app.editors.FolderEditorStories;
 import stroom.gwt.workbench.client.app.editors.GitRepoEditorStories;
+import stroom.gwt.workbench.client.app.editors.NewFloorMapStoresStories;
 import stroom.gwt.workbench.client.app.editors.OpenAiModelEditorStories;
 import stroom.gwt.workbench.client.app.editors.PathwaysEditorStories;
 import stroom.gwt.workbench.client.app.editors.PlanBEditorStories;
@@ -96,9 +96,9 @@ import stroom.gwt.workbench.client.app.main.DatabaseTablesScreenStories;
 import stroom.gwt.workbench.client.app.main.DependenciesScreenStories;
 import stroom.gwt.workbench.client.app.main.DependencyInfoDialogStories;
 import stroom.gwt.workbench.client.app.main.DocInfoDialogStories;
-import stroom.gwt.workbench.client.app.main.DocPluginStories;
 import stroom.gwt.workbench.client.app.main.DocumentCreatePermissionsGridStories;
 import stroom.gwt.workbench.client.app.main.DocumentPermissionsScreenStories;
+import stroom.gwt.workbench.client.app.main.DocumentPluginStories;
 import stroom.gwt.workbench.client.app.main.EditAccountDialogStories;
 import stroom.gwt.workbench.client.app.main.EditTagsDialogStories;
 import stroom.gwt.workbench.client.app.main.ExecutionSchedulesScreenStories;
@@ -121,7 +121,7 @@ import stroom.gwt.workbench.client.app.main.ProcessorProfilesScreenStories;
 import stroom.gwt.workbench.client.app.main.ProcessorTaskListStories;
 import stroom.gwt.workbench.client.app.main.ProcessorTaskSummaryStories;
 import stroom.gwt.workbench.client.app.main.PropertiesScreenStories;
-import stroom.gwt.workbench.client.app.main.QueryInfoDialogStories;
+import stroom.gwt.workbench.client.app.main.QueryInfoPromptStories;
 import stroom.gwt.workbench.client.app.main.QuickFilterHistoryStories;
 import stroom.gwt.workbench.client.app.main.RecentItemsDialogStories;
 import stroom.gwt.workbench.client.app.main.RenameDocumentDialogStories;
@@ -232,7 +232,7 @@ public final class AppStories {
         DocInfoDialogStories.addTo(registry);
         RenameDocumentDialogStories.addTo(registry);
         // App/Main/QueryInfoDialog
-        QueryInfoDialogStories.addTo(registry);
+        QueryInfoPromptStories.addTo(registry);
         // App/Main/DocumentCreatePermissionsGrid
         DocumentCreatePermissionsGridStories.addTo(registry);
         // App/Main/DocumentPermissionsScreen
@@ -318,7 +318,7 @@ public final class AppStories {
         // App/Main/currentActivity
         CurrentActivityStories.addTo(registry);
         // App/Main/docPlugin
-        DocPluginStories.addTo(registry);
+        DocumentPluginStories.addTo(registry);
         // App/Main/Activity Chooser
         ActivityChooserStories.addTo(registry);
         // App/Editors/AnalyticRuleEditor
@@ -332,14 +332,14 @@ public final class AppStories {
         // App/Editors/ElasticClusterEditor
         ElasticClusterEditorStories.addTo(registry);
         // App/Editors/FloorMapEditor
-        FloorMapEditorStories.addTo(registry);
+        FloorMapEditorTabStories.addTo(registry);
         FloorMapSettingsStories.addTo(registry);
         // App/Editors/FloorMapForms
         FloorMapFormsStories.addTo(registry);
         // App/Editors/FloorMapInit
-        FloorMapInitStories.addTo(registry);
+        NewFloorMapStoresStories.addTo(registry);
         // App/Editors/FloorMapMap
-        FloorMapMapStories.addTo(registry);
+        FloorMapMapTabStories.addTo(registry);
         // App/Editors/FolderEditor
         FolderEditorStories.addTo(registry);
         // App/Editors/GitRepoEditor
@@ -396,9 +396,9 @@ public final class AppStories {
         // App/Data/MetaBrowser
         MetaBrowserStories.addTo(registry);
         // App/Data/DocRefSelectionDialog
-        DocRefSelectionDialogStories.addTo(registry);
+        SaveChangedDocumentsStories.addTo(registry);
         // App/Data/ProcessChoiceDialog
-        ProcessChoiceDialogStories.addTo(registry);
+        CreateProcessorsStories.addTo(registry);
         // App/Dictionary/DictionaryEditor
         DictionaryEditorStories.addTo(registry);
         // App/Security/DocumentPermissionsTab
@@ -424,7 +424,7 @@ public final class AppStories {
         // App/Core/deleteConfirmation
         DeleteConfirmationStories.addTo(registry);
         // App/Annotations/decorateComment
-        DecorateCommentStories.addTo(registry);
+        CommentDecorationStories.addTo(registry);
         // App/IdP/AuthenticationError
         AuthenticationErrorStories.addTo(registry);
         // App/IdP/ChangePassword

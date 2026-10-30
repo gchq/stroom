@@ -21,11 +21,11 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.CoreScreens;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.LocationManager;
-import stroom.core.client.component.CoreController;
+import stroom.core.client.component.AppPageController;
 import stroom.core.client.component.FullScreenController;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.component.NavigationController;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
+import stroom.explorer.client.component.ExplorerController;
+import stroom.hyperlink.client.HyperlinkOpener;
 import stroom.main.client.GlobalKeyHandlerImpl;
 import stroom.main.client.MainScreens;
 import stroom.main.client.component.MainController;
@@ -49,7 +49,7 @@ public class AppModule extends AbstractGinModule {
 
         bind(GlobalKeyHandler.class).to(GlobalKeyHandlerImpl.class).in(Singleton.class);
 
-        bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
+        bind(HyperlinkOpener.class).asEagerSingleton();
 
         bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
@@ -59,12 +59,12 @@ public class AppModule extends AbstractGinModule {
         // Hear the app-wide events that open its screens, for the life of the app
         bind(CoreScreens.class).asEagerSingleton();
         bind(MainScreens.class).asEagerSingleton();
-        bind(CoreController.class).in(Singleton.class);
+        bind(AppPageController.class).in(Singleton.class);
 
         bind(FullScreenController.class).in(Singleton.class);
 
         bind(MainController.class).in(Singleton.class);
-        bind(NavigationController.class).in(Singleton.class);
+        bind(ExplorerController.class).in(Singleton.class);
         bind(ContentTabPaneController.class).in(Singleton.class);
 
         // Menu

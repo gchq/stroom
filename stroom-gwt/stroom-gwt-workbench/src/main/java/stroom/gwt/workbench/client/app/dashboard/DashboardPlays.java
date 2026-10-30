@@ -45,7 +45,7 @@ final class DashboardPlays {
     static final String SPLITTER = ".flex-layout__splitter";
 
     /// A Query component's own Execute Query button.
-    static final String QUERY_RUN_BUTTON = ".query-pane .query-buttons__button";
+    static final String QUERY_RUN_BUTTON = ".query-pane .run-query-button__button";
     // The run button's modifiers while its query is idle and while it runs (toolbar-button.css)
     static final String QUERY_RUN_BUTTON_IDLE = "toolbar-button--play";
     static final String QUERY_RUN_BUTTON_RUNNING = "toolbar-button--stop";

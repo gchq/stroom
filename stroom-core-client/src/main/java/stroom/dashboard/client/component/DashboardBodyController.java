@@ -27,15 +27,15 @@ import stroom.dashboard.client.flexlayout.MutableSize;
 import stroom.dashboard.client.flexlayout.MutableSplitLayoutConfig;
 import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardContextImpl;
 import stroom.dashboard.client.main.DashboardPane;
 import stroom.dashboard.client.main.MutableConfigUtil;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
+import stroom.dashboard.client.main.Panes;
 import stroom.dashboard.client.main.Queryable;
-import stroom.dashboard.client.main.Refreshable;
+import stroom.dashboard.client.main.RefreshablePane;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
@@ -52,7 +52,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.HasToolbar;
 import stroom.entity.client.component.DocumentEditorHost;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.query.api.ParamUtil;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
@@ -113,12 +113,12 @@ public class DashboardBodyController
 
     private static final Logger logger = Logger.getLogger(DashboardBodyController.class.getName());
     private final FlexLayout layoutController;
-    private final Components components;
+    private final Panes components;
     private final QueryToolbarController queryToolbar;
     private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintController> layoutConstraintControllerProvider;
     private final Provider<CurrentSelectionController> currentSelectionControllerProvider;
-    private final Provider<ExplorerPopupController> dashboardSelection;
+    private final Provider<DocumentChooserController> dashboardSelection;
     private CurrentSelectionController currentSelection;
     // The Current Selection popup refreshes as the selection changes, while it is shown
     private final ListenerWhileShown selectionListener = new ListenerWhileShown();
@@ -161,14 +161,14 @@ public class DashboardBodyController
     @Inject
     public DashboardBodyController(final EventBus eventBus,
                                    final DashboardBody view,
-                                   final Components components,
+                                   final Panes components,
                                    final QueryToolbarController queryToolbar,
                                    final Provider<TabMenuController> tabMenuProvider,
                                    final QueryInfo queryInfo,
                                    final Provider<LayoutConstraintController> layoutConstraintControllerProvider,
                                    final Provider<CurrentSelectionController> currentSelectionControllerProvider,
                                    final UrlParameters urlParameters,
-                                   final Provider<ExplorerPopupController> dashboardSelection) {
+                                   final Provider<DocumentChooserController> dashboardSelection) {
         super(eventBus);
         this.view = view;
         initWidget(view);
@@ -309,7 +309,7 @@ public class DashboardBodyController
         selectionInfoButton.setVisible(designMode);
         layoutController.setDesignMode(designMode);
 
-        editModeButton.setState(designMode);
+        editModeButton.setPressed(designMode);
     }
 
     private void onAdd() {
@@ -573,7 +573,7 @@ public class DashboardBodyController
     }
 
     public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
-        final ExplorerPopupController chooser = dashboardSelection.get();
+        final DocumentChooserController chooser = dashboardSelection.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Dashboard");
         chooser.setIncludedTypes(DashboardDoc.TYPE);
@@ -599,7 +599,7 @@ public class DashboardBodyController
     }
 
     public void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig,
-                             final Components components) {
+                             final Panes components) {
         duplicateTabs(tabLayoutConfig, Collections.singletonList(tabConfig), components);
     }
 
@@ -608,7 +608,7 @@ public class DashboardBodyController
     }
 
     public void duplicateTabs(final MutableTabLayoutConfig tabLayoutConfig, final List<MutableTabConfig> tabs,
-                              final Components orginalComponents) {
+                              final Panes orginalComponents) {
         // Get sets of unique component ids and names.
         final ComponentNameSet componentNameSet = new ComponentNameSet(this.components);
         final Map<String, String> idMapping = new HashMap<>();
@@ -948,8 +948,8 @@ public class DashboardBodyController
 
     public void onContentTabVisible(final boolean visible) {
         components.getComponents().stream()
-                .filter(component -> component instanceof Refreshable)
-                .map(component -> (Refreshable) component)
+                .filter(component -> component instanceof RefreshablePane)
+                .map(component -> (RefreshablePane) component)
                 .forEach(refreshable -> {
                     refreshable.setAllowRefresh(visible);
                     if (visible && refreshable.isRefreshScheduled()) {
@@ -972,7 +972,7 @@ public class DashboardBodyController
         private final Set<String> currentIdSet = new HashSet<>();
         private final Set<String> currentNameSet = new HashSet<>();
 
-        public ComponentNameSet(final Components components) {
+        public ComponentNameSet(final Panes components) {
             for (final DashboardPane component : components.getComponents()) {
                 currentIdSet.add(component.getId());
                 currentNameSet.add(component.getLabel());

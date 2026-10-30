@@ -30,8 +30,8 @@ import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -75,10 +75,10 @@ public class SearchResultStoresController extends Controller {
     }
 
     private void showDetails(final ResultStoreInfo resultStoreInfo) {
-        final TableBuilder tb = new TableBuilder();
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
         if (resultStoreInfo != null) {
             tb
-                    .row(TableCell.header("Store Details", 2))
+                    .row(HtmlTableCell.header("Store Details", 2))
                     .row("UUID", resultStoreInfo.getQueryKey().getUuid())
                     .row("Owner", NullSafe.get(resultStoreInfo.getOwner(), UserRef::toDisplayString))
                     .row("Creation Time", dateTimeFormatter.format(resultStoreInfo.getCreationTime()))
@@ -94,7 +94,7 @@ public class SearchResultStoresController extends Controller {
 
             if (resultStoreInfo.getSearchRequestSource() != null) {
                 final SearchRequestSource source = resultStoreInfo.getSearchRequestSource();
-                tb.row(TableCell.header("Source", 2));
+                tb.row(HtmlTableCell.header("Source", 2));
                 if (source.getSourceType() != null) {
                     tb.row("Type", source.getSourceType().getDisplayValue());
                 }
@@ -107,11 +107,11 @@ public class SearchResultStoresController extends Controller {
             }
 
             if (resultStoreInfo.getSearchProcessLifespan() != null) {
-                tb.row(TableCell.header("Search Process Lifespan", 2));
+                tb.row(HtmlTableCell.header("Search Process Lifespan", 2));
                 addLifespan(tb, resultStoreInfo.getSearchProcessLifespan());
             }
             if (resultStoreInfo.getStoreLifespan() != null) {
-                tb.row(TableCell.header("Store Lifespan", 2));
+                tb.row(HtmlTableCell.header("Store Lifespan", 2));
                 addLifespan(tb, resultStoreInfo.getStoreLifespan());
             }
         }
@@ -121,7 +121,7 @@ public class SearchResultStoresController extends Controller {
         view.setDetails(htmlBuilder.toSafeHtml());
     }
 
-    private void addLifespan(final TableBuilder tb, final LifespanInfo lifespan) {
+    private void addLifespan(final HtmlTableBuilder tb, final LifespanInfo lifespan) {
         tb
                 .row("Time To Live", lifespan.getTimeToLive())
                 .row("Time To Idle", lifespan.getTimeToIdle())

@@ -25,7 +25,7 @@ import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -51,9 +51,9 @@ public class DocumentUserPermissionsTabController extends Controller {
 
     private final DocumentUserPermissionsTab view;
     private final DocumentUserPermissionsListController documentUserPermissionsList;
-    private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
+    private final Provider<DocumentUserPermissionsEditorController> documentUserPermissionsEditProvider;
     private final DocPermissionRestClient docPermissionClient;
-    private final ButtonView docEdit;
+    private final IsButton docEdit;
     private DocRef docRef;
 
     /// Made by GIN, with its content.
@@ -69,7 +69,7 @@ public class DocumentUserPermissionsTabController extends Controller {
             final DocumentUserPermissionsTab view,
             final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsListController documentUserPermissionsList,
-            final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider) {
+            final Provider<DocumentUserPermissionsEditorController> documentUserPermissionsEditProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);

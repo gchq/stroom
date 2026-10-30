@@ -23,7 +23,7 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.structure.client.PipelineElementTypesFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.PopupSize;
@@ -48,8 +48,8 @@ public class SteppingFilterEditorController extends Controller {
     private final SteppingFilterEditor view;
     private final XPathList xPathList;
     private final Provider<XPathFilterEditorController> xPathFilterEditorProvider;
-    private final ButtonView editXPath;
-    private final ButtonView removeXPath;
+    private final IsButton editXPath;
+    private final IsButton removeXPath;
     private List<XPathFilter> xPathFilters;
 
     // elementId => SteppingFilterSettings

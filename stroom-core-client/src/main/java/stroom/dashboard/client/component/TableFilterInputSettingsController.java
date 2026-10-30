@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// A Table Filter pane's settings: Basic and Conditional Formatting (one set of rules for each
 /// column).
-public class TableFilterInputSettingsController extends ComponentSettingsDialogController {
+public class TableFilterInputSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -32,9 +32,9 @@ public class TableFilterInputSettingsController extends ComponentSettingsDialogC
     /// @param multiRules    The multi rules.
     @Inject
     public TableFilterInputSettingsController(final EventBus eventBus,
-                                         final ComponentSettingsDialog view,
+                                         final PaneSettings view,
                                          final BasicTableFilterInputSettingsController basicSettings,
-                                         final MultiRulesController multiRules) {
+                                         final TableFilterConditionalFormattingController multiRules) {
         super(eventBus, view);
         own(basicSettings);
         own(multiRules);

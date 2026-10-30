@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A Query pane's settings: Basic and Selection Query, whose fields are the query's data source.
-public class QuerySettingsController extends ComponentSettingsDialogController {
+public class QuerySettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -31,7 +31,7 @@ public class QuerySettingsController extends ComponentSettingsDialogController {
     /// @param selectionQuery The selection query.
     @Inject
     public QuerySettingsController(final EventBus eventBus,
-                                   final ComponentSettingsDialog view,
+                                   final PaneSettings view,
                                    final BasicQuerySettingsController basicSettings,
                                    final SelectionHandlersController selectionQuery) {
         super(eventBus, view);

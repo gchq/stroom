@@ -22,9 +22,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.SafeHtmlUtil;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 
@@ -48,7 +48,7 @@ public class QuickFilterTooltipUtil {
     }
 
     public static SafeHtml createTooltip(final String header,
-                                         final Consumer<TableBuilder> preambleBuilder,
+                                         final Consumer<HtmlTableBuilder> preambleBuilder,
                                          final List<FilterFieldDefinition> fieldDefinitions,
                                          final String quickFilterHelpUrl) {
         return createTooltip(header, preambleBuilder, fieldDefinitions, null, quickFilterHelpUrl);
@@ -59,7 +59,7 @@ public class QuickFilterTooltipUtil {
      *                            match types it would reject. Null shows every match type.
      */
     public static SafeHtml createTooltip(final String header,
-                                         final Consumer<TableBuilder> preambleBuilder,
+                                         final Consumer<HtmlTableBuilder> preambleBuilder,
                                          final List<FilterFieldDefinition> fieldDefinitions,
                                          final ConditionSet supportedConditions,
                                          final String quickFilterHelpUrl) {
@@ -80,10 +80,10 @@ public class QuickFilterTooltipUtil {
         // rejection rather than an empty grid - so a row shown here for a condition the surface
         // does not declare is actively misleading. Callers that know their surface's conditions
         // pass them in; callers that pass null get every row, which is the old behaviour.
-        final TableBuilder tb = new TableBuilder();
-        tb.row(TableCell.header(header, 2));
-        tb.row(TableCell.data(description, 2));
-        tb.row(TableCell.data("Space is used to separate multiple terms, unless quoted, see examples.", 2));
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
+        tb.row(HtmlTableCell.header(header, 2));
+        tb.row(HtmlTableCell.data(description, 2));
+        tb.row(HtmlTableCell.data("Space is used to separate multiple terms, unless quoted, see examples.", 2));
 
         // Add the supplied pre-amble
         if (preambleBuilder != null) {
@@ -93,7 +93,7 @@ public class QuickFilterTooltipUtil {
         // Adds a break at the end if there are fields
         addFieldInfo(fieldDefinitions, tb);
 
-        tb.row(TableCell.header("Example input"), TableCell.header("Match type"));
+        tb.row(HtmlTableCell.header("Example input"), HtmlTableCell.header("Match type"));
         addMatchTypeRow(tb, supportedConditions, Condition.CONTAINS,
                 "abc", "Default contains matching. (matches 'xxabcxx').");
         // '~' is rewritten to a regex at parse time, so it is offered wherever regex is.
@@ -135,7 +135,7 @@ public class QuickFilterTooltipUtil {
 
         tb
                 .row()
-                .row(TableCell.header("Examples", 2));
+                .row(HtmlTableCell.header("Examples", 2));
 
         addFieldExamples(fieldDefinitions, tb);
 
@@ -147,7 +147,7 @@ public class QuickFilterTooltipUtil {
 
             tb
                     .row()
-                    .row(TableCell.data(hb.toSafeHtml(), 2));
+                    .row(HtmlTableCell.data(hb.toSafeHtml(), 2));
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -155,7 +155,7 @@ public class QuickFilterTooltipUtil {
         return htmlBuilder.toSafeHtml();
     }
 
-    private static void addMatchTypeRow(final TableBuilder tb,
+    private static void addMatchTypeRow(final HtmlTableBuilder tb,
                                        final ConditionSet supportedConditions,
                                        final Condition condition,
                                        final String example,
@@ -190,11 +190,11 @@ public class QuickFilterTooltipUtil {
     }
 
     private static void addFieldInfo(final List<FilterFieldDefinition> fieldDefinitions,
-                                     final TableBuilder tb) {
+                                     final HtmlTableBuilder tb) {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             tb.row();
 
-            tb.row(TableCell.header("Filterable fields"), TableCell.header("Field qualifier"));
+            tb.row(HtmlTableCell.header("Filterable fields"), HtmlTableCell.header("Field qualifier"));
 
             fieldDefinitions.forEach(fieldDefinition -> {
                 final String suffix = fieldDefinition.isDefaultField()
@@ -209,7 +209,8 @@ public class QuickFilterTooltipUtil {
         }
     }
 
-    private static void addFieldExamples(final List<FilterFieldDefinition> fieldDefinitions, final TableBuilder tb) {
+    private static void addFieldExamples(final List<FilterFieldDefinition> fieldDefinitions,
+                                         final HtmlTableBuilder tb) {
         tb
                 .row("abc \"d ef\"",
                         "Matches default field(s) with values containing 'abc' AND 'd ef'.");

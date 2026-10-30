@@ -48,7 +48,7 @@ public class QueryToolbar extends Component {
     @UiField
     ToolbarButton errors;
     @UiField
-    QueryButtons queryButtons;
+    RunQueryButton queryButtons;
 
     private Consumer<TimeRange> onTimeRangeChange;
 
@@ -68,7 +68,7 @@ public class QueryToolbar extends Component {
     }
 
     /// @return The buttons that start and stop the query.
-    public QueryButtons getQueryButtons() {
+    public RunQueryButton getQueryButtons() {
         return queryButtons;
     }
 

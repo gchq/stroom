@@ -29,8 +29,8 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.Button;
 import stroom.widget.datagrid.client.DataGrid;
@@ -410,7 +410,7 @@ final class ColumnInteractionGrids {
         }
     }
 
-    private static String describe(final Hyperlink hyperlink) {
+    private static String describe(final LinkValue hyperlink) {
         return hyperlink.getHref() + " " + hyperlink.getTarget();
     }
 

@@ -41,7 +41,7 @@ public class DashboardApp implements EntryPoint {
             userPreferencesManager.setCurrentPreferences(preferences);
 
             // Show the application panel.
-            Page.show(ginjector.getCoreController().get());
+            Page.show(ginjector.getAppPageController().get());
 
             // Start the login manager. This will attempt to auto login with PKI and
             // will therefore start the rest of the application.

@@ -22,7 +22,7 @@ import stroom.analytics.client.component.ReportEditor;
 import stroom.annotation.client.component.FindAnnotationController;
 import stroom.data.client.DataDisplaySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
-import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
+import stroom.hyperlink.client.HyperlinkOpener;
 import stroom.iframe.client.component.IFrameContentController;
 import stroom.planb.client.component.PlanBEditor;
 import stroom.query.client.DateTimeSettingsFactory;
@@ -68,9 +68,9 @@ public interface QueryScreenGinjector extends ScreenGinjector {
     FindAnnotationController getFindAnnotationController();
 
     /// @return Stroom's handler of `HyperlinkEvent`s (a table's links), which Stroom creates eagerly.
-    HyperlinkEventHandlerImpl getHyperlinkEventHandler();
+    HyperlinkOpener getHyperlinkOpener();
 
-    /// @return A link's page as a tab, as `HyperlinkEventHandlerImpl` opens a `tab` link.
+    /// @return A link's page as a tab, as `HyperlinkOpener` opens a `tab` link.
     IFrameContentController getIFrameContentController();
 
     /// @return Stroom's handler of `ShowDataEvent`s (a data link's dialog), which Stroom creates

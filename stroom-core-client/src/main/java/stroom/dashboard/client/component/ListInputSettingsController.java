@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A List Input pane's settings: its Basic tab.
-public class ListInputSettingsController extends ComponentSettingsDialogController {
+public class ListInputSettingsController extends PaneSettingsController {
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -30,7 +30,7 @@ public class ListInputSettingsController extends ComponentSettingsDialogControll
     /// @param basicSettings The basic settings.
     @Inject
     public ListInputSettingsController(final EventBus eventBus,
-                                       final ComponentSettingsDialog view,
+                                       final PaneSettings view,
                                        final BasicListInputSettingsController basicSettings) {
         super(eventBus, view);
         own(basicSettings);

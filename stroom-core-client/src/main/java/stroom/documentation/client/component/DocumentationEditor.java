@@ -23,8 +23,8 @@ import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -52,14 +52,14 @@ public class DocumentationEditor extends DocumentEditor<DocumentationDoc> {
     ///
     /// @param eventBus             The application's event bus.
     /// @param view                 Its component.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     /// @param restFactory          Makes REST requests.
     /// @param locationManager      The browser's location.
     @Inject
     public DocumentationEditor(final EventBus eventBus,
                                final LinkTabPanel view,
-                               final Provider<MarkdownEditController> markdownEditProvider,
+                               final Provider<DocumentationTabController> documentationTabProvider,
                                final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                                final RestFactory restFactory,
                                final LocationManager locationManager) {
@@ -70,7 +70,7 @@ public class DocumentationEditor extends DocumentEditor<DocumentationDoc> {
         downloadButton.setEnabled(false);
 
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 DocumentationDoc::getData,
                 (doc, data) -> doc.copy().data(data).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

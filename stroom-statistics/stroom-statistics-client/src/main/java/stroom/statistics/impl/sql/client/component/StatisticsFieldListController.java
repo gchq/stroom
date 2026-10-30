@@ -17,8 +17,8 @@
 package stroom.statistics.impl.sql.client.component;
 
 import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.client.State;
-import stroom.statistics.impl.sql.client.State.Field;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks;
+import stroom.statistics.impl.sql.client.StatisticFieldsAndMasks.Field;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 public class StatisticsFieldListController extends Controller {
 
     private final StatisticsFieldList view;
-    private final Provider<StatisticsFieldEditController> fieldEditProvider;
-    private State state = new State();
+    private final Provider<StatisticsFieldEditorController> fieldEditProvider;
+    private StatisticFieldsAndMasks state = new StatisticFieldsAndMasks();
     private Runnable onFieldsChange = () -> {
     };
 
@@ -52,7 +52,7 @@ public class StatisticsFieldListController extends Controller {
     @Inject
     public StatisticsFieldListController(final EventBus eventBus,
                                          final StatisticsFieldList view,
-                                         final Provider<StatisticsFieldEditController> fieldEditProvider) {
+                                         final Provider<StatisticsFieldEditorController> fieldEditProvider) {
         super(eventBus);
         this.view = view;
         this.fieldEditProvider = fieldEditProvider;
@@ -64,7 +64,7 @@ public class StatisticsFieldListController extends Controller {
     }
 
     /// @param state The fields and custom roll-ups the statistic store's tabs share.
-    public void setState(final State state) {
+    public void setState(final StatisticFieldsAndMasks state) {
         this.state = Objects.requireNonNull(state, "state");
     }
 

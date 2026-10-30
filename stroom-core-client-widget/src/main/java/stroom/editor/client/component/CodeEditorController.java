@@ -16,10 +16,10 @@
 
 package stroom.editor.client.component;
 
-import stroom.editor.client.Action;
-import stroom.editor.client.Option;
+import stroom.editor.client.CodeEditorAction;
+import stroom.editor.client.CodeEditorOption;
+import stroom.editor.client.ace.AceEditorPane;
 import stroom.editor.client.ace.Annotation;
-import stroom.editor.client.ace.Editor;
 import stroom.editor.client.ace.Indicator;
 import stroom.editor.client.ace.IndicatorLines;
 import stroom.editor.client.ace.Marker;
@@ -64,7 +64,7 @@ import java.util.function.Function;
 /// A code editor's controller: it sets the text of its [CodeEditor] and holds its options
 /// ([CodeEditorOptions]) and its Format action, and shows its menu: the edit items for its text (Cut,
 /// Copy, Paste and so on), Format, and the options, ticked to show how they are set. Its
-/// [AceEditorController] sets the editor up as the user prefers.
+/// [AceEditorPaneController] sets the editor up as the user prefers.
 ///
 /// A template declares the editor, and its screen's controller attaches one of these to it:
 ///
@@ -80,12 +80,12 @@ public class CodeEditorController extends Controller {
             AceEditorMode.STROOM_FRAGMENT_PARSER,
             AceEditorMode.STROOM_COMBINED_PARSER);
 
-    private final Action formatAction = new Action("Format", false, this::format);
-    private final AceEditorController aceEditorController;
+    private final CodeEditorAction formatAction = new CodeEditorAction("Format", false, this::format);
+    private final AceEditorPaneController aceEditorController;
     // Told nothing but that the text was formatted
     private final Listeners<Void> formatListeners = new Listeners<>();
     private CodeEditor view;
-    private Editor editor;
+    private AceEditorPane editor;
     private CodeEditorOptions options;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
 
@@ -95,7 +95,7 @@ public class CodeEditorController extends Controller {
     /// @param aceEditorController Sets the editor up as the user prefers; this owns it.
     @Inject
     public CodeEditorController(final EventBus eventBus,
-                                final AceEditorController aceEditorController) {
+                                final AceEditorPaneController aceEditorController) {
         super(eventBus);
         this.aceEditorController = own(aceEditorController);
     }
@@ -127,7 +127,7 @@ public class CodeEditorController extends Controller {
     }
 
     /// @return Format, which formats the text, e.g. as XML.
-    public Action getFormatAction() {
+    public CodeEditorAction getFormatAction() {
         return formatAction;
     }
 
@@ -301,18 +301,18 @@ public class CodeEditorController extends Controller {
         return editor.addValueChangeHandler(handler);
     }
 
-    /// @see AceEditorController#registerCompletionProviders(AceEditorMode, AceCompletionProvider...)
+    /// @see AceEditorPaneController#registerCompletionProviders(AceEditorMode, AceCompletionProvider...)
     public void registerCompletionProviders(final AceEditorMode aceEditorMode,
                                             final AceCompletionProvider... completionProviders) {
         aceEditorController.registerCompletionProviders(aceEditorMode, completionProviders);
     }
 
-    /// @see AceEditorController#registerCompletionProviders(AceCompletionProvider...)
+    /// @see AceEditorPaneController#registerCompletionProviders(AceCompletionProvider...)
     public void registerCompletionProviders(final AceCompletionProvider... completionProviders) {
         aceEditorController.registerCompletionProviders(completionProviders);
     }
 
-    /// @see AceEditorController#deRegisterCompletionProviders()
+    /// @see AceEditorPaneController#deRegisterCompletionProviders()
     public void deRegisterCompletionProviders() {
         aceEditorController.deRegisterCompletionProviders();
     }
@@ -388,7 +388,7 @@ public class CodeEditorController extends Controller {
     }
 
     // An option is a setting that is on or off, so its item is ticked while it is on
-    private void addMenuItem(final int position, final List<Item> menuItems, final Option option) {
+    private void addMenuItem(final int position, final List<Item> menuItems, final CodeEditorOption option) {
         if (option.isAvailable()) {
             menuItems.add(new CheckMenuItem.Builder()
                     .priority(position)

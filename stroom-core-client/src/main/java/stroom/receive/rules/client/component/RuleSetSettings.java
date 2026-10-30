@@ -18,7 +18,7 @@ package stroom.receive.rules.client.component;
 
 import stroom.query.client.component.ExpressionTree;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 
@@ -43,7 +43,7 @@ public class RuleSetSettings extends Component {
 
     private static final String ENABLE_DISABLE_TITLE = "Enable or Disable Selected Rules";
 
-    private final Map<RuleAction, ButtonView> buttons = new EnumMap<>(RuleAction.class);
+    private final Map<RuleAction, IsButton> buttons = new EnumMap<>(RuleAction.class);
     private final Set<RuleAction> available = EnumSet.noneOf(RuleAction.class);
     private Consumer<RuleAction> onAction = action -> {
     };
@@ -117,7 +117,7 @@ public class RuleSetSettings extends Component {
     }
 
     private void addButton(final Toolbar toolbar, final RuleAction action, final SvgImage icon, final String title) {
-        final ButtonView button = toolbar.button(icon, title, () -> onAction.accept(action));
+        final IsButton button = toolbar.button(icon, title, () -> onAction.accept(action));
         button.setEnabled(false);
         buttons.put(action, button);
     }

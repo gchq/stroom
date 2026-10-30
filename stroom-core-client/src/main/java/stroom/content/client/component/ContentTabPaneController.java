@@ -28,7 +28,7 @@ import stroom.content.client.event.RefreshContentTabEvent.RefreshContentTabHandl
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.explorer.client.RecentItems;
 import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.task.client.TaskMonitor;
@@ -91,9 +91,9 @@ public class ContentTabPaneController
         listen(RefreshCurrentContentTabEvent.getType(),
                 event -> {
                     final TabData selectedTab = getSelectedTab();
-                    if (selectedTab instanceof Refreshable) {
+                    if (selectedTab instanceof HasRefresh) {
                         //noinspection PatternVariableCanBeUsed // Not in GWT
-                        final Refreshable refreshable = (Refreshable) selectedTab;
+                        final HasRefresh refreshable = (HasRefresh) selectedTab;
                         refreshable.refresh();
                     }
                 });

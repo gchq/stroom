@@ -17,14 +17,14 @@
 package stroom.pipeline.structure.client.component;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.widget.htree.client.CellRenderer2;
+import stroom.widget.htree.client.CellRenderer;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
 import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.util.client.CssProperties;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 public final class PipelineElementRenderer
-        implements CellRenderer2<PipelineElement>, NodeExtentProvider<PipelineElement> {
+        implements CellRenderer<PipelineElement>, NodeExtentProvider<PipelineElement> {
 
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
@@ -83,7 +83,7 @@ public final class PipelineElementRenderer
         pipelineElementBox.setPorts(hasChildren);
         setTreeItem(pipelineElementBox, pipelineElement, hasChildren, selected);
 
-        // Placed by pipeline-element.css's rule, which reads these
+        // Placed by pipeline-element-box.css's rule, which reads these
         final Element boxElement = pipelineElementBox.getElement();
         CssProperties.set(boxElement, "--pipeline-element__left", bounds.getX() + "px");
         CssProperties.set(boxElement, "--pipeline-element__top", bounds.getY() + "px");
@@ -114,8 +114,9 @@ public final class PipelineElementRenderer
             level++;
             parent = tree.getParent(parent);
         }
-        final boolean nothingSelected = !(selectionModel instanceof final MySingleSelectionModel<PipelineElement> model)
-                                        || model.getSelectedObject() == null;
+        final boolean nothingSelected =
+                !(selectionModel instanceof final SingleItemSelectionModel<PipelineElement> model)
+                || model.getSelectedObject() == null;
         final boolean tabStop = selected || (nothingSelected && level == 1);
         pipelineElementBox.setTreeItem(level,
                 siblings.indexOf(pipelineElement) + 1,

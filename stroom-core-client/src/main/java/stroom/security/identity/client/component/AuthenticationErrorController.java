@@ -27,7 +27,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// The authentication error page ([AuthenticationError]): the error in the URL, and the UI
 /// config's message.
-public class AuthenticationErrorController extends SignInPageController {
+public class AuthenticationErrorController extends AbstractSignInPageController {
 
     private final AuthenticationError view;
     private final UiConfigCache uiConfigCache;

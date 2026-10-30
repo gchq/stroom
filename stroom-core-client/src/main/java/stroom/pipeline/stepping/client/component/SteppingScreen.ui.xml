@@ -5,7 +5,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:pp="urn:import:stroom.pipeline.stepping.client.component"
-             xmlns:tab="urn:import:stroom.widget.tab.client"
+             xmlns:c="urn:import:stroom.widget.component.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="stepping-screen max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal stepping-screen__top">
@@ -33,6 +33,6 @@
                 </b:Toolbar>
             </g:FlowPanel>
         </g:FlowPanel>
-        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max stepping-screen__panes"/>
+        <c:LayerContainer ui:field="layerContainer" styleName="dock-max stepping-screen__panes"/>
     </g:FlowPanel>
 </ui:UiBinder>

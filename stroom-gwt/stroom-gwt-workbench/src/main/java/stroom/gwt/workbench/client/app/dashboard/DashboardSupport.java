@@ -211,11 +211,11 @@ public final class DashboardSupport {
     }
 
     /// Creates every component plugin of the injector, so that each registers its component type
-    /// in the dashboard's `ComponentRegistry`, as Stroom's eager singletons do.
+    /// in the dashboard's `PaneRegistry`, as Stroom's eager singletons do.
     ///
     /// @param injector The story's injector.
     public static void registerComponentTypes(final DashboardScreenGinjector injector) {
-        injector.getQueryPlugin();
+        injector.getQueryPanePlugin();
         injector.getTablePlugin();
         injector.getVisPlugin();
         injector.getTextPlugin();

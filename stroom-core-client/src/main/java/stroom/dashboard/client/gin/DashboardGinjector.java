@@ -18,7 +18,7 @@ package stroom.dashboard.client.gin;
 
 import stroom.dashboard.client.embeddedquery.gin.EmbeddedQueryModule;
 import stroom.dashboard.client.input.gin.InputModule;
-import stroom.dashboard.client.query.gin.QueryModule;
+import stroom.dashboard.client.query.gin.QueryPaneModule;
 import stroom.dashboard.client.table.gin.TableModule;
 import stroom.dashboard.client.text.gin.TextModule;
 import stroom.dashboard.client.vis.gin.VisModule;
@@ -26,7 +26,7 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import com.google.gwt.inject.client.GinModules;
 
 @GinModules({
-        QueryModule.class,
+        QueryPaneModule.class,
         TableModule.class,
         TextModule.class,
         VisModule.class,

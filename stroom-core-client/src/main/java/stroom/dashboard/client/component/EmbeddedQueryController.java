@@ -20,9 +20,9 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.OwnedContentTabs;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.input.FilterableTable;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
@@ -53,7 +53,7 @@ import stroom.query.api.TableResult;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryClient;
 import stroom.query.client.QueryModel;
-import stroom.query.client.ResultComponent;
+import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.ResultStoreModel;
 import stroom.query.client.SearchErrorListener;
 import stroom.query.client.SearchStateListener;
@@ -80,7 +80,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class EmbeddedQueryController
-        extends RefreshableDashboardComponentController
+        extends RefreshableDashboardPaneController
         implements SearchStateListener, SearchErrorListener, HasComponentSelection, FilterableTable {
 
     public static final String TAB_TYPE = "embedded-query-component";
@@ -151,7 +151,7 @@ public class EmbeddedQueryController
         this.queryTabs = new OwnedContentTabs(contentManager);
         onDispose(queryTabs::closeAll);
 
-        final stroom.query.client.ResultComponent tableResultConsumer = new ResultComponent() {
+        final stroom.query.client.QueryResultConsumer tableResultConsumer = new QueryResultConsumer() {
             boolean start;
             boolean hasData;
 
@@ -226,7 +226,7 @@ public class EmbeddedQueryController
             }
         };
 
-        final stroom.query.client.ResultComponent visResultConsumer = new ResultComponent() {
+        final stroom.query.client.QueryResultConsumer visResultConsumer = new QueryResultConsumer() {
             boolean start;
             boolean hasData;
 

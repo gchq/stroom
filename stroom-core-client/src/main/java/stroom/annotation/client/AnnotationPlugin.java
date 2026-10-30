@@ -22,7 +22,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
+import stroom.node.client.ToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -33,7 +33,7 @@ import stroom.widget.util.client.KeyBinding.Action;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-abstract class AnnotationPlugin extends NodeToolsContentPlugin<AnnotationTagsController> {
+abstract class AnnotationPlugin extends ToolsContentPlugin<AnnotationTagsController> {
 
     private final String tabLabel;
 

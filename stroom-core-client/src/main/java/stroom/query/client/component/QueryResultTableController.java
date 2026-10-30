@@ -27,8 +27,8 @@ import stroom.core.client.LocationManager;
 import stroom.dashboard.client.component.ColumnFilterEditorController;
 import stroom.dashboard.client.component.ColumnFormatController;
 import stroom.dashboard.client.component.ColumnValuesFilterController;
+import stroom.dashboard.client.component.ConditionalFormattingRulesController;
 import stroom.dashboard.client.component.DownloadSearchResultsController;
-import stroom.dashboard.client.component.RulesController;
 import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
@@ -56,8 +56,8 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableResult;
 import stroom.query.client.ColumnHeader;
 import stroom.query.client.QueryModel;
+import stroom.query.client.QueryResultConsumer;
 import stroom.query.client.QueryTableColumnValuesDataSupplier;
-import stroom.query.client.ResultComponent;
 import stroom.query.client.TableComponentSelection;
 import stroom.query.client.TableRow;
 import stroom.query.client.TableRow.Cell;
@@ -71,7 +71,7 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.LayerController;
@@ -108,7 +108,7 @@ import java.util.stream.Collectors;
 /// annotation and Ask Stroom AI actions, and its row styles from conditional formatting.
 public class QueryResultTableController
         extends LayerController
-        implements ResultComponent, HasComponentSelection, HasHandlers, FilterableTable {
+        implements QueryResultConsumer, HasComponentSelection, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -132,14 +132,14 @@ public class QueryResultTableController
 
     private GroupLevelButtons groupLevelButtons;
 
-    private ButtonView downloadButton;
+    private IsButton downloadButton;
     private final DownloadSearchResultsController downloadOptions;
     private final AnnotationMenuController annotationManager;
     private ToolbarToggleButton valueFilterButton;
-    private ButtonView resetButton;
+    private IsButton resetButton;
     private ToolbarButton annotateButton;
     private final EventBus eventBus;
-    private ButtonView askAiButton;
+    private IsButton askAiButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -188,7 +188,7 @@ public class QueryResultTableController
                                       final AnnotationMenuController annotationManager,
                                       final ClientSecurityContext securityContext,
                                       final Provider<ColumnFormatController> columnFormatProvider,
-                                      final Provider<RulesController> rulesProvider,
+                                      final Provider<ConditionalFormattingRulesController> rulesProvider,
                                       final Provider<ColumnFilterEditorController> columnFilterEditorProvider,
                                       final ColumnValuesFilterController columnValuesFilter,
                                       final UserPreferencesManager userPreferencesManager) {
@@ -409,7 +409,7 @@ public class QueryResultTableController
     }
 
     private void setShowValueFilters(final boolean showValueFilters) {
-        valueFilterButton.setState(showValueFilters);
+        valueFilterButton.setPressed(showValueFilters);
         if (showValueFilters) {
             dataGrid.addStyleName("result-table__grid--value-filters");
         } else {

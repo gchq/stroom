@@ -115,7 +115,7 @@ final class PopupHarnesses {
     }
 
     /// Stroom's `SettingBlock`, whose click shows a chooser below it as
-    /// `AnnotationEditController.showStatusChooser` does.
+    /// `AnnotationEditorController.showStatusChooser` does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.

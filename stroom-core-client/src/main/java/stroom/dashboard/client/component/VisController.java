@@ -17,11 +17,11 @@
 package stroom.dashboard.client.component;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
-import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.DashboardPane;
-import stroom.dashboard.client.main.ResultComponent;
+import stroom.dashboard.client.main.DashboardResultPane;
+import stroom.dashboard.client.main.PaneRegistry.ComponentType;
+import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
@@ -82,8 +82,8 @@ import java.util.Set;
 /// A dashboard's Visualisation pane ([Vis]): draws a table's results with a visualisation (a script
 /// in a frame laid over the pane), updating as the query runs unless paused, and selects in it.
 public class VisController
-        extends DashboardComponentController
-        implements ResultComponent, StatusHandler, HasComponentSelection {
+        extends DashboardPaneController
+        implements DashboardResultPane, StatusHandler, HasComponentSelection {
 
     /// The tab type of the pane.
     public static final String TAB_TYPE = "vis-component";

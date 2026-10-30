@@ -34,14 +34,14 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import java.util.Objects;
 import java.util.Optional;
 
-/// A pipeline element's box in the pipeline structure tree (see pipeline-element.css, a BEM block):
+/// A pipeline element's box in the pipeline structure tree (see pipeline-element-box.css, a BEM block):
 /// its type icon, name and any embedded document icon, and the dots where its connectors join it
 /// (its ::before and ::after). It is an item of the tree for assistive technology, named by all
 /// that the icons show (which are hover tips only).
 public class PipelineElementBox extends Box<PipelineElement> {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final String BLOCK = "pipeline-element";
+    private static final String BLOCK = "pipeline-element-box";
     private static final String TARGET_CLASS = BLOCK + "--target";
     private static final String REFUSED_CLASS = BLOCK + "--refused";
     private static final String DETACHED_CLASS = BLOCK + "--detached";
@@ -325,7 +325,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     // The element's name, also in data-text, so that the label keeps room for it in bold (see
-    // pipeline-element.css)
+    // pipeline-element-box.css)
     private void setLabelText(final String text) {
         label.setInnerText(text);
         label.setAttribute("data-text", text == null

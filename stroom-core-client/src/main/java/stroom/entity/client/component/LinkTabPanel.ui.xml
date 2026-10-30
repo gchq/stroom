@@ -15,6 +15,6 @@
         <g:FlowPanel ui:field="toolbarContainer" styleName="dock-min link-tab-panel__toolbar">
             <b:Toolbar ui:field="toolbar" name="Document actions" visible="false"/>
         </g:FlowPanel>
-        <tab:LayerContainerImpl ui:field="layerContainer" addStyleNames="dock-max"/>
+        <c:LayerContainer ui:field="layerContainer" addStyleNames="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

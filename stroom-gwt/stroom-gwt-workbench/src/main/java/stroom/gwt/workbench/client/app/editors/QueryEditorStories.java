@@ -20,7 +20,7 @@ import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.ShowFindAnnotationEvent;
-import stroom.data.client.ShowDataEvent;
+import stroom.data.client.event.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -1339,7 +1339,7 @@ public final class QueryEditorStories {
     private static void hyperlinks(final ScreenHarness harness, final QueryScreenGinjector injector) {
         harness.fn(STEPPING);
         harness.fn(SHOW_DATA);
-        injector.getHyperlinkEventHandler();
+        injector.getHyperlinkOpener();
         harness.getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), event ->
                 harness.spy(STEPPING, event.getStepLocation().getMetaId() + ":"
                                       + event.getStepLocation().getPartIndex() + ":"

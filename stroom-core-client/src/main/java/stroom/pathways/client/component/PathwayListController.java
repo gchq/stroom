@@ -56,7 +56,7 @@ public class PathwayListController extends Controller {
     private PathwayList view;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final PathwayEditController pathwayEdit;
+    private final PathwayEditorController pathwayEditor;
     private RestDataProvider<Pathway, ResultPage<Pathway>> dataProvider;
 
     private String filter;
@@ -70,16 +70,16 @@ public class PathwayListController extends Controller {
     /// @param eventBus             The application's event bus.
     /// @param restFactory          Finds and changes the pathways.
     /// @param dateTimeFormatter    Formats the times shown.
-    /// @param pathwayEdit          Edits a pathway.
+    /// @param pathwayEditor          Edits a pathway.
     @Inject
     public PathwayListController(final EventBus eventBus,
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
-                                 final PathwayEditController pathwayEdit) {
+                                 final PathwayEditorController pathwayEditor) {
         super(eventBus);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
-        this.pathwayEdit = own(pathwayEdit);
+        this.pathwayEditor = own(pathwayEditor);
     }
 
     /// Attaches this to a list, e.g. one a template declares. The list is then this controller's
@@ -115,10 +115,10 @@ public class PathwayListController extends Controller {
 
     private void onAdd() {
         final NanoTime now = NanoTime.ofMillis(System.currentTimeMillis());
-        pathwayEdit.read(pathwaysDoc, Pathway.builder().name("").createTime(now).build());
-        pathwayEdit.show("New Pathway", e -> {
+        pathwayEditor.read(pathwaysDoc, Pathway.builder().name("").createTime(now).build());
+        pathwayEditor.show("New Pathway", e -> {
             if (e.isOk()) {
-                final Pathway pathway = pathwayEdit.write();
+                final Pathway pathway = pathwayEditor.write();
                 restFactory
                         .create(PATHWAYS_RESOURCE)
                         .method(res -> res.addPathway(new AddPathway(docRef, pathway)))
@@ -140,11 +140,11 @@ public class PathwayListController extends Controller {
     private void onEdit() {
         final Pathway existingPathway = view.getSelectionModel().getSelected();
         if (existingPathway != null) {
-            pathwayEdit.read(pathwaysDoc, existingPathway);
-            pathwayEdit.show("Edit Pathway", e -> {
+            pathwayEditor.read(pathwaysDoc, existingPathway);
+            pathwayEditor.show("Edit Pathway", e -> {
                 if (e.isOk()) {
                     try {
-                        final Pathway pathway = pathwayEdit.write();
+                        final Pathway pathway = pathwayEditor.write();
                         restFactory
                                 .create(PATHWAYS_RESOURCE)
                                 .method(res -> res.updatePathway(new UpdatePathway(

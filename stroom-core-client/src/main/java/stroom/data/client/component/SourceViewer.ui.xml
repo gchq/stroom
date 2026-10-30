@@ -41,7 +41,7 @@
                     <pb:SourceProgressBar ui:field="progressBar" visible="false"/>
                 </g:SimplePanel>
                 <g:FlowPanel styleName="dock-max default-min-sizes source-viewer__content">
-                    <spinner:SpinnerLarge ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
+                    <spinner:LargeBusySpinner ui:field="spinner" addStyleNames="busy-spinner--centred" visible="false"/>
                     <d:ClassificationWrapper ui:field="classification">
                         <d:content>
                             <d:DataTextPane ui:field="text"/>

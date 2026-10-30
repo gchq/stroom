@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -56,7 +56,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
     /// @param eventBus             The application's event bus.
     /// @param view                 Its component.
     /// @param codeTabProvider      Makes the code tab.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     /// @param restFactory          Makes REST requests.
     /// @param locationManager      The browser's location.
@@ -64,7 +64,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
     public S3ConfigEditor(final EventBus eventBus,
                           final LinkTabPanel view,
                           final Provider<CodeTabController> codeTabProvider,
-                          final Provider<MarkdownEditController> markdownEditProvider,
+                          final Provider<DocumentationTabController> documentationTabProvider,
                           final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                           final RestFactory restFactory,
                           final LocationManager locationManager) {
@@ -84,7 +84,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
                 (config, docRef, doc) -> config.setText(doc.getData()),
                 (config, doc) -> doc.copy().data(config.getText()).build());
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 S3ConfigDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

@@ -16,7 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
-import stroom.data.client.ShowDataEvent;
+import stroom.data.client.event.ShowDataEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.AppScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -52,7 +52,7 @@ import java.util.function.Supplier;
 /// Stroom's `OpenDocumentEvent`, `ShowDataEvent` and `OpenProcessorTaskEvent`. The controller comes
 /// from GIN.
 ///
-/// The list refreshes when Stroom's content pane asks it to (`Refreshable`), which the stories
+/// The list refreshes when Stroom's content pane asks it to (`HasRefresh`), which the stories
 /// don't do, so there is no polling here; see `UserTaskManagerDialogStories` for a screen that
 /// polls by itself.
 public final class ServerTasksScreenStories {
@@ -252,7 +252,7 @@ public final class ServerTasksScreenStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(filteredFind());
                     expectNoProblems(play);
                 })
-                // TaskManagerListController details visible on one flat page: '?' for a task with no
+                // ServerTaskListController details visible on one flat page: '?' for a task with no
                 // node, and no expander column when no row is a parent
                 .story("FlatListDetails", context -> render(context, ORPHAN_FIXTURES, null))
                 .withPlay(play -> {
@@ -365,8 +365,8 @@ public final class ServerTasksScreenStories {
         harness.getEventBus().addHandler(OpenProcessorTaskEvent.getType(), event ->
                 harness.spy(ON_SHOW_FILTER_TASKS, "filterTasks:" + event.getProcessorFilter().getId()));
 
-        // Opened once Stroom has started (the screen reads the UI config), as TaskManagerPlugin
-        // opens it, with the name filter of an OpenTaskManagerEvent if there is one
+        // Opened once Stroom has started (the screen reads the UI config), as ServerTasksPlugin
+        // opens it, with the name filter of an OpenServerTasksEvent if there is one
         harness.afterStartUp(() -> {
             final ServerTasksController controller = harness.show(injector.getServerTasksController());
             if (filter != null) {

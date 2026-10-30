@@ -20,7 +20,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.preferences.client.component.KeyboardShortcutsController;
-import stroom.preferences.client.component.UserPreferencesDialogController;
+import stroom.preferences.client.component.UserPreferencesEditorController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.menu.client.IconMenuItem;
@@ -36,14 +36,14 @@ import javax.inject.Singleton;
 @Singleton
 public class UserPreferencesPlugin extends Plugin {
 
-    private final Provider<UserPreferencesDialogController> preferencesProvider;
+    private final Provider<UserPreferencesEditorController> preferencesProvider;
     private final Provider<KeyboardShortcutsController> keyboardShortcutsProvider;
 
     private final AppRoot appRoot;
 
     @Inject
     public UserPreferencesPlugin(final EventBus eventBus,
-                                 final Provider<UserPreferencesDialogController> preferencesProvider,
+                                 final Provider<UserPreferencesEditorController> preferencesProvider,
                                  final Provider<KeyboardShortcutsController> keyboardShortcutsProvider,
                                  final AppRoot appRoot) {
         super(eventBus);

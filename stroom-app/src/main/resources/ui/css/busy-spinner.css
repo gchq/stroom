@@ -18,12 +18,12 @@
    Busy spinners, named BEM style (block, block__element, block--modifier), all in the block
    busy-spinner (not spinner, the value spinner's class):
 
-   * busy-spinner--small (SpinnerSmall): shown while tasks run, e.g. on a tab or the explorer's bar.
+   * busy-spinner--small (SmallBusySpinner): shown while tasks run, e.g. on a tab or the explorer's bar.
      It fades in and out (--active). Once faded out it is hidden, so screen readers skip it: its
      visibility changes when the fade has finished (delayed by the fade's length), but at once when
-     it is shown. It spins only while SpinnerSmall says so (--spinning), until it has faded out, so
+     it is shown. It spins only while SmallBusySpinner says so (--spinning), until it has faded out, so
      an idle one costs nothing (#5299).
-   * busy-spinner--large (SpinnerLarge): a ring that spins while a dialog or pane loads. It fades in
+   * busy-spinner--large (LargeBusySpinner): a ring that spins while a dialog or pane loads. It fades in
      (--active), slower when soft (--soft), and may be centred over what is loading (--centred).
    * busy-spinner--page: the ring shown while the app itself loads (app.html).
 */

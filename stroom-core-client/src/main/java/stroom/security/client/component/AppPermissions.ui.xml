@@ -42,7 +42,7 @@
         </g:FlowPanel>
         <!-- The pane that lists all the app perms with check boxes to set them -->
         <g:SimplePanel styleName="max">
-            <sec:AppPermissionsEdit ui:field="appPermissionsEdit"/>
+            <sec:AppPermissionsEditor ui:field="appPermissionsEdit"/>
         </g:SimplePanel>
     </split:SplitPane>
 </ui:UiBinder>

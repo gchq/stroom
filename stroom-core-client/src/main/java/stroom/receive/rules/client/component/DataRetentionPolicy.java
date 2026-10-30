@@ -18,7 +18,7 @@ package stroom.receive.rules.client.component;
 
 import stroom.query.client.component.ExpressionTree;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Component;
 
@@ -40,7 +40,7 @@ public class DataRetentionPolicy extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
-    private final Map<RetentionRuleAction, ButtonView> buttons = new EnumMap<>(RetentionRuleAction.class);
+    private final Map<RetentionRuleAction, IsButton> buttons = new EnumMap<>(RetentionRuleAction.class);
     private final Set<RetentionRuleAction> available = EnumSet.noneOf(RetentionRuleAction.class);
     private Consumer<RetentionRuleAction> onAction = action -> {
     };
@@ -92,7 +92,7 @@ public class DataRetentionPolicy extends Component {
                            final RetentionRuleAction action,
                            final SvgImage icon,
                            final String title) {
-        final ButtonView button = toolbar.button(icon, title, () -> onAction.accept(action));
+        final IsButton button = toolbar.button(icon, title, () -> onAction.accept(action));
         button.setEnabled(false);
         buttons.put(action, button);
     }

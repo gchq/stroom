@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.data.client.OpenLinkUtil;
-import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.FilterExpressionController;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -68,12 +68,12 @@ public class ProcessorsController extends Controller {
 
     private final Processors view;
     private final ProcessorListController processorList;
-    private final Provider<ProcessorEditController> processorEditProvider;
+    private final Provider<ProcessorEditorController> processorEditorProvider;
     private final ExpressionTreeController expressionTree;
     private final RestFactory restFactory;
     private final ProcessorInfoBuilder processorInfoBuilder;
-    private final Provider<ExpressionDialogController> filterDialogProvider;
-    private final Provider<BatchProcessorFilterEditController> batchProcessorFilterEditProvider;
+    private final Provider<FilterExpressionController> filterDialogProvider;
+    private final Provider<BatchProcessorFilterEditorController> batchProcessorFilterEditorProvider;
 
     private ProcessorType processorType;
     private DocRef docRef;
@@ -91,35 +91,35 @@ public class ProcessorsController extends Controller {
     /// @param eventBus                         The application's event bus.
     /// @param view                             The content.
     /// @param processorList                    The processors and their filters.
-    /// @param processorEditProvider            Makes the Add Filter and Edit Filter dialog.
+    /// @param processorEditorProvider            Makes the Add Filter and Edit Filter dialog.
     /// @param expressionTree                   Shows the selected filter's expression.
     /// @param restFactory                      Loads and deletes filters.
     /// @param processorInfoBuilder             Describes the selected processor or filter.
     /// @param filterDialogProvider             Makes the dialog that filters the list.
-    /// @param batchProcessorFilterEditProvider Makes the dialog that edits the filters listed.
+    /// @param batchProcessorFilterEditorProvider Makes the dialog that edits the filters listed.
     @Inject
     public ProcessorsController(final EventBus eventBus,
                                 final Processors view,
                                 final ProcessorListController processorList,
-                                final Provider<ProcessorEditController> processorEditProvider,
+                                final Provider<ProcessorEditorController> processorEditorProvider,
                                 final ExpressionTreeController expressionTree,
                                 final RestFactory restFactory,
                                 final ProcessorInfoBuilder processorInfoBuilder,
-                                final Provider<ExpressionDialogController> filterDialogProvider,
-                                final Provider<BatchProcessorFilterEditController>
-                                        batchProcessorFilterEditProvider) {
+                                final Provider<FilterExpressionController> filterDialogProvider,
+                                final Provider<BatchProcessorFilterEditorController>
+                                        batchProcessorFilterEditorProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);
         own(processorList).attach(view.getProcessorList());
         own(expressionTree).attach(view.getExpressionTree());
         this.processorList = processorList;
-        this.processorEditProvider = processorEditProvider;
+        this.processorEditorProvider = processorEditorProvider;
         this.expressionTree = expressionTree;
         this.restFactory = restFactory;
         this.processorInfoBuilder = processorInfoBuilder;
         this.filterDialogProvider = filterDialogProvider;
-        this.batchProcessorFilterEditProvider = batchProcessorFilterEditProvider;
+        this.batchProcessorFilterEditorProvider = batchProcessorFilterEditorProvider;
 
         // Stop users from selecting expression items.
         expressionTree.setSelectionModel(null);
@@ -204,7 +204,7 @@ public class ProcessorsController extends Controller {
     }
 
     private void onBatchEdit() {
-        batchProcessorFilterEditProvider.get().show(this,
+        batchProcessorFilterEditorProvider.get().show(this,
                 processorList.getExpression(),
                 processorList::refresh);
     }
@@ -351,7 +351,7 @@ public class ProcessorsController extends Controller {
                       final ExpressionOperator defaultExpression) {
         if (editInterceptor.get()) {
             if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
-                processorEditProvider.get()
+                processorEditorProvider.get()
                         .show(this,
                                 processorType,
                                 docRef,
@@ -368,7 +368,7 @@ public class ProcessorsController extends Controller {
                                     }
                                 });
             } else {
-                processorEditProvider.get()
+                processorEditorProvider.get()
                         .show(this, processorType, docRef, filter, null, result -> {
                             if (result != null) {
                                 // The runAsUser can't be changed in the editor

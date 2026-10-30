@@ -19,6 +19,7 @@ package stroom.data.client;
 import stroom.data.client.component.DataViewer;
 import stroom.data.client.component.DataViewerController;
 import stroom.data.client.component.SourceViewerController;
+import stroom.data.client.event.ShowDataEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;

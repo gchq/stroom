@@ -57,7 +57,7 @@ public class DocSelectionController extends Controller {
     /// Shown when no document is chosen.
     public static final String NONE_DISPLAY_VALUE = "None";
 
-    private final ExplorerPopupController explorerPopup;
+    private final DocumentChooserController documentChooser;
     private final RestFactory restFactory;
     private final Listeners<DocRef> selectionListeners = new Listeners<>();
     private DropDownBox box;
@@ -73,14 +73,14 @@ public class DocSelectionController extends Controller {
     /// Made by GIN, with the chooser it opens.
     ///
     /// @param eventBus      The application's event bus.
-    /// @param explorerPopup The chooser, which it shows again and again.
+    /// @param documentChooser The chooser, which it shows again and again.
     /// @param restFactory   Checks the chosen document's name with the server.
     @Inject
     public DocSelectionController(final EventBus eventBus,
-                                  final ExplorerPopupController explorerPopup,
+                                  final DocumentChooserController documentChooser,
                                   final RestFactory restFactory) {
         super(eventBus);
-        this.explorerPopup = own(explorerPopup);
+        this.documentChooser = own(documentChooser);
         this.restFactory = restFactory;
     }
 
@@ -126,59 +126,59 @@ public class DocSelectionController extends Controller {
     /// @param caption The caption; null leaves the default in place.
     public void setCaption(final String caption) {
         if (caption != null) {
-            explorerPopup.setCaption(caption);
+            documentChooser.setCaption(caption);
         }
     }
 
     /// @param filterInput The chooser's quick filter when it opens.
     public void setQuickFilter(final String filterInput) {
-        explorerPopup.setInitialQuickFilter(filterInput);
+        documentChooser.setInitialQuickFilter(filterInput);
     }
 
     /// @param includedTypes The types of document that may be chosen.
     public void setIncludedTypes(final String... includedTypes) {
-        explorerPopup.setIncludedTypes(includedTypes);
+        documentChooser.setIncludedTypes(includedTypes);
     }
 
     /// @param includedTypes The types of document that may be chosen.
     public void setIncludedTypes(final Collection<String> includedTypes) {
-        explorerPopup.setIncludedTypes(NullSafe.stream(includedTypes)
+        documentChooser.setIncludedTypes(NullSafe.stream(includedTypes)
                 .toArray(String[]::new));
     }
 
     /// @param tags The tags a document must have to be offered.
     public void setTags(final String... tags) {
-        explorerPopup.setTags(tags);
+        documentChooser.setTags(tags);
     }
 
     /// @param tags The tags a document must have to be offered.
     public void setTags(final Collection<String> tags) {
-        explorerPopup.setTags(NullSafe.stream(tags)
+        documentChooser.setTags(NullSafe.stream(tags)
                 .toArray(String[]::new));
     }
 
     /// @param tags The tags a document must have to be offered.
     public void setTags(final StandardExplorerTags... tags) {
-        explorerPopup.setTags(NullSafe.stream(tags)
+        documentChooser.setTags(NullSafe.stream(tags)
                 .map(StandardExplorerTags::getTagName)
                 .toArray(String[]::new));
     }
 
     /// @param nodeFlags The flags of the explorer nodes offered.
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerPopup.setNodeFlags(nodeFlags);
+        documentChooser.setNodeFlags(nodeFlags);
     }
 
     /// @param nodeFlags The flags of the explorer nodes offered.
     public void setNodeFlags(final Collection<NodeFlag> nodeFlags) {
-        explorerPopup.setNodeFlags(NullSafe.stream(nodeFlags)
+        documentChooser.setNodeFlags(NullSafe.stream(nodeFlags)
                 .toArray(NodeFlag[]::new));
     }
 
     /// @param requiredPermissions The permissions the user must have on the chosen document.
     public void setRequiredPermissions(final DocumentPermission... requiredPermissions) {
         this.requiredPermissions = NullSafe.asSet(requiredPermissions);
-        explorerPopup.setRequiredPermissions(requiredPermissions);
+        documentChooser.setRequiredPermissions(requiredPermissions);
 
         // In case this is called after setSelectedEntityReference, call that again to
         // do the perm check now that we know what perms are needed.
@@ -234,7 +234,7 @@ public class DocSelectionController extends Controller {
             // Selected as given at once, so that it is the value until decorating it is done, and if
             // that fails (rather than the value before, or none, which whatever reads the value,
             // e.g. a query expression's term editor, would save in its place)
-            explorerPopup.setSelectedEntityReference(docRef);
+            documentChooser.setSelectedEntityReference(docRef);
             setFieldValue(docRef, null);
             // The docRef may have come from the data within a Doc so the name may be out of date,
             // so decorate it to ensure we have the right name
@@ -250,7 +250,7 @@ public class DocSelectionController extends Controller {
                             return;
                         }
                         if (decoratedDocRef != null) {
-                            explorerPopup.setSelectedEntityReference(decoratedDocRef);
+                            documentChooser.setSelectedEntityReference(decoratedDocRef);
                             setFieldValue(decoratedDocRef, null);
                             if (!Objects.equals(docRef, decoratedDocRef)) {
                                 // The decorated one is different so we need to update
@@ -267,7 +267,7 @@ public class DocSelectionController extends Controller {
                     .exec();
         } else {
             // No decoration
-            explorerPopup.setSelectedEntityReference(docRef);
+            documentChooser.setSelectedEntityReference(docRef);
             setFieldValue(docRef, null);
         }
     }
@@ -296,14 +296,14 @@ public class DocSelectionController extends Controller {
 
     /// @param allowFolderSelection Whether a folder may be chosen.
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
-        explorerPopup.setAllowFolderSelection(allowFolderSelection);
+        documentChooser.setAllowFolderSelection(allowFolderSelection);
     }
 
     /// Opens the chooser, unless the picker is disabled or read only.
     public void showPopup() {
         if (enabled && !readOnly) {
             final DocRef oldDocRef = getSelectedEntityReference();
-            explorerPopup.show(selectedDocRef -> {
+            documentChooser.show(selectedDocRef -> {
                 if (!Objects.equals(oldDocRef, selectedDocRef)) {
                     setFieldValue(selectedDocRef, null);
                     selectionListeners.fire(selectedDocRef);

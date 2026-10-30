@@ -23,8 +23,8 @@ import stroom.pipeline.stepping.client.PipelinePath.Step;
 import stroom.pipeline.stepping.client.PipelinePathCollapse;
 import stroom.pipeline.stepping.client.SeverityChanges;
 import stroom.pipeline.structure.client.PipelineModel;
-import stroom.pipeline.structure.client.component.AbstractPipelineTree;
 import stroom.pipeline.structure.client.component.PipelineElementBoxFactory;
+import stroom.pipeline.structure.client.component.PipelinePicture;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -82,7 +82,7 @@ import java.util.Set;
 /// chevron's list (from its button too); the context menu key or Shift+F10 opens the element's
 /// context menu. A control's states are its ARIA attributes (`aria-current`, `aria-disabled`,
 /// `aria-expanded`), which pipeline-path-bar.css styles.
-public class PipelinePathBar extends AbstractPipelineTree {
+public class PipelinePathBar extends PipelinePicture {
 
     private static final Binder BINDER = GWT.create(Binder.class);
     private static final Template TEMPLATE = GWT.create(Template.class);

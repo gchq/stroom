@@ -1,0 +1,11 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!-- A table's conditional formatting rules: the list of rules, with the actions on its toolbar -->
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:dash="urn:import:stroom.dashboard.client.component">
+    <g:SimplePanel styleName="max form">
+        <g:SimplePanel styleName="max control-box">
+            <dash:ConditionalFormattingRuleList ui:field="ruleList"/>
+        </g:SimplePanel>
+    </g:SimplePanel>
+</ui:UiBinder>

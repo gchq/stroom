@@ -19,7 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.client.TableRow;
 
-public class TableRowStyles extends AbstractRowStyles<TableRow> {
+public class TableRowStyles extends ConditionalRowStyles<TableRow> {
 
     public TableRowStyles(final UserPreferencesManager userPreferencesManager) {
         super(userPreferencesManager,

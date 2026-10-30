@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class PopupManager {
 
-    private Map<Controller, PopupSupport> popupMap;
+    private Map<Controller, PopupHost> popupMap;
 
     @Inject
     public PopupManager(final EventBus eventBus) {
@@ -56,44 +56,44 @@ public class PopupManager {
             hide(HidePopupEvent.builder(controller).autoClose(true).ok(false).build());
 
         } else {
-            final PopupSupport popupSupport = new PopupSupportImpl(
+            final PopupHost popupHost = new PopupHost(
                     controller,
                     event.getIcon(),
                     event.getCaption(),
                     event.getModal(), event.getAutoHidePartners());
 
-            popupMap.put(controller, popupSupport);
+            popupMap.put(controller, popupHost);
 
-            popupSupport.show(event);
+            popupHost.show(event);
         }
     }
 
     private void hideRequest(final HidePopupRequestEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getController());
-            if (popupSupport != null) {
-                popupSupport.hideRequest(event);
+            final PopupHost popupHost = popupMap.get(event.getController());
+            if (popupHost != null) {
+                popupHost.hideRequest(event);
             }
         }
     }
 
     private void hide(final HidePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.remove(event.getController());
-            if (popupSupport != null) {
-                popupSupport.hide(event);
+            final PopupHost popupHost = popupMap.remove(event.getController());
+            if (popupHost != null) {
+                popupHost.hide(event);
             }
         }
     }
 
     private void disable(final DisablePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getController());
-            if (popupSupport != null) {
+            final PopupHost popupHost = popupMap.get(event.getController());
+            if (popupHost != null) {
                 if (event.getAction() != null) {
-                    popupSupport.setEnabled(event.getAction(), false);
+                    popupHost.setEnabled(event.getAction(), false);
                 } else {
-                    popupSupport.setEnabled(false);
+                    popupHost.setEnabled(false);
                 }
             }
         }
@@ -101,12 +101,12 @@ public class PopupManager {
 
     private void enable(final EnablePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getController());
-            if (popupSupport != null) {
+            final PopupHost popupHost = popupMap.get(event.getController());
+            if (popupHost != null) {
                 if (event.getAction() != null) {
-                    popupSupport.setEnabled(event.getAction(), true);
+                    popupHost.setEnabled(event.getAction(), true);
                 } else {
-                    popupSupport.setEnabled(true);
+                    popupHost.setEnabled(true);
                 }
             }
         }
@@ -114,9 +114,9 @@ public class PopupManager {
 
     private void rename(final RenamePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(event.getController());
-            if (popupSupport != null) {
-                popupSupport.setCaption(event.getCaption());
+            final PopupHost popupHost = popupMap.get(event.getController());
+            if (popupHost != null) {
+                popupHost.setCaption(event.getCaption());
             }
         }
     }

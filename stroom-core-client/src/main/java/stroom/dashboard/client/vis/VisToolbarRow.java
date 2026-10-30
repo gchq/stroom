@@ -44,7 +44,7 @@ public class VisToolbarRow extends Component {
     @UiField
     RefreshButton refreshButton;
     // The buttons the visualisation asked for, as visToolbar shows them
-    private List<VisToolbarButton> visButtons = Collections.emptyList();
+    private List<VisButtonSpec> visButtons = Collections.emptyList();
     private BiConsumer<String, Boolean> onPress;
 
     public VisToolbarRow() {
@@ -67,24 +67,24 @@ public class VisToolbarRow extends Component {
     ///
     /// @param buttons The buttons, none for no visualisation buttons; pressing one is told to
     ///                [#setOnPress].
-    public void setVisButtons(final List<VisToolbarButton> buttons) {
+    public void setVisButtons(final List<VisButtonSpec> buttons) {
         if (isSameButtons(buttons)) {
             // Only a toggle's state, or whether a button is enabled, may have changed, so keep the
             // buttons (and the focus on one)
             for (int i = 0; i < buttons.size(); i++) {
                 final ToolbarButton shown = (ToolbarButton) visToolbar.getWidget(i);
                 if (buttons.get(i).isToggle()) {
-                    ((ToolbarToggleButton) shown).setState(buttons.get(i).isPressed());
+                    ((ToolbarToggleButton) shown).setPressed(buttons.get(i).isPressed());
                 }
                 shown.setEnabled(buttons.get(i).isEnabled());
             }
         } else {
             visToolbar.clear();
-            for (final VisToolbarButton button : buttons) {
+            for (final VisButtonSpec button : buttons) {
                 if (button.isToggle()) {
                     final ToolbarToggleButton toggle = visToolbar.toggle(button.getIcon(), button.getTitle(),
                             pressed -> press(button.getId(), pressed));
-                    toggle.setState(button.isPressed());
+                    toggle.setPressed(button.isPressed());
                     toggle.setEnabled(button.isEnabled());
                 } else {
                     visToolbar.button(button.getIcon(), button.getTitle(),
@@ -104,13 +104,13 @@ public class VisToolbarRow extends Component {
     }
 
     // Whether the buttons are those shown, other than the toggles' states
-    private boolean isSameButtons(final List<VisToolbarButton> buttons) {
+    private boolean isSameButtons(final List<VisButtonSpec> buttons) {
         if (buttons.size() != visButtons.size()) {
             return false;
         }
         for (int i = 0; i < buttons.size(); i++) {
-            final VisToolbarButton button = buttons.get(i);
-            final VisToolbarButton shown = visButtons.get(i);
+            final VisButtonSpec button = buttons.get(i);
+            final VisButtonSpec shown = visButtons.get(i);
             if (!button.getId().equals(shown.getId())
                 || !button.getTitle().equals(shown.getTitle())
                 || button.getIcon() != shown.getIcon()

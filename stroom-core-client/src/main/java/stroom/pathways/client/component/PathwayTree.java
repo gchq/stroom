@@ -29,8 +29,8 @@ import stroom.widget.text.client.Html;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MySingleSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -69,7 +69,7 @@ public class PathwayTree extends Component {
     @UiField
     Html tree;
 
-    private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<>();
+    private final SingleItemSelectionModel<PathNode> selectionModel = new SingleItemSelectionModel<>();
     private final Map<String, PathNode> nodeMap = new HashMap<>();
     private Element selected;
     // Read only until a pathway is read, and only shown on the buttons when a node is chosen, as it
@@ -111,7 +111,7 @@ public class PathwayTree extends Component {
     }
 
     /// @return The chosen node.
-    public MySingleSelectionModel<PathNode> getSelectionModel() {
+    public SingleItemSelectionModel<PathNode> getSelectionModel() {
         return selectionModel;
     }
 

@@ -66,7 +66,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     private final Provider<RenameColumnController> renameColumnControllerProvider;
     private final Provider<ColumnFunctionEditorController> expressionProvider;
     private final Provider<ColumnFormatController> columnFormatProvider;
-    private final ColumnFilterDialogController columnFilterDialog;
+    private final ColumnFilterTabsController columnFilterTabs;
     private final ColumnValuesFilterController columnValuesFilter;
     private int columnsStartIndex;
     private int currentMenuColIndex = -1;
@@ -80,14 +80,14 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                           final Provider<RenameColumnController> renameColumnControllerProvider,
                           final Provider<ColumnFunctionEditorController> expressionProvider,
                           final Provider<ColumnFormatController> columnFormatProvider,
-                          final ColumnFilterDialogController columnFilterDialog,
+                          final ColumnFilterTabsController columnFilterTabs,
                           final ColumnValuesFilterController columnValuesFilter) {
         this.eventBus = eventBus;
         this.tableController = tableController;
         this.renameColumnControllerProvider = renameColumnControllerProvider;
         this.expressionProvider = expressionProvider;
         this.columnFormatProvider = columnFormatProvider;
-        this.columnFilterDialog = columnFilterDialog;
+        this.columnFilterTabs = columnFilterTabs;
         this.columnValuesFilter = columnValuesFilter;
     }
 
@@ -348,7 +348,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     }
 
     private void filterColumn(final Column column) {
-        columnFilterDialog.show(column, (oldField, newField) -> {
+        columnFilterTabs.show(column, (oldField, newField) -> {
             // The dialog isn't modal, so the column may have been changed or removed while it was
             // open: the filters go on the column as it is now
             final Column current = getColumns().stream()

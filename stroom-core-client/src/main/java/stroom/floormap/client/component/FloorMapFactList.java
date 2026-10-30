@@ -56,15 +56,15 @@ public class FloorMapFactList extends Component {
     @UiField
     ToolbarButton helpButton;
     @UiField
-    DataGrid<FactObject> dataGrid;
+    DataGrid<FactListRow> dataGrid;
 
-    private final ListDataProvider<FactObject> dataProvider = new ListDataProvider<>();
-    private final MultiSelectionModelImpl<FactObject> selectionModel;
+    private final ListDataProvider<FactListRow> dataProvider = new ListDataProvider<>();
+    private final MultiSelectionModelImpl<FactListRow> selectionModel;
     // Minted for each panel: two floor maps open at once mustn't share an id, or each canvas's
     // aria-describedby would name whichever came first in the page
     private final String gridElementId = FloorMapAria.uniqueId("floormap-fact-list-grid");
 
-    private Consumer<List<FactObject>> onSelectionChange = selected -> {
+    private Consumer<List<FactListRow>> onSelectionChange = selected -> {
     };
     private Runnable onAdd = () -> {
     };
@@ -104,7 +104,7 @@ public class FloorMapFactList extends Component {
     /// [#setSelectedKeys(Collection)] as needed.
     ///
     /// @param facts The facts.
-    public void setFacts(final List<FactObject> facts) {
+    public void setFacts(final List<FactListRow> facts) {
         dataProvider.setList(facts);
         dataGrid.setRowData(0, facts);
     }
@@ -115,10 +115,10 @@ public class FloorMapFactList extends Component {
     ///
     /// @param keys The keys, or null for none.
     public void setSelectedKeys(final Collection<String> keys) {
-        final List<FactObject> list = dataProvider.getList();
-        final List<FactObject> toSelect = new ArrayList<>();
+        final List<FactListRow> list = dataProvider.getList();
+        final List<FactListRow> toSelect = new ArrayList<>();
         if (list != null && keys != null && !keys.isEmpty()) {
-            for (final FactObject fact : list) {
+            for (final FactListRow fact : list) {
                 if (keys.contains(fact.getKey())) {
                     toSelect.add(fact);
                 }
@@ -128,12 +128,12 @@ public class FloorMapFactList extends Component {
     }
 
     /// @return The first fact selected, or null if none is.
-    public FactObject getSelectedFact() {
+    public FactListRow getSelectedFact() {
         return selectionModel.getSelected();
     }
 
     /// @param onSelectionChange Given every fact selected, each time the user changes the selection.
-    public void setOnSelectionChange(final Consumer<List<FactObject>> onSelectionChange) {
+    public void setOnSelectionChange(final Consumer<List<FactListRow>> onSelectionChange) {
         this.onSelectionChange = onSelectionChange;
     }
 
@@ -158,15 +158,15 @@ public class FloorMapFactList extends Component {
     }
 
     private void withSelectedKey(final Consumer<String> action) {
-        final FactObject selected = selectionModel.getSelected();
+        final FactListRow selected = selectionModel.getSelected();
         if (selected != null) {
             action.accept(selected.getKey());
         }
     }
 
     private void onSelection() {
-        final List<FactObject> selected = selectionModel.getSelectedItems();
-        final FactObject primary = selectionModel.getSelected();
+        final List<FactListRow> selected = selectionModel.getSelectedItems();
+        final FactListRow primary = selectionModel.getSelected();
         // Delete From This Time acts on the first selected, which mustn't already be deleted (Show
         // All lists deleted facts so they can be found and restored, not deleted again)
         endButton.setEnabled(primary != null && !primary.isDeleted());
@@ -178,8 +178,8 @@ public class FloorMapFactList extends Component {
     }
 
     // The first selected row is scrolled into view once it is drawn
-    private void scrollIntoView(final FactObject fact) {
-        final List<FactObject> list = dataProvider.getList();
+    private void scrollIntoView(final FactListRow fact) {
+        final List<FactListRow> list = dataProvider.getList();
         final int index = list == null
                 ? -1
                 : list.indexOf(fact);
@@ -202,19 +202,19 @@ public class FloorMapFactList extends Component {
     private void addColumns() {
         dataGrid.addColumn(new TextColumn<>() {
             @Override
-            public String getValue(final FactObject fact) {
+            public String getValue(final FactListRow fact) {
                 return fact.getKey();
             }
         }, "Key");
         dataGrid.addColumn(new TextColumn<>() {
             @Override
-            public String getValue(final FactObject fact) {
+            public String getValue(final FactListRow fact) {
                 return fact.getType();
             }
         }, "Type");
         dataGrid.addColumn(new TextColumn<>() {
             @Override
-            public String getValue(final FactObject fact) {
+            public String getValue(final FactListRow fact) {
                 return fact.isDeleted()
                         ? fact.getName() + " (deleted)"
                         : fact.getName();

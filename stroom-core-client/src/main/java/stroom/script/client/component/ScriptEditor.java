@@ -21,8 +21,8 @@ import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.component.CodeTabController;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -51,14 +51,14 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
     /// @param view                 Its component.
     /// @param settingsProvider     Makes the Settings tab.
     /// @param codeTabProvider      Makes the code tab.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param permissionsProvider  Makes the Permissions tab.
     @Inject
     public ScriptEditor(final EventBus eventBus,
                         final LinkTabPanel view,
                         final Provider<ScriptSettingsController> settingsProvider,
                         final Provider<CodeTabController> codeTabProvider,
-                        final Provider<MarkdownEditController> markdownEditProvider,
+                        final Provider<DocumentationTabController> documentationTabProvider,
                         final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
         addTab(SCRIPT,
@@ -75,7 +75,7 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
                 ScriptSettingsController::read,
                 ScriptSettingsController::write);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 ScriptDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

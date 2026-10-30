@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -74,7 +74,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
     /// @param wordsTabProvider           Makes the words tab.
     /// @param importsTabProvider         Makes the imports tab.
     /// @param effectiveWordsListProvider Makes the effective words list.
-    /// @param markdownEditProvider       Makes the Documentation tab's editor.
+    /// @param documentationTabProvider       Makes the Documentation tab's editor.
     /// @param permissionsProvider        Makes the Permissions tab.
     /// @param restFactory                Makes REST requests.
     /// @param locationManager            The browser's location.
@@ -84,7 +84,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                             final Provider<WordsTabController> wordsTabProvider,
                             final Provider<ImportsTabController> importsTabProvider,
                             final Provider<EffectiveWordsListController> effectiveWordsListProvider,
-                            final Provider<MarkdownEditController> markdownEditProvider,
+                            final Provider<DocumentationTabController> documentationTabProvider,
                             final Provider<DocumentUserPermissionsTabController> permissionsProvider,
                             final RestFactory restFactory,
                             final LocationManager locationManager) {
@@ -116,7 +116,7 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
         addTab(DOCUMENTATION,
                 () -> {
                     // It tells the editor of changes itself (Contexts.DIRTY)
-                    final MarkdownEditController documentation = markdownEditProvider.get();
+                    final DocumentationTabController documentation = documentationTabProvider.get();
                     documentation.followReadOnly();
                     return documentation;
                 },

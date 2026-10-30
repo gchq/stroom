@@ -23,7 +23,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Html;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
+import stroom.widget.util.client.HtmlTableBuilder;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
@@ -76,7 +76,7 @@ public class InfoDocument extends Component {
 
         if (NullSafe.hasItems(auditEntries)) {
             hb.div(d -> appendKey("Audit Info", d), Attribute.className("info-line"));
-            final TableBuilder tableBuilder = new TableBuilder();
+            final HtmlTableBuilder tableBuilder = new HtmlTableBuilder();
             tableBuilder.row("Time", "User", "Action");
             for (final AuditEntry entry : auditEntries) {
                 tableBuilder.row(

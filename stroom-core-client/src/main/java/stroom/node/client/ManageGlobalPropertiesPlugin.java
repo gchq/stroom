@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalPropertyTabController> {
+public class ManageGlobalPropertiesPlugin extends ToolsContentPlugin<GlobalPropertyTabController> {
 
     @Inject
     ManageGlobalPropertiesPlugin(final EventBus eventBus,

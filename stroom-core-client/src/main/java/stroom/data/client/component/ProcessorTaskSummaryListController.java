@@ -34,9 +34,9 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -98,8 +98,8 @@ public class ProcessorTaskSummaryListController extends Controller {
 
     // A row's info: what it counts
     private static SafeHtml info(final ProcessorTaskSummary row) {
-        final TableBuilder tb = new TableBuilder();
-        tb.row(TableCell.header("Key Data", 2));
+        final HtmlTableBuilder tb = new HtmlTableBuilder();
+        tb.row(HtmlTableCell.header("Key Data", 2));
         final DocRef pipeline = row.getPipeline();
         if (pipeline != null) {
             tb.row("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));

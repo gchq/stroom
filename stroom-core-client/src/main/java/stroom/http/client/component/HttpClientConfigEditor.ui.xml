@@ -7,7 +7,7 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form-padding form http-client-config-editor">
         <form:FormGroup identity="httpClientTimeout"
                         label="Timeout"
                         helpText="How long to wait for a response once a request has been sent. 0 means wait indefinitely. Default is 3 minutes."
@@ -49,14 +49,14 @@
                         helpText="The maximum number of connections in the pool across all hosts. Default is 1024."
                         screenReaderText="Total across all hosts. Default is 1024.">
             <v:ValueSpinner ui:field="maxConnections" minValue="1" maxValue="1000000"
-                            addStyleNames="http-config__number"/>
+                            addStyleNames="http-client-config-editor__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
                         label="Max Connections Per Route"
                         helpText="The maximum number of pooled connections to any one host. Default is 1024."
                         screenReaderText="Per host. Default is 1024.">
             <v:ValueSpinner ui:field="maxConnectionsPerRoute" minValue="1" maxValue="1000000"
-                            addStyleNames="http-config__number"/>
+                            addStyleNames="http-client-config-editor__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientKeepAlive"
                         label="Keep Alive"
@@ -68,13 +68,13 @@
                         label="Retries"
                         helpText="How many times a failed request is retried. 0 means no retries. Default is 0."
                         screenReaderText="0 to 1000. Default is 0.">
-            <v:ValueSpinner ui:field="retries" maxValue="1000" addStyleNames="http-config__number"/>
+            <v:ValueSpinner ui:field="retries" maxValue="1000" addStyleNames="http-client-config-editor__number"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientUserAgent"
                         label="User Agent"
                         helpText="The value sent as the User-Agent header of each request. Leave blank to use the HTTP client's default."
                         screenReaderText="Sent as the User-Agent header. Blank uses the HTTP client's default.">
-            <form:TextBox ui:field="userAgent" addStyleNames="http-config__text"/>
+            <form:TextBox ui:field="userAgent" addStyleNames="http-client-config-editor__text"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
                         label="Validate After Inactivity Period"
@@ -83,6 +83,6 @@
             <d:DurationPicker ui:field="validateAfterInactivityPeriod" zeroAllowed="true"/>
         </form:FormGroup>
         <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config"
-                  addStyleNames="allow-focus http-config__button"/>
+                  addStyleNames="allow-focus http-client-config-editor__button"/>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -22,7 +22,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.spinner.client.SpinnerLarge;
+import stroom.widget.spinner.client.LargeBusySpinner;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -82,7 +82,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     @UiField
     SimplePanel resizeSW;
     @UiField
-    SpinnerLarge spinner;
+    LargeBusySpinner spinner;
     @UiField
     FlowPanel titleBar;
     @UiField

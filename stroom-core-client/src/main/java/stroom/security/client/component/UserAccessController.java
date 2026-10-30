@@ -19,7 +19,7 @@ package stroom.security.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.shared.UserAccessResource;
@@ -27,7 +27,7 @@ import stroom.security.shared.UserAccessRow;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -41,7 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// session-authenticated request never presents a token to check - so a screen offering only one
 /// would let an administrator believe they had cut someone off when they had not.
 public class UserAccessController extends ContentTabController
-        implements Refreshable {
+        implements HasRefresh {
 
     private static final UserAccessResource USER_ACCESS_RESOURCE = GWT.create(UserAccessResource.class);
     public static final String TAB_TYPE = "UserAccess";
@@ -49,8 +49,8 @@ public class UserAccessController extends ContentTabController
     private final UserAccessListController userAccessList;
     private final UserSessionsListController userSessionsList;
     private final RestFactory restFactory;
-    private final ButtonView revokeButton;
-    private final ButtonView openUserButton;
+    private final IsButton revokeButton;
+    private final IsButton openUserButton;
 
     private boolean isExternalIdp = false;
 

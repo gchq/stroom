@@ -17,8 +17,8 @@
 package stroom.sqlstore.client.component;
 
 import stroom.entity.client.component.DocumentEditor;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.widget.tab.client.TabData;
@@ -43,7 +43,7 @@ public class SqlTemporalStoreEditor extends DocumentEditor<SqlTemporalStoreDoc> 
     /// @param view                         Its component.
     /// @param sqlTemporalStoreDataProvider Makes the SQL temporal store data.
     /// @param sqlStoreSettingsProvider     Makes the SQL store settings.
-    /// @param markdownEditProvider         Makes the Documentation tab's editor.
+    /// @param documentationTabProvider         Makes the Documentation tab's editor.
     /// @param permissionsProvider          Makes the Permissions tab.
     @Inject
     public SqlTemporalStoreEditor(
@@ -51,7 +51,7 @@ public class SqlTemporalStoreEditor extends DocumentEditor<SqlTemporalStoreDoc> 
             final LinkTabPanel view,
             final Provider<SqlTemporalStoreDataController> sqlTemporalStoreDataProvider,
             final Provider<SqlTemporalStoreSettingsController> sqlStoreSettingsProvider,
-            final Provider<MarkdownEditController> markdownEditProvider,
+            final Provider<DocumentationTabController> documentationTabProvider,
             final Provider<DocumentUserPermissionsTabController> permissionsProvider) {
         super(eventBus, view);
 
@@ -62,7 +62,7 @@ public class SqlTemporalStoreEditor extends DocumentEditor<SqlTemporalStoreDoc> 
                 sqlTemporalStoreDataProvider::get,
                 SqlTemporalStoreDataController::read);
         addDocumentationTab(DOCUMENTATION,
-                markdownEditProvider,
+                documentationTabProvider,
                 SqlTemporalStoreDoc::getDescription,
                 (doc, description) -> doc.copy().description(description).build());
         addPermissionsTab(PERMISSIONS, permissionsProvider);

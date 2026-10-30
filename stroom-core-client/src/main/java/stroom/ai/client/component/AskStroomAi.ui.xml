@@ -35,7 +35,7 @@
                     <g:SimplePanel styleName="dock-max">
                         <dd:DropDownBox ui:field="modelRef" addStyleNames="ask-stroom-ai__model drop-down--icon-raised"/>
                     </g:SimplePanel>
-                    <spinner:SpinnerSmall ui:field="spinner"/>
+                    <spinner:SmallBusySpinner ui:field="spinner"/>
                     <p:Toolbar name="Message" addStyleNames="toolbar--control">
                         <p:ToolbarButton ui:field="run" svg="PLAY" title="Send" enabled="false"
                                          addStyleNames="toolbar-button--play"/>

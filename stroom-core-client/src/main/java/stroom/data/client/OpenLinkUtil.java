@@ -16,6 +16,7 @@
 
 package stroom.data.client;
 
+import stroom.data.client.event.ShowDataEvent;
 import stroom.feed.client.OpenFeedEvent;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.shared.SvgImage;

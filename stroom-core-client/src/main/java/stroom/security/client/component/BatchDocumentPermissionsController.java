@@ -17,7 +17,7 @@
 package stroom.security.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.FilterExpressionController;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.explorer.client.component.DocumentListController;
@@ -45,9 +45,9 @@ public class BatchDocumentPermissionsController extends ContentTabController {
 
     public static final String TAB_TYPE = "DocumentPermissions";
 
-    private final Provider<ExpressionDialogController> filterDialogProvider;
+    private final Provider<FilterExpressionController> filterDialogProvider;
     private final DocumentListController documentList;
-    private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
+    private final Provider<BatchDocumentPermissionsEditorController> batchDocumentPermissionsEditProvider;
     private ExpressionOperator filterExpression;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResult> docs;
@@ -63,9 +63,9 @@ public class BatchDocumentPermissionsController extends ContentTabController {
     @Inject
     public BatchDocumentPermissionsController(final EventBus eventBus,
                                               final QuickFilterPage view,
-                                              final Provider<ExpressionDialogController> filterDialogProvider,
+                                              final Provider<FilterExpressionController> filterDialogProvider,
                                               final DocumentListController documentList,
-                                              final Provider<BatchDocumentPermissionsEditController>
+                                              final Provider<BatchDocumentPermissionsEditorController>
                                                      batchDocumentPermissionsEditProvider,
                                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);

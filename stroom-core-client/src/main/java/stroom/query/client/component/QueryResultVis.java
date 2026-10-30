@@ -18,7 +18,7 @@ package stroom.query.client.component;
 
 import stroom.dashboard.client.component.VisFrame;
 import stroom.dashboard.client.component.VisFrameLayout;
-import stroom.dashboard.client.vis.VisToolbarButton;
+import stroom.dashboard.client.vis.VisButtonSpec;
 import stroom.dashboard.client.vis.VisToolbarRow;
 import stroom.data.pager.client.RefreshButton;
 import stroom.widget.component.client.Component;
@@ -87,7 +87,7 @@ public class QueryResultVis extends Component implements RequiresResize {
     /// Shows the buttons the visualisation asks for in its toolbar, replacing any it showed.
     ///
     /// @param buttons The buttons, none for no visualisation buttons.
-    public void setVisButtons(final List<VisToolbarButton> buttons) {
+    public void setVisButtons(final List<VisButtonSpec> buttons) {
         toolbarRow.setVisButtons(buttons);
     }
 

@@ -53,8 +53,8 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.tooltip.client.component.InfoTooltipController;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.TableBuilder;
-import stroom.widget.util.client.TableCell;
+import stroom.widget.util.client.HtmlTableBuilder;
+import stroom.widget.util.client.HtmlTableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.dom.client.Element;
@@ -410,8 +410,8 @@ public class ImportConfigConfirmController extends Controller {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
 
-                    final TableBuilder tb = new TableBuilder();
-                    tb.row(TableCell.header("Messages", 2));
+                    final HtmlTableBuilder tb = new HtmlTableBuilder();
+                    tb.row(HtmlTableCell.header("Messages", 2));
                     for (final Message msg : action.getMessageList()) {
                         tb.row(msg.getSeverity().getDisplayValue(), msg.getMessage());
                     }
@@ -423,8 +423,8 @@ public class ImportConfigConfirmController extends Controller {
                         htmlBuilder.br();
                     }
 
-                    final TableBuilder tb = new TableBuilder();
-                    tb.row(TableCell.header("Fields Updated"));
+                    final HtmlTableBuilder tb = new HtmlTableBuilder();
+                    tb.row(HtmlTableCell.header("Fields Updated"));
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("info-table"));
                 }

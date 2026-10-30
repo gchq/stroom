@@ -36,9 +36,9 @@ public final class TimeZoneBox extends Composite {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
-    FormGroup userPreferencesTimeZoneId;
+    FormGroup timeZoneIdGroup;
     @UiField
-    FormGroup userPreferencesTimeZoneOffset;
+    FormGroup timeZoneOffsetGroup;
     @UiField
     SelectionBox<Use> timeZoneUse;
     @UiField
@@ -144,8 +144,8 @@ public final class TimeZoneBox extends Composite {
     }
 
     public void changeVisible() {
-        userPreferencesTimeZoneId.setVisible(Use.ID.equals(this.timeZoneUse.getValue()));
-        userPreferencesTimeZoneOffset.setVisible(Use.OFFSET.equals(this.timeZoneUse.getValue()));
+        timeZoneIdGroup.setVisible(Use.ID.equals(this.timeZoneUse.getValue()));
+        timeZoneOffsetGroup.setVisible(Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
     /// Makes the time zone read only: it can be read and stays in the tab order, but none of its

@@ -19,8 +19,8 @@ package stroom.receive.rules.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.entity.client.component.DocumentationTabController;
 import stroom.entity.client.component.LinkTabPanel;
-import stroom.entity.client.component.MarkdownEditController;
 import stroom.entity.client.component.TabbedController;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
@@ -68,7 +68,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
     /// @param view                 Its component.
     /// @param ruleSetSettings      The rule set settings.
     /// @param fieldList            The field list.
-    /// @param markdownEditProvider Makes the Documentation tab's editor.
+    /// @param documentationTabProvider Makes the Documentation tab's editor.
     /// @param restFactory          Makes REST requests.
     /// @param uiConfigCache        The UI's configuration.
     @Inject
@@ -76,7 +76,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
                          final LinkTabPanel view,
                          final RuleSetSettingsController ruleSetSettings,
                          final FieldListController fieldList,
-                         final Provider<MarkdownEditController> markdownEditProvider,
+                         final Provider<DocumentationTabController> documentationTabProvider,
                          final RestFactory restFactory,
                          final UiConfigCache uiConfigCache) {
         super(eventBus, view);
@@ -104,7 +104,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
         addOwnedTab(FIELDS_TAB, fieldList, FieldListController::read, FieldListController::write);
         addTab(DOCUMENTATION_TAB,
                 () -> {
-                    final MarkdownEditController documentation = markdownEditProvider.get();
+                    final DocumentationTabController documentation = documentationTabProvider.get();
                     documentation.followReadOnly();
                     return documentation;
                 },

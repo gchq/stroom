@@ -19,7 +19,7 @@ package stroom.dictionary.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
@@ -37,11 +37,11 @@ import java.util.List;
 /// removed unless the dictionary is read only, and the effective words of the one selected.
 public class ImportsTabController extends Controller {
 
-    private final DocRefListController importList;
+    private final ImportListController importList;
     private final EffectiveWordsListController effectiveWords;
-    private final Provider<ExplorerPopupController> docSelectionPopupProvider;
+    private final Provider<DocumentChooserController> docSelectionPopupProvider;
     // Made when first used, and kept for the next time
-    private ExplorerPopupController docSelectionPopup;
+    private DocumentChooserController docSelectionPopup;
     private List<DocRef> imports = new ArrayList<>();
     private DocRef dictionary;
     private boolean readOnly = true;
@@ -58,9 +58,9 @@ public class ImportsTabController extends Controller {
     @Inject
     public ImportsTabController(final EventBus eventBus,
                                 final ImportsTab view,
-                                final Provider<DocRefListController> docRefListProvider,
+                                final Provider<ImportListController> docRefListProvider,
                                 final EffectiveWordsListController effectiveWords,
-                                final Provider<ExplorerPopupController> docSelectionPopupProvider) {
+                                final Provider<DocumentChooserController> docSelectionPopupProvider) {
         super(eventBus);
         this.docSelectionPopupProvider = docSelectionPopupProvider;
         initWidget(view);
@@ -121,7 +121,7 @@ public class ImportsTabController extends Controller {
             docSelectionPopup = make(docSelectionPopupProvider);
             docSelectionPopup.setIncludeNullSelection(false);
         }
-        final ExplorerPopupController chooser = docSelectionPopup;
+        final DocumentChooserController chooser = docSelectionPopup;
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
         chooser.setRequiredPermissions(DocumentPermission.USE);

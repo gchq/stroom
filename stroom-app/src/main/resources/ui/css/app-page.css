@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* The app's page (app-page, on its body): the panel the app is shown in (Core, app-page__panel),
+/* The app's page (app-page, on its body): the panel the app is shown in (AppPage, app-page__panel),
    and the loading banner and logo that the page shows before the app starts. */
 
 .app-page {

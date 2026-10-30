@@ -20,7 +20,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
 import stroom.util.shared.TreeRow;
-import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.GridDisplay;
 
 import com.google.gwt.user.cellview.client.Column;
 
@@ -29,10 +29,10 @@ import java.util.List;
 public class TreeRowHandler<R> {
 
     private final TreeAction<R> action;
-    private final DataGridView<R> dataGrid;
+    private final GridDisplay<R> dataGrid;
     private final Column<R, Expander> expanderColumn;
 
-    public TreeRowHandler(final TreeAction<R> action, final DataGridView<R> dataGrid,
+    public TreeRowHandler(final TreeAction<R> action, final GridDisplay<R> dataGrid,
                           final Column<R, Expander> expanderColumn) {
         this.action = action;
         this.dataGrid = dataGrid;

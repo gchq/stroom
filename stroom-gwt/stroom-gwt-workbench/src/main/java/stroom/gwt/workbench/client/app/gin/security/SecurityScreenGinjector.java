@@ -28,9 +28,9 @@ import stroom.security.client.component.UserAccessController;
 import stroom.security.client.component.UserInfoTabController;
 import stroom.security.client.component.UserTabController;
 import stroom.security.client.component.UsersAndGroupsTabController;
+import stroom.security.identity.client.component.AccountEditorController;
 import stroom.security.identity.client.component.AccountsController;
 import stroom.security.identity.client.component.ChangePasswordController;
-import stroom.security.identity.client.component.EditAccountController;
 
 import com.google.gwt.inject.client.GinModules;
 
@@ -56,7 +56,7 @@ public interface SecurityScreenGinjector extends ScreenGinjector {
     AccountsController getAccountsController();
 
     /// @return A new 'Edit Account'/'Create Account' dialog.
-    EditAccountController getEditAccountController();
+    AccountEditorController getEditAccountController();
 
     /// @return A new 'Change Password' dialog, as `CurrentPasswordController` shows it once the
     /// current password is confirmed.

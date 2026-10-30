@@ -19,7 +19,7 @@ package stroom.dashboard.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.explorer.client.component.ExplorerPopupController;
+import stroom.explorer.client.component.DocumentChooserController;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Controller;
@@ -41,7 +41,7 @@ import java.util.Objects;
 /// ```
 public class IncludeExcludeFilterDictionaryController extends Controller {
 
-    private final Provider<ExplorerPopupController> dictionarySelection;
+    private final Provider<DocumentChooserController> dictionarySelection;
     private IncludeExcludeFilterDictionary view;
     private List<DocRef> dictionaries = new ArrayList<>();
 
@@ -51,7 +51,7 @@ public class IncludeExcludeFilterDictionaryController extends Controller {
     /// @param dictionarySelection Makes the popup that picks a dictionary to add.
     @Inject
     public IncludeExcludeFilterDictionaryController(final EventBus eventBus,
-                                                    final Provider<ExplorerPopupController> dictionarySelection) {
+                                                    final Provider<DocumentChooserController> dictionarySelection) {
         super(eventBus);
         this.dictionarySelection = dictionarySelection;
     }
@@ -67,7 +67,7 @@ public class IncludeExcludeFilterDictionaryController extends Controller {
     }
 
     private void onAdd() {
-        final ExplorerPopupController chooser = dictionarySelection.get();
+        final DocumentChooserController chooser = dictionarySelection.get();
         chooser.setIncludeNullSelection(false);
         chooser.setCaption("Choose Dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);

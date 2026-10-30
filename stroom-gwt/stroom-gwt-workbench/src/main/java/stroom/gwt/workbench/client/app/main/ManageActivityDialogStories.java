@@ -34,7 +34,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories of `App/Main/ManageActivityDialog`, showing Stroom's real [ManageActivityController] (the
-/// 'Choose Activity' dialog, with its `ActivityEditController`) with fake REST replies.
+/// 'Choose Activity' dialog, with its `ActivityEditorController`) with fake REST replies.
 ///
 /// The fixtures answer Stroom's `ActivityResource` (`/activity/v1`, see [ActivityFixtures]): the
 /// list (`GET ?filter=`, a sequence where the list changes), creating (`POST`), updating

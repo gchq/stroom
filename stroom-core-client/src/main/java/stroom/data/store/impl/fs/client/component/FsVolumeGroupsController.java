@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.IsButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,13 +42,13 @@ public class FsVolumeGroupsController extends ContentTabController {
             GWT.create(FsVolumeGroupResource.class);
 
     private final FsVolumeGroupListController fsVolumeGroupList;
-    private final Provider<FsVolumeGroupEditController> editProvider;
+    private final Provider<FsVolumeGroupEditorController> editProvider;
     private final RestFactory restFactory;
     private final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider;
 
-    private final ButtonView newButton;
-    private final ButtonView openButton;
-    private final ButtonView deleteButton;
+    private final IsButton newButton;
+    private final IsButton openButton;
+    private final IsButton deleteButton;
 
     /// Made by GIN, with its parts.
     ///
@@ -61,7 +61,7 @@ public class FsVolumeGroupsController extends ContentTabController {
     public FsVolumeGroupsController(
             final EventBus eventBus,
             final FsVolumeGroupListController fsVolumeGroupList,
-            final Provider<FsVolumeGroupEditController> editProvider,
+            final Provider<FsVolumeGroupEditorController> editProvider,
             final RestFactory restFactory,
             final Provider<NewFsVolumeGroupController> newFsVolumeGroupControllerProvider) {
 

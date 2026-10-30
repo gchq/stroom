@@ -39,7 +39,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryModel;
 import stroom.query.client.ResultStoreModel;
-import stroom.query.client.component.QueryDataPane.QueryDataAction;
+import stroom.query.client.component.QueryDataTab.QueryDataAction;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.ErrorMessage;
@@ -55,7 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/// The base of a store's or index's Data tab ([QueryDataPane]): runs a StroomQL query of the
+/// The base of a store's or index's Data tab ([QueryDataTab]): runs a StroomQL query of the
 /// document's rows, starting with a default query that a subclass gives, shows any error in it, and
 /// makes a dashboard that runs it.
 ///
@@ -65,7 +65,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-    private final QueryDataPane view;
+    private final QueryDataTab view;
     private final QueryModel queryModel;
     private final QueryResultTableController tableController;
     private final RestFactory restFactory;
@@ -80,7 +80,7 @@ public abstract class AbstractQueryDataController<D> extends Controller {
     /// @param dateTimeSettingsFactory Gives the query the user's time settings.
     /// @param resultStoreModel        Keeps the query's results.
     protected AbstractQueryDataController(final EventBus eventBus,
-                                          final QueryDataPane view,
+                                          final QueryDataTab view,
                                           final QueryResultTableController tableController,
                                           final RestFactory restFactory,
                                           final DateTimeSettingsFactory dateTimeSettingsFactory,

@@ -132,9 +132,9 @@ public final class DictionaryEditorStories {
     private static final RestFixtures LATE_FAILURE_FIXTURES = fixtures(
             RestReply.error(500, "Effective words failed").delayed(LATE_REPLY_MILLIS));
 
-    /// The name of the spy recording what the component copy's owner is asked to save.
+    /// The name of the spy recording what the unhosted editor's owner is asked to save.
     static final String SAVE = "save";
-    /// The name of the spy recording the component copy becoming dirty or clean.
+    /// The name of the spy recording the unhosted editor becoming dirty or clean.
     static final String DIRTY = "dirty";
 
     private DictionaryEditorStories() {
@@ -170,7 +170,7 @@ public final class DictionaryEditorStories {
                 DictionaryEditorStories::renderComponent));
     }
 
-    // The stories both editors have, so that the component copy is checked as the original is
+    // The stories both have, so that the unhosted editor is checked as the hosted one is
     private static ComponentStories addSharedStories(final ComponentStories stories,
                                                      final BiFunction<StoryContext, Boolean, Widget> render) {
         return stories
@@ -245,7 +245,7 @@ public final class DictionaryEditorStories {
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
                 })
-                // The Imports tab is a grid (DocRefList, a "Document Name" link column): the name
+                // The Imports tab is a grid (ImportList, a "Document Name" link column): the name
                 // opens the imported document, and Remove takes the selection
                 // after a confirmation
                 .story("ImportsGrid", context -> render.apply(context, false))
@@ -280,7 +280,7 @@ public final class DictionaryEditorStories {
                 });
     }
 
-    // The stories only the component copy has: what its owner does, and closing it
+    // The stories only the unhosted editor has: what its owner does, and closing it
     private static void addHostStories(final ComponentStories stories) {
         stories
                 // The document is read again locked and unlocked, as DocumentPlugin does when its
@@ -389,7 +389,7 @@ public final class DictionaryEditorStories {
                 });
     }
 
-    // The component copy the story shows, for plays that act as its owner does
+    // The unhosted editor the story shows, for plays that act as its owner does
     private static DictionaryEditor editor() {
         return ScreenHarness.shownComponent();
     }

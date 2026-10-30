@@ -33,7 +33,7 @@ import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 import stroom.widget.menu.client.IconMenuItem;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
@@ -56,7 +56,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
     private final Provider<TermEditorController> termEditorControllerProvider;
     private ExpressionTree view;
     private DefaultTreeForTreeLayout<Item> tree;
-    private MySingleSelectionModel<Item> selectionModel;
+    private SingleItemSelectionModel<Item> selectionModel;
     private Runnable onChange = () -> {
     };
 
@@ -71,7 +71,7 @@ public class ExpressionTreeController extends Controller implements HasContextMe
                                     final Provider<TermEditorController> termEditorControllerProvider) {
         super(eventBus);
         this.termEditorControllerProvider = termEditorControllerProvider;
-        selectionModel = new MySingleSelectionModel<>();
+        selectionModel = new SingleItemSelectionModel<>();
         own(selectionModel.addSelectionChangeHandler(event -> {
             selectionListeners.fire(selectionModel.getSelectedObject());
             view.refresh();
@@ -348,13 +348,13 @@ public class ExpressionTreeController extends Controller implements HasContextMe
     }
 
     /// @return The selection, or null if items can't be selected (the tree is read only).
-    public MySingleSelectionModel<Item> getSelectionModel() {
+    public SingleItemSelectionModel<Item> getSelectionModel() {
         return selectionModel;
     }
 
     /// @param selectionModel The selection, or null for none, so that items can't be selected (for
     ///                       an expression that can't be changed).
-    public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
+    public void setSelectionModel(final SingleItemSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         view.setSelectionModel(selectionModel);
     }

@@ -20,7 +20,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.TabPlugin;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.widget.component.client.Layer;
 import stroom.widget.tab.client.TabData;
@@ -95,7 +95,7 @@ public abstract class ContentPlugin<P extends Layer & TabData> extends TabPlugin
         contentManager.open(closeHandler, controller, controller);
 
         // If the controller is refreshable then refresh it.
-        if (controller instanceof final Refreshable refreshable) {
+        if (controller instanceof final HasRefresh refreshable) {
             refreshable.refresh();
         }
         consumer.accept(controller);

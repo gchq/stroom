@@ -44,7 +44,7 @@ import stroom.util.shared.TreeAction;
 import stroom.util.shared.UserRef;
 import stroom.widget.datagrid.client.ColSpec;
 import stroom.widget.datagrid.client.ColumnBuilder;
-import stroom.widget.datagrid.client.DataGridView;
+import stroom.widget.datagrid.client.GridDisplay;
 import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.datagrid.client.HeadingBuilder;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -191,7 +191,7 @@ public class DataGridUtil {
         };
     }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
+    public static <T_VIEW extends GridDisplay<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final TreeAction<T_ROW> treeAction,
@@ -203,7 +203,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
+    public static <T_VIEW extends GridDisplay<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final int width) {
@@ -213,7 +213,7 @@ public class DataGridUtil {
                 width);
     }
 
-    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addStatusIconColumn(
+    public static <T_VIEW extends GridDisplay<T_ROW>, T_ROW> void addStatusIconColumn(
             final T_VIEW view,
             final Function<T_ROW, CellIcon> statusIconExtractor) {
 
@@ -432,14 +432,14 @@ public class DataGridUtil {
     }
 
     public static <T_ROW> void addDocRefColumn(final RefCellsController refCells,
-                                               final DataGridView<T_ROW> dataGrid,
+                                               final GridDisplay<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
         addDocRefColumn(refCells, dataGrid, name, docRefExtractionFunction, true);
     }
 
     public static <T_ROW> void addDocRefColumn(final RefCellsController refCells,
-                                               final DataGridView<T_ROW> dataGrid,
+                                               final GridDisplay<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction,
                                                final boolean hasOpenAndCopy) {
@@ -460,7 +460,7 @@ public class DataGridUtil {
     /// @param hasOpenAndCopy           Whether a cell shows open and copy buttons.
     /// @param <T_ROW>                  The type of a row.
     public static <T_ROW> void addDocRefColumn(final DocRefCell.Builder<T_ROW> cell,
-                                               final DataGridView<T_ROW> dataGrid,
+                                               final GridDisplay<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction,
                                                final boolean hasOpenAndCopy) {
@@ -482,7 +482,7 @@ public class DataGridUtil {
     }
 
     public static <T_ROW> void addFeedColumn(final RefCellsController refCells,
-                                             final DataGridView<T_ROW> dataGrid,
+                                             final GridDisplay<T_ROW> dataGrid,
                                              final String name,
                                              final Function<T_ROW, String> nameExtractionFunction) {
         addFeedColumn(refCells.configure(new FeedRefCell.Builder<T_ROW>()), dataGrid, name, nameExtractionFunction);
@@ -497,7 +497,7 @@ public class DataGridUtil {
     /// @param nameExtractionFunction Gives a row's feed's name.
     /// @param <T_ROW>                The type of a row.
     public static <T_ROW> void addFeedColumn(final FeedRefCell.Builder<T_ROW> cell,
-                                             final DataGridView<T_ROW> dataGrid,
+                                             final GridDisplay<T_ROW> dataGrid,
                                              final String name,
                                              final Function<T_ROW, String> nameExtractionFunction) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
@@ -607,7 +607,7 @@ public class DataGridUtil {
                 NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
     }
 
-    public static <T> Builder<T> comparatorFactoryBuilder(final DataGridView<T> dataGrid) {
+    public static <T> Builder<T> comparatorFactoryBuilder(final GridDisplay<T> dataGrid) {
         return DataGridComparatorFactory.builder(dataGrid);
     }
 }

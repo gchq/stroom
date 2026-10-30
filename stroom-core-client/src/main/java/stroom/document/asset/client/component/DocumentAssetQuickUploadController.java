@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 ///
 /// This exists so a dialog that merely _references_ an asset (for example the Floor Map layer
 /// appearance dialog, which points a layer at an image) can offer "upload a new one" inline. It
-/// reuses the standard [DocumentAssetUploadFileDialogController] for the file chooser and the
+/// reuses the standard [DocumentAssetUploadFileController] for the file chooser and the
 /// standard `updateNewUploadedFile` endpoint for the upload, so a file uploaded here is
 /// indistinguishable from one added on the Assets tab.
 ///
@@ -57,7 +57,7 @@ public class DocumentAssetQuickUploadController extends Controller implements Do
     private static final String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
 
     private final RestFactory restFactory;
-    private final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider;
+    private final Provider<DocumentAssetUploadFileController> uploadDialogProvider;
 
     // Root-level asset names already in use, so an upload never silently replaces one
     private final Set<String> existingRootNames = new HashSet<>();
@@ -74,7 +74,7 @@ public class DocumentAssetQuickUploadController extends Controller implements Do
     public DocumentAssetQuickUploadController(
             final EventBus eventBus,
             final RestFactory restFactory,
-            final Provider<DocumentAssetUploadFileDialogController> uploadDialogProvider) {
+            final Provider<DocumentAssetUploadFileController> uploadDialogProvider) {
         super(eventBus);
         this.restFactory = restFactory;
         this.uploadDialogProvider = uploadDialogProvider;

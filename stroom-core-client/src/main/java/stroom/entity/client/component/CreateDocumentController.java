@@ -19,7 +19,7 @@ package stroom.entity.client.component;
 import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.explorer.client.component.EntityTreeController;
+import stroom.explorer.client.component.DocumentPickerController;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.shared.DocumentPermission;
@@ -40,21 +40,21 @@ import com.google.web.bindery.event.shared.EventBus;
 public class CreateDocumentController extends Controller {
 
     private final CreateDocument view;
-    private final EntityTreeController folders;
+    private final DocumentPickerController folders;
 
     /// Made by GIN, with its content.
     ///
     /// @param eventBus                     The application's event bus.
     /// @param view                         The content.
-    /// @param entityTreeControllerProvider Makes the folder picker's controller.
+    /// @param documentPickerControllerProvider Makes the folder picker's controller.
     @Inject
     public CreateDocumentController(final EventBus eventBus,
                                     final CreateDocument view,
-                                    final Provider<EntityTreeController> entityTreeControllerProvider) {
+                                    final Provider<DocumentPickerController> documentPickerControllerProvider) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        folders = make(entityTreeControllerProvider).attach(view.getFolders());
+        folders = make(documentPickerControllerProvider).attach(view.getFolders());
         folders.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
         folders.setRequiredPermissions(DocumentPermission.USE, DocumentPermission.VIEW);
         // Enter in the name is OK

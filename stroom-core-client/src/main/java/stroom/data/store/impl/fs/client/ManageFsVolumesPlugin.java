@@ -21,7 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.data.store.impl.fs.client.component.FsVolumeGroupsController;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsContentPlugin;
+import stroom.node.client.ToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -36,7 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Singleton;
 
 @Singleton
-public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupsController> {
+public class ManageFsVolumesPlugin extends ToolsContentPlugin<FsVolumeGroupsController> {
 
     @Inject
     ManageFsVolumesPlugin(final EventBus eventBus,

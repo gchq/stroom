@@ -20,7 +20,7 @@
    block--modifier). The block is the editor (code-editor), holding the Ace editor (code-editor__ace)
    and the overview bar to its right
    (code-editor__overview), with its summary and markers. The highlight and error underline are Ace
-   markers that Stroom adds. The indicator popup is a block of its own (code-editor-indicator.css),
+   markers that Stroom adds. The overview tooltip is a block of its own (code-editor-overview-tooltip.css),
    as it is shown outside the editor. Ace's own classes (ace_*, and the stroom_* annotation classes the Ace wrapper gives
    the gutter) are styled here only where Stroom changes them; the editor themes are in
    editor-themes.css.
@@ -195,7 +195,7 @@
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
 }
 
-/* The overview bar and its markers (their indicator popup is code-editor-indicator.css) */
+/* The overview bar and its markers (their tooltip is code-editor-overview-tooltip.css) */
 
 .code-editor__text {
     border-bottom: 1px solid transparent; /* Required to allow mouse drag selection on ace editor text inside this panel. */
@@ -257,7 +257,7 @@
 	user-select: none;
 }
 
-/* Placed by the line it marks (--code-editor__marker-top, set by RightBar) */
+/* Placed by the line it marks (--code-editor__marker-top, set by OverviewBar) */
 .code-editor__marker {
 	position: absolute;
 	top: var(--code-editor__marker-top);

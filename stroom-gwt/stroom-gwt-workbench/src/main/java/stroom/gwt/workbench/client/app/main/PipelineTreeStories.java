@@ -102,18 +102,19 @@ public final class PipelineTreeStories {
                     play.findByText("Source");
                     play.findByText("parser");
                     // Each element's name says what its icons show, which are hover tips only
-                    final Query xslt = play.getByText("xslt", ".pipeline-element__label").closest(".pipeline-element");
+                    final Query xslt = play.getByText("xslt", ".pipeline-element-box__label")
+                            .closest(".pipeline-element-box");
                     play.expect(xslt).toHaveAttribute("aria-label", "xslt, XSLT Filter, has embedded document");
-                    final Query parser = play.getByText("parser", ".pipeline-element__label")
-                            .closest(".pipeline-element");
+                    final Query parser = play.getByText("parser", ".pipeline-element-box__label")
+                            .closest(".pipeline-element-box");
                     play.expect(parser).toHaveAttribute("aria-label",
                             "parser, Combined Parser, has embedded document inherited from parent pipeline");
-                    final Query embedded = play.within(xslt).querySelector(".pipeline-element__embedded");
+                    final Query embedded = play.within(xslt).querySelector(".pipeline-element-box__embedded");
                     play.expect(embedded).toHaveAttribute("aria-hidden", "true");
                     play.expect(embedded).toHaveAttribute("title", "Has embedded document");
-                    play.expect(play.within(xslt).querySelector(".pipeline-element__type-icon"))
+                    play.expect(play.within(xslt).querySelector(".pipeline-element-box__type-icon"))
                             .toHaveAttribute("aria-hidden", "true");
-                    play.expect(play.querySelectorAll(".pipeline-tree__items [role='img']")).toHaveLength(0);
+                    play.expect(play.querySelectorAll(".pipeline-tree-diagram__items [role='img']")).toHaveLength(0);
                     // Selecting a node reports it
                     play.click(play.findByText("xslt"));
                     play.waitFor(() -> play.expect(play.spy(ON_SELECT)).toHaveBeenCalled());

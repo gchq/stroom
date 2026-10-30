@@ -43,7 +43,7 @@ public class AnnotationTagCreateController extends Controller {
 
     private final AnnotationTagCreate view;
     private final AnnotationResourceClient annotationResourceClient;
-    private final Provider<AnnotationTagEditController> editProvider;
+    private final Provider<AnnotationTagEditorController> editProvider;
 
     /// Made by GIN, with its content.
     ///
@@ -55,7 +55,7 @@ public class AnnotationTagCreateController extends Controller {
     public AnnotationTagCreateController(final EventBus eventBus,
                                          final AnnotationTagCreate view,
                                          final AnnotationResourceClient annotationResourceClient,
-                                         final Provider<AnnotationTagEditController> editProvider) {
+                                         final Provider<AnnotationTagEditorController> editProvider) {
         super(eventBus);
         this.view = view;
         this.annotationResourceClient = annotationResourceClient;

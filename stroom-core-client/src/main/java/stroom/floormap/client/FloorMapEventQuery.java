@@ -93,7 +93,7 @@ public final class FloorMapEventQuery {
     ///
     /// The Map tab queries a trailing window rather than an instant, because an instant is
     /// unsatisfiable against a store that applies the time range literally — see
-    /// `FloorMapMapController.runQueryAtSelectedTime`. A window can return several events for
+    /// `FloorMapMapTabController.runQueryAtSelectedTime`. A window can return several events for
     /// one entity, and the canvas wants exactly one position each, so the extras are dropped here.
     /// A store that already deduplicates server-side returns one row per key anyway, and this then
     /// costs a pass over the rows and changes nothing.
@@ -201,7 +201,7 @@ public final class FloorMapEventQuery {
     /// column mappings.
     ///
     /// Static and package-visible because two callers run the same events
-    /// query: this editor tab, and [FloorMapMapController], which owns the
+    /// query: this editor tab, and [FloorMapMapTabController], which owns the
     /// timeline-driven playback query feeding the animated entity overlay.
     ///
     /// An entity is positioned outright when its [FloorMapEventRole#LOCATION] column holds

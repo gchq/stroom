@@ -16,7 +16,7 @@
 
 package stroom.security.client.component;
 
-import stroom.data.client.component.ExpressionDialogController;
+import stroom.data.client.component.FilterExpressionController;
 import stroom.explorer.client.component.DocumentPermissionsListController;
 import stroom.explorer.shared.FindResultWithPermissions;
 import stroom.query.api.ExpressionOperator;
@@ -43,10 +43,10 @@ import java.util.Set;
 /// are shown, and edits the permissions on one document or on all those listed.
 public class UserPermissionReportController extends Controller {
 
-    private final Provider<ExpressionDialogController> filterDialogProvider;
+    private final Provider<FilterExpressionController> filterDialogProvider;
     private final DocumentPermissionsListController documentPermissionsList;
-    private final Provider<DocumentUserPermissionsEditController> documentUserPermissionsEditProvider;
-    private final Provider<BatchDocumentPermissionsEditController> batchDocumentPermissionsEditProvider;
+    private final Provider<DocumentUserPermissionsEditorController> documentUserPermissionsEditProvider;
+    private final Provider<BatchDocumentPermissionsEditorController> batchDocumentPermissionsEditProvider;
     private ExpressionOperator filterExpression;
     private String quickFilter;
     private ExpressionOperator combinedExpression;
@@ -67,11 +67,11 @@ public class UserPermissionReportController extends Controller {
     @Inject
     public UserPermissionReportController(final EventBus eventBus,
                                           final UserPermissionReport view,
-                                          final Provider<ExpressionDialogController> filterDialogProvider,
+                                          final Provider<FilterExpressionController> filterDialogProvider,
                                           final DocumentPermissionsListController documentPermissionsList,
-                                          final Provider<DocumentUserPermissionsEditController>
+                                          final Provider<DocumentUserPermissionsEditorController>
                                                   documentUserPermissionsEditProvider,
-                                          final Provider<BatchDocumentPermissionsEditController>
+                                          final Provider<BatchDocumentPermissionsEditorController>
                                                   batchDocumentPermissionsEditProvider,
                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
@@ -132,7 +132,7 @@ public class UserPermissionReportController extends Controller {
     }
 
     private void onBatchEdit() {
-        final BatchDocumentPermissionsEditController batchEdit = batchDocumentPermissionsEditProvider.get();
+        final BatchDocumentPermissionsEditorController batchEdit = batchDocumentPermissionsEditProvider.get();
         batchEdit.setUser(userRef);
         batchEdit.show(this,
                 combinedExpression,

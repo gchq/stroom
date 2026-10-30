@@ -26,11 +26,11 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final Hyperlink hyperlink;
+    private final LinkValue hyperlink;
     private final TaskMonitorFactory taskMonitorFactory;
     private final Object context;
 
-    private HyperlinkEvent(final Hyperlink hyperlink,
+    private HyperlinkEvent(final LinkValue hyperlink,
                            final TaskMonitorFactory taskMonitorFactory,
                            final Object context) {
         this.hyperlink = hyperlink;
@@ -39,13 +39,13 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
     }
 
     public static void fire(final HasHandlers handlers,
-                            final Hyperlink hyperlink,
+                            final LinkValue hyperlink,
                             final TaskMonitorFactory taskMonitorFactory) {
         handlers.fireEvent(new HyperlinkEvent(hyperlink, taskMonitorFactory, null));
     }
 
     public static void fire(final HasHandlers handlers,
-                            final Hyperlink hyperlink,
+                            final LinkValue hyperlink,
                             final TaskMonitorFactory taskMonitorFactory,
                             final Object context) {
         handlers.fireEvent(new HyperlinkEvent(hyperlink, taskMonitorFactory, context));
@@ -68,7 +68,7 @@ public class HyperlinkEvent extends GwtEvent<HyperlinkEvent.Handler> {
         handler.onLink(this);
     }
 
-    public Hyperlink getHyperlink() {
+    public LinkValue getHyperlink() {
         return hyperlink;
     }
 

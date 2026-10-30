@@ -40,7 +40,7 @@ public interface DashboardContext extends ParamValues {
 
     TimeRange getResolvedTimeRange();
 
-    Components getComponents();
+    Panes getComponents();
 
     DocRef getDashboardDocRef();
 

@@ -29,7 +29,7 @@ import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
-import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.SingleItemSelectionModel;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -47,7 +47,7 @@ import java.util.function.Predicate;
 public class ExpressionEditorController extends Controller implements Focus {
 
     private final ExpressionTreeController expressionTree;
-    private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
+    private final SingleItemSelectionModel<stroom.query.client.Item> selectionModel;
     private ExpressionEditor view;
     private boolean readOnly;
 

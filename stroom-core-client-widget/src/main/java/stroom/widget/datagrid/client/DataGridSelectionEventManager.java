@@ -17,8 +17,8 @@
 package stroom.widget.datagrid.client;
 
 import stroom.data.client.event.SelectAllEvent;
-import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.LinkValue;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.datagrid.client.model.SelectionRules;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -302,7 +302,7 @@ public class DataGridSelectionEventManager<T>
         if (target.hasTagName("u")) {
             final String link = target.getAttribute("link");
             if (link != null && !link.isEmpty()) {
-                final Hyperlink hyperlink = Hyperlink.create(link);
+                final LinkValue hyperlink = LinkValue.create(link);
                 if (hyperlink != null) {
                     HyperlinkEvent.fire(dataGrid, hyperlink, new DefaultTaskMonitorFactory(this));
                     return true;

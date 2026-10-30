@@ -1,6 +1,0 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- The indicator popup's content (code-editor-indicator.css): what the marker or summary shows -->
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:tx="urn:import:stroom.widget.text.client">
-    <tx:Html ui:field="content"/>
-</ui:UiBinder>

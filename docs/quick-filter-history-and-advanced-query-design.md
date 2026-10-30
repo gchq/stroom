@@ -6,7 +6,7 @@ controller (`AdvancedQuickFilter` and `AdvancedQuickFilterController` in
 column value filter is `ColumnValuesFilter`. Since 28 October 2026 the widget `QuickFilter` is in
 `stroom.widget.quickfilter.client`, `RecentItems` in `stroom.explorer.client`, `EditExpressionPresenter`
 is `ExpressionEditorController` (`stroom.query.client.component`) and `ProcessorEditPresenter` is
-`ProcessorEditController` (`stroom.processor.client.component`). The names, paths and line numbers
+`ProcessorEditorController` (`stroom.processor.client.component`). The names, paths and line numbers
 below are as first built.
 
 **Status:** reviewed 2026-09-18; decisions in §8 taken. **A1–A3 implemented 2026-09-18** on

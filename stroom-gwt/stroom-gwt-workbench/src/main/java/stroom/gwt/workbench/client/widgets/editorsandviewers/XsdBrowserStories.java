@@ -26,16 +26,16 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.widget.xsdbrowser.client.XSDModel;
-import stroom.widget.xsdbrowser.client.XSDNode;
-import stroom.widget.xsdbrowser.client.component.XSDBrowser;
-import stroom.widget.xsdbrowser.client.component.XSDBrowserController;
+import stroom.widget.xsdbrowser.client.XsdModel;
+import stroom.widget.xsdbrowser.client.XsdNode;
+import stroom.widget.xsdbrowser.client.component.XsdBrowser;
+import stroom.widget.xsdbrowser.client.component.XsdBrowserController;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's XSD browser ([XSDBrowserController], the box diagram shown by the XML
+/// Stories for Stroom's XSD browser ([XsdBrowserController], the box diagram shown by the XML
 /// schema editor).
 public final class XsdBrowserStories {
 
@@ -170,7 +170,7 @@ public final class XsdBrowserStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Editors & Viewers/XsdBrowser", XsdBrowserStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                .argType(ArgType.text(XSD_TEXT).description("The raw schema text (GWT XSDModel.setContents(...))."))
+                .argType(ArgType.text(XSD_TEXT).description("The raw schema text (GWT XsdModel.setContents(...))."))
                 .argType(ArgType.text(OPEN).description("The name of a global element or type to open "
                                                         + "(as a double-click does), or blank for the schema."))
                 .args(Args.of(XSD_TEXT, SAMPLE_XSD, OPEN, ""))
@@ -240,7 +240,7 @@ public final class XsdBrowserStories {
                     play.expect(play.getByText("[0-9]{13}")).toBeVisible();
                 })
                 // A malformed schema: the parse error is shown, not the partial schema (Chrome's
-                // XML parser recovers, and GWT's XSDModel once showed what it recovered)
+                // XML parser recovers, and GWT's XsdModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)
                 .withArgs(Args.of(XSD_TEXT, MALFORMED_XSD))
                 .withPlay(play -> {
@@ -252,9 +252,9 @@ public final class XsdBrowserStories {
 
     private static Widget fromArgs(final StoryContext context) {
         final ScreenHarness harness = ScreenHarness.create(context, RestFixtures.none());
-        final XSDBrowserController browser = harness.own(new XSDBrowserController(harness.getEventBus(),
-                new XSDBrowser()));
-        final XSDModel model = new XSDModel();
+        final XsdBrowserController browser = harness.own(new XsdBrowserController(harness.getEventBus(),
+                new XsdBrowser()));
+        final XsdModel model = new XsdModel();
         browser.setModel(model);
         model.setContents(context.getArgs().getString(XSD_TEXT, ""));
         open(model, context.getArgs().getString(OPEN, ""));
@@ -272,11 +272,11 @@ public final class XsdBrowserStories {
     }
 
     // Opens the global element or type with this name, if there is one
-    private static void open(final XSDModel model, final String name) {
+    private static void open(final XsdModel model, final String name) {
         if (name.isEmpty() || model.getGlobalElementMap() == null) {
             return;
         }
-        XSDNode node = model.getGlobalElementMap().get(name);
+        XsdNode node = model.getGlobalElementMap().get(name);
         if (node == null) {
             node = model.getGlobalTypeMap().get(name);
         }

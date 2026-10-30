@@ -10,7 +10,7 @@
                        addStyleNames="query-toolbar__errors query-toolbar__errors--hidden">
                 <b:ToolbarButton ui:field="errors" svg="ERROR" title="Show Errors"/>
             </b:Toolbar>
-            <q:QueryButtons ui:field="queryButtons" addStyleNames="dock-min"/>
+            <q:RunQueryButton ui:field="queryButtons" addStyleNames="dock-min"/>
         </g:FlowPanel>
     </g:SimplePanel>
 </ui:UiBinder>

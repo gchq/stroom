@@ -10,7 +10,7 @@
                         helpText="The folder that the document(s) will be copied into."
                         addStyleNames="dock-max overflow-hidden">
             <g:SimplePanel styleName="dock-max overflow-hidden">
-                <ex:EntityTree ui:field="folders"/>
+                <ex:DocumentPicker ui:field="folders"/>
             </g:SimplePanel>
         </form:FormGroup>
         <form:FormGroup ui:field="nameFormGroup"

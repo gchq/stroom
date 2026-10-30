@@ -17,7 +17,7 @@
 package stroom.dashboard.client.component;
 
 import stroom.query.client.component.ExpressionTree;
-import stroom.query.client.component.QueryButtons;
+import stroom.query.client.component.RunQueryButton;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ToolbarButton;
@@ -57,7 +57,7 @@ public class QueryPane extends Component {
     @UiField
     ToolbarButton messages;
     @UiField
-    QueryButtons queryButtons;
+    RunQueryButton queryButtons;
     @UiField
     ExpressionTree expressionTree;
 

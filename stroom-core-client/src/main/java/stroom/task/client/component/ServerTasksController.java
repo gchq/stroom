@@ -17,7 +17,7 @@
 package stroom.task.client.component;
 
 import stroom.content.client.component.ContentTabController;
-import stroom.data.table.client.Refreshable;
+import stroom.data.table.client.HasRefresh;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -25,8 +25,8 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
+import stroom.widget.util.client.HtmlTableCell;
 import stroom.widget.util.client.KeyBinding.Action;
-import stroom.widget.util.client.TableCell;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -34,35 +34,35 @@ import com.google.web.bindery.event.shared.EventBus;
 
 /// Shows the tasks running on every node, filtered as the user asks.
 public class ServerTasksController extends ContentTabController
-        implements Refreshable {
+        implements HasRefresh {
 
     public static final String TAB_TYPE = "ServerTasks";
 
     private final ServerTasks view;
 
-    private final TaskManagerListController taskManagerList;
+    private final ServerTaskListController serverTaskList;
 
     /// Made by GIN, with its screen and its parts.
     ///
     /// @param eventBus                         The application's event bus.
     /// @param view                             Its component.
-    /// @param taskManagerList                  The task manager list.
+    /// @param serverTaskList                  The task manager list.
     /// @param uiConfigCache                    The UI's configuration.
     /// @param quickFilterContextHandlerFactory Adds the quick filter's history and Advanced Query.
     @Inject
     public ServerTasksController(final EventBus eventBus,
                                  final ServerTasks view,
-                                 final TaskManagerListController taskManagerList,
+                                 final ServerTaskListController serverTaskList,
                                  final UiConfigCache uiConfigCache,
                                  final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.taskManagerList = own(taskManagerList).attach(view.getList());
+        this.serverTaskList = own(serverTaskList).attach(view.getList());
         view.setOnFilterChange(this::changeNameFilter);
         // A rejected filter comes back as an empty list like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
-        taskManagerList.setFilterErrorConsumer(view::setFilterError);
+        serverTaskList.setFilterErrorConsumer(view::setFilterError);
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindTaskProgressCriteria.QUICK_FILTER_CONTEXT, this, this));
 
@@ -72,11 +72,11 @@ public class ServerTasksController extends ContentTabController
                         "Server Tasks Quick Filter",
                         builder -> builder
                                 .row(
-                                        TableCell.data(
+                                        HtmlTableCell.data(
                                                 "Matched tasks are displayed in black, un-matched but " +
                                                         "related tasks are displayed in grey.", 2))
                                 .row(
-                                        TableCell.data("All relations of a matched task will be " +
+                                        HtmlTableCell.data("All relations of a matched task will be " +
                                                 "included in the results.", 2))
                                 .row(),
                         FindTaskProgressCriteria.FIELD_DEFINITIONS,
@@ -102,7 +102,7 @@ public class ServerTasksController extends ContentTabController
 
     @Override
     public void refresh() {
-        taskManagerList.refresh();
+        serverTaskList.refresh();
     }
 
     /// Shows the tasks whose name, node or user match a filter.
@@ -110,7 +110,7 @@ public class ServerTasksController extends ContentTabController
     /// @param name The filter.
     public void changeNameFilter(final String name) {
         view.setNameFilter(name);
-        taskManagerList.setNameFilter(name);
+        serverTaskList.setNameFilter(name);
     }
 
     /// Filters the tasks; each filter left blank is left out.

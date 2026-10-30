@@ -68,7 +68,7 @@ class TestFloorMapEventsQueryOrder {
     /// The default query, which must stay on the exact last-row-wins reduction.
     @Test
     void testTheGeneratedDefaultQueryHasNoSort() {
-        assertThat(FloorMapEventsQueryOrder.hasSortClause(FloorMapEventsQuery.defaultQuery()))
+        assertThat(FloorMapEventsQueryOrder.hasSortClause(FloorMapDefaultEventsQuery.defaultQuery()))
                 .isFalse();
     }
 
@@ -167,7 +167,7 @@ class TestFloorMapEventsQueryOrder {
     @Test
     void testTheGeneratedDefaultQueryBindsTheEntityIdToTheKey() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
-                FloorMapEventsQuery.defaultQuery(), FloorMapEventsQuery.ENTITY_ID_COLUMN))
+                FloorMapDefaultEventsQuery.defaultQuery(), FloorMapDefaultEventsQuery.ENTITY_ID_COLUMN))
                 .isTrue();
     }
 

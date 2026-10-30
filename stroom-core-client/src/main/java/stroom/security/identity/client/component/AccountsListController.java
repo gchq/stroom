@@ -56,7 +56,7 @@ public class AccountsListController extends Controller {
 
     private final AccountsList view;
     private final RestFactory restFactory;
-    private final Provider<EditAccountController> editAccountProvider;
+    private final Provider<AccountEditorController> editAccountProvider;
     private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
 
@@ -74,7 +74,7 @@ public class AccountsListController extends Controller {
                                   final AccountsList view,
                                   final RestFactory restFactory,
                                   final DateTimeFormatter dateTimeFormatter,
-                                  final Provider<EditAccountController> editAccountProvider,
+                                  final Provider<AccountEditorController> editAccountProvider,
                                   final UiConfigCache uiConfigCache,
                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus);

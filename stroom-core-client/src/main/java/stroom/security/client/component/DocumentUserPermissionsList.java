@@ -20,7 +20,7 @@ import stroom.data.client.ColumnSizeConstants;
 import stroom.data.client.component.UserRefCell;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.security.client.UserAndGroupHelper;
+import stroom.security.client.UsersAndGroupsHelper;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
@@ -101,13 +101,13 @@ public class DocumentUserPermissionsList extends Component {
         // Icon
         dataGrid.addColumn(
                 DataGridUtil.cellIconColumnBuilder(false, (DocumentUserPermissions row) ->
-                                UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
+                                UsersAndGroupsHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()
                         .enabledWhen(this::isUserEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("")
-                        .headingText(UserAndGroupHelper.buildUserAndGroupIconHeader())
+                        .headingText(UsersAndGroupsHelper.buildUserAndGroupIconHeader())
                         .centerAligned()
                         .withToolTip("Whether this row is a single user or a named user group.")
                         .build(),
@@ -129,7 +129,7 @@ public class DocumentUserPermissionsList extends Component {
 
         dataGrid.addResizableColumn(
                 displayNameCol,
-                DataGridUtil.headingBuilder(UserAndGroupHelper.COL_NAME_DISPLAY_NAME)
+                DataGridUtil.headingBuilder(UsersAndGroupsHelper.COL_NAME_DISPLAY_NAME)
                         .withToolTip("The name of the user or group.")
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);

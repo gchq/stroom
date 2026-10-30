@@ -31,7 +31,7 @@ import stroom.job.shared.ScheduleReferenceTime;
 import stroom.schedule.client.component.SchedulePickerController;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.task.client.event.OpenTaskManagerEvent;
+import stroom.task.client.event.OpenServerTasksEvent;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.component.client.Controller;
@@ -205,14 +205,14 @@ public class JobNodeActionsController extends Controller {
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (" + jobNode.getNodeName() + ")")
-                        .command(() -> OpenTaskManagerEvent.fire(
+                        .command(() -> OpenServerTasksEvent.fire(
                                 this,
                                 jobNode.getNodeName(),
                                 jobNode.getJobName())))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.JOBS)
                         .text("Show in Server Tasks (All Nodes)")
-                        .command(() -> OpenTaskManagerEvent.fire(this, jobNode.getJobName())))
+                        .command(() -> OpenServerTasksEvent.fire(this, jobNode.getJobName())))
                 .build();
     }
 
