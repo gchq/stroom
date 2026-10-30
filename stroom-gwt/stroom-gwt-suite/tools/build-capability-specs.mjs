@@ -245,7 +245,7 @@ for (const name of own.keys()) {
 const CHROME = new Set([
   'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
   'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New Document', 'Delete Selected Documents',
+  'New Document', 'Delete Selected Documents', 'Reload Explorer Tree',
 ]);
 // …but a label is chrome only when the screen does not claim it itself. `New` and `Delete` were the
 // explorer's buttons AND genuine buttons on FsVolumeGroup, IndexVolumeGroup, NodeGroup and

@@ -115,7 +115,7 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 const CHROME = new Set([
   'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
   'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New Document', 'Delete Selected Documents',
+  'New Document', 'Delete Selected Documents', 'Reload Explorer Tree',
 ]);
 const chromeDone = new Set();
 /** Types whose loose explorer-title match has already been reported. */

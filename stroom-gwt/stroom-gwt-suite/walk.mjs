@@ -145,7 +145,7 @@ if (!['reach', 'dom', 'pixel'].includes(DEPTH)) {
 const CHROME = new Set([
   'Main Menu', 'Show Main Menu', 'Expand All Folders', 'Collapse All Folders', 'Locate Current Item', 'Find in Content',
   'Show Alerts', 'Ask Stroom AI', 'Filter Document Types', 'Clear Filter', 'Quick Filter Syntax Help',
-  'New Document', 'Delete Selected Documents',
+  'New Document', 'Delete Selected Documents', 'Reload Explorer Tree',
   // The navigation logo and the tab bar's sidebar toggle (CurveTabLayoutViewImpl's `Hide Sidebar`)
   // are chrome; the names are listed in case either is given an `aria-label`. Walking the toggle
   // put a post-action state under every node.
