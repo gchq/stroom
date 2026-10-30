@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ChatUserQuestions;
 import stroom.ai.impl.tools.ToolCall;
@@ -37,6 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -195,6 +198,30 @@ class TestConsent {
         // Without a form, the agent asks.
         assertThat(consent.choose(CALL, textOnly(), "create_feed", "Which feed?", List.of("A"), null)).isEmpty();
         assertThat(consent.choose(CALL, picked.context(), "create_feed", "Which feed?", List.of(), null)).isEmpty();
+    }
+
+    @Test
+    void aChoiceTooLargeForAFormIsLeftToTheAgentRatherThanRefused() {
+        // Seen: a question naming every field of a wide mapping, too long for a form; refused, it stopped the call
+        // where the user could never answer it.
+        final Questions picked = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("choice", "A")));
+        final String longQuestion = "Overwrite fields " + "attr_001, ".repeat(250) + "?";
+        final List<String> manyOptions = IntStream.range(0, 400)
+                .mapToObj(i -> "System/Indexes/Department " + i + "/Some long folder name/Index " + i)
+                .toList();
+
+        assertThat(consent.choose(CALL, picked.context(), "hand_edit", longQuestion, List.of("A", "B"), null))
+                .isEmpty();
+        assertThat(consent.choose(CALL, picked.context(), "get_field_conventions", "Which index?", manyOptions,
+                null)).isEmpty();
+        assertThat(consent.chooseEach(CALL, picked.context(), "build_translation_xslt", "Stand-ins?",
+                IntStream.range(0, ElicitationSchema.MAX_FIELDS + 1).boxed().collect(Collectors.toMap(
+                        i -> "v" + i, i -> new Consent.Question("v" + i, List.of("Keep", "Leave out")),
+                        (a, b) -> a, LinkedHashMap::new)))).isEmpty();
+        // Not asked at all: the agent asks in the chat, as when no form can be shown.
+        assertThat(picked.forms).isEmpty();
+        Mockito.verify(auditLog, Mockito.times(3)).processed(Mockito.any(), Mockito.isNull(), Mockito.eq("choice"),
+                Mockito.anyString(), Mockito.startsWith("not asked in a form, as its"), Mockito.eq(false));
     }
 
     @Test

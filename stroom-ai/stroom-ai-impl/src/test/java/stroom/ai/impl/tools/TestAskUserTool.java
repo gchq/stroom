@@ -26,8 +26,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -111,6 +113,29 @@ class TestAskUserTool {
         assertThatThrownBy(() -> AskUserTool.questions("{\"questions\": [" + "{\"question\": \"Q\"},".repeat(8)
                                                        + "{\"question\": \"Q\"}]}"))
                 .hasMessageContaining("at most 8");
+        Mockito.verifyNoInteractions(elicitations);
+    }
+
+    @Test
+    void questionsTooLargeForOneFormAreRefusedWithTheLimitsSoTheyCanBeAskedShorter() {
+        // Each question and option within its own limit, but 8 questions of 6 long options, with what each means,
+        // come to more than one form can show; and the intro has no limit of its own.
+        final String option = "{\"label\": \"%d" + "o".repeat(AskUserTool.MAX_OPTION_CHARS - 1) + "\", "
+                              + "\"description\": \"" + "d".repeat(AskUserTool.MAX_OPTION_CHARS) + "\"}";
+        final String options = String.join(", ", IntStream.range(0, AskUserTool.MAX_OPTIONS)
+                .mapToObj(i -> option.formatted(i)).toList());
+        final String question = "{\"question\": \"" + "q".repeat(AskUserTool.MAX_QUESTION_CHARS) + "\", "
+                                + "\"options\": [" + options + "]}";
+        final String tooMany = "{\"questions\": [" + String.join(", ", Collections.nCopies(
+                AskUserTool.MAX_QUESTIONS, question)) + "]}";
+        final String longIntro = "{\"intro\": \"" + "i".repeat(3_000) + "\", "
+                                 + "\"questions\": [{\"question\": \"Which?\"}]}";
+
+        assertThat(run(tooMany)).startsWith("Error: These questions can't be shown in one form, as its form is too "
+                                            + "large")
+                .contains("at most 16000 characters together")
+                .contains("Ask fewer questions at a time, or make them shorter, and call again");
+        assertThat(run(longIntro)).contains("as its message is too long").contains("The intro may be at most 2000");
         Mockito.verifyNoInteractions(elicitations);
     }
 

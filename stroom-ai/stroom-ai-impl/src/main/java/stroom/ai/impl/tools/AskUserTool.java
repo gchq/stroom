@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
@@ -112,8 +113,15 @@ class AskUserTool extends AbstractBuiltInTool {
         }
         final String intro = NullSafe.nonBlankStringElse(NullSafe.trim(stringArg(request, INTRO_ARG)),
                 DEFAULT_INTRO);
+        final Map<String, Object> form = form(questions);
+        // Each question and option is short enough, but together, or with a long intro, they may not fit in one
+        // form: the agent is told, so it asks again shorter, rather than that it can't be asked at all.
+        final String problem = ElicitationSchema.check(intro, form);
+        if (problem != null) {
+            return ToolResult.text("Error: " + tooLarge(problem));
+        }
         // In a chat, the run stops until the user answers, and the call is made again then, with the answer.
-        final ElicitResult result = context.userQuestions().ask(NAME, request.id(), intro, form(questions));
+        final ElicitResult result = context.userQuestions().ask(NAME, request.id(), intro, form);
         final String text = switch (result.action()) {
             case ACCEPT -> answers(questions, NullSafe.map(result.content()));
             case DECLINE -> "The user chose not to answer these questions. Don't ask them again now: carry on with "
@@ -130,6 +138,15 @@ class AskUserTool extends AbstractBuiltInTool {
     public boolean readsUntrustedContent() {
         // What the user answers.
         return false;
+    }
+
+    /// @param problem Why the form can't be shown.
+    /// @return What the agent is told: the limits, and to ask again shorter.
+    static String tooLarge(final String problem) {
+        return "These questions can't be shown in one form, as " + problem + ". The intro may be at most "
+               + ElicitationSchema.MAX_MESSAGE_CHARS + " characters, and the questions, their options and the "
+               + "options' descriptions at most " + ElicitationSchema.MAX_SCHEMA_CHARS + " characters together. "
+               + "Ask fewer questions at a time, or make them shorter, and call again; nothing was asked.";
     }
 
     /// @return The questions in the arguments, checked.

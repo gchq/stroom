@@ -17,13 +17,16 @@
 package stroom.mcp.impl;
 
 import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.McpEndpointConfig;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.server.McpAsyncServerExchange;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult.Action;
@@ -67,12 +70,22 @@ class McpForms {
     /// (or for this user), or the user doesn't answer in time.
     /// @throws CancellationException if the call is cancelled (its thread interrupted) while the form waits: the
     ///                               thread's interrupt is kept, so the call stops.
+    /// @throws ToolRefusal           if the form can't be shown: too large ([ElicitationSchema]), or the client
+    ///                               answers it with an error.
     ElicitResult ask(final McpSession session,
                      final McpAsyncServerExchange exchange,
                      final String message,
                      final Map<String, Object> schema) {
         if (!session.canShowForms()) {
             return new ElicitResult(Action.CANCEL, null, null);
+        }
+        // Checked as the chat checks its forms: a client refusing one too large answers as if the user had declined
+        // (seen in testing: an index template's confirmation), so the tool would say the user made no choice.
+        final String problem = ElicitationSchema.check(message, schema);
+        if (problem != null) {
+            LOGGER.warn(() -> LogUtil.message("Not showing a form to {}, as {}",
+                    session.owner().toDisplayString(), problem));
+            throw new ToolRefusal(ElicitationSchema.cannotShow(problem));
         }
         final McpEndpointConfig config = config();
         final String user = session.owner().getUuid();
@@ -97,6 +110,13 @@ class McpForms {
                 // The call was cancelled: block() wraps the interrupt, which must not be lost, or the call goes on.
                 Thread.currentThread().interrupt();
                 throw new CancellationException("The call was cancelled while it waited for the user's answer.");
+            }
+            final McpError refused = clientError(e);
+            if (refused != null) {
+                // The client answered with an error: it couldn't show the form, so the user wasn't asked.
+                LOGGER.warn(() -> LogUtil.message("The client of {} couldn't show a form: {}",
+                        session.owner().toDisplayString(), refused.getMessage()));
+                throw new ToolRefusal(ElicitationSchema.cannotShow("the client said: " + refused.getMessage()));
             }
             // E.g. the user didn't answer in time, or the client went away.
             LOGGER.debug(() -> LogUtil.message(
@@ -132,6 +152,18 @@ class McpForms {
         waitingByUser.computeIfPresent(user, (uuid, count) -> count <= 1
                 ? null
                 : count - 1);
+    }
+
+    // The error the client answered the form with, if that is why it failed.
+    private static McpError clientError(final Throwable e) {
+        Throwable cause = e;
+        while (cause != null) {
+            if (cause instanceof final McpError error) {
+                return error;
+            }
+            cause = cause.getCause();
+        }
+        return null;
     }
 
     private static boolean isInterrupt(final Throwable e) {

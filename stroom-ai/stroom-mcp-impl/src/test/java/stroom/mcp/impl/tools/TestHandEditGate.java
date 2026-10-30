@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.xml.transform.stream.StreamSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -332,6 +333,20 @@ class TestHandEditGate {
         assertThat(choicesAsked()).hasSize(1);
         assertThat(choicesAsked().getFirst()).contains("(the edit changed 3 other things as well)");
         assertThat(code()).contains("EventSource/User/Email").doesNotContain("User/Name").doesNotContain("bytes");
+    }
+
+    @Test
+    void theQuestionsNameAFewFieldsAndQuoteEditsShort() {
+        // Seen: a question naming every field of a wide mapping, too long for a form.
+        final List<String> labels = IntStream.rangeClosed(1, 50).mapToObj(i -> "attr_" + i).toList();
+
+        assertThat(HandEditGate.named(labels)).isEqualTo("attr_1, attr_2, attr_3, attr_4, attr_5 and 45 others");
+        assertThat(HandEditGate.named(labels.subList(0, 2))).isEqualTo("attr_1, attr_2");
+        assertThat(HandEditGate.quoted("<xsl:value-of\n    select=\"" + "concat(a, b) ".repeat(30) + "\"/>"))
+                .startsWith("<xsl:value-of select=\"concat(a, b)")
+                .endsWith("…")
+                .hasSizeLessThanOrEqualTo(HandEditGate.MAX_QUOTED + 1);
+        assertThat(HandEditGate.quoted(null)).isNull();
     }
 
     @Test
