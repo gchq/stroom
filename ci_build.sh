@@ -399,6 +399,12 @@ doDockerBuildAndRelease() {
     --vex-location "${vexDir}"
   echo "::endgroup::"
 
+
+  docker scout attestation add \
+    --file CVE-XXXX-YYYY.vex.json \
+    --predicate-type https://openvex.dev/ns/v0.2.0 \
+    "${fi}"
+
   echo "::group::Docker release (${dockerRepo})"
   if [[ -z "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
@@ -451,6 +457,14 @@ docker_logout() {
     echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PAT not set so" \
       "skipping docker logout"
   fi
+}
+
+install_docker_scout() {
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
 }
 
 copy_swagger_ui_content() {
@@ -674,11 +688,7 @@ export BUILD_VERSION
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
-  # Install scout for docker image scanning
-  echo "::group::Docker Scout Install"
-  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
-    | sh -s --
-  echo "::endgroup::"
+  install_docker_scout
 
   # build and release stroom image to dockerhub
   doDockerBuildAndRelease \
