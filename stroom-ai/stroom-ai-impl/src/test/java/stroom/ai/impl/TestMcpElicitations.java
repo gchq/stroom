@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -307,6 +309,30 @@ class TestMcpElicitations {
         assertThat(elicitations.askUser(CHAT_ID, "ask_user", null, "x".repeat(ElicitationSchema.MAX_MESSAGE_CHARS + 1),
                 FORM).action())
                 .isEqualTo(Action.DECLINE);
+    }
+
+    @Test
+    void aToolsFormThatCanNeverBeShownFailsTheCallRatherThanSayingTheUserDeclined() {
+        // Seen: a form too large to show was declined, the tool told the agent "The user made no choice", and the
+        // agent called it again and again, the user asked the same questions each time.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        for (int i = 1; i <= ElicitationSchema.MAX_FIELDS + 1; i++) {
+            properties.put("q" + i, Map.of("type", "string", "enum", List.of("Leave out", "Keep as written")));
+        }
+        final Map<String, Object> tooMany = Map.of("type", "object", "properties", properties);
+
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "build_translation_xslt", "c1", "Which?", tooMany))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("couldn't show this tool's form")
+                .hasMessageContaining("more than " + ElicitationSchema.MAX_FIELDS + " fields")
+                .hasMessageContaining("didn't decline")
+                .hasMessageContaining("don't repeat the call");
+
+        // No form is shown; the user is told.
+        assertThat(messages.values()).extracting(AiChatMessage::getMessageType).containsOnly(AiMessageType.WARNING);
+        assertThat(messages.values()).extracting(AiChatMessage::getMessage).singleElement().asString()
+                .contains("couldn't be shown");
     }
 
     @Test

@@ -395,6 +395,39 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aChoiceIsKeptWhenALaterFormFailsTheCallSoTheUserIsNotAskedAgain() {
+        // Seen in testing: the domain split answered, then the stand-ins' form couldn't be shown, so the call failed
+        // before saving, and each call after asked about the domain again; the user could never get past it.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "ACME\\\\alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        final Map<String, Object> arguments = Map.of("mapping", mapping, "build", "acme-v1", "name", "D",
+                "sample", sample);
+        world.forms = true;
+        world.answers.put("Split the domain off", DomainSplits.SPLIT);
+        world.unshowable.add(PlaceholderChoices.INTRO);
+
+        final Map<String, Object> failed = world.call(tool, arguments);
+        assertThat(failed).as(String.valueOf(failed)).containsKey("error").doesNotContainKey("saved");
+        assertThat(world.asked).hasSize(2).last().isEqualTo(PlaceholderChoices.INTRO);
+
+        // Made again, once the form can be shown: only the stand-ins are asked about, and the domain is split as
+        // the user chose before.
+        world.unshowable.clear();
+        world.answers.put("'-' in", PlaceholderChoices.LEAVE_OUT);
+        final Map<String, Object> saved = world.call(tool, arguments);
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        assertThat(world.asked).hasSize(3).last().isEqualTo(PlaceholderChoices.INTRO);
+        assertThat(list(saved.get("changes_applied"))).anyMatch(change -> String.valueOf(change)
+                        .startsWith("the domain split off 'user', as the user chose"))
+                .contains("'-' left out where a field holds it (nil_values), as the user chose");
+    }
+
+    @Test
     void anIdWrittenFromTwoFieldsIsAskedAboutOnce() {
         // Seen: Authenticate/User/Id from By User in some rules and Target User in others, two forms in a row.
         final Map<String, Object> mapping = JsonUtil.readValue("""
