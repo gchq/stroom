@@ -26,6 +26,25 @@ themes and eleven waves, approved and under way (from wave 35). The one behaviou
 XSD browser's pattern heading, fixed in wave 36) is under [Smaller oddities](#smaller-oddities) as
 well.
 
+### Tracked elsewhere
+
+Everything else that is open (bugs, accessibility gaps, flaky stories and decisions) is in this
+file. Kept elsewhere, on purpose:
+
+* the behaviour, branching and coverage suites' open phases: `stroom-gwt-suite/`'s
+  [BEHAVIOUR-PLAN.md](stroom-gwt-suite/BEHAVIOUR-PLAN.md),
+  [BRANCHING-PLAN.md](stroom-gwt-suite/BRANCHING-PLAN.md),
+  [COVERAGE-PLAN.md](stroom-gwt-suite/COVERAGE-PLAN.md) and its [README](stroom-gwt-suite/README.md)'s
+  Status;
+* the workbench harness's known limits: [WRITING-STORIES.md](stroom-gwt-workbench/WRITING-STORIES.md);
+* what the UI audit didn't cover: [UI_AUDIT.md](UI_AUDIT.md), "Not covered or uncertain";
+* the UI audit's deliberate, accepted leftovers (e.g. the flex layout widgets staying in
+  `flexlayout`, the tree pickers and build info kept apart, the delete confirmation staying
+  SafeHtml): the "Left" sections of the wave records,
+  [component-migration/wave-39.md](component-migration/wave-39.md) to
+  [wave-46.md](component-migration/wave-46.md). Those that are defects or decisions are here, in
+  [Left from the UI audit (waves 39 to 46)](#left-from-the-ui-audit-waves-39-to-46).
+
 ## Data not saved or not used
 
 ### A view's Meta Filter only applies to analytic rules
@@ -1606,6 +1625,113 @@ measured with `FocusRingClipping`) and `Keyboard` (the real keyboard reaches eac
 its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/Main/AppShell`
 `ToolbarTabStops` counts Main Menu and Hide Sidebar as one tab stop each.
 
+### Nothing has been tried with a screen reader
+
+**Open** (30 October 2026, moved from COMPONENTS.md § Checklist): every row of the checklist's
+Screen reader column is "no" (the Layout panels row aside, where it doesn't apply). Each component's
+roles, names and states are checked with axe and the workbench's play functions, but none has been
+heard in NVDA or VoiceOver, so what a screen reader actually says (e.g. a grid's row as it is
+selected, a live region's timing, a dialog's description) is unknown. `COMPONENT_MODEL_DESIGN.md`
+says the same of the data grid, the date and time boxes, the overlays and the code editor, and
+"Toolbars are a tab stop per button" of toolbars. Needs a person with a screen reader.
+
+### Tab bars: link tabs too small and unnamed, document tab names cut, loading not announced
+
+**Open** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs):
+left from the tab bars' retrofit (`AbstractTabBar`, shared by both bars):
+
+* A link tab is about 16px tall (its label's text: `tab-bar.css` `.tab-bar--link`, sized by the
+  invisible `tab-bar__strut`), under WCAG 2.5.8's 24px. It passes axe only where nothing is close
+  enough beside it (the Data Retention one that didn't was fixed by 1px more room below its bar,
+  A11Y.md batch 5).
+* A link tab bar's `tablist` has no name (`LinkTabBar.ui.xml:10`), where the document tabs' is
+  "Open documents" (`CurveTabBar.ui.xml:9`); `AbstractTabBar.setAccessibleName` (line 683) is there,
+  but nothing calls it.
+* A document tab's name is cut at 50 characters with "..." (`CurveTab.MAX_TEXT_LENGTH`, lines 41
+  and 86); the whole name is its tooltip, but a screen reader hears the shortened one.
+* A tab panel holding nothing focusable isn't a tab stop (`AbstractTabBar.setTabPanel` gives it
+  only its role).
+* A document tab's loading isn't announced: its spinner is a `SmallBusySpinner` (`CurveTab.java:50`),
+  which says nothing (see "The small busy spinner says nothing").
+
+### The small busy spinner says nothing
+
+**Open** (30 October 2026, moved from COMPONENTS.md § Status, Busy spinners): the large spinner is a
+`role="status"` live region that says "Loading..." once it shows (`LargeBusySpinner.ui.xml:5`,
+`LargeBusySpinner.java:36`), but the small one (`SmallBusySpinner.ui.xml`: a picture with the title
+"Loading...") has no role and no status text, so a document tab's, the explorer's and Ask Stroom
+AI's loading aren't announced. Also left there: `.sr-only`, a general utility, lives in
+`spinner.css`.
+
+### The pager's page boxes are unnamed and reached only by the mouse
+
+**Open** (30 October 2026, moved from COMPONENTS.md § Status, Data grids): a pager's "1 to 100"
+becomes two text boxes, `txtFrom` and `txtTo` (`Pager.ui.xml:11` and `:14`, hidden until then), only
+when its labels are clicked (`Pager.onClickFrom`/`onClickTo`, `Pager.java:156`-`163`): the labels
+are `Label`s, not tab stops, so the keyboard can't get to the boxes, and the boxes have no
+accessible name. The toolbar's First, Backward, Forward and Last buttons are named and reachable.
+
+### The floor map views' reading order isn't checked
+
+**Open** (30 October 2026, moved from COMPONENTS.md § Status and Checklist, Layout panels): every
+`DockLayoutPanel` became grid or flex layout, where the DOM order (what a screen reader reads and
+Tab follows) can differ from where a panel places its children; `ReadingOrder` was deleted, as no
+split panel is left. The floor map's views (its editor and map, added since, moved to flex in wave
+13) haven't been checked for it.
+
+### A data grid's columns can't be moved one place or resized from the keyboard
+
+**Open** (30 October 2026, moved from COMPONENT_MODEL_DESIGN.md § Data grid, "Not done yet"):
+
+* A column is resized only by dragging its header's edge, and moved only by dragging its header
+  (`ColumnInteractions`). The dashboard and query tables' column menus have Move Column to Start
+  and Move Column to End (`ColumnsManager.java:804`/`813`, `QueryTableColumnsManager.java:570`/`579`),
+  but nothing moves a column one place or changes its width. Agreed: Move and Resize items in the
+  column menu, not shortcuts.
+* A cell holding more than one control gives the focus to the first: `DataGridKeyboard`'s
+  `editableControl`, `directControl` and `formControl` (lines 767-783) each take the cell's first
+  match (`querySelector`), so the keyboard can't reach a second control in the same cell.
+
+### Toolbars can't show their buttons' names as text
+
+**Open** (30 October 2026, moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
+(later)): toolbars are icon only; a button's name is its tooltip and what a screen reader
+announces. The agreed preference (icons only, text only, or icons and text) isn't implemented:
+nothing has a `toolbar-button__label` or a `toolbar-display--*` page class. The design says what it
+needs: a label element in `ToolbarButton`, the preference applied as a page class as the theme and
+density are (`ThemeCssUtil.getCurrentPreferenceClasses`), and wider buttons when they show text.
+
+### Text size and high contrast (#3695)
+
+**Deferred** (30 October 2026, moved from A11Y.md § Batch 5): two parts of GitHub #3695, tracked
+apart since 23 October 2026.
+
+* **Large text: fonts don't scale.** Waits for the whole-app text size pass, with the user's text
+  size preference (text size and spacing, e.g. the stepping bar's fixed-size chevrons; and the
+  density setting not making a grid row with controls tighter, `COMPONENT_MODEL_DESIGN.md` § Data
+  grid).
+* **High contrast: things disappear.** Many stylesheets have `forced-colors` rules (menus, grids,
+  tabs, dialogs, split panes, the calendar, the pipeline tree), and the workbench runs stories in
+  forced colours, some checks failing without a rule (e.g. the splitters). Still to do: a pass over
+  the whole app in forced colours (Windows High Contrast) for anything that disappears.
+
+### No warning on a low-contrast custom row style
+
+**Open** (30 October 2026, moved from A11Y.md § Batch 5): a table's conditional formatting can give
+rows a custom text and background colour (`CustomRowStyleEditor`), and nothing warns when the two
+don't meet WCAG's contrast ratio. The baseline entry that showed it was the story's own fault (a
+background with no text colour) and is fixed; a warning in the custom style dialog isn't done.
+
+### GitHub issues loosely related to accessibility
+
+**Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,
+not yet worked on.
+
+* **#3416** (marked wontfix): disabled rules look the same as enabled ones in the explorer (the
+  explorer tree has no disabled look).
+* **#5847**: nothing says that jobs are disabled for the whole cluster.
+* **#5743**: the Info pane's keys have no help.
+
 ## Copy-paste mistakes and typos
 
 **Reported.**
@@ -1827,6 +1953,40 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 * **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
+### Left from the UI audit (waves 39 to 46)
+
+**Open** (30 October 2026, moved from the wave records' "Left" sections; each checked in the code
+that day). Those the record accepts as right stay only there (see
+[Tracked elsewhere](#tracked-elsewhere)).
+
+* **Two unused SafeHtml templates** (moved from `component-migration/wave-40.md` § Left, and why):
+  `SafeHtmlUtil.Template`'s `divWithClassStyleAndTitle` and `divWithClassAndStyle`
+  (`SafeHtmlUtil.java:445` and `448`) have no users. A removal, so it waits for approval (or the
+  dead code pass).
+* **`NameDialog` duplicates `NameEntry`** (moved from `wave-43.md` § Left, and why): two name forms,
+  `NameDialog` (`stroom.widget.popup.client.component`, with `NameDialogController`, used by
+  `TabSessionManager`) and `NameEntry` (`stroom.document.client.component`, used by Rename and the
+  Create User, and the new volume group, node group and user group dialogs), each a required Name field in a form group.
+  They should be merged, not renamed.
+* **Time Preferences doesn't declare a `TimeZoneBox`** (moved from `wave-39.md`, finding
+  dashboard-query-15, and `wave-43.md`): `TimePreferences.ui.xml` (lines 27-44) has its own Use,
+  Id and offset fields. `TimeZoneBox` fires its change on every field and has its own help, widths
+  and no accessible name for the offset, where the preferences apply on each change and say more,
+  and a story finds the fields by their ids; it needs `TimeZoneBox` made settable first.
+* **`AbstractTabBar` makes its `TabSelector` in Java** (moved from `wave-39.md`, finding
+  widgets-1-17; `AbstractTabBar.java:104`): the bars' templates are element roots and the bar places
+  and moves its tabs itself, so declaring the selector means rebuilding the bar, which risks its
+  keyboard and drag behaviour.
+* **`ContextChip` writes its icon as markup** (moved from `wave-40.md`): `ContextChip.toHtml`
+  appends `<span class='icon-wrap'>` and the icon's SVG as a string (`ContextChip.java:38`);
+  replacing it means deleting the class and its test.
+* **The annotation history's rows are built with `HtmlBuilder`** (moved from `wave-40.md`):
+  `AnnotationHistory` (lines 127, 334 and 409) builds its groups and entries as HTML in the widget;
+  only its actions button is a template.
+* **Find in Content uses the form group's classes outside a form group** (moved from `wave-41.md`
+  § Left): its pattern's feedback and hint are `Label`s styled `form-group__feedback` and
+  `form-group__description` (`FindInContent.ui.xml:23`-`24`), elements of a block they aren't in.
+
 ### An opened document's focus lands on its tab bar or its first button, by timing
 
 **Fixed** (28 October 2026, wave 23). An opened document focuses its selected tab, laying its tabs out first if needed (`DocumentEditorHost.focus`, `AbstractTabBar.focusTabStop`); a document with no tabs shown falls back to the first tab stop (`App/Main/AppShell` `OpenedDocumentTakesFocus`). On master too.
@@ -1932,6 +2092,17 @@ this extends it to every handler. When counted (wave 13), the converted componen
 * Until then, new and converted components already follow this.
 
 ## Smaller oddities
+
+**Open** (30 October 2026, moved from COMPONENTS.md § To delete; a removal, so it needs approval):
+the rules for bare inputs (`text-field.css`'s `textarea:where(:not(.text-field))` block and the
+`input:where(:not(.text-field))` selectors from line 38, the `select option` rules and the bare
+`::placeholder`, and `base.css`'s `input[type="file"]` rules at 569) may now style nothing that
+needs them: every input on Stroom's screens has a block of its own, the floor map's schema grid
+(the last bare controls found) included. Not yet confirmed at runtime: a sweep of every story for
+elements those selectors match was stopped for lack of memory, and the blocks whose inputs they
+still match (the tick box's, the radios', the hidden file input, the colour box, Ace's hidden
+textarea) aren't checked for relying on a property only these rules set. The check is a screenshot
+diff of every story in both themes before and after deleting them.
 
 **Fixed** (30 October 2026, wave 46, changelog entry: greyed in the read-only text colour, as the
 user chose). **Confirmed** (29 October 2026, wave 42): a read-only annotation's settings aren't greyed, though

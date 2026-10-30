@@ -355,6 +355,8 @@ save.setEnabled(dirty);
 
 ### Display preference (later)
 
+(ISSUES.md: Toolbars can't show their buttons' names as text)
+
 Toolbars are icon only for now: every button shows its icon, and its name is its tooltip (shown on hover and, by `FocusTooltip`, on keyboard focus) and what a screen reader announces. Some users would find text easier, so a user preference should later choose how toolbars are shown: icons only, text only, or icons and text. Each `ToolbarButton` already has the text (its name), so this needs only:
 
 - a label element in the button (`toolbar-button__label`), holding its name, hidden while icons only;
@@ -726,7 +728,7 @@ A duration is a `DurationPicker` (`stroom.widget.duration.client`, styled by `du
 
 Stories `Widgets/Date & Time/CalendarGrid` (`CalendarGridStories`): roles and names, the one tab stop, each key, crossing months, choosing with Enter, Space and a click, and the toolbars. Stories `Widgets/Date & Time/DateTimePicker` (`DateTimePickerStories`): opening with Enter and Alt+Down, choosing a day with the keys, the dialog's buttons, invalid text, expressions and disabled; `Widgets/Query/ExpressionBuilder` `DateTermBoxes`, a date term's From and To. Real input (`test-runner/lib/real-input/date-time.mjs`): the grid's keys, its focus ring and Tab pressed for real, and Alt+Down and Escape on the box.
 
-Not yet done: it hasn't been tried with a screen reader; the dialogs' own markup (the Popups and Dialogs rows, session 3); the schedule box and time range selector (their own rows).
+Not yet done: it hasn't been tried with a screen reader (ISSUES.md: Nothing has been tried with a screen reader). The dialogs' own markup, the schedule box and the time range selector have since been done (their COMPONENTS.md rows).
 
 ## Overlays
 
@@ -757,7 +759,7 @@ The selection manager (`DataGridSelectionEventManager`) handles the mouse, and i
 
 Stories `Widgets/Data Grid/DataGridRowStates` (`DataGridRowStateStories`): a row of `DataGrid` in each state (it was set beside `MyDataGrid`'s until that was deleted), a story for each theme and density, with a tick box, value spinner, text field and selection box in each row. `Widgets/Data Grid/DataGridKeyboard` (`DataGridKeyboardStories`): `Rows`, `SingleSelection`, `Cells`, `Editing` and `Headers`. Real input (`test-runner/lib/real-input/data-grid.mjs`): Tab in and out, the keys cancelled as they are pressed, the focus ring for the keyboard and not a click, and Tab from control to control while editing. `Widgets/Data Grid/DataGrid`, `Behaviour` and `Benchmark` are the new grid's own (see its design).
 
-Not done yet: the column menu's Move and Resize items for keyboard users (agreed: items in the menu, not shortcuts); a cell with more than one control gives the focus to the first; it hasn't been tried with a screen reader. The density setting doesn't make a row with controls in it tighter, as the controls keep their own padding (left to the whole-app text size pass). The follow-ups agreed at the end of session 4 are in `ISSUES.md`, The data grid's follow-ups: keeping a focused control during a row update, measuring the row update's cost and splitting `DataGrid.java` (its event dispatch is now `GridEvents`) were done on 23 October 2026, and key providers are left.
+Not done yet: the column menu's Move and Resize items for keyboard users (agreed: items in the menu, not shortcuts); a cell with more than one control gives the focus to the first (ISSUES.md: A data grid's columns can't be moved one place or resized from the keyboard); it hasn't been tried with a screen reader (ISSUES.md: Nothing has been tried with a screen reader). The density setting doesn't make a row with controls in it tighter, as the controls keep their own padding (left to the whole-app text size pass). The follow-ups agreed at the end of session 4 are in `ISSUES.md`, The data grid's follow-ups: keeping a focused control during a row update, measuring the row update's cost and splitting `DataGrid.java` (its event dispatch is now `GridEvents`) were done on 23 October 2026, and key providers are left.
 
 ## CSS for new widgets
 
