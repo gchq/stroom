@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ProcessingFacts.Backlogs;
 import stroom.ai.impl.tools.ProcessingFacts.Cluster;
 import stroom.ai.impl.tools.ProcessingFacts.Node;
+import stroom.ai.impl.tools.ProcessingFacts.VolumeGroup;
 import stroom.docref.DocRef;
 import stroom.job.api.JobStates.JobNodeState;
 import stroom.job.api.JobStates.JobState;
@@ -188,6 +189,7 @@ final class ProcessingExplainer {
         }
         settingsChecks();
         jobChecks(cluster);
+        volumeChecks();
         if (settings.claimTasksOnWorker()) {
             claimChecks();
         }
@@ -231,6 +233,56 @@ final class ProcessingExplainer {
                     ? ""
                     : "; the master is " + cluster.master()) + ".", evidence, null);
         }
+    }
+
+    // Whether processing's output can be written: a volume group with no volume to write to fails every write to it,
+    // and Stroom deletes nothing to make room.
+    private void volumeChecks() {
+        final List<VolumeGroup> data = facts.dataVolumeGroups();
+        final List<VolumeGroup> index = facts.indexVolumeGroups();
+        final List<VolumeGroup> dataUnwritable = data.stream().filter(group -> group.writable() == 0).toList();
+        final List<VolumeGroup> indexUnwritable = index.stream().filter(group -> group.writable() == 0).toList();
+        final Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("data_volume_groups", volumeEvidence(data));
+        evidence.put("index_volume_groups", volumeEvidence(index));
+        final String fix = "Free space, raise a volume's limit, or add or activate a volume in the group (Volumes "
+                           + "screen; " + VolumesTool.NAME + ", where offered, gives each volume's space). Stroom "
+                           + "deletes nothing to make room.";
+        final Optional<VolumeGroup> defaultData = dataUnwritable.stream().filter(VolumeGroup::isDefault).findFirst();
+        if (data.isEmpty()) {
+            report.add("volumes", BLOCKING, "There are no data volumes, so no stream can be written: the output of "
+                                            + "processing, and data received, fail to be written.",
+                    evidence, "Add a data volume (Volumes screen).");
+        } else if (defaultData.isPresent()) {
+            report.add("volumes", BLOCKING, "The default data volume group '" + defaultData.get().name() + "' has "
+                                            + "no volume a stream can be written to (its "
+                                            + defaultData.get().volumes() + " volume(s) are full, inactive or "
+                                            + "closed): the output of processing written there, and data received "
+                                            + "for feeds that name no group, fail to be written.",
+                    evidence, fix);
+        } else if (!dataUnwritable.isEmpty() || !indexUnwritable.isEmpty()) {
+            final List<String> groups = new ArrayList<>();
+            dataUnwritable.forEach(group -> groups.add("data '" + group.name() + "'"));
+            indexUnwritable.forEach(group -> groups.add("index '" + group.name() + "'"));
+            report.add("volumes", SLOWING, "Volume group(s) with no volume that can be written to: "
+                                           + String.join(", ", groups) + ". Whatever writes to them fails: streams "
+                                           + "of feeds (or pipeline appenders) that name a data group, and shards "
+                                           + "of indexes that use an index group.",
+                    evidence, fix);
+        } else {
+            report.add("volumes", OK, "Every data and index volume group has a volume that can be written to.",
+                    evidence, null);
+        }
+    }
+
+    // Each group's writable and total volumes, e.g. "1 of 2 writable".
+    private static Map<String, String> volumeEvidence(final List<VolumeGroup> groups) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        groups.forEach(group -> out.put(group.name(), group.writable() + " of " + group.volumes() + " writable"
+                                                      + (group.isDefault()
+                ? " (default)"
+                : "")));
+        return out;
     }
 
     private void settingsChecks() {

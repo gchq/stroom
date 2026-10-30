@@ -18,8 +18,10 @@ package stroom.ai.impl.tools;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
+import stroom.data.store.api.FsVolumeStates;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.index.api.IndexVolumeStates;
 import stroom.job.api.JobStates;
 import stroom.job.api.JobStates.JobState;
 import stroom.meta.api.MetaService;
@@ -67,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /// [ProcessingFacts] read from Stroom, as the user. Each read checks the permission the matching screen needs
 /// (Manage Processors, Manage Jobs, Manage Nodes, View System Info) and throws [PermissionException] without it.
@@ -86,6 +89,8 @@ class StroomProcessingFacts implements ProcessingFacts {
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorTaskService> processorTaskServiceProvider;
     private final Provider<MetaService> metaServiceProvider;
+    private final Provider<FsVolumeStates> fsVolumeStatesProvider;
+    private final Provider<IndexVolumeStates> indexVolumeStatesProvider;
     private final ProcessorFilterAccess processorFilterAccess;
     private final DocumentAccess documentAccess;
     private final SecurityContext securityContext;
@@ -98,6 +103,8 @@ class StroomProcessingFacts implements ProcessingFacts {
                           final Provider<ProcessorFilterService> processorFilterServiceProvider,
                           final Provider<ProcessorTaskService> processorTaskServiceProvider,
                           final Provider<MetaService> metaServiceProvider,
+                          final Provider<FsVolumeStates> fsVolumeStatesProvider,
+                          final Provider<IndexVolumeStates> indexVolumeStatesProvider,
                           final ProcessorFilterAccess processorFilterAccess,
                           final DocumentAccess documentAccess,
                           final SecurityContext securityContext) {
@@ -108,6 +115,8 @@ class StroomProcessingFacts implements ProcessingFacts {
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.metaServiceProvider = metaServiceProvider;
+        this.fsVolumeStatesProvider = fsVolumeStatesProvider;
+        this.indexVolumeStatesProvider = indexVolumeStatesProvider;
         this.processorFilterAccess = processorFilterAccess;
         this.documentAccess = documentAccess;
         this.securityContext = securityContext;
@@ -307,6 +316,32 @@ class StroomProcessingFacts implements ProcessingFacts {
     @Override
     public Optional<Profile> profile(final String name) {
         return processingDiagnosticsProvider.get().getProfile(name, now());
+    }
+
+    @Override
+    public List<VolumeGroup> dataVolumeGroups() {
+        // Only whether each group can be written to is given, so the user's volume permissions aren't needed.
+        return securityContext.asProcessingUserResult(() -> {
+            final FsVolumeStates states = fsVolumeStatesProvider.get();
+            return volumeGroups(states.volumesByGroup(), states.defaultGroup().orElse(null), VolumeReport::writable);
+        });
+    }
+
+    @Override
+    public List<VolumeGroup> indexVolumeGroups() {
+        return securityContext.asProcessingUserResult(() -> {
+            final IndexVolumeStates states = indexVolumeStatesProvider.get();
+            return volumeGroups(states.volumesByGroup(), states.defaultGroup().orElse(null), VolumeReport::writable);
+        });
+    }
+
+    private static <T> List<VolumeGroup> volumeGroups(final Map<String, List<T>> byGroup,
+                                                      final String defaultGroup,
+                                                      final Predicate<T> writable) {
+        return byGroup.entrySet().stream()
+                .map(entry -> new VolumeGroup(entry.getKey(), entry.getKey().equals(defaultGroup),
+                        entry.getValue().size(), (int) entry.getValue().stream().filter(writable).count()))
+                .toList();
     }
 
     private static boolean isStreamStore(final DocRef dataSource) {
