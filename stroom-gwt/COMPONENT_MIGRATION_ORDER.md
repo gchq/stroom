@@ -1367,6 +1367,15 @@ after wave 44; the audit's last wave.
 > the processor task screens, annotation setting blocks and dialog frames are one each. See
 > `wave-45.md`.
 
+## 46. The audit's follow-ups
+
+Record: [`component-migration/wave-46.md`](component-migration/wave-46.md). Added 30 October 2026,
+after wave 45.
+
+> **Done, 30 October 2026**: the XSD browser's unused images went, a read-only annotation's settings
+> are greyed (changelog), the index editors are composed as the rest, and `FloorMapAria` is
+> `AriaUtil`. See `wave-46.md`.
+
 ## Deferred: delete rather than convert
 
 **Done.** Wave 16's units 7 and 11 were deleted on 28 October 2026 (`79d9ed716d`: `ItemCell`,

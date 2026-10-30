@@ -22,7 +22,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Label;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
@@ -69,10 +69,10 @@ public class FloorMapSetScale extends Component {
 
         // The label text lives in a <td>, which names nothing on its own. Without this the dialog's
         // only input is announced as an unnamed edit box
-        distanceLabel.setId(FloorMapAria.uniqueId("floormap-label"));
-        FloorMapAria.labelledBy(distanceBox, distanceLabel.getId());
+        distanceLabel.setId(AriaUtil.uniqueId("floormap-label"));
+        AriaUtil.labelledBy(distanceBox, distanceLabel.getId());
         // The unit list shares the row, so the row label alone would not say what it selects
-        FloorMapAria.labelInnerControl(unitListBox, "Unit of the distance you typed");
+        AriaUtil.labelInnerControl(unitListBox, "Unit of the distance you typed");
     }
 
     /// @param reading What the line measures at the map's current scale.

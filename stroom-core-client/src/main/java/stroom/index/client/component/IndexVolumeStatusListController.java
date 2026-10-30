@@ -35,6 +35,7 @@ import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The index volumes its owner's criteria find ([IndexVolumeStatusList]), a page at a time.
@@ -42,27 +43,36 @@ public class IndexVolumeStatusListController extends Controller {
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
-    private final IndexVolumeStatusList view;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
+    private IndexVolumeStatusList view;
     private Consumer<ResultPage<IndexVolume>> consumer;
     private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
-    /// Made by GIN, with its content.
+    /// Made by GIN; [#attach(IndexVolumeStatusList)] gives it its list.
     ///
     /// @param eventBus          The application's event bus.
-    /// @param view              The content.
     /// @param restFactory       Finds the volumes.
     /// @param dateTimeFormatter Formats when each volume was last written to.
     @Inject
     public IndexVolumeStatusListController(final EventBus eventBus,
-                                           final IndexVolumeStatusList view,
                                            final RestFactory restFactory,
                                            final DateTimeFormatter dateTimeFormatter) {
         super(eventBus);
-        this.view = view;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    /// Attaches this to a list, e.g. one a template declares. The list is then this
+    /// controller's widget.
+    ///
+    /// @param view The list.
+    /// @return This, for its owner to keep.
+    public IndexVolumeStatusListController attach(final IndexVolumeStatusList view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         view.addColumns(dateTimeFormatter::formatWithDuration);
+        return this;
     }
 
     /// @return The selection.

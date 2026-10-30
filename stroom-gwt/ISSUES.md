@@ -1913,7 +1913,8 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
-**Confirmed** (29 October 2026, wave 42): a read-only annotation's settings aren't greyed, though
+**Fixed** (30 October 2026, wave 46, changelog entry: greyed in the read-only text colour, as the
+user chose). **Confirmed** (29 October 2026, wave 42): a read-only annotation's settings aren't greyed, though
 `SettingBlock.setReadOnly`'s doc said they were. Its only rule, `.setting-block--read-only
 .text-label`, styled nothing: no `text-label` is inside a setting block. The rule went with wave
 42's sheet work and the doc now says what happens; greying the values (e.g. a `--read-only` rule on
@@ -1925,12 +1926,13 @@ and, when there was none, for the pattern list, both with `enumeration = true`, 
 heading was never used.~~ `getList` takes the heading, and the XSD browser's Enumeration and Pattern
 Constraint stories show each. Master has it too.
 
-**Open** (29 October 2026, wave 36): eleven images in `stroom-app/src/main/resources/ui/images/xsdbrowser/`
+**Fixed** (30 October 2026, wave 46, at the user's decision: deleted by hand, as `GenerateSvgImages`
+doesn't make PNGs). ~~Eleven images in `stroom-app/src/main/resources/ui/images/xsdbrowser/`
 are named by nothing now that `xsd-browser.css`'s unused rules went (`xsdBrowser-Title.png`,
 `xsdBrowser-Title-selected.png`, `xsdTitleAttributes.png`, `xsdTitleDirectives.png`,
 `xsdTitleGroups.png`, `xsdTree01.png`, `04`, `07`, `08`, `10` and `11`). AGENTS.md keeps changes to
 `ui/images` to `GenerateSvgImages`, and these are PNGs it doesn't make, so they wait for a decision
-to delete them by hand.
+to delete them by hand.~~
 
 **Reported.**
 

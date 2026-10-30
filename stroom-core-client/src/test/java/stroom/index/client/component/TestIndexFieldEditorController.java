@@ -53,10 +53,12 @@ class TestIndexFieldEditorController {
         eventBus = Mockito.mock(EventBus.class);
         view = Mockito.mock(IndexFieldEditor.class);
         Mockito.when(view.getType()).thenReturn(FieldType.TEXT);
+        final DenseVectorFieldController denseVectorField = Mockito.mock(DenseVectorFieldController.class);
+        Mockito.when(denseVectorField.attach(Mockito.any())).thenReturn(denseVectorField);
         controller = new IndexFieldEditorController(
                 eventBus,
                 view,
-                Mockito.mock(DenseVectorFieldController.class));
+                denseVectorField);
         hideRequest = Mockito.mock(HidePopupRequestEvent.class);
         onOk = Mockito.mock(BiConsumer.class);
     }

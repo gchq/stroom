@@ -22,7 +22,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.text.client.Label;
 import stroom.widget.tickbox.client.TickBox;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
@@ -97,19 +97,19 @@ public class FloorMapGroupEdit extends Component {
         initWidget(BINDER.createAndBindUi(this));
 
         // The Name and Colour labels are <td> text, which names nothing on its own
-        nameLabel.setId(FloorMapAria.uniqueId("floormap-label"));
-        FloorMapAria.labelledBy(nameBox, nameLabel.getId());
-        colourLabel.setId(FloorMapAria.uniqueId("floormap-label"));
-        FloorMapAria.labelledBy(colourBox, colourLabel.getId());
+        nameLabel.setId(AriaUtil.uniqueId("floormap-label"));
+        AriaUtil.labelledBy(nameBox, nameLabel.getId());
+        colourLabel.setId(AriaUtil.uniqueId("floormap-label"));
+        AriaUtil.labelledBy(colourBox, colourLabel.getId());
 
         //noinspection unused e
         filterBox.addKeyUpHandler(e -> onFilterChanged());
 
         // Ties the scrolling tick-list to the "Members" heading above it, so arriving in the list
         // says what the list is
-        final String membersLabelId = FloorMapAria.uniqueId("floormap-members");
+        final String membersLabelId = AriaUtil.uniqueId("floormap-members");
         membersLabel.getElement().setId(membersLabelId);
-        FloorMapAria.labelledBy(memberScroll, membersLabelId);
+        AriaUtil.labelledBy(memberScroll, membersLabelId);
     }
 
     /// @param name The group's name.

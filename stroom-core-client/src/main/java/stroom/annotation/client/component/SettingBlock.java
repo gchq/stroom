@@ -114,7 +114,7 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
     }
 
     /// Makes the setting read only: its chooser doesn't open (the controller refuses the change too),
-    /// and its ellipsis hint is hidden.
+    /// its ellipsis hint is hidden, and its value is greyed as a read-only field's is.
     ///
     /// @param readOnly Whether the setting is read only.
     public void setReadOnly(final boolean readOnly) {

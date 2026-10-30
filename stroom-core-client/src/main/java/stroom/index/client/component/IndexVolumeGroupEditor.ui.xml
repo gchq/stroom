@@ -2,6 +2,7 @@
 <!-- An index volume group: its name, above its volumes -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:index="urn:import:stroom.index.client.component"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="indexVolumeGroupEditVolumeGroupName" label="Volume Group Name"
@@ -10,6 +11,8 @@
                         required="true">
             <form:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="list" styleName="dock-max control-box control-box--padded"/>
+        <g:SimplePanel styleName="dock-max control-box control-box--padded">
+            <index:IndexVolumeStatusList ui:field="list"/>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder>

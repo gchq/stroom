@@ -45,7 +45,7 @@ public class IndexFieldEditorController extends Controller {
     ///
     /// @param eventBus         The application's event bus.
     /// @param view             The content.
-    /// @param denseVectorField The dense vector options.
+    /// @param denseVectorField The dense vector options, attached to the content's.
     @Inject
     public IndexFieldEditorController(final EventBus eventBus,
                                       final IndexFieldEditor view,
@@ -53,8 +53,7 @@ public class IndexFieldEditorController extends Controller {
         super(eventBus);
         this.view = view;
         initWidget(view);
-        this.denseVectorField = own(denseVectorField);
-        view.setDenseVectorOptions(denseVectorField);
+        this.denseVectorField = own(denseVectorField).attach(view.getDenseVectorField());
         view.setOnTypeChange(this::onTypeChange);
     }
 

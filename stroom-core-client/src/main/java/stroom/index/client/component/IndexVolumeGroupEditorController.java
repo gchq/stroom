@@ -72,7 +72,7 @@ public class IndexVolumeGroupEditorController extends Controller {
     ///
     /// @param eventBus              The application's event bus.
     /// @param view                  The content.
-    /// @param indexVolumeStatusList The group's volumes.
+    /// @param indexVolumeStatusList The group's volumes, attached to the content's list.
     /// @param editProvider          Makes the dialog that adds or edits a volume.
     /// @param restFactory           Fetches, deletes and rescans volumes, and saves the group.
     /// @param nodeClient            Lists the nodes, whose volumes are rescanned.
@@ -85,11 +85,11 @@ public class IndexVolumeGroupEditorController extends Controller {
                                             final NodeClient nodeClient) {
         super(eventBus);
         this.view = view;
-        this.indexVolumeStatusList = own(indexVolumeStatusList);
         this.editProvider = editProvider;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
         initWidget(view);
+        this.indexVolumeStatusList = own(indexVolumeStatusList).attach(view.getList());
 
         indexVolumeStatusList.getToolbar().setName("Volume actions");
         indexVolumeStatusList.getToolbar().button(SvgImage.ADD, "New Index Volume", this::create);
@@ -100,8 +100,6 @@ public class IndexVolumeGroupEditorController extends Controller {
                 "Delete Selected Index Volumes", this::delete);
         deleteButton.setEnabled(false);
         indexVolumeStatusList.getToolbar().button(SvgImage.REFRESH, "Rescan Index Volumes", this::onRescan);
-
-        view.setList(indexVolumeStatusList);
         delayedUpdate = new DelayedUpdate(indexVolumeStatusList::refresh);
         onDispose(delayedUpdate::reset);
 

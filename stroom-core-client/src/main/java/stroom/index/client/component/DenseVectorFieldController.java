@@ -26,25 +26,35 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
+
 /// A dense vector index field's options ([DenseVectorField]), offering the AI models the user may
 /// view for its embedding and reranking models.
 public class DenseVectorFieldController extends Controller {
 
-    private final DenseVectorField view;
-    private final DocSelectionController embeddingModel;
-    private final DocSelectionController rerankModel;
+    private final Provider<DocSelectionController> docSelectionProvider;
+    private DenseVectorField view;
+    private DocSelectionController embeddingModel;
+    private DocSelectionController rerankModel;
 
-    /// Made by GIN, with its options.
+    /// Made by GIN; [#attach(DenseVectorField)] gives it its options.
     ///
     /// @param eventBus             The application's event bus.
-    /// @param view                 The options.
     /// @param docSelectionProvider Makes the models' pickers.
     @Inject
     public DenseVectorFieldController(final EventBus eventBus,
-                                      final DenseVectorField view,
                                       final Provider<DocSelectionController> docSelectionProvider) {
         super(eventBus);
-        this.view = view;
+        this.docSelectionProvider = docSelectionProvider;
+    }
+
+    /// Attaches this to a field's options, e.g. ones a template declares, and the models' pickers
+    /// to the options' model boxes. The options are then this controller's widget.
+    ///
+    /// @param view The options.
+    /// @return This, for its owner to keep.
+    public DenseVectorFieldController attach(final DenseVectorField view) {
+        this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
 
         embeddingModel = make(docSelectionProvider);
@@ -56,6 +66,7 @@ public class DenseVectorFieldController extends Controller {
         rerankModel.attach(view.getRerankModelBox());
         rerankModel.setIncludedTypes(OpenAIModelDoc.TYPE);
         rerankModel.setRequiredPermissions(DocumentPermission.VIEW);
+        return this;
     }
 
     /// Shows a field's options.

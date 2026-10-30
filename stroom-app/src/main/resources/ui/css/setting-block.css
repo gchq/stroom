@@ -72,6 +72,11 @@
     display: none;
 }
 
+/* Its value greyed, as a read-only field's is */
+.setting-block.setting-block--read-only .setting-block__setting {
+    color: var(--control__text-color--readonly);
+}
+
 /* A setting's ⋮ is its button (SettingBlock): with the keyboard focus it shows, with a focus ring,
    and its setting is highlighted as on a hover */
 .setting-block__icon:focus-visible {

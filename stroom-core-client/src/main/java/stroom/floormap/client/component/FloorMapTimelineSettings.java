@@ -20,7 +20,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.component.client.Component;
 import stroom.widget.datepicker.client.component.DateTimeBox;
 import stroom.widget.tickbox.client.TickBox;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -57,8 +57,8 @@ public class FloorMapTimelineSettings extends Component {
         // The visible "Start Date" and "End Date" text is a plain Label beside each box, not a
         // <label for>, and DateTimeBox is a composite whose root is a div, so there is nothing for
         // a `for` to reach even if it were one. Name them directly instead
-        FloorMapAria.group(startDateTimeBox, "Timeline start date and time");
-        FloorMapAria.group(endDateTimeBox, "Timeline end date and time");
+        AriaUtil.group(startDateTimeBox, "Timeline start date and time");
+        AriaUtil.group(endDateTimeBox, "Timeline end date and time");
         showAllButton.setOnClick(() -> onShowAll.run());
         startDateTimeBox.addValueChangeHandler(e -> onStartChange.run());
         endDateTimeBox.addValueChangeHandler(e -> onEndChange.run());

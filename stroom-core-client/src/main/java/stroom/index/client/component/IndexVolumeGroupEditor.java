@@ -22,8 +22,6 @@ import stroom.widget.form.client.TextBox;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// An index volume group: its name, above its volumes.
@@ -34,9 +32,9 @@ public class IndexVolumeGroupEditor extends Component {
     @UiField
     TextBox name;
     @UiField
-    SimplePanel list;
+    IndexVolumeStatusList list;
 
-    /// Makes an empty form, with no volumes until [#setList(IsWidget)].
+    /// Makes an empty form, with its volumes empty until their controller fills them.
     public IndexVolumeGroupEditor() {
         initWidget(BINDER.createAndBindUi(this));
     }
@@ -56,9 +54,9 @@ public class IndexVolumeGroupEditor extends Component {
         this.name.setText(name);
     }
 
-    /// @param list The group's volumes.
-    public void setList(final IsWidget list) {
-        this.list.setWidget(list.asWidget());
+    /// @return The group's volumes, which its controller attaches the list's controller to.
+    public IndexVolumeStatusList getList() {
+        return list;
     }
 
 

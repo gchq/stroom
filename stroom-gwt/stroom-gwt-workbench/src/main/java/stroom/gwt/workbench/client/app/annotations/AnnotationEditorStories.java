@@ -31,6 +31,7 @@ import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -446,6 +447,14 @@ public final class AnnotationEditorStories {
                 .withPlay(play -> {
                     waitForAnnotation(play);
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
+                    // A setting's value is greyed, as a read-only field's is, not drawn as its label is
+                    // (its rule once styled nothing)
+                    final Value<String> settingColour = play
+                            .querySelector(".setting-block--read-only .setting-block__setting").computedStyle("color");
+                    final Value<String> labelColour = play
+                            .querySelector(".setting-block--read-only .form-group__label").computedStyle("color");
+                    play.expect("the value's colour is the label's",
+                            () -> settingColour.get().equals(labelColour.get())).toBeFalsy();
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // The Events tab as an editable partner for EventsReadOnly

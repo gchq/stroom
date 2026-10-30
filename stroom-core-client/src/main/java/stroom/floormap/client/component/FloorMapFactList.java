@@ -21,8 +21,8 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
+import stroom.widget.util.client.AriaUtil;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.FloorMapAria;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -63,7 +63,7 @@ public class FloorMapFactList extends Component {
     private final MultiSelectionModelImpl<FactListRow> selectionModel;
     // Minted for each panel: two floor maps open at once mustn't share an id, or each canvas's
     // aria-describedby would name whichever came first in the page
-    private final String gridElementId = FloorMapAria.uniqueId("floormap-fact-list-grid");
+    private final String gridElementId = AriaUtil.uniqueId("floormap-fact-list-grid");
 
     private Consumer<List<FactListRow>> onSelectionChange = selected -> {
     };

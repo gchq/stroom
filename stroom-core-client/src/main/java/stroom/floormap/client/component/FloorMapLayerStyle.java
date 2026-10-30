@@ -27,7 +27,7 @@ import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.RadioGroup;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.text.client.Html;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
@@ -123,7 +123,7 @@ public class FloorMapLayerStyle extends Component {
         // group is named by its cell too, and each radio button by its own text
         labelledBy(graphicLabel, modeGroup);
         // A selection box: its combobox is the text box inside it
-        FloorMapAria.labelledByInnerControl(shapeBox, id(shapeLabel));
+        AriaUtil.labelledByInnerControl(shapeBox, id(shapeLabel));
         labelledBy(colourLabel, colourBox);
         // The icon grid is a group of choices rather than one control, so the row label names the
         // group, as it does the asset picker's
@@ -131,7 +131,7 @@ public class FloorMapLayerStyle extends Component {
         labelledBy(imageLabel, assetPickerPanel);
         // The picker is a button named by the value it shows, so the row's name hangs off its
         // container as a group
-        FloorMapAria.group(assetPickerPanel, "Image");
+        AriaUtil.group(assetPickerPanel, "Image");
         uploadButton.setOnClick(() -> onUpload.run());
         //noinspection unused e
         shapeBox.addValueChangeHandler(e -> onChange.run());
@@ -236,13 +236,13 @@ public class FloorMapLayerStyle extends Component {
 
     // Names a control after the text in its row's label cell
     private static void labelledBy(final TableCellElement label, final UIObject control) {
-        FloorMapAria.labelledBy(control, id(label));
+        AriaUtil.labelledBy(control, id(label));
     }
 
     // The label cell's id, given one
     private static String id(final TableCellElement label) {
         if (label.getId() == null || label.getId().isEmpty()) {
-            label.setId(FloorMapAria.uniqueId("floormap-label"));
+            label.setId(AriaUtil.uniqueId("floormap-label"));
         }
         return label.getId();
     }

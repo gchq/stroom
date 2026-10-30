@@ -40,8 +40,8 @@ import stroom.floormap.shared.TypeStyle;
 import stroom.util.client.Console;
 import stroom.widget.component.client.Component;
 import stroom.widget.text.client.Label;
+import stroom.widget.util.client.AriaUtil;
 import stroom.widget.util.client.CssProperties;
-import stroom.widget.util.client.FloorMapAria;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -248,7 +248,7 @@ public class FloorMapCanvas extends Component implements RequiresResize {
     /// document's Map and Editor tabs — the second would fill its background with the
     /// first's pattern and inherit its pan and zoom. Stable across frames rather than
     /// minted per draw, so redrawing does not leak ids.
-    private final String gridPatternId = FloorMapAria.uniqueId("floormap-grid-major");
+    private final String gridPatternId = AriaUtil.uniqueId("floormap-grid-major");
 
     /// Resolves an entity id to its display name, for captioning a cluster drawn
     /// around the tracked entity. Supplied by the controller; `null` until

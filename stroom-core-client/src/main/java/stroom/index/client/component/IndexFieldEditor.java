@@ -28,7 +28,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -54,6 +53,8 @@ public class IndexFieldEditor extends Component {
     TickBox caseSensitive;
     @UiField
     SimplePanel denseVectorOptions;
+    @UiField
+    DenseVectorField denseVectorField;
 
     private Runnable onTypeChange = () -> {
     };
@@ -141,10 +142,9 @@ public class IndexFieldEditor extends Component {
         this.caseSensitive.setValue(caseSensitive);
     }
 
-    /// @param options The dense vector options, which their controller makes with their own
-    ///                content.
-    public void setDenseVectorOptions(final IsWidget options) {
-        this.denseVectorOptions.setWidget(options);
+    /// @return The dense vector options, which its controller attaches their controller to.
+    public DenseVectorField getDenseVectorField() {
+        return denseVectorField;
     }
 
     /// @param visible Whether the dense vector options are shown.

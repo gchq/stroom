@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client"
              xmlns:l="urn:import:stroom.widget.selection.client"
+             xmlns:index="urn:import:stroom.index.client.component"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="indexFieldType" label="Type"
@@ -37,6 +38,8 @@
                         screenReaderText="When unticked, 'Error' matches 'error'.">
             <tickbox:TickBox ui:field="caseSensitive" identity="indexFieldCaseSensitive" label="Case Sensitive"/>
         </form:FormGroup>
-        <g:SimplePanel ui:field="denseVectorOptions"/>
+        <g:SimplePanel ui:field="denseVectorOptions">
+            <index:DenseVectorField ui:field="denseVectorField"/>
+        </g:SimplePanel>
     </g:FlowPanel>
 </ui:UiBinder> 

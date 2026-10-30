@@ -21,13 +21,11 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.UIObject;
 
-/// ARIA attribute helpers for the floor map's views.
+/// ARIA attribute helpers for form rows that have nothing a `<label for>` can point at (written for
+/// the floor map's views, which use them most).
 ///
-/// Exists because the floor map is unusually short of things a
-/// `<label for>` can point at. A `for` attribute may only reference a
-/// *labelable* element — an `input`, `select`, `textarea`
-/// or `button` — and much of what this feature puts in a form row is not
-/// one of those:
+/// A `for` attribute may only reference a *labelable* element — an `input`, `select`, `textarea`
+/// or `button` — and much of what a form row can hold is not one of those:
 ///
 /// - `DateTimeBox` and `SelectionBox` are composites whose root is
 ///   a wrapper `div` with the real input nested inside, so
@@ -46,7 +44,7 @@ import com.google.gwt.user.client.ui.UIObject;
 /// Prefer `FormGroup.setIdentity()` to anything here when the row holds a
 /// single plain input: a real `<label for>` also makes the visible label
 /// click-to-focus, which `aria-label` does not.
-public final class FloorMapAria {
+public final class AriaUtil {
 
     private static final String ARIA_LABEL = "aria-label";
     private static final String ARIA_LABELLEDBY = "aria-labelledby";
@@ -58,7 +56,7 @@ public final class FloorMapAria {
     /// [#labelInnerControl(UIObject, String)].
     private static final String[] FOCUSABLE_TAGS = {"input", "select", "textarea", "button", "a"};
 
-    private FloorMapAria() {
+    private AriaUtil() {
         // Utility class.
     }
 

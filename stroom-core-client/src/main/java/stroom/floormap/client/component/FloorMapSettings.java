@@ -30,7 +30,7 @@ import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.selection.client.SelectionBoxCell;
 import stroom.widget.selection.client.SimpleSelectionItemWrapper;
 import stroom.widget.selection.client.SimpleSelectionListModel;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -393,11 +393,11 @@ public class FloorMapSettings extends Component {
         if (cell == null) {
             return;
         }
-        // FloorMapAria rather than a local tag scan: it is the same feature's helper, it
+        // AriaUtil rather than a local tag scan: it is the same feature's helper, it
         // skips disabled and tabindex="-1" candidates that must not be focused, and it
         // reports whether it found anything — a silent no-op here would look exactly like
         // a working restore.
-        FloorMapAria.focusFirstFocusable(cell);
+        AriaUtil.focusFirstFocusable(cell);
     }
 
     // The row's cell for a column (the grid marks each cell with its column's index)

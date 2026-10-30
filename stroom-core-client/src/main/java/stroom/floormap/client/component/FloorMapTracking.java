@@ -25,7 +25,7 @@ import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.SingleSelectionEventManager;
-import stroom.widget.util.client.FloorMapAria;
+import stroom.widget.util.client.AriaUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -71,7 +71,7 @@ public class FloorMapTracking extends Component {
     private final SingleSelectionModel<EntityEntry> selectionModel = new SingleSelectionModel<>();
     // Minted for each panel: two floor maps open at once mustn't share an id, or each canvas's
     // aria-describedby would name whichever came first in the page
-    private final String gridElementId = FloorMapAria.uniqueId("floormap-tracking-grid");
+    private final String gridElementId = AriaUtil.uniqueId("floormap-tracking-grid");
     // Every entity as last given, filtered to the rows shown by applyFilter(), so Show Facts can
     // filter again at once
     private final List<EntityEntry> allEntities = new ArrayList<>();
