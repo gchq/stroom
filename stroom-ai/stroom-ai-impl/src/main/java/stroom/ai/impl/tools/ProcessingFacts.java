@@ -108,6 +108,15 @@ interface ProcessingFacts {
     /// @return The profile as it applies now, or empty if there is none of that name. Needs Manage Processors.
     Optional<Profile> profile(String name);
 
+    /// @return Each data volume group, in name order, with how many of its volumes a stream could be written to.
+    /// Read whatever the user's permissions, as only whether each group can be written to is given (as the volumes
+    /// tool's reduced view).
+    List<VolumeGroup> dataVolumeGroups();
+
+    /// @return Each index volume group, in name order, with how many of its volumes (on any node) a shard could be
+    /// created on. Read whatever the user's permissions, as [#dataVolumeGroups()].
+    List<VolumeGroup> indexVolumeGroups();
+
     /// The cluster's nodes.
     ///
     /// @param nodes  Each node, highest priority first.
@@ -130,6 +139,16 @@ interface ProcessingFacts {
     /// @param byFilter Created, Queued and Processing counts, by filter id.
     /// @param capped   Whether more tasks exist than were read.
     record Backlogs(Map<Integer, Map<TaskStatus, Long>> byFilter, boolean capped) {
+
+    }
+
+    /// A volume group.
+    ///
+    /// @param name      Its name.
+    /// @param isDefault Whether it is the default group (used when nothing names one).
+    /// @param volumes   How many volumes it has.
+    /// @param writable  How many of them can be written to: Active and not full.
+    record VolumeGroup(String name, boolean isDefault, int volumes, int writable) {
 
     }
 }

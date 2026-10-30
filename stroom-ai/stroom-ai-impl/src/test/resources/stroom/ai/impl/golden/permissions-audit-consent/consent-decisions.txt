@@ -13,6 +13,7 @@
 - document_links (read-only, reads untrusted content): RUN in every situation
 - elastic_index_templates (read-only, reads untrusted content): RUN in every situation
 - explain_processing (read-only, reads untrusted content): RUN in every situation
+- explain_retention (read-only, reads untrusted content): RUN in every situation
 - fetch_events (read-only, reads untrusted content): RUN in every situation
 - find_in_content (read-only, reads untrusted content): RUN in every situation
 - folder_contents (read-only, reads untrusted content): RUN in every situation
@@ -51,6 +52,7 @@
 - table (read-only, reads untrusted content): RUN in every situation
 - task_list (read-only, reads only trusted content): RUN in every situation
 - validate_stroomql (read-only, reads untrusted content): RUN in every situation
+- volumes (read-only, reads untrusted content): RUN in every situation
 - wc (read-only, reads only trusted content): RUN in every situation
 - write_file (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}
 - xpath (read-only, reads untrusted content): RUN in every situation

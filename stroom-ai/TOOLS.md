@@ -41,6 +41,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `document_links` | Follows dependency links (dependants or dependencies) from documents | all | yes | | Manage Processors | View | workspace | |
 | `elastic_index_templates` | An Elastic Index's index template and its component templates, read from its cluster, each by name with its JSON body | all | yes | | | View | no | none (`check_index_template` and `propose_index_template` take templates the user gives) |
 | `explain_processing` | Why processing isn't happening (or is slow) for a pipeline, feed, stream or the whole cluster, link by link from nodes and jobs to each filter's tracker, profile, tasks and priority | all | yes | Manage Processors | Manage Jobs, Manage Nodes, View System Info | View | no | `processing_status` (part) |
+| `explain_retention` | How long data is kept and why: the data retention rules in the order they apply, the rule that keeps a feed's or stream's data and until when, what the rules would delete now, and the jobs that delete | all | yes | | Manage Policies, Manage Jobs | | no | |
 | `fetch_events` | Fetches the events behind StreamId/EventId rows into an XML file | all | yes | View Data | | | yes (workspace) | `read_stream`, `locate_event` (part) |
 | `find_in_content` | Finds text in documents' content (XSLTs, converters, dictionaries) | all | yes | | | View | workspace | `find_documents` (with `content`) |
 | `folder_contents` | An Explorer folder's documents, streams, processor filters and task counts; finds documents by name | all | yes | | Manage Processors | View | no | `find_documents`, `processing_status` (part) |
@@ -79,6 +80,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `table` | Queries a workspace table with Stroom expressions | all | yes | | | | yes (workspace) | |
 | `task_list` | Keeps the task list the user sees | all | yes | | | | yes (chat) | |
 | `validate_stroomql` | Checks a StroomQL query without running it | all | yes | | | Use | workspace | |
+| `volumes` | The data and index volume groups, whether each can still be written to, each volume's state and space, and what Stroom does as volumes fill | all | yes | | Manage Volumes | | no | |
 | `wc` | Counts a workspace file's lines and bytes | all | yes | | | | yes (workspace) | |
 | `write_file` | Writes a file in the workspace's `/outputs/` | Agent | no | | | | yes (workspace) | |
 | `xpath` | Runs XPath on a workspace XML file | all | yes | | | | yes (workspace) | |

@@ -85,7 +85,8 @@ public final class BuiltInToolGroups {
                     "wait_for_processing",
                     "processing_status",
                     "processor_tasks",
-                    "explain_processing"),
+                    "explain_processing",
+                    "explain_retention"),
             INDEXING, List.of(
                     "draft_index_mapping",
                     "verify_index",
@@ -106,7 +107,8 @@ public final class BuiltInToolGroups {
                     "propose_extraction_pipeline"),
             ADMINISTRATION, List.of(
                     "config_properties",
-                    "server_tasks")));
+                    "server_tasks",
+                    "volumes")));
 
     private BuiltInToolGroups() {
         // Static only.

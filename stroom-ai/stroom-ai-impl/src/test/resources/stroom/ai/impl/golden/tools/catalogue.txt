@@ -1,6 +1,6 @@
 # The built-in tools the model is shown
 
-Built-in tools: 52
+Built-in tools: 54
 
 ## Offered in each mode (in a chat with no MCP servers)
 
@@ -514,7 +514,7 @@ offered in modes:
 
 ### Description
 
-Explains why processing isn't happening, or is slow, and in what order filters get work: e.g. 'why is this pipeline (or feed, or stream) not processing?', 'why is this filter starved?', 'is processing healthy?'. Give one of pipeline_uuid, feed or stream_id, or none for the whole cluster. It traces the chain: the nodes (enabled, answering, the master), the processing settings, the jobs processing needs (Processor Task Creator, Data Processor, the reaper and heartbeat: enabled, on which nodes, task limits, last and next runs, asked of every node), each processor filter (enabled, its tracker, stream create time window, feed dependencies, polling), its processor profile (node group, periods, threads each node gets now), its tasks and where they wait (locked streams, limits), and its priority among the filters ahead of it. Each link is ok, blocking, slowing or not checked (the user lacks the permission to see it); 'answer' and 'first_blocker' say what stops it, and each finding's 'fix' what would help. Read-only: it changes nothing. It doesn't explain why a task that ran failed: Stroom keeps no reason for that.
+Explains why processing isn't happening, or is slow, and in what order filters get work: e.g. 'why is this pipeline (or feed, or stream) not processing?', 'why is this filter starved?', 'is processing healthy?'. Give one of pipeline_uuid, feed or stream_id, or none for the whole cluster. It traces the chain: the nodes (enabled, answering, the master), the processing settings, the jobs processing needs (Processor Task Creator, Data Processor, the reaper and heartbeat: enabled, on which nodes, task limits, last and next runs, asked of every node), each processor filter (enabled, its tracker, stream create time window, feed dependencies, polling), its processor profile (node group, periods, threads each node gets now), its tasks and where they wait (locked streams, limits), its priority among the filters ahead of it, and whether output can be written (volume groups with no volume to write to). Each link is ok, blocking, slowing or not checked (the user lacks the permission to see it); 'answer' and 'first_blocker' say what stops it, and each finding's 'fix' what would help. Read-only: it changes nothing. It doesn't explain why a task that ran failed: Stroom keeps no reason for that.
 
 ### Parameters
 
@@ -530,6 +530,41 @@ Explains why processing isn't happening, or is slow, and in what order filters g
     },
     "stream_id" : {
       "description" : "A stream (meta) id whose processing to explain.",
+      "type" : "integer"
+    }
+  },
+  "required" : [ ],
+  "type" : "object"
+}
+
+================================================================================
+## explain_retention
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Explains how long Stroom keeps data and why, from its data retention rules: e.g. 'how long is this feed's data kept?', 'when will this stream be deleted?', 'why was this data deleted?', 'what would the rules delete?', 'what happens to old data?'. Gives the rules in the order they apply (number, name, period, what each matches, enabled); with feed, the rule that applies to the newest stream of each of its types and the time it is kept until; with stream_id, that stream's; with impact, how many streams the rules would delete now, by rule, feed and type; and the state of the jobs that delete. 'behaviour' says how Stroom applies the rules: answer from it, not from how other products behave. The rules and impact need the Manage Policies permission; without it, each stream's rule is still given. Read-only: it changes nothing.
+
+### Parameters
+
+{
+  "properties" : {
+    "feed" : {
+      "description" : "A feed's name: the rule that keeps its streams, for the newest of each stream type.",
+      "type" : "string"
+    },
+    "impact" : {
+      "description" : "Also count the streams the rules would delete now, by rule, feed and type (as the Data Retention screen's Impact tab; it can take a while on a large store).",
+      "type" : "boolean"
+    },
+    "stream_id" : {
+      "description" : "A stream (meta) id: the rule that keeps it.",
       "type" : "integer"
     }
   },
@@ -2930,6 +2965,38 @@ Checks a StroomQL query without running it: OK (and whether it groups rows), or 
     }
   },
   "required" : [ "query" ],
+  "type" : "object"
+}
+
+================================================================================
+## volumes
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Stroom's data volumes (where streams are stored) and index volumes (where Lucene index shards are stored), and how Stroom treats them as they fill: e.g. 'are the volumes full?', 'why is data no longer being written?', 'what happens when a volume fills up?'. For each volume group: whether it can still be written to and which is the default; with the Manage Volumes permission, also each volume's path (or S3 bucket) or node, status, limit, total, used and free space, and whether it is full. 'behaviour' says what Stroom does with full volumes: answer from it, not from how other products behave. Read-only: it changes nothing.
+
+### Parameters
+
+{
+  "properties" : {
+    "group" : {
+      "description" : "Only this volume group.",
+      "type" : "string"
+    },
+    "kind" : {
+      "description" : "Data volumes, index volumes, or both (the default).",
+      "enum" : [ "data", "index", "both" ],
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 

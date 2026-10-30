@@ -96,8 +96,9 @@ class ExplainProcessingTool extends AbstractBuiltInTool {
                              + "nodes, task limits, last and next runs, asked of every node), each processor "
                              + "filter (enabled, its tracker, stream create time window, feed dependencies, "
                              + "polling), its processor profile (node group, periods, threads each node gets now), "
-                             + "its tasks and where they wait (locked streams, limits), and its priority among the "
-                             + "filters ahead of it. Each link is ok, blocking, slowing or not checked (the user "
+                             + "its tasks and where they wait (locked streams, limits), its priority among the "
+                             + "filters ahead of it, and whether output can be written (volume groups with no "
+                             + "volume to write to). Each link is ok, blocking, slowing or not checked (the user "
                              + "lacks the permission to see it); 'answer' and 'first_blocker' say what stops it, "
                              + "and each finding's 'fix' what would help. Read-only: it changes nothing. It doesn't "
                              + "explain why a task that ran failed: Stroom keeps no reason for that.")

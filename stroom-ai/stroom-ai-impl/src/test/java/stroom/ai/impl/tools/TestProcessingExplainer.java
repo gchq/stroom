@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.ProcessingFacts.Cluster;
 import stroom.ai.impl.tools.ProcessingFacts.Node;
+import stroom.ai.impl.tools.ProcessingFacts.VolumeGroup;
 import stroom.docref.DocRef;
 import stroom.job.api.JobStates.JobNodeState;
 import stroom.job.api.JobStates.JobState;
@@ -67,6 +68,44 @@ class TestProcessingExplainer {
         assertThat(result.get("answer")).isEqualTo("Nothing found stopping processing.");
         assertThat(result).doesNotContainKeys("first_blocker", "not_checked");
         assertThat(states(result)).allMatch(state -> state.equals(ProcessingExplainer.OK));
+    }
+
+    @Test
+    void aDefaultDataVolumeGroupThatCantBeWrittenToBlocksProcessing() {
+        facts.dataVolumeGroups = List.of(new VolumeGroup("Default Volume Group", true, 2, 0),
+                new VolumeGroup("Archive", false, 1, 1));
+        facts.pipelineFilters.put("p1", List.of(filter(1, 10).build()));
+
+        final Map<String, Object> blocker = firstBlocker(explainPipeline());
+
+        assertThat(blocker.get("link")).isEqualTo("volumes");
+        assertThat(String.valueOf(blocker.get("finding"))).contains("'Default Volume Group'")
+                .contains("2 volume(s) are full, inactive or closed");
+        assertThat(String.valueOf(blocker.get("fix"))).contains("deletes nothing to make room")
+                .contains(VolumesTool.NAME);
+        assertThat(String.valueOf(blocker.get("evidence"))).contains("Default Volume Group=0 of 2 writable (default)")
+                .contains("Archive=1 of 1 writable");
+    }
+
+    @Test
+    void otherVolumeGroupsThatCantBeWrittenToSlowProcessing() {
+        facts.dataVolumeGroups = List.of(new VolumeGroup("Default Volume Group", true, 1, 1),
+                new VolumeGroup("Archive", false, 1, 0));
+        facts.indexVolumeGroups = List.of(new VolumeGroup("Indexes", true, 2, 0));
+        facts.pipelineFilters.put("p1", List.of(filter(1, 10).build()));
+
+        final Map<String, Object> volumes = check(explainPipeline(), "volumes");
+
+        assertThat(volumes.get("state")).isEqualTo(ProcessingExplainer.SLOWING);
+        assertThat(String.valueOf(volumes.get("finding"))).contains("data 'Archive', index 'Indexes'");
+    }
+
+    @Test
+    void noDataVolumesAtAllBlockProcessing() {
+        facts.dataVolumeGroups = List.of();
+
+        assertThat(String.valueOf(firstBlocker(new ProcessingExplainer(facts).explainCluster()).get("finding")))
+                .contains("There are no data volumes");
     }
 
     @Test

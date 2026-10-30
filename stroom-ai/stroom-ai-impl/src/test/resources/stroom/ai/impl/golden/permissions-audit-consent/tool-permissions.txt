@@ -55,6 +55,83 @@ Needs: Manage Processors
 - nothing: REFUSED or limited: You need the Manage Processors permission to see processing, as the Processors tab does.
 - admin: runs (the same as with everything)
 
+## explain_retention {"feed":"TEST-FEED"}
+Needs: Manage Policies, Manage Jobs
+- everything: runs: {
+- without Manage Policies: REFUSED or limited: {
+      "view" : "Reduced view: you don't have the Manage Policies permission, so the rules themselves, and what they would delete, aren't shown; the rule that keeps each of your streams is, as the Data screen shows it. Someone with Manage Policies (the Data Retention screen) can see them all.",
+      "streams_note" : "No streams of feed 'TEST-FEED' that you can view.",
+      "streams" : [ ],
+      "jobs" : {
+        "Policy Based Data Retention" : "No such job.",
+        "Data Delete" : "No such job."
+      },
+      "behaviour" : [ "Retention is by age alone: a stream is deleted once it is older (by its create time) than th…
+- without Manage Jobs: REFUSED or limited: {
+      "rules" : [ {
+        "number" : 1,
+        "name" : "Test feed",
+        "keep" : "30 Days",
+        "matches" : "AND {Feed = TEST-FEED}",
+        "enabled" : true
+      } ],
+      "streams_note" : "No streams of feed 'TEST-FEED' that you can view.",
+      "streams" : [ ],
+      "jobs" : {
+        "Policy Based Data Retention" : "Not checked: it needs the Manage Jobs permission.",
+        "Data Delete" : "Not checked: it needs the Manage Jobs permission."
+      },
+      "behaviour" : [ "Retention is by age alone: a stream is deleted once it is older (by its create time) than the period of the rule that applies to it. Disk space plays no pa…
+- nothing: REFUSED or limited: {
+      "view" : "Reduced view: you don't have the Manage Policies permission, so the rules themselves, and what they would delete, aren't shown; the rule that keeps each of your streams is, as the Data screen shows it. Someone with Manage Policies (the Data Retention screen) can see them all.",
+      "streams_note" : "No streams of feed 'TEST-FEED' that you can view.",
+      "streams" : [ ],
+      "jobs" : {
+        "Policy Based Data Retention" : "Not checked: it needs the Manage Jobs permission.",
+        "Data Delete" : "Not checked: it needs the Manage Jobs permission."
+      },
+      "behaviour" : [ "Retention is by ag…
+- admin: runs (the same as with everything)
+
+## volumes {}
+Needs: Manage Volumes
+- everything: runs: {
+- without Manage Volumes: REFUSED or limited: {
+      "view" : "Reduced view: you don't have the Manage Volumes permission, so only whether each group can still be written to is shown, not its volumes' paths or sizes. Someone with Manage Volumes (the Volumes screen) can see them.",
+      "data_volume_groups" : [ {
+        "group" : "Default Volume Group",
+        "default" : true,
+        "writable" : true,
+        "volume_count" : 1,
+        "writable_volume_count" : 1
+      } ],
+      "index_volume_groups" : [ {
+        "group" : "Default Volume Group",
+        "default" : true,
+        "writable" : false,
+        "nodes_writable" : 0,
+        "nodes_not_writable" : 1
+      } ],
+      "behaviour" : …
+- nothing: REFUSED or limited: {
+      "view" : "Reduced view: you don't have the Manage Volumes permission, so only whether each group can still be written to is shown, not its volumes' paths or sizes. Someone with Manage Volumes (the Volumes screen) can see them.",
+      "data_volume_groups" : [ {
+        "group" : "Default Volume Group",
+        "default" : true,
+        "writable" : true,
+        "volume_count" : 1,
+        "writable_volume_count" : 1
+      } ],
+      "index_volume_groups" : [ {
+        "group" : "Default Volume Group",
+        "default" : true,
+        "writable" : false,
+        "nodes_writable" : 0,
+        "nodes_not_writable" : 1
+      } ],
+      "behaviour" : …
+- admin: runs (the same as with everything)
+
 ## folder_contents {"folder":"folder-uuid"}
 Needs: View (document)
 - everything: runs: Folder 'Test' (/Test, uuid folder-uuid, [Test](?action=open-doc&docType=Folder&docUuid=folder-uuid))

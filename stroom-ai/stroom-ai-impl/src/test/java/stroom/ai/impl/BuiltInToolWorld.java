@@ -55,9 +55,17 @@ import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.impl.script.ScriptStore;
 import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataService;
+import stroom.data.store.api.FsVolumeStates;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -76,8 +84,12 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.Dependency;
+import stroom.index.api.IndexVolumeStates;
+import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.job.api.JobStates;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.pipeline.cache.SchemaPool;
@@ -89,6 +101,8 @@ import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessingDiagnostics;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ResultStoreManager;
@@ -237,6 +251,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("processor_tasks", "{\"mode\":\"list\"}"),
             Map.entry("explain_processing", "{\"pipeline_uuid\":\"pipeline-uuid\"}"),
             Map.entry("server_tasks", "{}"),
+            Map.entry("volumes", "{}"),
+            Map.entry("explain_retention", "{\"feed\":\"TEST-FEED\"}"),
             Map.entry("document_links", "{\"uuids\":[\"pipeline-uuid\"]}"),
             Map.entry("find_in_content", "{\"pattern\":\"HOST_TO_LOCATION\",\"uuids\":[\"xslt-uuid\"]}"),
             Map.entry("xslt_lookups", "{\"uuids\":[\"xslt-uuid\"]}"),
@@ -540,6 +556,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(ProcessorTaskService.class).toInstance(Mockito.mock(ProcessorTaskService.class));
                 bind(ProcessingDiagnostics.class).toInstance(processingDiagnostics());
                 bind(JobStates.class).toInstance(Mockito.mock(JobStates.class));
+                bind(FsVolumeStates.class).toInstance(fsVolumeStates());
+                bind(IndexVolumeStates.class).toInstance(indexVolumeStates());
+                bind(DataRetentionRulesProvider.class).toInstance(retentionRules());
                 bind(ClusterNodeManager.class).toInstance(clusterNodeManager());
                 bind(TaskResource.class).toInstance(Mockito.mock(TaskResource.class));
                 bind(TaskContextFactory.class).toInstance(new SimpleTaskContextFactory());
@@ -622,6 +641,12 @@ public final class BuiltInToolWorld implements AutoCloseable {
         Mockito.when(securityContext.asUserResult(Mockito.<UserRef>any(), Mockito.any(Supplier.class)))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(securityContext.getUserIdentityForAudit()).thenReturn("tester");
+        Mockito.when(securityContext.asProcessingUserResult(Mockito.any(Supplier.class)))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
+        Mockito.doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(0).run();
+            return null;
+        }).when(securityContext).asProcessingUser(Mockito.any(Runnable.class));
     }
 
     // A workspace held in memory, with a few files to work on.
@@ -690,6 +715,51 @@ public final class BuiltInToolWorld implements AutoCloseable {
         Mockito.when(diagnostics.getSettings()).thenReturn(new ProcessingDiagnostics.Settings(false, true, true, true,
                 true, 1000, 1000, Duration.ofMinutes(10), Duration.ofMinutes(1)));
         return diagnostics;
+    }
+
+    // One data volume, half full, in the default group, for volumes.
+    private static FsVolumeStates fsVolumeStates() {
+        final FsVolumeStates states = Mockito.mock(FsVolumeStates.class);
+        Mockito.when(states.volumesByGroup()).thenReturn(Map.of("Default Volume Group", List.of(FsVolume.builder()
+                .path("/stroom/volumes/defaultStreamVolume")
+                .status(VolumeUseStatus.ACTIVE)
+                .byteLimit(900L * 1024 * 1024 * 1024)
+                .volumeType(FsVolumeType.STANDARD)
+                .volumeState(new FsVolumeState(1, 1, 500L * 1024 * 1024 * 1024, 500L * 1024 * 1024 * 1024,
+                        1000L * 1024 * 1024 * 1024, 0L))
+                .build())));
+        Mockito.when(states.defaultGroup()).thenReturn(Optional.of("Default Volume Group"));
+        return states;
+    }
+
+    // One index volume on node1, full, in the default group, for volumes.
+    private static IndexVolumeStates indexVolumeStates() {
+        final IndexVolumeStates states = Mockito.mock(IndexVolumeStates.class);
+        Mockito.when(states.volumesByGroup()).thenReturn(Map.of("Default Volume Group", List.of(IndexVolume.builder()
+                .nodeName("node1")
+                .path("/stroom/volumes/defaultIndexVolume")
+                .state(VolumeUseState.ACTIVE)
+                .bytesLimit(100L * 1024 * 1024 * 1024)
+                .bytesUsed(100L * 1024 * 1024 * 1024)
+                .bytesFree(900L * 1024 * 1024 * 1024)
+                .bytesTotal(1000L * 1024 * 1024 * 1024)
+                .build())));
+        Mockito.when(states.defaultGroup()).thenReturn(Optional.of("Default Volume Group"));
+        return states;
+    }
+
+    // A rule deleting TEST-FEED's data after 30 days, for explain_retention.
+    private static DataRetentionRulesProvider retentionRules() {
+        final DataRetentionRulesProvider provider = Mockito.mock(DataRetentionRulesProvider.class);
+        final DataRetentionRules rules = DataRetentionRules.builder()
+                .uuid("rules-uuid")
+                .name("Data Retention Rules")
+                .rules(List.of(DataRetentionRule.ageRule(1, 0L, "Test feed", true, ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, "TEST-FEED")
+                        .build(), 30, stroom.util.shared.time.TimeUnit.DAYS)))
+                .build();
+        Mockito.when(provider.get()).thenReturn(Optional.of(rules));
+        return provider;
     }
 
     // One enabled node that is the master, for explain_processing.
