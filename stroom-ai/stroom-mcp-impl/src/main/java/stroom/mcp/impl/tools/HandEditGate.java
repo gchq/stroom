@@ -67,6 +67,11 @@ class HandEditGate {
             "cef", "carry it into the CEF plan (overrides), as the edit made it");
     /// The most answers remembered: the least recently used are forgotten first.
     static final int MAX_REMEMBERED = 10_000;
+    /// The most clashing fields the first question names; the rest are counted (seen: a wide mapping, every field
+    /// named, made a question too long for a form).
+    static final int MAX_NAMED = 5;
+    /// The most characters of a hand edit, or a field's definition, a question quotes.
+    static final int MAX_QUOTED = 150;
 
     private final KeptCode keptCode;
     private final Consent consent;
@@ -211,7 +216,7 @@ class HandEditGate {
         final int others = all.size();
         return "XSLT '" + doc.getName() + "' was edited by hand in Stroom" + by + ", and the agent's change changes "
                + clashes.size() + " field" + plural(clashes.size()) + " the edit changed too: "
-               + String.join(", ", clashes.keySet())
+               + named(List.copyOf(clashes.keySet()))
                + (others > 0
                 ? " (the edit changed " + others + " other thing" + plural(others) + " as well)"
                 : "")
@@ -226,10 +231,10 @@ class HandEditGate {
         for (final HandEdits.Undone item : clash.undone().subList(0, Math.min(3, clash.undone().size()))) {
             edits.add((item.again()
                     ? "took out"
-                    : "added") + " " + item.item());
+                    : "added") + " " + quoted(item.item()));
         }
-        final String old = clash.had();
-        final String proposed = clash.proposes();
+        final String old = quoted(clash.had());
+        final String proposed = quoted(clash.proposes());
         return "XSLT '" + doc.getName() + "', field " + label + ": you edited it by hand in Stroom" + by + ", which "
                + String.join("; ", edits) + ". The agent's change "
                + (NullSafe.isNonEmptyString(proposed)
@@ -318,6 +323,24 @@ class HandEditGate {
         synchronized (decided) {
             return new LinkedHashMap<>(decided);
         }
+    }
+
+    /// @param labels The clashing fields.
+    /// @return The first few ([#MAX_NAMED]) by name, and how many others.
+    static String named(final List<String> labels) {
+        final String first = String.join(", ", labels.subList(0, Math.min(MAX_NAMED, labels.size())));
+        final int others = labels.size() - MAX_NAMED;
+        return others > 0
+                ? first + " and " + others + " other" + plural(others)
+                : first;
+    }
+
+    /// @param text Some code, or a field's definition, or null.
+    /// @return It on one line, cut short ([#MAX_QUOTED]), as a question quotes it; null for null.
+    static String quoted(final String text) {
+        return text == null
+                ? null
+                : Consent.heading(text.replaceAll("\\s+", " "), MAX_QUOTED);
     }
 
     private static String plural(final int count) {
