@@ -2436,11 +2436,14 @@ to delete them by hand.~~
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationList`).
-* Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
+* ~~Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
   as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
   until both are entered again, even to change only the name. Nothing in the dialog says the
   secret is write-only (`CredentialSettingsController.read`, `UsernamePasswordSecretForm`).
-  Found by the credentials write cycle.
+  Found by the credentials write cycle.~~ **Fixed** (by #5815, `d8865194a7`, 20 October 2026; found
+  stale 30 October 2026): secrets are replace-only. Editing existing credentials shows no secret
+  form ("The secret is set but cannot be shown. Use Replace Secret to set a new one.", with help
+  saying so), OK checks only the name, type and expiry, and the list's Replace Secret sets a new one.
 * Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
   pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
   `.st7`), and `OpenAI.svg` has a `<title>` "OpenAI icon", so a tree row reads "OpenAI icon My
