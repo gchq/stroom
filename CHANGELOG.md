@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5936** : Fix missing document dependencies for index default extraction pipelines, data generator feeds, pathways traces and info feeds, analytic rule and report error and notification feeds, and content template pipelines.
+
+* Bug **#5936** : Fix copies and imports of receive data rules and data retention rules not remapping document references in their rule expressions.
+
+* Bug **#5936** : Rebuild document dependencies once at startup, so dependencies missed when upgrading to 7.13 (e.g. pipeline to parent pipeline, elastic index to elastic cluster) appear without having to re-save each document.
+
+* Bug **#5947** : Fix bug where setting cache prop `refreshAfterWrite` on a non-loading cache results in an exception being thrown. It now ignores the property and logs a warning.
+
+* Bug **#5946** : Fix Stroom-Proxy requesting a token from the identity provider for its internal processing user, which stopped it starting when the token had no valid `aud` claim, even when an API key is configured for downstream authentication.
+
+* Bug **#5945** : Add in the missing data delete functionality for streams stored in an `S3` volume.
+
+
 ## [v7.14-beta.9] - 2026-10-29
 
 * Feature **#5834** : Add Enterprise Floor Mapping: a new Floor Map document type that plots entities on a floor plan from a SQL Temporal Store of facts and a Plan B Temporal State store of events, with a timeline, playback, entity tracking and clustering, areas, layers, a properties editor and per-document assets.
