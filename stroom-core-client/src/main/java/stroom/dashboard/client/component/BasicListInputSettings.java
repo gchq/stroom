@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /// A List Input pane's Basic settings: its id, name and key, the values typed (one a line), whether
@@ -54,9 +55,13 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
     @UiField
     TickBox allowTextEntry;
 
+    private Consumer<Boolean> onUseDictionaryChange = useDictionary -> {
+    };
+
     /// Makes the tab, empty.
     public BasicListInputSettings() {
         initWidget(BINDER.createAndBindUi(this));
+        useDictionary.addValueChangeHandler(event -> onUseDictionaryChange.accept(isUseDictionary()));
     }
 
     @Override
@@ -109,6 +114,12 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
     /// @param useDictionary Whether a dictionary's words are offered instead of the values typed.
     public void setUseDictionary(final boolean useDictionary) {
         this.useDictionary.setValue(useDictionary);
+    }
+
+    /// @param onUseDictionaryChange Given whether a dictionary's words are offered, when the user
+    ///                              ticks or unticks Use Dictionary.
+    public void setOnUseDictionaryChange(final Consumer<Boolean> onUseDictionaryChange) {
+        this.onUseDictionaryChange = onUseDictionaryChange;
     }
 
     /// @return The dictionary's picker, for a controller to attach.

@@ -66,6 +66,7 @@ public class AnalyticNotificationEditor extends Component {
         maxNotifications.setValue(1);
         destinationType.addItem(NotificationDestinationType.STREAM);
         destinationType.addItem(NotificationDestinationType.EMAIL);
+        updateEnabledState();
     }
 
     /// @return Whether the notification is sent.
@@ -86,6 +87,7 @@ public class AnalyticNotificationEditor extends Component {
     /// @param limitNotifications Whether sending stops after the maximum.
     public void setLimitNotifications(final boolean limitNotifications) {
         this.limitNotifications.setValue(limitNotifications);
+        updateEnabledState();
     }
 
     /// @return The most notifications sent before sending stops.
@@ -133,7 +135,16 @@ public class AnalyticNotificationEditor extends Component {
     }
 
     private void onLimitNotifications() {
+        updateEnabledState();
         onChange.run();
+    }
+
+    // The maximum and when sending resumes apply only while notifications are limited. The editor
+    // is never opened read only (NotificationListController), so nothing else disables them
+    private void updateEnabledState() {
+        final boolean limit = limitNotifications.getValue();
+        maxNotifications.setEnabled(limit);
+        resumeAfter.setEnabled(limit);
     }
 
     private void onMaxNotifications() {

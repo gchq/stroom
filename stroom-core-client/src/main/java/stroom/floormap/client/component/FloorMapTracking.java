@@ -107,7 +107,7 @@ public class FloorMapTracking extends Component {
         selectionModel.addSelectionChangeHandler(e -> {
             final EntityEntry selected = selectionModel.getSelectedObject();
             stopTrackingButton.setEnabled(selected != null);
-            addToGroupButton.setEnabled(selected != null && addToGroupAvailable);
+            updateAddToGroup();
             onSelectionChange.accept(selected);
         });
         // Clicking the row already selected changes no selection, but is told all the same: it is
@@ -135,7 +135,19 @@ public class FloorMapTracking extends Component {
     /// @param available Whether Add to Group is offered (not where there is no Groups panel).
     public void setAddToGroupAvailable(final boolean available) {
         this.addToGroupAvailable = available;
-        addToGroupButton.setEnabled(selectionModel.getSelectedObject() != null && available);
+        updateAddToGroup();
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        updateAddToGroup();
+    }
+
+    // Adding to a group changes the document's groups, so not while it is read only
+    private void updateAddToGroup() {
+        addToGroupButton.setEnabled(!isReadOnly()
+                                    && addToGroupAvailable
+                                    && selectionModel.getSelectedObject() != null);
     }
 
     /// Shows the entities in place of those shown (only those Show Facts lets through; all are

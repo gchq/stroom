@@ -146,6 +146,15 @@ public class PipelineStructureController extends Controller {
         // Get a map of all available elements and properties.
         setAdvancedMode(true);
         enableButtons();
+        // The parent picker, dragging and the buttons follow the document's read-only state, as it
+        // changes while the tab is open (a lock change without a read)
+        watch(Contexts.READ_ONLY, readOnly -> {
+            inheritSelection.setReadOnly(readOnly);
+            // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a
+            // document that can be changed
+            pipelineTree.setAllowDragging(advancedMode && !readOnly);
+            enableButtons();
+        });
 
         own(inheritSelection.addSelectionListener(selected -> {
             final DocRef selectedDocRef = selected;
@@ -231,10 +240,6 @@ public class PipelineStructureController extends Controller {
     /// @param document The pipeline.
     public void read(final DocRef docRef, final PipelineDoc document) {
         this.readDoc = document;
-        inheritSelection.setReadOnly(isReadOnly());
-        // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
-        // that can be changed
-        pipelineTree.setAllowDragging(advancedMode && !isReadOnly());
         propertyList.setTableName(
                 "Pipeline '" + docRef.getName() + "' Properties");
         pipelineReferenceList.setTableName(

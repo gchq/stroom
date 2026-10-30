@@ -183,9 +183,16 @@ public class FloorMapTimeList extends Component {
         this.onDelete = onDelete;
     }
 
-    private void setButtonsEnabled(final boolean enabled) {
-        editButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        addButton.setEnabled(!readOnly);
+        setButtonsEnabled(selectionModel.getSelectedObject() != null);
+    }
+
+    // Edit and Delete act on the selected entry, and change the fact, so not while read only
+    private void setButtonsEnabled(final boolean selected) {
+        editButton.setEnabled(selected && !isReadOnly());
+        deleteButton.setEnabled(selected && !isReadOnly());
     }
 
     private void withSelected(final Consumer<TemporalEntry> action) {

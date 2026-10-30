@@ -165,17 +165,29 @@ public class FloorMapFactList extends Component {
         }
     }
 
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        addButton.setEnabled(!readOnly);
+        updateButtons();
+    }
+
     private void onSelection() {
         final List<FactListRow> selected = selectionModel.getSelectedItems();
         final FactListRow primary = selectionModel.getSelected();
-        // Delete From This Time acts on the first selected, which mustn't already be deleted (Show
-        // All lists deleted facts so they can be found and restored, not deleted again)
-        endButton.setEnabled(primary != null && !primary.isDeleted());
-        deleteButton.setEnabled(!selected.isEmpty());
+        updateButtons();
         onSelectionChange.accept(selected);
         if (primary != null) {
             scrollIntoView(primary);
         }
+    }
+
+    // The actions on the selection change the facts, so none is enabled while read only
+    private void updateButtons() {
+        final FactListRow primary = selectionModel.getSelected();
+        // Delete From This Time acts on the first selected, which mustn't already be deleted (Show
+        // All lists deleted facts so they can be found and restored, not deleted again)
+        endButton.setEnabled(!isReadOnly() && primary != null && !primary.isDeleted());
+        deleteButton.setEnabled(!isReadOnly() && !selectionModel.getSelectedItems().isEmpty());
     }
 
     // The first selected row is scrolled into view once it is drawn

@@ -70,7 +70,9 @@ import java.util.function.Consumer;
 /// rewrites the document's [TypeStyle] order, so it persists), a per-layer
 /// lock that stops its items being moved on the canvas, and an appearance dialog
 /// per layer. The lock is transient client-side state; the order and appearance
-/// are document edits.
+/// are document edits. While the document is read only ([#setReadOnly(boolean)]) the editing
+/// controls are disabled: the grips, the swatches, a discovered type's Add and Discover. Visibility
+/// and lock, which change only the view, still work.
 ///
 /// It makes no REST calls and uses no bus, so it is a component its owners (the Map and Editor
 /// tabs) make and give their callbacks.
@@ -247,8 +249,13 @@ public class FloorMapLayers extends Component {
         return new HashSet<>(lockedTypes);
     }
 
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        rebuild();
+    }
+
     private void discover() {
-        if (onDiscover != null) {
+        if (onDiscover != null && !isReadOnly()) {
             onDiscover.run();
         }
     }
@@ -296,6 +303,7 @@ public class FloorMapLayers extends Component {
         // A Discover action that scans the whole facts store for types.
         final boolean showDiscover = editorMode && onDiscover != null;
         discoverFooter.setVisible(showDiscover);
+        discover.setEnabled(!isReadOnly());
 
         // A floor map with no type styles saved is a perfectly ordinary state — entities and
         // facts render with defaults — but a blank panel reads as a failure. On the Editor tab the
@@ -328,6 +336,7 @@ public class FloorMapLayers extends Component {
         final ToolbarButton add = toolbar.button(
                 SvgImage.ADD, "Add the discovered type " + type + " as a layer", () -> promote(type));
         add.addStyleName("floor-map-layers__add");
+        add.setEnabled(!isReadOnly());
         row.add(toolbar);
         return row;
     }
@@ -463,10 +472,12 @@ public class FloorMapLayers extends Component {
         row.addStyleName("floor-map-layers__row");
 
         // Editor-only: drag a row to reorder the layers (z-order). List order is
-        // the z-order — earlier = painted behind, later = painted in front.
+        // the z-order — earlier = painted behind, later = painted in front. A read-only
+        // document's rows show the grip, disabled, and can't be dragged.
         if (editorMode) {
             row.add(buildGrip(type, index));
-
+        }
+        if (editorMode && !isReadOnly()) {
             row.getElement().setDraggable(Element.DRAGGABLE_TRUE);
             row.addDomHandler(event -> {
                 dragFromIndex = index;
@@ -566,9 +577,10 @@ public class FloorMapLayers extends Component {
         grip.setStyleName("floor-map-layers__grip");
         grip.setTitle("Reorder the " + type
                       + " layer — drag, or use the up and down arrow keys");
+        grip.setAriaDisabled(isReadOnly());
         grip.addKeyDownHandler(event -> {
             final int key = event.getNativeKeyCode();
-            if (key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN) {
+            if (!isReadOnly() && (key == KeyCodes.KEY_UP || key == KeyCodes.KEY_DOWN)) {
                 // Otherwise the arrow scrolls the Layers panel instead.
                 event.preventDefault();
                 event.stopPropagation();
@@ -607,8 +619,9 @@ public class FloorMapLayers extends Component {
                         + (ts.hasGraphic()
                 ? "image & colour)"
                 : "shape & colour)"));
-        // It opens the layer's appearance dialog
+        // It opens the layer's appearance dialog, unless the document is read only
         swatch.setOpensDialog(true);
+        swatch.setAriaDisabled(isReadOnly());
         swatch.setOnClick(() -> {
             if (onEditStyle != null) {
                 onEditStyle.accept(ts, this::applyStyle);

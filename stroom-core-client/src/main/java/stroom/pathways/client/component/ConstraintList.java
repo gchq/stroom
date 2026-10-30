@@ -142,7 +142,7 @@ public class ConstraintList extends Component {
             }
             return constraint.getValue().valueType().getDisplayValue();
         });
-        addTextColumn("Type", 400, constraint -> {
+        addTextColumn("Value", 400, constraint -> {
             if (constraint == null || constraint.getValue() == null) {
                 return null;
             }

@@ -159,6 +159,10 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         // Ensure editor is disabled by default
         disableEditor();
 
+        // The buttons and the file shown follow the document's read-only state, as it changes
+        // while the tab is open (a lock change without a read)
+        watch(Contexts.READ_ONLY, this::onReadOnlyChange);
+
         // Create the Add menu
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
@@ -203,6 +207,15 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
 
     private boolean isReadOnly() {
         return context(Contexts.READ_ONLY);
+    }
+
+    // Applies a change of the document's read-only state to the buttons, and to the file shown
+    private void onReadOnlyChange(final boolean readOnly) {
+        updateState();
+        final DocumentAssetTreeItem item = tree.getSelectedItem();
+        if (item != null && item.isLeaf()) {
+            editor.setReadOnly(readOnly);
+        }
     }
 
     /// Callback from the Add dialog that adds a file that has been uploaded.

@@ -134,6 +134,11 @@ public class FloorMapQuery extends Component {
         this.onColumnChange = onColumnChange;
     }
 
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        boxesByRole.values().forEach(box -> box.setEnabled(!readOnly));
+    }
+
     /// @return Which columns hold each role.
     public FloorMapEventColumns getEventColumns() {
         FloorMapEventColumns columns = new FloorMapEventColumns(null);

@@ -147,6 +147,9 @@ public final class PathwaysEditorStories {
                     final Play constraints = play.within(dialog.getByText("host").closest(".data-grid"));
                     play.expect(constraints.getByText("Name")).toBeInTheDocument();
                     play.expect(constraints.getByText("Optional")).toBeInTheDocument();
+                    // One column is headed Type, the next Value (both were once headed Type)
+                    play.expect(constraints.getByRole("columnheader", "Type")).toBeInTheDocument();
+                    play.expect(constraints.getByRole("columnheader", "Value")).toBeInTheDocument();
                     // The value's type is shown as Stroom's ConstraintValueType
                     play.expect(constraints.getByText("Any")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);

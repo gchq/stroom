@@ -274,6 +274,8 @@ public final class AnalyticRuleEditorStories {
                     openTab(play, "Notifications");
                     play.click(play.findByRole("button", "New Notification"));
                     final Play dialog = dialog(screen, "Add Notification");
+                    // Resume applies only while notifications are limited
+                    play.click(dialog.getByRole("checkbox", "Limit Notifications"));
                     final Play resume = dialog.within(dialog.getByRole("group", "Resume Notifications After"));
                     play.expect(resume.getByRole("spinbutton", "Amount")).toHaveValue("1");
                     play.expect(resume.getByLabelText("Unit")).toHaveValue("Days");
@@ -281,6 +283,35 @@ public final class AnalyticRuleEditorStories {
                     play.click(screen.findByText("Never", ".selection-popup *"));
                     play.waitFor(() -> play.expect(resume.getByLabelText("Unit")).toHaveValue("Never"));
                     play.expect(resume.getByRole("spinbutton", "Amount")).toBeDisabled();
+                    expectNoProblems(play);
+                })
+                // Maximum and Resume Notifications After are enabled only while Limit Notifications
+                // is ticked; they stayed enabled when it wasn't, although then unused
+                .story("LimitGatesMaximumAndResume", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openTab(play, "Notifications");
+                    play.click(play.findByRole("button", "New Notification"));
+                    final Play dialog = dialog(screen, "Add Notification");
+                    final Query limit = dialog.getByRole("checkbox", "Limit Notifications");
+                    final Query maximum = dialog.getByRole("spinbutton", "Maximum Notifications");
+                    final Play resume = dialog.within(dialog.getByRole("group", "Resume Notifications After"));
+                    final Query amount = resume.getByRole("spinbutton", "Amount");
+                    final Query unit = resume.getByLabelText("Unit");
+                    // A new notification is not limited
+                    play.expect(limit).not().toBeChecked();
+                    play.expect(maximum).toBeDisabled();
+                    play.expect(amount).toBeDisabled();
+                    play.expect(unit).toBeDisabled();
+                    play.click(limit);
+                    play.expect(maximum).toBeEnabled();
+                    play.expect(amount).toBeEnabled();
+                    play.expect(unit).toBeEnabled();
+                    play.click(limit);
+                    play.expect(maximum).toBeDisabled();
+                    play.expect(amount).toBeDisabled();
+                    play.expect(unit).toBeDisabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     expectNoProblems(play);
                 })
                 // An email notification's subject template is tested on the server, which shows its

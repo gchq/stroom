@@ -279,6 +279,33 @@ public final class FloorMapMapTabStories {
                     play.expect(play.getByText("Group").closest(ROW)).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
+                // A floor map the user may only view: its groups can't be added, edited or deleted,
+                // nor a tracked person added to one (they once followed no read-only state). A
+                // group's eye still highlights it, as that changes only the view
+                .story("GroupsReadOnly", context -> render(context, FIXTURES, true))
+                .withPlay(play -> {
+                    eventsShown(play);
+                    final Play tracking = play.within(play.querySelector(TRACKING_GRID));
+                    play.click(tracking.findByText("alice"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Stop Tracking"))
+                            .not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.getByRole("button", "Add to Group")).toHaveAttribute("aria-disabled", "true");
+
+                    play.click(play.getByText("Groups", TAB_LABEL));
+                    play.click(play.findByText("Engineers"));
+                    play.waitFor(() -> play.expect(play.getByText("Engineers").closest(ROW))
+                            .toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(play.getByRole("button", "New Group")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Edit Group (name, colour and members)"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Delete Group")).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.within(play.getByText("Engineers").closest(ROW))
+                            .querySelector(".icon-cell--button"));
+                    play.waitFor(() -> play.expect(play.within(play.getByText("Engineers").closest(ROW))
+                            .querySelector(".icon-cell--button")).toHaveAttribute("title",
+                            "Highlighted on the map — click to stop highlighting"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Clicking a cluster on the map lists its members in a dialog, with each one's
                 // type and groups
                 .story("Cluster", FloorMapMapTabStories::render)
@@ -387,8 +414,13 @@ public final class FloorMapMapTabStories {
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        return render(context, fixtures, false);
+    }
+
+    // The tab, for a user who may only view the floor map or may change it
+    private static Widget render(final StoryContext context, final RestFixtures fixtures, final boolean readOnly) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
-        return DocEditors.render(context, fixtures, false, (harness, injector) -> {
+        return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> {
             final FloorMapMapTabController controller = injector.getFloorMapMapTab();
             // The tab checks every 10 seconds whether its facts are due a re-read, from when it
             // reads the document until it is closed (which a story never does)

@@ -19,6 +19,7 @@ package stroom.floormap.client.component;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.TemporalEntry;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.preferences.client.ChangeCurrentPreferencesEvent;
 
@@ -61,6 +62,8 @@ public class FloorMapTimeListController extends Controller {
         view.setTimeFormatter(dateTimeFormatter::format);
         listen(ChangeCurrentPreferencesEvent.getType(), e -> view.redraw());
         FloorMapEditorHelp.wire(view.getHelpButton(), "Time List", FloorMapEditorHelp.timeList());
+        // Its actions change the fact's versions, so they follow the document's read-only state
+        watch(Contexts.READ_ONLY, view::setReadOnly);
         return this;
     }
 

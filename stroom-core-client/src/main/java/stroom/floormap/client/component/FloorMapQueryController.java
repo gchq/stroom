@@ -29,6 +29,7 @@ import stroom.query.client.component.QueryEditorController;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.util.client.Console;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -78,6 +79,8 @@ public class FloorMapQueryController
         own(queryEditController);
         this.queryEditController = queryEditController;
         view.setQueryEdit(queryEditController);
+        // The column mappings are the document's
+        watch(Contexts.READ_ONLY, view::setReadOnly);
 
         // A dropdown change has to mark the document dirty, as a query edit does (the mapping was
         // once unsaveable on its own, as only the query editor's changes were told)

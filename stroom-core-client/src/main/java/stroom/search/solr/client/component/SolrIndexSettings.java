@@ -81,8 +81,15 @@ public class SolrIndexSettings extends Component {
         zkHosts.addKeyDownHandler(e -> onChange.run());
         zkPath.addKeyDownHandler(e -> onChange.run());
         timeField.addKeyDownHandler(e -> onChange.run());
-        instanceType.addValueChangeHandler(e -> onChange.run());
-        useZk.addValueChangeHandler(e -> onChange.run());
+        instanceType.addValueChangeHandler(e -> {
+            updateEnabledState();
+            onChange.run();
+        });
+        useZk.addValueChangeHandler(e -> {
+            updateEnabledState();
+            onChange.run();
+        });
+        updateEnabledState();
     }
 
     /// @return The collection, trimmed.
@@ -107,6 +114,7 @@ public class SolrIndexSettings extends Component {
         } else {
             this.instanceType.setValue(instanceType);
         }
+        updateEnabledState();
     }
 
     /// @return The Solr URLs, one per line.
@@ -131,6 +139,7 @@ public class SolrIndexSettings extends Component {
     /// @param useZk Whether the cloud is found through its ZooKeeper hosts.
     public void setUseZk(final boolean useZk) {
         this.useZk.setValue(useZk);
+        updateEnabledState();
     }
 
     /// @return The ZooKeeper hosts, one per line.
@@ -210,6 +219,14 @@ public class SolrIndexSettings extends Component {
         zkPath.setReadOnly(readOnly);
         collection.setReadOnly(readOnly);
         timeField.setReadOnly(readOnly);
+    }
+
+    // The ZooKeeper fields are used only to find a Solr Cloud through ZooKeeper. Read only is
+    // applied separately (setReadOnly), so enabling them never makes them editable
+    private void updateEnabledState() {
+        final boolean zk = InstanceType.SOLR_CLOUD.equals(instanceType.getValue()) && useZk.getValue();
+        zkHosts.setEnabled(zk);
+        zkPath.setEnabled(zk);
     }
 
 

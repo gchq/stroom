@@ -98,11 +98,20 @@ public class FloorMapGroups extends Component {
         newButton.setOnClick(() -> onNew.run());
         editButton.setOnClick(() -> withSelected(onEdit));
         deleteButton.setOnClick(() -> withSelected(onDelete));
-        selectionModel.addSelectionChangeHandler(e -> {
-            final boolean hasSelection = selectionModel.getSelectedObject() != null;
-            editButton.setEnabled(hasSelection);
-            deleteButton.setEnabled(hasSelection);
-        });
+        selectionModel.addSelectionChangeHandler(e -> updateButtons());
+    }
+
+    @Override
+    protected void onReadOnlyChange(final boolean readOnly) {
+        newButton.setEnabled(!readOnly);
+        updateButtons();
+    }
+
+    // Edit and Delete act on the selected group, and change the document, so not while read only
+    private void updateButtons() {
+        final boolean enabled = !isReadOnly() && selectionModel.getSelectedObject() != null;
+        editButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
     }
 
     /// Shows the groups in place of those shown, keeping the selected group selected (by id, as an

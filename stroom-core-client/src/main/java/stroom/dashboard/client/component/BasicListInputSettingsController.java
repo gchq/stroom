@@ -48,6 +48,9 @@ public class BasicListInputSettingsController extends BasicSettingsTabController
         dictionary.attach(view.getDictionaryBox());
         dictionary.setIncludedTypes(DictionaryDoc.TYPE);
         dictionary.setRequiredPermissions(DocumentPermission.USE);
+        // The dictionary is used only when Use Dictionary is ticked
+        dictionary.setEnabled(false);
+        view.setOnUseDictionaryChange(dictionary::setEnabled);
     }
 
     @Override
@@ -59,6 +62,7 @@ public class BasicListInputSettingsController extends BasicSettingsTabController
             getView().setKey(settings.getKey());
             getView().setValues(settings.getValues());
             getView().setUseDictionary(settings.isUseDictionary());
+            dictionary.setEnabled(settings.isUseDictionary());
             dictionary.setSelectedEntityReference(settings.getDictionary(), true);
             getView().setAllowTextEntry(settings.isAllowTextEntry());
         }

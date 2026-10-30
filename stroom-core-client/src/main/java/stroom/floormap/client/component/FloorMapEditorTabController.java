@@ -59,6 +59,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
@@ -254,7 +255,8 @@ public class FloorMapEditorTabController
         layersPanel.setEditorMode(true);
         this.layerStyle = make(layerStyleProvider);
 
-        // Always in edit mode, with the grid overlay shown as an editing aid.
+        // In edit mode (unless the document is read only, see below), with the grid overlay shown
+        // as an editing aid.
         canvas.setEditMode(true);
         canvas.setShowGrid(true);
 
@@ -301,6 +303,14 @@ public class FloorMapEditorTabController
         layersPanel.setOnEditStyle(layerStyle::show);
         // Full facts-store type-discovery scan behind the panel's Discover action.
         layersPanel.setOnDiscover(this::onDiscoverTypes);
+
+        // A read-only floor map can be looked at here, not changed: the canvas leaves edit mode
+        // (no moves, drawing or context menu), and the Layers panel disables its editing controls.
+        // The Fact and Time Lists follow it themselves.
+        watch(Contexts.READ_ONLY, readOnly -> {
+            canvas.setEditMode(!readOnly);
+            layersPanel.setReadOnly(readOnly);
+        });
 
         // Name the Fact List as this canvas's text alternative. The Map tab uses
         // its Tracking grid for the same purpose; on the Editor tab the Fact List

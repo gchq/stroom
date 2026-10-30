@@ -113,7 +113,7 @@ public final class AppShellStories {
     private static final String PERMISSIONS_PATH = "/explorer/v2/fetchExplorerPermissions";
     private static final String TERMINATE_OTHER_PATH = "/session/v1/terminateOther";
     private static final String EXPORT_PATH = "/content/v1/export";
-    private static final String ACKNOWLEDGE_SPLASH_PATH = ActivityFixtures.PATH + "/acknowledgeSplash";
+    private static final String ACKNOWLEDGE_SPLASH_PATH = ActivityFixtures.PATH + "/acknowledge";
 
     private static final String EMPTY_PAGE = """
             {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}""";
@@ -525,15 +525,22 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.getByText("You must accept the terms to use this system"))
                             .toBeInTheDocument());
                     play.click(screen.getByRole("button", TextMatch.regex("close|ok", "i")));
-                    // Once the warning is closed, Stroom closes the splash screen
-                    // and never shows the app (SplashController hides it and passes the rejection on),
-                    // so the terms can't then be accepted in the same story: nothing was acknowledged
-                    play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
+                    // Once the warning is closed, the terms are still shown, not acknowledged, and
+                    // the app still isn't shown (the splash screen once closed, leaving a blank page)
+                    play.waitFor(() -> play.expect(screen.queryByText(
+                            "You must accept the terms to use this system")).toBeNull());
+                    play.expect(screen.getByText("Accept to continue.")).toBeInTheDocument();
                     play.expect(play.queryByText("Dictionaries")).toBeNull();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(ACKNOWLEDGE_SPLASH_PATH).toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
                             "WARN: You must accept the terms to use this system");
+                    // Accepting them then is recorded, and the app is shown
+                    play.click(screen.getByRole("button", TextMatch.regex("accept", "i")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(ACKNOWLEDGE_SPLASH_PATH).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
+                    play.waitFor(() -> play.expect(play.getByText("Dictionaries")).toBeInTheDocument());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Double-clicking a document opens its editor in a tab; a folder opens too
@@ -1007,6 +1014,30 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.getByText("You must provide a new name for Countries"))
                             .toBeInTheDocument());
                     play.expect(screen.getByLabelText("Name")).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A failed rename is reported and keeps the dialog open with the new name, so it can
+                // be tried again (the dialog was once hidden before the request was sent)
+                .story("RenameFailureKeepsDialog", context -> render(context, AppShellFixtures.dictTree(),
+                        routes -> routes.put(RENAME_PATH, RestReply.error(500, "Name already in use")),
+                        builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Rename", StroomDom.MENU_ITEM_TEXT));
+                    final Query name = screen.findByLabelText("Name");
+                    play.clear(name);
+                    play.type(name, "Nations");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.expect(screen.findByText(TextMatch.containing("Name already in use"))).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            ValueMatcher.stringContaining("Name already in use"));
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Name already in use")))
+                            .toBeNull());
+                    play.expect(screen.getByText("Rename Countries", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(screen.getByLabelText("Name")).toHaveValue("Nations");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Delete confirms, deletes and closes the deleted document's tab

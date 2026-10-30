@@ -111,6 +111,12 @@ public final class FloorMapEditorTabStories {
 
     private static final String DESK_SWATCH = "Edit the appearance of the desk layer (shape & colour)";
 
+    // The desk layer's grip, which moves it
+    private static final String DESK_GRIP = "Reorder the desk layer — drag, or use the up and down arrow keys";
+
+    // The Layers panel's Discover, which adds the store's types as layers
+    private static final String DISCOVER = "Discover types from the facts store";
+
     private FloorMapEditorTabStories() {
         // Static utility
     }
@@ -309,17 +315,16 @@ public final class FloorMapEditorTabStories {
                 // grip and saying where it went
                 .story("LayerReorderKeyboard", context -> render(context, fixtures(DOC_WITH_TWO_LAYERS)))
                 .withPlay(play -> {
-                    final String deskGrip = "Reorder the desk layer — drag, or use the up and down arrow keys";
-                    final Query grip = play.findByRole("button", deskGrip);
+                    final Query grip = play.findByRole("button", DESK_GRIP);
                     play.run("focus the desk layer's grip", () -> grip.element().get().focus());
                     play.keyboard("{ArrowDown}");
                     play.waitFor(() -> play.expect(play.getByText("desk layer moved to position 2 of 2"))
                             .toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.getByRole("button", deskGrip)).toHaveFocus());
+                    play.waitFor(() -> play.expect(play.getByRole("button", DESK_GRIP)).toHaveFocus());
                     play.keyboard("{ArrowUp}");
                     play.waitFor(() -> play.expect(play.getByText("desk layer moved to position 1 of 2"))
                             .toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.getByRole("button", deskGrip)).toHaveFocus());
+                    play.waitFor(() -> play.expect(play.getByRole("button", DESK_GRIP)).toHaveFocus());
                     DocEditors.expectNoProblems(play);
                 })
                 // A layer's eye dims it, then hides it, and its name fades with it; its lock
@@ -342,7 +347,72 @@ public final class FloorMapEditorTabStories {
                     play.expect(play.getByRole("button", TextMatch.startingWith("desk layer is locked")))
                             .toHaveClass("floor-map-layers__lock--locked");
                     DocEditors.expectNoProblems(play);
+                })
+                // A floor map the user may only view: the layers can't be reordered or restyled,
+                // nor types discovered, the Fact and Time Lists can't add, and the canvas opens no
+                // menu (it once followed no read-only state, so all of them could be changed,
+                // though not saved). A layer's eye still works, as it changes only the view
+                .story("ReadOnly", context -> render(context, fixtures(DOC_WITH_LAYER), true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query grip = play.findByRole("button", DESK_GRIP);
+                    play.expect(grip).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", DESK_SWATCH)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", DISCOVER)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Add New Object")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Add")).toHaveAttribute("aria-disabled", "true");
+                    // The arrow keys on the grip move nothing
+                    play.run("focus the desk layer's grip", () -> grip.element().get().focus());
+                    play.keyboard("{ArrowDown}");
+                    play.expect(play.queryByText("desk layer moved to position 2 of 2")).toBeNull();
+                    // The swatch opens no appearance
+                    play.click(play.getByRole("button", DESK_SWATCH));
+                    play.expect(screen.queryByText(APPEARANCE, StroomDom.DIALOG_TITLE)).toBeNull();
+                    // The canvas opens no menu
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.run("focus the canvas", () -> canvas.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    play.expect(screen.queryByRole("menu", MAP_ACTIONS)).toBeNull();
+                    // The eye only changes the view, so it still works
+                    play.click(play.getByRole("button", "desk layer is visible — click to dim to 30%"));
+                    play.expect(play.getByRole("button", "desk layer is dimmed to 30% — click to hide"))
+                            .toBeInTheDocument();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The document is locked and unlocked while it is open, without being read again:
+                // the editing controls follow
+                .story("LockChangeWhileOpen", context -> render(context, fixtures(DOC_WITH_LAYER)))
+                .withPlay(play -> {
+                    final Query grip = play.findByRole("button", DESK_GRIP);
+                    play.expect(grip).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", "Add New Object")).not().toHaveAttribute("aria-disabled");
+
+                    play.run("lock the document", () -> tab().setReadOnly(true));
+                    play.expect(play.getByRole("button", DESK_GRIP)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", DESK_SWATCH)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", DISCOVER)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Add New Object")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Add")).toHaveAttribute("aria-disabled", "true");
+
+                    play.run("unlock the document", () -> tab().setReadOnly(false));
+                    play.expect(play.getByRole("button", DESK_GRIP)).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", DESK_SWATCH)).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", DISCOVER)).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", "Add New Object")).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", "Add")).not().toHaveAttribute("aria-disabled");
+                    // The canvas is in edit mode again: its menu opens
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.run("focus the canvas", () -> canvas.element().get().focus());
+                    play.keyboard("{Shift>}{F10}{/Shift}");
+                    expectMenuWithFocus(play, play.screen());
+                    play.keyboard("{Escape}");
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // The Editor tab the story shows, as its document holds it
+    private static TabStory<FloorMapEditorTabController, FloorMapDoc> tab() {
+        return ScreenHarness.shownComponent();
     }
 
     // Chooses Set Scale from the canvas's menu and drags a line across the canvas with the mouse,
@@ -397,8 +467,13 @@ public final class FloorMapEditorTabStories {
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        return render(context, fixtures, false);
+    }
+
+    // The tab, for a user who may only view the floor map or may change it
+    private static Widget render(final StoryContext context, final RestFixtures fixtures, final boolean readOnly) {
         final FloorMapResource resource = GWT.create(FloorMapResource.class);
-        return DocEditors.render(context, fixtures, false,
+        return DocEditors.render(context, fixtures, readOnly,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
                         // Shown as the document shows its Editor tab

@@ -148,6 +148,32 @@ public final class ProcessorProfilesScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // Remove removes a period just edited. The edit replaces the period with an unequal
+                // copy; the selection kept the old one, which Remove then failed to find
+                // (ProfilePeriodList.setData now moves the selection to the copy)
+                .story("RemoveEditedPeriod", ProcessorProfilesScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Nightly"));
+                    final Play profile = screen.within(screen.findByText(
+                            TextMatch.containing("Edit Processor Profile")).closest(StroomDom.DIALOG));
+                    // p1 has no days, so its cell is empty: the row is found by position
+                    play.click(play.within(periodRow(play, profile)).querySelector("td, [data-col]"));
+                    play.click(profile.getByTitle("Edit Selected Profile Period"));
+                    final Play period = screen.within(screen.findByText(PERIOD_CAPTION, StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // Monday
+                    play.click(period.getAllByRole("checkbox").nth(0));
+                    play.click(period.getByRole("button", StroomDom.button("OK")));
+                    profile.findByText("Mon-Mon");
+                    play.click(profile.getByTitle("Remove Selected Profile Period"));
+                    play.waitFor(() -> play.expect(profile.querySelectorAll(StroomDom.GRID_ROW).count()).toBe(0));
+                    play.expect(profile.queryByText("Mon-Mon")).toBeNull();
+                    // Nothing is selected now, so Edit and Remove are disabled again
+                    play.expect(profile.getByTitle("Remove Selected Profile Period"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    expectNoProblems(play);
+                })
                 // A start time that isn't a time is refused, and the period dialog stays open;
                 // Cancel then adds no period
                 .story("PeriodInvalidTime", context -> render(context, true))

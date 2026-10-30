@@ -26,6 +26,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ContentStorySupport;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -92,6 +93,14 @@ public final class ActivityChooserStories {
                     screen.findByText("Select Current Activity");
                     play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("Routine monitoring")))
                             .toBeInTheDocument());
+                    // The current activity is fetched apart from the list, so its row is found by
+                    // its id (the grid once couldn't match it, and highlighted no row)
+                    final Play dialog = screen.within(screen.getByText("Select Current Activity",
+                            StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+                    play.waitFor(() -> play.expect(dialog.getByText(TextMatch.containing("Routine monitoring"))
+                            .closest(StroomDom.GRID_ROW)).toHaveClass(StroomDom.SELECTED_ROW));
+                    play.expect(dialog.getByText(TextMatch.containing("Incident 2024-08 triage"))
+                            .closest(StroomDom.GRID_ROW)).not().toHaveClass(StroomDom.SELECTED_ROW);
                     ContentStorySupport.expectNoProblems(play);
                 });
     }

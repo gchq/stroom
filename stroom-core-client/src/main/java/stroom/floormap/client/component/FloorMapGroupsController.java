@@ -19,6 +19,7 @@ package stroom.floormap.client.component;
 import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.overlay.FloorMapGroupSnapshot;
 import stroom.floormap.shared.FloorMapGroup;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
@@ -78,6 +79,9 @@ public class FloorMapGroupsController extends Controller {
         view.setOnEdit(this::onEdit);
         view.setOnDelete(this::onDelete);
         view.setOnToggleHighlight(this::toggleHighlight);
+        // The groups are the document's, so they can't be changed while it is read only (a group's
+        // highlight, which is only the view's, still can)
+        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
     /// Sets the groups read from the document. The highlights and selection are kept, as saving

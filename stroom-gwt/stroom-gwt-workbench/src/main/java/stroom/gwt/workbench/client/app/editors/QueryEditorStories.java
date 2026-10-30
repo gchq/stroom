@@ -93,9 +93,6 @@ public final class QueryEditorStories {
               "description": "# Query docs"
             }""";
 
-    // FindAnnotationController's warning for OK with no annotation selected
-    private static final String NOTHING_SELECTED = "No annotation has been selected";
-
     // One table result with four columns and two rows, the second annotated
     static final String TABLE = QueryFixtures.tableResult("table", """
                     [{"id": "f-name", "name": "Name", "visible": true},
@@ -672,6 +669,35 @@ public final class QueryEditorStories {
                                            + "{}, {}, {}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A date's format and time zone are enabled only while Use Preferences is unticked;
+                // they stayed enabled when it was ticked, although the server then ignores them
+                .story("FormatDateTimeFollowsUsePreferences", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Name");
+                    play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Format 'Name'");
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Date Time", ".selection-popup *"));
+                    final Query usePreferences = dialog.findByRole("checkbox", "Use Preferences");
+                    final Query format = dialog.getByLabelText("Format");
+                    final Query custom = dialog.getByRole("checkbox", "Custom");
+                    final Query timeZone = dialog.getByLabelText("Time Zone");
+                    // A column with no format uses the preferences
+                    play.expect(usePreferences).toBeChecked();
+                    play.expect(format).toBeDisabled();
+                    play.expect(custom).toBeDisabled();
+                    play.expect(timeZone).toBeDisabled();
+                    play.click(usePreferences);
+                    play.expect(format).toBeEnabled();
+                    play.expect(custom).toBeEnabled();
+                    play.expect(timeZone).toBeEnabled();
+                    play.click(usePreferences);
+                    play.expect(format).toBeDisabled();
+                    play.expect(timeZone).toBeDisabled();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // Conditional formatting: the rules list, a new rule, then OK
                 .story("ConditionalFormattingMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {
@@ -923,20 +949,9 @@ public final class QueryEditorStories {
                     play.click(play.getByRole("button", "Annotate Selected Rows"));
                     play.click(screen.findByText("Add to Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
-                    // Stroom doesn't select the first annotation (the list only selects it when the
-                    // filter changes), so OK with none selected warns and keeps the chooser open;
-                    // the play then selects it
-                    play.expect(dialog.findByText("Existing incident").closest("[role='option']"))
-                            .toHaveAttribute("aria-selected", "false");
-                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
-                    play.click(warning.getByRole("button", StroomDom.button("Close")));
-                    play.waitFor(() -> play.expect(screen.queryByText(NOTHING_SELECTED)).toBeNull());
-                    play.expect(screen.getByText("Choose Annotation", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
-                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
-                            RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
-                    play.click(dialog.getByText("Existing incident"));
+                    // The first annotation found is selected when the chooser opens, so OK straight
+                    // away chooses it (it was once selected only when the filter changed, and OK
+                    // warned "No annotation has been selected")
                     play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("[role='option']"))
                             .toHaveAttribute("aria-selected", "true"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -946,8 +961,7 @@ public final class QueryEditorStories {
                                     + "\"linkEvents\", \"events\": [{\"streamId\": 1001, \"eventId\": 5}]}}")
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(play.spy(EDIT_ANNOTATION)).toHaveBeenCalledWith("77"));
-                    // The warning is the only alert
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // A STEPPING link begins stepping at the 0 based part and record

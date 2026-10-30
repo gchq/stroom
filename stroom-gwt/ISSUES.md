@@ -692,20 +692,32 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
 
 ## Controls that stay enabled but do nothing
 
-**Reported.**
+**Fixed** (30 October 2026; all on master too).
 
-* Dashboard table format: the date format and time zone controls stay enabled when Use Preferences
-  is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).
-* Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
-  (`component/BasicListInputSettings.ui.xml`).
+* ~~Dashboard table format: the date format and time zone controls stay enabled when Use Preferences
+  is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).~~ **Fixed** (30
+  October 2026, `ColumnFormat.updateEnabledState` disables Format, Custom, Custom Format and the
+  time zone fields while Use Preferences is ticked, on open and on change; `App/Editors/QueryEditor`
+  `FormatDateTimeFollowsUsePreferences`).
+* ~~Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
+  (`component/BasicListInputSettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `BasicListInputSettingsController` enables and disables the picker with the tick box, as the
+  embedded query does; `TestBasicListInputSettingsController`, `App/Editors/DashboardEditor`
+  `ListInputSettingsDictionaryFollowsUseDictionary`).
 * ~~Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
   unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).~~ **Fixed** (30 October 2026,
   `BasicEmbeddedQuerySettingsController` enables and disables the picker with the tick box, lines
   69 and 103).
-* Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
-  Notifications is unticked (`AnalyticNotificationEditor.ui.xml`).
-* Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
-  (`SolrIndexSettings.ui.xml`).
+* ~~Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
+  Notifications is unticked (`AnalyticNotificationEditor.ui.xml`).~~ **Fixed** (30 October 2026,
+  `AnalyticNotificationEditor.updateEnabledState` enables them only while Limit Notifications is
+  ticked; the editor is never opened read only; `App/Editors/AnalyticRuleEditor`
+  `LimitGatesMaximumAndResume`, and `ResumeAfterNever` now ticks Limit first).
+* ~~Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
+  (`SolrIndexSettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `SolrIndexSettings.updateEnabledState` enables ZooKeeper Hosts and Path only for Solr Cloud with
+  Use ZK ticked; read only stays separate (`setReadOnly`); `App/Index/SolrIndexEditor`
+  `ZooKeeperFieldsFollowUseZk`).
 
 ### The Go to Search Results shortcut did nothing (on master too)
 
@@ -2094,6 +2106,14 @@ this extends it to every handler. When counted (wave 13), the converted componen
 
 ## Smaller oddities
 
+**Reported** (30 October 2026, found fixing the processor profile periods' Remove): lists that
+replace a row after an edit may keep the old object selected, as `MultiSelectionModelImpl` matches
+the selection by object, not by the grid's key provider. `NotificationListController.edit` passes
+the selected notification to `replace(selected, updated)`, so a second edit of the same row may act
+on the replaced object. Not checked; the profile periods' fix (moving the selection to the row with
+the same id in `ProfilePeriodList.setData`) is the pattern, or the selection model could use the key
+provider.
+
 **Kept** (30 October 2026, at the user's approval removed and then put back, as the check found a use): the activity editor shows the site's own configured HTML form, built of plain `input`, `select` and `textarea` elements, which only these rules give Stroom's look; without them its fields were the browser's white boxes, and the Manage Activity Validation Blocks Save story's contrast check failed. Removing them would need that form's controls styled another way (e.g. rules scoped to the activity editor's form). ~~the rules for bare inputs (`text-field.css`'s `textarea:where(:not(.text-field))` block and the
 `input:where(:not(.text-field))` selectors from line 38, the `select option` rules and the bare
 `::placeholder`, and `base.css`'s `input[type="file"]` rules at 569) may now style nothing that
@@ -2127,10 +2147,17 @@ to delete them by hand.~~
 
 **Reported.**
 
-* A disabled link button still underlines on hover: a disabled step location link and a disabled
+* ~~A disabled link button still underlines on hover: a disabled step location link and a disabled
   `TimeRangeSelector` (found 24 October 2026, in wave 1's stylesheet review). `.link-button:hover`
   (`link-button.css`, once `.linkButton:hover` in `components.css`) wins over their disabled rules.
-  Fix: `.link-button:hover:not(:disabled):not([aria-disabled="true"])`, with a story for each.
+  Fix: `.link-button:hover:not(:disabled):not([aria-disabled="true"])`, with a story for each.~~
+  **Fixed** (30 October 2026): `.link-button:hover` no longer applies to a disabled link button
+  (`:disabled` or `aria-disabled="true"`), inside `:where()` so its specificity, and the callers'
+  rules over it, are as they were. The step location link already had its own
+  `[aria-disabled="true"]:hover` rule; the time range selector, disabled or read only, still
+  underlined. Checked with real mouse hovers on `Widgets/Inputs/ViewStates` `AllControls`
+  (`test-runner/lib/real-input/link-button.mjs`), as a play's hover can't show `:hover`. On master
+  too.
 * ~~Unused CSS and classes met in wave 1's stylesheet renames (24 October 2026), renamed rather than
   deleted (removals wait): in `button.css`, the default, outline and icon button variants, the
   `button--selected`, `.small` and `.large` rules, `button__container`, the empty `.button svg`
@@ -2253,10 +2280,17 @@ to delete them by hand.~~
   runs; a later drop of something dragged in from elsewhere then moves that layer again. The fix is
   to forget it in the drop handler (`FloorMapLayers.buildRow`). Not fixed yet: the workbench has
   no way to fire HTML drag and drop events (with a `DataTransfer`) for its regression story.
-* The floor map follows no read-only state (found 26 October 2026, in wave 7's audit; master has it
+* ~~The floor map follows no read-only state (found 26 October 2026, in wave 7's audit; master has it
   too): nothing under `stroom.floormap.client` watches `Contexts.READ_ONLY`, and `FloorMapLayers`
   has no `onReadOnlyChange`, so a floor map the user can only view can still have its layers
-  reordered and restyled on the Editor tab (though it can't be saved).
+  reordered and restyled on the Editor tab (though it can't be saved).~~ **Fixed** (30 October 2026,
+  changelog entry): its editing controls follow `Contexts.READ_ONLY`, as it changes. On the Editor
+  tab the canvas leaves edit mode (no moves, drawing or context menu), the Layers panel disables its
+  grips (and drag), swatches, a discovered type's Add and Discover (`FloorMapLayers.onReadOnlyChange`),
+  and the Fact and Time Lists their actions; on the Map tab the Groups panel's New, Edit and Delete and
+  the Tracking panel's Add to Group; on the Events Query tab the column dropdowns. Layer and group
+  visibility, which change only the view, still work. Workbench: `App/Editors/FloorMapEditor`
+  `ReadOnly` and `LockChangeWhileOpen`, `App/Editors/FloorMapMap` `GroupsReadOnly`.
 * ~~The floor map's dock (`FloorMapDock`) hands out its tab bar and layer container, and its controller
   adds its handlers to the tab bar, rather than the dock having a callback for each (decided in
   wave 7, as the plan accepted the controller relaying the tab bar's menu). Revisit with
@@ -2349,10 +2383,20 @@ to delete them by hand.~~
   editor's done** (wave 28, 29 October 2026: `annotation-editor`, `annotation-setting`,
   `annotation-history` and `duration-label`, a sheet each); `traces-toolbar` is
   `traces-list-tab__toolbar` (`traces-list-tab.css`) since UI audit wave 8 (29 October 2026).
-* Read-only read once rather than followed (found 27 October 2026, in wave 12's audit; as before
+* ~~Read-only read once rather than followed (found 27 October 2026, in wave 12's audit; as before
   the wave): the pipeline's Structure tab, a document's Assets tab and the scheduled processing pane
   take `Contexts.READ_ONLY` when they read, so a lock change without a re-read leaves their buttons
-  as they were. Follow it with `watch(Contexts.READ_ONLY, ...)`, with a `LockChangeWhileOpen` story.
+  as they were. Follow it with `watch(Contexts.READ_ONLY, ...)`, with a `LockChangeWhileOpen` story.~~
+  **Fixed** (30 October 2026; master reads the document again on a lock change, so has no such
+  bug, and no changelog entry): each watches it. `PipelineStructureController` sets
+  the parent picker, dragging and its buttons when it changes (not in `read`);
+  `DocumentAssetsTabController` its buttons and the shown file's editor; `ScheduledProcessingController`
+  the state its New, Edit and Delete check (the list's buttons already followed, so after an unlock
+  New was enabled and did nothing). Workbench: `App/Main/PipelineEditor` `LockChangeWhileOpen`,
+  `App/Main/VisualisationAssets` `LockChangeWhileOpen`, `App/Editors/DataGenEditor`
+  `ExecutionLockChangeWhileOpen`. `QueryEditorController.setQuery` still reads it once (when a query
+  is shown), as do `StreamingProcessingController`, `SolrIndexSettingsController`,
+  `DuplicateManagementListController` and `PathwayEditorController` (not checked).
 
 * ~~A menu item's tooltip is escaped twice: `MenuItemCell` passes the escaped `SafeHtml` tooltip's
   string to a template's `String` attribute, which escapes it again, so an apostrophe shows as
@@ -2379,23 +2423,40 @@ to delete them by hand.~~
   Buttons" fail (seen 2026-10-21, before the phase 4 removals; not grid related). The dark theme,
   the suite's default, passes them.
 
-* After editing a processor profile's period, Remove does nothing until another row is chosen: the
+* ~~After editing a processor profile's period, Remove does nothing until another row is chosen: the
   edit replaces the row with an unequal copy, but the selection keeps the old one, which
   `profilePeriods.remove(selected)` doesn't find (`ProfilePeriodListController`, was
-  `ProfilePeriodList`).
+  `ProfilePeriodList`).~~ **Fixed** (30 October 2026, on master too: `ProfilePeriodList.setData`
+  moves the selection to the row with the selected period's uuid, or clears it if gone, so Edit
+  and Remove act on the current copy; `App/Main/ProcessorProfilesScreen` `RemoveEditedPeriod`).
 * ~~`DocumentUserPermissionsListPresenter` asked the document type cache for its columns
   (`setupColumns`) before its grid was created; with the cache already filled it would add them to
   a null grid.~~ Fixed in wave 10's audit: `DocumentUserPermissionsListController` adds the columns
   once both the document types and the document are known, whichever comes first (each list has its
   own `DocumentTypeCache`, unbound in GIN, so its first fetch answers after the document is given;
   the order no longer matters).
-* The activity chooser highlights the current activity with an object from another fetch
-  (`ManageActivityController.setSelected`), which a grid comparing rows can't match.
-* A pathway's constraints list heads its value column "Type" (`ConstraintList.addColumns`, was `ConstraintListPresenter.addValueColumn`),
-  a copy of the column before it.
+* ~~The activity chooser highlights the current activity with an object from another fetch
+  (`ManageActivityController.setSelected`), which a grid comparing rows can't match.~~
+  **Fixed** (30 October 2026): `ActivityListController.setSelected` selects the list's row with the
+  activity's id, and each page found swaps a selection from another fetch (the current activity,
+  or one just saved) for its row, as `Activity` has no `equals` and the grid matches the selection
+  to its rows as objects. `App/Main/Activity Chooser` `OpenWithSelection` checks the current
+  activity's row is selected. On master too.
+* ~~A pathway's constraints list heads its value column "Type" (`ConstraintList.addColumns`, was `ConstraintListPresenter.addValueColumn`),
+  a copy of the column before it.~~ **Fixed** (30 October 2026): the value column is headed
+  "Value", as the constraint dialog's field is. `App/Editors/PathwaysEditor` `Graph` checks the
+  "Type" and "Value" column headers. On master too.
 
-* Rename hides its dialog before the request is sent, and the document permission dialogs
-  close once a failed change is dismissed, so both lose what was entered if the request fails.
+* ~~Rename hides its dialog before the request is sent, and the document permission dialogs
+  close once a failed change is dismissed, so both lose what was entered if the request fails.~~
+  **Fixed** (30 October 2026): `DocumentPluginEventManager` hides the rename dialog only once the
+  rename succeeds (a failure resets it, open with the new name), and Set Permissions
+  (`DocumentUserPermissionsEditorController`) and Set Document Create Permissions
+  (`DocumentUserCreatePermissionsEditorController`) reset their dialog when the change fails (the
+  clients report a failure as `false`), rather than hide it. `App/Main/AppShell`
+  `RenameFailureKeepsDialog` and `App/Security/DocumentPermissionsTab`
+  `SetPermissionsFailureKeepsDialog` and `CreatePermissionsFailureKeepsDialog` check each stays
+  open with what was entered after the error is closed. On master too.
 * ~~`TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
   and second groups.~~ Fixed in wave 4: `TimePicker.setHourVisible` hides the hour's form group.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
@@ -2433,9 +2494,14 @@ to delete them by hand.~~
   the controller overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
-* The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
+* ~~The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
-  been selected" (`FindAnnotationList`).
+  been selected" (`FindAnnotationList`).~~ **Fixed** (30 October 2026): the chooser
+  (`FindAnnotationController`) asks its list to choose the first annotation found whenever none is
+  chosen (`FindAnnotationListController.setChooseFirst`), so it is selected when the chooser
+  opens. Browse Annotations and an annotation's links are as they were. `App/Main/AnnotationEditor`
+  `LinkAnnotation` and `App/Editors/QueryEditor` `AddToAnnotation` check the first annotation is
+  selected and OK straight away chooses it. On master too.
 * ~~Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
   as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
   until both are entered again, even to change only the name. Nothing in the dialog says the
@@ -2449,9 +2515,12 @@ to delete them by hand.~~
   `.st7`), and `OpenAI.svg` has a `<title>` "OpenAI icon", so a tree row reads "OpenAI icon My
   Model". No other icon uses those class names today, so nothing is recoloured, but any that did
   would be. Found when the document write cycles couldn't match those rows by name.
-* Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
+* ~~Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
   leaves a blank page: the app is never shown and only a reload offers the terms again
-  (`SplashPresenter`, `CurrentUser.showSplash`).
+  (`SplashPresenter`, `CurrentUser.showSplash`).~~ **Fixed** (30 October 2026): once the warning
+  is closed, `SplashController` keeps the terms shown (it resets the dialog rather than hide it),
+  so they can still be accepted. `App/Main/AppShell` `SplashGate` rejects, closes the warning,
+  accepts, and checks the acknowledgement is sent and the app shown. On master too.
 
 ## Fixed
 

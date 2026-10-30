@@ -18,6 +18,7 @@ package stroom.floormap.client.component;
 
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.model.FactListRow;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 
 import com.google.inject.Inject;
@@ -52,6 +53,8 @@ public class FloorMapFactListController extends Controller {
         this.view = Objects.requireNonNull(view, "view");
         initWidget(view);
         FloorMapEditorHelp.wire(view.getHelpButton(), "Fact List", FloorMapEditorHelp.factList());
+        // Its actions change the facts, so they follow the document's read-only state
+        watch(Contexts.READ_ONLY, view::setReadOnly);
         return this;
     }
 

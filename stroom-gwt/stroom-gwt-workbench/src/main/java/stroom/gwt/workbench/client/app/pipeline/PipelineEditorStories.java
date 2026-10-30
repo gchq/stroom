@@ -1164,7 +1164,31 @@ public final class PipelineEditorStories {
                     selectXslt(play);
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     expectNoProblems(play);
+                })
+                // The pipeline is locked and unlocked while it is open, without being read again:
+                // the Structure tab's buttons follow (they once kept the state of the last read)
+                .story("LockChangeWhileOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    waitForStructure(play);
+                    play.click(play.getByText("parser"));
+                    final String add = "Add New Pipeline Element";
+                    play.waitFor(() -> play.expect(play.getByRole("button", add))
+                            .not().toHaveAttribute("aria-disabled"));
+
+                    play.run("lock the pipeline", () -> host().setReadOnly(true));
+                    play.expect(play.getByRole("button", add)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Remove Pipeline Element"))
+                            .toHaveAttribute("aria-disabled", "true");
+
+                    play.run("unlock the pipeline", () -> host().setReadOnly(false));
+                    play.expect(play.getByRole("button", add)).not().toHaveAttribute("aria-disabled");
+                    expectNoProblems(play);
                 });
+    }
+
+    // The editor's host the story shows, which is told when the pipeline's lock changes
+    private static DocumentEditorHost<PipelineDoc> host() {
+        return ScreenHarness.shownComponent();
     }
 
     // Opens the Structure tab and waits for its elements

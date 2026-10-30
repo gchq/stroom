@@ -86,6 +86,10 @@ public final class VisualisationAssetsStories {
                 {"id": "a4", "path": "css/style.css", "folder": false}],
               "uploadedFiles": {}}""";
 
+    // The document's read-only state, as its opener provides it to the tab: the story that locks
+    // the document while it is open changes it
+    private static ContextValue<Boolean> readOnly;
+
     private VisualisationAssetsStories() {
         // Static utility
     }
@@ -173,6 +177,31 @@ public final class VisualisationAssetsStories {
                     play.keyboard("i");
                     play.expect(item(play, "index.html")).toHaveFocus();
                     play.expect(item(play, "index.html")).toHaveAttribute("aria-selected", "true");
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The document is locked and unlocked while it is open, without being read again:
+                // the buttons and the file shown follow (they once kept the state of the last read)
+                .story("LockChangeWhileOpen", VisualisationAssetsStories::renderTree)
+                .withPlay(play -> {
+                    final String add = "Add File or Folder";
+                    final String delete = "Delete Selected Asset";
+                    final String aceInput = ".ace_text-input";
+                    play.click(play.findByText("index.html"));
+                    play.waitFor(() -> play.expect(play.querySelector(aceInput)).not().toBeNull());
+                    play.waitFor(() -> play.expect(play.getByRole("button", delete))
+                            .not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.getByRole("button", add)).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.querySelector(aceInput)).not().toHaveAttribute("readonly");
+
+                    play.run("lock the document", () -> readOnly.set(true));
+                    play.expect(play.getByRole("button", add)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", delete)).toHaveAttribute("aria-disabled", "true");
+                    play.waitFor(() -> play.expect(play.querySelector(aceInput)).toHaveAttribute("readonly"));
+
+                    play.run("unlock the document", () -> readOnly.set(false));
+                    play.expect(play.getByRole("button", add)).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByRole("button", delete)).not().toHaveAttribute("aria-disabled");
+                    play.waitFor(() -> play.expect(play.querySelector(aceInput)).not().toHaveAttribute("readonly"));
                     ContentStorySupport.expectNoProblems(play);
                 })
                 // A floor map's asset picker opens 'Choose Asset': only a file can be chosen, and Enter
@@ -336,7 +365,8 @@ public final class VisualisationAssetsStories {
         // After start-up, as its editor reads the user's preferences
         harness.afterStartUp(() -> {
             // As its document's opener says, which its tabs follow
-            harness.getComponentRoot().provide(Contexts.READ_ONLY, ContextValue.of(false));
+            readOnly = ContextValue.of(false);
+            harness.getComponentRoot().provide(Contexts.READ_ONLY, readOnly);
             final DocumentAssetsTabController<VisualisationDoc> assetsTab = harness.own(
                     injector.getVisualisationAssetsTab());
             for (final Widget toolbar : assetsTab.getDocumentButtons()) {

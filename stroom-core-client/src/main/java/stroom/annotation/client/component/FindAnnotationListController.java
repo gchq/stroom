@@ -41,7 +41,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /// The annotations found ([FindAnnotationList]) by a filter, and linked to or from an annotation
-/// if given one, a page at a time; the first chosen when the filter changes.
+/// if given one, a page at a time; the first chosen when the filter changes (and, in a chooser,
+/// whenever none is chosen: [#setChooseFirst(boolean)]).
 public class FindAnnotationListController extends Controller {
 
     private FindAnnotationList view;
@@ -59,6 +60,7 @@ public class FindAnnotationListController extends Controller {
     private String filter;
     private boolean initialised;
     private boolean focusText;
+    private boolean chooseFirst;
 
     /// Made by GIN; [#attach(FindAnnotationList)] gives it its list.
     ///
@@ -98,7 +100,7 @@ public class FindAnnotationListController extends Controller {
                     }
                     dataConsumer.accept(resultPage);
 
-                    if (filterChange) {
+                    if (filterChange || (chooseFirst && selectionModel.getSelected() == null)) {
                         if (!resultPage.isEmpty()) {
                             selectionModel.setSelected(resultPage.getValues().get(0));
                         } else {
@@ -188,6 +190,12 @@ public class FindAnnotationListController extends Controller {
     /// @param focusText `true` to put the focus on the filter once the next find comes back.
     public void setFocusText(final boolean focusText) {
         this.focusText = focusText;
+    }
+
+    /// @param chooseFirst `true` to choose the first annotation found by any find while none is
+    ///                    chosen (e.g. when a chooser opens), not only when the filter changes.
+    public void setChooseFirst(final boolean chooseFirst) {
+        this.chooseFirst = chooseFirst;
     }
 
     /// @param onFilterError Given why the filter was rejected after each find, or `null` if it

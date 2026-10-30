@@ -396,10 +396,11 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 9. Handle entity rename events.
         getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
-            // Hide the rename document controller.
-            event.getHidePopupRequestEvent().hide();
-
             rename(event.getExplorerNode(), event.getDocName(), explorerNode -> {
+                // Hide the rename dialog only once the rename has succeeded, so a failure
+                // keeps it open with the new name
+                event.getHidePopupRequestEvent().hide();
+
                 highlight(explorerNode);
                 RefreshDocumentEvent.fire(this, explorerNode.getDocRef());
             }, explorerListener, event.getHidePopupRequestEvent());

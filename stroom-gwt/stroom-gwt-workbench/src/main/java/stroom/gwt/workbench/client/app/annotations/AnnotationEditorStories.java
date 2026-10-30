@@ -54,8 +54,6 @@ import java.util.Map;
 public final class AnnotationEditorStories {
 
     private static final String CHANGE_PATH = "/annotation/v1/change";
-    // FindAnnotationController's warning for OK with no annotation selected
-    private static final String NOTHING_SELECTED = "No annotation has been selected";
     // The comment entry's actions button, and the menu it opens
     private static final String COMMENT_ACTIONS = "Actions for history entry 'Comment' by Alice";
 
@@ -118,20 +116,11 @@ public final class AnnotationEditorStories {
                     play.click(play.findByTitle("Add Annotation Link"));
                     play.waitFor(() -> play.expect(screen.getByText("Choose Annotation")).toBeInTheDocument());
                     final Play chooser = screen.within(screen.getByText("Choose Annotation").closest(StroomDom.DIALOG));
-                    // GWT doesn't select the first annotation found (its list only
-                    // selects the first result when the filter changes), so OK with nothing selected
-                    // warns and keeps the chooser open; the annotation is then selected
-                    play.expect(chooser.findByText("Related alert").closest("[role='option']"))
-                            .toHaveAttribute("aria-selected", "false");
-                    play.click(chooser.getByRole("button", StroomDom.button("OK")));
-                    final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
-                    play.click(warning.getByRole("button", StroomDom.button("Close")));
-                    play.waitFor(() -> play.expect(screen.queryByText(NOTHING_SELECTED)).toBeNull());
-                    play.expect(screen.getByText("Choose Annotation", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
-                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
-                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
-                    play.click(chooser.getByText("Related alert"));
+                    // The first annotation found is selected when the chooser opens, so OK straight
+                    // away links it (it was once selected only when the filter changed, and OK
+                    // warned "No annotation has been selected")
+                    play.waitFor(() -> play.expect(chooser.getByText("Related alert").closest("[role='option']"))
+                            .toHaveAttribute("aria-selected", "true"));
                     play.click(chooser.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
@@ -140,8 +129,7 @@ public final class AnnotationEditorStories {
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.queryByText("Choose Annotation", StroomDom.DIALOG_TITLE))
                             .toBeNull());
-                    // The warning is the only alert
-                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Events tab: "Add Event Link" asks for streamId:eventId and links it

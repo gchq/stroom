@@ -149,9 +149,13 @@ public class DocumentUserPermissionsEditorController extends Controller {
             final SingleDocumentPermissionChangeRequest request =
                     new SingleDocumentPermissionChangeRequest(relatedDoc, change);
             permissionChangeClient.changeDocumentPermissions(request, guard(success -> {
-                if (success
-                    && (Annotation.TYPE.equals(relatedDoc.getType())
-                        || AnnotationTag.TYPE.equals(relatedDoc.getType()))) {
+                if (Boolean.FALSE.equals(success)) {
+                    // The client has shown the error: keep the dialog open with the user's change
+                    event.reset();
+                    return;
+                }
+                if (Annotation.TYPE.equals(relatedDoc.getType())
+                    || AnnotationTag.TYPE.equals(relatedDoc.getType())) {
                     AnnotationChangeEvent.fire(this, null);
                 }
                 onClose.run();
@@ -163,7 +167,12 @@ public class DocumentUserPermissionsEditorController extends Controller {
             builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
             final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
                     builder.build(), change);
-            explorerClient.changeDocumentPermissions(request, guard(response -> {
+            explorerClient.changeDocumentPermissions(request, guard(success -> {
+                if (Boolean.FALSE.equals(success)) {
+                    // The client has shown the error: keep the dialog open with the user's change
+                    event.reset();
+                    return;
+                }
                 onClose.run();
                 event.hide();
             }), taskMonitor());

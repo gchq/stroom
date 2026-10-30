@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
+import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -323,6 +324,33 @@ public final class DashboardSearchStories {
                     play.click(play.querySelector(".dashboard-input .icon-box__icon"));
                     screen.findByText("red", ".selection-popup *");
                     play.expect(screen.getByText("blue", ".selection-popup *")).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A List Input's Dictionary picker is enabled only while Use Dictionary is ticked; it
+                // stayed enabled when it wasn't, although the dictionary was then unused
+                .story("ListInputSettingsDictionaryFollowsUseDictionary", DashboardSupport.story(
+                        DashboardDocs.LIST_INPUT_DASHBOARD,
+                        routes -> {
+                            wordListRoutes(routes);
+                            DocEditors.docSelectionRoutes(routes);
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "Colour");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    final Query useDictionary = settings.findByRole("checkbox", "Use Dictionary");
+                    final Query picker = settings.within(settings.getByText("Dictionary", "label")
+                            .closest(".form-group")).querySelector(".drop-down");
+                    // The dashboard's list input uses its dictionary
+                    play.expect(useDictionary).toBeChecked();
+                    play.expect(picker).not().toHaveAttribute("aria-disabled", "true");
+                    play.click(useDictionary);
+                    play.expect(picker).toHaveAttribute("aria-disabled", "true");
+                    play.click(useDictionary);
+                    play.expect(picker).not().toHaveAttribute("aria-disabled", "true");
+                    play.click(settings.getByRole("button", StroomDom.button("Cancel")));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A List Input's value that isn't one of its dictionary's words is cleared, but

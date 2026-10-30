@@ -59,6 +59,8 @@ public class FindAnnotationController extends Controller {
         this.findAnnotationList = own(findAnnotationList).attach(content.getResultList());
 
         findAnnotationList.setBordered(true);
+        // OK (or Enter in the filter) straight away chooses the first annotation found
+        findAnnotationList.setChooseFirst(true);
         view.setOnFilterChange(this::changeQuickFilter);
         view.setOnFilterKeyDown(this::onFilterKeyDown);
         findAnnotationList.setOnOpen(annotation -> choose());

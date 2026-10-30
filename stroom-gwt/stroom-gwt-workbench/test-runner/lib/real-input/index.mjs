@@ -36,6 +36,7 @@ import { CHECKS as DATA_GRID } from './data-grid.mjs';
 import { CHECKS as DATE_TIME } from './date-time.mjs';
 import { CHECKS as HELP } from './help.mjs';
 import { CHECKS as ICON_PICKER } from './icon-picker.mjs';
+import { CHECKS as LINK_BUTTON } from './link-button.mjs';
 import { CHECKS as MENU } from './menu.mjs';
 import { CHECKS as SELECTION_BOX } from './selection-box.mjs';
 import { CHECKS as SELECTION_LIST } from './selection-list.mjs';
@@ -49,7 +50,8 @@ import { CHECKS as VALUE_SPINNER } from './value-spinner.mjs';
 const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'areas.mjs': AREAS, 'buttons.mjs': BUTTONS,
   'copy-icons.mjs': COPY_ICONS, 'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
   'date-time.mjs': DATE_TIME, 'help.mjs': HELP,
-  'icon-picker.mjs': ICON_PICKER, 'menu.mjs': MENU, 'selection-box.mjs': SELECTION_BOX,
+  'icon-picker.mjs': ICON_PICKER, 'link-button.mjs': LINK_BUTTON, 'menu.mjs': MENU,
+  'selection-box.mjs': SELECTION_BOX,
   'selection-list.mjs': SELECTION_LIST, 'shortcuts.mjs': SHORTCUTS, 'split-pane.mjs': SPLIT_PANE, 'tabs.mjs': TABS,
   'text-context-menu.mjs': TEXT_CONTEXT_MENU, 'top-bar.mjs': TOP_BAR, 'value-spinner.mjs': VALUE_SPINNER };
 

@@ -27,12 +27,14 @@ import stroom.util.shared.TokenError;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.component.client.Controller;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -46,6 +48,7 @@ public class ActivityListController extends Controller {
     private Consumer<String> onFilterError = error -> {
     };
     private String name;
+    private List<Activity> rows = List.of();
 
     /// Made by GIN; [#attach(ActivityList)] gives it its list.
     ///
@@ -68,6 +71,8 @@ public class ActivityListController extends Controller {
                             // A rejected filter comes back as an empty page like any other, so
                             // surface the reason on the filter box. See ResultPage.filterError.
                             onFilterError.accept(NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            rows = NullSafe.list(resultPage.getValues());
+                            matchSelectionToRow();
                             dataConsumer.accept(resultPage);
                         })
                         .onFailure(errorHandler)
@@ -105,6 +110,44 @@ public class ActivityListController extends Controller {
     /// @return The selection.
     public MultiSelectionModel<Activity> getSelectionModel() {
         return view.getSelectionModel();
+    }
+
+    /// Selects an activity, or nothing. An activity from another fetch (e.g. the current activity,
+    /// or one just saved) is matched to its row by its id, as the grid matches the selection to its
+    /// rows as objects: its row is selected if the list shows it, else once the list is next found.
+    ///
+    /// @param activity The activity, or `null` for none.
+    public void setSelected(final Activity activity) {
+        final MultiSelectionModel<Activity> selectionModel = view.getSelectionModel();
+        selectionModel.clear();
+        if (activity != null) {
+            selectionModel.setSelected(rowOf(activity));
+        }
+    }
+
+    // Selects the row of the activity selected, if that is an activity from another fetch
+    private void matchSelectionToRow() {
+        final MultiSelectionModel<Activity> selectionModel = view.getSelectionModel();
+        final Activity selected = selectionModel.getSelected();
+        if (selected != null) {
+            final Activity row = rowOf(selected);
+            if (row != selected) {
+                // The same activity, so nothing the owner needs to hear of
+                selectionModel.setSelected(row, new SelectionType(), false);
+            }
+        }
+    }
+
+    // The row shown for the activity (the one with its id), or the activity if none is
+    private Activity rowOf(final Activity activity) {
+        if (activity.getId() != null) {
+            for (final Activity row : rows) {
+                if (activity.getId().equals(row.getId())) {
+                    return row;
+                }
+            }
+        }
+        return activity;
     }
 
     /// @param name The filter the activities are found by, at the next [#refresh()].

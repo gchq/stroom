@@ -105,7 +105,8 @@ public class ColumnFormat extends Component {
     /// Makes the content.
     public ColumnFormat() {
         initWidget(BINDER.createAndBindUi(this));
-        custom.setOnChange(value -> onCustom());
+        custom.setOnChange(value -> updateEnabledState());
+        usePreferences.setOnChange(value -> updateEnabledState());
         type.addValueChangeHandler(this::onType);
         format.addValueChangeHandler(this::onFormat);
         timeZoneUse.addValueChangeHandler(this::onTimeZoneUse);
@@ -114,6 +115,7 @@ public class ColumnFormat extends Component {
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
         timeZoneUse.addItem(Use.OFFSET);
+        updateEnabledState();
     }
 
     /// Puts the focus on the type.
@@ -167,6 +169,7 @@ public class ColumnFormat extends Component {
     /// @param usePreferences Whether the user's preferences say how dates are shown.
     public void setUsePreferences(final boolean usePreferences) {
         this.usePreferences.setValue(usePreferences);
+        updateEnabledState();
     }
 
     /// @return The date and time pattern: the custom one if Custom is ticked, otherwise the
@@ -193,8 +196,8 @@ public class ColumnFormat extends Component {
         }
         final boolean custom = formatIndex == -1;
         this.custom.setValue(custom);
-        this.text.setEnabled(custom);
         this.text.setText(text);
+        updateEnabledState();
     }
 
     /// @param timeZoneIds The named time zones offered.
@@ -278,8 +281,17 @@ public class ColumnFormat extends Component {
         formatTimeZoneOffset.setVisible(dateTime && Use.OFFSET.equals(timeZoneUse.getValue()));
     }
 
-    private void onCustom() {
-        text.setEnabled(custom.getValue());
+    // The date and time settings are ignored when the user's preferences are used, and the custom
+    // format unless Custom is ticked. The dialog is never read only, so nothing else disables them
+    private void updateEnabledState() {
+        final boolean ownSettings = !usePreferences.getValue();
+        format.setEnabled(ownSettings);
+        custom.setEnabled(ownSettings);
+        text.setEnabled(ownSettings && custom.getValue());
+        timeZoneUse.setEnabled(ownSettings);
+        timeZoneId.setEnabled(ownSettings);
+        timeZoneOffsetHours.setEnabled(ownSettings);
+        timeZoneOffsetMinutes.setEnabled(ownSettings);
     }
 
     private void onType(final ValueChangeEvent<Type> event) {

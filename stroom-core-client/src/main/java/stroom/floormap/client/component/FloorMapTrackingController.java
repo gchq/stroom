@@ -20,6 +20,7 @@ import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
 import stroom.widget.menu.client.IconMenuItem;
 import stroom.widget.menu.client.Item;
@@ -59,6 +60,7 @@ public class FloorMapTrackingController extends Controller {
         this.view = view;
         initWidget(view);
         view.setOnAddToGroup(this::showAddToGroupMenu);
+        watch(Contexts.READ_ONLY, view::setReadOnly);
     }
 
     /// Offers Add to Group; without it the button stays disabled, so a host with no Groups panel

@@ -188,6 +188,32 @@ public final class SolrIndexEditorStories {
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
+                // The ZooKeeper fields are enabled only for a Solr Cloud with Use ZK ticked; they
+                // stayed enabled for a single node or with Use ZK unticked, although then unused
+                .story("ZooKeeperFieldsFollowUseZk", context -> render(context, FIELDS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openSettings(play);
+                    final Query zkHosts = play.getByLabelText("ZooKeeper Hosts");
+                    final Query zkPath = play.getByLabelText("ZooKeeper Path");
+                    final Query useZk = play.getByRole("checkbox", "Use ZK");
+                    // A single node, Use ZK unticked
+                    play.expect(zkHosts).toBeDisabled();
+                    play.expect(zkPath).toBeDisabled();
+                    // Use ZK alone is not enough: a single node has no ZooKeeper
+                    play.click(useZk);
+                    play.expect(zkHosts).toBeDisabled();
+                    // A Solr Cloud with Use ZK ticked
+                    play.click(play.getByLabelText("Instance Type"));
+                    play.click(screen.findByRole("option", "Solr Cloud"));
+                    play.waitFor(() -> play.expect(zkHosts).toBeEnabled());
+                    play.expect(zkPath).toBeEnabled();
+                    // Unticked again
+                    play.click(useZk);
+                    play.expect(zkHosts).toBeDisabled();
+                    play.expect(zkPath).toBeDisabled();
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab as an editable partner for SettingsReadOnly
                 .story("SettingsEditable", context -> render(context, FIELDS, false))
                 .withPlay(play -> {

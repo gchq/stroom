@@ -83,16 +83,16 @@ public class ScheduledProcessingController extends Controller {
         own(scheduleList.addSelectionHandler(e -> {
             historyList.setExecutionSchedule(scheduleList.getSelected());
         }));
+        // Read only as its document is, following a lock change while it is open, as the list's
+        // buttons do
+        watch(Contexts.READ_ONLY, readOnly -> this.readOnly = readOnly);
     }
 
     /// Shows the execution schedules of a document.
     ///
     /// @param ownerDocRef The document that owns the execution schedules.
     public void read(final DocRef ownerDocRef) {
-        // Read only as its document is
-        final boolean readOnly = context(Contexts.READ_ONLY);
         this.ownerDocRef = ownerDocRef;
-        this.readOnly = readOnly;
         scheduleList.read(ownerDocRef);
     }
 

@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 /// The splash screen ([Splash]), made for one use: the terms to accept before using the system.
-/// Accepting them is recorded; rejecting them says they must be accepted.
+/// Accepting them is recorded; rejecting them says they must be accepted and shows them again.
 public class SplashController extends Controller {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
@@ -61,7 +61,9 @@ public class SplashController extends Controller {
     /// @param title    The dialog's title.
     /// @param body     The terms, as HTML.
     /// @param version  The terms' version.
-    /// @param onClosed Told whether the terms were accepted, once the dialog is closed.
+    /// @param onClosed Told that the terms were accepted, once the dialog is closed. The dialog
+    ///                 closes only then: rejecting the terms keeps it open, so they can still be
+    ///                 accepted.
     public void show(final HasControllerNode opener,
                      final String title,
                      final String body,
@@ -87,10 +89,9 @@ public class SplashController extends Controller {
                                 .taskMonitorFactory(taskMonitor())
                                 .exec();
                     } else {
-                        AlertEvent.fireWarn(this, "You must accept the terms to use this system", null, () -> {
-                            e.hide();
-                            onClosed.accept(false);
-                        });
+                        // The terms stay shown once the warning is closed: hiding them left a
+                        // blank page, as the app is shown only once they are accepted
+                        AlertEvent.fireWarn(this, "You must accept the terms to use this system", null, e::reset);
                     }
                 })
                 .fire();

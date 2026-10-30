@@ -31,7 +31,9 @@
     cursor: pointer;
 }
 
-.link-button:hover {
+/* Not when disabled, natively (setEnabled) or aria-disabled (setAriaDisabled, DisabledState);
+   :where() keeps the specificity of .link-button:hover, so the caller's rules still win as before */
+.link-button:hover:where(:not(:disabled):not([aria-disabled="true"])) {
     text-decoration: underline;
 }
 

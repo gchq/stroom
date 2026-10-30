@@ -291,10 +291,7 @@ public class ManageActivityController extends Controller {
     }
 
     private void setSelected(final Activity activity) {
-        activityList.getSelectionModel().clear();
-        if (activity != null) {
-            activityList.getSelectionModel().setSelected(activity);
-        }
+        activityList.setSelected(activity);
     }
 
     private Activity getSelected() {
