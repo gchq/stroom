@@ -1,5 +1,9 @@
 # From reaching the GWT UI to testing it — the behaviour plan
 
+> **Note (30 October 2026):** the figures here (the status below and § 5's metrics, from September
+> 2026, and the progress log's, to 13 October 2026) were measured before the component migration
+> (waves 1 to 46), and haven't been measured again; counts of presenters no longer apply, as none remains. The plan is kept as it was written.
+
 Companion to [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) (how every screen and dialog came to be
 reachable) and [BRANCHING-PLAN.md](./BRANCHING-PLAN.md) (the graph the walk descends). This plan is
 about what happens *after* a door is opened: whether the thing behind it does what the source says

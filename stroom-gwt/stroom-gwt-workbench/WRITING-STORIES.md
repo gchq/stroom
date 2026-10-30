@@ -838,13 +838,12 @@ Also:
   other rows' are `-1`): give a row the focus (press its text), then `play.tab()` reaches its row
   actions in order. Enter and Space press a button, Enter follows a link; the grid leaves the keys
   pressed on them alone (`JobsScreen` `CommandLinksByKeyboard`).
-* Grid tick boxes are `TickBoxCell` divs (`.tickBox`) with the `checkbox` role, not inputs, so
+* Grid tick boxes are `TickBoxCell` divs (`.tick-box--cell`) with the `checkbox` role, not inputs, so
   `getAllByRole("checkbox")` finds them too; list boxes (`<select multiple>`) are driven with
   `play.selectOptions(...)`; context menus with `play.rightClick(cell)`.
-* **Results table headers**: `MyDataGrid` only handles a header's mouse buttons after the mouse has
-  moved over it (a deferred native preview handler), and a click moves the mouse in again from the
-  body, so `QueryEditorStories.clickHeader(play, target)` fires a mousemove, waits 200ms, then
-  mousedown/mouseup/click. A column's menu opens on a left click (not a context menu); the values
+* **Results table headers**: click a part of a header with `StroomDom.clickHeader(play, target)`,
+  which fires the pointer and mouse events, then the click, at the target's centre, without moving
+  the mouse in from the body as user-event's click does. A column's menu opens on a left click (not a context menu); the values
   filter on the header's `.column-header__value-filter-icon`. Header labels are `.column-header__label`.
 * **Form groups**: a `FormGroup`'s label names the one form control in it (an input, select or text
   area, even inside a panel or composite such as a tick box or password box), so find it with

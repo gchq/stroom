@@ -1,5 +1,9 @@
 # Full coverage of the GWT UI — the branching plan
 
+> **Note (30 October 2026):** the presenters this plan names and counts (414, and those listed by
+> name) predate the component migration (waves 1 to 46): no presenter remains, as every screen and
+> dialog is now a controller, and many were renamed or merged. The plan is kept as it was written.
+
 [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) planned *destinations* — places you can navigate to. That layer
 is done: 184 recorded targets, 167 pixel-identical, 0 corpus misses. It then said "dialogs are the
 long tail" and stopped, which was an admission rather than a plan.

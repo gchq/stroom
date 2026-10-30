@@ -620,7 +620,8 @@ that runs only the workbench tasks gets the same. A fix: the workbench serves Ac
 
 Without the visualisations checkout beside the copy, the same task also failed on a script error:
 the "No visualisations" message's `+` began a line, so Groovy read it as a unary plus on a string.
-Fixed in data_grid2.
+Fixed in data_grid2 (checked 30 October 2026: `stroom-gwt-workbench/build.gradle:898` ends its line
+with the `+`).
 
 * `stroom-gwt/stroom-gwt-workbench/build.gradle` (`workbenchServe`'s roots, `runTestRunner`)
 * `stroom-core-client-widget/src/main/java/edu/ycp/cs/dh/acegwt/public/ace/`
@@ -655,7 +656,8 @@ retiring FloorMapLocalBuilder, 22 October 2026.
 
 ### Bootstrap's styles apply to every page
 
-**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
+**Fixed** (30 October 2026, by the CSS plan's step 5, wave 31: `app.css` no longer imports
+Bootstrap and `ui/css/bootstrap/` is gone; its element rules lead `base.css`). ~~**Open decision (not now).** `app.css` imports the whole of `bootstrap.min.css` (with
 `custom-bootstrap.css` recolouring parts of it), but Stroom uses only a few of its classes:
 `form-group` and `form-label` (`FormGroup`, `FormLabel` and about ten settings views), `dropdown`
 (`TermEditor`), and the `badge-*`, `form-control` and `dropdown-menu` looks. Its reboot and its
@@ -664,10 +666,10 @@ names. The vis tooltip's key and value columns were classed `grid` and `col`, so
 Bootstrap's grid column (the whole width, shared equally, 1rem each side) and short values wrapped
 mid-word; the tooltip is now styled only by its own BEM classes (22 October 2026). Dropping
 Bootstrap would mean moving the classes Stroom uses into its own BEM styles, replacing the parts of
-reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.
+reboot the app relies on (box sizing, margins, fonts), and a full screenshot diff of the workbench.~~
 
 * `stroom-app/src/main/resources/ui/css/app.css`
-* `stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`
+* ~~`stroom-app/src/main/resources/ui/css/bootstrap/custom-bootstrap.css`~~ (gone)
 
 ## Controls that stay enabled but do nothing
 
@@ -677,8 +679,10 @@ reboot the app relies on (box sizing, margins, fonts), and a full screenshot dif
   is ticked, although the server then ignores them (`FormatViewImpl.ui.xml`).
 * Dashboard list input: the Dictionary picker stays enabled when Use Dictionary is unticked
   (`component/BasicListInputSettings.ui.xml`).
-* Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
-  unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).
+* ~~Embedded query: Referenced Query is only faded, not disabled, when Reference Existing Query is
+  unticked (`component/BasicEmbeddedQuerySettings.ui.xml`).~~ **Fixed** (30 October 2026,
+  `BasicEmbeddedQuerySettingsController` enables and disables the picker with the tick box, lines
+  69 and 103).
 * Analytic notifications: Maximum and Resume Notifications After stay enabled when Limit
   Notifications is unticked (`AnalyticNotificationEditor.ui.xml`).
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
@@ -941,10 +945,12 @@ Renderer memory peaked at 823 MB, against 2.4 GB before. What still grows (about
 walk node) is likely the on-demand dialogs below, made outside any scope; `mem-leak.mjs CLASSES=1`
 can name them.
 
-**Still to do:** about 240 other places make a presenter on demand (mostly dialogs) outside any scope;
+**Done** (30 October 2026, superseded: no presenter remains, as every screen and dialog is a
+controller owned by what shows it, and every story passes the leak check; see "Status" above).
+~~**Still to do:** about 240 other places make a presenter on demand (mostly dialogs) outside any scope;
 those inside a document should use `inScope(...)` so they are released with it. Dialogs shown and
 hidden repeatedly measured nothing kept in the live app (Find), but the workbench probe suggests
-some (data upload, current activity, find in content, Ask Stroom AI configure) keep their children.
+some (data upload, current activity, find in content, Ask Stroom AI configure) keep their children.~~
 `QueryResultVisPresenter.onRemove()` called `onUnbind()` rather than `unbind()`: fixed in wave 13,
 where `QueryResultVisController` releases its visualisation and takes its frame off the page when it
 is disposed.
@@ -964,7 +970,9 @@ registered completion providers.
 * Heap still grows by 100-280 KB per close with no DOM nodes or listeners kept; a heap snapshot
   shows mostly V8 internals (compiled code, `WeakArrayList`), not Stroom classes, and the
   harness's request spies record every reopen, so heap isn't judged.
-* The rest of the stories (e.g. `app-main-*`, `widgets-*`) haven't been run with it yet.
+* ~~The rest of the stories (e.g. `app-main-*`, `widgets-*`) haven't been run with it yet.~~
+  **Done**: every story is run with it, and all pass (full runs since wave 13; all 1,741 in the
+  runs of waves 36, 39 and 42 to 45).
 
 **Fixes needed, together** (as first proposed; done as above):
 
@@ -983,17 +991,22 @@ registered completion providers.
 
 **Smaller growth found:**
 
-* Help popups push onto the static `CurrentFocus` stack (`PopupUtil:53`) and never pop
-  (`HelpManager:80`): about 22 KB per help button click.
+* ~~Help popups push onto the static `CurrentFocus` stack (`PopupUtil:53`) and never pop
+  (`HelpManager:80`): about 22 KB per help button click.~~ **Fixed** (checked 30 October 2026:
+  `CurrentFocus` keeps an entry per open popup and removes it in the popup's close handler).
 * The Info dialog leaves 48 DOM nodes per time shown: its Close button is still "loading" (disabled,
   spinner) when the dialog is removed, and Chrome's style engine keeps the detached button and its
   dialog. Unconfirmed whether other dialogs closed by their own buttons do the same.
 * The explorer's context menu leaves 14 DOM nodes per time shown (not traced).
-* `HasSaveRegistry` (an eager singleton) keeps every Data Receipt Rules screen ever opened
-  (`RuleSetPresenter:119` registers, nothing unregisters), and Save All then saves closed ones.
-* `UserTaskManagerController` (line 65) keeps a presenter per task id ever seen while open.
-* `DelegatingAceCompleter` gains two duplicate completion providers per query tab switch
-  (`QueryHelpPresenter:195` registers on detach too).
+* ~~`HasSaveRegistry` (an eager singleton) keeps every Data Receipt Rules screen ever opened
+  (`RuleSetPresenter:119` registers, nothing unregisters), and Save All then saves closed ones.~~
+  **Fixed** (checked 30 October 2026: `RuleSetTabController` unregisters on dispose, line 65).
+* ~~`UserTaskManagerController` (line 65) keeps a presenter per task id ever seen while open.~~
+  **Fixed** (checked 30 October 2026: `setData` drops each finished task's row from its map; see
+  "Presenters nothing owned").
+* ~~`DelegatingAceCompleter` gains two duplicate completion providers per query tab switch
+  (`QueryHelpPresenter:195` registers on detach too).~~ **Fixed** (checked 30 October 2026:
+  `DelegatingAceCompleter.registerCompletionProviders` adds a provider only if it isn't there).
 * ~~`ElementPresenter.setCode` (line 342) adds another key handler on every stepping Refresh.~~
   Fixed in wave 12: `SteppingElementController` adds the Ctrl+Enter handler once, when it first
   attaches the code's editor.
@@ -1052,11 +1065,13 @@ colour, kept distinct by its style (e.g. italic), not by a fainter colour.
 
 **Reported.**
 
-* Traces: the Service & Operation list (`#operationList`, `TraceOverviewChart`) scrolls when it is
+* ~~Traces: the Service & Operation list (`#operationList`, `TraceOverviewChart`) scrolls when it is
   taller than its pane, but neither it nor its rows take the focus, so a keyboard user can't scroll
   it (axe `scrollable-region-focusable`, baselined for `App/Main/TracesScreen/Traces`). It showed
-  once screen stories stopped being 48px taller than the page. It wants the rows to be a keyboard
-  list (or tree, as they nest), which would also let a row be selected without a mouse.
+  once screen stories stopped being 48px taller than the page.~~ **Fixed** (22 October 2026: see "A
+  trace's operation list can't be scrolled with the keyboard"; no baseline entry is left). Left: it
+  wants the rows to be a keyboard list (or tree, as they nest), which would also let a row be
+  selected without a mouse.
 * `HoverActionMenuCell` showed its "..." only on a mouse over and opened its menu only on a mouse
   press. Nothing used it, and it was deleted (data_grid2, 23 October 2026).
 * A grid's spinner doesn't repeat while a finger is held on an arrow (a tap steps once): it steps
@@ -1100,19 +1115,22 @@ Measured (`ButtonRuns` and `TabStops` in the workbench's `a11y` package; stories
 stops, a dashboard with a query, table and text 30, its expression toolbar 8 and table toolbar 6,
 and each list pane 3 + 5 (its actions and its pager). Found while measuring:
 
-* `SvgToggleButton` (`ButtonPanel.addToggleButton`) has no name: its tooltip is on the icon inside
-  it, not on the button (`Widgets/Buttons/ButtonGroup` `WithToggle`).
-* A `FabButton` (the Text component's stepping button) is two tab stops, its outer `div` and its
-  inner `button` (`App/Editors/DashboardEditor` `ToolbarTabStops`).
-* `TableController` adds its Ask Stroom AI button twice.
+* ~~`SvgToggleButton` (`ButtonPanel.addToggleButton`) has no name: its tooltip is on the icon inside
+  it, not on the button (`Widgets/Buttons/ButtonGroup` `WithToggle`).~~ **Gone** (checked 30 October
+  2026: `SvgToggleButton` and `ButtonPanel` are deleted; toggles are `ToolbarToggleButton`s).
+* ~~A `FabButton` (the Text component's stepping button) is two tab stops, its outer `div` and its
+  inner `button` (`App/Editors/DashboardEditor` `ToolbarTabStops`).~~ **Fixed** (checked 30 October
+  2026: `FabButton.onAttach` takes the outer element out of the tab order).
+* ~~`TableController` adds its Ask Stroom AI button twice.~~ **Fixed** (30 October 2026, checked:
+  `TableController.java:286` adds it once, `button(SvgImage.AI, …)`).
 
 Done so far: `ButtonPanel` is a group (`ButtonGroupFocus`, which can also be installed on any
 element, merging the groups inside it), so each list's actions, the dictionary's Save buttons and a
 dashboard's expression and table toolbars are now one tab stop each (`Widgets/Buttons/ButtonGroup`,
 `Widgets/Query/ExpressionBuilder` `ToolbarIsRealButtons`). Still to do: the groups built as plain
 `FlowPanel`s (the explorer's header, the pagers, the main toolbar, the data navigators), merging
-adjacent groups (e.g. a document tab's toolbar row), naming each toolbar (`setAccessibleName`), the
-`FabButton`'s second tab stop and the `SvgToggleButton`'s name.
+adjacent groups (e.g. a document tab's toolbar row), naming each toolbar (`setAccessibleName`)~~, the
+`FabButton`'s second tab stop and the `SvgToggleButton`'s name~~ (both done, above).
 
 Since then: `Toolbar` and `ToolbarRow` (named groups built from an `SvgImage` and a name, also in
 UiBinder) with their own buttons (`ToolbarButton`, `ToolbarToggleButton`, styled only by
@@ -1594,8 +1612,9 @@ its ring, and a click doesn't; `test-runner/lib/real-input/top-bar.mjs`). `App/M
 
 * Misleading `identity` values: fixed in wave 13 (the settings tabs' templates name their own,
   e.g. `basicListInputSettingsUseDictionary`, `basicTextInputSettingsId`).
-* `VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
-  fileyou wish to create" (missing space).
+* ~~`VisualisationAssetsAddItemDialogPresenter`: the blank name error reads "...the name of the
+  fileyou wish to create" (missing space).~~ **Fixed** (30 October 2026, checked:
+  `TestDocumentAssetAddItemController` is its regression test).
 * `ProcessorFilterChange.SET_RUN_AS_USER`: its description reads "Set a run asuser.".
 * `AccountServiceImpl`: a comment says a user ID can't change after the account is created, but the
   field can be edited and the DAO updates it.
@@ -1792,18 +1811,19 @@ framework's `BrowserUtil.copyToClipboard` stays, as the framework has no Stroom 
 
 **Reported** (28 October 2026).
 
-* **The explorer's other classes** (`navigation-title-bar`, `navigation-logo` and the like in
+* ~~**The explorer's other classes** (`navigation-title-bar`, `navigation-logo` and the like in
   `components.css`) aren't BEM yet: wave 17 renamed only classes named after views, and moved the
-  `navigation` block's own rules to `navigation.css`.
+  `navigation` block's own rules to `navigation.css`.~~ **Done** (checked 30 October 2026: neither
+  class is named anywhere, and `components.css` went in wave 30, a sheet per block).
 * **Done (UI audit wave 9): the last types with "View" in their names**, which weren't presenters'
   views, are renamed or gone: `ButtonView` is `IsButton` (a `Button` or `ToolbarButton` as
   controllers see it), `ToggleButtonView` is deleted with its `setState`/`getState`/`setOn`
   aliases (callers and templates use `ToolbarToggleButton`'s `setPressed`/`isPressed`, `pressed="true"`),
   `DataGridView` is `GridDisplay` (the grid as the shared helpers see it; `MyDataGrid` is gone), and
   the workbench framework's sidebar renderer is `Sidebar`.
-* **`ScreenViewsModule`** (the workbench's) binds nothing and is named for views, but nine
+* ~~**`ScreenViewsModule`** (the workbench's) binds nothing and is named for views, but nine
   ginjectors list it: delete it, or rename it for the shared bindings it is there for, with the dead
-  code clean-up.
+  code clean-up.~~ **Deleted** (checked 30 October 2026: no ginjector or class names it).
 * **Commented-out code** renamed with its fields (e.g. `QueryTextPaneController`,
   `QueryTableColumnsManager`) is still dead code, for the dead code clean-up.
 
@@ -1957,14 +1977,15 @@ to delete them by hand.~~
   24 October 2026 in wave 2's audit)~~ Fixed: the class goes on the label's cell. A row's other
   cells aren't highlighted with it, as the grid's rows are no longer elements; the XSD browser's
   wave (8) can mark the row's cells if that is wanted.
-* Unused CSS met in wave 3 (24 October 2026): `acceptRejectContent-button`, `-accept` and `-reject`
+* ~~Unused CSS met in wave 3 (24 October 2026): `acceptRejectContent-button`, `-accept` and `-reject`
   (`components.css`; no rules use them), and `resizableAcceptRejectContent-button`, `-accept` and
   `-reject` (`components.css`, the green Accept and red Reject). Only the fixed-size Accept/Reject
   bar had the first, and no screen opens one; the resizable copy, which the splash screen uses,
-  had the second. ~~Merging the two bars dropped the splash screen's green Accept (found 25
+  had the second.~~ ~~Merging the two bars dropped the splash screen's green Accept (found 25
   October 2026 in wave 3's audit)~~ Fixed: Accept is `button--contained-green` and Reject stays
-  `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. Delete
-  both rule sets once removals are allowed.
+  `button--contained-secondary` (pink, close to the old red), Stroom's own contained colours. ~~Delete
+  both rule sets once removals are allowed.~~ **Deleted** (checked 30 October 2026: neither class
+  is named anywhere; `components.css` went in wave 30).
 * Found in wave 4's audit (25 October 2026), and fixed:
   * ~~A controller passed its context's task monitor (`context(Contexts.TASK_MONITOR)`) to clients
     that take one (`ScheduledTimeClient`, `ConfigDefaultSetter`, the explorer's decorate request).
@@ -1998,10 +2019,11 @@ to delete them by hand.~~
 * Batch Edit Schedules' `validate` told its caller `false` after every check, even after `true`
   (found 25 October 2026 in wave 4's audit; older; harmless, as `ExecutionScheduleManager` acts
   only on `true`). Fixed 27 October 2026 when the dialog converted (`BatchExecutionScheduleEditorController`).
-* Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
+* ~~Unused CSS met in wave 4 (25 October 2026): `itemNavigator-button`, `characterNavigator-button`,
   `stepLocationViewImpl-layout` and the empty `itemSelectionViewImpl-panelChild` (`components.css`; nothing uses them since the
   navigators and the item selection became components, `item-navigator.css`,
-  `character-navigator.css` and `item-selection.css`). Delete them once removals are allowed.
+  `character-navigator.css` and `item-selection.css`). Delete them once removals are allowed.~~
+  **Deleted** (checked 30 October 2026: none is named anywhere; `components.css` went in wave 30).
 * ~~A trace's Span Info details (`TraceOverviewWidget`'s `span-info-body`) scroll but couldn't be
   reached with the keyboard, so couldn't be scrolled without a mouse (found 25 October 2026 in wave
   6, by a new story's accessibility check; older).~~ Fixed: a named region that takes the focus, as
@@ -2011,18 +2033,20 @@ to delete them by hand.~~
   heading ("Service & Operation") and its region's role and name, the Span Info's title, its close
   button ("×", titled "Close") and its region's role and name, and Reset Range and Full Range. They
   can move to the template if the frame is split from what is drawn from the spans.
-* The single line code editor's `maxLines="1"` (`SingleLineCodeEditor.ui.xml`, as the old
+* **Gone** (checked 30 October 2026: `SingleLineCodeEditor` went in wave 35, and nothing calls
+  `setMaxLines` now). ~~The single line code editor's `maxLines="1"` (`SingleLineCodeEditor.ui.xml`, as the old
   `setMaxLines(1)`) does nothing: `Editor.setMaxLines` applies only once Ace has started, and
   `AceEditorPane`'s attach handler doesn't apply it then (found 25 October 2026, in wave 6's audit; older).
   The line's height comes from `code-editor__ace--single-line`'s rules. Fix with `updateMaxLines()`
-  in the attach handler, and the single line stories' screenshots.
+  in the attach handler, and the single line stories' screenshots.~~
 * Two files in Ace's directory (`edu/ycp/cs/dh/acegwt`), which aren't changed without approval,
   still name `editor.css`, renamed `code-editor.css` in wave 6's audit (25 October 2026): its
   `public/README.md` and `AceAnnotationType.java`'s comment.
-* The code editor's own `OverviewTooltip` (static in `CodeEditor`, before that `EditorViewImpl`) is
+* ~~The code editor's own `OverviewTooltip` (static in `CodeEditor`, before that `EditorViewImpl`) is
   never shown: the overview bar (`OverviewBar`) shows one of its own, which hides itself on a click
   (found 25 October 2026, in wave 6). So the editor's mouse down handler, which hides its own,
-  does nothing. Unused code, kept until removals are allowed.
+  does nothing. Unused code, kept until removals are allowed.~~ **Deleted** (checked 30 October
+  2026: `CodeEditor` has no tooltip of its own; only `OverviewBar`'s is left).
 * `Widgets/Editors & Viewers/AceEditorFeatures` `Snippet` failed its first attempt in a 70 story
   run (found 25 October 2026, in wave 6's editor unit): `apply ` hadn't become
   `xsl:apply-templates`. It passed its second, and 4 runs of 4 alone; Ace's completion timing under
@@ -2037,18 +2061,20 @@ to delete them by hand.~~
   the Data link tab), in a run of 56 stories with 8 workers, and matched with 4. Which a newly shown
   tab focuses, its first link tab or its first toolbar button, seems to depend on timing; worth
   looking into rather than putting down to load.
-* Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
+* ~~Unused CSS met in wave 6 (25 October 2026): `chooserViewImpl-container`, `chooserViewImpl-top`,
   `chooserViewImpl-bottom` and `.multiChooser .tick-box` (`components.css`; nothing uses them since
   the annotation choosers became the `Chooser` component, `chooser.css`). Delete them once removals
-  are allowed.
-* Unused code met in wave 7 (25 October 2026): `FloorMapAria.labelledByCell`,
+  are allowed.~~ **Deleted** (checked 30 October 2026: none is named anywhere).
+* ~~Unused code met in wave 7 (25 October 2026): `FloorMapAria.labelledByCell`,
   `labelledByCellInnerControl`, `layoutTable` and their private `cellId`, for a `Grid` laying out a
   form; the floor map's dialogs are templates with `<table role="presentation">` now, and name
   their controls with `labelledBy` and `labelledByInnerControl`. Delete them once removals are
-  allowed.
-* Unused code met in wave 7's audit (26 October 2026): `stroom.dashboard.client.table.ExpressionUiHandlers`,
+  allowed.~~ **Deleted** (checked 30 October 2026: `FloorMapAria` is `AriaUtil` since wave 46, without
+  them).
+* ~~Unused code met in wave 7's audit (26 October 2026): `stroom.dashboard.client.table.ExpressionUiHandlers`,
   unused since before wave 7 (wave 7 deleted `stroom.query.client.ExpressionUiHandlers`, its
-  twin). Delete it once removals are allowed.
+  twin). Delete it once removals are allowed.~~ **Deleted** (checked 30 October 2026: no
+  `ExpressionUiHandlers` is left).
 * The floor map's Layers panel can reorder its layers wrongly after a drag (found 26 October 2026, in
   wave 7's audit; master has it too). A drop that moves a layer rebuilds the list before the
   dragged row's `dragend`, so its handler, which forgets the row dragged (`dragFromIndex`), never
@@ -2103,14 +2129,15 @@ to delete them by hand.~~
 * A dialog's New button (`DialogFrame` with New, OK and Cancel; was `CreateOkCancelContent`) shows
   its busy spinner on Cancel, not on itself, while the screen handles it (found 24 October 2026 in wave 3; as it was in
   `ResizableCreateOkCancelContent`). Fix: the pressed button shows it, with a story.
-* Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
+* ~~Unused CSS met in wave 2's stylesheet renames (24 October 2026): `pager-heading` and
   `pager-button` (`components.css`; nothing has either class). Delete them once removals are
-  allowed.
-* Unused code met in wave 11 (27 October 2026): `FloorMapAria.label(UIObject, String)`,
+  allowed.~~ **Deleted** (checked 30 October 2026: neither is named anywhere).
+* ~~Unused code met in wave 11 (27 October 2026): `FloorMapAria.label(UIObject, String)`,
   `label(Element, String)` and `hide` (the floor map object form names its controls in its
   template now), `stroom.data.client.FileData` (only the old upload presenter made one); `ProcessingStatusUiHandlers`
   went in wave 16. Delete them once removals are
-  allowed.
+  allowed.~~ **Deleted** (checked 30 October 2026: `AriaUtil`, once `FloorMapAria`, has none of the
+  three, and `FileData` is gone).
 * Two dialogs that fetch before they show can't hear that the fetch failed (found 27 October 2026,
   in wave 11's audit): the API key dialog's create path and the activity chooser at start-up wait
   for the UI config, and `UiConfigCache` never calls back on a failure (see "UI config failures
@@ -2122,11 +2149,12 @@ to delete them by hand.~~
   chosen (it warns and stays open) and its Cancel; and Choose Annotation shown a second time
   through the one controller the app keeps (it should keep its last filter; the stories make a new
   one each time).
-* The sign-in pages and Change Password keep some old shared classes (found 27 October 2026, in
+* ~~The sign-in pages and Change Password keep some old shared classes (found 27 October 2026, in
   wave 11's audit; wave 17 made `LoginView*` and `AuthErrorView*` BEM blocks and gave the
   stylesheets kebab-case names): `userNameTextBoxOuter` and `userNameTextBox` in `sign-in-page.css`,
   and `emailTextBox` and `passwordPolicyMessage` in `change-password.css`. Give them BEM names in
-  one pass, as the five pages share the two files.
+  one pass, as the five pages share the two files.~~ **Done** (checked 30 October 2026: no class
+  has those names; both sheets are BEM, the policy message `change-password__policy`).
 * A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
   (found 27 October 2026, in wave 12; as on master), before the typed character is in the field, so
   the change the user sees isn't the one compared; a paste with the mouse marks nothing. Use the
@@ -2136,9 +2164,9 @@ to delete them by hand.~~
   doubled form padding: no screenshot shows it); the data generator's Execution tab's grids (a
   stylesheet slip once blanked them and every story still passed); the user Document Permissions
   filter's help (its missing spaces were fixed in the template, with a changelog entry but no test).
-* Unused CSS met in wave 12 (27 October 2026): `.pipelineStructureViewImpl-buttons`
+* ~~Unused CSS met in wave 12 (27 October 2026): `.pipelineStructureViewImpl-buttons`
   (`components.css`; nothing has the class since the pipeline's Structure tab converted). Delete it
-  once removals are allowed.
+  once removals are allowed.~~ **Deleted** (checked 30 October 2026: it is named nowhere).
 * Classes wave 12 left un-BEM'd (found 27 October 2026, in its audit): the annotation editor's
   `annotationContainer`, `annotationHistory*`, `annotationButtons`, `annotationTextBox` and the rest
   (`stroom-annotation.css`; only the button width moved, to `annotation-editor.css`), and the traces
@@ -2220,9 +2248,9 @@ to delete them by hand.~~
     (`AnalyticProcessingController.setProcessType`).
   * An analytic rule's email recipients (To, Cc and Bcc) report a change only on a key up, so a
     paste with the mouse or an autofill doesn't make the rule changed (`AnalyticEmailDestination`).
-  * The query result's source pane declares a stepping button that nothing shows
+  * ~~The query result's source pane declares a stepping button that nothing shows
     (`QueryTextPane.ui.xml`, `steppingButton`); it was never shown before either. To go with the
-    other removals.
+    other removals.~~ **Deleted** (checked 30 October 2026: `QueryTextPane` has no stepping button).
   * Debug logging and commented-out code carried into the new controllers:
     `DocumentationTabController.updateEditState` (`GWT.log`), `updatePreview` (a comment naming the gone
     `iFramePresenter`). To go with the other removals. (`AnalyticEmailDestinationController`'s old
