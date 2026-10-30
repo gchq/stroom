@@ -900,6 +900,16 @@ Also:
   While iterating, a draft compile (`workbenchDraftCompile`, ~25s) and
   `node run.mjs App/Main/JobsScreen --url http://127.0.0.1:<port>` in `test-runner` against your
   own `workbenchServe` is quickest.
+* The `App/Visualisations` stories (tagged `visualisations`) load a visualisations content pack, as
+  Stroom would. By default it is the release Stroom itself uses, named in the root
+  `content-packs.json`: `workbenchFetchVisualisations` (run by `workbenchServe` and `workbenchTest`)
+  downloads it once and unpacks it into the Gradle user home. To try changes to the visualisations,
+  build them in a [stroom-visualisations-dev](https://github.com/gchq/stroom-visualisations-dev)
+  checkout on the branch for this Stroom (`8.0`; `main` has the legacy pack) with `npm run build`;
+  a checkout beside this repository is used instead of the release when it has a built pack
+  (`war/stroom_content`), or give one with `-PworkbenchVisualisationsDir=<dir>`. `workbenchTest`
+  says which it used. Without either (e.g. offline before the first download) it skips the
+  `visualisations` stories.
 * To see the DOM before writing a play, register the story with a minimal play (the preview runs
   the play when it loads), then read the page (`iframe.html?id=<id>&viewMode=story`) with
   Playwright.

@@ -28,8 +28,12 @@
 //                          (stroom-gwt-workbench-framework) are picked up live; re-run it after changing
 //                          code in any other module.
 //   workbenchServe         Serves the workbench on http://localhost:6008 (-PworkbenchPort=NNNN).
-//                          The App/Visualisations stories need a stroom-visualisations-dev checkout,
-//                          found beside this repository or given by -PworkbenchVisualisationsDir=<dir>.
+//                          The App/Visualisations stories use the visualisations release named in
+//                          content-packs.json, or a stroom-visualisations-dev checkout found beside
+//                          this repository or given by -PworkbenchVisualisationsDir=<dir>.
+//   workbenchFetchVisualisations  Downloads and unpacks that release (run by workbenchServe and
+//                          workbenchTest when there is no checkout). It is kept in the Gradle user
+//                          home, so `clean` doesn't remove it.
 //   workbenchFetchAxe      Downloads axe-core with npm for the Accessibility addon (run by
 //                          workbenchServe; without npm the addon explains what is missing).
 //                          It is kept in the Gradle user home, so `clean` doesn't remove it.
@@ -65,12 +69,17 @@ def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
 def axeDir = new File(gradle.gradleUserHomeDir, "caches/stroom-gwt-workbench/axe-core-${axeVersion}").toString()
 def codeServerPort = findProperty('workbenchCodeServerPort') ?: '9877'
 
-// The source of the visualisations content pack (https://github.com/gchq/stroom-visualisations-dev),
-// whose visualisations and scripts the App/Visualisations stories load as Stroom would (the server's
-// --content-root). Set it with -PworkbenchVisualisationsDir=<dir>; by default it is a
-// stroom-visualisations-dev checkout beside this repository, or beside the main checkout when this is
-// a git worktree. Without one, those stories show that it is missing and workbenchTest skips them.
-def findVisualisationsDir = { ->
+// The visualisations content pack (https://github.com/gchq/stroom-visualisations-dev), whose
+// visualisations and scripts the App/Visualisations stories load as Stroom would (the server's
+// --content-root). In order of preference:
+//   1. -PworkbenchVisualisationsDir=<dir>, a stroom-visualisations-dev checkout;
+//   2. a stroom-visualisations-dev checkout beside this repository (or beside the main checkout when
+//      this is a git worktree) that has a built pack, for working on the visualisations;
+//   3. the release Stroom itself uses, named in content-packs.json, which workbenchFetchVisualisations
+//      downloads (to the content pack download dir the distribution builds share) and unpacks.
+// A checkout's pack is war/stroom_content, which its build (`npm run build`) makes and commits. A
+// checkout must be on the branch that matches this Stroom (8.0); main has the legacy pack.
+def findVisualisationsCheckout = { ->
     if (findProperty('workbenchVisualisationsDir')) {
         return file(findProperty('workbenchVisualisationsDir'))
     }
@@ -82,11 +91,28 @@ def findVisualisationsDir = { ->
         checkouts += new File(gitDir).parentFile.parentFile.parentFile
     }
     return checkouts.collect { new File(it.parentFile, 'stroom-visualisations-dev') }
-            .find { it.isDirectory() } ?: new File(rootDir.parentFile, 'stroom-visualisations-dev')
+            .find { new File(it, 'war/stroom_content').isDirectory() }
 }
-// The content pack the checkout's build makes (`npm run build`), which is committed there and which
-// Stroom's content store imports
-def visualisationsContentDir = new File(findVisualisationsDir(), 'war/stroom_content')
+def visualisationsCheckout = findVisualisationsCheckout()
+// The release named in content-packs.json: its url, and the zip's name as Stroom's own content pack
+// downloader names it (so both share one download)
+def visualisationsRelease = new groovy.json.JsonSlurper()
+        .parse(rootProject.file(rootProject.ext.contentPackDefinitionFile))
+        .contentPacks
+        .find { it.name == 'stroom-visualisations' }
+def visualisationsReleaseName = "${visualisationsRelease.name}-v${visualisationsRelease.version}"
+def visualisationsReleaseZip = new File(
+        rootProject.ext.contentPackDownloadDir.toString(), "${visualisationsReleaseName}.zip")
+// Unpacked once per release, kept in the Gradle user home so that `clean` doesn't remove it
+def visualisationsReleaseDir = new File(gradle.gradleUserHomeDir,
+        "caches/stroom-gwt-workbench/${visualisationsReleaseName}")
+def visualisationsContentDir = visualisationsCheckout != null
+        ? new File(visualisationsCheckout, 'war/stroom_content')
+        : visualisationsReleaseDir
+// Where the stories' visualisations come from, for the logs
+def visualisationsSource = visualisationsCheckout != null
+        ? "the checkout ${visualisationsCheckout}"
+        : "release ${visualisationsReleaseName} (content-packs.json)"
 // The tag of the stories that need it
 def visualisationsTag = 'visualisations'
 
@@ -526,11 +552,53 @@ tasks.register('workbenchFetchAxe') {
     }
 }
 
+tasks.register('workbenchFetchVisualisations') {
+    group = "workbench"
+    // The + ends the first line: one starting the second would be read as a unary plus
+    description = "Downloads and unpacks the visualisations release named in content-packs.json, " +
+            "for the App/Visualisations stories when there is no stroom-visualisations-dev checkout"
+    outputs.dir(visualisationsReleaseDir)
+    // Not needed with a checkout, and each release is only unpacked once
+    onlyIf { visualisationsCheckout == null && !visualisationsReleaseDir.isDirectory() }
+
+    doLast {
+        try {
+            if (!visualisationsReleaseZip.isFile()) {
+                logger.lifecycle("Downloading ${visualisationsRelease.url}")
+                visualisationsReleaseZip.parentFile.mkdirs()
+                // Downloaded beside the zip and then renamed, so that a failed download leaves no zip
+                def partFile = new File(visualisationsReleaseZip.path + '.part')
+                URI.create(visualisationsRelease.url.toString()).toURL().withInputStream { input ->
+                    partFile.withOutputStream { output -> output << input }
+                }
+                if (!partFile.renameTo(visualisationsReleaseZip)) {
+                    throw new IOException("Unable to rename ${partFile} to ${visualisationsReleaseZip}")
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("Unable to download the visualisations release ${visualisationsRelease.url}, so the " +
+                    "stories tagged '${visualisationsTag}' can't load their visualisations: ${e.message}")
+            return
+        }
+        // Unpacked beside the release dir and then renamed, so that a failed unpack isn't used
+        def tmpDir = new File(visualisationsReleaseDir.path + '-tmp')
+        delete tmpDir
+        copy {
+            from zipTree(visualisationsReleaseZip)
+            into tmpDir
+        }
+        if (!tmpDir.renameTo(visualisationsReleaseDir)) {
+            throw new GradleException("Unable to rename ${tmpDir} to ${visualisationsReleaseDir}")
+        }
+    }
+}
+
 tasks.register('workbenchServe', JavaExec) {
     group = "workbench"
     description = "Serves the workbench on http://localhost:${workbenchPort}"
     dependsOn classes
     dependsOn 'workbenchFetchAxe'
+    dependsOn 'workbenchFetchVisualisations'
 
     mainClass = 'stroom.gwt.workbench.framework.server.WorkbenchServer'
     classpath = sourceSets.main.runtimeClasspath
@@ -892,10 +960,12 @@ def runTestRunner = { String testUrl ->
         // A longer settle lets a story's last asynchronous updates finish before its screenshot.
         command += ['--fixed-time', SCREENSHOT_FIXED_TIME, '--retries', '1', '--settle', '750']
     }
-    if (!visualisationsContentDir.isDirectory()) {
+    if (visualisationsContentDir.isDirectory()) {
+        println "Visualisations from ${visualisationsSource}"
+    } else {
         // Before workbenchTestArgs, so that its --skip-tags wins
         // The + ends the first line: one starting the second would be read as a unary plus
-        println "No visualisations in ${visualisationsContentDir} (build them with 'npm run build', and see " +
+        println "No visualisations in ${visualisationsContentDir} (see workbenchFetchVisualisations and " +
                 "-PworkbenchVisualisationsDir), so the stories tagged '${visualisationsTag}' are skipped"
         command += ['--skip-tags', "skip-test,${visualisationsTag}".toString()]
     }
@@ -995,8 +1065,9 @@ tasks.register('workbenchTest') {
     group = "workbench"
     description = "Runs every workbench story and its play function in headless Chromium"
     dependsOn 'workbenchTestRunnerBrowser'
-    // For the Accessibility addon, as with workbenchServe
+    // For the Accessibility addon and the App/Visualisations stories, as with workbenchServe
     dependsOn 'workbenchFetchAxe'
+    dependsOn 'workbenchFetchVisualisations'
     // The workbench server's classpath, so that it is built
     inputs.files(sourceSets.main.runtimeClasspath).withPropertyName('serverClasspath')
     // Only compile when testing a server started by this task, and when it can actually run
