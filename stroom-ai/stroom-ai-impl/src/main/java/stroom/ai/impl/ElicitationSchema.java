@@ -32,9 +32,11 @@ import java.util.regex.Pattern;
 /// Only flat forms are supported, as MCP allows: text (optionally an email address, URI, date or date-time),
 /// numbers, whole numbers, true/false, a choice of one value, and (as a list of values) a choice of several.
 /// Anything else, and very large forms, are declined without being shown.
-final class ElicitationSchema {
+public final class ElicitationSchema {
 
-    static final int MAX_FIELDS = 20;
+    /// The most fields a form can have to be shown. A tool asking more questions than this splits them, or asks
+    /// some together.
+    public static final int MAX_FIELDS = 20;
     static final int MAX_SCHEMA_CHARS = 16_000;
     static final int MAX_MESSAGE_CHARS = 2_000;
     static final int MAX_TEXT_CHARS = 10_000;
