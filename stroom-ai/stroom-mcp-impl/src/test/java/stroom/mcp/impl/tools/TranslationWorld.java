@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.ElicitationSchema;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.ChatModelNames;
@@ -25,6 +26,7 @@ import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
@@ -121,6 +123,8 @@ final class TranslationWorld {
     // The same messages, as the consent tests read them.
     final List<String> shown = asked;
     boolean forms;
+    // The forms, by their message's start, that can't be shown, so fail the call as Stroom's chat does.
+    final Set<String> unshowable = new HashSet<>();
     // As in the chat: a form's first asking stops the call (the run waits for the user), and the same call, made
     // again, gets the answer.
     boolean waitsForUser;
@@ -199,6 +203,15 @@ final class TranslationWorld {
                                             final String intro,
                                             final Map<String, Object> form) {
                         asked.add(intro);
+                        // As the chat refuses them, so no test passes on a form the user would never see.
+                        if (form.get("properties") instanceof final Map<?, ?> fields
+                            && fields.size() > ElicitationSchema.MAX_FIELDS) {
+                            throw new ToolRefusal("Stroom couldn't show this tool's form: it has "
+                                                  + fields.size() + " fields");
+                        }
+                        if (unshowable.stream().anyMatch(intro::startsWith)) {
+                            throw new ToolRefusal("Stroom couldn't show this tool's form");
+                        }
                         if (waitsForUser && waited.add(callId)) {
                             throw new AiChatRunManager.WaitingForUserException("Waiting for " + callId);
                         }

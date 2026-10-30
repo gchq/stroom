@@ -60,6 +60,7 @@ public interface UserQuestions {
     /// sent a message instead), or the run is stopped.
     /// @throws stroom.ai.impl.AiChatRunManager.WaitingForUserException if the run is to stop until the user
     ///                                                                 answers.
+    /// @throws ToolRefusal if the form can never be shown (e.g. it is too large), so the user isn't asked.
     ElicitResult ask(String toolName, String callId, String intro, Map<String, Object> form);
 
     /// @return The stop [#ask] asked of the run, to wait for the user's answer, if it did: the run is to stop even if

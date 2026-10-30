@@ -878,8 +878,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             || (request.build() == null && request.uuid() == null)) {
             return false;
         }
-        final Map<String, String> before = builds.agreed(TranslationBuilds.DOMAIN_CHOSEN, request.uuid(),
-                request.build(), request.name());
+        final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.DOMAIN_CHOSEN);
         // One question for the fields not answered before, the answer for them all (seen: an Id written from two
         // fields, By User in some rules and Target User in others, asked about twice in a row).
         final List<LocalCheck.QualifiedIds> unasked = b.qualified.stream()
@@ -914,6 +913,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             split.done().forEach(line -> done.add("the domain split off '" + found.field() + "', as the user chose: "
                                                   + line));
         }
+        // Kept now, as this call may yet fail before the XSLT is saved with them.
+        UnsavedChoices.remember(context, request.target(), TranslationBuilds.DOMAIN_CHOSEN, b.domainChoices);
         if (done.isEmpty()) {
             return false;
         }
@@ -935,15 +936,14 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             || (request.build() == null && request.uuid() == null)) {
             return false;
         }
-        final Map<String, String> before = builds.agreed(TranslationBuilds.PLACEHOLDERS_CHOSEN, request.uuid(),
-                request.build(), request.name());
+        final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.PLACEHOLDERS_CHOSEN);
         final List<Placeholders.Found> unasked = b.placeholders.stream()
                 .filter(found -> !before.containsKey(found.value()))
                 .toList();
         final Map<String, String> answers = unasked.isEmpty()
                 ? Map.of()
-                : consent.chooseEach(call, context, NAME, PlaceholderChoices.INTRO,
-                        PlaceholderChoices.questions(unasked, PlaceholderChoices.OPTIONS)).orElse(Map.of());
+                : PlaceholderChoices.byValue(unasked, consent.chooseEach(call, context, NAME, PlaceholderChoices.INTRO,
+                        PlaceholderChoices.questions(unasked, PlaceholderChoices.OPTIONS)).orElse(Map.of()));
         final List<String> leaveOut = new ArrayList<>();
         for (final Placeholders.Found found : b.placeholders) {
             final String chosen = before.containsKey(found.value())
@@ -958,6 +958,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 leaveOut.add(found.value());
             }
         }
+        // Kept now, as this call may yet fail before the XSLT is saved with them.
+        UnsavedChoices.remember(context, request.target(), TranslationBuilds.PLACEHOLDERS_CHOSEN,
+                b.placeholderChoices);
         if (leaveOut.isEmpty()) {
             return false;
         }
@@ -967,6 +970,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                               + "the user chose"));
         b.applied = applied;
         return true;
+    }
+
+    // What the user has chosen for the XSLT: what was saved with it, and what they chose since in this session, which
+    // the XSLT may not have been saved with yet (see UnsavedChoices).
+    private Map<String, String> agreedSoFar(final ToolCallContext context, final Request request, final String block) {
+        final Map<String, String> agreed = new LinkedHashMap<>(builds.agreed(block, request.uuid(), request.build(),
+                request.name()));
+        agreed.putAll(UnsavedChoices.recalled(context, request.target(), block));
+        return agreed;
     }
 
     // The warnings to the agent about what the user has answered (a domain kept on Ids, a stand-in for none), which
