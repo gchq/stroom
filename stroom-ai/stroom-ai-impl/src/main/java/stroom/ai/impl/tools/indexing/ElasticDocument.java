@@ -329,6 +329,9 @@ final class ElasticDocument {
             return IndexingXslt.call(use, indent);
         }
         final PlannedField field = (PlannedField) item;
+        if (field.isObjects()) {
+            return objects(field, key, indent, source, asNull);
+        }
         final String element = JSON_ELEMENT.getOrDefault(field.type(), "string");
         final String at = JsonValues.truthy(source)
                 ? source
@@ -350,6 +353,41 @@ final class ElasticDocument {
                + "><xsl:value-of select=\"" + FieldPlans.quoted(field.value(".")) + "\" /></" + element
                + "></xsl:for-each></array></xsl:when><xsl:when test=\"" + FieldPlans.quoted(at) + "\">" + single
                + "</xsl:when></xsl:choose>";
+    }
+
+    // A field of objects: an array of one object per element the source selects, made distinct by the key (the first
+    // element with each, in the order first met: xsl:for-each-group, which leaves out an element without one), each
+    // object written from its element as a field of the document is from the Event. Not in the Stroom MCP server;
+    // asked for by the user: every user an event names, once each by login name.
+    private static String objects(final PlannedField field,
+                                  final String key,
+                                  final String indent,
+                                  final String source,
+                                  final boolean asNull) {
+        final String at = JsonValues.truthy(source)
+                ? source
+                : field.source();
+        final String select = JsonValues.truthy(field.distinctBy())
+                ? "(" + at + ")[" + field.distinctBy() + "]"
+                : at;
+        final List<String> lines = new ArrayList<>();
+        lines.add(indent + "<xsl:if test=\"" + FieldPlans.quoted(select) + "\">");
+        lines.add(indent + "  <array key=\"" + key + "\">");
+        lines.add(indent + (JsonValues.truthy(field.distinctBy())
+                ? "    <xsl:for-each-group select=\"" + FieldPlans.quoted(select) + "\" group-by=\""
+                  + FieldPlans.quoted(field.distinctBy()) + "\">"
+                : "    <xsl:for-each select=\"" + FieldPlans.quoted(select) + "\">"));
+        lines.add(indent + "      <map>");
+        for (final PlannedField item : field.items()) {
+            lines.add(leaf(item, item.name(), indent + "        ", item.source(), asNull));
+        }
+        lines.add(indent + "      </map>");
+        lines.add(indent + (JsonValues.truthy(field.distinctBy())
+                ? "    </xsl:for-each-group>"
+                : "    </xsl:for-each>"));
+        lines.add(indent + "  </array>");
+        lines.add(indent + "</xsl:if>");
+        return String.join("\n", lines);
     }
 
     // An object of one field: the field's own test is the object's, so it is not tested twice.

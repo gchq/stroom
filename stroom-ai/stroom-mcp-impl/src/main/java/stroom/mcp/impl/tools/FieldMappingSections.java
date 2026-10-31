@@ -352,7 +352,13 @@ class FieldMappingSections {
         final SteppedPipeline loaded = load(pipeline.getUuid());
         final Map<String, String> outputs = outputMap(context, loaded, streamIds, kept.element(),
                 Map.of(kept.element(), marked.xslt()));
-        final List<XmlElement> events = EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
+        final Optional<String> drift = mappingDrift.drift(kept);
+        // An XSLT that isn't what its mapping generates (edited by hand) is documented as it runs: its own events,
+        // each given the rule the mapping's marked XSLT gave the same record's event. Seen: a hand edit making
+        // users distinct documented from what the mapping generates, duplicates and all.
+        final List<XmlElement> events = drift.isPresent()
+                ? EventFieldDocs.runningEvents(outputMap(context, loaded, streamIds, kept.element(), null), outputs)
+                : EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
         if (events.isEmpty()) {
             // A section of "(not in the sample)" documents nothing: say what the streams are and what stopped them.
             throw new ToolRefusal(noEvents(context, loaded, streamIds, kept.element(), marked.xslt(),
@@ -366,9 +372,15 @@ class FieldMappingSections {
         perStream.forEach((stream, count) -> counted.add(count + " of stream " + stream));
         String section = "Counts are of " + outputs.size() + " sample records (" + String.join(", ", counted)
                          + ").\n\n" + EventFieldDocs.fieldMappingMarkdown(mapping, schema, events, layout, described);
-        final Optional<String> drift = mappingDrift.drift(kept);
         if (drift.isPresent()) {
-            section += "\nNote: " + capitalised(drift.get()) + ".\n";
+            final List<String> unexpressible = HandEditGate.unexpressible(kept.xslt().getData());
+            section += "\nNote: " + (unexpressible.isEmpty()
+                    ? capitalised(drift.get()) + "."
+                    : "Its XSLT was edited by hand with what no mapping can hold (" + String.join("; ",
+                            unexpressible.subList(0, Math.min(3, unexpressible.size()))) + "), so it differs from "
+                      + "what its mapping generates for good.")
+                       + " The values and counts above are of the XSLT as it runs; where it reads them from is the "
+                       + "mapping's.\n";
         }
         return section;
     }

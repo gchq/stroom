@@ -162,7 +162,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                              + "user chooses another folder. The Field mapping section is not taken from the "
                              + "markdown: it is generated from the mapping (or index plan) kept with the pipeline's "
                              + "XSLT, stepped over stream_ids, and put in place of whatever the markdown has there, "
-                             + "so it always agrees with the XSLT. It lists the fields every event type has in one "
+                             + "so it always agrees with the XSLT; an XSLT edited by hand since is documented as it "
+                             + "runs (its own events, by the mapping's rules), with a note of the edit. It lists "
+                             + "the fields every event type has in one "
                              + "table, then a table per event type (types with roughly the same fields together); "
                              + "field_mapping_layout='compact', or an AGENTS doc's Documentation section, lays it "
                              + "out otherwise. Each field is described by what it means for this source: a "
@@ -363,21 +365,14 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         }
         String body = request.body();
         String generated = null;
-        // An XSLT edited since its mapping was kept: documented from the mapping, the section would say what the
-        // XSLT no longer writes (not in the Python server; seen: TWITTER's links, saved with save_xslt, left out,
-        // and its mentions shown joined as the mapping wrote them).
+        // An XSLT edited since its mapping was kept is documented as it runs (its own events, by the mapping's
+        // rules, with a note of the edit): documented from the mapping, the section said what the XSLT no longer
+        // writes (not in the Python server; seen: TWITTER's links, saved with save_xslt, left out, and its mentions
+        // shown joined as the mapping wrote them). A section the agent wrote for it is kept as written.
         final Optional<String> edited = kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind())
                 ? mappingDrift.editDrift(kept)
                 : Optional.empty();
-        if (edited.isPresent() && !ownFieldMapping(body)) {
-            throw new ToolRefusal("Not written: the Field mapping section is generated from the mapping kept with "
-                                  + "the XSLT, and " + edited.get() + " Once the mapping says what the XSLT "
-                                  + "writes, call again. Or, if it can't, give a '## Field mapping' section of your "
-                                  + "own in markdown (a table of each element the XSLT writes, where it comes from "
-                                  + "and sample values, from read_document and a stepped sample): it is kept as "
-                                  + "written.");
-        }
-        if (kept != null && edited.isEmpty()) {
+        if (kept != null && !(edited.isPresent() && ownFieldMapping(body))) {
             if (streamIds.isEmpty()) {
                 throw new ToolRefusal(streamsNeeded(kept));
             }
