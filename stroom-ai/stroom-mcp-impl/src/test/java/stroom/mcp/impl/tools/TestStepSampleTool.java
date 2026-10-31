@@ -196,7 +196,7 @@ class TestStepSampleTool {
 
         assertThat(result.get("records_stepped")).isEqualTo(3);
         assertThat(String.valueOf(result.get("hint")))
-                .contains("the server's limit for one step_sample (max_records=1000 is more than it steps)")
+                .contains("the limit for one step_sample (max_records=1000 is more than it steps)")
                 .contains("calling it again steps the same 3")
                 .contains("wait_for_processing");
     }

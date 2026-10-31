@@ -91,7 +91,7 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
                 .description(BuildPlan.onboardingLabel(NAME)
                              + "Save a text converter: create it in the build (see stroom://guide/data-splitter; "
                              + "build_data_splitter writes one from a spec), or with uuid replace the code of one "
-                             + "this server created. For templates whose parser needs one (DSParser.textConverter, "
+                             + "the agent created. For templates whose parser needs one (DSParser.textConverter, "
                              + "xmlFragmentParser.textConverter); not for JSON, which the JSONParser parses with no "
                              + "converter.")
                 .parameters(ObjectSchema.builder()
@@ -103,7 +103,7 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
                                                      + "document.")
                         .addStringProperty(UUID_ARG, TranslationArgs.UUID)
                         .addStringProperty(VERSION_ARG, TranslationArgs.VERSION)
-                        .required(BUILD_ARG, NAME_ARG, CONVERTER_TYPE_ARG, CODE_ARG)
+                        .required(CODE_ARG)
                         .build())
                 .build();
     }
@@ -129,7 +129,7 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
         final String build = stringArg(call, BUILD_ARG);
         final String name = stringArg(call, NAME_ARG);
         if (build == null || name == null) {
-            throw new ToolRefusal("Give build and name for a new text converter (or uuid to change one this server "
+            throw new ToolRefusal("Give build and name for a new text converter (or uuid to change one the agent "
                                   + "created).");
         }
         return translationDocs.createTextConverter(context, build, name, NullSafe.nonBlankStringElse(

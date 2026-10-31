@@ -191,9 +191,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                              + "plus StreamId and EventId. With the user's example Elasticsearch index template, "
                              + "fields take the example's names for the same data (User.Id, TypeId...), others are "
                              + "named in its style, and sample paths the example maps are added. Returns the plan "
-                             + "rendered for the backend (Lucene field list or Elasticsearch index template) and a "
-                             + "draft indexing XSLT in the output form that backend's indexing filter reads, leaving "
-                             + "out events drop_when names. With discovery, a discovery index instead: nothing is "
+                             + "rendered for the backend (Lucene field list or Elasticsearch index template); "
+                             + "save_xslt index_plan= generates the indexing XSLT from it, leaving out events "
+                             + "drop_when names. With discovery, a discovery index instead: nothing is "
                              + "read; raw JSON records are copied as they are and Elasticsearch maps their fields "
                              + "dynamically. Nothing is saved. The plan is kept for the session: amend it with "
                              + "changes= (only what changes), and save_xslt, create_index_doc and "
@@ -1210,7 +1210,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         .filter(entry -> XsltDoc.TYPE.equals(entry.doc().getType()))
                         .toList();
             } catch (final RuntimeException e) {
-                throw new ToolRefusal("replaces=" + replaces + ": neither an XSLT nor a pipeline this server can read ("
+                throw new ToolRefusal("replaces=" + replaces + ": neither an XSLT nor a pipeline Stroom can read ("
                                       + e.getMessage() + ")");
             }
             if (entries.isEmpty()) {

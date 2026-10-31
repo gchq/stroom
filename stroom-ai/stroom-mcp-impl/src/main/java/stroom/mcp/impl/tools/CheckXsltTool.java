@@ -57,7 +57,8 @@ import java.util.Optional;
 /// `tools/validation.py`, on the checks of [XsltChecks] and [XsltSafety].
 ///
 /// Read as the user: the XML schemas and the imported XSLTs are looked for among those the user may view. It
-/// compiles nothing (as the Stroom MCP server's didn't): full compilation happens when the pipeline is stepped.
+/// compiles the XSLT as Stroom compiles it ([XsltCompileCheck]), so code that would fail every record is caught
+/// before it is saved; what it does to records is found by stepping the pipeline.
 class CheckXsltTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CheckXsltTool.class);
