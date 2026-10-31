@@ -160,6 +160,7 @@ class TestAgentModeTools {
             Map.entry("explain_retention", false),
             Map.entry("server_tasks", false),
             Map.entry("volumes", false),
+            Map.entry("instruction_evidence", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
             Map.entry("xslt_lookups", false),

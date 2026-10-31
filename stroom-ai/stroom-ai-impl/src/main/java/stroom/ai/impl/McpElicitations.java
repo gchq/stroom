@@ -380,7 +380,9 @@ public class McpElicitations {
                 .findFirst();
     }
 
-    private static Optional<ElicitationRecord> read(final AiChatMessage message) {
+    /// @param message An ELICITATION message.
+    /// @return The form it holds, if it is one.
+    public static Optional<ElicitationRecord> read(final AiChatMessage message) {
         try {
             return Optional.ofNullable(JsonUtil.readValue(message.getMessage(), ElicitationRecord.class))
                     .filter(record -> ElicitationRecord.KIND.equals(record.kind()));

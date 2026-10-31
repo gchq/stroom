@@ -1,11 +1,12 @@
 # The built-in tools the model is shown
 
-Built-in tools: 54
+Built-in tools: 55
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (45 tool(s))
+### AGENT (46 tool(s))
 activate_administration
+activate_build
 activate_dashboards
 activate_indexing
 activate_processing
@@ -51,8 +52,9 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (41 tool(s))
+### ASK (42 tool(s))
 activate_administration
+activate_build
 activate_dashboards
 activate_indexing
 activate_processing
@@ -94,8 +96,9 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (41 tool(s))
+### PLAN (42 tool(s))
 activate_administration
+activate_build
 activate_dashboards
 activate_indexing
 activate_processing
@@ -940,6 +943,28 @@ Finds the lines of a workspace file, or of every file in a directory, that conta
     }
   },
   "required" : [ "path", "pattern" ],
+  "type" : "object"
+}
+
+================================================================================
+## instruction_evidence
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Gives what the user's own recent chats say about how they want things done, as evidence for standing instructions (AGENTS docs): the answers they gave your forms, grouped by question (a choice made the same way in several chats and never another way is 'repeated'; one made different ways is 'mixed', which is no rule), and what they wrote themselves. Call it when the user asks you to suggest standing instructions, or when a build is promoted. Draft rules only from repeated choices or from what the user said they always want, and cite the chats.
+
+### Parameters
+
+{
+  "properties" : { },
+  "required" : [ ],
   "type" : "object"
 }
 
