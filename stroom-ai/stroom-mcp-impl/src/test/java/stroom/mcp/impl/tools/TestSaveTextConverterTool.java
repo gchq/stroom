@@ -23,6 +23,7 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,5 +101,14 @@ class TestSaveTextConverterTool {
         assertThat(String.valueOf(world.call(tool, Map.of("build", "acme-v1", "name", "Theirs", "converter_type",
                 "DATA_SPLITTER", "code", SPLITTER, "uuid", uuid)).get("error")))
                 .contains("was not created by this server");
+    }
+
+    @Test
+    void anUpdateByUuidNeedsNoBuildOrName() {
+        // Found reviewing the tools: the schema required build and name, which an update by uuid doesn't give, so a
+        // client checking calls against the schema refused a valid one.
+        final List<String> required = tool.definition().parameters().required();
+
+        assertThat(required).containsExactly("code");
     }
 }

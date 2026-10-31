@@ -67,7 +67,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
 
     /// The source pipeline's argument, as both processing tools describe it.
     static final String SOURCE_PIPELINE_DESCRIPTION = "Indexing pipelines reading Events: the events pipeline that "
-                                                      + "produced them (one this server built, or another with the "
+                                                      + "produced them (one the agent built, or another with the "
                                                       + "user's confirmation). The filter only selects Events from "
                                                       + "exactly that pipeline.";
     /// The template-committed argument.
@@ -131,7 +131,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                              + "indexing pipeline the user approves it in a form, then it is created enabled and "
                              + "processing starts. Any other pipeline (CEF output, reference data) is created "
                              + "disabled, for the user to enable in Stroom (the pipeline's Processors tab). A feed "
-                             + "scope needs a created_after bound and is limited to the configured task count. "
+                             + "scope needs a created_after bound and runs at most "
+                             + ProcessorFilterWrites.MAX_FEED_FILTER_TASKS + " tasks at a time. "
                              + "Streams the pipeline already processed are refused: use reprocess_streams for those. "
                              + "An indexing pipeline whose earlier Events have since been superseded (the "
                              + "translation processed their raw streams again) still has their documents in its "
@@ -150,7 +151,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                              + "the reply's pipeline_link and what enabling does; once they say it is enabled, "
                              + "wait_for_processing. An enabled one: wait_for_processing with its filter_id.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline this server created.")
+                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline the agent created.")
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Process exactly these streams (the "
                                                                        + "sample). The default and safest "
                                                                        + "scope."))
@@ -219,7 +220,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
     private Map<String, Object> create(final ToolCall call, final ToolCallContext context) {
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
         if (pipelineUuid == null) {
-            throw new ToolRefusal("Give pipeline_uuid: a pipeline this server created.");
+            throw new ToolRefusal("Give pipeline_uuid: a pipeline the agent created.");
         }
         PipelineDoc pipeline = filterWrites.managedPipeline(context.session(), pipelineUuid);
         final DocRef ref = ProcessorFilterWrites.ref(pipeline);

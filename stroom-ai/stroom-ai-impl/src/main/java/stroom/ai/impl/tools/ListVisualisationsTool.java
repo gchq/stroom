@@ -69,7 +69,8 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
         // documentation understated them).
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
-                .note("Lists the Visualisations the user can view, and says whether they can use the chart libraries' scripts.")
+                .note("Lists the Visualisations the user can view, and says whether they can use the chart "
+                      + "libraries' scripts.")
                 .build();
     }
 

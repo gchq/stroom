@@ -20,6 +20,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,5 +55,14 @@ class TestSaveDictionaryTool {
 
         assertThat(String.valueOf(world.call(tool, Map.of("build", "acme-v1", "name", "VIP", "text", "b"))
                 .get("error"))).contains("A Dictionary named 'VIP' is already in build acme-v1");
+    }
+
+    @Test
+    void anUpdateByUuidNeedsNoBuildOrName() {
+        // Found reviewing the tools: the schema required build and name, which an update by uuid doesn't give, so a
+        // client checking calls against the schema refused a valid one.
+        final List<String> required = tool.definition().parameters().required();
+
+        assertThat(required).containsExactly("text");
     }
 }

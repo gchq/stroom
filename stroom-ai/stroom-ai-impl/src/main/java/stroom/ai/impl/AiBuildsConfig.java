@@ -30,8 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class AiBuildsConfig extends AbstractConfig implements IsStroomConfig {
 
-    /// The workspace folder's name unless configured, as the Stroom MCP server named it, so builds it started are
-    /// carried on in Stroom.
+    /// The workspace folder's name unless configured.
     public static final String DEFAULT_WORKSPACE_FOLDER = "MCP Workspace";
 
     private final String workspaceFolder;
@@ -50,8 +49,8 @@ public class AiBuildsConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("The name of the folder, directly below System in the explorer tree, in which the "
                              + "agent's tools make a folder for each build (the documents they create, until a "
                              + "build is promoted into place). The tools change only documents they created in "
-                             + "this folder. The Stroom MCP server's own default is 'MCP Workspace': keep the "
-                             + "name it used to carry on builds it started.")
+                             + "this folder. Renaming it leaves builds already in the old folder behind: rename the "
+                             + "folder in the explorer tree to match.")
     @JsonProperty("workspaceFolder")
     public String getWorkspaceFolder() {
         return workspaceFolder;

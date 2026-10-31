@@ -317,4 +317,11 @@ class TestSaveXsltTool {
         plan.put("fields", List.of(Map.of("name", "@timestamp", "type", "date", "source", "EventTime/TimeCreated")));
         return plan;
     }
+
+    @Test
+    void anUpdateByUuidNeedsNoBuildOrName() {
+        // Found reviewing the tools: the schema required build and name, which an update by uuid doesn't give, so a
+        // client checking calls against the schema refused a valid one.
+        assertThat(world.saveXsltTool().definition().parameters().required()).isNullOrEmpty();
+    }
 }

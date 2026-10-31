@@ -75,6 +75,16 @@ class TestBuildReferenceXsltTool {
     }
 
     @Test
+    void theNewestIsTheHighestVersionWhateverOrderStroomListsThemIn() {
+        // Found reviewing the tools: the last listed was taken as the newest. 2.0.10 is newer than 2.0.9, though
+        // it sorts before it as text.
+        Mockito.when(world.heldSchemas.systemIds()).thenReturn(List.of("file://reference-data-v2.0.10.xsd",
+                "file://reference-data-v2.0.9.xsd", "file://reference-data-v2.0.2.xsd"));
+
+        assertThat(world.call(tool, Map.of("mapping", MAPPING))).containsEntry("schema_version", "2.0.10");
+    }
+
+    @Test
     void aMappingThatIsNotOneIsRefused() {
         assertThat((String) world.call(tool, Map.of("mapping", Map.of("input", "json"))).get("error"))
                 .startsWith("mapping is not a reference mapping: ");
