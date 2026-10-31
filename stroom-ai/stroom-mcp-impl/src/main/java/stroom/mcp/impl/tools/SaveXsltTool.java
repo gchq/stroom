@@ -128,7 +128,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
                 .name(NAME)
                 .description(BuildPlan.onboardingLabel(NAME)
                              + "Save an XSLT written by hand, or an indexing XSLT from its plan (index_plan, no "
-                             + "code): create it in the build, or with uuid replace the code of one this server "
+                             + "code): create it in the build, or with uuid replace the code of one the agent "
                              + "created (including working copies of production XSLTs; prove a hand edit with "
                              + "step_sample and draft_code first). It is checked with check_xslt and not saved if "
                              + "that fails. A translation generated from a mapping is saved by "
@@ -154,7 +154,6 @@ class SaveXsltTool extends AbstractBuiltInTool {
                         .addStringProperty(CHANGE_ARG, TranslationArgs.CHANGE)
                         .addBooleanProperty(DISCARD_HAND_EDIT_ARG, TranslationArgs.DISCARD_HAND_EDIT)
                         .addProperty(HAND_EDIT_CHOICES_ARG, TranslationArgs.object(TranslationArgs.HAND_EDIT_CHOICES))
-                        .required(BUILD_ARG, NAME_ARG)
                         .build())
                 .build();
     }
@@ -199,7 +198,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
         } else {
             final String name = stringArg(call, NAME_ARG);
             if (build == null || name == null) {
-                throw new ToolRefusal("Give build and name for a new XSLT (or uuid to change one this server "
+                throw new ToolRefusal("Give build and name for a new XSLT (or uuid to change one the agent "
                                       + "created).");
             }
             result = translationDocs.createXslt(call, context, build, name, code, source, said);

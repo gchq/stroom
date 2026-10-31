@@ -107,7 +107,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                              + "the user to enable. Promoted pipelines are refused by the write guard: reprocessing "
                              + "production data is the user's.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline this server built, after a change.")
+                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline the agent built, after a change.")
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Streams it already processed, to process "
                                                                        + "again."))
                         .addStringProperty(CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG,
@@ -165,7 +165,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
     private Map<String, Object> reprocess(final ToolCall call, final ToolCallContext context) {
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
         if (pipelineUuid == null) {
-            throw new ToolRefusal("Give pipeline_uuid: a pipeline this server built, after a change.");
+            throw new ToolRefusal("Give pipeline_uuid: a pipeline the agent built, after a change.");
         }
         PipelineDoc pipeline = filterWrites.managedPipeline(context.session(), pipelineUuid);
         final DocRef ref = ProcessorFilterWrites.ref(pipeline);
