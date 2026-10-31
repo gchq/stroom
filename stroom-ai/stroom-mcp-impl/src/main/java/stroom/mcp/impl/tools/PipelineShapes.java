@@ -18,11 +18,16 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiPipelineStageConfig;
+import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,11 +38,16 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /// What a pipeline does, read from its elements and properties as Stroom runs it: its stage (translation,
 /// indexing, reference and so on), its element chain, what a child must supply (its XSLT, its text converter) and
@@ -46,6 +56,9 @@ import java.util.Set;
 /// A pipeline's stage is read by the configured stage markers ([AiConfig#getPipelineStages()]) wherever it is
 /// read, not only by the template search. Seen: a translation pipeline found by the policy's markers, then classed
 /// 'other' when its sample was processed, its filter made disabled for the user to enable.
+///
+/// A CEF pipeline writing text (to a file or a stream) has no element of its own to tell it by: it is told by its
+/// XSLT ([#writesCef]), read as the user.
 class PipelineShapes {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineShapes.class);
@@ -60,17 +73,33 @@ class PipelineShapes {
             "ElasticIndexingFilter", "elasticsearch");
     private static final Set<String> RAW_PARSERS = Set.of("JSONParser", "DSParser", "CombinedParser",
             "XMLFragmentParser");
+    /// The backend of a CEF pipeline that writes its lines as text (a TextWriter to a file or stream appender).
+    static final String FILE = "file";
+    /// How many imports deep a pipeline's XSLTs are followed for CEF lines.
+    static final int MAX_IMPORT_DEPTH = 4;
+    /// The most XSLTs read to tell whether a pipeline writes CEF lines.
+    static final int MAX_XSLTS_READ = 25;
+    // A CEF header's start, as an XSLT writing CEF lines holds it.
+    private static final Pattern CEF_LITERAL = Pattern.compile("CEF:[01]\\|");
 
     private final Provider<PipelineService> pipelineServiceProvider;
     private final Provider<AiConfig> aiConfigProvider;
+    private final Provider<DocumentAccess> documentAccessProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     /// @param pipelineServiceProvider Reads a pipeline's layers, as the pipeline editor does.
     /// @param aiConfigProvider        Gives the stage markers.
+    /// @param documentAccessProvider  Reads a pipeline's XSLTs as the user, to tell a CEF one writing text.
+    /// @param docFinderProvider       Finds the XSLTs they import, by name as Stroom does.
     @Inject
     PipelineShapes(final Provider<PipelineService> pipelineServiceProvider,
-                   final Provider<AiConfig> aiConfigProvider) {
+                   final Provider<AiConfig> aiConfigProvider,
+                   final Provider<DocumentAccess> documentAccessProvider,
+                   final Provider<DocFinder> docFinderProvider) {
         this.pipelineServiceProvider = pipelineServiceProvider;
         this.aiConfigProvider = aiConfigProvider;
+        this.documentAccessProvider = documentAccessProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     /// Reads a pipeline's layers as Stroom builds them, root template first: each is validated, so a pipeline
@@ -106,7 +135,80 @@ class PipelineShapes {
     /// @return What it does.
     /// @throws PipelineUnreadableException if Stroom can't load it, or the user may not read it.
     Shape shape(final String uuid) {
-        return shape(merged(uuid), markers());
+        final MergedPipeline merged = merged(uuid);
+        return shape(merged, markers(), () -> writesCef(merged, uuid));
+    }
+
+    /// Whether a pipeline's XSLTs write CEF lines: one of them (its own or inherited, or one they import or
+    /// include, up to [#MAX_IMPORT_DEPTH] deep) keeps a CEF plan (as draft_cef_mapping saves it) or holds a CEF
+    /// header's start (`CEF:0|` or `CEF:1|`). Each is read as the user; one that can't be found or read is skipped.
+    ///
+    /// @param merged The pipeline as Stroom runs it.
+    /// @param uuid   Its UUID.
+    /// @return True if its XSLTs write CEF lines; false if not, or if they can't be read.
+    boolean writesCef(final MergedPipeline merged, final String uuid) {
+        try {
+            final DocumentAccess documentAccess = documentAccessProvider.get();
+            final List<DocRef> xslts = merged.translationDocs(uuid).stream()
+                    .map(TranslationDoc::doc)
+                    .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
+                    .toList();
+            return writesCef(xslts, ref -> documentAccess.read(ref, XsltDoc.class),
+                    href -> XsltImports.resolve(docFinderProvider.get(), documentAccess, href));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read the XSLTs of pipeline {}: {}", uuid,
+                    e.getMessage()), e);
+            return false;
+        }
+    }
+
+    /// Whether these XSLTs, or those they import or include, write CEF lines (see [#writesCef(MergedPipeline,
+    /// String)]): followed breadth first, up to [#MAX_IMPORT_DEPTH] imports deep and [#MAX_XSLTS_READ] read.
+    ///
+    /// @param xslts    A pipeline's XSLTs.
+    /// @param read     Reads an XSLT, or empty if it can't be.
+    /// @param imported Finds the XSLT an import's href names, or empty if none can be.
+    /// @return True if one of them writes CEF lines.
+    static boolean writesCef(final List<DocRef> xslts,
+                             final Function<DocRef, Optional<XsltDoc>> read,
+                             final Function<String, Optional<XsltDoc>> imported) {
+        final Set<String> seen = new HashSet<>();
+        final Set<String> hrefs = new HashSet<>();
+        List<XsltDoc> level = new ArrayList<>();
+        for (final DocRef ref : xslts) {
+            if (seen.add(ref.getUuid()) && seen.size() <= MAX_XSLTS_READ) {
+                read.apply(ref).ifPresent(level::add);
+            }
+        }
+        for (int depth = 0; depth <= MAX_IMPORT_DEPTH && !level.isEmpty(); depth++) {
+            final List<XsltDoc> next = new ArrayList<>();
+            for (final XsltDoc xslt : level) {
+                if (writesCef(xslt)) {
+                    return true;
+                }
+                for (final String href : SharedXslt.importsOf(NullSafe.string(xslt.getData()))) {
+                    if (seen.size() >= MAX_XSLTS_READ) {
+                        break;
+                    }
+                    if (!hrefs.add(href)) {
+                        continue;
+                    }
+                    imported.apply(href)
+                            .filter(doc -> seen.add(doc.getUuid()))
+                            .ifPresent(next::add);
+                }
+            }
+            level = next;
+        }
+        return false;
+    }
+
+    // Whether this XSLT keeps a CEF plan, or holds a CEF header's start.
+    private static boolean writesCef(final XsltDoc xslt) {
+        final boolean keptCef = KeptMapping.readMapping(xslt.getDescription())
+                .filter(kept -> XsltSaves.CEF.equals(kept.kind()))
+                .isPresent();
+        return keptCef || CEF_LITERAL.matcher(NullSafe.string(xslt.getData())).find();
     }
 
     /// @param uuid The UUID of a pipeline, or of a template a pipeline is to be made from.
@@ -129,9 +231,19 @@ class PipelineShapes {
     /// @param markers Each stage's markers, in the order they are tested.
     /// @return What it does.
     static Shape shape(final MergedPipeline merged, final Map<String, AiPipelineStageConfig> markers) {
+        return shape(merged, markers, () -> false);
+    }
+
+    /// @param merged    A pipeline as Stroom runs it.
+    /// @param markers   Each stage's markers, in the order they are tested.
+    /// @param writesCef Whether its XSLTs write CEF lines; asked only of a pipeline that would otherwise be 'other'.
+    /// @return What it does.
+    static Shape shape(final MergedPipeline merged,
+                       final Map<String, AiPipelineStageConfig> markers,
+                       final BooleanSupplier writesCef) {
         final Map<String, String> elements = merged.elements();
         final Map<ElementProperty, Object> properties = merged.properties();
-        final Classification classification = classify(elements, properties, markers);
+        final Classification classification = classify(elements, properties, markers, writesCef);
         final List<String> chain = merged.chain();
         final List<Map<String, Object>> openSlots = new ArrayList<>();
         final List<Map<String, Object>> shared = new ArrayList<>();
@@ -167,6 +279,19 @@ class PipelineShapes {
     static Classification classify(final Map<String, String> elements,
                                    final Map<ElementProperty, Object> properties,
                                    final Map<String, AiPipelineStageConfig> markers) {
+        return classify(elements, properties, markers, () -> false);
+    }
+
+    /// @param elements   Each element's type by its id.
+    /// @param properties Each property's value by its element and name.
+    /// @param markers    Each stage's markers, in the order they are tested.
+    /// @param writesCef  Whether its XSLTs write CEF lines ([#writesCef(MergedPipeline, String)]); asked only of a
+    ///                   pipeline that would otherwise be 'other'.
+    /// @return The pipeline's stage, and its index backend for an indexing one or how a forwarding one sends.
+    static Classification classify(final Map<String, String> elements,
+                                   final Map<ElementProperty, Object> properties,
+                                   final Map<String, AiPipelineStageConfig> markers,
+                                   final BooleanSupplier writesCef) {
         final List<String> indexers = elements.values().stream()
                 .filter(INDEXING::containsKey)
                 .toList();
@@ -180,7 +305,8 @@ class PipelineShapes {
             return new Classification("loader", null);
         }
         // Events sent on to Kafka (CEF for ArcSight, say).
-        // (A text writer can't tell: Batch Search writes text from XML too. Text CEF pipelines are found by name.)
+        // (A text writer can't tell: Batch Search writes text from XML too. A CEF pipeline writing text is told by
+        // its XSLT, below.)
         if (elements.containsValue("StandardKafkaProducer")) {
             return new Classification("forwarding", "kafka");
         }
@@ -191,6 +317,12 @@ class PipelineShapes {
                 || marker.getValue().getStreamTypes().stream().anyMatch(types::contains)) {
                 return new Classification(marker.getKey(), null);
             }
+        }
+        // Events written as CEF lines of text (to a file or a stream): its XSLT says so, read only now. Raw input is
+        // a source's own CEF being parsed, not CEF output.
+        final boolean rawInput = elements.values().stream().anyMatch(RAW_PARSERS::contains);
+        if (!rawInput && writesCef.getAsBoolean()) {
+            return new Classification("forwarding", FILE);
         }
         return new Classification("other", null);
     }
@@ -278,7 +410,8 @@ class PipelineShapes {
     /// A pipeline's stage, and its index backend for an indexing one.
     ///
     /// @param stage   translation, indexing, discovery, reference, records, forwarding, loader or other.
-    /// @param backend lucene or elasticsearch for an indexing pipeline, kafka for a forwarding one, else null.
+    /// @param backend lucene or elasticsearch for an indexing pipeline; kafka or file (CEF lines of text) for a
+    ///                forwarding one, or null when its markers alone class it; else null.
     record Classification(String stage, String backend) {
 
     }
@@ -286,7 +419,7 @@ class PipelineShapes {
     /// What a pipeline does.
     ///
     /// @param stage          Its stage.
-    /// @param backend        Its index backend, or null.
+    /// @param backend        Its index backend, or how a forwarding one sends (kafka or file), or null.
     /// @param chain          Its element ids in processing order.
     /// @param parser         The type of its first element, or null.
     /// @param childMustSupply Each key property left unset, for a child to set.

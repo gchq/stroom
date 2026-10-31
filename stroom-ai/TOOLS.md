@@ -2244,7 +2244,9 @@ globs, `stroom.ai.pipelineStages.<stage>.templateFolders` / `templateNames`), `i
 children), `standard` (under `System/Template Pipelines`), then `template_like` (a parentless pipeline that leaves
 what a child supplies, its XSLT or text converter, unset). Ties are broken by child count. Each candidate is merged
 with its template chain and its shape worked out (`PipelineShapes.shape`): it is kept only when its stage matches,
-and a `template_like` one only when it really leaves something for a child.
+and a `template_like` one only when it really leaves something for a child. For `forwarding`, a candidate that
+would otherwise be `other` has its XSLTs (and those they import) read for CEF lines written as text (backend
+`file`, see `PipelineShapes.writesCef`).
 
 * **Arguments**: `stage` (required: `translation`, `indexing`, `discovery`, `reference`, `records` or
   `forwarding`).
@@ -3270,7 +3272,8 @@ review), and `ReferenceData` (find_reference_data's maps and pipeline references
   event-logging version, as check_events).
 * **Returns**: the sections for its stage, always all of them and in order; a section that can't be given has
   `status` and `reason`.
-  * `pipeline`: `name`, `uuid`, `stage`, `backend` (indexing: lucene or elasticsearch; forwarding: kafka),
+  * `pipeline`: `name`, `uuid`, `stage`, `backend` (indexing: lucene or elasticsearch; forwarding: kafka, or file
+    for CEF lines written as text),
     `description`, `templates` (its template chain, root first), `parser`, `translation_docs` (each XSLT and text
     converter, its element, and whether its template sets it), `element_chain`.
   * `processing`: from the newest Error streams it wrote (up to 10; up to 500 Error and Events streams counted,
@@ -3302,8 +3305,8 @@ review), and `ReferenceData` (find_reference_data's maps and pipeline references
   * `cef` (forwarding): its lines stepped with the Events they came from (up to 100 records) and reviewed by
     `CefLines.review`: `status`, `output` (kafka and its topic, or text), `lines_stepped`, `custom_keys` (from the
     plan kept with its XSLT, else not known), `header_todo` (header fields still holding a TODO constant),
-    `problems`, `not_sent` and `implied_mapping` (each cut to 15, up to 10 kinds of event), `notes` (Kafka delivery
-    is not tested by stepping).
+    `problems`, `not_sent` and `implied_mapping` (each cut to 15, up to 10 kinds of event), `notes` (for Kafka,
+    delivery is not tested by stepping; for a file, what its appender does with the lines is not).
   * `reference` (reference): `status`, `maps` (each map its XSLT writes, as find_reference_data reads it, with
     `seen`: the entries stepping wrote, an example key and value), `maps_seen_only`, `feeds` (its processor
     filters', needing Manage Processors), `looked_up_by` (pipelines whose reference names one of those feeds or
@@ -3492,9 +3495,10 @@ Creates a pipeline in the build as a child of a template, setting only what the 
 XSLT, the parser's text converter, open properties). It keeps the template's structure and defaults, including
 optional steps such as an empty decoration XSLT. The user confirms the template and name in a form first; the name
 is editable there. `create_indexing_pipeline` uses the same path (`CreatePipelineTool.fromTemplate`).
-A template whose stage gives no role subfolder (a CEF pipeline written by hand that writes lines of text: XMLParser,
-XSLTFilter, TextWriter) is used all the same: the child is made in the build folder itself (seen in `TestE2eCef`:
-create_pipeline failed with a NullPointerException on such a template, which an AGENTS doc named).
+A template whose stage gives no role subfolder (stage `other`; seen: a CEF pipeline written by hand that writes lines
+of text, XMLParser, XSLTFilter, TextWriter, before such a pipeline was told by its XSLT as `forwarding`) is used all
+the same: the child is made in the build folder itself (seen in `TestE2eCef`: create_pipeline failed with a
+NullPointerException on such a template, which an AGENTS doc named).
 
 Making it, in order (`fromTemplate`):
 
@@ -4046,7 +4050,9 @@ tool generates two sections in it and keeps the version control:
   where comments don't), so each Event is matched to the rule that wrote it. The section opens with "Counts are of
   N sample records (n of stream ...)" so a reader knows which records were counted (seen: counts from a different
   sample taken for a change in routing). An index XSLT written by hand is documented from the documents it writes
-  (`writtenFieldsSection`), a CEF one from the lines it writes (`cefWrittenSection`). A hand-written discovery
+  (`writtenFieldsSection`), a CEF one from the lines it writes (`cefWrittenSection`), to Kafka or as text to a file
+  alike (`CefLines.linesIn` reads Kafka records' values, a text XSLT's lines, or the text of XML a TextWriter
+  writes). A hand-written discovery
   pipeline (stage `discovery`, no plan) is documented the same way from the documents it writes from its raw
   streams, with none of a planned discovery index's framing (its settings aren't known without the plan).
 * **Reference maps** is generated for a reference data pipeline (`PipelineShapes` stage `reference`; its XSLT, made
