@@ -35,7 +35,7 @@ rules:
   - {message: 'Elasticsearch rejected', class: blocking,
      reason: "Elasticsearch rejected these documents, so their records are not indexed (the rest of the batch was)"}
   - {message: 'Bulk indexing request failed', class: blocking,
-     reason: "Elasticsearch rejected documents in a bulk request, and its response could not be read in full (a large batch is cut short in the Error stream). Process again with a small batch: create_processor_filter and reprocess_streams set batch size 10 on a workspace pipeline"}
+     reason: "Elasticsearch rejected documents in a bulk request, and its response could not be read in full (a large batch is cut short in the Error stream; this Stroom version reported a whole batch in one message). Process the stream again: Stroom now reports each rejected document with Elasticsearch's reason"}
   # A Data Splitter's records lost (seen in testing: CSV lines of about 20,000 characters, and the agent, told the
   # DSParser had no buffer property, couldn't go on). Its errors name the converter's element, by id when
   # build_data_splitter wrote it.

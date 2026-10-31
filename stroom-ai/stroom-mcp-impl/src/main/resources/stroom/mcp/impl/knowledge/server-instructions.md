@@ -201,9 +201,6 @@ Rules for every run:
   its index is dropped (or emptied) first, so it starts fresh, and, with its events pipeline promoted too, it is
   enabled only once that pipeline's filter has processed the build's streams again; ask the user to do it in that
   order. A filter marked existing is one the pipeline already had, enabled: no second one is made.
-- Elasticsearch indexing in the workspace runs in batches of 10 (create_processor_filter and reprocess_streams set
-  it), so a document Elasticsearch rejects is reported whole, with its reason; wait_for_processing restores the
-  template's batch size once indexing completes without errors.
 - Elasticsearch indexing runs only through the Stroom indexing pipeline, with an index template the user agreed
   (built by propose_index_template from their example, or their correction), and only once the cluster admin has
   committed it to the cluster: the user enables the filter then, or confirms it when approving a reprocessing.

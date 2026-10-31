@@ -21,7 +21,6 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
-import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -178,11 +177,9 @@ class TestCreateProcessorFilterTool {
                 + "cluster ES_DEV");
         assertThat(w.created.getLast().isEnabled()).isTrue();
         assertThat(gated.result().get("enabled")).isEqualTo(true);
-        // While it is developed in the build, Elasticsearch indexes in small batches.
-        assertThat(String.valueOf(gated.result().get("batch_size"))).startsWith("batch size 10 while developing");
-        assertThat(PipelineDocs.addedProperties(w.pipelineDoc("p1")))
-                .extracting(PipelineProperty::getName)
-                .containsExactly("batchSize");
+        // Stroom reports each document Elasticsearch rejects, so the pipeline keeps its template's batch size.
+        assertThat(gated.result()).doesNotContainKey("batch_size");
+        assertThat(PipelineDocs.addedProperties(w.pipelineDoc("p1"))).isEmpty();
     }
 
     @ParameterizedTest
