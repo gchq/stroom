@@ -240,6 +240,82 @@ class TestErrorTriage {
     }
 
     @Test
+    void documentsStroomReportsOneByOneAreGroupedByReasonWithTheirEvents() {
+        // As Stroom reports them since #5958: an ERROR per rejected document naming its EventId, then a FATAL
+        // summary of the batch.
+        final String reason = " (document_parsing_exception): [1:117] object mapping for [user] tried to parse "
+                              + "field [user] as object, but found a concrete value";
+        final List<Marker> markers = List.of(
+                ErrorTriage.marker("ERROR", "elasticIndexingFilter",
+                        "Elasticsearch rejected the document with EventId 5" + reason, null),
+                ErrorTriage.marker("ERROR", "elasticIndexingFilter",
+                        "Elasticsearch rejected the document with EventId 12" + reason, null),
+                ErrorTriage.marker("FATAL", "elasticIndexingFilter",
+                        "Bulk indexing request failed: 2 of 3 documents rejected by Elasticsearch", null));
+
+        final List<Map<String, Object>> groups = groups(RULES.triage(markers, Set.of("elasticIndexingFilter")));
+
+        final Map<String, Object> rejected = byMessage(groups,
+                "Elasticsearch rejected the document with EventId 5" + reason);
+        assertThat(rejected.get("count")).isEqualTo(2);
+        assertThat(rejected.get("records_affected")).as("each document's event").isEqualTo(2);
+        assertThat((String) rejected.get("reason"))
+                .startsWith("A field is an object in some records and a plain value in others");
+        final Map<String, Object> summary = byMessage(groups,
+                "Bulk indexing request failed: 2 of 3 documents rejected by Elasticsearch");
+        assertThat(summary.get("class")).isEqualTo("blocking");
+        assertThat((String) summary.get("reason"))
+                .as("the reasons are in the errors above, so not sent to process again with a small batch")
+                .contains("each rejected document is reported in its own error")
+                .doesNotContain("small batch");
+    }
+
+    @Test
+    void aDocumentStroomReportsByEventIdIsOfThatRecord() {
+        assertThat(ErrorTriage.splitBulk(ErrorTriage.marker("ERROR", "elasticIndexingFilter",
+                "Elasticsearch rejected the document with EventId 42 (mapper_parsing_exception): failed to parse "
+                + "field [n] of type [long]", null)))
+                .singleElement()
+                .extracting(Marker::record)
+                .isEqualTo("42");
+        // Without an EventId the document is named by its place in the stream, which is not a record.
+        assertThat(ErrorTriage.splitBulk(ErrorTriage.marker("ERROR", "elasticIndexingFilter",
+                "Elasticsearch rejected document 3 of the stream (mapper_parsing_exception): failed to parse field "
+                + "[n] of type [long]", null)))
+                .singleElement()
+                .extracting(Marker::record)
+                .isNull();
+    }
+
+    @Test
+    void moreRejectionsThanStroomListsSaysTheListedOnesUsuallyShareTheCause() {
+        final List<Map<String, Object>> groups = groups(RULES.triage(List.of(ErrorTriage.marker("ERROR",
+                "elasticIndexingFilter", "Elasticsearch rejected 250 documents in this batch; only the first 100 "
+                                         + "are reported individually", null)), Set.of("elasticIndexingFilter")));
+
+        assertThat(groups).singleElement().satisfies(group -> {
+            assertThat(group.get("class")).isEqualTo("blocking");
+            assertThat((String) group.get("reason")).startsWith("More of the batch's documents were rejected than "
+                                                                + "are listed one by one");
+        });
+    }
+
+    @Test
+    void retriesOfAnOverloadedClusterRunningOutSaysToProcessAgainOnceItHasCapacity() {
+        // As Stroom reports it since #5958, when the documents Elasticsearch was too busy for are still refused.
+        final List<Map<String, Object>> groups = groups(RULES.triage(List.of(ErrorTriage.marker("FATAL",
+                "elasticIndexingFilter", "Indexing failed to complete after 5 retries: Elasticsearch was overloaded "
+                                         + "and rejected 40 of 1000 documents, and rejected 2 for other reasons",
+                null)), Set.of("elasticIndexingFilter")));
+
+        assertThat(groups).singleElement().satisfies(group -> {
+            assertThat(group.get("class")).isEqualTo("blocking");
+            assertThat((String) group.get("reason")).startsWith("Elasticsearch was too busy to index some documents")
+                    .contains("maxBatchSize");
+        });
+    }
+
+    @Test
     void anErrorTheUserAcceptedIsBenignWithTheirReasonAndMatchesItsKind() {
         final List<AcceptedErrors.Entry> accepted = List.of(AcceptedErrors.entry("decorationFilter",
                 "No HR record for user svc-backup", "Service accounts have no HR record", "2026-10-04",
