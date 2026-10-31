@@ -22,12 +22,17 @@ import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.time.StroomDuration;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.InfoResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.util.BinaryData;
+import co.elastic.clients.util.ContentType;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.apache.hc.core5.http.HttpHost;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -517,6 +522,65 @@ class TestElasticClientFactory {
                     .withHeader("Authorization", WireMock.equalTo("ApiKey " + API_KEY)));
         } finally {
             proxyServer.stop();
+            elasticServer.stop();
+        }
+    }
+
+    @Test
+    void testRequestsCompressed() throws IOException {
+        final LoggedRequest request = sendBulkRequest(new ElasticClientConfig(null, null, true));
+
+        assertThat(request.header("Content-Encoding").firstValue())
+                .isEqualTo("gzip");
+        // WireMock decompresses the body, so it can be checked as sent
+        assertThat(request.getBodyAsString())
+                .contains("{\"user\":\"jbloggs\"}");
+    }
+
+    @Test
+    void testRequestsNotCompressedByDefault() throws IOException {
+        final LoggedRequest request = sendBulkRequest(new ElasticClientConfig());
+
+        assertThat(request.containsHeader("Content-Encoding"))
+                .isFalse();
+        assertThat(request.getBodyAsString())
+                .contains("{\"user\":\"jbloggs\"}");
+    }
+
+    /// Sends a bulk request indexing one document to a plain HTTP WireMock server, with a client made with the
+    /// supplied settings.
+    ///
+    /// @return The request as the server received it.
+    private static LoggedRequest sendBulkRequest(final ElasticClientConfig elasticClientConfig) throws IOException {
+        final WireMockServer elasticServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
+                .dynamicPort()
+                .http2PlainDisabled(true));
+        elasticServer.start();
+        try {
+            elasticServer.stubFor(WireMock.post(WireMock.urlPathEqualTo("/_bulk"))
+                    .willReturn(ElasticWireMock.elasticResponse(200, """
+                            {"took":1,"errors":false,"items":[
+                              {"create":{"_index":"test-index","_id":"id-0","status":201}}]}""")));
+
+            //noinspection HttpUrlsUsage
+            final ResolvedElasticConnection connection = new ResolvedElasticConnection(
+                    List.of("http://localhost:" + elasticServer.port()),
+                    null,
+                    HttpClientConfiguration.builder().build());
+            try (final ElasticsearchClient elasticClient = new ElasticClientFactory().create(
+                    connection, elasticClientConfig)) {
+                elasticClient.bulk(BulkRequest.of(b -> b.operations(BulkOperation.of(op -> op
+                        .create(create -> create
+                                .index("test-index")
+                                .document(BinaryData.of("{\"user\":\"jbloggs\"}".getBytes(StandardCharsets.UTF_8),
+                                        ContentType.APPLICATION_JSON)))))));
+            }
+
+            final List<LoggedRequest> requests = elasticServer.findAll(
+                    WireMock.postRequestedFor(WireMock.urlPathEqualTo("/_bulk")));
+            assertThat(requests).hasSize(1);
+            return requests.getFirst();
+        } finally {
             elasticServer.stop();
         }
     }
