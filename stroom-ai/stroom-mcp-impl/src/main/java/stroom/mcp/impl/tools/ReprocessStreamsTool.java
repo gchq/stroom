@@ -227,10 +227,9 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         // Reprocessing an events or indexing pipeline while it is developed in a build runs once the user approves
         // it (asked for by the user); every other filter is made disabled, for the user to enable.
         if (!runs) {
-            final boolean small = destination != null && indexingRuns.developmentBatch(pipelineUuid, true);
             final ProcessorFilter created = filterWrites.createFilter(ref, expression,
                     ProcessorFilterWrites.DEFAULT_PRIORITY, maxTasks, null, false);
-            final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, false, small);
+            final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, false);
             result.putAll(ProcessingApprovals.forTheUser(context.links(), ref, created.getId(), details,
                     ProcessingApprovals.beforeActions(context.links(), pipeline, destination, lucene, details)));
             return plan.nextFor(context, ref, result);
@@ -250,10 +249,9 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         if (clear) {
             indexingRuns.deleteIndexShards(lucene.getUuid());
         }
-        final boolean small = destination != null && indexingRuns.developmentBatch(pipelineUuid, true);
         final ProcessorFilter created = filterWrites.createFilter(ref, expression,
                 ProcessorFilterWrites.DEFAULT_PRIORITY, maxTasks, null, true);
-        final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, true, small);
+        final Map<String, Object> result = result(created, pipeline, streamIds, maxTasks, true);
         result.put("hint", "wait_for_processing with filter_id=" + created.getId() + " so only this run's outputs "
                            + "count.");
         return plan.nextFor(context, ref, result);
@@ -263,17 +261,13 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                                               final PipelineDoc pipeline,
                                               final List<Long> streamIds,
                                               final int maxTasks,
-                                              final boolean enabled,
-                                              final boolean small) {
+                                              final boolean enabled) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", created.getId());
         result.put("pipeline", pipeline.getName());
         result.put("streams", streamIds);
         result.put("max_tasks", maxTasks);
         result.put("enabled", enabled);
-        if (small) {
-            result.put("batch_size", IndexingRuns.BATCH_NOTE);
-        }
         return result;
     }
 }

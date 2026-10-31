@@ -111,7 +111,7 @@ final class ProcessingWorld {
                 world.guard(), feeds.consent, feeds.plan, feeds.feedNames, outputFeeds);
         approvals = new ProcessingApprovals(world.pipelineShapes, pipelineOutputs, agreements, pipelineDocs,
                 feeds.consent);
-        indexingRuns = new IndexingRuns(world.pipelineShapes, pipelineDocs, world.guard(), streamProcessing,
+        indexingRuns = new IndexingRuns(world.pipelineShapes, world.guard(), streamProcessing,
                 () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""));
         sampleStreamTexts = new SampleStreamTexts(feeds.streamReader, feeds.feedNames, world.documentAccess);
         promotion = new PromotionProcessing(filterWrites, streamProcessing, pipelineOutputs, agreements,

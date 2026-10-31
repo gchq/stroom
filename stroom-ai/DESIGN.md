@@ -296,9 +296,9 @@ flowchart TD
     through `check_index_template`. The cluster administrator commits the template; the user's `user_actions` carry
     the request for them to copy.
 16. **Indexing the sample.** `create_processor_filter` refuses an Elasticsearch pipeline without an agreed template
-    for its current index and code. The approval form asks the user to confirm the template is committed. In the
-    workspace the pipeline indexes in batches of 10, so a document Elasticsearch rejects comes back whole in the Error
-    stream (`IndexingRuns.DEV_BATCH_SIZE`). An index the pipeline wrote to before is dropped first (`drop_first`).
+    for its current index and code. The approval form asks the user to confirm the template is committed. Stroom
+    reports each document Elasticsearch rejects in the Error stream, with its reason, so the pipeline keeps its
+    template's batch size. An index the pipeline wrote to before is dropped first (`drop_first`).
 17. **indexed.** `wait_for_processing`, then `verify_index`: a `<index>-VERIFY` dashboard, columns the user
     confirms, and test searches through Stroom (counts per stream, an exact match per key field, a time range), each
     check's first hit traced back to its record by stepping. A pass is recorded by the code's digest.
@@ -336,7 +336,7 @@ sequenceDiagram
     Admin->>ES: PUT _index_template
     Agent->>Tools: create_processor_filter
     Tools-->>User: form: process the sample? (template committed)
-    Tools->>Stroom: filter, enabled; batch size 10
+    Tools->>Stroom: filter, enabled
     Stroom->>ES: documents, through the indexing filter
     Agent->>Tools: wait_for_processing, verify_index
 ```
@@ -1274,7 +1274,7 @@ flowchart LR
   index, or the user deletes a Lucene index's shards, so it starts fresh), and, with its events pipeline promoted too,
   is to be enabled only once that pipeline's filter has processed the build's streams again; its enable button
   depends on the events filter's. A pipeline with an enabled filter already selecting what arrives gets no second
-  one. The batch size set for development is removed.
+  one.
 * **A failure part way** says which step failed and what was already done; what wasn't promoted stays in the build.
 
 ### Pipelines (built)
@@ -1535,15 +1535,12 @@ its time field, and each field's name, type and source in the Event.
 
 ### Indexing runs (built)
 
-* In the workspace, an Elasticsearch indexing pipeline indexes in batches of 10 (`IndexingRuns.DEV_BATCH_SIZE`), set by
-  `create_processor_filter` and `reprocess_streams`; a rejected document comes back whole. `wait_for_processing`
-  restores the template's batch size once indexing completes without errors; promotion makes sure of it.
-* Stroom reported a bulk request with failures as one message, cut to 4,096 characters; triage splits it into one
-  entry per rejected document (`ErrorTriage.splitBulk`), with what to do. Since #5958 (`gh-5958` off `7.14`, not yet
-  in this branch) Stroom logs each rejected document itself, naming it by its EventId, then a fatal summary of the
-  batch: triage gives such an entry its event's record, and the summary its own reason (the causes are in the
-  entries above it, so it no longer sends the agent to process again with a small batch). Both forms are read, as
-  Error streams from older Stroom remain. Once #5958 is merged in, the development batch of 10 is no longer needed.
+* Since #5958 Stroom logs each document Elasticsearch rejects itself, naming it by its EventId, then a fatal summary
+  of the batch: triage gives such an entry its event's record, and the summary its own reason (the causes are in the
+  entries above it). So an indexing pipeline keeps its template's batch size while it is developed (the tools used to
+  set 10, so that a rejected document came back whole).
+* Older Stroom reported a bulk request with failures as one message, cut to 4,096 characters; triage splits it into
+  one entry per rejected document (`ErrorTriage.splitBulk`), with what to do, as Error streams from it remain.
 * Indexing again doesn't remove documents already in the index. So an index the pipeline wrote to before starts fresh:
   a `drop_first` reply with a button carrying `DELETE _data_stream/<index>` (when the agreed template makes a data
   stream) or `DELETE <index>`; once the user says it is dropped, the call is made again with `index_dropped=true` for

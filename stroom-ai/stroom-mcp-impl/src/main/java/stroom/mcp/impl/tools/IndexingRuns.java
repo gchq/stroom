@@ -28,8 +28,6 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -44,13 +42,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -58,8 +54,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// What indexing a build's sample needs of the index it goes into: the Lucene index an indexing pipeline writes to,
-/// whether the build may empty it, what the cluster admin drops first for Elasticsearch, and the small batch
-/// Elasticsearch indexing runs in while it is developed, for the processing tools and promotion to share.
+/// whether the build may empty it, and what the cluster admin drops first for Elasticsearch, for the processing tools
+/// to share.
 ///
 /// A Lucene index's shards are deleted through Stroom's own index service ([IndexResource], as its Shards tab
 /// deletes them: the user needs the Manage Index Shards permission). Elasticsearch is never written to: dropping an
@@ -68,14 +64,6 @@ class IndexingRuns {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexingRuns.class);
 
-    /// While a pipeline is developed in the workspace, Elasticsearch indexing runs in small batches: a rejected
-    /// document is then reported with Elasticsearch's own reason, whole, rather than cut short in one large bulk
-    /// response.
-    static final int DEV_BATCH_SIZE = 10;
-    /// What a result says of the small batch.
-    static final String BATCH_NOTE = "batch size " + DEV_BATCH_SIZE + " while developing, so each document "
-                                     + "Elasticsearch rejects is reported with its reason; the template's default "
-                                     + "comes back once indexing completes without errors";
     /// The details key for an index this pipeline wrote to before, which is dropped (or emptied) by the user first.
     static final String ALREADY_INDEXED = "already indexed";
 
@@ -93,14 +81,12 @@ class IndexingRuns {
                                         + "before)";
 
     private final PipelineShapes pipelineShapes;
-    private final PipelineDocs pipelineDocs;
     private final WriteGuard guard;
     private final StreamProcessing streamProcessing;
     private final Provider<IndexResource> indexResourceProvider;
     private final ErrorText errorText;
 
     /// @param pipelineShapes        Reads a pipeline as Stroom runs it.
-    /// @param pipelineDocs          Reads and saves pipelines as the user.
     /// @param guard                 Says what is in a build.
     /// @param streamProcessing      Reads what a pipeline produced from a stream.
     /// @param indexResourceProvider Finds and deletes a Lucene index's shards as the user.
@@ -109,24 +95,21 @@ class IndexingRuns {
     ///                              taken to hold what the pipeline indexed before).
     @Inject
     IndexingRuns(final PipelineShapes pipelineShapes,
-                 final PipelineDocs pipelineDocs,
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
                  final StreamReader streamReader) {
-        this(pipelineShapes, pipelineDocs, guard, streamProcessing, indexResourceProvider,
+        this(pipelineShapes, guard, streamProcessing, indexResourceProvider,
                 streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text());
     }
 
     /// As the injected constructor, with how an Error stream's text is read given, for tests.
     IndexingRuns(final PipelineShapes pipelineShapes,
-                 final PipelineDocs pipelineDocs,
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
                  final ErrorText errorText) {
         this.pipelineShapes = pipelineShapes;
-        this.pipelineDocs = pipelineDocs;
         this.guard = guard;
         this.streamProcessing = streamProcessing;
         this.indexResourceProvider = indexResourceProvider;
@@ -313,44 +296,6 @@ class IndexingRuns {
                 .indexShardIdSet(new Selection<>(false, ids))
                 .build()));
         return shards.stream().mapToLong(IndexShard::getDocumentCount).sum();
-    }
-
-    /// Sets the workspace Elasticsearch indexing pipeline's own batchSize to [#DEV_BATCH_SIZE] (small), or removes it
-    /// so the template's (or Stroom's) default applies again. Production pipelines are left alone.
-    ///
-    /// @param pipelineUuid A pipeline.
-    /// @param small        True for the development batch, false for the default.
-    /// @return True if it changed.
-    boolean developmentBatch(final String pipelineUuid, final boolean small) {
-        final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
-        final Optional<String> element = elementsOf(merged, "ElasticIndexingFilter").stream().findFirst();
-        if (element.isEmpty()) {
-            return false;
-        }
-        final PipelineDoc doc = pipelineDocs.read(pipelineUuid);
-        if (!guard.tags(ProcessorFilterWrites.ref(doc)).contains(WriteGuard.MANAGED)) {
-            return false;
-        }
-        final List<PipelineProperty> added = PipelineDocs.addedProperties(doc);
-        final List<PipelineProperty> own = added.stream()
-                .filter(property -> PipelineDocs.isProperty(property, element.get(), "batchSize"))
-                .toList();
-        if (small && !own.isEmpty()
-            && Objects.equals(NullSafe.get(own.getFirst().getValue(), PipelinePropertyValue::getInteger),
-                DEV_BATCH_SIZE)) {
-            return false;
-        }
-        if (!small && own.isEmpty()) {
-            return false;
-        }
-        final List<PipelineProperty> rest = new ArrayList<>(added.stream()
-                .filter(property -> !own.contains(property))
-                .toList());
-        if (small) {
-            rest.add(new PipelineProperty(element.get(), "batchSize", new PipelinePropertyValue(DEV_BATCH_SIZE)));
-        }
-        pipelineDocs.write(PipelineDocs.withAddedProperties(doc, rest));
-        return true;
     }
 
     // The ids of the pipeline's elements of a type, in order.
