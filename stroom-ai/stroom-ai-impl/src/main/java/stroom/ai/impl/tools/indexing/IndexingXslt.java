@@ -27,7 +27,9 @@ import stroom.ai.impl.tools.generation.XsltComments;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,12 +164,23 @@ final class IndexingXslt {
             return plan;
         }
         return plan.withFields(plan.fields().stream()
-                .map(field -> JsonValues.truthy(field.source())
-                        ? new PlannedField(field.name(), field.type(), field.source() + "[not(normalize-space(.) = $"
-                                                                      + LEFT_OUT + ")]", field.description(),
-                        field.transform(), field.multiple())
-                        : field)
+                .map(IndexingXslt::leavingOut)
                 .toList());
+    }
+
+    // A field whose value passes over the stand-ins left out: a field of objects its items' values (each of its
+    // elements is still an object).
+    private static PlannedField leavingOut(final PlannedField field) {
+        if (field.isObjects()) {
+            return new PlannedField(field.name(), field.type(), field.source(), field.description(),
+                    field.transform(), field.multiple(), field.items().stream().map(IndexingXslt::leavingOut).toList(),
+                    field.distinctBy());
+        }
+        return JsonValues.truthy(field.source())
+                ? new PlannedField(field.name(), field.type(), field.source() + "[not(normalize-space(.) = $"
+                                                              + LEFT_OUT + ")]", field.description(),
+                field.transform(), field.multiple())
+                : field;
     }
 
     // The variables holding the stand-ins, before the templates; none without any.
@@ -236,7 +249,18 @@ final class IndexingXslt {
     // source ends with it), else its last step.
     private static Map<String, String> reads(final XmlElement template, final Map<String, String> names) {
         final Map<String, String> out = new LinkedHashMap<>();
+        // What a loop's body reads is relative to each item, not the Event: never held in a variable of the
+        // template's (seen: a field of objects' Id read once as the Event's).
+        final Set<XmlElement> inLoops = Collections.newSetFromMap(new IdentityHashMap<>());
         for (final XmlElement element : template.iterElements()) {
+            if (element.is(XSL, "for-each") || element.is(XSL, "for-each-group")) {
+                element.iterElements().stream().filter(inner -> inner != element).forEach(inLoops::add);
+            }
+        }
+        for (final XmlElement element : template.iterElements()) {
+            if (inLoops.contains(element)) {
+                continue;
+            }
             final List<String> values = new ArrayList<>();
             for (final XmlElement.Attribute attribute : element.attributes()) {
                 if (XSL.equals(element.namespace())) {

@@ -136,7 +136,7 @@ class IndexValues {
     /// @return Those a wildcard EQUALS finds any value of on the backend.
     static List<String> wildcarded(final String backend, final FieldPlan plan, final List<String> fields) {
         final Map<String, String> types = new LinkedHashMap<>();
-        plan.fields().forEach(field -> types.put(field.name(), field.type()));
+        plan.leafFields().forEach(field -> types.put(field.name(), field.type()));
         final Set<String> wild = WILDCARD_TYPES.getOrDefault(backend, Set.of());
         return fields.stream().filter(field -> wild.contains(types.get(field))).toList();
     }
@@ -154,7 +154,7 @@ class IndexValues {
     /// @return The plan's fields whose source no event of the sample has (not the ids, nor a shared template's).
     static List<String> notInSample(final FieldPlan plan, final Map<String, Double> population) {
         final List<String> out = new ArrayList<>();
-        for (final PlannedField field : plan.fields()) {
+        for (final PlannedField field : plan.leafFields()) {
             final String source = field.source();
             if (NullSafe.isBlankString(source) || source.startsWith("@") || plan.writtenBy(field.name()) != null) {
                 continue;

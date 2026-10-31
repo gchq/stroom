@@ -182,9 +182,10 @@ class TestWriteDocumentationTool {
     }
 
     @Test
-    void anXsltEditedSinceItsMappingIsNotDocumentedFromIt() {
+    void anXsltEditedSinceItsMappingIsDocumentedAsItRunsOrFromTheAgentsOwnSection() {
         // Seen: TWITTER's XSLT saved by hand (save_xslt) with mentions and links in Data arrays, and the Field
-        // mapping section generated from the mapping kept before them: links left out, mentions shown joined.
+        // mapping section generated from the mapping kept before them: links left out, mentions shown joined. The
+        // section is generated from the XSLT as it runs (FieldMappingSections), not refused.
         world.pipeline(BUILD, "Acme", "p");
         final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", Map.of()));
         Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept));
@@ -194,14 +195,18 @@ class TestWriteDocumentationTool {
                 "markdown", "## Purpose and data\n\nTweets.\n\n## Field mapping\n\n(Generated on save.)\n",
                 "stream_ids", List.of(5), "change", "Created"));
 
-        // A placeholder isn't a section of its own.
-        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
-                .startsWith("Not written: the Field mapping section is generated from the mapping kept with the "
-                            + "XSLT, and its XSLT was saved as written by hand (save_xslt)")
-                .contains("give a '## Field mapping' section of your own");
-        Mockito.verifyNoInteractions(world.sections);
+        // A placeholder isn't a section of its own: the section is generated.
+        Mockito.when(world.sections.fieldMappingSection(any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("| `EventDetail/Create/Document/Data[@Name='links']` | as it runs |");
+        final Map<String, Object> generated = world.call(tool, context, DocumentationWorld.args(args));
+        assertThat(world.world.body(String.valueOf(generated.get("uuid")))).contains("as it runs");
+        Mockito.verify(world.sections).fieldMappingSection(any(), any(), any(), any(), any(), any(), any());
+        Mockito.clearInvocations(world.sections);
 
-        // One written from the XSLT is kept as it is.
+        // One written from the XSLT is kept as it is (another pipeline, edited alike).
+        world.pipeline(BUILD, "Acme2", "q");
+        Mockito.when(world.keptMappings.keptXslt("q")).thenReturn(Optional.of(kept));
+        args.put("pipeline_uuid", "q");
         args.put("markdown", "## Purpose and data\n\nTweets.\n\n## Field mapping\n\n| XPath | From |\n"
                              + "| --- | --- |\n| `EventDetail/Create/Document/Data[@Name='links']` | text |\n");
         final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(args));

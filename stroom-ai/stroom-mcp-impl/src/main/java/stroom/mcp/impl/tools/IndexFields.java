@@ -294,7 +294,7 @@ class IndexFields {
                     .map(PipelineDoc::getName)
                     .filter(NullSafe::isNonEmptyString)
                     .orElse(pipelineUuid);
-            for (final PlannedField field : plan.fields()) {
+            for (final PlannedField field : plan.leafFields()) {
                 final Double share = FieldPlans.populationOf(field.source(), population);
                 if (field.source().startsWith("@") || (share != null && share > 0)) {
                     written.add(field.name());

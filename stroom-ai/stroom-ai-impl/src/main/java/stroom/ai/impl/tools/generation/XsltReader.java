@@ -477,6 +477,15 @@ public final class XsltReader {
             rule.leaves().add(leaf);
         } else if (!child.is(XSL, "variable")) {
             rule.lose(at + ": " + child.localName() + " not read");
+        } else if (!truthy(child.get("select"))) {
+            // A variable built from what it holds, not a select: what builds it isn't read (asked for by the
+            // user: distinct users built with an xsl:iterate in a variable, then copied into an element).
+            child.childElements().stream()
+                    .filter(inner -> XSL.equals(inner.namespace()))
+                    .map(XmlElement::localName)
+                    .distinct()
+                    .forEach(name -> rule.lose(at + ": " + name + " not read (in variable $" + child.get("name")
+                                               + ")"));
         }
     }
 
