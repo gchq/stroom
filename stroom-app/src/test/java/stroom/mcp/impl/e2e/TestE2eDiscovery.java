@@ -656,8 +656,10 @@ class TestE2eDiscovery extends AbstractE2eTest {
                 .isNotEqualTo("translation");
         final String why = jsonOf(client.json("summarise_streams", args("stream_ids", List.of(raw), "kind",
                 "errors")));
+        // Split out of the whole bulk response by triage, or (since #5958) reported by Stroom per document by its
+        // EventId.
         assertThat(why).as("triage names the document and why")
-                .contains("Elasticsearch rejected document 2 of 3")
+                .containsPattern("Elasticsearch rejected (document 2 of 3|the document with EventId \\d+)")
                 .contains("A field is an object in some records");
         node.refresh(index);
         assertThat(node.count(index, null)).as("the other two records are indexed").isEqualTo(2);
