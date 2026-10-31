@@ -62,8 +62,10 @@ public class ElasticIndexingConfig extends AbstractConfig implements IsStroomCon
         return maxNestedElementDepth;
     }
 
-    @JsonPropertyDescription("Delay in milliseconds, before the indexing request is initially retried. " +
-            "Subsequent retries occur after a multiple of this initial delay.")
+    @JsonPropertyDescription("Delay in milliseconds, before an indexing request that Elasticsearch rejected " +
+            "because it was overloaded is first retried. Each later retry waits twice as long as the one before, up " +
+            "to 60 seconds. Each wait is randomised to between half and all of this, so that indexing tasks " +
+            "rejected together don't all retry together.")
     public int getInitialRetryBackoffPeriodMs() {
         return initialRetryBackoffPeriodMs;
     }
