@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
+import stroom.ai.impl.tools.validation.StroomXPath;
 import stroom.ai.impl.tools.validation.XsltSafety;
 
 import org.w3c.dom.Element;
@@ -661,6 +662,8 @@ final class EventTrees {
             if (refused != null) {
                 note(problems, "xpath " + PyText.repr(x) + ": " + refused);
             }
+            // Seen: fold-left with an inline function checked as valid XPath, then refused by Stroom's Saxon.
+            StroomXPath.unsupported(x).ifPresent(why -> note(problems, "xpath " + PyText.repr(x) + ": " + why));
             final List<String> read = MappingFacts.variableReads(x, derivedNames);
             if (!read.isEmpty()) {
                 note(problems, "xpath " + PyText.repr(x) + " reads " + read.stream().map(n -> "$" + n)

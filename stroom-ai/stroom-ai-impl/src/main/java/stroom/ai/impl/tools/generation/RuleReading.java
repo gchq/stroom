@@ -32,6 +32,7 @@ public final class RuleReading {
     private final boolean drop;
     private String unknown;
     private final List<String> notes = new ArrayList<>();
+    private final List<String> lost = new ArrayList<>();
     private final List<String> guards = new ArrayList<>();
     private final List<SharedCall> calls = new ArrayList<>();
 
@@ -79,6 +80,19 @@ public final class RuleReading {
     /// @return What wasn't read.
     public List<String> notes() {
         return notes;
+    }
+
+    /// Notes what in the event wasn't read, so a mapping read back leaves it out.
+    ///
+    /// @param note What it is, and where.
+    public void lose(final String note) {
+        notes.add(note);
+        lost.add(note);
+    }
+
+    /// @return What in the event wasn't read ([#lose(String)]): what a mapping read back leaves out.
+    public List<String> lost() {
+        return lost;
     }
 
     /// @return While reading: the xsl:if tests around the element being read.
