@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.processor.shared.ProcessorFilter;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -77,34 +76,6 @@ class TestIndexingRuns {
                 .isEqualTo("DELETE x");
         assertThat(IndexingRuns.dropRequest(PipelineDoc.builder().uuid("p").build(), "x"))
                 .isEqualTo("DELETE _data_stream/x (a data stream), or DELETE x (an index)");
-    }
-
-    @Test
-    void theBuildsElasticsearchPipelineIndexesInSmallBatchesWhileItIsDeveloped() {
-        w.pipeline(ProcessingWorld.P1, true, null);
-        w.elastic("p1");
-
-        assertThat(w.indexingRuns.developmentBatch("p1", true)).isTrue();
-        assertThat(w.indexingRuns.developmentBatch("p1", true)).isFalse();
-        final List<PipelineProperty> set = PipelineDocs.addedProperties(w.pipelineDoc("p1"));
-        assertThat(set).extracting(property -> property.getElement() + "." + property.getName() + "="
-                                               + property.getValue().getInteger())
-                .containsExactly("elasticIndexingFilter.batchSize=10");
-        assertThat(w.indexingRuns.developmentBatch("p1", false)).isTrue();
-        assertThat(PipelineDocs.addedProperties(w.pipelineDoc("p1"))).isEmpty();
-        assertThat(w.indexingRuns.developmentBatch("p1", false)).isFalse();
-    }
-
-    @Test
-    void aProductionPipelinesBatchSizeIsLeftAlone() {
-        w.pipeline(ProcessingWorld.P1, false, null, WriteGuard.GENERATED);
-        w.elastic("p1");
-        w.pipeline(new DocRef("Pipeline", "t1", "Acme-Events"), true, null);
-        w.translation("t1");
-
-        assertThat(w.indexingRuns.developmentBatch("p1", true)).isFalse();
-        assertThat(w.indexingRuns.developmentBatch("t1", true)).isFalse();
-        assertThat(PipelineDocs.addedProperties(w.pipelineDoc("p1"))).isEmpty();
     }
 
     static Stream<Arguments> refusals() {

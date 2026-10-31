@@ -103,7 +103,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final PromotionProcessing promotionProcessing;
     private final ProcessorFilterWrites filterWrites;
-    private final IndexingRuns indexingRuns;
     private final OutputFeeds outputFeeds;
     private final DocumentWrites writes;
     private final DocumentAccess documentAccess;
@@ -118,7 +117,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                      final Consent consent,
                      final PromotionProcessing promotionProcessing,
                      final ProcessorFilterWrites filterWrites,
-                     final IndexingRuns indexingRuns,
                      final OutputFeeds outputFeeds,
                      final DocumentWrites writes,
                      final DocumentAccess documentAccess,
@@ -131,7 +129,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.consent = consent;
         this.promotionProcessing = promotionProcessing;
         this.filterWrites = filterWrites;
-        this.indexingRuns = indexingRuns;
         this.outputFeeds = outputFeeds;
         this.writes = writes;
         this.documentAccess = documentAccess;
@@ -628,9 +625,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 doing = "restoring production settings on '" + name + "'";
                 if (PromotionLayout.MOVE.equals(step.action()) && PipelineDoc.TYPE.equals(step.doc().get("type"))) {
                     final String uuid = String.valueOf(step.doc().get("uuid"));
-                    if (indexingRuns.developmentBatch(uuid, false)) {
-                        done.add("restored the default batch size on '" + name + "'");
-                    }
                     if (outputFeeds.restoreOutputFeed(uuid, buildFeeds)) {
                         // Its Events went to the build's test feed (an existing feed's streams, processed in the
                         // build): in production they go into the input's feed.

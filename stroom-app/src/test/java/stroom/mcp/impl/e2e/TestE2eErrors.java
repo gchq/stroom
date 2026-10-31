@@ -35,8 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Error streams and the documentation) and 4 (raw data that is not well-formed XML, blocking in the template's
 /// parser).
 ///
-/// Part 3 (invalid data for Elasticsearch: a document Elasticsearch rejects, small batches, the batch size
-/// restored) is left out: it needs an Elasticsearch cluster, which this environment hasn't got.
+/// Part 3 (invalid data for Elasticsearch: a document Elasticsearch rejects) is left out here: TestE2eDiscovery
+/// covers it against a real cluster.
 @SuppressWarnings("unchecked")
 class TestE2eErrors extends AbstractE2eTest {
 
