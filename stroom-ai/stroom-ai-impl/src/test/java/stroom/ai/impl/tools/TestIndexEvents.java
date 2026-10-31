@@ -184,6 +184,21 @@ class TestIndexEvents {
     }
 
     @Test
+    void containsOnALuceneKeywordFieldIsRefused() {
+        // Found reviewing the tools: the index's analyzers weren't passed to the check, so this search ran, and
+        // found nothing, though describe_data_source warned of it.
+        fields(QueryField.createKeyword("StreamId"), QueryField.createText("UserId"));
+        final LuceneTextFields luceneTextFields = Mockito.mock(LuceneTextFields.class);
+        Mockito.when(luceneTextFields.of(LUCENE)).thenReturn(Map.of("UserId", "KEYWORD"));
+        indexEvents.setLuceneTextFields(luceneTextFields);
+
+        assertThatThrownBy(() -> indexEvents.find(context, new Find("l", List.of(new Term("UserId",
+                Condition.CONTAINS, "bob")), null, null, List.of(), 10, false)))
+                .hasMessageContaining("UserId CONTAINS 'bob': UserId is a keyword field, where Stroom finds nothing "
+                                      + "with CONTAINS");
+    }
+
+    @Test
     void aFieldTheLuceneIndexDoesNotIndexIsRefusedSayingWhy() {
         fields(QueryField.createKeyword("StreamId"),
                 QueryField.builder().fldName("Raw").fldType(FieldType.TEXT).queryable(false).build());

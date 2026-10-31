@@ -85,6 +85,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.Dependency;
 import stroom.index.api.IndexVolumeStates;
+import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.job.api.JobStates;
@@ -110,6 +111,7 @@ import stroom.query.impl.QueryService;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.resource.api.ResourceStore;
+import stroom.script.shared.ScriptDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -124,6 +126,7 @@ import stroom.task.shared.TaskResource;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -180,6 +183,10 @@ public final class BuiltInToolWorld implements AutoCloseable {
     public static final DocRef INDEX = new DocRef("Index", "index-uuid", "Test index");
     public static final DocRef QUERY = new DocRef("Query", "query-uuid", "Test query");
     public static final DocRef DASHBOARD = new DocRef("Dashboard", "dashboard-uuid", "Test dashboard");
+    /// The ECharts build installed as a Script.
+    public static final DocRef ECHARTS = new DocRef("Script", "echarts-uuid", "echarts");
+    /// A Visualisation already in Stroom.
+    public static final DocRef VISUALISATION = new DocRef("Visualisation", "visualisation-uuid", "Bar chart");
     public static final DocRef AGENTS = new DocRef(DocumentationDoc.TYPE, "agents-uuid", AgentInstructions.DOC_NAME);
     /// An Elastic Index, kept out of the folder's listing so the other tools' outputs don't change with it.
     public static final DocRef ELASTIC_INDEX = new DocRef(ElasticIndexDoc.TYPE, "elastic-index-uuid",
@@ -256,6 +263,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("document_links", "{\"uuids\":[\"pipeline-uuid\"]}"),
             Map.entry("find_in_content", "{\"pattern\":\"HOST_TO_LOCATION\",\"uuids\":[\"xslt-uuid\"]}"),
             Map.entry("xslt_lookups", "{\"uuids\":[\"xslt-uuid\"]}"),
+            Map.entry("propose_visualisation", "{\"columns\":{\"x\":\"UserId\",\"y\":\"UserId\"},\"kind\":\"bar\","
+                                               + "\"library\":\"echarts\",\"name\":\"Users\",\"summary\":\"Events by "
+                                               + "user.\",\"table\":\"table-1\"}"),
             Map.entry("propose_dashboard_change", "{\"component\":\"table-1\",\"changes\":[{\"op\":\"hide_column\","
                                                   + "\"column\":\"UserId\"}],\"summary\":\"Hide the user.\"}"),
             Map.entry("propose_documentation_change", json(Map.of("uuid", "dictionary-uuid",
@@ -387,12 +397,33 @@ public final class BuiltInToolWorld implements AutoCloseable {
     /// Opens the tab a tool works on, if it works on the user's tab, so it gets as far as its checks.
     ///
     /// @param toolName The tool.
+    // An ECharts 6 build installed as a Script, as an administrator installs it: the chart libraries' script
+    // whose Use the visualisation tools check.
+    private static ScriptStore scriptStore() {
+        final ScriptStore store = Mockito.mock(ScriptStore.class);
+        Mockito.when(store.list()).thenReturn(List.of(ECHARTS));
+        Mockito.when(store.readDocument(ECHARTS)).thenReturn(ScriptDoc.builder().uuid(ECHARTS.getUuid())
+                .name(ECHARTS.getName()).data("var dependencies={zrender:\"6.0.0\"};e.version=\"6.0.0\";").build());
+        return store;
+    }
+
+    // One Visualisation, which the user may view.
+    private static VisualisationStore visualisationStore() {
+        final VisualisationStore store = Mockito.mock(VisualisationStore.class);
+        Mockito.when(store.list()).thenReturn(List.of(VISUALISATION));
+        Mockito.when(store.readDocument(VISUALISATION)).thenReturn(VisualisationDoc.builder()
+                .uuid(VISUALISATION.getUuid()).name(VISUALISATION.getName()).functionName("visualisations.BarChart")
+                .build());
+        return store;
+    }
+
     public void prepareFor(final String toolName) {
         switch (toolName) {
             case "propose_query_change" -> openTab(QUERY, AiTabSnapshotPart.QUERY, STROOMQL);
             case "propose_code_change" -> openStepping();
             case "current_results" -> openQueryResults();
-            case "propose_dashboard_change", "preview_extraction", "propose_extraction_pipeline" -> openTab(
+            case "propose_dashboard_change", "preview_extraction", "propose_extraction_pipeline",
+                 "propose_visualisation" -> openTab(
                     DASHBOARD, AiTabSnapshotPart.QUERY, STROOMQL);
             default -> {
                 // Nothing to open.
@@ -547,6 +578,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(TabSnapshots.class).toInstance(tabSnapshots);
                 bind(TableDownloader.class).toInstance(Mockito.mock(TableDownloader.class));
                 bind(DataSourceProviderRegistry.class).toInstance(dataSourceRegistry);
+                bind(IndexResource.class).toInstance(Mockito.mock(IndexResource.class));
                 bind(DashboardService.class).toInstance(Mockito.mock(DashboardService.class));
                 bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
                 final MapBinder<DocumentTypeName, DocumentActionHandler> handlerBinder = MapBinder.newMapBinder(
@@ -573,10 +605,10 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 bind(FeedProperties.class).toInstance(Mockito.mock(FeedProperties.class));
                 bind(DocFinder.class).toInstance(docFinder);
                 bind(XmlSchemaStore.class).toInstance(Mockito.mock(XmlSchemaStore.class));
-                bind(ScriptStore.class).toInstance(Mockito.mock(ScriptStore.class));
+                bind(ScriptStore.class).toInstance(scriptStore());
                 bind(XsltStore.class).toInstance(Mockito.mock(XsltStore.class));
                 bind(SteppingService.class).toInstance(Mockito.mock(SteppingService.class));
-                bind(VisualisationStore.class).toInstance(Mockito.mock(VisualisationStore.class));
+                bind(VisualisationStore.class).toInstance(visualisationStore());
                 bind(DocumentPermissionService.class)
                         .toInstance(Mockito.mock(DocumentPermissionService.class));
                 bind(SchemaPool.class).toInstance(Mockito.mock(SchemaPool.class));
@@ -604,6 +636,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
                 "Feeds in /Test are test feeds."));
         // Found by its UUID, but with no handler, as its templates are read by ElasticIndexTemplates.
         docRefs.put(ELASTIC_INDEX.getUuid(), ELASTIC_INDEX);
+        // Read through their stores (ScriptStore, VisualisationStore), not handlers.
+        docRefs.put(ECHARTS.getUuid(), ECHARTS);
+        docRefs.put(VISUALISATION.getUuid(), VISUALISATION);
     }
 
     private void add(final DocRef docRef, final Object document) {
