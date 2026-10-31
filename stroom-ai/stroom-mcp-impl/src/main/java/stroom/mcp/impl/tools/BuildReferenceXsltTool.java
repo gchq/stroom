@@ -37,13 +37,16 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Version;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /// `build_reference_xslt` - writes the XSLT of a reference-data pipeline from a mapping: for each record and map, a
 /// `<reference>` with the map name, key and value in reference-data:2 (the Stroom MCP server's
@@ -149,20 +152,27 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
             return given;
         }
         try {
-            final List<String> ids = heldSchemas.systemIds().stream()
+            // The highest version, whatever order Stroom lists them in (found reviewing the tools: the last
+            // listed was taken).
+            final Optional<String> newest = heldSchemas.systemIds().stream()
                     .filter(id -> id.contains("reference-data"))
-                    .toList();
-            if (!ids.isEmpty()) {
-                final String last = ids.getLast();
-                final String version = last.substring(last.lastIndexOf("-v") + 2);
-                return version.endsWith(".xsd")
-                        ? version.substring(0, version.length() - ".xsd".length())
-                        : version;
+                    .map(BuildReferenceXsltTool::schemaVersion)
+                    .max(Comparator.comparing(Version::parse));
+            if (newest.isPresent()) {
+                return newest.get();
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("The XML schemas couldn't be listed: {}", e.getMessage()));
         }
         return ReferenceGenerator.DEFAULT_VERSION;
+    }
+
+    // The version a schema's system id names, e.g. 2.0.1 of file://reference-data-v2.0.1.xsd.
+    private static String schemaVersion(final String systemId) {
+        final String version = systemId.substring(systemId.lastIndexOf("-v") + 2);
+        return version.endsWith(".xsd")
+                ? version.substring(0, version.length() - ".xsd".length())
+                : version;
     }
 
     private static ReferenceMapping mapping(final Object given) {

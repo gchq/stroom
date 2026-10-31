@@ -132,7 +132,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                                 .description("Only for samples that are not files (pasted text): every sample's "
                                              + "text, by name or as a list, to tell the format and fields from: "
                                              + SampleTexts.SAMPLE_GUIDE + ". Never trimmed further, completed "
-                                             + "or repaired. Not paths: this server cannot read the client's "
+                                             + "or repaired. Not paths: Stroom cannot read the client's "
                                              + "files.")
                                 .build())
                         .addProperty(FILES_ARG, stringArraySchema("The preferred start when the samples are files: "

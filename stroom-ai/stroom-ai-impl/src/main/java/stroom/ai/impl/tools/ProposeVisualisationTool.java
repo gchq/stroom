@@ -188,7 +188,8 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
         // documentation understated them).
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE, DocumentPermission.EDIT)
-                .note("View on the dashboard or query it is for, Use on the chart libraries' scripts, and Edit on a Visualisation it updates.")
+                .note("View on the dashboard or query it is for, Use on the chart libraries' scripts, and Edit "
+                      + "on a Visualisation it updates.")
                 .build();
     }
 

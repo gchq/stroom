@@ -86,7 +86,7 @@ class SaveDictionaryTool extends AbstractBuiltInTool {
                              + "Save a Dictionary doc: a small static table a translation reads at run time with "
                              + "stroom:dictionary() (the mapping's `dictionary` for key=value lines, "
                              + "`in_dictionary` for a list). Create it in the build, or with uuid replace the "
-                             + "entries of one this server created. Data that changes or is large belongs in "
+                             + "entries of one the agent created. Data that changes or is large belongs in "
                              + "reference data instead (find_reference_data).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, TranslationArgs.BUILD)
@@ -98,7 +98,7 @@ class SaveDictionaryTool extends AbstractBuiltInTool {
                         .addStringProperty(DESCRIPTION_ARG, "What the entries are and where they came from.")
                         .addStringProperty(UUID_ARG, TranslationArgs.UUID)
                         .addStringProperty(VERSION_ARG, TranslationArgs.VERSION)
-                        .required(BUILD_ARG, NAME_ARG, TEXT_ARG)
+                        .required(TEXT_ARG)
                         .build())
                 .build();
     }
@@ -121,7 +121,7 @@ class SaveDictionaryTool extends AbstractBuiltInTool {
         final String build = stringArg(call, BUILD_ARG);
         final String name = stringArg(call, NAME_ARG);
         if (build == null || name == null) {
-            throw new ToolRefusal("Give build and name for a new Dictionary (or uuid to change one this server "
+            throw new ToolRefusal("Give build and name for a new Dictionary (or uuid to change one the agent "
                                   + "created).");
         }
         return translationDocs.createDictionary(build, name, text, NullSafe.string(rawArg(call, DESCRIPTION_ARG)));

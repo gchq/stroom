@@ -93,11 +93,11 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
     public ToolDefinition definition() {
         return ToolDefinition.builder()
                 .name(NAME)
-                .description("Change a pipeline this server created: set element properties, and attach "
+                .description("Change a pipeline the agent created: set element properties, and attach "
                              + "reference data (feed and loader pipeline, from find_reference_data) so its XSLT's "
                              + "lookups find the maps.")
                 .parameters(ObjectSchema.builder()
-                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline this server created.")
+                        .addStringProperty(PIPELINE_UUID_ARG, "A pipeline the agent created.")
                         .addProperty(SET_PROPERTIES_ARG, CreatePipelineTool.propertiesSchema(
                                 "Element properties to set, as objects: " + PropertyValue.EXAMPLE + "."))
                         .addProperty(REFERENCES_ARG, CreatePipelineTool.referencesSchema(
