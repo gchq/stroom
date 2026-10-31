@@ -1,6 +1,11 @@
 # Stroom XSLT conventions
 
-Stroom runs XSLT 2.0/3.0 (Saxon). Declare `xmlns:stroom="stroom"` to use Stroom functions.
+Stroom runs XSLT 2.0/3.0 on Saxon-HE 9.9. Declare `xmlns:stroom="stroom"` to use Stroom functions.
+
+Saxon-HE has no higher-order functions: inline functions, function references (`upper-case#1`), the functions that
+take a function (`fold-left`, `for-each`, `filter`...) and string constructors don't compile (Saxon says they need Saxon-PE), and
+a mapping xpath using one is refused when the XSLT is built. Use `for`, `let`, `if`, `!` and `=>`, or in XSLT
+`xsl:iterate` and `xsl:for-each-group`, which are supported.
 
 ## Input depends on the parser before the XSLT
 
@@ -273,6 +278,12 @@ boolean function as `string(gs:isLocalIpAddress(...))` with `equals: 'true'`. An
 no `functions` entry binds is a problem. Stroom steps the XSLT with its imports; the local checks skip these
 xpaths.
 
+The environment's common elements are written as its pipelines write them: `draft_translation_mapping` pre-fills, as
+`shared` entries, the shared templates two or more of the environment's event pipelines call (each writing one
+element, with no parameters), in place of what it would have mapped there, and notes others. `build_translation_xslt`
+and `save_xslt` warn when an XSLT doesn't call a shared template its stage's pipelines call, and when it imports a
+required import but calls none of its named templates.
+
 ## Checking a draft
 
 1. `check_xslt` for well-formedness, namespaces, function names and imports.
@@ -299,8 +310,9 @@ The mapping an XSLT was generated from is kept with it. `build_translation_xslt 
 changes, regenerates it from that mapping as the generator writes it now: after a server upgrade changes the style
 defaults, this is how an XSLT is brought up to them. Never send the kept mapping back whole; `read_document`
 summarises it (`mapping=true` shows it, to read). `build_status` says when an XSLT was written by an earlier generator
-(and is unchanged since), as against edited by hand: a hand edit is carried into the mapping (`changes=`) first; a
-save that would undo it is refused, saying what it changed (`discard_hand_edit=true` only when the user says to drop
+(and is unchanged since), as against edited by hand: a hand edit is carried into the mapping (`changes=`) first; an
+edit no mapping can hold (an `xsl:iterate`, say, inline or building a variable) can't be, so it is the user's to keep
+(the XSLT stays as it is, with no generated change) or drop. A save that would undo a hand edit is refused, saying what it changed (`discard_hand_edit=true` only when the user says to drop
 it). Where a change is to a field the edit changed too (a constant they changed, say), the user is asked first whether
 to overwrite the XSLT with the change, else per field whether to keep their edit or use the proposed one
 (`hand_edit_choices`, from their answers, never chosen for them). For a hand edit it shows what differs (`-` what the mapping generates, `+` what
@@ -310,4 +322,6 @@ an imported function stays an xpath entry, reported under `calls_imported_functi
 it keeps every entry that still reads as it generates, reads the rest from the XSLT, regenerates the XSLT from the
 result and steps both over the pipeline's original sample streams (`stream_ids` for others), and saves only when every record's output is the same (the user confirms). An edit a mapping can't express (an element
 written even when its value is empty) shows as a difference: nothing is saved unless the user accepts it
-(`accept_differences=true`). Small changes can still be made by hand in the mapping with `changes=`.
+(`accept_differences=true`). It refuses while anything inside an event couldn't be read back (listed as `unread`:
+an `xsl:iterate` added by hand, say, which stepping misses when no sample record reaches it), unless the user accepts
+losing it (`accept_unread=true`). Small changes can still be made by hand in the mapping with `changes=`.

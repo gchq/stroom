@@ -145,6 +145,11 @@ Events the index must not hold (heartbeats, a monitoring account) are left out a
 `draft_index_mapping` `drop_when` XPath tests on an Event, e.g. `"EventDetail/TypeId = 'Heartbeat'"`; the drafted
 XSLT applies templates only to the events none of them match.
 
+Fields the environment's indexing XSLTs write with a shared XSLT's named template are written the same way: without
+`shared`, `draft_index_mapping` uses the shared templates the environment's indexing pipelines call
+(`shared_from_pipelines` says which); `shared=[]` for none. `save_xslt` warns when an indexing XSLT doesn't call one
+its stage's pipelines call.
+
 ## Lucene XSLT output
 
 ```xml
