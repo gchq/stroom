@@ -43,6 +43,20 @@ public interface UserActionLookup {
     /// view it.
     Optional<String> savedDocumentation(DocRef docRef);
 
+    /// @param folder A folder.
+    /// @return The standing instructions doc (a Documentation doc named AGENTS) directly in it, if it has one the
+    /// user may view.
+    Optional<DocRef> instructionsIn(DocRef folder);
+
+    /// Creates a folder's standing instructions doc (a Documentation doc named AGENTS) holding the text, and saves
+    /// it, as the user. If it can't be filled it is deleted again, rather than left behind empty.
+    ///
+    /// @param folder The folder.
+    /// @param text   Its text.
+    /// @return The new document.
+    /// @throws RuntimeException if the user may not create it there, or it can't be written.
+    DocRef createInstructions(DocRef folder, String text);
+
     /// @param docRef A document.
     /// @return The document's tags, empty if it has none or cannot be found.
     Set<String> tags(DocRef docRef);

@@ -524,6 +524,28 @@
 ## propose_extraction_pipeline {"table":"Users","name":"Users extraction","fields":[{"name":"Org","xpath":"Org"}]}
 (nothing recorded)
 
+## propose_instructions {"folder":"/Test","markdown":"# Standing instructions\n\n- Times are UTC.","summary":"Times as chosen in two chats."}
+- audit: documentViewed(1, DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}, "Proposed standing instructions with the propose_instructions tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed Documentation 'AGENTS' in chat 1"
+  ViewEventAction {
+    "objects" : [ {
+      "data" : [ {
+        "name" : "ChatId",
+        "value" : "1"
+      }, {
+        "name" : "Purpose",
+        "value" : "Proposed standing instructions with the propose_instructions tool"
+      } ],
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Proposed standing instructions with the propose_instructions tool",
+      "success" : true
+    }
+  }
+
 ## propose_query {"name":"Users","query":"from \"Test index\"\nselect UserId\n"}
 (nothing recorded)
 

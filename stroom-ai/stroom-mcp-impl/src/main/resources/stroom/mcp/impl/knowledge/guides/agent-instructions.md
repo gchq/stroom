@@ -47,6 +47,7 @@ get the imports (`build_translation_xslt`, `save_xslt index_plan=`, the CEF plan
 build=` add them, and say which named templates each
 offers: call them with `shared` entries where they write; for a translation, also the functions each defines, with
 the `functions` entry that binds their prefix), and a hand-written XSLT without them is refused at save.
+`build_translation_xslt` and `save_xslt` warn when a translation or indexing XSLT imports one but calls none of its named templates.
 
 A `## Component templates` section says which Elasticsearch component templates new index templates compose
 (`- include: logs-ilm-90d, org-base`, `- exclude: legacy-base`). The server applies it: `propose_index_template`
@@ -65,3 +66,12 @@ so every generated XSLT follows it without hand edits.
 
 The name Stroom looks for is `AGENTS`. Anyone who can
 edit a folder can edit its `AGENTS` doc, so set folder permissions accordingly.
+
+## Suggesting standing instructions
+
+In the chat, `instruction_evidence` gives the user's own recent chats: the form answers they gave the same way
+again and again (repeated), those they gave different ways (mixed, which is no rule), and what they wrote. Draft
+rules only from repeated choices or from what the user said they always want, check the folder's `AGENTS` doc
+(`get_instructions`) so nothing is said twice, and offer them with `propose_instructions`: the user reviews the
+diff and applies it, to the doc's editor, or by creating the doc if the folder has none. A preference of the user's
+own belongs in their memory, not a folder's doc.
