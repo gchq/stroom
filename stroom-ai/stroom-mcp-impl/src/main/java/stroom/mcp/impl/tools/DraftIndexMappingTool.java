@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.PyText;
@@ -121,6 +122,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     private final PipelineIndex pipelineIndex;
     private final PipelineShapes pipelineShapes;
     private final DocumentAccess documentAccess;
+    private final SiblingSharedCalls siblingSharedCalls;
 
     @Inject
     DraftIndexMappingTool(final AgentKnowledge knowledge,
@@ -133,7 +135,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                           final StreamReader streamReader,
                           final PipelineIndex pipelineIndex,
                           final PipelineShapes pipelineShapes,
-                          final DocumentAccess documentAccess) {
+                          final DocumentAccess documentAccess,
+                          final SiblingSharedCalls siblingSharedCalls) {
         this.knowledge = knowledge;
         this.conventions = conventions;
         this.inputs = inputs;
@@ -145,6 +148,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         this.pipelineIndex = pipelineIndex;
         this.pipelineShapes = pipelineShapes;
         this.documentAccess = documentAccess;
+        this.siblingSharedCalls = siblingSharedCalls;
     }
 
     @Override
@@ -238,7 +242,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         .addProperty(SHARED_ARG, objects("Named templates from shared XSLTs that sibling indexing "
                                                          + "XSLTs call (describe_template's shared_xslt): each writes "
                                                          + "a field (at, e.g. 'guid'), which the XSLT then does not "
-                                                         + "write."))
+                                                         + "write. Left out, those the environment's indexing "
+                                                         + "pipelines call are used (shared_from_pipelines says "
+                                                         + "which); [] for none."))
                         .addProperty(DISCOVERY_ARG, ObjectSchema.builder()
                                 .description("A discovery index instead: raw data (JSON, delimited text or XML) "
                                              + "indexed as it is into Elasticsearch, with no convention and no "
@@ -554,7 +560,12 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             fields.add(PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"));
             timeField = "@timestamp";
         }
-        final List<SharedTemplate> shared = IndexingArgs.shared(call, SHARED_ARG);
+        // Not given: the shared templates the environment's indexing pipelines call, called here too (shared=[]
+        // says this index differs).
+        final List<String> sharedNotes = new ArrayList<>();
+        final List<SharedTemplate> shared = ToolArgs.raw(call, SHARED_ARG) == null
+                ? SiblingSharedCalls.forPlan(siblingSharedCalls.forStage(InstructionRules.INDEXING), sharedNotes)
+                : IndexingArgs.shared(call, SHARED_ARG);
         sharedFields(shared, fields, exampleNotes);
         if ("ecs".equals(draft.convention) && draft.exampleTemplate != null && ecs != null) {
             // The user's example names the fields: its top-level names are theirs, declared, not reported as un-ECS.
@@ -595,6 +606,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         result.putAll(reply);
         if (draft.exampleTemplate != null || !shared.isEmpty()) {
             result.put("from_example", exampleNotes);
+        }
+        if (!sharedNotes.isEmpty()) {
+            result.put("shared_from_pipelines", sharedNotes);
         }
         if (!ecsData.isEmpty()) {
             result.put("ecs_data_elements", ecsData);
