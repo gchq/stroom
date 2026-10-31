@@ -23,6 +23,7 @@
 - get_instructions (read-only, reads untrusted content): RUN in every situation
 - get_utc_time_offset (read-only, reads only trusted content): RUN in every situation
 - grep (read-only, reads untrusted content): RUN in every situation
+- instruction_evidence (read-only, reads untrusted content): RUN in every situation
 - jq (read-only, reads untrusted content): RUN in every situation
 - list_data_sources (read-only, reads untrusted content): RUN in every situation
 - list_visualisations (read-only, reads only trusted content): RUN in every situation

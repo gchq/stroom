@@ -318,6 +318,7 @@ Needs: View (document)
 - get_current_time (its output is the time, so not compared)
 - get_utc_time_offset: same
 - grep: same
+- instruction_evidence: same
 - jq: same
 - list_visualisations: same
 - ls: same

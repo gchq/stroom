@@ -52,6 +52,9 @@ appConfig:
     elicitationTimeout: "PT10M"
     errorTriage:
       rules: []
+    instructionSuggestions:
+      evidenceWindow: "P90D"
+      minChats: 2
     maxChatTitleWords: 12
     maxElicitationsPerNode: 5
     maxRunDuration: "PT2H"
