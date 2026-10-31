@@ -763,11 +763,11 @@ class TestElasticIndexingFilter {
 
         // Not retried
         Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getMessages(Severity.ERROR))
+                .containsExactly("Elasticsearch rejected document 1 of the stream (mapper_parsing_exception): " +
+                                 "bad field");
         assertThat(harness.getMessages(Severity.FATAL_ERROR))
-                .singleElement()
-                .asString()
-                .startsWith("Bulk indexing request failed: ")
-                .contains("mapper_parsing_exception");
+                .containsExactly("Bulk indexing request failed: 1 of 1 documents rejected by Elasticsearch");
     }
 
     @Test
