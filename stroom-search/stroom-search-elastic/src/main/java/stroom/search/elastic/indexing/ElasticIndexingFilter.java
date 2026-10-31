@@ -87,6 +87,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,6 +118,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final int ES_TOO_MANY_REQUESTS_STATUS = 429;
     // Matches the number of errors the Error stream view shows per page
     private static final int MAX_REPORTED_REJECTIONS = 100;
+    // The longest wait before retrying a request Elasticsearch rejected because it was overloaded
+    private static final long MAX_RETRY_BACKOFF_MS = 60_000;
     // Elastic recommend bulk requests of 5-15 MB
     private static final String DEFAULT_MAX_BATCH_SIZE = "10M";
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
@@ -905,9 +908,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final ElasticIndexingConfig indexingConfig = elasticConfigProvider.get().getIndexingConfig();
 
         if (currentRetry < indexingConfig.getRetryCount()) {
-            // Backoff by the initial interval plus an exponential amount
-            final long sleepDurationMs = indexingConfig.getInitialRetryBackoffPeriodMs() +
-                                         (long) currentRetry * currentRetry;
+            final long sleepDurationMs = retryBackoffMs(indexingConfig.getInitialRetryBackoffPeriodMs(),
+                    currentRetry, ThreadLocalRandom.current().nextDouble());
             try {
                 LOGGER.warn("Indexing request by pipeline '{}' for stream {} was rejected by Elasticsearch. " +
                             "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
@@ -921,6 +923,21 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             reportRejectionSummary();
             fatalError("Indexing failed to complete after " + currentRetry + " retries: " + errorDetailMsg, e);
         }
+    }
+
+    /// Works out how long to wait before retrying a request that Elasticsearch rejected because it was overloaded.
+    /// The wait doubles with each retry, up to [#MAX_RETRY_BACKOFF_MS], and is then randomised to between half and
+    /// all of that, so that tasks rejected at the same moment don't all retry at the same moment.
+    ///
+    /// @param initialBackoffMs The wait before the first retry, before it is randomised.
+    /// @param retry            The number of retries made so far, from 0.
+    /// @param random           A random number, at least 0 and less than 1.
+    /// @return The wait in milliseconds.
+    static long retryBackoffMs(final long initialBackoffMs, final int retry, final double random) {
+        final double exponentialMs = initialBackoffMs * Math.pow(2, retry);
+        final long cappedMs = (long) Math.min(MAX_RETRY_BACKOFF_MS, exponentialMs);
+        final long halfMs = cappedMs / 2;
+        return halfMs + (long) (random * (cappedMs - halfMs));
     }
 
     /**
