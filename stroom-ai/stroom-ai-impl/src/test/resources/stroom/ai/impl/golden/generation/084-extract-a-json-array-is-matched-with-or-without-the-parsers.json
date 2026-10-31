@@ -50,6 +50,7 @@
   "problems": [],
   "warnings": [
    "[any] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[any] 'host' is written as EventSource/Device/HostName and as Data 'h' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[any] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
   ],
   "events": [

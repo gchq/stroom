@@ -18,6 +18,7 @@ Every event type writes these, from the same source.
 | `EventSource/Device/HostName` | The network host name of the device, e.g. someserver.somenet.org.uk. | `host` (of the record) |
 | `EventSource/User/Id` | An identifier for the user. | `user` |
 | `EventSource/User/Groups/Group/Name` | The name of the group. | `roles`, one per value |
+| `EventDetail/*/Data[@Name='batch']/@Value` | The `batch` value recorded in a Data element of the event's action element. | `batch` (of the record) |
 
 ### Event types
 
@@ -30,5 +31,4 @@ When `action` = LOGIN (logon). When `action` = LOGOUT (logoff).
 | `EventDetail/TypeId` | A name/code/ID to uniquely identify the logical event type within the service providing the events. | `action` |
 | `EventDetail/Authenticate/Action` | The authentication action that was performed, e.g. Logon, Logoff. | "Logon" (logon)<br>"Logoff" (logoff) |
 | `EventDetail/Authenticate/User/Id` | An identifier for the user. | `user` |
-| `EventDetail/Authenticate/Data[@Name='batch']/@Value` | The `batch` value recorded in a Data element of Authenticate. | `batch` (of the record) |
 

@@ -6,11 +6,15 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:apply-templates select="*[@key='events']/*" mode="item">
       <xsl:with-param name="record" select="." tunnel="yes"/>
+      <xsl:with-param name="record-no" select="$record-no" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>
   <xsl:template match="*" mode="item">
+    <xsl:param name="record-no" tunnel="yes"/>
     <xsl:param name="record" tunnel="yes"/>
     <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
     <xsl:choose>
@@ -27,7 +31,7 @@
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('host=', string((normalize-space(*[@key='host']))[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('host=', string((normalize-space(*[@key='host']))[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

@@ -12,11 +12,6 @@ Each record holds several events: one per `items` item. Sources marked "of the r
 
 - `EventSource/Device`: the named template `eventSource` of `Common-V1`, given `ip` = `ip`
 
-### Extracted fields
-
-- `who`, `what`: parsed from `msg` with `^(\S+) (\S+)$`
-- `all`: parsed from `a.b` (of the record) with `(.*)`
-
 ### Common fields
 
 Every event type writes these, from the same source.

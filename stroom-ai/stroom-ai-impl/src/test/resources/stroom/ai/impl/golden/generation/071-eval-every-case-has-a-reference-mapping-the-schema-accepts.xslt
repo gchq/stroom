@@ -6,7 +6,9 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="action" select="*[@key='_action'][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$action = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
@@ -18,7 +20,7 @@
         <xsl:apply-templates select="." mode="event_type_disk"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('_action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('_action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -79,7 +81,7 @@
     <xsl:if test="normalize-space(*[@key='timestamp'])">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(round(xs:decimal(*[@key='timestamp'][1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal(*[@key='timestamp'][1]) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

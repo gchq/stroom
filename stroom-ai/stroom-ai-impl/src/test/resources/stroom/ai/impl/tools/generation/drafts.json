@@ -698,21 +698,6 @@
       "path": "EventDetail/Update/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -753,21 +738,6 @@
       "path": "EventDetail/Process/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Process/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Process/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Process/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -819,21 +789,6 @@
       "path": "EventDetail/Alert/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Alert/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Alert/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Alert/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -878,21 +833,6 @@
       "path": "EventDetail/Authenticate/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -926,21 +866,6 @@
       "path": "EventDetail/Authenticate/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -977,21 +902,6 @@
       "path": "EventDetail/Update/Data",
       "data_name": "protocol",
       "field": "protocol"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "rule_id",
-      "field": "rule_id"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "bytes_sent",
-      "field": "bytes_sent"
-     },
-     {
-      "path": "EventDetail/Update/Data",
-      "data_name": "bytes_received",
-      "field": "bytes_received"
      }
     ]
    },
@@ -1102,16 +1012,6 @@
        "user",
        "message.user"
       ]
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "level",
-      "field": "level"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "message.timestamp",
-      "field": "message.timestamp"
      }
     ]
    },
@@ -1134,16 +1034,6 @@
        "user",
        "message.user"
       ]
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "level",
-      "field": "level"
-     },
-     {
-      "path": "EventDetail/Authenticate/Data",
-      "data_name": "message.timestamp",
-      "field": "message.timestamp"
      }
     ]
    },

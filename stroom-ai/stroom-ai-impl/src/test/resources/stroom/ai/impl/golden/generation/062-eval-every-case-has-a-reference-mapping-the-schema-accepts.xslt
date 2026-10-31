@@ -6,7 +6,9 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="change" select="data[@name='change']/@value[normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$change = 'joiner'">
         <xsl:apply-templates select="." mode="event_type_joiner"/>
@@ -18,7 +20,7 @@
         <xsl:apply-templates select="." mode="event_type_leaver"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('change=', string(($change)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('change=', string(($change)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

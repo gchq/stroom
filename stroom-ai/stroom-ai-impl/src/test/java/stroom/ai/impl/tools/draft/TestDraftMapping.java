@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.GoldenFiles;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.generation.MappingCompaction;
@@ -71,6 +72,8 @@ class TestDraftMapping extends DraftFixtures {
             2026-10-01T09:17:00+10:00,FW-EDGE-01,ADMIN,NOTICE,192.0.2.100,,,,HTTPS,CONFIG_CHANGE,,admin,\
             Policy 12 changed
             """;
+    // The drafts the generator's tests start from, a golden file.
+    private static final String DRAFTS = "/stroom/ai/impl/tools/generation/drafts.json";
     // The draft reply's firewall sample.
     private static final String REPLY_SAMPLE = """
             timestamp,device,event_type,severity,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,bytes_sent,\
@@ -454,25 +457,18 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
-    void aRulesDataListReadsBackAsItsDataEntriesFromTheDraftKeptAsAFixture() {
-        // The generator's tests of what it does with a draft (TestMappingDrafts) start from drafts kept as
-        // fixtures: the draft now gives the same.
-        final Map<String, Object> kept = json(resource(
-                "/stroom/ai/impl/tools/generation/drafts.json"));
-        // Each rule's Data cut to what its records hold, as it is drafted now.
-        final Map<String, Object> fw = mappingOf(draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod"));
-        asTheRulesRecordsHold(fw, kept.get("fw"));
-        assertThat(ToolJson.dumps(fw)).isEqualTo(ToolJson.dumps(kept.get("fw")));
-        final Map<String, Object> logs = mappingOf(draft(samples("test firewall logs 20"), "Firewall Logs"));
-        asTheRulesRecordsHold(logs, kept.get("firewall_logs_20"));
-        assertThat(ToolJson.dumps(logs)).isEqualTo(ToolJson.dumps(kept.get("firewall_logs_20")));
+    void theDraftsKeptAsAFixtureAreTheDraftsMadeNow() {
+        // The generator's tests of what it does with a draft (TestMappingDrafts, TestPairs) start from drafts kept as
+        // a golden file: the drafts made now, and the first compacted, with the file's other inputs kept as they are.
+        final Map<String, Object> kept = json(resource(DRAFTS));
+        kept.put("fw", mappingOf(draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod")));
+        kept.put("firewall_logs_20", mappingOf(draft(samples("test firewall logs 20"), "Firewall Logs")));
         final Map<String, Object> fortigate = mappingOf(draft(samples("test fortigate"), "Fortigate"));
-        asTheRulesRecordsHold(fortigate, kept.get("fortigate"));
-        assertThat(ToolJson.dumps(fortigate)).isEqualTo(ToolJson.dumps(kept.get("fortigate")));
-        final Map<String, Object> shapes = mappingOf(DraftMapping.draft(samples("test shapes"), "App", "App",
-                "Prod", null, null, null));
-        asTheRulesRecordsHold(shapes, kept.get("shapes"));
-        assertThat(ToolJson.dumps(shapes)).isEqualTo(ToolJson.dumps(kept.get("shapes")));
+        kept.put("fortigate", fortigate);
+        kept.put("shapes", mappingOf(DraftMapping.draft(samples("test shapes"), "App", "App", "Prod", null, null,
+                null)));
+        kept.put("fortigate_compact_rules", MappingCompaction.compactRules(fortigate));
+        GoldenFiles.assertResourceMatches(DRAFTS, ToolJson.dumps(kept, 1));
     }
 
     @Test

@@ -6,11 +6,13 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="event_data_data" select="(EventData/Data)[normalize-space(.)]"/>
     <xsl:variable name="action_parts" select="analyze-string(string($event_data_data[1]), '(?:^|[;|()\]]|\s-)\s*Action: \[([^\]]*)\]')"/>
     <xsl:variable name="action" select="($action_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]"/>
     <xsl:variable name="event_parts" select="analyze-string(string($event_data_data[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
     <xsl:variable name="event" select="($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event = 'User' and $action = ('Login', 'Login Failed')">
         <xsl:apply-templates select="." mode="event_type_user_logon"/>
@@ -20,11 +22,11 @@
       </xsl:when>
       <xsl:when test="$event = 'Secret'">
         <xsl:apply-templates select="." mode="event_type_secret"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''secret'': record ', stroom:record-no(), ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''secret'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', stroom:record-no(), ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event=', string(($event)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

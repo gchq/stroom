@@ -72,7 +72,7 @@
  "result": {
   "ok": false,
   "problems": [
-   "xpath \"environment-variable('PATH')\": it calls environment-variable(), which reads the environment, files or network, or looks a function up by name: the server doesn't run or save it. Read the record's own values",
+   "xpath \"environment-variable('PATH')\": it calls environment-variable(), which reads the environment, files or network, or looks a function up by name: the tools don't run or save it. Read the record's own values",
    "[logon] Event/EventTime is required by the schema; map it",
    "[logon] Event/EventSource/Generator is required by the schema; map it",
    "[logon] Event/EventSource/Device is required by the schema; map it",

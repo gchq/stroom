@@ -6,13 +6,15 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="data[@name='action']/@value = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', stroom:record-no(), ' (', string-join((concat('action=', string((normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('action=', string((normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

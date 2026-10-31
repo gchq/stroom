@@ -133,7 +133,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, 'a': give exactly one of field, any_of, value, xpath or lookup (given field and value), e.g. {\"path\": \"a\", \"field\": \"<input field>\"}",
+    "msg": "Value error, 'a': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"a\", \"field\": \"<input field>\"}",
     "input": {
      "path": "a",
      "field": "x",
@@ -802,7 +802,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, 'x': give exactly one of field, any_of, value, xpath or lookup (given field and value), e.g. {\"path\": \"x\", \"field\": \"<input field>\"}",
+    "msg": "Value error, 'x': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"x\", \"field\": \"<input field>\"}",
     "input": {
      "path": "x",
      "field": "a",
@@ -817,7 +817,7 @@
      1
     ],
     "type": "value_error",
-    "msg": "Value error, 'y': give exactly one of field, any_of, value, xpath or lookup (none given), e.g. {\"path\": \"y\", \"field\": \"<input field>\"}",
+    "msg": "Value error, 'y': give exactly one of field, any_of, join, value, xpath or lookup (none given), e.g. {\"path\": \"y\", \"field\": \"<input field>\"}",
     "input": {
      "path": "y"
     }
@@ -1081,7 +1081,7 @@
      0
     ],
     "type": "value_error",
-    "msg": "Value error, 'EventSource/User/Id': give exactly one of field, any_of, value, xpath or lookup (given field and value), e.g. {\"path\": \"EventSource/User/Id\", \"field\": \"<input field>\"}",
+    "msg": "Value error, 'EventSource/User/Id': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"EventSource/User/Id\", \"field\": \"<input field>\"}",
     "input": {
      "path": "EventSource/User/Id",
      "field": "user",
