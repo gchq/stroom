@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -618,6 +619,65 @@ class TestE2eDiscovery extends AbstractE2eTest {
     }
 
     @Test
+    void moreRejectedDocumentsThanStroomListsAreCountedInFull() {
+        // Asked for by the user: Stroom lists only the first 100 documents a batch rejects. 150 records with a value
+        // where the first had an object, in one batch (the template's batch size): 100 listed with their records,
+        // and the rest counted, so the listed ones aren't taken for all of them.
+        final String build = "e2e-discovery-many-" + STAMP;
+        final String feed = "E2E-MANY-" + STAMP.toUpperCase();
+        final String index = indexName("many");
+        createFeed(build, feed);
+        final List<Map<String, Object>> records = new ArrayList<>();
+        records.add(obj("ts", "2026-10-02T08:00:00Z", "user", obj("name", "alice")));
+        for (int n = 1; n <= 150; n++) {
+            records.add(obj("ts", "2026-10-02T08:00:00Z", "user", "user" + n));
+        }
+        final long raw = upload(feed, compact(records));
+        final String template = discoveryTemplate(FIXTURE_TEMPLATE);
+        final DocRef cluster = liveCluster();
+        final Map<String, Object> plan = map(client.json("draft_index_mapping", args("backend", "elasticsearch",
+                "index_name", index, "discovery", obj("timestamp_field", "ts"))), "plan");
+        final String pipeline = discoveryPipeline(build, index, plan, template, cluster);
+        assertThat(stepSample(pipeline, List.of(raw))).containsEntry("verdict", "clean");
+        final Map<String, Object> agreedTemplate = agreed("propose_index_template", args("pipeline_uuid", pipeline,
+                "plan", plan, "events_stream_ids", List.of(raw), "example_template", STANDALONE_EXAMPLE));
+        apply((String) agreedTemplate.get("dev_tools"));
+        final Map<String, Object> started = agreed("create_processor_filter", args("pipeline_uuid", pipeline,
+                "stream_ids", List.of(raw)));
+        processAll();
+
+        final Map<String, Object> done = client.json("wait_for_processing", args("pipeline_uuid", pipeline,
+                "stream_ids", List.of(raw), "expect_events", false, "filter_id", started.get("filter_id"),
+                "timeout_seconds", 10));
+        dump("wait_for_processing many rejected", done);
+        assertThat(done).containsEntry("gate", "fail");
+        final Map<String, Object> errors = client.json("summarise_streams", args("stream_ids", List.of(raw),
+                "kind", "errors"));
+        dump("summarise_streams many rejected", errors);
+        final List<Map<String, Object>> groups = groupsOf(errors);
+        assertThat(groups).as("the documents Stroom listed, each with its record")
+                .anySatisfy(group -> {
+                    assertThat(String.valueOf(group.get("reason")))
+                            .startsWith("A field is an object in some records");
+                    assertThat(group.get("records_affected")).isEqualTo(100);
+                    assertThat(group).as("the listed documents say there were more").containsEntry("listed_only",
+                            "Counts only the documents Stroom listed: it lists the first 100 a batch rejects, and "
+                            + "50 more were rejected without being listed");
+                });
+        assertThat(jsonOf(groups)).as("the batch's own count, and the request's")
+                .contains("Elasticsearch rejected 150 documents in this batch; only the first 100 are reported "
+                          + "individually")
+                .contains("150 of 151 documents rejected by Elasticsearch")
+                .contains("More of the batch's documents were rejected than are listed one by one");
+        final Map<String, Object> evaluated = client.json("evaluate_pipeline", args("pipeline_uuid", pipeline));
+        dump("evaluate_pipeline many rejected", evaluated);
+        assertThat(jsonOf(map(evaluated, "processing"))).as("evaluate_pipeline says so too")
+                .contains("50 more were rejected without being listed");
+        node.refresh(index);
+        assertThat(node.count(index, null)).as("only the first record is indexed").isEqualTo(1);
+    }
+
+    @Test
     void awkwardShapesAreIndexedAndARejectedRecordReported() {
         final String build = "e2e-discovery-shapes-" + STAMP;
         final String feed = "E2E-SHAPES-" + STAMP.toUpperCase();
@@ -1060,6 +1120,23 @@ class TestE2eDiscovery extends AbstractE2eTest {
             map.put((String) keysAndValues[i], keysAndValues[i + 1]);
         }
         return map;
+    }
+
+    // The groups of an errors summary, at its top or under each stream (summarise_streams keys its streams under
+    // streams).
+    private static List<Map<String, Object>> groupsOf(final Map<String, Object> summary) {
+        if (summary.get("groups") != null) {
+            return list(summary, "groups");
+        }
+        if (summary.get("streams") instanceof final Map<?, ?> streams) {
+            return groupsOf((Map<String, Object>) streams);
+        }
+        return summary.values().stream()
+                .filter(value -> value instanceof Map<?, ?>)
+                .map(value -> (Map<String, Object>) value)
+                .flatMap(value -> Optional.ofNullable(value.get("groups")).stream()
+                        .flatMap(groups -> ((List<Map<String, Object>>) groups).stream()))
+                .toList();
     }
 
     private static String compact(final Object value) {
