@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AgentInstructions;
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,19 @@ class TestStartBuildTool {
         // One not here is said: the user may mean another cluster.
         assertThat(String.valueOf(started.get("not_found"))).startsWith("No feed named 'NEW' in this Stroom.")
                 .endsWith(" (A feed this build is to create is fine: it doesn't exist yet.)");
+    }
+
+    @Test
+    void theBuildStartedIsTheOneLaterCallsNamingNoneWorkOn() {
+        // Found reviewing the tools: start_onboarding remembered its build, start_build didn't, so a later call
+        // naming no build was refused rather than taking it.
+        Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
+                .thenReturn(Map.of("instructions", List.of()));
+        final ToolCallContext context = PortedToolCalls.context();
+
+        tool.execute(PortedToolCalls.call(StartBuildTool.NAME, "{\"build\": \"bb\"}"), context);
+
+        assertThat(feeds.plan.currentBuild(context)).contains("bb");
     }
 
     @Test

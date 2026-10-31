@@ -54,6 +54,7 @@ import stroom.ai.shared.AskStroomAiContext;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
 import stroom.query.shared.QueryDoc;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -179,6 +180,16 @@ class ProposeVisualisationTool extends AbstractWorkspaceTool {
     public boolean isChatOnly() {
         // It proposes a chart for the tab the user attached to the chat.
         return true;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        // Declared as checked (found reviewing the tools: declared as none, so the permission matrix and the
+        // documentation understated them).
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE, DocumentPermission.EDIT)
+                .note("View on the dashboard or query it is for, Use on the chart libraries' scripts, and Edit on a Visualisation it updates.")
+                .build();
     }
 
     @Override

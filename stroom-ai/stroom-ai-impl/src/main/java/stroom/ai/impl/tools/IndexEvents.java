@@ -98,6 +98,7 @@ public class IndexEvents {
     private final DocumentAccess documentAccess;
     private final IndexSearches indexSearches;
     private final Provider<MetaService> metaServiceProvider;
+    private LuceneTextFields luceneTextFields;
 
     /// @param dataSourceAccess     Finds the index, checking Use.
     /// @param queryServiceProvider Lists its fields.
@@ -116,6 +117,14 @@ public class IndexEvents {
         this.documentAccess = documentAccess;
         this.indexSearches = indexSearches;
         this.metaServiceProvider = metaServiceProvider;
+    }
+
+    /// @param luceneTextFields A Lucene index's text fields' analyzers, for the misleading-search check (found
+    ///                         reviewing the tools: without them, a CONTAINS on a keyword field ran, and found
+    ///                         nothing).
+    @Inject
+    void setLuceneTextFields(final LuceneTextFields luceneTextFields) {
+        this.luceneTextFields = luceneTextFields;
     }
 
     /// Finds the events in an index that meet the conditions.
@@ -148,7 +157,9 @@ public class IndexEvents {
         }
         final Optional<String> refusal = MisleadingSearches.refusal(backend, terms.stream()
                 .map(term -> new MisleadingSearches.Search(term.field(), term.condition(), term.value()))
-                .toList(), MisleadingSearches.ipFields(info), List.of(), Map.of(), unindexed);
+                .toList(), MisleadingSearches.ipFields(info), List.of(), luceneTextFields == null
+                ? Map.of()
+                : luceneTextFields.of(ref), unindexed);
         if (refusal.isPresent()) {
             throw new WorkspaceException(refusal.get());
         }

@@ -303,6 +303,43 @@ Needs: View (document)
 - nothing: REFUSED or limited: Error: no folder '/Test' that you can see. Give a folder's UUID or Explorer path.
 - admin: runs (the same as with everything)
 
+## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}
+Needs: View (document)
+- everything: runs: The tab shows no table of results to chart. Run its query first.
+- without View (document): REFUSED or limited: You don't have permission to view this document.
+- nothing: REFUSED or limited: You don't have permission to view this document.
+- admin: runs (the same as with everything)
+
+## list_visualisations {}
+Needs: View (document), Use (document)
+- everything: runs: # Charting libraries
+- without View (document): REFUSED or limited: # Charting libraries
+    
+    - ECharts 6.0.0: installed as Script 'echarts' (echarts-uuid). Generates any of the kinds below (library echarts), drawn by Stroom's own adapter.
+    - D3: not installed. An administrator installs it as a Script doc holding a D3 build, version 3 or later (the visualisations content pack includes D3 3).
+    - The visualisations content pack's D3 charts: bar ('Bar chart'). Wires these existing Visualisations to a table (library content-pack); nothing is generated, and only their own inputs apply.
+    
+    # Chart kinds
+    
+    ## bar: Bar chart
+    one bar per category, grouped or stacked by series.
+    …
+- without Use (document): REFUSED or limited: # Charting libraries
+    
+    - ECharts 6.0.0: installed as Script 'echarts' (echarts-uuid), but the user doesn't have Use permission on it, so its charts won't load for them. Generates any of the kinds below (library echarts), drawn by Stroom's own adapter.
+    - D3: not installed. An administrator installs it as a Script doc holding a D3 build, version 3 or later (the visualisations content pack includes D3 3).
+    - The visualisations content pack's D3 charts: bar ('Bar chart'). Wires these existing Visualisations to a table (library content-pack); nothing is generated, and only their own inputs apply.
+    
+    # …
+- nothing: REFUSED or limited: # Charting libraries
+    
+    - ECharts 6.0.0: installed as Script 'echarts' (echarts-uuid), but the user doesn't have Use permission on it, so its charts won't load for them. Generates any of the kinds below (library echarts), drawn by Stroom's own adapter.
+    - D3: not installed. An administrator installs it as a Script doc holding a D3 build, version 3 or later (the visualisations content pack includes D3 3).
+    - The visualisations content pack's D3 charts: bar ('Bar chart'). Wires these existing Visualisations to a table (library content-pack); nothing is generated, and only their own inputs apply.
+    
+    # …
+- admin: runs (the same as with everything)
+
 ## current_results {}
 Needs: Use (document)
 - everything: runs: Error running built-in tool 'current_results': Cannot invoke "stroom.ai.impl.TableDownloader$Downloaded.rows()" because "downloaded" is null
@@ -327,11 +364,9 @@ Needs: View (document)
 - grep: same
 - instruction_evidence: same
 - jq: same
-- list_visualisations: same
 - ls: same
 - memory: same
 - pipeline: same
-- propose_visualisation: same
 - read_file: same
 - read_turn: same
 - run_stroomql: same (its data source is checked by QueryService when the search runs, mocked here)

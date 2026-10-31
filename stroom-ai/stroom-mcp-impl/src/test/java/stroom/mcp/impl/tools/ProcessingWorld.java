@@ -135,7 +135,7 @@ final class ProcessingWorld {
     /// @return reprocess_streams, on this world.
     ReprocessStreamsTool reprocessTool() {
         return new ReprocessStreamsTool(filterWrites, sources, approvals, indexingRuns, agreements,
-                sampleStreamTexts, feeds.consent, feeds.plan);
+                sampleStreamTexts, feeds.consent, feeds.plan, world.records());
     }
 
     /// @return set_processor_filter_enabled, on this world.

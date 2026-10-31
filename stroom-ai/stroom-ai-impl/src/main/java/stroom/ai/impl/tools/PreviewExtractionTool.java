@@ -163,6 +163,13 @@ class PreviewExtractionTool extends AbstractWorkspaceTool {
     }
 
     @Override
+    public boolean isChatOnly() {
+        // It works on the dashboard the user attached to the chat (found reviewing the tools: offered over /mcp,
+        // where there is none, it always failed).
+        return true;
+    }
+
+    @Override
     public AiToolCategory category() {
         return AiToolCategory.CONTENT;
     }

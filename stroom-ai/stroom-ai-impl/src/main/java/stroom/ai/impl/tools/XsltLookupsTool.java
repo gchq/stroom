@@ -513,6 +513,10 @@ class XsltLookupsTool extends AbstractWorkspaceTool {
         /// @return An XSLT's text: as the user has it in their attached tab, unsaved, if it is shown there (as the
         /// tab's document, or the selected element while stepping) and was shared in full; else as saved.
         private String text(final DocRef xslt, final XsltDoc saved) {
+            if (!context.session().isChat()) {
+                // No tab outside a chat (e.g. over /mcp): the code is as saved.
+                return saved.getData();
+            }
             final Optional<UnsavedPart> edited = tabSnapshots.unsavedPart(chatId(), xslt, AiTabSnapshotPart.DATA)
                     .or(() -> steppingCode(xslt))
                     .filter(part -> !part.cut());

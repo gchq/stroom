@@ -60,6 +60,14 @@ class TestToolPermissionMetadata {
             "explain_processing", Map.of(AppPermission.VIEW_SYSTEM_INFO_PERMISSION,
                     "checked only when nodes claim their own tasks, and this world uses the master queue"));
 
+    /// Document permissions a tool declares that this world can't make it check, with why. Kept as short as
+    /// possible.
+    private static final Map<String, Map<DocumentPermission, String>> DOCUMENTS_NOT_REACHED_HERE = Map.of(
+            "propose_visualisation", Map.of(
+                    DocumentPermission.USE, "checked on the chart library's script once a chart is planned, which "
+                                            + "needs a numeric column this world's dashboard table doesn't have",
+                    DocumentPermission.EDIT, "checked only when a chart Stroom AI generated is replaced"));
+
     @TempDir
     Path tempDir;
 
@@ -72,6 +80,7 @@ class TestToolPermissionMetadata {
             declared = world.builtInTools()::permissions;
         }
         assertThat(NOT_REACHED_HERE.keySet()).isSubsetOf(toolNames);
+        assertThat(DOCUMENTS_NOT_REACHED_HERE.keySet()).isSubsetOf(toolNames);
         assertThat(PROBES.keySet()).isSubsetOf(toolNames);
 
         for (final String tool : toolNames) {
@@ -118,6 +127,14 @@ class TestToolPermissionMetadata {
                         .doesNotContain(permission);
             }
             checkedApp.addAll(notReached);
+            final Set<DocumentPermission> documentsNotReached = DOCUMENTS_NOT_REACHED_HERE
+                    .getOrDefault(tool, Map.of()).keySet();
+            for (final DocumentPermission permission : documentsNotReached) {
+                assertThat(checkedDocuments)
+                        .as("%s is said not to check %s here, which it now does", tool, permission)
+                        .doesNotContain(permission);
+            }
+            checkedDocuments.addAll(documentsNotReached);
             assertThat(permissions.appPermissions())
                     .as("the app permissions %s declares, against those it checks when called with %s", tool,
                             calls)

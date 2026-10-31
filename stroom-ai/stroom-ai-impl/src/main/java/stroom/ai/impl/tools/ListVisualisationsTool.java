@@ -30,6 +30,7 @@ import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -60,6 +61,16 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
     ListVisualisationsTool(final ChatWorkspace workspace, final ChartLibraries chartLibraries) {
         super(workspace);
         this.chartLibraries = chartLibraries;
+    }
+
+    @Override
+    public ToolPermissions permissions() {
+        // Declared as checked (found reviewing the tools: declared as none, so the permission matrix and the
+        // documentation understated them).
+        return ToolPermissions.builder()
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
+                .note("Lists the Visualisations the user can view, and says whether they can use the chart libraries' scripts.")
+                .build();
     }
 
     @Override

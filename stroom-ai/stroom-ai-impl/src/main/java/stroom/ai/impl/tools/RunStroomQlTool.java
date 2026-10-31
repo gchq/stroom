@@ -84,6 +84,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
     private final AgentSearches agentSearches;
+    private LuceneTextFields luceneTextFields;
 
     @Inject
     RunStroomQlTool(final ChatWorkspace workspace,
@@ -94,6 +95,14 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         this.queryServiceProvider = queryServiceProvider;
         this.agentSearches = agentSearches;
         this.resourceStoreProvider = resourceStoreProvider;
+    }
+
+    /// @param luceneTextFields A Lucene index's text fields' analyzers, for the misleading-search check (found
+    ///                         reviewing the tools: without them, a CONTAINS on a keyword field ran, and found
+    ///                         nothing).
+    @Inject
+    void setLuceneTextFields(final LuceneTextFields luceneTextFields) {
+        this.luceneTextFields = luceneTextFields;
     }
 
     @Override
@@ -181,7 +190,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         final QueryService queryService = queryServiceProvider.get();
         final DocRef dataSource = queryService.getReferencedDataSource(query).orElse(null);
         final String sourceDocUuid = NullSafe.get(dataSource, DocRef::getUuid);
-        final Optional<String> misleading = misleading(queryService, query, dataSource);
+        final Optional<String> misleading = misleading(queryService, query, dataSource, luceneTextFields == null
+                ? Map.of()
+                : luceneTextFields.of(dataSource));
         if (misleading.isPresent()) {
             throw new WorkspaceException(misleading.get());
         }
@@ -225,6 +236,21 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
     static Optional<String> misleading(final QueryService queryService,
                                        final String query,
                                        final DocRef dataSource) {
+        return misleading(queryService, query, dataSource, Map.of());
+    }
+
+    /// As [#misleading(QueryService, String, DocRef)], knowing a Lucene index's text fields' analyzers, so that a
+    /// CONTAINS on a keyword field, or a range on a text field, is refused too.
+    ///
+    /// @param queryService Parses the query and lists the index's fields.
+    /// @param query        The query.
+    /// @param dataSource   Its data source, or null.
+    /// @param luceneText   A Lucene index's text fields and their analyzers ([LuceneTextFields]), or none.
+    /// @return The refusal, or empty if the query can be trusted, isn't on an index, or can't be checked.
+    static Optional<String> misleading(final QueryService queryService,
+                                       final String query,
+                                       final DocRef dataSource,
+                                       final Map<String, String> luceneText) {
         final Optional<String> backend = MisleadingSearches.backendOf(dataSource);
         if (backend.isEmpty()) {
             return Optional.empty();
@@ -245,7 +271,7 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
             return Optional.empty();
         }
         return MisleadingSearches.refusal(backend.get(), searches, MisleadingSearches.ipFields(fields), List.of(),
-                        Map.of(), MisleadingSearches.unindexed(dataSource, fields,
+                        luceneText, MisleadingSearches.unindexed(dataSource, fields,
                                 searches.stream().map(MisleadingSearches.Search::field).toList()))
                 .map(refusal -> refusal + ". In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
     }
