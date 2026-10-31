@@ -60,7 +60,8 @@ public class ElasticClientFactory {
     /// Creates a new Elasticsearch client. The caller is responsible for closing it.
     ///
     /// @param connection          The connection to the cluster, with all credentials resolved.
-    /// @param elasticClientConfig Stroom's global Elasticsearch client settings, i.e. the connection pool sizes.
+    /// @param elasticClientConfig Stroom's global Elasticsearch client settings, i.e. the connection pool sizes
+    ///                            and compression.
     /// @return A new client.
     public ElasticsearchClient create(final ResolvedElasticConnection connection,
                                       final ElasticClientConfig elasticClientConfig) {
@@ -83,6 +84,7 @@ public class ElasticClientFactory {
 
         final HttpClientConfiguration httpClientConfiguration = connection.httpClientConfiguration();
         final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
+        restClientBuilder.setCompressionEnabled(elasticClientConfig.isCompressRequests());
 
         restClientBuilder.setRequestConfigCallback(requestConfig -> {
             setTimeout(httpClientConfiguration.getConnectionRequestTimeout(),

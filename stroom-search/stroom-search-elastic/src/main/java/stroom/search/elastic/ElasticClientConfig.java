@@ -32,23 +32,29 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
 
     private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = Rest5ClientBuilder.DEFAULT_MAX_CONN_PER_ROUTE;
     private static final int DEFAULT_MAX_CONNECTIONS = Rest5ClientBuilder.DEFAULT_MAX_CONN_TOTAL;
+    private static final boolean DEFAULT_COMPRESS_REQUESTS = false;
 
     private final int maxConnectionsPerRoute;
     private final int maxConnections;
+    private final boolean compressRequests;
 
     public ElasticClientConfig() {
         maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
         maxConnections = DEFAULT_MAX_CONNECTIONS;
+        compressRequests = DEFAULT_COMPRESS_REQUESTS;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ElasticClientConfig(@JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
-                               @JsonProperty("maxConnections") final Integer maxConnections) {
+                               @JsonProperty("maxConnections") final Integer maxConnections,
+                               @JsonProperty("compressRequests") final Boolean compressRequests) {
         this.maxConnectionsPerRoute =
                 Objects.requireNonNullElse(maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
         this.maxConnections =
                 Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.compressRequests =
+                Objects.requireNonNullElse(compressRequests, DEFAULT_COMPRESS_REQUESTS);
     }
 
     @JsonPropertyDescription("Maximum number of connections maintained by the Elastic Java client pool on a per-" +
@@ -63,11 +69,20 @@ public class ElasticClientConfig extends AbstractConfig implements IsStroomConfi
         return maxConnections;
     }
 
+    /// @return Whether the Elastic Java client compresses request bodies with gzip.
+    @JsonPropertyDescription("Whether to compress the body of each request to Elasticsearch with gzip, and accept " +
+            "compressed responses. Bulk indexing requests usually compress to a fraction of their size, which " +
+            "helps where the network between Stroom and the cluster is slow, at the cost of some CPU on both.")
+    public boolean isCompressRequests() {
+        return compressRequests;
+    }
+
     @Override
     public String toString() {
         return "ElasticClientConfig{" +
                 "maxConnectionsPerRoute=" + maxConnectionsPerRoute +
                 ", maxConnections=" + maxConnections +
+                ", compressRequests=" + compressRequests +
                 "}";
     }
 }

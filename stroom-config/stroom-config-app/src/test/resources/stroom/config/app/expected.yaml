@@ -648,6 +648,7 @@ appConfig:
       prepStmtCacheSqlLimit: 256
   elastic:
     client:
+      compressRequests: false
       maxConnections: 30
       maxConnectionsPerRoute: 10
     indexCache:
