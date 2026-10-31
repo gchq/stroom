@@ -1538,8 +1538,12 @@ its time field, and each field's name, type and source in the Event.
 * In the workspace, an Elasticsearch indexing pipeline indexes in batches of 10 (`IndexingRuns.DEV_BATCH_SIZE`), set by
   `create_processor_filter` and `reprocess_streams`; a rejected document comes back whole. `wait_for_processing`
   restores the template's batch size once indexing completes without errors; promotion makes sure of it.
-* Stroom reports a bulk request with failures as one message; triage splits it into one entry per rejected document
-  (`ErrorTriage.splitBulk`), with what to do.
+* Stroom reported a bulk request with failures as one message, cut to 4,096 characters; triage splits it into one
+  entry per rejected document (`ErrorTriage.splitBulk`), with what to do. Since #5958 (`gh-5958` off `7.14`, not yet
+  in this branch) Stroom logs each rejected document itself, naming it by its EventId, then a fatal summary of the
+  batch: triage gives such an entry its event's record, and the summary its own reason (the causes are in the
+  entries above it, so it no longer sends the agent to process again with a small batch). Both forms are read, as
+  Error streams from older Stroom remain. Once #5958 is merged in, the development batch of 10 is no longer needed.
 * Indexing again doesn't remove documents already in the index. So an index the pipeline wrote to before starts fresh:
   a `drop_first` reply with a button carrying `DELETE _data_stream/<index>` (when the agreed template makes a data
   stream) or `DELETE <index>`; once the user says it is dropped, the call is made again with `index_dropped=true` for
