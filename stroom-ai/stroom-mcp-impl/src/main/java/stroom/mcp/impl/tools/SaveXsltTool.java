@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -191,16 +192,47 @@ class SaveXsltTool extends AbstractBuiltInTool {
             code = generated(indexPlan);
         }
         final TranslationDocs.Source source = TranslationDocs.Source.of(indexPlan);
+        final Map<String, Object> result;
         if (uuid != null) {
-            return translationDocs.updateXslt(call, context, uuid, code, stringArg(call, VERSION_ARG), source, said,
-                    ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),
-                    TranslationArgs.handEditChoices(call));
+            result = translationDocs.updateXslt(call, context, uuid, code, stringArg(call, VERSION_ARG), source,
+                    said, ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG), TranslationArgs.handEditChoices(call));
+        } else {
+            final String name = stringArg(call, NAME_ARG);
+            if (build == null || name == null) {
+                throw new ToolRefusal("Give build and name for a new XSLT (or uuid to change one this server "
+                                      + "created).");
+            }
+            result = translationDocs.createXslt(call, context, build, name, code, source, said);
         }
-        final String name = stringArg(call, NAME_ARG);
-        if (build == null || name == null) {
-            throw new ToolRefusal("Give build and name for a new XSLT (or uuid to change one this server created).");
+        if (result.containsKey("uuid")) {
+            sharedWarnings(context, code, build, uuid, indexPlan, result);
         }
-        return translationDocs.createXslt(call, context, build, name, code, source, said);
+        return result;
+    }
+
+    // The environment's common elements written as its pipelines write them, with their shared templates: said
+    // once the XSLT is saved (a question about a hand edit saves nothing, and is returned as it is).
+    private void sharedWarnings(final ToolCallContext context,
+                                final String code,
+                                final String build,
+                                final String uuid,
+                                final FieldPlan indexPlan,
+                                final Map<String, Object> result) {
+        final String where = build != null
+                ? build
+                : guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).orElse(null);
+        final List<String> warnings = translationDocs.sharedWarnings(context.session(), code, where, indexPlan != null
+                ? "Indexing"
+                : null, indexPlan == null
+                ? null
+                : at -> indexPlan.fields().stream()
+                        .filter(field -> indexPlan.writtenBy(field.name()) == null)
+                        .anyMatch(field -> field.name().equals(at) || field.name().startsWith(at + ".")));
+        if (!warnings.isEmpty()) {
+            final List<Object> all = new ArrayList<>(JsonValues.listOrEmpty(result.get("warnings")));
+            all.addAll(warnings);
+            result.put("warnings", all);
+        }
     }
 
     /// The indexing XSLT an index plan generates, for a save given no code.

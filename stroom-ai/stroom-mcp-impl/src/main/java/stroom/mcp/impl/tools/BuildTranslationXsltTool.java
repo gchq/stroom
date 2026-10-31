@@ -43,6 +43,7 @@ import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.EventRule;
+import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingChanges;
 import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.MappingFacts;
@@ -568,6 +569,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         if (!required.isEmpty()) {
             b.result.put("required_imports", requiredImports.importNotes(required, true));
+        }
+        if (Boolean.TRUE.equals(b.result.get("ok"))) {
+            // The environment's common elements written as its pipelines write them: with their shared templates.
+            final TranslationMapping mapping = b.mapping;
+            TranslationBuilds.warnings(b.result).addAll(translationDocs.sharedWarnings(context.session(),
+                    String.valueOf(b.result.get("xslt")), request.build(), "Events", at -> mapping.allEntries()
+                            .stream()
+                            .map(FieldMapping::path)
+                            .anyMatch(path -> path.equals(at) || path.startsWith(at + "/"))));
         }
         if (!b.unknownKeys.isEmpty()) {
             TranslationBuilds.warnings(b.result).add("mapping keys ignored, as a mapping has no such key: "
