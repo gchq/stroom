@@ -224,6 +224,7 @@ document in a build folder also needs Create there.
 | `draft_cef_mapping` | Drafts, reviews or saves a mapping of Events to CEF | content | no | build | View Data | Stepping | View, Edit | slot, build, ro calls |
 | `draft_index_mapping` | Drafts the fields of an index from Events, as a plan the indexing tools build from | indexing | no | indexing | | View Data | View, Edit | confirms |
 | `draft_translation_mapping` | Drafts a translation mapping from the sample | content | yes | build | | View Data | View | |
+| `evaluate_pipeline` | Gathers the facts for a consistent evaluation of an existing pipeline, by its stage, with the report's outline | processing | yes | processing | | View Data, Stepping, Manage Processors | View | slot |
 | `find_elastic_clusters` | The Elastic Cluster documents and the indexes on each, with a connection test | indexing | yes | indexing | | | View | |
 | `find_pipeline_templates` | Candidate parent pipelines for a stage, by what they are | content | yes | build | | | View | |
 | `find_reference_data` | Every reference data map that can be looked up, and where it is loaded from | core | yes | | | Manage Processors | View | |
@@ -285,6 +286,9 @@ Several tools cover neighbouring ground. Which does what:
   XSLTs or pipelines and analyses their lookups.
 * **Feeds**: `describe_feed` describes a feed by name from its generated documentation and its index fields;
   `describe_data_source` describes any data source's fields and conditions.
+* **Evaluation**: `evaluate_pipeline` gathers an evaluation's facts for any existing pipeline, by its stage, and
+  the report's outline; `review_coverage` goes further into the kinds of record a feed's translation misses;
+  `check_index_template` and `verify_index` check an index template and an index, and are only pointed to.
 * **Fixes**: `propose_code_change` offers the stepping user a button to apply a change it has tried by stepping;
   `summarise_fix` proves a fix over every record of some streams and returns a diff with the steps to apply it.
 * **Documentation**: `propose_documentation_change` offers a button to review a change to any document's
@@ -3232,6 +3236,91 @@ on both sides in a session of its own.
 * **Notes**: when time runs out, only records stepped through both sides are compared. It neither checks
   mistyped properties nor records anything.
 
+### `evaluate_pipeline`
+
+Processing · read-only (its step may record a clean verdict) · unlocked by View Data, Stepping and Manage Processors
+(none required) · checks View on the pipeline, its XSLTs and the index docs it writes to · takes a run slot ·
+Classes: `EvaluatePipelineTool`, `IndexEvaluation`, `CefEvaluation`, `ReferenceEvaluation`, `StepSampleTool`,
+`CheckEventsTool`, `StreamSummaries`, `CoverageReads`, `PipelineShapes`
+
+The facts for an evaluation of an existing pipeline, covering the same ground every time, so evaluations are
+consistent and the feature is found. It reads the pipeline's stage as `PipelineShapes` reads it (the stage
+write_documentation uses), gives the general sections every pipeline gets, then the checks for its stage, then the
+report's outline. The agent writes the report from it, shows it to the user, and saves it with
+`write_documentation pipeline_uuid=<uuid> evaluation=true` only if the user wants it kept. It is made of the tools
+that cover each part, reused, not reimplemented: `StreamSummaries.summariseErrorStreams` (summarise_streams'
+triage, with the errors the user accepted as benign reported as benign), `StepSampleTool.sampled` (step_sample's
+verdict, keeping each record's output when the stage's checks read it), `CheckEventsTool.checkRead` and
+`StreamSummaries.summariseEvents` (check_events and summarise_streams kind=events, recording nothing),
+`CoverageReads.parseLogged` (review_coverage's reading of missed records), `IndexDocs` and `TemplateCheck.fits`
+(the index's fields and value types), `DraftCefMappingTool.stepped` and `CefLines.review` (draft_cef_mapping's
+review), and `ReferenceData` (find_reference_data's maps and pipeline references).
+
+| Stage (`PipelineShapes`) | Checks | Sections, in order |
+|---|---|---|
+| translation | events | `pipeline`, `processing`, `stepping`, `events`, `coverage`, `report` |
+| indexing, discovery | index | `pipeline`, `processing`, `stepping`, `index`, `report` |
+| forwarding | cef | `pipeline`, `processing`, `stepping`, `cef`, `report` |
+| reference | reference | `pipeline`, `processing`, `stepping`, `reference`, `report` |
+| records, loader, other | general | `pipeline`, `processing`, `stepping`, `checks`, `report` |
+
+* **Arguments**: `pipeline_uuid` (required); `stream_ids` (input streams to step: raw streams for an events
+  pipeline, Events streams for an indexing or CEF one, Raw Reference for a reference one); `max_records` (at least
+  1, at most 500; by default the first 50 of each stream, as step_sample); `schema_version` (an events pipeline's
+  event-logging version, as check_events).
+* **Returns**: the sections for its stage, always all of them and in order; a section that can't be given has
+  `status` and `reason`.
+  * `pipeline`: `name`, `uuid`, `stage`, `backend` (indexing: lucene or elasticsearch; forwarding: kafka),
+    `description`, `templates` (its template chain, root first), `parser`, `translation_docs` (each XSLT and text
+    converter, its element, and whether its template sets it), `element_chain`.
+  * `processing`: from the newest Error streams it wrote (up to 10; up to 500 Error and Events streams counted,
+    `500+` beyond): `status` (`processed`; an events pipeline that wrote nothing, `never_processed`; any other with
+    no Error streams, `no_error_streams`, as it writes no Events stream to tell nothing processed from processed
+    clean), `events_streams`, `error_streams`, `error_streams_read`, `verdict`, `groups_by_class`,
+    `markers_by_severity`, `groups` (up to 8: `class`, `reason`, `severity`, `element`, `count`, `records_affected`,
+    `accepted`, `example`), `groups_not_shown`, any `unread` and `hint`.
+  * `stepping`: step_sample's `verdict`, `streams`, `streams_from` (`stream_ids`, or `the pipeline's newest
+    inputs`), `records_stepped`, `records_with_errors`, `groups_by_class`, `groups` (up to 8, each with up to 5
+    `records`), any `stopped_early` and `hint`. By default it steps the inputs of the pipeline's newest output
+    (Events, else Error streams' parents), else the newest streams of the type its stage reads on the feeds its
+    processor filters read, up to 3; with none, `not_stepped` asking for `stream_ids`.
+  * `events` (translation): the newest Events stream checked as check_events does (`ok`, `schema` with up to 5
+    errors, `quality` with one example a failed rule, `read`) and profiled as summarise_streams kind=events does
+    (`events_profiled`, `event_types`, `type_ids` (up to 10), `field_population`: each path's share of the events,
+    least filled first, up to 40, with `field_population_note` for the rest). With no Events stream, the first
+    record stepped is checked instead, and the population is not profiled.
+  * `coverage` (translation): `status` (`records_missed`, `none_logged`, `not_checked`),
+    `records_no_rule_matched`, `records_kept_as_unknown` and `rules_keeping_unknown`, read from the processing
+    groups' log lines, and `next` pointing to review_coverage, which it does not run.
+  * `index` (indexing, discovery): `status` (`checked`, or `partial` when the fields written or the index's fields
+    couldn't be read, with `notes`), `index`, `backend`, the Elasticsearch `cluster` and `index_name`,
+    `index_fields`, `documents_stepped`, `fields_written`, `written_not_in_index`, `index_fields_not_written` (up to
+    40), `type_mismatches` (up to 20: a value its field's type can't take, as `TemplateCheck.fits` judges an index
+    template; or free text of several words in a keyword field), `hint`, and for Elasticsearch `index_template`
+    (`agreed`, and `next`: check_index_template when one is agreed, which it does not run, else why there is
+    none). It never runs verify_index.
+  * `cef` (forwarding): its lines stepped with the Events they came from (up to 100 records) and reviewed by
+    `CefLines.review`: `status`, `output` (kafka and its topic, or text), `lines_stepped`, `custom_keys` (from the
+    plan kept with its XSLT, else not known), `header_todo` (header fields still holding a TODO constant),
+    `problems`, `not_sent` and `implied_mapping` (each cut to 15, up to 10 kinds of event), `notes` (Kafka delivery
+    is not tested by stepping).
+  * `reference` (reference): `status`, `maps` (each map its XSLT writes, as find_reference_data reads it, with
+    `seen`: the entries stepping wrote, an example key and value), `maps_seen_only`, `feeds` (its processor
+    filters', needing Manage Processors), `looked_up_by` (pipelines whose reference names one of those feeds or
+    this pipeline as loader, up to 20), `notes`.
+  * `checks` (any other stage): `status: not_applicable` and why.
+  * `report`: `outline` (`# <name> - Evaluation`, then `## Summary`, `## Pipeline`, `## Processing errors`,
+    `## Stepping`, the stage's own heading or headings (`## Event validity` and `## Coverage`; `## Index fields`;
+    `## CEF output`; `## Reference maps`), `## Recommendations`), `sections` (what fills each heading) and `next`
+    (show the report; save it with write_documentation pipeline_uuid=<uuid> evaluation=true only if the user wants
+    it kept).
+* **Refuses**: no `pipeline_uuid`; `stream_ids` that aren't stream ids; `max_records` below 1; a pipeline that
+  doesn't exist, that the user can't view, or that Stroom can't load. A missing permission never refuses the call:
+  the sections it affects say so.
+* **Notes**: it says where it is (reading Error streams, stepping, the stage's checks); the streams it reads are
+  audited as summarise_streams and check_events audit theirs, and the stepped ones as step_sample does. A cancelled
+  call is refused with stepping's cancellation message.
+
 ### `summarise_fix`
 
 Processing · read-only (its steps may record a clean verdict) · requires Stepping; unlocked further by View Data;
@@ -3943,7 +4032,7 @@ content · write · unlocked by Stepping (the pipeline is stepped as the user fo
 checks View and Edit; the Documentation doc is created in the build folder or saved as the user · changes only its
 build · takes a run slot · Classes: `WriteDocumentationTool`, `BuildDocumentation`, `FieldMappingSections`,
 `IndexDocumentation`, `GeneratedDrift`, `KeptMappings`, `DocumentationVersions`, `DocumentWrites`, `DocumentPlaces`,
-`AcceptedErrors`, `EventFieldDocs`, `Descriptions`
+`AcceptedErrors`, `EventFieldDocs`, `Descriptions`, `ReferenceEvaluation`
 
 Creates or updates the Documentation doc of a pipeline in the build (named as the pipeline, in the same role
 subfolder), or with `index_uuid` of an existing index (named as its index doc). The agent writes the markdown; the
@@ -3957,7 +4046,17 @@ tool generates two sections in it and keeps the version control:
   where comments don't), so each Event is matched to the rule that wrote it. The section opens with "Counts are of
   N sample records (n of stream ...)" so a reader knows which records were counted (seen: counts from a different
   sample taken for a change in routing). An index XSLT written by hand is documented from the documents it writes
-  (`writtenFieldsSection`), a CEF one from the lines it writes (`cefWrittenSection`).
+  (`writtenFieldsSection`), a CEF one from the lines it writes (`cefWrittenSection`). A hand-written discovery
+  pipeline (stage `discovery`, no plan) is documented the same way from the documents it writes from its raw
+  streams, with none of a planned discovery index's framing (its settings aren't known without the plan).
+* **Reference maps** is generated for a reference data pipeline (`PipelineShapes` stage `reference`; its XSLT, made
+  by build_reference_xslt or by hand, keeps no mapping) in place of the agent's own section of that name
+  (`FieldMappingSections.referenceMapsSection`): the pipeline is stepped over `stream_ids` (its Raw Reference
+  streams), and the section opens with "Counts are of N sample records (n of stream ...)", then a row for each map:
+  its key and value as its XSLT writes them, how many entries the sample gave, and an example key and value; then
+  the feed(s) its processor filters read and the pipelines that look the maps up (a pipeline reference naming one
+  of those feeds, or the pipeline as loader). The facts are evaluate_pipeline's `reference` section's
+  (`ReferenceEvaluation`), shared, not duplicated. Nothing is kept with it, so no digest closes it.
 * **Errors** is generated from the pipeline's Error streams: every kind of error with counts and an example, and
   the errors the user accepted as benign with their reasons (`AcceptedErrors`), kept with the doc so triage doesn't
   raise them again. The agent's own sections on errors stay as written.
@@ -3967,7 +4066,8 @@ tool generates two sections in it and keeps the version control:
   (`{field: description}`, or JSON text); `field_mapping_layout` (`by_event_type` or `compact`; else an AGENTS
   doc's Documentation section, else by event type); `index_itself`; `document_missing_fields`; `evaluation`.
 * **Returns**: `type`, `uuid`, `name`, `written` (`created` or `updated`: seen, `updated: false` on a new doc sent
-  the agent to check it was written), `link` and an open-document action, `field_mapping` (the generated section),
+  the agent to check it was written), `link` and an open-document action, `field_mapping` (the generated section;
+  `reference_maps` instead for a reference data pipeline),
   `note`, the build's `next`; for a promoted pipeline `working_copy_of` and a `next` about promote_build. Or
   `needs_descriptions` (nothing written yet): the fields not yet described, each with where it comes from, sample
   values, `schemas_say` (the vendor notes and the schemas), `under` for a Data name, `was` for one whose source
@@ -3978,7 +4078,8 @@ tool generates two sections in it and keeps the version control:
   accepted error without `example` or `reason` (`accept_errors[0].example is required`); a kept mapping with no
   streams to step (`streamsNeeded` says which: sample raw streams, the Events streams indexed or sent); an events
   pipeline whose XSLT keeps no mapping and whose markdown has no `## Field mapping` (or the lost-mapping text when
-  it was lost); an index or CEF XSLT written by hand without `stream_ids`; a section that steps to no events
+  it was lost); an index or CEF XSLT written by hand without `stream_ids` (for a discovery pipeline, asking for the
+  raw streams it indexes); a reference data pipeline without `stream_ids` (its Raw Reference streams); a section that steps to no events
   (`FieldMappingSections.noEvents` says why, per stream: missing, of another type, or stopped by an error); no
   Stepping permission; an existing doc in the build that isn't the tools' own (`WriteGuard.checkInBuild`).
 * **Notes**:

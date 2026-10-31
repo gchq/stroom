@@ -79,6 +79,7 @@ class FieldMappingSections {
     private final StreamReader streamReader;
     private final StreamSummaries streamSummaries;
     private final IndexValues indexValues;
+    private final ReferenceEvaluation referenceEvaluation;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -88,6 +89,7 @@ class FieldMappingSections {
     /// @param streamReader    Reads the streams' meta.
     /// @param streamSummaries Reads how populated each path of the sample Events is.
     /// @param indexValues     Reads example values from the index for fields the sample has none of.
+    /// @param referenceEvaluation Reads a reference data pipeline's maps, feeds and the pipelines that look them up.
     @Inject
     FieldMappingSections(final PipelineStepping stepping,
                          final DraftCefMappingTool cef,
@@ -96,7 +98,8 @@ class FieldMappingSections {
                          final GeneratedDrift mappingDrift,
                          final StreamReader streamReader,
                          final StreamSummaries streamSummaries,
-                         final IndexValues indexValues) {
+                         final IndexValues indexValues,
+                         final ReferenceEvaluation referenceEvaluation) {
         this.stepping = stepping;
         this.cef = cef;
         this.pipelineShapes = pipelineShapes;
@@ -105,6 +108,7 @@ class FieldMappingSections {
         this.streamReader = streamReader;
         this.streamSummaries = streamSummaries;
         this.indexValues = indexValues;
+        this.referenceEvaluation = referenceEvaluation;
     }
 
     /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
@@ -226,6 +230,31 @@ class FieldMappingSections {
             problems.forEach(problem -> section.append("- ").append(problem).append('\n'));
         }
         return section.toString();
+    }
+
+    /// The Reference maps section of a reference data pipeline: each map it writes, with its key and value and an
+    /// example of each from the sample, the feeds that load it and the pipelines that look it up (the facts
+    /// evaluate_pipeline's `reference` section gives, [ReferenceEvaluation]).
+    ///
+    /// @param context      The call's context.
+    /// @param pipelineUuid The pipeline.
+    /// @param streamIds    The Raw Reference streams it reads.
+    /// @return The section.
+    /// @throws ToolRefusal if stepping the streams gives no records.
+    String referenceMapsSection(final ToolCallContext context,
+                                final String pipelineUuid,
+                                final List<Long> streamIds) {
+        final SteppedPipeline loaded = load(pipelineUuid);
+        final Map<String, String> outputs = outputMap(context, loaded, streamIds, loaded.outputElement(), null);
+        if (outputs.isEmpty()) {
+            throw new ToolRefusal("Reference maps not written: stepping streams " + streamIds + " gave no records. "
+                                  + "A reference data pipeline's stream_ids are the Raw Reference streams it reads.");
+        }
+        final Map<String, Integer> perStream = new LinkedHashMap<>();
+        outputs.keySet().forEach(key -> perStream.merge(key.split(":")[0], 1, Integer::sum));
+        final Map<String, Object> facts = referenceEvaluation.reference(loaded.merged(), pipelineUuid,
+                new ArrayList<>(outputs.values()));
+        return ReferenceEvaluation.markdown(facts, perStream);
     }
 
     /// The agreed Elasticsearch index template, for the Field mapping section.

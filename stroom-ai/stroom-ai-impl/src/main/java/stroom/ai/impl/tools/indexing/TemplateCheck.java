@@ -379,7 +379,7 @@ public final class TemplateCheck {
     /// @param text Its text.
     /// @return Why the value doesn't suit the mapped type, or null if it does (or a custom date format, reported
     /// apart as unchecked).
-    static String fits(final Map<String, Object> spec, final String kind, final String text) {
+    public static String fits(final Map<String, Object> spec, final String kind, final String text) {
         final Object mapped = spec.getOrDefault("type", "object");
         if (OBJECT.contains(mapped)) {
             return "object".equals(kind)

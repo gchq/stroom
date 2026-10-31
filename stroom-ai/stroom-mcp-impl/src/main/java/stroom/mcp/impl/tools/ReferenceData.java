@@ -161,6 +161,41 @@ class ReferenceData {
                 .toList();
     }
 
+    /// The pipelines that load reference data from these feeds for their lookups (a pipeline reference naming one
+    /// of them), or through this loader, as find_reference_data's `references_in_use` reads them.
+    ///
+    /// @param feeds      Reference feeds' names.
+    /// @param loaderUuid A loader pipeline's UUID, or null.
+    /// @param unreadable Where a pipeline Stroom can't load is said.
+    /// @return Each such reference, as `{pipeline, uuid, feed, loader}`.
+    List<Map<String, Object>> referencesTo(final Set<String> feeds,
+                                           final String loaderUuid,
+                                           final List<String> unreadable) {
+        final List<Map<String, Object>> found = new ArrayList<>();
+        for (final Entry pipeline : referencing(pipelineIndex.read())) {
+            final List<PipelineReference> references;
+            try {
+                references = pipelineShapes.merged(pipeline.uuid()).references();
+            } catch (final PipelineUnreadableException e) {
+                unreadable.add("pipeline '" + pipeline.name() + "': " + e.getMessage());
+                continue;
+            }
+            for (final PipelineReference reference : references) {
+                final String feed = NullSafe.get(reference.getFeed(), DocRef::getName);
+                final String loader = NullSafe.get(reference.getPipeline(), DocRef::getUuid);
+                if (feeds.contains(feed) || (loaderUuid != null && loaderUuid.equals(loader))) {
+                    final Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("pipeline", pipeline.name());
+                    entry.put("uuid", pipeline.uuid());
+                    entry.put("feed", feed);
+                    entry.put("loader", NullSafe.get(reference.getPipeline(), DocRef::getName));
+                    found.add(entry);
+                }
+            }
+        }
+        return found;
+    }
+
     /// The loader for a reference feed, when the agent names none: the one other pipelines already load that feed
     /// with, else the environment's only loader. Several, and none in use: the agent asks which.
     ///
