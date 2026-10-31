@@ -72,6 +72,9 @@ import java.util.regex.Pattern;
 @Singleton
 public class BuildRecords {
 
+    /// In a working copy's entry: the version its original had when it was copied.
+    static final String COPY_OF_VERSION = "copy_of_version";
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildRecords.class);
 
     /// The record's name in each build folder.
