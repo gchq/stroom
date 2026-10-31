@@ -6,8 +6,10 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="type" select="*[@key='type'][normalize-space(.)]"/>
     <xsl:variable name="event_type" select="*[@key='eventType'][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'user.session.start'">
         <xsl:apply-templates select="." mode="event_type_new_session_start"/>
@@ -28,7 +30,7 @@
         <xsl:apply-templates select="." mode="event_type_legacy_password_change"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('eventType=', string(($event_type)[1])), concat('type=', string(($type)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('eventType=', string(($event_type)[1])), concat('type=', string(($type)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

@@ -49,7 +49,11 @@ public final class MappingValidationException extends IllegalArgumentException {
                         ? ""
                         : "s").append(" for ").append(model);
         for (final MappingError error : errors) {
-            sb.append('\n').append(error.dotted()).append("\n  ").append(error.message())
+            // An error of the whole model has no place, so no line for it.
+            if (!error.dotted().isEmpty()) {
+                sb.append('\n').append(error.dotted());
+            }
+            sb.append("\n  ").append(error.message())
                     .append(" [type=").append(error.type()).append(']');
         }
         return sb.toString();

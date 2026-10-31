@@ -135,13 +135,17 @@ Don't rebuild while a dev node or a long test run is using the jars.
 * **Unit tests** in each module: `./gradlew :stroom-ai:stroom-ai-impl:test :stroom-ai:stroom-mcp-impl:test`.
 * **Reference files.** Several tests compare what they produce with files under
   `src/test/resources/stroom/ai/impl/golden/` (`GoldenFiles`): the tools and prompts the model is shown, the exact
-  output of the larger tools, scripted chat runs, how stored chats are read back, and the permission, audit,
-  consent and tool-name tables. They show that a change (e.g. a refactor) leaves what the agent does as it was. A
-  mismatch writes the actual text under `build/golden-actual/` and fails. When a change is meant to alter them,
-  accept it with `-DtestUpdateGoldenFiles=true` (e.g.
-  `./gradlew :stroom-ai:stroom-ai-impl:test -DtestUpdateGoldenFiles=true`) and review the reference files'
-  `git diff` with the change. The stored-chat fixture (`fixtures/stored-chats/`) is never regenerated: it is how
-  chats are stored today, so a change that can't read it breaks existing chats.
+  output of the larger tools and generators, scripted chat runs, how stored chats are read back, and the
+  permission, audit, consent and tool-name tables. Lists of recorded cases (`tools/*/*_cases.json`,
+  `recorded_calls.json`, `drafts.json`) hold each core's results call by call. They show that a change (e.g. a
+  refactor) leaves what the agent does as it was. A mismatch writes the actual text under `build/golden-actual/`
+  (or says which case differs) and fails. When a change is meant to alter them, accept it with
+  `-DtestUpdateGoldenFiles=true` (e.g.
+  `./gradlew :stroom-ai:stroom-ai-impl:test :stroom-ai:stroom-mcp-impl:test -DtestUpdateGoldenFiles=true`; run it
+  twice when the generated XSLTs change, as other cases read them) and review the reference files' `git diff` with
+  the change. Fixtures of data already stored are never regenerated: the stored-chat fixture
+  (`fixtures/stored-chats/`), `stored_survey.json` and `stored-build-record.md` are how things are stored today, so a
+  change that can't read them breaks what is already stored.
 * **Integration and end-to-end tests** in `stroom-app` run the real chat and `/mcp` tools on the integration test
   database, stream store and the standard content packs (`AbstractAiIntegrationTest`):
   * `stroom/mcp/impl/e2e/Test*` (`AbstractE2eTest`): each build workflow end to end through an administrator's MCP

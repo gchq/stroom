@@ -3586,10 +3586,10 @@
    "records": 20,
    "check": {
     "records": 20,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_alert, system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_alert, system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -11550,7 +11550,7 @@
    },
    "schema_values": [
     "EventSource/Device/MACAddress takes values of a set form (the schema's pattern), but field 'mac' has ['00:1a:2b:3c:4d:5e', '001a.2b3c.4d5f', '001a.2b3c.4d5e'] in 3 of the 5 sample records: Stroom's schema check refuses those events. Map only the values that fit (an extract whose regex matches only them gives an empty field otherwise), or map the field elsewhere (a name to a HostName, say)",
-    "EventSource/Client/IPAddress takes values of a set form (the schema's pattern), but field 'ip' has ['2001:DB8::21', 'FE80::1A2B:3CFF:FE4D:60'] in 2 of the 5 sample records: Stroom's schema check refuses those events. Map only the values that fit (an extract whose regex matches only them gives an empty field otherwise), or map the field elsewhere (a name to a HostName, say)"
+    "EventSource/Client/IPAddress takes values of a set form (the schema's pattern), but field 'ip' has ['2001:DB8::21', 'FE80::1A2B:3CFF:FE4D:60'] in 2 of the 5 sample records: Stroom's schema check refuses those events. They fit once lower-cased: give the entry transform: lower"
    ]
   }
  },
@@ -14380,6 +14380,7 @@
    "check": {
     "records": 33,
     "problems": [
+     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('Session' for rules session, session_service; 'System' for rules system, system_config_change; 'User' for rules user, user_logoff, user_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value.",
      "[folder] keeps EventDetail/Unknown for 3 of the 33 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: Folder; action: Create, Move; parent_folder: Infrastructure; e.g. EventData/Data: \"Sep 28 2026 00:20:30 - User: domain.com\\Wilson, Casey - [[SecretServer]] Event: \". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
      "[permission] keeps EventDetail/Unknown for 2 of the 33 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: Permission; action: Grant, Revoke; permission: Owner, List; e.g. EventData/Data: \"Sep 28 2026 00:25:21 - User: domain.com\\Lee, Sam - [[SecretServer]] Event: [Perm\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
      "[secret] keeps EventDetail/Unknown for 15 of the 33 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: Secret; correlation_id: corr-000080, corr-000008, corr-000040, corr-000012, corr-000176, corr-000016, corr-000072; action: Checkin, Checkout, Create, Delete, Edit, Export, Launch, Restore ...; e.g. EventData/Data: \"Sep 28 2026 01:57:30 - User: domain.com\\Smith, Morgan - [[SecretServer]] Event: \". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
@@ -14387,9 +14388,7 @@
      "[system] keeps EventDetail/Unknown for 2 of the 33 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: System; correlation_id: corr-000032; result: Success; e.g. EventData/Data: \"Sep 28 2026 00:39:54 - User: domain.com\\Brown, Taylor - [[SecretServer]] Event: \". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
      "[user] keeps EventDetail/Unknown for 4 of the 33 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: User; correlation_id: corr-000136, corr-000256; authentication: OIDC, Local; e.g. EventData/Data: \"Sep 28 2026 03:28:02 - User: domain.com\\Nguyen, Alex - [[SecretServer]] Event: [\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
     ],
-    "warnings": [
-     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('Session' for rules session, session_service; 'System' for rules system, system_config_change; 'User' for rules user, user_logoff, user_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
-    ],
+    "warnings": [],
     "fields_seen": [
      "System/Provider/@Name",
      "System/EventID",
@@ -15674,11 +15673,10 @@
    "check": {
     "records": 6,
     "problems": [
+     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value.",
      "[secret] keeps EventDetail/Unknown for 3 of the 6 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: Secret; action: View; e.g. EventData/Data: \"Sep 27 2026 23:53:01 - User: domain.com\\Chen, Riley - [[SecretServer]] Event: [S\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
     ],
-    "warnings": [
-     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
-    ],
+    "warnings": [],
     "fields_seen": [
      "System/Provider/@Name",
      "System/EventID",
@@ -16414,11 +16412,10 @@
    "check": {
     "records": 150,
     "problems": [
+     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value.",
      "[secret] keeps EventDetail/Unknown for 45 of the 150 sample records: System/Provider/@Name: SecretServer; System/Channel: Application; System/Computer: SecretServer.domain.com; event: Secret; action: View; e.g. EventData/Data: \"Sep 27 2026 23:53:01 - User: domain.com\\Chen, Riley - [[SecretServer]] Event: [S\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
     ],
-    "warnings": [
-     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
-    ],
+    "warnings": [],
     "fields_seen": [
      "System/Provider/@Name",
      "System/EventID",
@@ -18400,7 +18397,7 @@
    ]
   },
   "result": {
-   "error": "ValidationError: 3 validation errors for TranslationMapping\nevents.0.fields.14\n  Value error, 'EventDetail/Unknown/Data': field 'cs(Referer)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error, input_value={'path': 'EventDetail/Unk... 'field': 'cs(Referer)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error\nevents.0.fields.18\n  Value error, 'EventDetail/Unknown/Data': field 'rs(Content-Type)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error, input_value={'path': 'EventDetail/Unk...ld': 'rs(Content-Type)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error\nevents.0.fields.24\n  Value error, 'EventDetail/Unknown/Data': field 'cs(User-Agent)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error, input_value={'path': 'EventDetail/Unk...ield': 'cs(User-Agent)'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error"
+   "error": "MappingValidationException: 3 validation errors for TranslationMapping\nevents.0.fields.14\n  Value error, 'EventDetail/Unknown/Data': field 'cs(Referer)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error]\nevents.0.fields.18\n  Value error, 'EventDetail/Unknown/Data': field 'rs(Content-Type)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error]\nevents.0.fields.24\n  Value error, 'EventDetail/Unknown/Data': field 'cs(User-Agent)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself. [type=value_error]"
   }
  },
  {
@@ -18736,7 +18733,7 @@
   "draft": "40_json_cloudtrail_records (files head)",
   "splitter": null,
   "result": {
-   "error": "JSONDecodeError: Expecting property name enclosed in double quotes: line 150 column 37 (char 4712)"
+   "error": "JsonDecodeException: Expecting property name enclosed in double quotes: line 150 column 37 (char 4712)"
   }
  },
  {
@@ -19458,10 +19455,11 @@
    "records": 6,
    "check": {
     "records": 6,
-    "problems": [],
+    "problems": [
+     "EventDetail/TypeId reads 'logger', which in the sample is the same for events of different kinds ('com.acme.auth.LoginController' for rules logoff, logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"logger\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
+    ],
     "warnings": [
-     "fields in the sample that nothing reads: ['thread']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
-     "EventDetail/TypeId reads 'logger', which in the sample is the same for events of different kinds ('com.acme.auth.LoginController' for rules logoff, logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+     "fields in the sample that nothing reads: ['thread']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
     ],
     "fields_seen": [
      "time",
@@ -23790,10 +23788,10 @@
    "records": 6,
    "check": {
     "records": 6,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'logid', which in the sample is the same for events of different kinds ('0000000013' for rules 0000000013_denied, 0000000013_permitted). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'logid', which in the sample is the same for events of different kinds ('0000000013' for rules 0000000013_denied, 0000000013_permitted). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"logid\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "date",
      "time",
@@ -24398,10 +24396,10 @@
    "records": 150,
    "check": {
     "records": 150,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'logid', which in the sample is the same for events of different kinds ('0000000013' for rules 0000000013_denied, 0000000013_permitted). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'logid', which in the sample is the same for events of different kinds ('0000000013' for rules 0000000013_denied, 0000000013_permitted). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"logid\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "date",
      "time",
@@ -25602,7 +25600,45 @@
   "draft": "49_jsonl_soap_payload (excerpt)",
   "splitter": null,
   "result": {
-   "error": "AttributeError: 'int' object has no attribute 'strip'"
+   "splitter": null,
+   "note": null,
+   "records": 6,
+   "check": {
+    "records": 6,
+    "problems": [
+     "[getaccount] keeps EventDetail/Unknown for 2 of the 6 sample records: service: accounts; operation: GetAccount; payload/Envelope/Body/GetAccount/User: alice, bob; payload//User: alice, bob; payload/Envelope/Body/GetAccount/Account/@id: ACC-1002, ACC-1003; payload//Account/@id: ACC-1002, ACC-1003; e.g. payload: \"<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Head\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
+     "[updateaccount] keeps EventDetail/Unknown for 1 of the 6 sample records: service: accounts; operation: UpdateAccount; payload/Envelope/Body/UpdateAccount/User: alice; payload//User: alice; payload/Envelope/Body/UpdateAccount/Account/@id: ACC-1005; payload//Account/@id: ACC-1005; e.g. payload: \"<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Head\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
+    ],
+    "warnings": [
+     "fields in the sample that nothing reads: ['payload', 'payload/Envelope/Header', 'payload//Header', 'payload/Envelope/Body/GetAccount/Account', 'payload//Account', 'payload/Envelope/Body/UpdateAccount/Account']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+    ],
+    "fields_seen": [
+     "time",
+     "client_ip",
+     "service",
+     "operation",
+     "status",
+     "payload",
+     "payload/Envelope/Header",
+     "payload//Header",
+     "payload/Envelope/Body/Login/User",
+     "payload//User",
+     "payload/Envelope/Body/Login/Result",
+     "payload//Result",
+     "payload/Envelope/Body/GetAccount/User",
+     "payload/Envelope/Body/GetAccount/Account",
+     "payload//Account",
+     "payload/Envelope/Body/GetAccount/Account/@id",
+     "payload//Account/@id",
+     "payload//@id",
+     "payload/Envelope/Body/GetAccount/Result",
+     "payload/Envelope/Body/UpdateAccount/User",
+     "payload/Envelope/Body/UpdateAccount/Account",
+     "payload/Envelope/Body/UpdateAccount/Account/@id",
+     "payload/Envelope/Body/UpdateAccount/Result"
+    ]
+   },
+   "schema_values": []
   }
  },
  {
@@ -25922,7 +25958,45 @@
   "draft": "49_jsonl_soap_payload (files head)",
   "splitter": null,
   "result": {
-   "error": "AttributeError: 'int' object has no attribute 'strip'"
+   "splitter": null,
+   "note": null,
+   "records": 150,
+   "check": {
+    "records": 150,
+    "problems": [
+     "[getaccount] keeps EventDetail/Unknown for 37 of the 150 sample records: service: accounts; operation: GetAccount; payload/Envelope/Body/GetAccount/User: alice, bob, carol; payload//User: alice, bob, carol; payload/Envelope/Body/GetAccount/Account/@id: ACC-1002, ACC-1003, ACC-1007, ACC-1012, ACC-1013, ACC-1014, ACC-1019, ACC-1024 ...; payload//Account/@id: ACC-1002, ACC-1003, ACC-1007, ACC-1012, ACC-1013, ACC-1014, ACC-1019, ACC-1024 ...; e.g. payload: \"<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Head\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart).",
+     "[updateaccount] keeps EventDetail/Unknown for 35 of the 150 sample records: service: accounts; operation: UpdateAccount; payload/Envelope/Body/UpdateAccount/User: alice, carol, bob; payload//User: alice, carol, bob; payload/Envelope/Body/UpdateAccount/Account/@id: ACC-1005, ACC-1010, ACC-1015, ACC-1020, ACC-1022, ACC-1025, ACC-1026, ACC-1027 ...; payload//Account/@id: ACC-1005, ACC-1010, ACC-1015, ACC-1020, ACC-1022, ACC-1025, ACC-1026, ACC-1027 ...; e.g. payload: \"<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Head\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
+    ],
+    "warnings": [
+     "fields in the sample that nothing reads: ['payload', 'payload/Envelope/Header', 'payload//Header', 'payload/Envelope/Body/GetAccount/Account', 'payload//Account', 'payload/Envelope/Body/UpdateAccount/Account']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
+    ],
+    "fields_seen": [
+     "time",
+     "client_ip",
+     "service",
+     "operation",
+     "status",
+     "payload",
+     "payload/Envelope/Header",
+     "payload//Header",
+     "payload/Envelope/Body/Login/User",
+     "payload//User",
+     "payload/Envelope/Body/Login/Result",
+     "payload//Result",
+     "payload/Envelope/Body/GetAccount/User",
+     "payload/Envelope/Body/GetAccount/Account",
+     "payload//Account",
+     "payload/Envelope/Body/GetAccount/Account/@id",
+     "payload//Account/@id",
+     "payload//@id",
+     "payload/Envelope/Body/GetAccount/Result",
+     "payload/Envelope/Body/UpdateAccount/User",
+     "payload/Envelope/Body/UpdateAccount/Account",
+     "payload/Envelope/Body/UpdateAccount/Account/@id",
+     "payload/Envelope/Body/UpdateAccount/Result"
+    ]
+   },
+   "schema_values": []
   }
  },
  {
@@ -28301,11 +28375,10 @@
    "check": {
     "records": 69,
     "problems": [
+     "EventDetail/TypeId reads 'action', which in the sample is the same for events of different kinds ('export' for rules export, export_alert). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"action\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value.",
      "[export] keeps EventDetail/Unknown for 21 of the 69 sample records: stream: stderr, stdout; user: alice, bob, carol; action: export; esult: failure, success; pod: api-7d9f-0, api-7d9f-, api-7d9f-1, api-7d, api-7, api-7d9f-2, api-7d9f-4, api-7d9f-3; ail: xxxxxxxxxxxxxxxxxxxxxxxxxxx; e.g. message: \"user=alice action=export r\n2026-10-11T08:00:00.000001Z stderr P esult=failure po\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
     ],
-    "warnings": [
-     "EventDetail/TypeId reads 'action', which in the sample is the same for events of different kinds ('export' for rules export, export_alert). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
-    ],
+    "warnings": [],
     "fields_seen": [
      "time",
      "stream",
@@ -29494,10 +29567,10 @@
    "records": 8,
    "check": {
     "records": 8,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -29665,10 +29738,11 @@
    "records": 4,
    "check": {
     "records": 4,
-    "problems": [],
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('SYSTEM' for rules system_alert, system_service). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
+    ],
     "warnings": [
-     "fields in the sample that nothing reads: ['src_ip', 'dst_ip']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose.",
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('SYSTEM' for rules system_alert, system_service). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+     "fields in the sample that nothing reads: ['src_ip', 'dst_ip']: map each to the element that means it (a Data entry if nothing else fits), or leave it out on purpose."
     ],
     "fields_seen": [
      "timestamp",
@@ -30510,11 +30584,10 @@
    "check": {
     "records": 5,
     "problems": [
+     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value.",
      "[secret] keeps EventDetail/Unknown for 2 of the 5 sample records: System/Provider/@Name: SecretServer; System/Computer: ss01; event: Secret; action: View, Edit; e.g. EventData/Data: \"Sep 27 2026 23:56:15 - User: domain.com\\Chen, Riley - [[SecretServer]] Event: [S\". Give them the action element these values describe, a rule per kind if they differ (split on the field that tells them apart)."
     ],
-    "warnings": [
-     "EventDetail/TypeId reads 'event', which in the sample is the same for events of different kinds ('User' for rules user_logoff, user_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
-    ],
+    "warnings": [],
     "fields_seen": [
      "System/Provider/@Name",
      "System/EventID",
@@ -30866,10 +30939,10 @@
    "records": 4,
    "check": {
     "records": 4,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -31445,10 +31518,10 @@
    "records": 20,
    "check": {
     "records": 20,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_alert, system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'SYSTEM' for rules system_alert, system_config_change, system_service; 'ADMIN' for rules admin_config_change, admin_logoff, admin_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -32725,10 +32798,10 @@
    "records": 7,
    "check": {
     "records": 7,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -33038,10 +33111,10 @@
    "records": 7,
    "check": {
     "records": 7,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'ADMIN' for rules admin_config_change, admin_logon). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'event_type', which in the sample is the same for events of different kinds ('TRAFFIC' for rules traffic_denied, traffic_permitted; 'ADMIN' for rules admin_config_change, admin_logon). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"event_type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "timestamp",
      "device",
@@ -35168,10 +35241,10 @@
    "records": 3,
    "check": {
     "records": 3,
-    "problems": [],
-    "warnings": [
-     "EventDetail/TypeId reads 'type', which in the sample is the same for events of different kinds ('traffic' for rules traffic_denied, traffic_permitted). TypeId names the kind of event: give each rule its own (a value per rule, or an xpath joining the fields)."
+    "problems": [
+     "EventDetail/TypeId reads 'type', which in the sample is the same for events of different kinds ('traffic' for rules traffic_denied, traffic_permitted). TypeId names the kind of event, so each kind needs its own: write it in the format the standing instructions (AGENTS docs) set for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. {\"path\": \"EventDetail/TypeId\", \"join\": [\"type\", \"<the field telling them apart, e.g. action>\"]} (separator, default '-'), or give each rule its own value."
     ],
+    "warnings": [],
     "fields_seen": [
      "date",
      "time",

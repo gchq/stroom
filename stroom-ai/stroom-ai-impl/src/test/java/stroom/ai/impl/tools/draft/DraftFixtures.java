@@ -34,8 +34,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What the draft mapping's tests share: the event-logging schemas, JSON reading, and the established results kept
-/// as fixtures.
+/// What the draft mapping's tests share: the event-logging schemas, JSON reading, and the recorded cases kept as
+/// fixtures.
 class DraftFixtures {
 
     /// The event-logging 4.1.0 schema.
@@ -179,37 +179,5 @@ class DraftFixtures {
     /// @return A mutable list of them.
     static List<String> list(final String... texts) {
         return new ArrayList<>(List.of(texts));
-    }
-
-    /// Each rule's Data as it is drafted now, from what the rule's own records hold, where the fixtures give every
-    /// rule the whole rest (see DraftMapping's held): checks the draft's is a subset of the fixture's, then cuts the
-    /// fixture's to it, so the rest of the draft compares as it was.
-    ///
-    /// @param drafted  The mapping drafted now.
-    /// @param recorded The fixture's mapping, cut.
-    @SuppressWarnings("unchecked")
-    static void asTheRulesRecordsHold(final Object drafted, final Object recorded) {
-        if (!(drafted instanceof final Map<?, ?> draftedMapping)
-            || !(recorded instanceof final Map<?, ?> recordedMapping)
-            || !(draftedMapping.get("events") instanceof final List<?> draftedRules)
-            || !(recordedMapping.get("events") instanceof final List<?> recordedRules)
-            || draftedRules.size() != recordedRules.size()) {
-            return;
-        }
-        for (int i = 0; i < draftedRules.size(); i++) {
-            final List<Object> draftedFields = (List<Object>) ((Map<String, Object>) draftedRules.get(i))
-                    .get("fields");
-            final List<Object> recordedFields = (List<Object>) ((Map<String, Object>) recordedRules.get(i))
-                    .get("fields");
-            if (draftedFields == null || recordedFields == null) {
-                continue;
-            }
-            final List<Object> draftedData = draftedFields.stream()
-                    .filter(f -> ((Map<?, ?>) f).containsKey("data_name"))
-                    .toList();
-            assertThat(recordedFields).as("rule %s's Data, as recorded", i)
-                    .containsAll(draftedData);
-            recordedFields.removeIf(f -> ((Map<?, ?>) f).containsKey("data_name") && !draftedData.contains(f));
-        }
     }
 }

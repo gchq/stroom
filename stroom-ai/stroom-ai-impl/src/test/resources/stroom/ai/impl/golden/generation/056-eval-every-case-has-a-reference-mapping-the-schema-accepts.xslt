@@ -6,10 +6,12 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:variable name="user_failed_parts" select="analyze-string(string($message[1]), '^Login failed for user ''([^'']+)''')"/>
     <xsl:variable name="user_ok_parts" select="analyze-string(string($message[1]), '^User ''([^'']+)'' logged (in|out)')"/>
     <xsl:variable name="direction" select="$user_ok_parts/fn:match//fn:group[@nr=2][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$direction = 'in'">
         <xsl:apply-templates select="." mode="event_type_logged_in"/>
@@ -21,7 +23,7 @@
         <xsl:apply-templates select="." mode="event_type_logged_out"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('direction=', string(($direction)[1])), concat('user_failed=', string((normalize-space($user_failed_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('direction=', string(($direction)[1])), concat('user_failed=', string((normalize-space($user_failed_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
