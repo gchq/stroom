@@ -186,6 +186,31 @@ class StepSampleTool extends AbstractBuiltInTool {
                                    final Map<String, String> draftCode,
                                    final Integer maxRecords,
                                    final Integer recordsPerStream) {
+        return sampled(call, context, pipelineUuid, streamIds, draftCode, maxRecords, recordsPerStream, false)
+                .result();
+    }
+
+    /// As [#stepSample], keeping what each record stepped wrote at the pipeline's output element when asked:
+    /// evaluate_pipeline reads the documents an indexing pipeline writes from them.
+    ///
+    /// @param call             The call, whose id tells its forms apart.
+    /// @param context          The call's context.
+    /// @param pipelineUuid     The pipeline to step.
+    /// @param streamIds        The streams to step through.
+    /// @param draftCode        Draft code by element, or null for the saved code.
+    /// @param maxRecords       The most records to step, or null for the limit.
+    /// @param recordsPerStream The most records to step of each stream, or null for the default.
+    /// @param keepOutputs      True to keep each record's output.
+    /// @return The verdict, as [#stepSample] gives it, and each record's output (none unless kept).
+    /// @throws ToolTimeoutException if the call is cancelled.
+    Sampled sampled(final ToolCall call,
+                    final ToolCallContext context,
+                    final String pipelineUuid,
+                    final List<Long> streamIds,
+                    final Map<String, String> draftCode,
+                    final Integer maxRecords,
+                    final Integer recordsPerStream,
+                    final boolean keepOutputs) {
         stepping.checkCanStep();
         stepping.checkDrafts(call, context, pipelineUuid, draftCode);
         stepping.refuseOlderThanFeed(streamIds);
@@ -203,12 +228,13 @@ class StepSampleTool extends AbstractBuiltInTool {
         final Walked walked;
         try {
             walked = PipelineStepping.withinTimeLimit(context, () -> walk(context, pipeline, streamIds, draftCode,
-                    cap, perStreamLimit));
+                    cap, perStreamLimit, keepOutputs));
         } finally {
             stepping.audit(context, streamIds, "Stepped stream(s) through " + pipeline.name() + " with the " + NAME
                                                + " tool");
         }
-        return verdict(context, pipeline, streamIds, draftCode, maxRecords, perStreamLimit, cap, walked);
+        return new Sampled(verdict(context, pipeline, streamIds, draftCode, maxRecords, perStreamLimit, cap, walked),
+                List.copyOf(walked.outputs));
     }
 
     // Every stream walked, up to the caps, or until the call's time is up.
@@ -217,8 +243,9 @@ class StepSampleTool extends AbstractBuiltInTool {
                         final List<Long> streamIds,
                         final Map<String, String> draftCode,
                         final int cap,
-                        final Integer perStreamLimit) {
-        final Walked walked = new Walked();
+                        final Integer perStreamLimit,
+                        final boolean keepOutputs) {
+        final Walked walked = new Walked(keepOutputs);
         final String outputElement = pipeline.outputElement();
         final CallProgress progress = CallProgress.of(context);
         int n = 0;
@@ -282,6 +309,9 @@ class StepSampleTool extends AbstractBuiltInTool {
         walked.markers.addAll(found);
         walked.records.add(new Stepped(key, found.size()));
         final String output = SteppingWalks.output(result, outputElement);
+        if (walked.keepOutputs) {
+            walked.outputs.add(output);
+        }
         if (SteppingVerdicts.writesEvents(output)) {
             walked.wroteEvents++;
             if (EventXml.countEvents(output) > 0) {
@@ -436,6 +466,14 @@ class StepSampleTool extends AbstractBuiltInTool {
 
     }
 
+    /// A sample stepped.
+    ///
+    /// @param result  The verdict, as [#stepSample] gives it.
+    /// @param outputs What each record stepped wrote at the pipeline's output element, if kept.
+    record Sampled(Map<String, Object> result, List<String> outputs) {
+
+    }
+
     // What the walks of the streams found.
     private static final class Walked {
 
@@ -450,7 +488,15 @@ class StepSampleTool extends AbstractBuiltInTool {
         private int wroteReference;
         private int wroteAReference;
         private Map<String, Object> firstOutput;
+        // Whether each record's output is kept, and the outputs kept.
+        private final boolean keepOutputs;
+        private final List<String> outputs = new ArrayList<>();
+
         // Stopped before the call's time ran out.
         private boolean cut;
+
+        private Walked(final boolean keepOutputs) {
+            this.keepOutputs = keepOutputs;
+        }
     }
 }

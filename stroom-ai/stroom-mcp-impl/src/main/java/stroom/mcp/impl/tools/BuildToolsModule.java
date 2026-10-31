@@ -57,6 +57,7 @@ public class BuildToolsModule extends AbstractModule {
                 .addBinding(StepRecordsTool.class)
                 .addBinding(CompareOutputsTool.class)
                 .addBinding(SummariseFixTool.class)
+                .addBinding(EvaluatePipelineTool.class)
                 .addBinding(CreateFeedTool.class)
                 .addBinding(UploadSampleTool.class)
                 .addBinding(RecordSourceNotesTool.class)

@@ -113,6 +113,47 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void aReferenceDataPipelineGetsAGeneratedReferenceMapsSection() {
+        world.pipeline(BUILD, "Ref", "r");
+        world.facts.stages.put("r", "reference");
+
+        assertThat(world.refusal(tool, context, arguments("r", "Created")))
+                .startsWith("Give stream_ids (the Raw Reference streams the pipeline reads)");
+        Mockito.verifyNoInteractions(world.sections);
+
+        Mockito.when(world.sections.referenceMapsSection(any(), eq("r"), eq(List.of(5L)))).thenReturn("The maps.");
+        final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(Map.of("build", BUILD,
+                "pipeline_uuid", "r", "markdown", "## Purpose and data\n\nUsers.\n\n## Reference maps\n\nMine.\n",
+                "stream_ids", List.of(5))));
+
+        assertThat(made).containsEntry("reference_maps", "The maps.").doesNotContainKey("field_mapping");
+        assertThat(world.world.body(String.valueOf(made.get("uuid"))))
+                .contains("## Reference maps\n\nThe maps.")
+                .doesNotContain("Mine.");
+    }
+
+    @Test
+    void aHandWrittenDiscoveryPipelineIsDocumentedFromTheDocumentsItWritesFromRawStreams() {
+        world.pipeline(BUILD, "Disc", "d");
+        world.facts.stages.put("d", "discovery");
+
+        assertThat(world.refusal(tool, context, arguments("d", "Created")))
+                .startsWith("Give stream_ids (the raw streams the discovery pipeline indexes)");
+        world.facts.stages.put("d", "indexing");
+        assertThat(world.refusal(tool, context, arguments("d", "Created")))
+                .startsWith("Give stream_ids (the Events streams the pipeline indexes)");
+        world.facts.stages.put("d", "discovery");
+
+        Mockito.when(world.sections.writtenFieldsSection(any(), eq("d"), eq(List.of(3L)))).thenReturn("Written.");
+        final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(Map.of("build", BUILD,
+                "pipeline_uuid", "d", "markdown", MARKDOWN, "stream_ids", List.of(3))));
+
+        assertThat(made).containsEntry("field_mapping", "Written.");
+        assertThat(world.world.body(String.valueOf(made.get("uuid")))).contains("## Field mapping\n\nWritten.")
+                .doesNotContain("_json", "_original", "dynamic");
+    }
+
+    @Test
     void unknownIsNotAcceptedAsABenignError() {
         // Seen: the user asked to agree to "3 of 50 records" as Unknown, with nothing to say which events they were.
         assertThat(world.refusal(tool, context, "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", \"markdown\": "

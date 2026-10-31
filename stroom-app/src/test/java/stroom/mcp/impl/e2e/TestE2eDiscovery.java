@@ -335,6 +335,17 @@ class TestE2eDiscovery extends AbstractE2eTest {
                 .containsExactly("33% of documents", "`10.1.1.1`");
         documentedToTheField(uuidOf(written), List.of("StreamId", "EventId", "@timestamp", "message_json.client.ip"),
                 Map.of("message_json.client.ip", "10.1.1.1"));
+
+        // The discovery index doc itself: the fields its discovery pipeline writes are not held against it (a
+        // discovery feeder is left out of the missing-fields check), and its fields come from the survey.
+        final Map<String, Object> indexDocumented = agreed("write_documentation", args("build", build,
+                "index_uuid", indexDoc, "index_itself", true, "markdown",
+                "## Purpose and data\n\nWeb access logs, indexed as they are for exploration.\n", "change",
+                "Created"));
+        dump("write_documentation discovery index", indexDocumented);
+        assertThat(indexDocumented).doesNotContainKey("not_in_index");
+        assertThat(String.valueOf(indexDocumented.get("field_mapping"))).as("the index's fields, from the survey")
+                .contains("user.name", "message_json.client.ip", "@timestamp");
     }
 
     /// An existing raw feed, outside the build, already holding three streams whose data drifts: backfilled by id,
