@@ -41,7 +41,9 @@ class TestSteppingVerdicts {
 
     @Test
     void outputWithNoElementsIsAnErrorButAnXmlDeclarationAloneIsNotAnElement() {
-        assertThat(SteppingVerdicts.emptyOutput(SteppingWorld.step(7, 0, 1, "<?xml version=\"1.1\"?>text"),
+        assertThat(SteppingVerdicts.emptyOutput(SteppingWorld.stepFrom(7, 0, 1, "<records><record><data>text</data>"
+                                                                                + "</record></records>",
+                        "<?xml version=\"1.1\"?>text"),
                 "translationFilter", "7:1"))
                 .singleElement()
                 .satisfies(marker -> {
@@ -51,6 +53,39 @@ class TestSteppingVerdicts {
                 });
         assertThat(SteppingVerdicts.emptyOutput(SteppingWorld.step(7, 0, 1, "<?xml version=\"1.1\"?><Events/>"),
                 "translationFilter", "7:1")).isEmpty();
+    }
+
+    @Test
+    void theInputsTextCopiedThroughIsAnErrorHoweverItIsWritten() {
+        // XSLT's built-in rules copy every text node when no template matches: escaped by the xml output method, as
+        // it is by the text one, and with or without the whitespace between elements.
+        final String input = "<?xml version=\"1.1\"?>\n<records>\n  <record><data>jbloggs</data>"
+                             + "<data>Tom &amp; Jerry</data><![CDATA[a < b]]></record>\n</records>";
+
+        assertThat(List.of("\n  jbloggs Tom &amp; Jerry a &lt; b\n", "jbloggsTom & Jerrya < b", "", "  \n"))
+                .allSatisfy(output -> assertThat(SteppingVerdicts.emptyOutput(
+                        SteppingWorld.stepFrom(7, 0, 1, input, output), "translationFilter", "7:1"))
+                        .as(output)
+                        .singleElement()
+                        .satisfies(marker -> assertThat(marker.message()).startsWith(SteppingVerdicts.NO_ELEMENTS)));
+    }
+
+    @Test
+    void textAnXsltWritesOnPurposeIsNotAnError() {
+        // Seen: an XSLT with xsl:output method="text" writing CSV or JSON lines was given a blocking verdict, as if its
+        // templates had matched nothing.
+        final String input = "<records><record><data name=\"user\" value=\"jbloggs\"/>"
+                             + "<data name=\"action\" value=\"logon\"/></record></records>";
+
+        assertThat(List.of("jbloggs,logon\n", "{\"user\": \"jbloggs\", \"action\": \"logon\"}\n"))
+                .allSatisfy(output -> assertThat(SteppingVerdicts.emptyOutput(
+                        SteppingWorld.stepFrom(7, 0, 1, input, output), "translationFilter", "7:1"))
+                        .as(output)
+                        .isEmpty());
+        // Text built from the input's text, but not only a copy of it.
+        assertThat(SteppingVerdicts.emptyOutput(SteppingWorld.stepFrom(7, 0, 1,
+                "<records><record><data>jbloggs</data><data>logon</data></record></records>",
+                "user=jbloggs action=logon"), "translationFilter", "7:1")).isEmpty();
     }
 
     @Test

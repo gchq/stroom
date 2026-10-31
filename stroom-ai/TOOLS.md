@@ -3074,7 +3074,9 @@ Shared behaviour:
   accepted for the pipeline (`AcceptedErrors`) counted as benign. Output with no XML elements is a marker of its own
   (`SteppingVerdicts.emptyOutput`): when no template matches (usually a wrong `xpath-default-namespace`), XSLT's
   built-in rules copy text through, nothing errors, and processing silently writes nothing. CEF lines and Kafka
-  records are not empty output (`SteppingVerdicts.sendsOn`).
+  records are not empty output (`SteppingVerdicts.sendsOn`), nor is text that isn't only the input's own text (CSV
+  or JSON lines from an XSLT with `xsl:output method="text"`; seen: such an export given a blocking verdict). Blank
+  output, or the input's text copied through, escaped or not, still is.
 * **Unknown nobody agreed to.** On a build's own new pipeline (tagged managed, not a copy) whose XSLT was saved
   without a mapping, records written as `EventDetail/Unknown` are a blocking group
   (`PipelineStepping.unagreedUnknown`), with what the Unknown events hold (their TypeIds and Data values). A
