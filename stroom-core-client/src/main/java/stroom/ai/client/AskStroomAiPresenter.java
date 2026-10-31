@@ -2476,6 +2476,10 @@ public class AskStroomAiPresenter
                 documentationChangeRow(row, messageId, json, request, status, pending);
                 return;
             }
+            if (UserActionsUi.CREATE_INSTRUCTIONS.equals(action)) {
+                newInstructionsRow(row, messageId, json, request, status, pending);
+                return;
+            }
             // A classic dashboard is shown as what Stroom builds from the StroomQL, rather than the StroomQL.
             final JSONArray outline = UserActionsUi.CREATE_DASHBOARD.equals(action)
                     ? AiToolMessages.getArray(AiToolMessages.getString(json, "newDashboard"), "outline")
@@ -2583,6 +2587,42 @@ public class AskStroomAiPresenter
                         new Attribute(USER_ACTION_ID_ATTRIBUTE, actionId));
             }
         }
+    }
+
+    // The standing instructions proposed for a folder with none: the whole doc as added lines, and the button that
+    // opens its review, or what became of it.
+    private void newInstructionsRow(final HtmlBuilder row,
+                                    final int messageId,
+                                    final String json,
+                                    final String proposed,
+                                    final String status,
+                                    final boolean pending) {
+        if (proposed != null) {
+            row.append(CodeDiffCardRenderer.render(LineDiff.diff("", proposed)));
+        }
+        if (pending) {
+            row.elem(UserActionsUi.buttonText(UserActionsUi.CREATE_INSTRUCTIONS), BUTTON,
+                    Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                    new Attribute(USER_ACTION_MESSAGE_ATTRIBUTE, String.valueOf(messageId)),
+                    new Attribute(USER_ACTION_ID_ATTRIBUTE, NullSafe.string(AiToolMessages.getString(json, "id"))));
+            return;
+        }
+        row.div(text -> text.append(UserActionsUi.outcomeText(status, AiToolMessages.getString(json, "outcome"))),
+                Attribute.className("ai-approval-reason"));
+    }
+
+    /// Reviews standing instructions proposed for a folder with none, from which the user can create the doc,
+    /// saved. Creating it is checked and done by the server.
+    private void onReviewNewInstructions(final int messageId, final String actionId) {
+        final AiDocumentationChanges.Change change = documentationChange(messageId, actionId);
+        if (change == null) {
+            return;
+        }
+        aiDocumentationChanges.reviewNewInstructions(this, this, change, () -> {
+            showUserActionStatus(messageId, actionId, "DONE", UserActionsUi.CREATED);
+            // Fetch the note of what was done.
+            pollAfterAnswer();
+        });
     }
 
     /// @return A proposed documentation change, as the chat shows it, or null if it isn't there.
@@ -3030,6 +3070,11 @@ public class AskStroomAiPresenter
         if (UserActionsUi.APPLY_DOCUMENTATION_CHANGE.equals(action)) {
             // Nothing is done until the user applies it in the review.
             onReviewDocumentationChange(messageId, actionId);
+            return;
+        }
+        if (UserActionsUi.CREATE_INSTRUCTIONS.equals(action)) {
+            // Nothing is created until the user applies it in the review.
+            onReviewNewInstructions(messageId, actionId);
             return;
         }
         button.setAttribute("disabled", "disabled");

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -204,6 +206,43 @@ public final class InstructionRules {
             }
         }
         return Optional.ofNullable(found);
+    }
+
+    /// What in a doc's sections the tools apply themselves they couldn't apply: a bullet naming no stage, rule or
+    /// layout they know, which they leave out without saying. Fine for a note; a slip (e.g. 'indexng') would be a
+    /// rule that does nothing, so a proposed doc's are pointed out.
+    ///
+    /// @param text A doc's text.
+    /// @return A problem for each such line.
+    public static List<String> problems(final String text) {
+        final List<String> out = new ArrayList<>();
+        keyProblems(out, text, REQUIRED_HEADING, "Required imports", STAGES.keySet(), BULLET);
+        keyProblems(out, text, COMPONENTS_HEADING, "Component templates", COMPONENT_RULES.keySet(), BULLET);
+        for (final String line : section(text, DOCUMENTATION_HEADING).orElse("").split("\\R")) {
+            final Matcher bullet = LAYOUT_BULLET.matcher(line);
+            if (bullet.matches()
+                && !LAYOUTS.containsKey(stripChars(bullet.group(2).strip(), "`*.").toLowerCase(Locale.ROOT))) {
+                out.add("'## Documentation' line '" + line.strip() + "' names no layout the tools know ("
+                        + String.join(", ", new TreeSet<>(LAYOUTS.keySet())) + ")");
+            }
+        }
+        return out;
+    }
+
+    private static void keyProblems(final List<String> out,
+                                    final String text,
+                                    final Pattern heading,
+                                    final String name,
+                                    final Set<String> keys,
+                                    final Pattern bulletPattern) {
+        for (final String line : section(text, heading).orElse("").split("\\R")) {
+            final Matcher bullet = bulletPattern.matcher(line);
+            if (bullet.matches()
+                && !keys.contains(stripChars(bullet.group(1).strip(), "`*").toLowerCase(Locale.ROOT))) {
+                out.add("'## " + name + "' line '" + line.strip() + "' names none the tools know ("
+                        + String.join(", ", new TreeSet<>(keys)) + "), so it would be left out");
+            }
+        }
     }
 
     /// @param text    A doc's text.

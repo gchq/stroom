@@ -64,6 +64,10 @@ class TestUserActionService {
     private static final DocRef PIPELINE = new DocRef("Pipeline", PIPELINE_UUID, "Acme-Events");
     private static final DocRef DASHBOARD = new DocRef("Dashboard", "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f", "Logons");
     private static final DocRef XSLT = new DocRef("XSLT", "6b1d3c2e-8f4a-4b9c-a1d2-3e4f5a6b7c8d", "Event translation");
+    private static final DocRef FOLDER = new DocRef("Folder", "2a3b4c5d-6e7f-4a8b-9c0d-1e2f3a4b5c6d", "Acme");
+    private static final DocRef AGENTS = new DocRef("Documentation", "7d8e9f0a-1b2c-4d3e-8f4a-5b6c7d8e9f0a",
+            "AGENTS");
+    private static final String INSTRUCTIONS = "# Standing instructions\n\n- Times are UTC.\n";
 
     private final AiService aiService = Mockito.mock(AiService.class);
     private final AiDao aiDao = Mockito.mock(AiDao.class);
@@ -835,6 +839,73 @@ class TestUserActionService {
     }
 
     @Test
+    void newStandingInstructionsAreCreatedAndSavedAsTheUserAndOpened() {
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.empty());
+        Mockito.when(lookup.createInstructions(FOLDER, INSTRUCTIONS)).thenReturn(AGENTS);
+        storeResult(newInstructions());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "instructions-1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getMessage()).isEqualTo(UserActionService.CREATED);
+        assertThat(result.getOpenDocument()).isEqualTo(AGENTS);
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(AGENTS),
+                Mockito.eq(UserActionService.CREATE_INSTRUCTIONS_COMMAND), Mockito.anyString(),
+                Mockito.eq("Created and saved the proposed standing instructions"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("I created the standing instructions in Folder 'Acme' and saved it"));
+    }
+
+    @Test
+    void newStandingInstructionsAreKeptToThePartsTheUserKept() {
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.empty());
+        Mockito.when(lookup.createInstructions(Mockito.eq(FOLDER), Mockito.anyString())).thenReturn(AGENTS);
+        storeResult(newInstructions());
+
+        // Everything is one added part, so rejecting it leaves nothing.
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "instructions-1", "0");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("nothing to create");
+        Mockito.verify(lookup, Mockito.never()).createInstructions(Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void newStandingInstructionsAreNotCreatedOnceTheFolderHasSome() {
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.of(AGENTS));
+        storeResult(newInstructions());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "instructions-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).contains("has standing instructions (an AGENTS doc) now");
+        Mockito.verify(lookup, Mockito.never()).createInstructions(Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
+    void newStandingInstructionsTheUserMayNotCreateAreRefusedWithTheReason() {
+        Mockito.when(lookup.find(FOLDER)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(lookup.instructionsIn(FOLDER)).thenReturn(Optional.empty());
+        Mockito.when(lookup.createInstructions(FOLDER, INSTRUCTIONS))
+                .thenThrow(new IllegalStateException("You do not have permission to create in Acme"));
+        storeResult(newInstructions());
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "instructions-1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("The standing instructions couldn't be created: You do not have "
+                                                  + "permission to create in Acme");
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(FOLDER),
+                Mockito.eq(UserActionService.CREATE_INSTRUCTIONS_COMMAND), Mockito.anyString(),
+                Mockito.contains("permission"), Mockito.eq(false));
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+    }
+
+    @Test
     void undoingAnAppliedDashboardChangeIsRecordedAndOffersTheChangeAgain() {
         Mockito.when(lookup.canEdit(DASHBOARD)).thenReturn(true);
         final String stored = storeResult(dashboardChange().withStatus(Status.DONE,
@@ -1035,6 +1106,13 @@ class TestUserActionService {
                 "New text", List.of(), Long.MAX_VALUE, status, null, null,
                 new UserActionRecord.CodeChange(null, null, "Old text", UserActionService.sha256("Old text"),
                         snapshotHash, 1, 1));
+    }
+
+    private static UserActionRecord newInstructions() {
+        return new UserActionRecord("instructions-1", UserActions.CREATE_INSTRUCTIONS,
+                "Create standing instructions (AGENTS) in folder 'Acme': +3 lines", null, null, null, FOLDER,
+                INSTRUCTIONS, List.of(), Long.MAX_VALUE, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, "", UserActionService.sha256(""), null, 3, 0));
     }
 
     private static UserActionRecord dashboardChange() {
