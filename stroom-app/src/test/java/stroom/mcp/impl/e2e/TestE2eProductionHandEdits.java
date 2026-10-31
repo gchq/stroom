@@ -132,6 +132,41 @@ class TestE2eProductionHandEdits extends AbstractE2eTest {
                 .contains("account", "data[@name='ip']");
     }
 
+    @Test
+    void aProductionEditMadeAfterTheWorkingCopyIsPutToTheUserAtPromotion() {
+        // Found reviewing the tools: production edited by hand after its working copy was taken lost the edit when
+        // the copy was promoted (but for the backup). Now the user is asked, told how production differs.
+        final Production production = promoted();
+        final String copy = workingCopy(production, "prodedit-fix4");
+        final Map<String, Object> changed = agreed("build_translation_xslt", args("changes", CHANGE, "uuid", copy,
+                "stream_ids", List.of(production.raw()), "change", "IP address written"));
+        assertThat(changed.get("ok")).as("the change made: %s", changed.get("problems")).isEqualTo(true);
+        assertThat(stepSample(production.pipeline(), List.of(production.raw())).get("verdict")).isEqualTo("clean");
+        // Production is edited by hand after the copy was taken.
+        editInProduction(production, code -> code.replace("<TypeId>Logon</TypeId>",
+                "<TypeId>Logon (edited in production)</TypeId>"));
+
+        // The user keeps production: the copy stays in the build.
+        client.answeringWith(choosing("Keep production as it is"));
+        promote("prodedit-fix4");
+        assertThat(formMessages()).anySatisfy(message -> assertThat(message)
+                .contains("was changed in production since its working copy was taken",
+                        "Overwriting it loses from production: ", "<TypeId>Logon (edited in production)</TypeId>",
+                        "The working copy brings: "));
+        assertThat(readXslt(production.xslt()).getData()).as("production as the user kept it")
+                .contains("Logon (edited in production)")
+                .doesNotContain("data[@name='ip']");
+        assertThat(readXslt(copy).getData()).as("the copy, still in the build").contains("data[@name='ip']");
+
+        // Promoted again, the user overwrites production with the copy.
+        client.answeringWith(choosing("Overwrite production with the working copy"));
+        promote("prodedit-fix4");
+        assertThat(readXslt(production.xslt()).getData()).as("production overwritten with the copy")
+                .contains("data[@name='ip']")
+                .doesNotContain("Logon (edited in production)");
+        client.answeringWith(McpTestClient::agree);
+    }
+
     // A change refused until the hand edit is carried into the mapping (rebuild_mapping, proven on the sample and
     // confirmed by the user), then made with the edit kept; promoted back over production.
     private void carriedThenChanged(final Production production, final String build) {
