@@ -59,6 +59,10 @@ public final class ErrorTriage {
     private static final Pattern QUOTED = Pattern.compile("\"[^\"]*\"|'[^']*'");
     private static final Pattern DIGITS = Pattern.compile("\\d+");
     private static final Pattern BULK = Pattern.compile("BulkResponse:\\s*(\\{.*\\})\\s*$", Pattern.DOTALL);
+    // Stroom's own message for one document Elasticsearch rejected (since it stopped logging the whole response),
+    // naming the document by its EventId: the record of the stream it was indexed from.
+    private static final Pattern REJECTED_EVENT = Pattern.compile("^Elasticsearch rejected the document with "
+                                                                  + "EventId (\\d+) \\(");
     private static final int DEFAULT_EXAMPLES = 3;
 
     private final List<Rule> rules;
@@ -153,12 +157,19 @@ public final class ErrorTriage {
         };
     }
 
-    /// Stroom reports an Elasticsearch bulk request that had failures as one message holding the whole response.
-    /// One marker per rejected document instead, saying which (its place in the batch) and why.
+    /// Stroom reported an Elasticsearch bulk request that had failures as one message holding the whole response
+    /// (cut short when large): one marker per rejected document instead, saying which (its place in the batch) and
+    /// why. Stroom now reports each rejected document itself, naming it by its EventId: such a marker is given
+    /// that record, so the rejected events can be stepped or located.
     ///
     /// @param marker A marker.
-    /// @return The markers it stands for: itself, unless it holds a bulk response with rejected documents.
+    /// @return The markers it stands for: itself (of its event's record, for one rejected document Stroom
+    /// reported), unless it holds a bulk response with rejected documents.
     public static List<Marker> splitBulk(final Marker marker) {
+        final Matcher rejected = REJECTED_EVENT.matcher(marker.message());
+        if (rejected.find()) {
+            return List.of(marker.withRecord(rejected.group(1)));
+        }
         final Matcher found = BULK.matcher(marker.message());
         if (!found.find()) {
             return List.of(marker);

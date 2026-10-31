@@ -5,7 +5,17 @@
 # Environment-specific rules (e.g. known-harmless decoration lookup misses) go in the Stroom config property
 # stroom.ai.errorTriage.rules, which are checked before these.
 rules:
-  # Elasticsearch rejecting documents (split out of its bulk response, one per document): the others were indexed.
+  # Elasticsearch rejecting documents (reported by Stroom one per document, or split out of the whole bulk response
+  # older versions logged): the others were indexed.
+  # Stroom's summaries of a batch whose documents it reported one by one: the reasons are in those errors.
+  - {message: 'Elasticsearch rejected \d+ documents in this batch; only the first', class: blocking,
+     reason: "More of the batch's documents were rejected than are listed one by one; they usually share the listed documents' causes: fix those, then process the streams again to see any that remain"}
+  # Stroom's retries of documents Elasticsearch was too busy to index ran out (#5958: only those are retried, with a
+  # growing wait between tries).
+  - {message: 'Elasticsearch was overloaded and rejected', class: blocking,
+     reason: "Elasticsearch was too busy to index some documents and Stroom's retries ran out, so those records are not indexed and the stream's processing stopped: process the stream again once the cluster has capacity. If it recurs, it is for the cluster admin (its load), or smaller requests may ease it (the indexing filter's maxBatchSize, and the stroom.elastic.client.compressRequests property). Documents rejected for other reasons are reported in their own errors"}
+  - {message: 'Bulk indexing request failed: \d+ of \d+ documents rejected', class: blocking,
+     reason: "Elasticsearch rejected documents in a bulk request, so their records are not indexed (the rest of the batch was) and the stream's processing stopped; each rejected document is reported in its own error, with Elasticsearch's reason"}
   - {message: 'Elasticsearch rejected .*as object, but found a concrete value', class: blocking,
      reason: "A field is an object in some records and a plain value in others; the index keeps the shape it saw first, so these records are not indexed. Ask the user: leave the field out (discovery drop), or index it as it first appeared and accept the loss"}
   - {message: 'Elasticsearch rejected .*(failed to parse field|mapper_parsing_exception)', class: blocking,
