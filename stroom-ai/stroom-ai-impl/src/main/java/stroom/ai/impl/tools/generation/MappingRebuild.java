@@ -140,11 +140,13 @@ final class MappingRebuild {
                                    final XPathTreeParser baseParser,
                                    final ReadIdioms idioms,
                                    final Map<String, Object> spec) {
+        final String which = "rule " + (XsltReader.truthy(rule.name())
+                ? rule.name()
+                : rule.key()) + ": ";
         for (final String note : rule.notes()) {
-            out.notes().add("rule " + (XsltReader.truthy(rule.name())
-                    ? rule.name()
-                    : rule.key()) + ": " + note);
+            out.notes().add(which + note);
         }
+        rule.lost().forEach(note -> out.lost().add(which + note));
         final String name = ruleName(rule, old);
         spec.put("name", name);
         if (old != null && sameTest(old.reading().test(), rule.test(), baseParser, reading.parser())) {

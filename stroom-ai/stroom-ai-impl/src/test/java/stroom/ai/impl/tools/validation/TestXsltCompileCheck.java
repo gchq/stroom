@@ -97,6 +97,24 @@ class TestXsltCompileCheck {
     }
 
     @Test
+    void testAHigherOrderFunctionIsAnErrorSaidInStroomsTermsAndItsAlternativesCompile() {
+        // Stroom runs Saxon-HE 9.9: Saxon says such a function needs Saxon-PE, which Stroom doesn't have.
+        final Compiled folded = check.compile(sheet("", "<xsl:value-of select=\"fold-left((1, 2), 0, "
+                                                        + "function($a, $b) { $a + $b })\"/>"));
+        assertThat(folded.errors()).isNotEmpty()
+                .anySatisfy(error -> assertThat(error).contains("Saxon-PE")
+                        .contains("Saxon-HE 9.9) has no higher-order functions").contains("xsl:for-each-group"));
+        // What to use instead compiles: users made distinct by their login name, the first mention of each kept.
+        final String distinct = "<xsl:for-each-group select=\"('a', 'b', 'a')\" group-by=\".\">"
+                                + "<u><xsl:value-of select=\"current-grouping-key()\"/></u></xsl:for-each-group>"
+                                + "<xsl:iterate select=\"('a', 'b', 'a')\"><xsl:param name=\"seen\" select=\"()\"/>"
+                                + "<xsl:if test=\"not(. = $seen)\"><u><xsl:value-of select=\".\"/></u></xsl:if>"
+                                + "<xsl:next-iteration><xsl:with-param name=\"seen\" select=\"($seen, .)\"/>"
+                                + "</xsl:next-iteration></xsl:iterate>";
+        assertThat(check.compile(sheet("", distinct)).errors()).isEmpty();
+    }
+
+    @Test
     void testAStroomFunctionThatDoesNotExistIsAnError() {
         final Compiled compiled = check.compile(sheet("", "<xsl:value-of select=\"stroom:lookp('m', 'k')\"/>"));
         assertThat(compiled.errors()).singleElement().asString().startsWith("XPST0017 ").contains("lookp");

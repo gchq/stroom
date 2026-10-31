@@ -75,6 +75,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
     static final String CHANGE_ARG = "change";
     static final String ACCEPT_DIFFERENCES_ARG = "accept_differences";
+    static final String ACCEPT_UNREAD_ARG = "accept_unread";
 
     /// The most records stepped each way.
     static final int PROVE_RECORDS = 200;
@@ -181,6 +182,10 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                                                                     + "differences): only when the user, shown "
                                                                     + "them, accepts what the mapping writes "
                                                                     + "instead.")
+                        .addBooleanProperty(ACCEPT_UNREAD_ARG, "Rebuild even though parts of the XSLT's events "
+                                                               + "couldn't be read (shown in unread), so the "
+                                                               + "mapping leaves them out: only when the user, "
+                                                               + "shown them, agrees to lose them.")
                         .required(UUID_ARG)
                         .build())
                 .build();
@@ -252,6 +257,18 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                       + "XSLT replaces the hand-written one."
                     : "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
                       + "instead (draft_translation_mapping drafts one from the samples).");
+            return result;
+        }
+        if (!rebuilt.lost().isEmpty() && !ToolArgs.flag(call, ACCEPT_UNREAD_ARG)) {
+            // Not in the Python server: a construct the reader doesn't know (an xsl:iterate making users distinct,
+            // say) was left out, and the proof by stepping showed nothing when no sample record reached it.
+            result.put("saved", null);
+            result.put("unread", rebuilt.lost());
+            result.put("hint", "Parts of the XSLT's events couldn't be read back (unread): a mapping rebuilt from "
+                               + "it leaves them out, and the regenerated XSLT would lose them for the whole feed, "
+                               + "whether or not the sample's records reach them. Nothing was saved. Show the user "
+                               + "what they are: to keep the XSLT as it is, leave the mapping as it is; to rebuild "
+                               + "without them all the same, call again with " + ACCEPT_UNREAD_ARG + "=true.");
             return result;
         }
         final XsltGenerator.Generated regenerated = XsltGenerator.generate(rebuilt.mapping(), schema, version);

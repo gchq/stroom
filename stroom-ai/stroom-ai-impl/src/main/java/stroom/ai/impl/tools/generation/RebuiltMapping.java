@@ -33,6 +33,7 @@ public final class RebuiltMapping {
     private final List<String> raw = new ArrayList<>();
     private final List<String> importedCalls = new ArrayList<>();
     private final List<String> notes;
+    private final List<String> lost = new ArrayList<>();
     private final List<String> problems = new ArrayList<>();
 
     /// @param notes What the reading noted, carried over.
@@ -73,6 +74,12 @@ public final class RebuiltMapping {
     /// @return What wasn't read.
     public List<String> notes() {
         return notes;
+    }
+
+    /// @return What in the rules' events wasn't read, so the mapping leaves out (among [#notes()]): an XSLT
+    /// construct the reader doesn't know (xsl:iterate, say), or a template it calls that isn't there.
+    public List<String> lost() {
+        return lost;
     }
 
     /// @return What stops the mapping being used.
