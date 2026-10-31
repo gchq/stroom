@@ -324,8 +324,25 @@ public final class Shapes {
     /// @param streamId The stream it is in.
     /// @param part     The part it is in.
     /// @return True if it started a shape not seen before (known ones included).
-    @SuppressWarnings("unchecked")
     public boolean add(final RecordSplitter.Chunk chunk, final int index, final long streamId, final int part) {
+        return add(chunk, index, streamId, part, 0);
+    }
+
+    /// As [#add(RecordSplitter.Chunk, int, long, int)], for records read from further into the part than its
+    /// start: a window of it ([stroom.ai.impl.tools.StreamReader#readWindows]).
+    ///
+    /// @param chunk       Records read from a part.
+    /// @param index       The record's index among them.
+    /// @param streamId    The stream it is in.
+    /// @param part        The part it is in.
+    /// @param firstRecord The index, in the part, of the chunk's first record.
+    /// @return True if it started a shape not seen before (known ones included).
+    @SuppressWarnings("unchecked")
+    public boolean add(final RecordSplitter.Chunk chunk,
+                       final int index,
+                       final long streamId,
+                       final int part,
+                       final long firstRecord) {
         final String signature = signature(chunk, index);
         final boolean isNew = !shapes.containsKey(signature);
         final Map<String, Object> shape = addShape(signature, false);
@@ -338,9 +355,16 @@ public final class Shapes {
         final List<Map<String, Object>> kept = (List<Map<String, Object>>) shape.get("examples");
         if (kept.size() < examples && kept.stream().noneMatch(e -> text.equals(e.get("text")))) {
             kept.add(SampleProfiler.map("text", text, "location",
-                    SampleProfiler.map("stream", streamId, "part", part, "record", index)));
+                    SampleProfiler.map("stream", streamId, "part", part, "record", recordNumber(firstRecord + index))));
         }
         return isNew;
+    }
+
+    // A record's index as a location gives it: a whole number, as before records were read from further in.
+    private static Number recordNumber(final long index) {
+        return index <= Integer.MAX_VALUE
+                ? (Number) (int) index
+                : (Number) index;
     }
 
     /// As [#add(RecordSplitter.Chunk, int, long, int)], for part 0.

@@ -50,6 +50,24 @@ class TestStepRecordsTool {
     }
 
     @Test
+    void aRecordPastTheStreamsEndIsNotFoundWithoutSpoilingTheVerdict() {
+        // Seen in testing: record 12,000 of a stream of 10,000 turned a clean verdict into review, on stepping's
+        // own complaint that it had nothing to replay.
+        world.stepper = (stream, at) -> at.getRecordIndex() < 10
+                ? SteppingWorld.step(stream, 0, at.getRecordIndex(), AN_EVENT)
+                : SteppingWorld.none("Reprocess of stream 7 has no replayable SAX output for feed dsParser");
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}, "
+                                                       + "{\"stream\": 7, \"record\": 12000}]}");
+
+        assertThat(List.of(result.get("records_stepped"), result.get("verdict"))).containsExactly(1, "clean");
+        assertThat(result.get("records_not_found")).isEqualTo(List.of("7:12000"));
+        assertThat(TestStepSampleTool.groups(result)).isEmpty();
+        assertThat(String.valueOf(result.get("records"))).contains("no replayable SAX output");
+    }
+
+    @Test
     void unknownFromAnXsltSavedWithoutAMappingBlocks() {
         world.stepper = (stream, at) -> SteppingWorld.step(stream, 0, at.getRecordIndex(), "<Events "
                 + "xmlns=\"event-logging:3\"><Event><EventDetail><TypeId>TRAFFIC</TypeId><Unknown/></EventDetail>"

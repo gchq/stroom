@@ -26,6 +26,7 @@ import org.xml.sax.InputSource;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -178,6 +179,44 @@ class TestStreamReader {
         assertThat(StreamCharsets.decode(lines.toByteArray(), "UTF-8", true).text()).startsWith(head.text());
         assertThat(head.parts()).isEqualTo(1);
         assertThat(reader.charsetReport(9)).isNotNull();
+    }
+
+    @Test
+    void windowsAreReadSpreadToAPartsEndEachStartingOnALineItsNumberGiven() {
+        // Seen in testing: only a 160 MB part's first 5,000,000 characters were surveyed, so kinds of event further
+        // in were found only once the feed was processed.
+        final StringBuilder text = new StringBuilder("n,kind\n");
+        for (int n = 0; n < 2_000; n++) {
+            text.append(n).append(',').append(n == 1_990 ? "rare" : "common").append('\n');
+        }
+        world.addRaw(12, "");
+        world.bytes.put(12L, text.toString().getBytes(StandardCharsets.UTF_8));
+
+        final List<StreamReader.Window> windows = reader.readWindows(12, 0, 2_000, 4, 300);
+
+        assertThat(windows).hasSize(4);
+        for (final StreamReader.Window window : windows) {
+            assertThat(window.fromByte()).isGreaterThanOrEqualTo(2_000);
+            assertThat(window.text()).as("whole lines").endsWith("\n").hasSizeLessThanOrEqualTo(300);
+            // The line it starts with is the record its number says (line 0 is the header).
+            final String firstLine = window.text().substring(0, window.text().indexOf('\n'));
+            assertThat(firstLine).startsWith((window.firstLine() - 1) + ",");
+        }
+        assertThat(windows.getLast().text()).as("the last is the part's tail").endsWith("1999,common\n")
+                .contains("1990,rare");
+        assertThat(windows).extracting(StreamReader.Window::fromByte).isSorted();
+    }
+
+    @Test
+    void noWindowsAreReadOfAPartNoLongerThanItsHeadOrWhoseLineEndIsNotOneByte() {
+        world.addRaw(13, "");
+        world.bytes.put(13L, "a\nb\n".getBytes(StandardCharsets.UTF_8));
+        assertThat(reader.readWindows(13, 0, 4, 4, 100)).isEmpty();
+
+        world.addRaw(14, "");
+        world.bytes.put(14L, "a,b\n1,2\n".repeat(100).getBytes(StandardCharsets.UTF_16LE));
+        world.encodings.put(StreamWorld.FEED, "UTF-16LE");
+        assertThat(reader.readWindows(14, 0, 10, 4, 100)).isEmpty();
     }
 
     @Test

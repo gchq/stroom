@@ -194,11 +194,11 @@ class CoverageReads {
         return new LoggedRecords(found, read);
     }
 
-    /// `_example`: one raw record, as the mapping reads it (record numbers count from 0), for an example.
+    /// `_example`: one raw record, as the mapping reads it, for an example.
     ///
     /// @param mapping The pipeline's mapping.
     /// @param raw     A raw stream.
-    /// @param record  The record in it.
+    /// @param record  The record in it, from 0, as step_records takes it.
     /// @return The record shown, or null if it can't be read.
     String example(final TranslationMapping mapping, final long raw, final int record) {
         final String text;
@@ -217,7 +217,7 @@ class CoverageReads {
             // Only an example: a record this can't read leaves its kind without one.
             return null;
         }
-        return record < records.size()
+        return record >= 0 && record < records.size()
                 ? shown(records.get(record))
                 : null;
     }

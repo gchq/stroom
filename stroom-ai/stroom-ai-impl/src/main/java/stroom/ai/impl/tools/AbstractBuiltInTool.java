@@ -48,7 +48,7 @@ public abstract class AbstractBuiltInTool implements StroomTool {
             if (value == null) {
                 return null;
             }
-            final String str = String.valueOf(value).trim();
+            final String str = text(value).trim();
             return str.isEmpty()
                     ? null
                     : str;
@@ -72,10 +72,19 @@ public abstract class AbstractBuiltInTool implements StroomTool {
                     : args.get(name);
             return value == null
                     ? null
-                    : String.valueOf(value);
+                    : text(value);
         } catch (final RuntimeException e) {
             return null;
         }
+    }
+
+    // A text argument's value: JSON given where text is taken (an object, as a workspace file holding JSON is put
+    // in) written out as JSON, not as Java writes a map, which no tool can read (seen in testing: an example index
+    // template refused as not JSON, as "{index_patterns=[...").
+    private static String text(final Object value) {
+        return value instanceof Map<?, ?> || value instanceof List<?>
+                ? JsonUtil.writeValueAsString(value)
+                : String.valueOf(value);
     }
 
     /**
