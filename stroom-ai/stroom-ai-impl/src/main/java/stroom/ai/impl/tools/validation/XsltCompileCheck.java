@@ -160,9 +160,10 @@ public class XsltCompileCheck {
                     ? xPathException.getErrorCodeLocalPart() + " "
                     : "";
             final String said = String.valueOf(exception.getMessage());
-            final String message = (code + (said.startsWith(IO_EXCEPTION)
+            // Saxon says a higher-order function needs Saxon-PE, which Stroom doesn't have: said in Stroom's terms.
+            final String message = StroomXPath.explained((code + (said.startsWith(IO_EXCEPTION)
                     ? said.substring(IO_EXCEPTION.length())
-                    : said)).strip();
+                    : said)).strip());
             if (!errors.contains(message)) {
                 errors.add(message);
             }

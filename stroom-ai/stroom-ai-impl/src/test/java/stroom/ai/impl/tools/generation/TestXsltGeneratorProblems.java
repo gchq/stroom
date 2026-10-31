@@ -323,6 +323,18 @@ class TestXsltGeneratorProblems extends XsltRuns {
     }
 
     @Test
+    void anXpathStroomsSaxonCantRunIsAProblem() {
+        // Stroom runs Saxon-HE 9.9, without higher-order functions: such an xpath generated an XSLT that didn't
+        // compile.
+        final List<Map<String, Object>> fields = new ArrayList<>(LOGON);
+        fields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_name", "n", "xpath",
+                "fold-left(data/@value, 0, function($a, $b) { $a + 1 })"));
+        assertThat(generate(mapping(with("events", List.of(logonRule(fields))))).problems())
+                .anySatisfy(p -> assertThat(p).contains("xpath 'fold-left(")
+                        .contains("Saxon-HE 9.9) has no higher-order functions"));
+    }
+
+    @Test
     void theRecordsNumberIsNotReadWhenNothingIsLogged() {
         assertThat(generate(mapping()).xslt()).doesNotContain("record-no");
     }
