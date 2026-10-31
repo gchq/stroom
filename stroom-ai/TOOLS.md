@@ -49,6 +49,7 @@ those. The general text of a *yes* tool is thin, as most of what it says is abou
 | `get_current_datetime` | The current date and time in UTC | all | yes | | | | no | |
 | `get_current_time` | The current time of day in UTC | all | yes | | | | no | |
 | `get_instructions` | The AGENTS docs that apply to folders or documents | all | yes | | | View | no | `get_instructions` |
+| `instruction_evidence` | What the user's own recent chats say about how they want things done: repeated and mixed form answers, and their messages | all | yes | | | | yes | |
 | `get_utc_time_offset` | A time zone's offset from UTC | all | yes | | | | no | |
 | `grep` | Finds lines of a workspace file containing some text | all | yes | | | | yes (workspace) | |
 | `jq` | Runs a jq query on a workspace JSON file | all | yes | | | | yes (workspace) | |
