@@ -59,6 +59,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(DocumentDocumentationTool.class)
                 .addBinding(FolderContentsTool.class)
                 .addBinding(GetInstructionsTool.class)
+                .addBinding(InstructionEvidenceTool.class)
                 .addBinding(CurrentResultsTool.class)
                 .addBinding(ListDataSourcesTool.class)
                 .addBinding(DescribeDataSourceTool.class)

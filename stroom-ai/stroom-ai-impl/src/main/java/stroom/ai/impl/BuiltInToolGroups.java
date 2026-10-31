@@ -71,7 +71,8 @@ public final class BuiltInToolGroups {
                     "promote_build",
                     "review_coverage",
                     "write_documentation",
-                    "set_shape_handling"),
+                    "set_shape_handling",
+                    "instruction_evidence"),
             PROCESSING, List.of(
                     "step_sample",
                     "step_records",
@@ -137,8 +138,9 @@ public final class BuiltInToolGroups {
     private static Map<String, String> purposes() {
         final Map<String, String> purposes = new LinkedHashMap<>();
         purposes.put(BUILD, "onboard a feed, or build or change a translation pipeline: samples, source notes, "
-                            + "mappings, XSLT, text converters, dictionaries, pipelines, documentation and "
-                            + "promoting a build");
+                            + "mappings, XSLT, text converters, dictionaries, pipelines, documentation, "
+                            + "promoting a build, and suggesting standing instructions (AGENTS docs) from the "
+                            + "user's chats");
         purposes.put(PROCESSING, "step pipelines and records, create or change processor filters, reprocess "
                                  + "streams, see processor tasks, and find out why processing isn't happening");
         purposes.put(INDEXING, "plan, make and check search indexes (Lucene or Elasticsearch), their index "

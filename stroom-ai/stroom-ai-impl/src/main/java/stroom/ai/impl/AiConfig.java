@@ -71,6 +71,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final AiPipelineStagesConfig pipelineStages;
     private final AiBuildsConfig builds;
     private final AiSampleUploadsConfig sampleUploads;
+    private final AiInstructionSuggestionsConfig instructionSuggestions;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -101,6 +102,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         pipelineStages = new AiPipelineStagesConfig();
         builds = new AiBuildsConfig();
         sampleUploads = new AiSampleUploadsConfig();
+        instructionSuggestions = new AiInstructionSuggestionsConfig();
     }
 
     /// As the constructor that reads the config, with the attached tab shared and the default tab snapshot limit.
@@ -126,7 +128,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     @SuppressWarnings("unused")
@@ -156,7 +158,9 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("errorTriage") final ErrorTriageConfig errorTriage,
                     @JsonProperty("pipelineStages") final AiPipelineStagesConfig pipelineStages,
                     @JsonProperty("builds") final AiBuildsConfig builds,
-                    @JsonProperty("sampleUploads") final AiSampleUploadsConfig sampleUploads) {
+                    @JsonProperty("sampleUploads") final AiSampleUploadsConfig sampleUploads,
+                    @JsonProperty("instructionSuggestions")
+                    final AiInstructionSuggestionsConfig instructionSuggestions) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -188,6 +192,42 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.pipelineStages = Objects.requireNonNullElseGet(pipelineStages, AiPipelineStagesConfig::new);
         this.builds = Objects.requireNonNullElseGet(builds, AiBuildsConfig::new);
         this.sampleUploads = Objects.requireNonNullElseGet(sampleUploads, AiSampleUploadsConfig::new);
+        this.instructionSuggestions = Objects.requireNonNullElseGet(instructionSuggestions,
+                AiInstructionSuggestionsConfig::new);
+    }
+
+    /// As the constructor that reads the config, with the default instruction suggestions.
+    public AiConfig(final AiDbConfig dbConfig,
+                    final CacheConfig chatResponseCache,
+                    final StroomDuration maxRunDuration,
+                    final StroomDuration unattendedAfter,
+                    final Integer maxRunsPerUser,
+                    final Integer maxRunsPerNode,
+                    final AiCompactionConfig compaction,
+                    final StroomDuration workspaceFileRetention,
+                    final StroomDuration chatRetention,
+                    final AiWorkspaceConfig workspace,
+                    final Boolean allowApproveEverything,
+                    final Integer toolGroupThreshold,
+                    final StroomDuration elicitationTimeout,
+                    final Integer maxElicitationsPerNode,
+                    final Boolean askReadOnlyToolsAfterUntrustedContent,
+                    final Integer maxChatTitleWords,
+                    final Boolean suggestFollowUps,
+                    final Integer maxToolIterations,
+                    final Boolean shareActiveTab,
+                    final Long maxTabSnapshotBytes,
+                    final McpEndpointConfig mcpEndpoint,
+                    final ErrorTriageConfig errorTriage,
+                    final AiPipelineStagesConfig pipelineStages,
+                    final AiBuildsConfig builds,
+                    final AiSampleUploadsConfig sampleUploads) {
+        this(dbConfig, chatResponseCache, maxRunDuration, unattendedAfter, maxRunsPerUser, maxRunsPerNode,
+                compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
+                toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
+                askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, errorTriage, pipelineStages, builds, sampleUploads,
+                null);
     }
 
     /// As the constructor that reads the config, with the default error triage, pipeline stages, builds and sample
@@ -217,7 +257,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 compaction, workspaceFileRetention, chatRetention, workspace, allowApproveEverything,
                 toolGroupThreshold, elicitationTimeout, maxElicitationsPerNode,
                 askReadOnlyToolsAfterUntrustedContent, maxChatTitleWords, suggestFollowUps, maxToolIterations,
-                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null, null);
+                shareActiveTab, maxTabSnapshotBytes, mcpEndpoint, null, null, null, null, null);
     }
 
     /// @return Sample files sent from the user's machine by the commands upload_sample gives: how large, and for
@@ -225,6 +265,13 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     @JsonProperty("sampleUploads")
     public AiSampleUploadsConfig getSampleUploads() {
         return sampleUploads;
+    }
+
+    /// @return Standing instructions the agent suggests from the user's own sessions: how far back it reads them,
+    /// and how often a choice must repeat.
+    @JsonProperty("instructionSuggestions")
+    public AiInstructionSuggestionsConfig getInstructionSuggestions() {
+        return instructionSuggestions;
     }
 
     /// @return Where the agent's tools build things: the workspace folder holding a folder for each build.
@@ -441,6 +488,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", pipelineStages=" + pipelineStages +
                ", builds=" + builds +
                ", sampleUploads=" + sampleUploads +
+               ", instructionSuggestions=" + instructionSuggestions +
                '}';
     }
 }
