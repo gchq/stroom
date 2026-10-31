@@ -332,6 +332,22 @@ class CoverageReads {
         return rows(streamReader.find(expression, 1, true));
     }
 
+    /// The newest streams of a type the pipeline wrote.
+    ///
+    /// @param pipeline The pipeline.
+    /// @param type     The stream type, e.g. [StreamTypeNames#ERROR].
+    /// @param limit    The most streams to find.
+    /// @return Its streams of that type (not deleted), newest first, with their meta values.
+    List<MetaRow> newest(final DocRef pipeline, final String type, final int limit) {
+        final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
+                .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
+                .build();
+        return rows(streamReader.find(expression, limit, true)).stream()
+                .filter(row -> row.getMeta().getStatus() != Status.DELETED)
+                .toList();
+    }
+
     /// The Events streams the pipeline wrote from these raw streams (their documents are in the index).
     ///
     /// @param pipeline The pipeline.
@@ -354,6 +370,24 @@ class CoverageReads {
                     .forEach(meta -> out.add(meta.getId()));
         }
         return List.copyOf(out);
+    }
+
+    /// The newest streams of a type on a feed.
+    ///
+    /// @param feed  The feed's name.
+    /// @param type  The stream type, e.g. [StreamTypeNames#RAW_EVENTS].
+    /// @param limit The most streams to find.
+    /// @return Their Ids (not deleted), newest first.
+    List<Long> newestOnFeed(final String feed, final String type, final int limit) {
+        final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
+                .build();
+        return rows(streamReader.find(expression, limit, true)).stream()
+                .map(MetaRow::getMeta)
+                .filter(meta -> meta.getStatus() != Status.DELETED)
+                .map(Meta::getId)
+                .toList();
     }
 
     /// A few of the newest raw streams on the feed the pipeline's Events are in.

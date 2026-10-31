@@ -73,6 +73,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     static final String EVALUATION = " - Evaluation";
 
     private static final String FIELD_MAPPING = "Field mapping";
+    private static final String REFERENCE_MAPS = "Reference maps";
     private static final String NOT_AN_OBJECT = "field_descriptions is an object, {field: description}";
 
     private final BuildDocumentation docs;
@@ -364,6 +365,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         }
         String body = request.body();
         String generated = null;
+        // The key the generated section is given as.
+        String generatedAs = "field_mapping";
         // An XSLT edited since its mapping was kept is documented as it runs (its own events, by the mapping's rules,
         // with a note of the edit): documented from the mapping, the section said what the XSLT no longer writes (seen
         // in testing: TWITTER's links, saved with save_xslt, left out, and its mentions shown joined as the mapping
@@ -401,9 +404,11 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             if ("indexing".equals(stage) || "discovery".equals(stage)) {
                 // An indexing XSLT written by hand keeps no plan: the section comes from the documents it writes.
                 if (streamIds.isEmpty()) {
-                    throw new ToolRefusal("Give stream_ids (the Events streams the pipeline indexes): the Field "
-                                          + "mapping section is generated from the documents it writes from them, "
-                                          + "each field with the values the sample gave");
+                    throw new ToolRefusal("Give stream_ids (" + ("discovery".equals(stage)
+                            ? "the raw streams the discovery pipeline indexes"
+                            : "the Events streams the pipeline indexes") + "): the Field mapping section is "
+                                          + "generated from the documents it writes from them, each field with the "
+                                          + "values the sample gave");
                 }
                 generated = sections.writtenFieldsSection(context, pipelineUuid, streamIds);
                 body = KeptMapping.replaceSection(body, FIELD_MAPPING, generated, false);
@@ -415,6 +420,16 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 }
                 generated = sections.cefWrittenSection(context, pipelineUuid, streamIds);
                 body = KeptMapping.replaceSection(body, FIELD_MAPPING, generated, false);
+            } else if ("reference".equals(stage)) {
+                // A reference data pipeline (build_reference_xslt keeps no mapping): its maps, from what it writes.
+                if (streamIds.isEmpty()) {
+                    throw new ToolRefusal("Give stream_ids (the Raw Reference streams the pipeline reads): the "
+                                          + "Reference maps section is generated from the reference data it writes "
+                                          + "from them");
+                }
+                generated = sections.referenceMapsSection(context, pipelineUuid, streamIds);
+                generatedAs = "reference_maps";
+                body = KeptMapping.replaceSection(body, REFERENCE_MAPS, generated, false);
             } else if (!body.contains("## Field mapping") && "translation".equals(stage)) {
                 final List<String> lost = mappingDrift.lostMappings(pipelineUuid);
                 if (!lost.isEmpty()) {
@@ -483,7 +498,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             result.put("working_copy_of", copied);
             result.put("link", context.links().documentTarget(docRef));
             if (generated != null) {
-                result.put("field_mapping", generated);
+                result.put(generatedAs, generated);
             }
             result.put("next", "Pipeline '" + pipeline.getName() + "' is promoted, so its documentation is changed "
                                + "through this working copy in build '" + request.build() + "'. Give the user the "
@@ -495,7 +510,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         UserActionEntries.withEntries(result, List.of(UserActionEntries.openDocument(context.links(), docRef,
                 "review it")));
         if (generated != null) {
-            result.put("field_mapping", generated);
+            result.put(generatedAs, generated);
         }
         if (!noted.isEmpty()) {
             result.put("note", String.join("; ", noted));

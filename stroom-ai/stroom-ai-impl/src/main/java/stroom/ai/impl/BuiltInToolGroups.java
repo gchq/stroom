@@ -80,6 +80,7 @@ public final class BuiltInToolGroups {
                     "locate_event",
                     "compare_outputs",
                     "summarise_fix",
+                    "evaluate_pipeline",
                     "create_processor_filter",
                     "set_processor_filter_enabled",
                     "reprocess_streams",

@@ -136,7 +136,6 @@ public class StreamSummaries {
     /// @return `stream_id`, `error_streams`, the triage (`verdict`, `groups_by_class`, `groups`) and any `unread`.
     /// @throws StreamReadException if there is no such stream.
     public Map<String, Object> summariseErrors(final long streamId) {
-        final ErrorTriage triage = errorTriage();
         final Meta meta = streamReader.meta(streamId);
         final List<Meta> errorStreams;
         if (StreamTypeNames.ERROR.equals(meta.getTypeName())) {
@@ -153,6 +152,18 @@ public class StreamSummaries {
         }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("stream_id", streamId);
+        result.putAll(summariseErrorStreams(errorStreams));
+        return result;
+    }
+
+    /// Summarises the error markers of these Error streams together, as [#summariseErrors(long)] does those of one
+    /// stream: grouped and triaged, with the errors each pipeline that wrote them accepted as benign.
+    ///
+    /// @param errorStreams Error streams, e.g. the newest a pipeline wrote.
+    /// @return `error_streams`, the triage (`verdict`, `groups_by_class`, `groups`) and any `unread`.
+    public Map<String, Object> summariseErrorStreams(final List<Meta> errorStreams) {
+        final ErrorTriage triage = errorTriage();
+        final Map<String, Object> result = new LinkedHashMap<>();
         if (errorStreams.isEmpty()) {
             result.put("error_streams", List.of());
             result.putAll(triage.triage(List.of(), Set.of()));
