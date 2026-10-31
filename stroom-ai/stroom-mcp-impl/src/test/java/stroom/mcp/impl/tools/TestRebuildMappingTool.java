@@ -156,6 +156,33 @@ class TestRebuildMappingTool {
     }
 
     @Test
+    void whatTheReaderCantReadInAnEventIsShownAndNothingIsRebuiltUnlessAccepted() {
+        // An xsl:iterate making users distinct by login name, added by hand: the reader leaves it out, and the
+        // sample's records (stepped the same here) may never reach it, so the proof alone wouldn't show its loss.
+        world.editByHand(uuid, code -> environmentChanged(code).replace("<Environment>Test</Environment>",
+                "<Environment>Test</Environment><xsl:iterate select=\"data\"><xsl:param name=\"seen\" "
+                + "select=\"()\"/><xsl:next-iteration><xsl:with-param name=\"seen\" select=\"($seen, @value)\"/>"
+                + "</xsl:next-iteration></xsl:iterate>"));
+        final String before = world.xslt(uuid).getData();
+
+        final Map<String, Object> refused = call(Map.of());
+
+        assertThat(refused.get("saved")).isNull();
+        // In the EventSource both rules share: each rule's event loses it.
+        assertThat((List<String>) refused.get("unread")).containsExactly(
+                "rule logon: EventSource/System: iterate not read", "rule other: EventSource/System: iterate not read");
+        assertThat(String.valueOf(refused.get("hint"))).startsWith("Parts of the XSLT's events couldn't be read back")
+                .contains("accept_unread=true");
+        Mockito.verifyNoInteractions(world.stepping);
+        assertThat(world.xslt(uuid).getData()).isEqualTo(before);
+
+        // Accepted: on to the proof and the user's confirmation, as any rebuild.
+        final Map<String, Object> accepted = call(Map.of("accept_unread", true));
+        assertThat(accepted).doesNotContainKey("unread");
+        assertThat(accepted.get("error")).asString().startsWith("Not done: Save the mapping rebuilt from XSLT");
+    }
+
+    @Test
     void aPipelineThatDoesNotRunTheXsltIsRefused() {
         world.editByHand(uuid, TestRebuildMappingTool::environmentChanged);
         PipelineLayers.given(world.world.pipelineService, "q", PipelineLayers.of(

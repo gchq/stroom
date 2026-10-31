@@ -357,7 +357,7 @@ public final class XsltReader {
                     ? null
                     : headers.get(key), resolvedTest(test, scope, parser), false);
             if (template == null) {
-                rule.notes().add("its template " + (key == null
+                rule.lose("its template " + (key == null
                         ? "None"
                         : key) + " isn't in the XSLT");
                 return rule;
@@ -458,7 +458,7 @@ public final class XsltReader {
                 leaf.setExpr(resolve(data.get(1), scope, parser));
                 rule.leaves().add(leaf);
             } else if (!select.startsWith("stroom:log(") && !select.equals(XsltGenerator.READ_RECORD_NO)) {
-                rule.notes().add(at + ": xsl:sequence " + head(select, 80) + " not read");
+                rule.lose(at + ": xsl:sequence " + head(select, 80) + " not read");
             }
         } else if (child.is(XSL, "for-each")) {
             // A Data entry repeated in a named Data (data_parent, not in the Python model): known by its Name, as
@@ -476,7 +476,7 @@ public final class XsltReader {
             }
             rule.leaves().add(leaf);
         } else if (!child.is(XSL, "variable")) {
-            rule.notes().add(at + ": " + child.localName() + " not read");
+            rule.lose(at + ": " + child.localName() + " not read");
         }
     }
 
@@ -530,7 +530,7 @@ public final class XsltReader {
             }
             rule.calls().add(new SharedCall(String.join("/", path), key, params));
         } else if (template == null) {
-            rule.notes().add(String.join("/", path) + ": template " + key + " isn't in the XSLT");
+            rule.lose(String.join("/", path) + ": template " + key + " isn't in the XSLT");
         } else {
             // The XSLT's own template (the generator's, or one added by hand): followed in place, its parameters
             // bound to what the call passes.
