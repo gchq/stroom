@@ -49,6 +49,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.feed.api.FeedProperties;
 import stroom.index.api.IndexVolumeStates;
+import stroom.index.shared.IndexResource;
 import stroom.job.api.JobStates;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
@@ -113,6 +114,7 @@ final class BuiltInToolsTestWiring {
                 bind(TabSnapshots.class).toInstance(Mockito.mock(TabSnapshots.class));
                 bind(TableDownloader.class).toInstance(Mockito.mock(TableDownloader.class));
                 bind(DataSourceProviderRegistry.class).toInstance(Mockito.mock(DataSourceProviderRegistry.class));
+                bind(IndexResource.class).toInstance(Mockito.mock(IndexResource.class));
                 bind(DashboardService.class).toInstance(Mockito.mock(DashboardService.class));
                 bind(TableAnalysisConfig.class).toInstance(new TableAnalysisConfig());
                 MapBinder.newMapBinder(binder(), DocumentTypeName.class, DocumentActionHandler.class);

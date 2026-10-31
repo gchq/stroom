@@ -79,6 +79,17 @@ class TestDocumentDocumentationTool {
     }
 
     @Test
+    void theMappingKeptHiddenInTheDocumentationIsLeftOut() {
+        // Found reviewing the tools: read_document left it out, this tool gave the model the hidden JSON.
+        canView(true);
+        documentation(KeptMapping.withMapping("# Malicious IPs\nKept up to date by the SOC.",
+                KeptMapping.TRANSLATION, Map.of("mapping", Map.of("input", "data_splitter"))));
+
+        assertThat(run()).isEqualTo("Documentation of Dictionary 'Malicious IPs':\n\n"
+                                    + "# Malicious IPs\nKept up to date by the SOC.");
+    }
+
+    @Test
     void noDocumentationIsNone() {
         canView(true);
         documentation(" ");

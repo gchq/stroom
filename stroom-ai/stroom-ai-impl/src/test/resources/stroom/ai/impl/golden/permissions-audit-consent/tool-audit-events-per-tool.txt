@@ -249,7 +249,7 @@
 
 ## folder_contents {"folder":"folder-uuid"}
 - audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read by the folder_contents tool")
-- audit: documentsSearched(1, "contents of Folder '/Test', showing documents, depth 1", [DocRef{type='Dashboard', uuid='dashboard-uuid', name='Test dashboard'}, DocRef{type='Dictionary', uuid='dictionary-uuid', name='Test words'}, DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}, DocRef{type='Feed', uuid='feed-uuid', name='TEST-FEED'}, DocRef{type='Index', uuid='index-uuid', name='Test index'}, DocRef{type='Pipeline', uuid='pipeline-uuid', name='Test pipeline'}, DocRef{type='Query', uuid='query-uuid', name='Test query'}, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}], {"Shown"="documents", "Documents"="8", "ProcessorFilters"="0"}, "Folder contents listed by the folder_contents tool")
+- audit: documentsSearched(1, "contents of Folder '/Test', showing documents, depth 1", [DocRef{type='Dashboard', uuid='dashboard-uuid', name='Test dashboard'}, DocRef{type='Dictionary', uuid='dictionary-uuid', name='Test words'}, DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}, DocRef{type='Feed', uuid='feed-uuid', name='TEST-FEED'}, DocRef{type='Index', uuid='index-uuid', name='Test index'}, DocRef{type='Pipeline', uuid='pipeline-uuid', name='Test pipeline'}, DocRef{type='Query', uuid='query-uuid', name='Test query'}, DocRef{type='Script', uuid='echarts-uuid', name='echarts'}, DocRef{type='Visualisation', uuid='visualisation-uuid', name='Bar chart'}, DocRef{type='XSLT', uuid='xslt-uuid', name='Test XSLT'}], {"Shown"="documents", "Documents"="10", "ProcessorFilters"="0"}, "Folder contents listed by the folder_contents tool")
 - event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
   ViewEventAction {
     "data" : [ {
@@ -282,7 +282,7 @@
       "value" : "documents"
     }, {
       "name" : "Documents",
-      "value" : "8"
+      "value" : "10"
     }, {
       "name" : "ProcessorFilters",
       "value" : "0"
@@ -320,12 +320,20 @@
         "name" : "Test query",
         "type" : "Query"
       }, {
+        "id" : "echarts-uuid",
+        "name" : "echarts",
+        "type" : "Script"
+      }, {
+        "id" : "visualisation-uuid",
+        "name" : "Bar chart",
+        "type" : "Visualisation"
+      }, {
         "id" : "xslt-uuid",
         "name" : "Test XSLT",
         "type" : "XSLT"
       } ]
     },
-    "totalResults" : 8
+    "totalResults" : 10
   }
 
 ## get_current_date {}
@@ -571,7 +579,7 @@
     }
   }
 
-## propose_visualisation {}
+## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}
 (nothing recorded)
 
 ## read_document {"uuid":"xslt-uuid"}

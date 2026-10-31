@@ -32,6 +32,7 @@ import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -106,6 +107,31 @@ class TestRunStroomQlTool {
                 ToolCalls.inChat(1, workspace)).text();
 
         assertThat(result).startsWith("Error: " + MisleadingSearches.REFUSAL + "tags IS_NOT_NULL");
+        Mockito.verify(queryService, Mockito.never()).search(Mockito.any());
+    }
+
+    @Test
+    void aRangeOnALuceneTextFieldIsRefusedBeforeItRuns() {
+        // Found reviewing the tools: the index's analyzers weren't passed to the check, so this search ran, and
+        // found nothing.
+        final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(workspace.limits()).thenReturn(new AiWorkspaceConfig());
+        Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
+                .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+        Mockito.when(queryService.getReferencedDataSource(Mockito.anyString())).thenReturn(Optional.of(LUCENE));
+        query(ExpressionOperator.builder().addTerm("SrcIp", Condition.GREATER_THAN, "10.1.0.0").build());
+        final LuceneTextFields luceneTextFields = Mockito.mock(LuceneTextFields.class);
+        Mockito.when(luceneTextFields.of(LUCENE)).thenReturn(Map.of("SrcIp", "KEYWORD"));
+        final RunStroomQlTool tool = new RunStroomQlTool(workspace, () -> queryService,
+                () -> Mockito.mock(ResourceStore.class), Mockito.mock(AgentSearches.class));
+        tool.setLuceneTextFields(luceneTextFields);
+
+        final String result = tool.execute(ToolCalls.call(RunStroomQlTool.NAME,
+                        "{\"query\": \"from events where SrcIp > '10.1.0.0' select SrcIp\"}"),
+                ToolCalls.inChat(1, workspace)).text();
+
+        assertThat(result).startsWith("Error: " + MisleadingSearches.REFUSAL + "SrcIp GREATER_THAN '10.1.0.0': SrcIp "
+                                      + "is a text field in Lucene");
         Mockito.verify(queryService, Mockito.never()).search(Mockito.any());
     }
 
