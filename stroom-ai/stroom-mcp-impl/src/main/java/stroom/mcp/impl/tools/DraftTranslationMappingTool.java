@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -82,18 +83,21 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     private final TranslationBuilds builds;
     private final SampleProfiling sampleProfiling;
     private final CurrentTranslations currentTranslations;
+    private final SiblingSharedCalls siblingSharedCalls;
 
     @Inject
     DraftTranslationMappingTool(final EventVersions eventVersions,
                                 final SampleStreamTexts sampleStreamTexts,
                                 final TranslationBuilds builds,
                                 final SampleProfiling sampleProfiling,
-                                final CurrentTranslations currentTranslations) {
+                                final CurrentTranslations currentTranslations,
+                                final SiblingSharedCalls siblingSharedCalls) {
         this.eventVersions = eventVersions;
         this.sampleStreamTexts = sampleStreamTexts;
         this.builds = builds;
         this.sampleProfiling = sampleProfiling;
         this.currentTranslations = currentTranslations;
+        this.siblingSharedCalls = siblingSharedCalls;
     }
 
     @Override
@@ -203,6 +207,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             // Read in the namespace of the wrapper the environment uses, which need not be records:2.
             fragmentNamespace(context, build, samples.values().iterator().next())
                     .ifPresent(namespace -> mapping.put("xml_namespace", namespace));
+        }
+        // The environment's common elements written as its event pipelines write them, with their shared templates:
+        // in the draft, not found at the pipeline step after the XSLT was generated without them.
+        final List<String> sharedNotes = SiblingSharedCalls.intoMapping(
+                siblingSharedCalls.forStage(InstructionRules.TRANSLATION), mapping);
+        if (!sharedNotes.isEmpty()) {
+            final List<Object> notes = new ArrayList<>(NullSafe.list((List<?>) result.get("notes")));
+            notes.addAll(sharedNotes);
+            result.put("notes", notes);
         }
         result.put("schema_check", schemaCheck(mapping, version));
         result.put("schema_version", version);

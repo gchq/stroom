@@ -107,8 +107,12 @@ final class TranslationWorld {
     final RequiredImports requiredImports = new RequiredImports(agentInstructions, world::guard, () -> docFinder,
             world.documentAccess);
     final LookupAgreements lookups = new LookupAgreements(consent);
+    // The stage's existing pipelines: none calling shared templates unless a test says so.
+    final PipelineTemplates pipelineTemplates = Mockito.mock(PipelineTemplates.class);
+    final SiblingSharedCalls siblingSharedCalls = new SiblingSharedCalls(pipelineTemplates);
     final TranslationDocs docs = new TranslationDocs(world.guard(), world.documentAccess, () -> plan, checkXslt,
-            requiredImports, eventVersions, handEditGate, history, lookups, () -> Mockito.mock(AgentKnowledge.class));
+            requiredImports, eventVersions, handEditGate, history, lookups, () -> Mockito.mock(AgentKnowledge.class),
+            siblingSharedCalls);
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
@@ -170,7 +174,7 @@ final class TranslationWorld {
     /// @return draft_translation_mapping, wired on the world.
     DraftTranslationMappingTool draftTool() {
         return new DraftTranslationMappingTool(eventVersions, sampleStreamTexts, builds, sampleProfiling,
-                currentTranslations);
+                currentTranslations, siblingSharedCalls);
     }
 
     /// @return save_xslt, wired on the world, with no plans drafted.
