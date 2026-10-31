@@ -22,9 +22,11 @@ import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -167,9 +169,41 @@ public class AskStroomAiConfigPresenter
         final AskStroomAiConfig config = write().copy()
                 .tableAnalysisConfig(tableAnalysisPresenter.write())
                 .build();
-        askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
-                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
-                taskMonitorFactory);
+        askStroomAiClient.getDefaultConfig(previous -> askStroomAiClient.setDefaultAskStroomAIConfig(config,
+                success -> {
+                    if (modelChanged(previous, config)) {
+                        askToApplyModelToEveryone(config.getModelRef(), taskMonitorFactory);
+                    } else {
+                        AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null);
+                    }
+                }, taskMonitorFactory), taskMonitorFactory);
+    }
+
+    private static boolean modelChanged(final AskStroomAiConfig previous, final AskStroomAiConfig config) {
+        final DocRef before = NullSafe.get(previous, AskStroomAiConfig::getModelRef);
+        final DocRef after = config.getModelRef();
+        return after != null && (before == null || !Objects.equals(before.getUuid(), after.getUuid()));
+    }
+
+    // A new default model reaches only the users who follow the default, so offer it to those who chose their own.
+    private void askToApplyModelToEveryone(final DocRef model, final TaskMonitorFactory taskMonitorFactory) {
+        final String name = NullSafe.getOrElse(model, DocRef::getName, "the new default model");
+        ConfirmEvent.fire(this,
+                "Default config updated. Users who chose their own model keep using it. Make everyone use "
+                + name + " now? Only their choice of model is cleared; their other settings are kept.",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.clearAllUsersModelChoice(count -> AlertEvent.fireInfo(
+                                AskStroomAiConfigPresenter.this,
+                                "Cleared the choice of model in " + count + " preference "
+                                + (count == 1
+                                        ? "record"
+                                        : "records")
+                                + ". Everyone now uses " + name + " from their next new chat; chats already "
+                                + "under way keep their model.",
+                                null), taskMonitorFactory);
+                    }
+                });
     }
 
     private void onResetAllUsers(final TaskMonitorFactory taskMonitorFactory) {

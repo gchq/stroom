@@ -16,6 +16,7 @@
 
 package stroom.ai.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -183,6 +184,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean resetToolApprovals(@PathParam("chatId") int chatId);
 
     @GET
+    @Path("/getChatModel/{chatId}")
+    @Operation(
+            summary = "Get the model a chat has been answered with, which its later questions use unless the user "
+                      + "names another, or nothing for a chat not yet answered",
+            operationId = "getAiChatModel")
+    DocRef getChatModel(@PathParam("chatId") int chatId);
+
+    @GET
     @Path("/getChatStatuses/{sinceVersion}")
     @Operation(
             summary = "Get the statuses of the user's chats, for the switcher and badges, or nothing if none has "
@@ -295,6 +304,14 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
                       "configured defaults",
             operationId = "resetAllUsersAskStroomAiConfig")
     Integer resetAllUsersConfig();
+
+    @POST
+    @Path("/clearAllUsersModelChoice")
+    @Operation(
+            summary = "Clear every user's own choice of Ask Stroom AI model, so that everyone uses the default " +
+                      "model, keeping their other settings",
+            operationId = "clearAllUsersAskStroomAiModelChoice")
+    Integer clearAllUsersModelChoice();
 
     @POST
     @Path("/setDefaultAskStroomAIConfig")
