@@ -36,14 +36,15 @@ are stepped, spread evenly over the streams given, so pass all the sample stream
   index_plan=...` for an indexing XSLT). Without it, an events pipeline's doc
   must bring its own `## Field mapping` section, and the tool refuses one that does not.
 - Pass `stream_ids` to `write_documentation`, for every indexing pipeline and every events pipeline whose XSLT
-  keeps a mapping: the tool refuses without them, as the section goes down to the field with the values the sample
-  gave. An indexing XSLT written by hand keeps no plan: its section lists the fields of the documents it writes,
+  keeps a mapping, as the section goes down to the field with the values the sample gave. Without them the tool
+  uses the streams the pipeline last stepped clean on, and refuses when there are none. An indexing XSLT written by hand keeps no plan: its section lists the fields of the documents it writes,
   how often and their values, but not where each comes from (save it with `index_plan=` for that). `build_translation_xslt` with `field_mapping=true`, `pipeline_uuid` and
   `stream_ids` returns the same section as a preview, by stepping the sample (slow): once, if at all, when the
   mapping is settled; never while fixing it.
 - Change the mapping and regenerate rather than editing the XSLT: `build_status` reports an XSLT that is no
   longer what its mapping generates, and a documentation whose Field mapping predates the current mapping or
-  XSLT (a digest marks the section).
+  XSLT (a digest marks the section). A translation XSLT edited by hand since its mapping was kept is documented as
+  it runs: its own output, each event by the mapping's rule, with a note of the edit.
 
 ### What the section holds (events pipelines)
 
@@ -60,7 +61,8 @@ many more; "(several per event)" for repeats; "(not in the sample)" when no samp
 sample's events have that the mapping does not write (a hand edit, a later step) gets a row saying so.
 
 **Event types**: a `#### <rule>` section per rule, with its conditions and how many of the sample's events it wrote
-(exactly: the documentation run marks each Event with its rule), and a table with the same columns of its own
+(exactly: the documentation run marks each Event with its rule, as a processing instruction: Stroom's stepping
+drops comments, `xsl:comment` output included), and a table with the same columns of its own
 fields: `TypeId` and `Description` first, then its `EventDetail` elements and any `EventSource` element it writes
 differently. Rules with roughly the same fields (logon and logoff, Send and Receive: three quarters of their fields
 in common, an action element counted as any) share one section, headed with each name: one row per field, its
