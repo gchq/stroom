@@ -20,20 +20,25 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.processor.api.ProcessorResult;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,8 +47,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// the node holds, independently of Stroom's search. See [ElasticTestNode] for how the node is found.
 class TestElasticIndexing_EndToEnd extends AbstractCoreIntegrationTest {
 
+    private static final String BULK_FEED = "ELASTIC_BULK_EVENTS";
+    // A line of an Error stream reporting a rejected document, e.g.
+    // `[1:31:12 elasticIndexingFilter] ERROR: Elasticsearch rejected the document with EventId 5 (type): reason`
+    private static final Pattern REJECTION_PATTERN = Pattern.compile(
+            "ERROR: Elasticsearch rejected the document with EventId (\\d+) (.*)");
+
     @Inject
     private ElasticEndToEndTestHelper helper;
+    @TempDir
+    private Path tempDir;
 
     private ElasticTestNode node;
     private DocRef clusterRef;
@@ -232,11 +245,138 @@ class TestElasticIndexing_EndToEnd extends AbstractCoreIntegrationTest {
         final List<ProcessorResult> results = helper.processAll();
 
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst().getMarkerCount(Severity.ERROR, Severity.FATAL_ERROR))
-                .as("Processing errors for the rejected documents")
-                .isPositive();
         node.refresh(indexName);
         assertThat(node.count(indexName, null)).isZero();
+
+        // Each document in the first batch is reported as its own error, naming the event it came from and
+        // giving Elasticsearch's reason, then processing stops
+        final String errorStream = helper.readOnlyStream(ElasticEndToEndTestHelper.NETWORK_FEED,
+                StreamTypeNames.ERROR);
+        final Map<Long, String> rejections = getRejections(errorStream);
+        assertThat(rejections.keySet())
+                .containsExactlyInAnyOrderElementsOf(firstBatchEventIds());
+        assertThat(rejections.values())
+                .allSatisfy(reason -> assertThat(reason).startsWith("(strict_dynamic_mapping_exception): "));
+        assertThat(errorStream).contains("FATAL: Bulk indexing request failed: " +
+                                         ElasticEndToEndTestHelper.INDEXING_BATCH_SIZE + " of " +
+                                         ElasticEndToEndTestHelper.INDEXING_BATCH_SIZE +
+                                         " documents rejected by Elasticsearch");
+    }
+
+    @Test
+    void testSomeDocumentsRejected() {
+        final String indexName = ElasticTestNode.createIndexName("partly-rejected");
+        indexPatternsToDelete.add(indexName);
+        // Command can't be parsed as a number, so the events that have one are rejected and the rest indexed
+        node.createIndex(indexName, """
+                {
+                  "mappings": {
+                    "properties": {
+                      "Command": {"type": "long"}
+                    }
+                  }
+                }""");
+
+        helper.translateNetworkEvents();
+        helper.createIndexingPipeline(
+                "Partly rejected network events indexing",
+                ElasticEndToEndTestHelper.NETWORK_XSLT,
+                clusterRef,
+                indexName,
+                ElasticEndToEndTestHelper.NETWORK_FEED);
+        final List<ProcessorResult> results = helper.processAll();
+
+        assertThat(results).hasSize(1);
+        final String errorStream = helper.readOnlyStream(ElasticEndToEndTestHelper.NETWORK_FEED,
+                StreamTypeNames.ERROR);
+        final Map<Long, String> rejections = getRejections(errorStream);
+        // Each rejection gives the cause, which holds the value that couldn't be parsed
+        assertThat(rejections)
+                .isNotEmpty()
+                .allSatisfy((eventId, reason) -> assertThat(reason)
+                        .contains("failed to parse field [Command] of type [long]")
+                        .contains(". Caused by (illegal_argument_exception): "));
+        assertThat(errorStream).contains("FATAL: Bulk indexing request failed: " + rejections.size() + " of " +
+                                         ElasticEndToEndTestHelper.INDEXING_BATCH_SIZE +
+                                         " documents rejected by Elasticsearch");
+
+        // The rest of the first batch stays indexed: exactly the events not named as rejected, none of them with
+        // a command
+        node.refresh(indexName);
+        final Set<Long> indexedEventIds = new HashSet<>();
+        node.search(indexName, """
+                {
+                  "size": 100,
+                  "_source": ["EventId"]
+                }""").at("/hits/hits").forEach(hit -> indexedEventIds.add(hit.at("/_source/EventId").asLong()));
+        final Set<Long> expectedEventIds = new HashSet<>(firstBatchEventIds());
+        expectedEventIds.removeAll(rejections.keySet());
+        assertThat(indexedEventIds)
+                .isNotEmpty()
+                .isEqualTo(expectedEventIds);
+        assertThat(node.count(indexName, """
+                {"exists": {"field": "Command"}}""")).isZero();
+    }
+
+    @Test
+    void testScatteredRejectionsInALargeBatch() throws IOException {
+        final String indexName = ElasticTestNode.createIndexName("large-batch");
+        indexPatternsToDelete.add(indexName);
+        node.createIndex(indexName, """
+                {
+                  "mappings": {
+                    "properties": {
+                      "Value": {"type": "long"}
+                    }
+                  }
+                }""");
+
+        // Enough events for the whole bulk response to be far longer than the 4,096 characters an error used to
+        // be cut to, with the few that Elasticsearch rejects scattered through them
+        final int eventCount = 3000;
+        final Set<Long> badEventIds = new HashSet<>();
+        final StringBuilder events = new StringBuilder("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<Events>\n");
+        for (long eventId = 1; eventId <= eventCount; eventId++) {
+            final boolean bad = eventId % 400 == 137;
+            if (bad) {
+                badEventIds.add(eventId);
+            }
+            events.append("<Event><Value>")
+                    .append(bad
+                            ? "not a number " + eventId
+                            : String.valueOf(eventId))
+                    .append("</Value></Event>\n");
+        }
+        events.append("</Events>\n");
+        final Path dataFile = tempDir.resolve("bulk-events.xml");
+        Files.writeString(dataFile, events);
+        helper.addEventsStream(BULK_FEED, dataFile);
+
+        // The filter's default batch size, so all the events go in one bulk request
+        helper.createIndexingPipeline(
+                "Large batch indexing",
+                ElasticEndToEndTestHelper.BULK_XSLT,
+                clusterRef,
+                indexName,
+                BULK_FEED,
+                true,
+                null);
+        final List<ProcessorResult> results = helper.processAll();
+
+        assertThat(results).hasSize(1);
+        final String errorStream = helper.readOnlyStream(BULK_FEED, StreamTypeNames.ERROR);
+        final Map<Long, String> rejections = getRejections(errorStream);
+        assertThat(rejections.keySet())
+                .containsExactlyInAnyOrderElementsOf(badEventIds);
+        assertThat(rejections).allSatisfy((eventId, reason) -> assertThat(reason)
+                .contains("failed to parse field [Value] of type [long]")
+                .contains("not a number " + eventId));
+        assertThat(errorStream).contains("FATAL: Bulk indexing request failed: " + badEventIds.size() + " of " +
+                                         eventCount + " documents rejected by Elasticsearch");
+
+        // Every other event is indexed
+        node.refresh(indexName);
+        assertThat(node.count(indexName, null)).isEqualTo(eventCount - badEventIds.size());
     }
 
     /// Reprocess the streams that a pipeline produced an Error stream for, checking it had no errors.
@@ -246,6 +386,30 @@ class TestElasticIndexing_EndToEnd extends AbstractCoreIntegrationTest {
         assertThat(results).hasSize(1);
         ElasticEndToEndTestHelper.assertNoErrors(results.getFirst());
         node.refresh(indexPattern);
+    }
+
+    /// Get the documents rejected by Elasticsearch from the content of an Error stream.
+    ///
+    /// @return Elasticsearch's reason for each rejection, starting with the error type in brackets, keyed by
+    ///         the `EventId` of the rejected document.
+    private static Map<Long, String> getRejections(final String errorStream) {
+        final Map<Long, String> rejections = new HashMap<>();
+        final Matcher matcher = REJECTION_PATTERN.matcher(errorStream);
+        while (matcher.find()) {
+            final long eventId = Long.parseLong(matcher.group(1));
+            final String previous = rejections.put(eventId, matcher.group(2));
+            assertThat(previous)
+                    .as("Rejection of event %d already reported", eventId)
+                    .isNull();
+        }
+        return rejections;
+    }
+
+    /// @return The ids of the events in the first batch the indexing filter sends.
+    private static List<Long> firstBatchEventIds() {
+        return LongStream.rangeClosed(1, ElasticEndToEndTestHelper.INDEXING_BATCH_SIZE)
+                .boxed()
+                .toList();
     }
 
     private Set<String> getDocumentIds(final String indexPattern) {
