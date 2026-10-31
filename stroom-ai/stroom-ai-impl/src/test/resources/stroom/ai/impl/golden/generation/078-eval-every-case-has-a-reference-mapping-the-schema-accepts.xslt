@@ -6,9 +6,11 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
     <xsl:variable name="verb_parts" select="analyze-string(string($message[1]), '^statement: (\w+)[\s\S]*$')"/>
     <xsl:variable name="verb_2" select="$verb_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="exists($message[matches(., '^connection authorized')])">
         <xsl:apply-templates select="." mode="event_type_connect"/>
@@ -26,7 +28,7 @@
         <xsl:apply-templates select="." mode="event_type_delete"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('message=', string(($message)[1])), concat('verb=', string(($verb_2)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('message=', string(($message)[1])), concat('verb=', string(($verb_2)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

@@ -66,7 +66,7 @@
     <xsl:if test="normalize-space(data[@name='time']/@value)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(round(xs:decimal(data[@name='time']/@value[1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal(data[@name='time']/@value[1]) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

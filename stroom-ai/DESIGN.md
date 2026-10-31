@@ -814,19 +814,27 @@ versions wrote:
 | `tools.draft` | `DraftMapping`, `LocalCheck` (a mapping checked on the sample), `SourceNotes`, `SplitterXml`. |
 | `tools.cef`, `tools.fielddoc` | The CEF plan and its XSLT; field documentation. |
 
-Some small helpers follow Python's rules rather than Java's, because the cores' established results (pinned by the
-parity fixtures, see [Testing](#testing)) and the messages agents act on depend on them:
+Some small helpers follow Python's rules rather than Java's, because the cores' results (held by the recorded cases,
+see [Testing](#testing)) and the messages agents act on depend on them:
 
 * `ToolText`: lengths and slices in code points, values in messages in Python's notation (`repr`: `'a'`, `None`,
   `True`), and regexes in which only `\n` ends a line (`$` doesn't match before a `\r`).
 * `ToolJson` and `JsonValues`: JSON read and written in Python's layout and messages, the truth of an empty value, and
   numbers compared across types.
-* `DelimitedText`: text after a quoted value's closing quote kept, an unclosed quote running to the end, no field size limit.
 * `IpAddresses`: an IPv4 octet with a leading zero refused, an IPv4 tail after `::` taken.
 * `CloseMatches`: difflib's ratio, autojunk on, for "did you mean".
-* `PythonRegex`: an extraction's regex read in the syntax of Python's `re` for its group count.
 * `ToolArgs`: a list argument read whether a model sends it as JSON, as a Python literal (`True`, `None`, single
   quotes) or as plain text, as models send all three.
+
+Two helpers follow Stroom's rules instead, as what they check runs in Stroom:
+
+* `XPathRegex`: an extraction's regex compiled by Saxon's own regex engine, in XPath's dialect, as the generated
+  XSLT's `analyze-string()` compiles it, for its group count. (It was read in Python's `re` dialect, which refused
+  `\p{L}` and let lookahead through.)
+* `DelimitedText`: a profile's delimited records split into cells as the generated Data Splitter splits them: a quote
+  opens or closes a quoted stretch wherever it is, a doubled quote stays doubled (for `unescape_quotes`), records end
+  at a new line (outside quotes with `quoted_newlines`), no field size limit. Only its sniffer, which guesses the
+  delimiter and whether there is a header, is a heuristic of Python's.
 
 The cores are pure Java over text and parsed trees; the tools around them read and write Stroom.
 Golden files fix their larger outputs (see [Testing](#testing)).
@@ -1989,24 +1997,28 @@ the README.
 | Suite | Where | What |
 | --- | --- | --- |
 | Unit | `stroom-ai-impl`, `stroom-mcp-impl` (`src/test`) | About 3,600 test methods (more cases, with parameterised and dynamic tests), each written around a case seen in testing. Mockito and AssertJ only. |
-| Golden | `stroom-ai-impl` test resources | The generators' larger outputs (XSLT, documentation text). Normalisers in `GenerationFixtures` cover deliberate changes (rule markers, record numbers, times). |
-| Parity | `TestXsltReaderCases`, `TestFieldPlanValidation`, `TestBuildRecords` and others | Fixtures that pin each tool's established behaviour and error text. A change to them is a decision, not a fix. |
+| Golden | `stroom-ai-impl` and `stroom-mcp-impl` test resources | The generators' larger outputs (XSLT, documentation text), compared to the byte. |
+| Recorded cases | `TestXsltReaderCases`, `TestFieldPlanValidation`, `TestIndexingRecordedCalls` and others | Fixtures holding each core's results and error text, call by call. A change to them is a decision, not a fix. |
+| Stored formats | `TestBuildRecords`, `TestStoredChatCompatibility`, `TestShapes` | Data in a format already stored, which must still read: never regenerated. |
 | Reference mappings, offline | `TestMappingSampleCheck` | Each evaluation case's reference mapping (cases whose samples are under 60 KB) passes the checks `build_translation_xslt` makes before it saves, with no Stroom: a reference that stops passing is a regression in the checks. |
 | End to end | `stroom-app`, `stroom.mcp.impl.e2e` | The real tools on a real Stroom, with MySQL and Elasticsearch, through an MCP test client that answers forms (about 35 classes, about 155 tests, about 26 minutes). |
 | Reference evaluation | `TestE2eEvalReference` | Each reference mapping checked through the real generator, without a model. |
 | Chat evaluation | `stroom-ai-impl` (`-DtestAiEval...`) | Scenarios run through the chat with a real model. See the README's developer notes. |
 | Chat end to end | `stroom-app` (`TestAskStroomAi*`) | The chat service with a fake model server: large tables, reports in batches, runs that tidy up, wide sample forms. |
 
-The parity fixtures hold each core's established results, call by call: `recorded_calls.json` and
-`model_cases.json` (indexing), `helper_cases.json` and `model_cases.json` (generation helpers and the mapping model),
-`reader_cases.json`, `xpath_cases.json`, `store_cases.json`, `changes_cases.json`, `reference_cases.json`,
-`draft_cases.json`, `localcheck_cases.json` and `stored_survey.json` (samples profiled, split and surveyed).
-`TestBuildRecords` holds a build record already in Stroom's format, which must read and be written back unchanged.
-Like the golden files, the fixtures are not regenerated from the code under test. Where Stroom now differs on purpose,
-the test applies the difference to the fixture in one place, with a comment saying why (times cut, not rounded; a
-`join` entry; a rule's Data from its own records; the draft's notes on where the message goes; a TypeId shared by
-kinds of event as a problem; a case transform named; the catalogue's order; a field written to an element and as
-Data warned of), so every difference is visible and deliberate.
+The recorded cases hold each core's results, call by call: `recorded_calls.json` and `model_cases.json` (indexing),
+`helper_cases.json` and `model_cases.json` (generation helpers and the mapping model), `reader_cases.json`,
+`xpath_cases.json`, `store_cases.json`, `changes_cases.json`, `reference_cases.json`, `draft_cases.json`,
+`localcheck_cases.json`, `splitter_cases.json` and `drafts.json`. They and the golden files are regenerated from the
+code: run the tests with `-DtestUpdateGoldenFiles=true` (`GoldenFiles`; `McpGoldenFiles` in `stroom-mcp-impl`),
+which rewrites each with what the code gives now, then review the `git diff` with the change. Run it twice when the
+generator's golden XSLTs change, as the reader's and parser's cases read them. A change to them must be deliberate:
+the diff is the review.
+
+Data already stored in an earlier format is never regenerated, as it proves that format still reads:
+`stored_survey.json` (samples profiled, split and surveyed, as recorded), `stored-build-record.md` (a build record
+already in Stroom's format, which must read and be written back unchanged) and `fixtures/stored-chats/` (how chats
+are stored).
 
 What the end-to-end classes prove:
 
@@ -2076,7 +2088,7 @@ Known local failures in the full build, neither caused by this code:
 | Processing far more than the sample | Sample filters by stream id, one task; feed filters need a start time and run 2 tasks; every filter outside an approved build run is created disabled. |
 | A prompt-injected model | Taint, approvals, the write guard, forms the model can't answer, XSLT safety. |
 | Long chats outgrow the context | Tool groups, streamed summaries, digests, reference results kept. |
-| Instructions in the code drift from what the agent is told | Tool wording and server instructions are tested; parity fixtures pin established wording. |
+| Instructions in the code drift from what the agent is told | Tool wording and server instructions are tested; golden files and recorded cases hold the wording, so a change to it shows in review. |
 | `TransportSessions` depends on the SDK's private field | A test pins it to the SDK in use; it fails on an upgrade that changes it. |
 | Stroom-side bugs the tools meet (Elasticsearch wildcard fields, extracted KEYWORD and IPV4 values, overnight profile periods, a disabled node still processing) | Worked round or warned about in the tools; written up for core fixes. |
 

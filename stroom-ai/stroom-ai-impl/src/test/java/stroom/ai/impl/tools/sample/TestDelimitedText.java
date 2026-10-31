@@ -26,27 +26,41 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestDelimitedText {
 
     @Test
-    void rowsAreReadWithQuotesAndEscapes() {
-        assertThat(DelimitedText.read("a,\"b, c\",\"say \"\"hi\"\"\"\n\nx\"y,\"multi\nline\"", DelimitedText.EXCEL))
-                .containsExactly(List.of("a", "b, c", "say \"hi\""), List.of(), List.of("x\"y", "multi\nline"));
-        // A quote after a quoted value's close is kept, as Python's reader keeps it when not strict.
-        assertThat(DelimitedText.read("\"ab\"c,d", DelimitedText.EXCEL)).containsExactly(List.of("abc", "d"));
-        // An unclosed quote runs to the end.
-        assertThat(DelimitedText.read("a,\"open\nmore", DelimitedText.EXCEL))
-                .containsExactly(List.of("a", "open\nmore"));
-        assertThat(DelimitedText.read("a\tb", DelimitedText.Dialect.delimitedBy('\t')))
-                .containsExactly(List.of("a", "b"));
+    void cellsAreSplitAsTheDataSplitterSplitsThem() {
+        assertThat(DelimitedText.cells(List.of("a,\"b, c\",\"say \"\"hi\"\"\"", "x,\"multi\nline\""), ','))
+                .containsExactly(List.of("a", "b, c", "say \"\"hi\"\""), List.of("x", "multi\nline"));
+        assertThat(DelimitedText.cells(List.of("a\tb"), '\t')).containsExactly(List.of("a", "b"));
+    }
+
+    @Test
+    void aDoubledQuoteStaysDoubledForUnescapeQuotes() {
+        // As Stroom gives it (seen: "Said ""bye""" is Said ""bye""): the mapping's unescape_quotes makes it one.
+        assertThat(DelimitedText.cells(List.of("1,\"Said \"\"bye\"\"\""), ','))
+                .containsExactly(List.of("1", "Said \"\"bye\"\""));
+    }
+
+    @Test
+    void aQuoteAnywhereOpensAQuotedStretch() {
+        // Not only at a value's start: the delimiter inside the stretch is not a delimiter.
+        assertThat(DelimitedText.cells(List.of("x\"y,z\",w"), ',')).containsExactly(List.of("xy,z", "w"));
+        assertThat(DelimitedText.cells(List.of("\"ab\"c,d"), ',')).containsExactly(List.of("abc", "d"));
+        // An unclosed quote runs to the end of the record.
+        assertThat(DelimitedText.cells(List.of("a,\"open,more"), ',')).containsExactly(List.of("a", "open,more"));
+    }
+
+    @Test
+    void anEmptyRecordIsOneEmptyCell() {
+        assertThat(DelimitedText.cells(List.of("", ",,"), ',')).containsExactly(List.of(""), List.of("", "", ""));
     }
 
     @Test
     void aVeryLongFieldIsRead() {
         // Seen in testing: a 250,000-character URL query was refused ("field larger than field limit (131072)").
         final String query = "q=" + "a".repeat(250_000);
-        final String quoted = "say \"\"" + "b".repeat(200_000) + "\"\"";
+        final String quoted = "say " + "b".repeat(200_000);
 
-        assertThat(DelimitedText.read("1," + query + ",\"" + quoted + "\"\n2,short,x", DelimitedText.EXCEL))
-                .containsExactly(List.of("1", query, "say \"" + "b".repeat(200_000) + "\""),
-                        List.of("2", "short", "x"));
+        assertThat(DelimitedText.cells(List.of("1," + query + ",\"" + quoted + "\"", "2,short,x"), ','))
+                .containsExactly(List.of("1", query, quoted), List.of("2", "short", "x"));
     }
 
     @Test

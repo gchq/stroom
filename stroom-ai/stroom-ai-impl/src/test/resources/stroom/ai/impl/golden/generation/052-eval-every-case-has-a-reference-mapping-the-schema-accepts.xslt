@@ -6,7 +6,9 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$action = 'create'">
         <xsl:apply-templates select="." mode="event_type_created"/>
@@ -18,7 +20,7 @@
         <xsl:apply-templates select="." mode="event_type_updated"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

@@ -108,8 +108,11 @@
   "problems": [],
   "warnings": [
    "[vip] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[vip] 'user' is written as EventSource/Client/IPAddress and as Data 'u' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
    "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] 'user' is written as EventSource/Client/IPAddress and as Data 'u' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
+   "[other] 'user' is written as EventSource/Client/IPAddress and as Data 'source_ip' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
    "Lookups read reference map(s) ['USER_TO_ORG']: the pipeline needs the feed that loads each as a pipeline reference (create_pipeline references, or update_pipeline (references=...)); find_reference_data lists the maps and their feeds."
   ],

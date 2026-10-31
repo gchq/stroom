@@ -2389,7 +2389,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(round(xs:decimal($v[1]) * 1000))))"
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) * 1000))))"
  },
  {
   "call": "time_expr",
@@ -2398,7 +2398,7 @@
    "UTC",
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(round(xs:decimal($v[1]) div 1000))))"
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000))))"
  },
  {
   "call": "time_expr",
@@ -2407,7 +2407,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(round(xs:decimal($v[1]) div 1000000))))"
+  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000000))))"
  },
  {
   "call": "time_expr",
@@ -2425,7 +2425,7 @@
    null,
    "$v[1]"
   ],
-  "result": "mcp:time-ms(string($v[1]), 'yyyy-MM-dd HH:mm:ss.SSSSSS', '')"
+  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS')"
  },
  {
   "call": "time_expr",
@@ -2434,7 +2434,7 @@
    "+10:00",
    "$v[1]"
   ],
-  "result": "mcp:time-ms(string($v[1]), 'yyyy-MM-dd HH:mm:ss.SSSSSS', '+10:00')"
+  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', '+10:00')"
  },
  {
   "call": "time_expr",

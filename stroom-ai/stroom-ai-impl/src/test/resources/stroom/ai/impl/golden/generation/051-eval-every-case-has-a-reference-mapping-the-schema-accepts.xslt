@@ -6,7 +6,9 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="cef_signature_id" select="data[@name='cef_signature_id']/@value[normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$cef_signature_id = ('1001', '1002')">
         <xsl:apply-templates select="." mode="event_type_logon"/>
@@ -21,7 +23,7 @@
         <xsl:apply-templates select="." mode="event_type_malware"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('cef_signature_id=', string(($cef_signature_id)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('cef_signature_id=', string(($cef_signature_id)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

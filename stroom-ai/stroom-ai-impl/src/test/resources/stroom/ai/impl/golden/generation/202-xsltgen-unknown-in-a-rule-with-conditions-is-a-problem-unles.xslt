@@ -6,10 +6,12 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="data[@name='action']/@value = 'status'">
         <xsl:apply-templates select="." mode="event_type_status"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''status'': record ', stroom:record-no(), ' (', string-join((concat('action=', string((normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''status'': record ', $record-no, ' (', string-join((concat('action=', string((normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>

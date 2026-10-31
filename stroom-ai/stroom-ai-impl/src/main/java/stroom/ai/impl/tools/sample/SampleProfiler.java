@@ -889,14 +889,12 @@ public final class SampleProfiler {
         if (!text.contains("\"") || !text.contains("\n")) {
             return null;
         }
+        // Records end at a new line outside quotes, as the Data Splitter with quoted_newlines ends them.
+        final List<String> texts = SplitterDryRun.quotedLines(text, DelimitedText.QUOTE);
         for (final char delimiter : List.of(',', '\t', '|', ';')) {
-            List<List<String>> rows;
-            try {
-                rows = DelimitedText.read(text, DelimitedText.Dialect.delimitedBy(delimiter));
-            } catch (final DelimitedText.CsvException e) {
-                continue;
-            }
-            rows = rows.stream().filter(row -> row.stream().anyMatch(cell -> !ToolText.isBlank(cell))).toList();
+            final List<List<String>> rows = DelimitedText.cells(texts, delimiter).stream()
+                    .filter(row -> row.stream().anyMatch(cell -> !ToolText.isBlank(cell)))
+                    .toList();
             if (rows.size() < 3 || rows.stream().noneMatch(row -> row.stream().anyMatch(c -> c.contains("\n")))) {
                 continue;
             }
@@ -1456,8 +1454,8 @@ public final class SampleProfiler {
         } catch (final DelimitedText.CsvException e) {
             hasHeader = false;
         }
-        final List<List<String>> rows = DelimitedText.read(String.join("\n", lines.subList(0,
-                Math.min(maxRecords + 1, lines.size()))), DelimitedText.Dialect.delimitedBy(delimiter.charAt(0)));
+        final List<List<String>> rows = DelimitedText.cells(lines.subList(0, Math.min(maxRecords + 1, lines.size())),
+                delimiter.charAt(0));
         if (!hasHeader && rows.size() > 1) {
             hasHeader = namesAHeader(rows);
         }
