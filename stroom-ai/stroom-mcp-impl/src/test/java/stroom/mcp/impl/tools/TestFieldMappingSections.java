@@ -51,7 +51,8 @@ class TestFieldMappingSections {
     private final StreamSummaries streamSummaries = Mockito.mock(StreamSummaries.class);
     private final FieldMappingSections sections = new FieldMappingSections(stepping,
             Mockito.mock(DraftCefMappingTool.class), Mockito.mock(PipelineShapes.class), world.eventVersions,
-            Mockito.mock(GeneratedDrift.class), world.streamReader, streamSummaries, Mockito.mock(IndexValues.class));
+            Mockito.mock(GeneratedDrift.class), world.streamReader, streamSummaries, Mockito.mock(IndexValues.class),
+            Mockito.mock(ReferenceEvaluation.class));
     private final PipelineDoc pipeline = PipelineDoc.builder().uuid("p").name("ACME-Events").build();
 
     @Test

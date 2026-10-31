@@ -57,6 +57,7 @@ public final class ToolSummaries {
             Map.entry("draft_index_mapping", "Onboarding: drafts the fields of an index."),
             Map.entry("draft_translation_mapping", "Onboarding: drafts a translation mapping from the sample."),
             Map.entry("elastic_index_templates", "Reads the Elasticsearch templates of an Elastic Index's index."),
+            Map.entry("evaluate_pipeline", "Gathers the facts for an evaluation of an existing event pipeline."),
             Map.entry("explain_processing",
                     "Explains why processing is stuck or slow, and how filters are prioritised and scheduled."),
             Map.entry("explain_retention", "Explains how long data is kept, and when and why it is deleted."),
