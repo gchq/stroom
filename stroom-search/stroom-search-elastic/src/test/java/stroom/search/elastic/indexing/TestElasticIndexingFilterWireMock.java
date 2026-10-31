@@ -17,6 +17,7 @@
 package stroom.search.elastic.indexing;
 
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.search.elastic.ElasticWireMock;
 import stroom.util.shared.Severity;
 
@@ -132,6 +133,80 @@ class TestElasticIndexingFilterWireMock {
         assertThat(ELASTIC.findAll(createBulkRequests()))
                 .extracting(request -> ndjsonLines(request).size() / 2)
                 .containsExactly(2, 2, 1);
+    }
+
+    @Test
+    void testBatchesSplitByMaxBatchSize() {
+        ELASTIC.stubFor(createBulk().willReturn(bulkSuccess(2)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        // Each document is `{"n":<0-9>}`, 7 or 8 bytes (with the space Jackson writes between root values), so a
+        // batch is sent after every second document
+        filter.setMaxBatchSize("14");
+
+        harness.process(filter, jsonXml(documents(5)));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(ELASTIC.findAll(createBulkRequests()))
+                .extracting(request -> ndjsonLines(request).size() / 2)
+                .containsExactly(2, 2, 1);
+    }
+
+    @Test
+    void testMaxBatchSizeWithUnit() {
+        ELASTIC.stubFor(createBulk().willReturn(bulkSuccess(1)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setMaxBatchSize("1K");
+
+        harness.process(filter, jsonXml(documents(200)));
+
+        // Document 0 is 7 bytes. Each later document has the space Jackson writes between root values, so
+        // 1-9 are 8 bytes, 10-99 are 9 and 100-199 are 10, and the first 114 come to 1,029 bytes, the first to
+        // reach 1,024
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(ELASTIC.findAll(createBulkRequests()))
+                .extracting(request -> ndjsonLines(request).size() / 2)
+                .containsExactly(114, 86);
+    }
+
+    @Test
+    void testDocumentLargerThanMaxBatchSizeSentAlone() {
+        ELASTIC.stubFor(createBulk().willReturn(bulkSuccess(1)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setMaxBatchSize("5");
+
+        harness.process(filter, jsonXml(documents(3)));
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(ELASTIC.findAll(createBulkRequests()))
+                .extracting(request -> ndjsonLines(request).size() / 2)
+                .containsExactly(1, 1, 1);
+    }
+
+    @Test
+    void testBlankMaxBatchSizeKeepsDefault() {
+        ELASTIC.stubFor(createBulk().willReturn(bulkSuccess(1)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setMaxBatchSize(" ");
+
+        harness.process(filter, jsonXml(documents(3)));
+
+        assertThat(ELASTIC.findAll(createBulkRequests()))
+                .extracting(request -> ndjsonLines(request).size() / 2)
+                .containsExactly(3);
+    }
+
+    @Test
+    void testInvalidMaxBatchSize() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        assertThatThrownBy(() -> filter.setMaxBatchSize("ten"))
+                .isInstanceOf(PipelineFactoryException.class)
+                .hasMessage("Incorrect value for max batch size: ten");
+        assertThatThrownBy(() -> filter.setMaxBatchSize("0"))
+                .isInstanceOf(PipelineFactoryException.class)
+                .hasMessage("Incorrect value for max batch size: 0");
+        assertThatThrownBy(() -> filter.setMaxBatchSize("-1M"))
+                .isInstanceOf(PipelineFactoryException.class);
     }
 
     @Test

@@ -23,6 +23,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -42,6 +43,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -115,6 +117,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final int ES_TOO_MANY_REQUESTS_STATUS = 429;
     // Matches the number of errors the Error stream view shows per page
     private static final int MAX_REPORTED_REJECTIONS = 100;
+    // Elastic recommend bulk requests of 5-15 MB
+    private static final String DEFAULT_MAX_BATCH_SIZE = "10M";
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
     private static final Pattern INDEX_BASE_NAME_PATTERN = Pattern.compile("^([^{]+)");
 
@@ -130,6 +134,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     // Pipeline filter configuration options
     private int batchSize = 10000;
+    private long maxBatchSizeBytes = ModelStringUtil.parseIECByteSizeString(DEFAULT_MAX_BATCH_SIZE);
     private boolean purgeOnReprocess = true;
     private String ingestPipelineName = null;
     private boolean refreshAfterEachBatch = false;
@@ -145,6 +150,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     // A description of the document each operation in bulkOperations holds, in the same order, for reporting
     // the document if Elasticsearch rejects it
     private final List<String> bulkDocumentNames;
+    // The total size of the documents in bulkOperations
+    private long bulkOperationsBytes = 0;
     private final ByteArrayOutputStream currentDocument;
     private final CharBuffer content = new CharBuffer();
     private Set<String> indexNameVariables = new HashSet<>();
@@ -545,12 +552,14 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             return createOp;
                         })
                 ));
+                bulkOperationsBytes += currentDocument.size();
                 // Remember which document this is, so that a rejection can be reported against it
                 queuedDocumentCount++;
                 bulkDocumentNames.add(describeCurrentDocument());
 
-                // If the maximum batch size has been reached, send the current batch for indexing
-                if (bulkOperations.size() >= batchSize) {
+                // If the maximum number of documents or bytes has been reached, send the current batch for
+                // indexing. A document larger than the maximum bytes is sent in a batch of its own.
+                if (bulkOperations.size() >= batchSize || bulkOperationsBytes >= maxBatchSizeBytes) {
                     indexDocuments();
                 }
             }
@@ -786,6 +795,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             currentRetry = 0;
             bulkOperations.clear();
             bulkDocumentNames.clear();
+            bulkOperationsBytes = 0;
         }
     }
 
@@ -964,6 +974,34 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     )
     public void setBatchSize(final int batchSize) {
         this.batchSize = batchSize;
+    }
+
+    /// Sets the maximum total size of the documents in each bulk request, so that a batch of large documents
+    /// doesn't make a request too large for Elasticsearch to handle well.
+    ///
+    /// @param maxBatchSize The size in bytes, e.g. `1048576`, or with an IEC unit suffix, e.g. `1M`. Blank
+    ///                     leaves the default.
+    /// @throws PipelineFactoryException If the size can't be parsed or isn't positive.
+    @PipelineProperty(
+            description = "Maximum total size of the documents in each bulk request, either in bytes e.g. " +
+                          "'1048576' or with an IEC unit suffix, e.g. '1M'. A batch is sent when it reaches either " +
+                          "this size or the batch size, whichever comes first.",
+            defaultValue = DEFAULT_MAX_BATCH_SIZE,
+            displayPriority = 6
+    )
+    public void setMaxBatchSize(final String maxBatchSize) {
+        if (maxBatchSize != null && !maxBatchSize.isBlank()) {
+            final Long value;
+            try {
+                value = ModelStringUtil.parseIECByteSizeString(maxBatchSize);
+            } catch (final NumberFormatException e) {
+                throw new PipelineFactoryException("Incorrect value for max batch size: " + maxBatchSize);
+            }
+            if (value == null || value <= 0) {
+                throw new PipelineFactoryException("Incorrect value for max batch size: " + maxBatchSize);
+            }
+            this.maxBatchSizeBytes = value;
+        }
     }
 
     @PipelineProperty(
