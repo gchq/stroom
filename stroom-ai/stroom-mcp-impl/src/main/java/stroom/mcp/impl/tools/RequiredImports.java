@@ -146,6 +146,35 @@ class RequiredImports {
         return out;
     }
 
+    /// The required imports an XSLT imports but whose named templates it calls none of: the import alone writes
+    /// nothing where a template must be called (asked for by the user: `Stream-Meta-V1` imported, and the event's
+    /// Meta still written by hand, or not at all). An import of template rules or functions only is left alone.
+    ///
+    /// @param required The required imports.
+    /// @param code     The XSLT.
+    /// @return A warning for each.
+    List<String> uncalled(final List<RequiredImport> required, final String code) {
+        final List<String> out = new ArrayList<>();
+        final Set<String> called = SiblingSharedCalls.calledTemplates(code);
+        for (final RequiredImport r : required) {
+            try {
+                final Set<String> offered = named(r.href())
+                        .map(doc -> SharedXslt.templatesOf(NullSafe.string(doc.getData())).keySet())
+                        .orElse(Set.of());
+                if (!offered.isEmpty() && offered.stream().noneMatch(called::contains)) {
+                    out.add(PyText.repr(r.href()) + " is imported (the AGENTS doc in " + root(r.from())
+                            + " requires it), but none of its named templates " + PyText.list(new TreeSet<>(offered))
+                            + " is called: call each where it writes (shared entries), unless the user says this "
+                            + "XSLT needs none of them.");
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Unable to read the required import {}: {}", r.href(),
+                        e.getMessage()), e);
+            }
+        }
+        return out;
+    }
+
     /// An XSLT of a stage whose standing instructions require shared imports, without them, is refused (asked for
     /// by the user): generated ones get them from the generator; one written by hand must add them.
     ///

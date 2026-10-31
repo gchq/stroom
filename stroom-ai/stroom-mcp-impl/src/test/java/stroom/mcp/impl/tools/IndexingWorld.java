@@ -104,7 +104,7 @@ final class IndexingWorld {
     DraftIndexMappingTool draftTool() {
         return new DraftIndexMappingTool(knowledge, conventionsTool(), inputs, plans, examples, memory,
                 processing.feeds.consent, processing.feeds.streamReader, pipelineIndex, world.pipelineShapes,
-                world.documentAccess);
+                world.documentAccess, new SiblingSharedCalls(pipelineTemplates));
     }
 
     /// @return create_index_doc, on this world.
