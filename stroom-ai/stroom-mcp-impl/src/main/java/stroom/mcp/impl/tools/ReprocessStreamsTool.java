@@ -64,6 +64,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
     private final SampleStreamTexts sampleStreamTexts;
     private final Consent consent;
     private final BuildPlan plan;
+    private final BuildRecords buildRecords;
 
     @Inject
     ReprocessStreamsTool(final ProcessorFilterWrites filterWrites,
@@ -73,7 +74,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                          final IndexTemplateAgreements agreements,
                          final SampleStreamTexts sampleStreamTexts,
                          final Consent consent,
-                         final BuildPlan plan) {
+                         final BuildPlan plan,
+                         final BuildRecords buildRecords) {
         this.filterWrites = filterWrites;
         this.sources = sources;
         this.approvals = approvals;
@@ -82,6 +84,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         this.sampleStreamTexts = sampleStreamTexts;
         this.consent = consent;
         this.plan = plan;
+        this.buildRecords = buildRecords;
     }
 
     @Override
@@ -89,7 +92,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(BuildPlan.onboardingLabel(NAME)
-                             + "Process streams again through a pipeline under development, after changing it. At "
+                             + "Process streams again through a pipeline under development, after changing it and "
+                             + "stepping it clean (its current code, as create_processor_filter needs). At "
                              + "most " + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " streams per call, run one "
                              + "task at a time. Stroom marks the pipeline's earlier outputs for "
                              + "these streams deleted once the new ones are written; pass the returned filter_id to "
@@ -175,6 +179,14 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         if (!fresh.isEmpty()) {
             throw new ToolRefusal("Stream(s) " + PyText.repr(fresh) + " have not been processed by '"
                                   + pipeline.getName() + "': use create_processor_filter");
+        }
+        // As create_processor_filter: reprocessing is of code proved first (asked for by the user; found reviewing
+        // the tools: streams were reprocessed through code never stepped).
+        if (!CreateProcessorFilterTool.steppedClean(buildRecords, ref)) {
+            throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' has no clean step of its current code "
+                                  + "recorded: step_sample (or step_records) over the streams until the verdict is "
+                                  + "clean, then reprocess. A change to its XSLT or converter since the last clean "
+                                  + "step needs stepping again.");
         }
         sources.buildFeedsOnly(ref, streamIds, null);
         sampleStreamTexts.refuseOlderThanFeed(streamIds);

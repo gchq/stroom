@@ -19,6 +19,7 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.shared.AiSteppingContext;
 import stroom.ai.shared.AiSteppingElement;
 import stroom.ai.shared.AiTabSnapshotPart;
@@ -163,6 +164,26 @@ class TestXsltLookupsTool {
                 .doesNotContain("Removed loader");
         // HOST_LONDON may be what the dynamic lookup uses, so it isn't flagged as unused.
         assertThat(result).doesNotContain("map 'HOST_LONDON' (resolved) written by");
+    }
+
+    @Test
+    void outsideAChatTheXsltsAreReadAsSaved() {
+        // Found reviewing the tools: offered over /mcp, it looked for the chat's tab on every XSLT, and failed.
+        final XsltLookupsTool tool = new XsltLookupsTool(fixture.workspace, () -> fixture.dependencyService,
+                () -> docFinder, fixture.documentAccess(), fixture.auditLog(), tabSnapshots);
+
+        // As McpTools makes an MCP session's call: its workspace is its hidden chat's.
+        final ToolCallContext overMcp = ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP,
+                        "mcp-session-1", new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                .workspace(new SessionWorkspace(fixture.workspace, 9))
+                .userQuestions(UserQuestions.NONE)
+                .build();
+
+        final String result = tool.run(ToolTestFixture.request(XsltLookupsTool.NAME, "{\"uuids\":[\"main-xslt\"]}"),
+                overMcp).text();
+
+        assertThat(result).contains("used by pipeline(s) 'Parent pipeline' (parent), 'Child pipeline' (child)");
+        Mockito.verifyNoInteractions(tabSnapshots);
     }
 
     @Test

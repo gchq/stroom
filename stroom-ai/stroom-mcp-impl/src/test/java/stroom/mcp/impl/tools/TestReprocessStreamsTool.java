@@ -98,6 +98,8 @@ class TestReprocessStreamsTool {
         w.stream(5, "ACME", "Raw Events", null, null);
         w.idFilter("p1", 3, 5);
 
+        w.steppedClean(P1);
+
         final Gated gated = reprocessed(Map.of("stream_ids", List.of(5)));
 
         assertThat(gated.gates()).isEmpty();
@@ -120,6 +122,24 @@ class TestReprocessStreamsTool {
     }
 
     @Test
+    void reprocessingCodeNeverSteppedCleanIsRefused() {
+        // Found reviewing the tools: create_processor_filter refused code not stepped clean, reprocess_streams
+        // didn't, so streams were processed again through code never proved (the user asked for the same gate).
+        w.pipeline(P1, true, null);
+        w.translation("p1");
+        w.buildFeed("ACME");
+        w.stream(5, "ACME", "Raw Events", null, null);
+        w.idFilter("p1", 3, 5);
+
+        final ToolResult result = call(Map.of("stream_ids", List.of(5)));
+
+        assertThat(result.isError()).isTrue();
+        assertThat(result.text()).contains("Pipeline 'Acme' has no clean step of its current code recorded",
+                "then reprocess");
+        assertThat(w.created).isEmpty();
+    }
+
+    @Test
     void reprocessWhatWasNeverProcessedSaysToCreateAFilter() {
         // The Stroom MCP server's tests/test_off_path.py: the message names the call that puts it right.
         translationInBuild();
@@ -138,6 +158,8 @@ class TestReprocessStreamsTool {
         w.translation("ev");
         w.stream(5, "ACME-EVENTS", "Events", "ev", 4L);
         w.idFilter("p1", 3, 5);
+
+        w.steppedClean(P1);
 
         final Gated gated = reprocessed(Map.of("stream_ids", List.of(5), "source_pipeline_uuid", "ev"));
 
@@ -181,6 +203,8 @@ class TestReprocessStreamsTool {
         }
         Mockito.when(w.indexResource.find(any(FindIndexShardCriteria.class))).thenReturn(new ResultPage<>(List.of(
                 shard(434, IndexShardStatus.OPEN, 5), shard(400, IndexShardStatus.DELETED, 3))));
+
+        w.steppedClean(P1);
 
         final Gated gated = reprocessed(Map.of("stream_ids", List.of(5)));
 
