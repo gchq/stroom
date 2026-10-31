@@ -331,6 +331,21 @@ class TestEvaluatePipelineTool {
     }
 
     @Test
+    void aGroupOfListedDocumentsKeepsWhatItsCountLeavesOut() {
+        // Stroom lists only the first 100 documents a batch rejects; the brief keeps saying so.
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("class", "blocking");
+        group.put("count", 100);
+        group.put("records_affected", 100);
+        group.put("listed_only", "Counts only the documents Stroom listed: it lists the first 100 a batch rejects, "
+                                 + "and 50 more were rejected without being listed");
+        group.put("examples", List.of(Map.of("message", "Elasticsearch rejected the document with EventId 2 (x)")));
+
+        assertThat(EvaluatePipelineTool.compact(List.of(group), false)).singleElement()
+                .satisfies(brief -> assertThat(brief).containsEntry("listed_only", group.get("listed_only")));
+    }
+
+    @Test
     void theFieldPopulationIsKeptShortLeastFilledFirst() {
         final Map<String, Double> paths = new LinkedHashMap<>();
         for (int i = 0; i < EvaluatePipelineTool.POPULATION_PATHS + 5; i++) {
