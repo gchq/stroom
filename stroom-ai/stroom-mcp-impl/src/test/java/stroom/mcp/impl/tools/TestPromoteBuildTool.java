@@ -49,8 +49,8 @@ class TestPromoteBuildTool {
     private final PromotionProcessing processing = Mockito.mock(PromotionProcessing.class);
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
-            Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(IndexingRuns.class),
-            Mockito.mock(OutputFeeds.class), docs.writes, world.documentAccess, docs.translation.history);
+            Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(OutputFeeds.class), docs.writes,
+            world.documentAccess, docs.translation.history);
 
     @Test
     void roleSubfoldersAreKeptUnderEachDestinationUnlessTheUserSaysNot() {

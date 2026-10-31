@@ -315,15 +315,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         }
         // A pipeline that sends elsewhere (CEF to Kafka) or loads reference data: disabled (asked for by the user),
         // so there is no approval form: enabling it in Stroom is the user's approval.
-        final boolean small = destination != null && indexingRuns.developmentBatch(pipelineUuid, true);
         final ProcessorFilter created = filterWrites.createFilter(ref, expression, priority, scope.maxTasks(),
                 scope.minMs(), false);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", created.getId());
         result.putAll(common);
-        if (small) {
-            result.put("batch_size", IndexingRuns.BATCH_NOTE);
-        }
         result.put("enabled", false);
         result.putAll(ProcessingApprovals.forTheUser(context.links(), ref, created.getId(), details,
                 ProcessingApprovals.beforeActions(context.links(), pipeline, destination, lucene, details)));
@@ -354,16 +350,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         if (run.clear()) {
             indexingRuns.deleteIndexShards(run.lucene().getUuid());
         }
-        final boolean small = run.destination() != null
-                              && indexingRuns.developmentBatch(run.ref().getUuid(), true);
         final ProcessorFilter created = filterWrites.createFilter(run.ref(), run.expression(), run.priority(),
                 run.scope().maxTasks(), run.scope().minMs(), true);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", created.getId());
         result.putAll(run.common());
-        if (small) {
-            result.put("batch_size", IndexingRuns.BATCH_NOTE);
-        }
         result.put("enabled", true);
         result.put("hint", "Processing has started: wait_for_processing with filter_id=" + created.getId() + ".");
         return plan.nextFor(context, run.ref(), result);

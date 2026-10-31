@@ -2533,8 +2533,7 @@ Every destination is resolved before approval (`WriteGuard.resolveFolder`), and 
 the tree, so a missing folder can't stop a promotion half way. On approval, in order: pending changes are consolidated
 (`consolidateVersions`: one new line in each XSLT's version history, one new row in each doc's version control);
 missing folders are created (one made since the review is used, never twinned; tagged `mcp-generated`, not
-`mcp-managed`); each promoted pipeline has its development batch size taken off (`IndexingRuns.developmentBatch`)
-and its StreamAppender `feed` property removed where it named a build feed (`OutputFeeds.restoreOutputFeed`: in
+`mcp-managed`); each promoted pipeline has its StreamAppender `feed` property removed where it named a build feed (`OutputFeeds.restoreOutputFeed`: in
 production its Events go into the input's feed); then write-backs, moves (untagged `mcp-managed`, so the agent may no
 longer change them directly), discards and keeps. The build's record entries go, the build folder is removed if empty,
 and `PromotionProcessing.createPromotionFilters` makes a feed-wide filter per promoted pipeline, **disabled**, with no
@@ -2839,14 +2838,13 @@ comes before the approval, with a button (the `DELETE _data_stream/<index>` or `
 cluster admin), and the agent calls again with `index_dropped=true` once the user says it is done. A build's own Lucene
 index is emptied by the tool once approved (`IndexingRuns.deleteIndexShards`, node by node through `IndexResource`).
 An index Elasticsearch refused every earlier write to holds nothing of the pipeline's (read from its Error streams'
-text), so it isn't dropped. A build's Elasticsearch indexing pipeline gets a batch size of 10 while developed
-(`IndexingRuns.developmentBatch`), so a rejected document is reported with Elasticsearch's full reason.
+text), so it isn't dropped.
 
 * **Arguments**: `pipeline_uuid` (required), `stream_ids` or `feed` (exactly one), `stream_type`, `created_after`
   (ISO; without an offset taken as UTC), `priority` (1 to 100, default 10), `source_pipeline_uuid`, `index_dropped`,
   `template_committed_by_user`.
 * **Returns**: `filter_id`, `pipeline`, `scope`, `events_from_pipeline`, `output_feed` with `output_note`,
-  `batch_size`, `enabled`, a hint (`wait_for_processing with filter_id=`), and `next`; a disabled filter adds
+  `enabled`, a hint (`wait_for_processing with filter_id=`), and `next`; a disabled filter adds
   `pipeline_link`, what enabling does, `before_enabling` and `user_actions`; a `drop_first` reply in place of the
   approval when the index must start fresh.
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build; both or neither scope; `priority` out of
@@ -2899,7 +2897,7 @@ index is emptied once approved.
 
 * **Arguments**: `pipeline_uuid`, `stream_ids` (required; 1 to 10), `source_pipeline_uuid`, `index_dropped`,
   `template_committed_by_user`.
-* **Returns**: `filter_id`, `pipeline`, `streams`, `max_tasks`, `enabled`, `batch_size`, a hint, `next`; for a disabled
+* **Returns**: `filter_id`, `pipeline`, `streams`, `max_tasks`, `enabled`, a hint, `next`; for a disabled
   filter what the user does first, with buttons; or a `drop_first` reply.
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build (promoted pipelines too: reprocessing
   production data is the user's); 0 or more than 10 streams (`Give 1 to 10 streams per call`); streams the pipeline
@@ -2938,7 +2936,7 @@ pipelines each waited out two timeouts with every task complete).
   `output_type`.
 * **Returns**: `pipeline`, `finished`, `streams` (each `input`, `events`, `errors`, `output_type`), `output` (when none
   is expected), `gate` (`pass`, `fail` or `waiting`), `problems`, `look_into` with `look_into_hint`, `hint`,
-  `batch_size` (when restored), `next`.
+  `next`.
 * **Problems** that fail the gate: an input still pending; no output and its task ended (`a failed task, a fatal error,
   or every record filtered out`); more than one output (processed more than once: pass `filter_id`); Error streams
   where no output is expected; blocking error groups beside an output; and, for a pipeline in a build, current code
@@ -2952,11 +2950,7 @@ pipelines each waited out two timeouts with every task complete).
   again, with nothing for the user to do. When nothing was processed by the timeout it hands over to
   `explain_processing` (asked for by the user); when every filter's tasks ended with none for the streams, it says
   waiting again won't help. It says where processing is now and then (`CallProgress`; seen: three minutes of silence
-  until the timeout) and stops at once when its thread is interrupted or the chat's run stopped. Once the gate passes
-  it takes the development batch size off the build's Elasticsearch indexing pipeline; that write is why it might be
-  called a write, but it is kept read-only: it only undoes what `create_processor_filter` and `reprocess_streams` set,
-  on a pipeline tagged as the tools' own in a build, and as a write every wait would need approving over `/mcp` and
-  none could run while the user is away. Failing to restore it never fails the wait.
+  until the timeout) and stops at once when its thread is interrupted or the chat's run stopped.
 
 ### `processing_status`
 

@@ -198,10 +198,8 @@ organisation: say so when the user searches by two items at once. A Lucene index
 values per item instead (several values in one event).
 
 Some problems only appear when documents reach Elasticsearch (a value of the wrong type for the mapping, a field
-name it refuses, the field limit). In the workspace, `create_processor_filter` and `reprocess_streams` start
-indexing with a batch size of 10, so each rejected document comes back whole in the Error stream; triage splits the
-bulk response into one entry per document. `wait_for_processing` restores the template's default once indexing
-completes without errors. Indexing again does not remove the documents already indexed (an amended translation's
+name it refuses, the field limit). Stroom reports each document Elasticsearch rejects in the Error stream, with
+Elasticsearch's reason, and triage gives each its record. Indexing again does not remove the documents already indexed (an amended translation's
 sample processed again leaves the superseded Events' documents in the index). So in a build, an indexing pipeline
 that has already indexed something starts its index fresh when it gets a new sample filter or reprocesses: before
 the approval, a `drop_first` reply asks the user to have the cluster admin drop the index, with a button for the
