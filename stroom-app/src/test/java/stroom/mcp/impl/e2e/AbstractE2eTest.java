@@ -35,15 +35,24 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractAiIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -156,6 +165,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     private ProcessorFilterService processorFilterService;
     @Inject
     private IndexShardManager indexShardManager;
+    @Inject
+    private ProcessorService processorService;
 
     /// The administrator's client, which shows forms: the user answers them (see [McpTestClient#agree]).
     McpTestClient client;
@@ -810,6 +821,63 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                     .build());
         });
         return node.getUuid();
+    }
+
+    /// A template made directly in Stroom of a pipeline writing lines of text to a file, as a CEF pipeline in an
+    /// environment might be (XMLParser, XSLTFilter, TextWriter, FileAppender), its XSLT left for a child to set.
+    ///
+    /// @param folder     The folder.
+    /// @param name       Its name.
+    /// @param outputPath The file its appender writes.
+    /// @return Its UUID.
+    String textFileTemplate(final ExplorerNode folder, final String name, final String outputPath) {
+        final ExplorerNode node = create(PipelineDoc.TYPE, name, folder);
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        String previous = null;
+        for (final List<String> element : List.of(List.of("Source", "Source"), List.of("xmlParser", "XMLParser"),
+                List.of("xsltFilter", "XSLTFilter"), List.of("textWriter", "TextWriter"),
+                List.of("fileAppender", "FileAppender"))) {
+            data.addElement(new PipelineElement(element.get(0), element.get(1)));
+            if (previous != null) {
+                data.addLink(previous, element.get(0));
+            }
+            previous = element.get(0);
+        }
+        data.addProperty(PipelineProperty.builder()
+                .element("fileAppender")
+                .name("outputPaths")
+                .value(new PipelinePropertyValue(outputPath))
+                .build());
+        asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(node.getDocRef()).copy()
+                .pipelineData(data.build())
+                .description("Fixture for the e2e suite")
+                .build()));
+        return node.getUuid();
+    }
+
+    /// A processor filter made directly in Stroom, as an environment's own pipeline has: every stream of one type
+    /// on a feed, enabled.
+    ///
+    /// @param feed       The feed's name.
+    /// @param streamType The stream type.
+    /// @param pipeline   The pipeline's UUID.
+    void feedFilter(final String feed, final String streamType, final String pipeline) {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
+                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
+                .build();
+        asUser(admin, () -> {
+            final ProcessorFilter filter = processorFilterService.create(CreateProcessFilterRequest.builder()
+                    .processorType(ProcessorType.PIPELINE)
+                    .pipeline(new DocRef(PipelineDoc.TYPE, pipeline))
+                    .queryData(QueryData.builder().dataSource(MetaFields.STREAM_STORE_DOC_REF).expression(expression)
+                            .build())
+                    .enabled(true)
+                    .priority(10)
+                    .maxProcessingTasks(2)
+                    .build());
+            processorService.setEnabled(filter.getProcessor().getId(), true);
+        });
     }
 
     /// A pipeline property naming a document, as Stroom keeps it.

@@ -62,6 +62,19 @@ class TestCefEvaluation {
     }
 
     @Test
+    void aPipelineWritingTextIsNotSaidToSendToKafka() {
+        Mockito.when(cef.stepped(any(), Mockito.eq("p"), Mockito.eq(List.of(7L)), any(), anyInt()))
+                .thenReturn(new DraftCefMappingTool.Stepped(List.of(LINE), List.of(), "cefFilter",
+                        Map.of("output", "text"), false));
+
+        final Map<String, Object> section = evaluation.cef(BuildToolCalls.context(), "p", List.of(7L), "file");
+
+        assertThat(section).containsEntry("status", "checked").containsEntry("output", Map.of("output", "text"));
+        assertThat(section.get("notes").toString()).contains("writes its lines as text")
+                .doesNotContain("Kafka");
+    }
+
+    @Test
     void withNothingToStepOrNoStepItSaysWhy() {
         assertThat(evaluation.cef(BuildToolCalls.context(), "p", List.of(), null))
                 .containsEntry("status", "not_checked");

@@ -17,7 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.PipelineService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -130,7 +132,19 @@ final class PipelineLayers {
     /// @param aiConfig        Gives the stage markers.
     /// @return Shapes that read pipelines from the service.
     static PipelineShapes shapes(final PipelineService pipelineService, final AiConfig aiConfig) {
-        return new PipelineShapes(() -> pipelineService, () -> aiConfig);
+        return shapes(pipelineService, aiConfig, Mockito.mock(DocumentAccess.class), Mockito.mock(DocFinder.class));
+    }
+
+    /// @param pipelineService Gives each pipeline's layers.
+    /// @param aiConfig        Gives the stage markers.
+    /// @param documentAccess  Reads the pipelines' XSLTs.
+    /// @param docFinder       Finds the XSLTs they import, by name.
+    /// @return Shapes that read pipelines from the service, and their XSLTs from the document access.
+    static PipelineShapes shapes(final PipelineService pipelineService,
+                                 final AiConfig aiConfig,
+                                 final DocumentAccess documentAccess,
+                                 final DocFinder docFinder) {
+        return new PipelineShapes(() -> pipelineService, () -> aiConfig, () -> documentAccess, () -> docFinder);
     }
 
     /// @return A pipeline service mock.
