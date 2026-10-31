@@ -18,10 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.DocumentAccess;
+import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -48,6 +50,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.w3c.dom.Element;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +58,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /// The translation documents of a build, created and saved through Stroom's own stores as the user: text
@@ -102,6 +106,7 @@ public class TranslationDocs {
     private final XsltHistory history;
     private final LookupAgreements lookups;
     private final Provider<AgentKnowledge> knowledgeProvider;
+    private final SiblingSharedCalls siblingSharedCalls;
 
     /// @param guard             Creates the documents in the build, and checks one is the tools' own.
     /// @param documentAccess    Reads and writes them as the user.
@@ -112,7 +117,8 @@ public class TranslationDocs {
     /// @param handEditGate      Keeps an edit made by hand since the tools saved an XSLT.
     /// @param history           Keeps each XSLT's version history.
     /// @param lookups           Asks the user to agree to the DNS lookups an XSLT calls.
-    /// @param knowledgeProvider The bundled ECS reference, for an index plan's convention.
+    /// @param knowledgeProvider  The bundled ECS reference, for an index plan's convention.
+    /// @param siblingSharedCalls The shared templates the stage's existing pipelines call.
     @Inject
     TranslationDocs(final WriteGuard guard,
                     final DocumentAccess documentAccess,
@@ -123,7 +129,8 @@ public class TranslationDocs {
                     final HandEditGate handEditGate,
                     final XsltHistory history,
                     final LookupAgreements lookups,
-                    final Provider<AgentKnowledge> knowledgeProvider) {
+                    final Provider<AgentKnowledge> knowledgeProvider,
+                    final SiblingSharedCalls siblingSharedCalls) {
         this.guard = guard;
         this.documentAccess = documentAccess;
         this.planProvider = planProvider;
@@ -134,6 +141,35 @@ public class TranslationDocs {
         this.history = history;
         this.lookups = lookups;
         this.knowledgeProvider = knowledgeProvider;
+        this.siblingSharedCalls = siblingSharedCalls;
+    }
+
+    /// What an XSLT of a translation or an index leaves undone of how the environment writes its common elements:
+    /// the shared templates the stage's existing pipelines call that it doesn't, and the required imports it
+    /// imports but calls none of the templates of. Warnings, not refusals: the user may say this one differs.
+    ///
+    /// @param session The session, for the audit log.
+    /// @param code    The XSLT.
+    /// @param build   Its build, or null.
+    /// @param role    Its role (`Events`, `Indexing`), or null to tell it from the code.
+    /// @param written Whether its mapping or plan writes a place itself, or null when written by hand.
+    /// @return A warning for each; none for an XSLT of another stage.
+    public List<String> sharedWarnings(final ToolSession session,
+                                       final String code,
+                                       final String build,
+                                       final String role,
+                                       final Predicate<String> written) {
+        final String stage = RequiredImports.ROLE_STAGE.get(NullSafe.nonBlankStringElse(role,
+                NullSafe.string(RequiredImports.xsltRole(code))));
+        if (!InstructionRules.TRANSLATION.equals(stage) && !InstructionRules.INDEXING.equals(stage)) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>(SiblingSharedCalls.notFollowed(siblingSharedCalls.forStage(stage),
+                code, written));
+        if (NullSafe.isNonBlankString(build)) {
+            out.addAll(requiredImports.uncalled(requiredImports.requiredFor(session, stage, build, List.of()), code));
+        }
+        return out;
     }
 
     // --------------------------------------------------------------------------------
