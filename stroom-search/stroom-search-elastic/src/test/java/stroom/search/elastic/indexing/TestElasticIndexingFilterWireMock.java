@@ -562,12 +562,19 @@ class TestElasticIndexingFilterWireMock {
 
     @Test
     void testOverloadRetriesExhaustedReportsOtherRejections() {
-        // Every attempt has one document rejected as Elasticsearch is overloaded, and one rejected outright
-        ELASTIC.stubFor(createBulk().willReturn(bulkResponse(
-                """
-                        {"create":{"_index":"test-index","status":429,
-                          "error":{"type":"es_rejected_execution_exception","reason":"rejected execution"}}}""",
-                rejectedItem("mapper_parsing_exception", "failed to parse field [n]"))));
+        // The first attempt has one document rejected as Elasticsearch is overloaded and one rejected outright,
+        // and every retry of the first is rejected as overloaded too
+        ELASTIC.stubFor(createBulk()
+                .inScenario(RETRY_SCENARIO)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willSetStateTo(RETRIED_STATE)
+                .willReturn(bulkResponse(
+                        overloadedItem(),
+                        rejectedItem("mapper_parsing_exception", "failed to parse field [n]"))));
+        ELASTIC.stubFor(createBulk()
+                .inScenario(RETRY_SCENARIO)
+                .whenScenarioStateIs(RETRIED_STATE)
+                .willReturn(bulkResponse(overloadedItem())));
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
 
         filter.startProcessing();
@@ -576,7 +583,7 @@ class TestElasticIndexingFilterWireMock {
                 .isInstanceOf(LoggedException.class);
 
         ELASTIC.verify(RETRY_COUNT + 1, createBulkRequests());
-        // Only the document rejected outright is reported, and only once, when the retries run out
+        // The document rejected outright is reported once
         assertThat(harness.getMessages(Severity.ERROR))
                 .containsExactly("Elasticsearch rejected document 2 of the stream (mapper_parsing_exception): " +
                                  "failed to parse field [n]");
@@ -587,7 +594,8 @@ class TestElasticIndexingFilterWireMock {
 
     @Test
     void testOverloadedItemsRetried() {
-        // The first attempt has one document indexed and one rejected, the retry succeeds
+        // The first attempt has one document indexed and one rejected as Elasticsearch is overloaded, then the
+        // retry of that one succeeds
         ELASTIC.stubFor(createBulk()
                 .inScenario(RETRY_SCENARIO)
                 .whenScenarioStateIs(Scenario.STARTED)
@@ -596,22 +604,73 @@ class TestElasticIndexingFilterWireMock {
         ELASTIC.stubFor(createBulk()
                 .inScenario(RETRY_SCENARIO)
                 .whenScenarioStateIs(RETRIED_STATE)
-                .willReturn(bulkSuccess(2)));
-        ELASTIC.stubFor(deleteBulk().willReturn(bulkSuccess(1)));
+                .willReturn(bulkSuccess(1)));
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
 
         harness.process(filter, jsonXml(documents(2)));
 
         assertThat(harness.getErrors()).isEmpty();
-        // The document indexed by the failed request is deleted, to avoid duplicates
-        final List<LoggedRequest> deletes = ELASTIC.findAll(deleteBulkRequests());
-        assertThat(deletes).hasSize(1);
-        assertThat(ndjsonLines(deletes.getFirst())).containsExactly(json("""
-                {"delete":{"_id":"id-0","_index":"test-index"}}"""));
-        // The whole batch is resent
+        // Only the rejected document is resent, so the indexed one isn't deleted or duplicated
+        assertThat(ELASTIC.findAll(deleteBulkRequests())).isEmpty();
         final List<LoggedRequest> creates = ELASTIC.findAll(createBulkRequests());
         assertThat(creates).hasSize(2);
-        assertThat(ndjsonLines(creates.get(1))).isEqualTo(ndjsonLines(creates.getFirst()));
+        assertThat(ndjsonLines(creates.get(1))).containsExactly(
+                json("""
+                        {"create":{"_index":"test-index"}}"""),
+                json("""
+                        {"n":1}"""));
+    }
+
+    @Test
+    void testOverloadedAndRejectedItemsInOneResponse() {
+        // The first attempt has one document rejected as Elasticsearch is overloaded and one rejected outright,
+        // then the retry of the first succeeds
+        ELASTIC.stubFor(createBulk()
+                .inScenario(RETRY_SCENARIO)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willSetStateTo(RETRIED_STATE)
+                .willReturn(bulkResponse(
+                        overloadedItem(),
+                        rejectedItem("mapper_parsing_exception", "failed to parse field [n]"))));
+        ELASTIC.stubFor(createBulk()
+                .inScenario(RETRY_SCENARIO)
+                .whenScenarioStateIs(RETRIED_STATE)
+                .willReturn(bulkSuccess(1)));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(2)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        // Only the overloaded document is resent; the rejected one is reported once and fails the batch
+        final List<LoggedRequest> creates = ELASTIC.findAll(createBulkRequests());
+        assertThat(creates).hasSize(2);
+        assertThat(ndjsonLines(creates.get(1))).containsExactly(
+                json("""
+                        {"create":{"_index":"test-index"}}"""),
+                json("""
+                        {"n":0}"""));
+        assertThat(harness.getMessages(Severity.ERROR))
+                .containsExactly("Elasticsearch rejected document 2 of the stream (mapper_parsing_exception): " +
+                                 "failed to parse field [n]");
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Bulk indexing request failed: 1 of 2 documents rejected by Elasticsearch");
+    }
+
+    @Test
+    void testResponseItemCountMismatchIsFatal() {
+        ELASTIC.stubFor(createBulk().willReturn(bulkResponse(overloadedItem())));
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+
+        filter.startProcessing();
+        harness.parse(filter, jsonXml(documents(2)));
+        assertThatThrownBy(filter::endProcessing)
+                .isInstanceOf(LoggedException.class);
+
+        ELASTIC.verify(1, createBulkRequests());
+        assertThat(harness.getMessages(Severity.FATAL_ERROR))
+                .containsExactly("Bulk indexing response has 1 items for 2 documents");
     }
 
     @Test
@@ -721,51 +780,6 @@ class TestElasticIndexingFilterWireMock {
                 .satisfies(error -> assertThat(error.severity()).isEqualTo(Severity.FATAL_ERROR));
     }
 
-    @Test
-    void testDeleteOfIndexedDocumentsFailsWithConnectionError() {
-        // A failure to delete the documents indexed by a rejected request is only a warning, and the batch is
-        // still retried
-        ELASTIC.stubFor(createBulk()
-                .inScenario(RETRY_SCENARIO)
-                .whenScenarioStateIs(Scenario.STARTED)
-                .willSetStateTo(RETRIED_STATE)
-                .willReturn(partiallyRejected()));
-        ELASTIC.stubFor(createBulk()
-                .inScenario(RETRY_SCENARIO)
-                .whenScenarioStateIs(RETRIED_STATE)
-                .willReturn(bulkSuccess(2)));
-        ELASTIC.stubFor(deleteBulk().willReturn(WireMock.aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
-        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
-
-        harness.process(filter, jsonXml(documents(2)));
-
-        assertThat(harness.getErrors()).isEmpty();
-        ELASTIC.verify(1, deleteBulkRequests());
-        ELASTIC.verify(2, createBulkRequests());
-    }
-
-    @Test
-    void testDeleteOfIndexedDocumentsFailsWithErrorResponse() {
-        // An error response is also only a warning
-        ELASTIC.stubFor(createBulk()
-                .inScenario(RETRY_SCENARIO)
-                .whenScenarioStateIs(Scenario.STARTED)
-                .willSetStateTo(RETRIED_STATE)
-                .willReturn(partiallyRejected()));
-        ELASTIC.stubFor(createBulk()
-                .inScenario(RETRY_SCENARIO)
-                .whenScenarioStateIs(RETRIED_STATE)
-                .willReturn(bulkSuccess(2)));
-        ELASTIC.stubFor(deleteBulk().willReturn(errorResponse(500, "internal_server_error")));
-        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
-
-        harness.process(filter, jsonXml(documents(2)));
-
-        assertThat(harness.getErrors()).isEmpty();
-        ELASTIC.verify(1, deleteBulkRequests());
-        ELASTIC.verify(2, createBulkRequests());
-    }
-
     private ElasticIndexingFilter createFilter(final String indexName) {
         return harness.createFilter(
                 elasticClient,
@@ -833,6 +847,12 @@ class TestElasticIndexingFilterWireMock {
         return """
                 {"create":{"_index":"test-index","status":400,"error":{"type":"%s","reason":"%s"}}}"""
                 .formatted(type, reason);
+    }
+
+    private static String overloadedItem() {
+        return """
+                {"create":{"_index":"test-index","status":429,
+                  "error":{"type":"es_rejected_execution_exception","reason":"rejected execution"}}}""";
     }
 
     private static ResponseDefinitionBuilder partiallyRejected() {
