@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.RecordSplitter;
+import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.workspace.ToolDeadline;
@@ -56,6 +57,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -63,6 +65,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -86,7 +89,23 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String MAX_STREAMS_ARG = "max_streams";
     static final String SKIP_STREAM_IDS_ARG = "skip_stream_ids";
     static final String KNOWN_SIGNATURES_ARG = "known_signatures";
+    /// Said when a stream's delimited records hold quoted values over several lines (seen in testing: a Data
+    /// Splitter built from the first lines, which held none, split each such record into pieces in processing).
+    static final String QUOTED_NEWLINES_NOTE = "Some quoted values in streams {streams} run over several lines. "
+                                               + "The Data Splitter must read a record to its end outside quotes "
+                                               + "(build_data_splitter spec quoted_newlines=true, saved over the "
+                                               + "converter), or processing splits each such record into pieces: "
+                                               + "the first translated with fields missing, the rest unmatched.";
     static final String MAX_CHARS_ARG = "max_chars_per_stream";
+    /// The most windows read from further into a part than its head, spread to its end.
+    static final int WINDOWS = 8;
+    /// The most characters in a window.
+    static final int WINDOW_CHARS = 250_000;
+    // Formats of one record a line, read from a window as from the head; not XML, a JSON document, or records of
+    // several lines, whose records a window can't be started in.
+    private static final Set<String> WINDOWED = Set.of(RecordSplitter.DELIMITED, RecordSplitter.JSON_LINES,
+            SampleProfiler.KEY_VALUE_FORMAT, SampleProfiler.CEF_FORMAT, SampleProfiler.CRI,
+            RecordSplitter.UNKNOWN_TEXT);
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
     static final String EXAMPLES_ARG = "examples_per_shape";
@@ -300,9 +319,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                      final String feed,
                                      final Request request,
                                      final List<Meta> chosen) {
-        if (chosen.isEmpty() && request.maxStreams() < FeedSampling.SURVEY_STREAMS) {
+        if (chosen.isEmpty() && request.maxStreams() < FeedSampling.SURVEY_STREAMS
+            && holdsMore(feed, request.streamType(), request.maxStreams())) {
             askFewerStreams(call, context, feed, request.maxStreams());
-        } else if (!chosen.isEmpty() && chosen.size() < FeedSampling.SURVEY_STREAMS && !inABuild(feed)) {
+        } else if (!chosen.isEmpty() && chosen.size() < FeedSampling.SURVEY_STREAMS && !inABuild(feed)
+                   && holdsMore(feed, request.streamType(), chosen.size())) {
             // A few of an existing feed's streams, by id: as few as a smaller max_streams, so the user's to confirm
             // too (seen in testing on 0.18.13: an existing feed onboarded from 5 streams). A sample uploaded to a
             // build's feed is read as it is.
@@ -327,6 +348,21 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 "Survey feed '" + feed + "' only " + count + " stream(s) a call (the default is "
                 + FeedSampling.SURVEY_STREAMS + ")", details));
         fewerStreams.agree(feed, count);
+    }
+
+    // Whether the feed holds more streams of the type than a call would read: if not, reading fewer than the default
+    // is no choice (seen in testing: a feed of one stream, and the user asked to agree to survey only that one).
+    // True when it can't be told.
+    private boolean holdsMore(final String feed, final String streamType, final int count) {
+        try {
+            final ExpressionOperator terms = ExpressionOperator.builder().op(Op.AND)
+                    .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
+                    .addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
+                    .build();
+            return find(terms, count + 1, true).size() > count;
+        } catch (final RuntimeException e) {
+            return true;
+        }
     }
 
     // Whether a feed is one a build made (its uploaded samples, a test feed); not for an existing feed. True when
@@ -454,6 +490,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private void readStream(final Reading reading, final Meta meta, final Shapes shapes, final Limits limits) {
         int newHere = 0;
         int readHere = 0;
+        int windowsHere = 0;
         boolean cut = false;
         int parts = 1;
         int part = 0;
@@ -496,11 +533,22 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 reading.format = chunk.format();
                 reading.firstChunk = chunk;
             }
+            if (holdsLineBreaks(chunk)) {
+                reading.quotedNewlinesIn.add(meta.getId());
+            }
             for (int index = 0; index < chunk.records().size(); index++) {
                 if (shapes.add(chunk, index, meta.getId(), part)) {
                     newHere++;
                 }
                 readHere++;
+            }
+            if (head.truncated() && WINDOWED.contains(chunk.format()) && !holdsLineBreaks(chunk)
+                && readHere < limits.maxRecords() && !timeIsUp()) {
+                final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes,
+                        limits.maxRecords() - readHere);
+                windowsHere += read.windows();
+                readHere += read.records();
+                newHere += read.newShapes();
             }
             part++;
         }
@@ -511,8 +559,70 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 "records", readHere, "parts", parts, "head_only", cut || parts > limits.maxParts()
                                                                    || readHere >= limits.maxRecords(),
                 "new_shapes", newHere);
+        if (windowsHere > 0) {
+            entry.put("windows", windowsHere);
+        }
         entry.putAll(FeedSampling.charsetEntry(streamReader.charsetReport(meta.getId())));
         reading.perStream.add(entry);
+    }
+
+    // Windows of a part further in than its head, to its end, their records added to the shapes where they are (a
+    // record a line, after the header line).
+    private WindowsRead readWindows(final Reading reading,
+                              final Meta meta,
+                              final int part,
+                              final RawHead head,
+                              final RecordSplitter.Chunk chunk,
+                              final Shapes shapes,
+                              final int maxRecords) {
+        final List<StreamReader.Window> windows;
+        try {
+            windows = streamReader.readWindows(meta.getId(), part,
+                    head.text().getBytes(StandardCharsets.UTF_8).length, WINDOWS, WINDOW_CHARS);
+        } catch (final StreamReadException e) {
+            reading.perStream.add(entry("stream", meta.getId(), "part", part, "note",
+                    "only its head was read: Stroom couldn't read further in: " + e.getMessage()));
+            return new WindowsRead(0, 0, 0);
+        }
+        int read = 0;
+        int records = 0;
+        int newShapes = 0;
+        for (final StreamReader.Window window : windows) {
+            if (records >= maxRecords || timeIsUp()) {
+                break;
+            }
+            final RecordSplitter.Chunk more;
+            try {
+                more = RecordSplitter.split(chunk.header() == null
+                        ? window.text()
+                        : chunk.header() + "\n" + window.text(), maxRecords - records, false);
+            } catch (final RuntimeException e) {
+                continue;
+            }
+            if (!more.format().equals(chunk.format()) || !Objects.equals(more.header(), chunk.header())) {
+                continue;
+            }
+            read++;
+            final long firstRecord = window.firstLine() - (chunk.header() == null
+                    ? 0
+                    : 1);
+            for (int index = 0; index < more.records().size(); index++) {
+                if (shapes.add(more, index, meta.getId(), part, firstRecord)) {
+                    newShapes++;
+                }
+                records++;
+            }
+        }
+        return new WindowsRead(read, records, newShapes);
+    }
+
+    // Whether delimited records hold a quoted value over several lines, which the record splitter reads whole.
+    private static boolean holdsLineBreaks(final RecordSplitter.Chunk chunk) {
+        return RecordSplitter.DELIMITED.equals(chunk.format())
+               && chunk.parsed().stream()
+                       .filter(Objects::nonNull)
+                       .flatMap(record -> record.values().stream())
+                       .anyMatch(value -> value instanceof final String text && text.indexOf('\n') >= 0);
     }
 
     // The call's result, as the Stroom MCP server gave it.
@@ -563,6 +673,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 ? stoppedCoverage(context, readIds.size(), outcome.picked())
                 : coverage(outcome, saturated, readIds, partly, reading.recordsRead));
         result.put("per_stream", reading.perStream);
+        if (!reading.quotedNewlinesIn.isEmpty()) {
+            result.put("quoted_newlines", QUOTED_NEWLINES_NOTE.replace("{streams}",
+                    String.valueOf(List.copyOf(reading.quotedNewlinesIn))));
+        }
         result.put("shapes", shapesShown(found, counts, drop));
         result.put("new_shapes", newShapes.size());
         // Records of a kind left untranslated are stepped too, expecting no Event.
@@ -576,8 +690,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                    final List<Long> readIds,
                                    final List<Long> partly,
                                    final long recordsRead) {
-        final String again = "Survey them again with stream_ids=" + partly + " and max_chars_per_stream="
-                             + Math.min(MAX_CHARS, (long) outcome.limits().maxChars() * 4) + " (up to 5,000,000)";
+        // At the most a call reads, a stream is sampled (its head and windows to its end), never read whole: said so,
+        // not to read again at the size just read (seen in testing: told to survey again with 5,000,000 after a
+        // call with 5,000,000).
+        final String again = outcome.limits().maxChars() >= MAX_CHARS
+                ? "They are bigger than a call reads: their head and windows spread to their end were read "
+                  + "(per_stream windows). Step records further in with step_records to check them; a kind of event "
+                  + "in none of them may still be there, which review_coverage finds once the feed is processed"
+                : "Survey them again with stream_ids=" + partly + " and max_chars_per_stream="
+                  + Math.min(MAX_CHARS, (long) outcome.limits().maxChars() * 4) + " (up to 5,000,000)";
         final boolean chosen = !outcome.chosen().isEmpty();
         if (chosen && !partly.isEmpty()) {
             return "NOT COVERED: only the start of stream(s) " + partly + " was read (" + recordsRead + " records); "
@@ -858,6 +979,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         private String format;
         private RecordSplitter.Chunk firstChunk;
         private boolean stopped;
+        // Streams whose delimited records hold a quoted value over several lines.
+        private final Set<Long> quotedNewlinesIn = new LinkedHashSet<>();
 
         private void stop() {
             stopped = true;
@@ -878,5 +1001,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     .map(stream -> ((Number) stream.get("stream")).longValue())
                     .toList();
         }
+    }
+
+    // What a part's windows gave: how many were read, their records, and the shapes new among them.
+    private record WindowsRead(int windows, int records, int newShapes) {
+
     }
 }

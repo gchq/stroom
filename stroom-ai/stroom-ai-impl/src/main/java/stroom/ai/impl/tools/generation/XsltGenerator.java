@@ -71,6 +71,14 @@ public final class XsltGenerator {
     public static final String KEPT_UNKNOWN = "Kept as Unknown by rule '{rule}': record ";
     /// How many of the fields the rules test the log lines carry.
     public static final int LOGGED_FIELDS = 4;
+    /// The variable holding the record's number (`stroom:record-no()`), read once for every record.
+    public static final String RECORD_NO = "record-no";
+    /// What makes the record's number be read for every record: Stroom's split filter queues a location per record
+    /// and only moves on when a location function is called, so reading it only for the records the log lines are
+    /// written for gave a later record's number, then none once the queue ran over (seen in testing: every
+    /// unmatched record of a 160 MB stream logged without a number, so review_coverage found none of them). A
+    /// predicate Saxon can't settle without the value, so the variable isn't left unread; it selects nothing.
+    public static final String READ_RECORD_NO = "$" + RECORD_NO + "[string(.) = '#']";
     /// A json-to-xml call in a mapping's xpath (bare, fn: or stroom:), read through the guarded mcp:json-to-xml.
     public static final Pattern JSON_CALL = Pattern.compile("(?<![\\w:-])(?:fn:|stroom:)?json-to-xml\\(",
             Pattern.UNICODE_CHARACTER_CLASS);
@@ -140,6 +148,8 @@ public final class XsltGenerator {
     // for_each: the templates run with an item as context; $record (a tunnel parameter) is the record.
     private final boolean itemMode;
     private boolean usesRecord;
+    // whether log lines give the record's number
+    private boolean logsRecordNo;
     private final Set<List<List<String>>> xslMaps = new HashSet<>();
     private final Map<Conversion, String> ownFunctions;
     private final Map<Extraction, Keyed> keyed = new IdentityHashMap<>();
@@ -1555,13 +1565,14 @@ public final class XsltGenerator {
         chooseShared(written);
         chooseDataRuns(written);
         XmlElement recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", "event");
+        final XmlElement eventTemplate = recordTemplate;
+        XmlElement apply = null;
         if (itemMode) {
             // One record, several events: each item is handed to the rules with the record as a tunnel parameter.
             final String select = FOR_EACH_XPATH.matcher(m.forEach()).find()
                     ? m.forEach()
                     : itemsOf(m.forEach(), null, null);
-            final XmlElement apply = recordTemplate.addElement(XSL, "apply-templates", "select", select, "mode",
-                    "item");
+            apply = recordTemplate.addElement(XSL, "apply-templates", "select", select, "mode", "item");
             apply.addElement(XSL, "with-param", "name", "record", "select", ".", "tunnel", "yes");
             recordTemplate = sheet.addElement(XSL, "template", "match", "*", "mode", "item");
         }
@@ -1584,6 +1595,9 @@ public final class XsltGenerator {
                     template.insert(0, XmlElement.create(XSL, "param", "name", "record", "tunnel", "yes"));
                 }
             }
+        }
+        if (logsRecordNo) {
+            readRecordNo(eventTemplate, apply, body);
         }
         declareMaps(sheet);
         if (!referenceMaps.isEmpty()) {
@@ -1649,10 +1663,45 @@ public final class XsltGenerator {
         }
     }
 
+    // The record's number read once, first, for every record ([#READ_RECORD_NO]); after the variables are tidied, so
+    // it isn't moved into the branch that logs. Declared first, and read after the template's other leading
+    // variables, so a template that declares its variables at its start still does. With items, read for the record
+    // and handed to the items' template.
+    private static void readRecordNo(final XmlElement eventTemplate,
+                                     final XmlElement apply,
+                                     final XmlElement rulesTemplate) {
+        eventTemplate.insert(leading(eventTemplate, "param"), XmlElement.create(XSL, "variable", "name", RECORD_NO,
+                "select", "stroom:record-no()"));
+        eventTemplate.insert(leading(eventTemplate, "param", "variable"), XmlElement.create(XSL, "sequence",
+                "select", READ_RECORD_NO));
+        if (apply != null) {
+            apply.addElement(XSL, "with-param", "name", RECORD_NO, "select", "$" + RECORD_NO, "tunnel", "yes");
+            rulesTemplate.insert(0, XmlElement.create(XSL, "param", "name", RECORD_NO, "tunnel", "yes"));
+        }
+    }
+
+    // The index, among a template's children, after its leading xsl elements of these names (and the white space
+    // and comments between them).
+    private static int leading(final XmlElement template, final String... names) {
+        final Set<String> wanted = Set.of(names);
+        final List<XmlNode> children = template.children();
+        int after = 0;
+        for (int i = 0; i < children.size(); i++) {
+            if (children.get(i) instanceof final XmlElement element) {
+                if (!XSL.equals(element.namespace()) || !wanted.contains(element.localName())) {
+                    break;
+                }
+                after = i + 1;
+            }
+        }
+        return after;
+    }
+
     // The values the rules test, put in the log lines: a whole feed's missed records are then grouped from its Error
     // streams alone, however large the feed, without reading the raw records.
     private String logged(final String text, final List<String> tested) {
-        final List<String> logParts = new ArrayList<>(List.of(XPathText.literal(text), "stroom:record-no()"));
+        logsRecordNo = true;
+        final List<String> logParts = new ArrayList<>(List.of(XPathText.literal(text), "$" + RECORD_NO));
         if (!tested.isEmpty()) {
             final List<String> values = tested.stream()
                     .map(field -> "concat(" + XPathText.literal(field + "=") + ", string((" + ref(field, null,

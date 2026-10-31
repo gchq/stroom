@@ -261,6 +261,26 @@ class TestIndexTemplateTools {
     }
 
     @Test
+    void testAnExampleGivenAsJsonRatherThanTextIsReadTheSame() {
+        // Seen in testing: an example saved to the workspace and given as "$workspace:..." went in as JSON, an
+        // object, which the tool read as Java writes a map ("{index_patterns=[...") and refused as not JSON.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "whatever", "@timestamp", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        final Object asJson = PyJson.loads(EXAMPLE.split("\n", 2)[1]);
+
+        final Map<String, Object> asText = propose(args("plan", plan.toJson(), "example_template", EXAMPLE,
+                "component_templates", COMPONENTS));
+        final Map<String, Object> asObject = propose(args("plan", plan.toJson(), "example_template", asJson,
+                "component_templates", COMPONENTS));
+
+        assertThat(asText.get("template")).as("built from the example").isNotNull();
+        assertThat(asObject).containsEntry("template", asText.get("template"))
+                .containsEntry("dev_tools", asText.get("dev_tools"));
+    }
+
+    @Test
     void testTheUsersOwnNominationWinsOverAnInstructionToExclude() {
         final AgentInstructions instructions = Mockito.mock(AgentInstructions.class);
         Mockito.when(instructions.componentsRuled(any(), any())).thenReturn(new ComponentRules(

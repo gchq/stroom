@@ -37,6 +37,17 @@ class TestPyCsv {
     }
 
     @Test
+    void aFieldLongerThanPythonsFieldSizeLimitIsRead() {
+        // Seen in testing: a 250,000-character URL query was refused ("field larger than field limit (131072)").
+        final String query = "q=" + "a".repeat(250_000);
+        final String quoted = "say \"\"" + "b".repeat(200_000) + "\"\"";
+
+        assertThat(PyCsv.read("1," + query + ",\"" + quoted + "\"\n2,short,x", PyCsv.EXCEL))
+                .containsExactly(List.of("1", query, "say \"" + "b".repeat(200_000) + "\""),
+                        List.of("2", "short", "x"));
+    }
+
+    @Test
     void theSnifferFindsTheDelimiterAndTheHeader() {
         assertThat(PyCsv.sniff("time,user,action\n2026-10-01T10:00:00Z,alice,login\n", ",\t|;").delimiter())
                 .isEqualTo(',');

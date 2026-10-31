@@ -292,7 +292,9 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             if (examples.size() < 2) {
                 final Map<String, Object> example = new LinkedHashMap<>();
                 example.put("raw_stream", entry.raw());
-                example.put("record", entry.record());
+                // As step_records takes it, from 0: the log's record numbers are from 1 (seen in e2e: the record
+                // after the one missed was given).
+                example.put("record", entry.record() - 1);
                 examples.add(example);
             }
         }

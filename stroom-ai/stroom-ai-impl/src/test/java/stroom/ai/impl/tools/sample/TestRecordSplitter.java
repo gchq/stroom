@@ -90,6 +90,22 @@ class TestRecordSplitter {
     }
 
     @Test
+    void aDelimitedRecordWithAVeryLongFieldIsSplit() {
+        // Seen in testing: a 250,000-character URL query stopped the whole stream part being split, so the survey
+        // read none of it ("could not split records: field larger than field limit (131072)").
+        final String url = "https://api.example.com/export?ids=" + "0123456789abcdef".repeat(15_625);
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(
+                "time,user,url\n2026-09-28T10:00:00,alice,/a\n2026-09-28T10:05:00,bob," + url
+                + "\n2026-09-28T10:10:00,carol,/c\n", 1000, false);
+
+        assertThat(chunk.format()).isEqualTo(RecordSplitter.DELIMITED);
+        assertThat(chunk.records()).hasSize(3);
+        assertThat(chunk.parsed().get(1)).isEqualTo(Map.of("time", "2026-09-28T10:05:00", "user", "bob",
+                "url", url));
+        assertThat(chunk.parsed().get(2)).containsEntry("user", "carol");
+    }
+
+    @Test
     void jsonLinesAreRecordsALine() {
         final RecordSplitter.Chunk chunk = RecordSplitter.split("{\"a\":1}\n{\"a\":2}\n", 1000, false);
 

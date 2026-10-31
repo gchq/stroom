@@ -18,16 +18,33 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.validation.XmlTrees;
 
+import net.sf.saxon.s9api.ExtensionFunction;
+import net.sf.saxon.s9api.ItemType;
+import net.sf.saxon.s9api.OccurrenceIndicator;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.SequenceType;
+import net.sf.saxon.s9api.XdmAtomicValue;
+import net.sf.saxon.s9api.XdmEmptySequence;
+import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.s9api.Xslt30Transformer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.xml.transform.stream.StreamSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -234,10 +251,80 @@ class TestXsltGeneratorProblems extends XsltRuns {
         final String xslt = generate(mapping(with("events", rules, "unmatched", "warn"))).xslt();
         // With the value the rule tests, so a whole feed's misses are grouped from its Error streams alone.
         assertThat(xslt).contains("stroom:log('WARN', concat('No event mapping matched record ', "
-                                  + "stroom:record-no(), ' (', string-join((concat('action=', string(("
+                                  + "$record-no, ' (', string-join((concat('action=', string(("
                                   + "normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))");
         // one read: no variable
         assertThat(xslt).contains("data[@name='action']/@value = ('login', 'logon')");
+    }
+
+    @Test
+    void eachUnmatchedRecordIsLoggedWithItsOwnNumber() throws SaxonApiException {
+        // Seen in testing: the number was read only for the records logged, but Stroom's split filter gives the
+        // next record's location on each call, so a later miss got an earlier record's number, then none at all
+        // once the unread locations ran over, and review_coverage found no misses in a 160 MB stream. Stood in for
+        // here by a record-no that counts its calls, as the queue of locations does.
+        final List<Object> rules = List.of(logonRule(LOGON));
+        final String xslt = generate(mapping(with("events", rules, "unmatched", "warn"))).xslt();
+        final String records = "<records xmlns=\"records:2\">"
+                               + Stream.of("login", "keepalive", "login", "login", "keepalive")
+                                       .map(action -> "<record><data name=\"time\" value=\"2026-09-28T10:00:00.000Z\"/>"
+                                                      + "<data name=\"action\" value=\"" + action + "\"/>"
+                                                      + "<data name=\"user\" value=\"u\"/></record>")
+                                       .collect(Collectors.joining())
+                               + "</records>";
+
+        final List<String> logged = new ArrayList<>();
+        final AtomicInteger calls = new AtomicInteger();
+        final Processor processor = new Processor(false);
+        processor.registerExtensionFunction(new StroomFunction("record-no", SequenceType.makeSequenceType(
+                ItemType.STRING, OccurrenceIndicator.ONE), List.of(), args ->
+                new XdmAtomicValue(String.valueOf(calls.incrementAndGet()))));
+        processor.registerExtensionFunction(new StroomFunction("log", SequenceType.makeSequenceType(
+                ItemType.STRING, OccurrenceIndicator.ZERO), List.of(ItemType.STRING, ItemType.STRING), args -> {
+                    logged.add(args[0].itemAt(0).getStringValue() + ": " + args[1].itemAt(0).getStringValue());
+                    return XdmEmptySequence.getInstance();
+                }));
+        final Xslt30Transformer transformer = processor.newXsltCompiler()
+                .compile(new StreamSource(new StringReader(xslt))).load30();
+        transformer.applyTemplates(new StreamSource(new StringReader(records)),
+                processor.newSerializer(new StringWriter()));
+
+        assertThat(calls.get()).as("read once for every record").isEqualTo(5);
+        assertThat(logged).containsExactly(
+                "WARN: No event mapping matched record 2 (action=keepalive)",
+                "WARN: No event mapping matched record 5 (action=keepalive)");
+    }
+
+    @Test
+    void withItemsTheRecordsNumberIsReadForTheRecordAndHandedToItsItems() {
+        // Read in the items' template, it would be read once for each item: a record's several events.
+        final String xslt = generate(mapping(with("for_each", "items", "events", List.of(logonRule(LOGON)),
+                "unmatched", "warn"))).xslt();
+        final XmlElement sheet = sheet(xslt);
+        final XmlElement perRecord = sheet.childElements(XSL, "template").stream()
+                .filter(template -> "event".equals(template.get("mode")))
+                .findFirst()
+                .orElseThrow();
+        final XmlElement perItem = sheet.childElements(XSL, "template").stream()
+                .filter(template -> "item".equals(template.get("mode")))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(perRecord.childElements().getFirst().get("select")).isEqualTo("stroom:record-no()");
+        assertThat(perRecord.iterElements(XSL, "with-param"))
+                .anySatisfy(param -> assertThat(List.of(param.get("name"), param.get("select"), param.get("tunnel")))
+                        .containsExactly("record-no", "$record-no", "yes"));
+        assertThat(perItem.childElements(XSL, "param"))
+                .anySatisfy(param -> assertThat(param.get("name")).isEqualTo("record-no"));
+        assertThat(perItem.iterElements(XSL, "sequence"))
+                .extracting(sequence -> sequence.get("select"))
+                .noneMatch(select -> select.contains("stroom:record-no()"))
+                .anyMatch(select -> select.contains("No event mapping matched record ', $record-no"));
+    }
+
+    @Test
+    void theRecordsNumberIsNotReadWhenNothingIsLogged() {
+        assertThat(generate(mapping()).xslt()).doesNotContain("record-no");
     }
 
     @Test
@@ -424,5 +511,34 @@ class TestXsltGeneratorProblems extends XsltRuns {
         assertThat(e.errors().getFirst().type()).isEqualTo("missing");
         assertThat(e.getMessage()).startsWith("1 validation error for TranslationMapping\nevents.0.fields.1.path\n"
                                               + "  Field required");
+    }
+
+    // A Stroom XSLT function stood in for in Java, so a test can see when, and how often, it is called.
+    private record StroomFunction(String localName,
+                                  SequenceType resultType,
+                                  List<ItemType> argumentTypes,
+                                  Function<XdmValue[], XdmValue> body) implements ExtensionFunction {
+
+        @Override
+        public QName getName() {
+            return new QName("stroom", localName);
+        }
+
+        @Override
+        public SequenceType getResultType() {
+            return resultType;
+        }
+
+        @Override
+        public SequenceType[] getArgumentTypes() {
+            return argumentTypes.stream()
+                    .map(type -> SequenceType.makeSequenceType(type, OccurrenceIndicator.ONE))
+                    .toArray(SequenceType[]::new);
+        }
+
+        @Override
+        public XdmValue call(final XdmValue[] arguments) {
+            return body.apply(arguments);
+        }
     }
 }
