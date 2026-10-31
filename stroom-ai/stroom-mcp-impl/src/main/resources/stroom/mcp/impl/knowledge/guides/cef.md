@@ -137,10 +137,13 @@ user picks one of the environment's (`draft_cef_mapping` lists them). Stepping s
 processing a CEF pipeline is approved by the user with that in mind.
 
 The pipeline comes from, in order: a template the standing instructions name; a forwarding template
-(`find_pipeline_templates stage=forwarding`: pipelines with a StandardKafkaProducer), or the one existing CEF
-pipelines inherit from; else `create_pipeline standalone='kafka'`, a pipeline of its own the user confirms.
+(`find_pipeline_templates stage=forwarding`: pipelines with a StandardKafkaProducer, or whose XSLTs write CEF
+lines as text), or the one existing CEF pipelines inherit from; else `create_pipeline standalone='kafka'`, a
+pipeline of its own the user confirms.
 For lines of text instead (`output=text`), the pipeline needs a TextWriter: from a template the instructions name or
-an existing CEF pipeline's.
+an existing CEF pipeline's. A pipeline writing CEF lines as text (to a file or a stream) is a forwarding pipeline
+with backend `file`, told by its XSLT (or a shared XSLT it imports) writing `CEF:0|`; it is reviewed, documented and
+evaluated as one sending to Kafka is.
 
 ## Reviewing, or changing, a CEF pipeline
 

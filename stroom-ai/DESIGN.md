@@ -503,6 +503,15 @@ A discovery index indexes a source's raw records as they are, to explore them be
   Event a split, XSLTFilter, SchemaFilter `kafka-records:1`, StandardKafkaProducer with a KafkaConfig).
 * An existing CEF pipeline, even one written by hand, is reviewed from its lines (`CefLines.review`): what each
   Event sends and leaves out, against the dictionary.
+* A CEF pipeline is stage `forwarding` (`PipelineShapes`): backend `kafka` when it has a StandardKafkaProducer, and
+  backend `file` when it writes CEF lines as text (a TextWriter to a file, rolling file or stream appender). A text
+  writer alone can't tell (Batch Search writes text too), so the text one is told by its XSLTs, read as the user
+  only for a pipeline that would otherwise be `other` and doesn't parse raw input: its own or inherited XSLTs, and
+  those they `xsl:import` or `xsl:include` (found by name as Stroom finds them, up to 4 imports deep and 25 XSLTs
+  read), one of which keeps a CEF plan or holds `CEF:0|` or `CEF:1|` (added 2026-10-31: in existing environments a
+  thin pipeline XSLT often imports a shared CEF one). An import that can't be found or read is skipped; with no
+  XSLT read, the pipeline stays `other`. Its lines are read from the stepped output of its XSLT: a text XSLT's lines
+  (Stroom's XML declaration dropped), or the text of XML that its TextWriter writes without the tags.
 * CEF steps: `cef_mapping`, `cef_pipeline`, `cef_stepped`, `cef_documented`. The filter is created disabled.
 
 ### Document an existing index
@@ -531,8 +540,8 @@ It reads the pipeline's stage as `PipelineShapes` does (the stage `write_documen
   indexing or discovery pipeline's `index` (fields its stepped documents write against its index's: missing, unused,
   and values their field's type or keyword analyzer doesn't suit; for Elasticsearch, where it writes and whether an
   index template is agreed, pointing to `check_index_template`); a CEF pipeline's `cef` (its lines reviewed against
-  ArcSight's dictionary, header fields still TODO, Event values not sent, the mapping its lines imply; Kafka delivery
-  noted as untested); a reference data pipeline's `reference` (its maps, what stepping wrote in each, its feeds and
+  ArcSight's dictionary, header fields still TODO, Event values not sent, the mapping its lines imply; Kafka delivery,
+  or for one writing text what its appender does, noted as untested; to Kafka or to a file alike); a reference data pipeline's `reference` (its maps, what stepping wrote in each, its feeds and
   the pipelines that look them up); any other stage's `checks`, saying none apply;
 * `report`: the outline for its stage, and `next`.
 
@@ -2174,6 +2183,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-10-31 | A CEF pipeline writing its lines as text (to a file or stream) is stage `forwarding`, backend `file`, told by its XSLTs and those they import (a CEF plan kept, or a CEF header literal, `CEF:0` or `CEF:1` and a bar), not by its writer; `write_documentation` and `evaluate_pipeline` treat it as they treat one to Kafka. | CEF output |
 | 2026-10-31 | Evaluating a pipeline has a tool of its own, `evaluate_pipeline`, the same sections every time for the pipeline's stage (events, indexing, CEF, reference, other) and the report's outline; it gathers facts, runs no follow-on checks, and saves nothing. `write_documentation` generates a Reference maps section for reference data pipelines from the same facts. | Further use cases |
 | 2026-10-31 | Promotion asks before writing a working copy over a production document changed since it was copied: who changed it and when, and how production differs from the copy; the user overwrites production (the change then only in the backup) or keeps it (the copy stays in the build). The user chose asking, with the difference explained, over refusing. | Builds |
 | 2026-10-31 | `reprocess_streams` needs a clean step of the pipeline's current code, as `create_processor_filter` does (asked for by the user). | Processing |

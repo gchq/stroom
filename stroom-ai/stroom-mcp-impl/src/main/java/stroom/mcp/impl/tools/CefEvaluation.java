@@ -69,7 +69,7 @@ class CefEvaluation {
     /// @param context      The call's context.
     /// @param pipelineUuid The CEF pipeline.
     /// @param streamIds    The Events streams to step it over; none if there are none to step.
-    /// @param backend      `kafka` when it sends to Kafka, else null.
+    /// @param backend      `kafka` when it sends to Kafka, `file` when it writes its lines as text, else null.
     /// @return `status`, `output`, `lines_stepped`, `custom_keys`, `header_todo`, `problems`, `not_sent`,
     /// `implied_mapping` and any `notes`; or `status` and `reason` when it couldn't be reviewed.
     Map<String, Object> cef(final ToolCallContext context,
@@ -114,6 +114,9 @@ class CefEvaluation {
         }
         if ("kafka".equals(backend) || CefPlan.KAFKA.equals(stepped.sent().get("output"))) {
             notes.add("It sends to Kafka: delivery to Kafka (and ArcSight) is not tested by stepping.");
+        } else if (PipelineShapes.FILE.equals(backend)) {
+            notes.add("It writes its lines as text: what its appender does with them (the file or stream written, "
+                      + "and how ArcSight collects it) is not tested by stepping.");
         }
         if (!notes.isEmpty()) {
             section.put("notes", notes);
