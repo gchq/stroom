@@ -178,6 +178,59 @@ class TestAskStroomAIService {
     }
 
     @Test
+    void testGetModelDoc_aChatKeepsTheModelItHasUsedWhenTheDefaultChanges() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final OpenAIModelDoc defaultDoc = OpenAIModelDoc.builder().uuid("default-uuid").name("Default").build();
+        final OpenAIModelDoc usedDoc = OpenAIModelDoc.builder().uuid("used-uuid").name("Used").build();
+        final OpenAIModelDoc chosen = OpenAIModelDoc.builder().uuid("chosen-uuid").name("Chosen").build();
+        Mockito.when(store.readDocument(DEFAULT_MODEL)).thenReturn(defaultDoc);
+        Mockito.when(store.readDocument(CHOSEN_MODEL)).thenReturn(chosen);
+        Mockito.when(store.readDocument(Mockito.argThat(ref -> ref != null && "used-uuid".equals(ref.getUuid()))))
+                .thenReturn(usedDoc);
+        // Chat 1 has been answered with the model used before the default changed; chat 2 is new.
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("used-uuid", null, null, 0, 0));
+        Mockito.when(aiDao.getUsage(2)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+        final AskStroomAIService service = serviceForModels(store, DEFAULT_MODEL);
+        final AskStroomAiConfig followsTheDefault = AskStroomAiConfig.builder().build();
+
+        assertThat(service.getModelDoc(followsTheDefault, 1)).as("an existing chat").isSameAs(usedDoc);
+        assertThat(service.getModelDoc(followsTheDefault, 2)).as("a new chat").isSameAs(defaultDoc);
+        // A model the user names (their own, or one picked in the chat) replaces the chat's.
+        assertThat(service.getModelDoc(AskStroomAiConfig.builder().modelRef(CHOSEN_MODEL).build(), 1))
+                .isSameAs(chosen);
+    }
+
+    @Test
+    void testGetChatModel_isTheModelTheChatWasAnsweredWith() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final OpenAIModelDoc usedDoc = OpenAIModelDoc.builder().uuid("used-uuid").name("Used").build();
+        Mockito.when(store.readDocument(Mockito.argThat(ref -> ref != null && "used-uuid".equals(ref.getUuid()))))
+                .thenReturn(usedDoc);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("used-uuid", null, null, 0, 0));
+        Mockito.when(aiDao.getUsage(2)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+        Mockito.when(aiDao.getUsage(3)).thenReturn(new AiDao.ChatUsage("deleted-uuid", null, null, 0, 0));
+        final AskStroomAIService service = serviceForModels(store, DEFAULT_MODEL);
+
+        final DocRef chatModel = service.getChatModel(1);
+        assertThat(chatModel).isEqualTo(usedDoc.asDocRef());
+        assertThat(chatModel.getName()).isEqualTo("Used");
+        assertThat(service.getChatModel(2)).as("not yet answered").isNull();
+        assertThat(service.getChatModel(3)).as("its model deleted").isNull();
+        Mockito.verify(aiService).verifyOwnership(1);
+    }
+
+    @Test
+    void testGetModelDoc_aChatWhoseModelWasDeletedUsesTheDefault() {
+        final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
+        final OpenAIModelDoc defaultDoc = OpenAIModelDoc.builder().uuid("default-uuid").name("Default").build();
+        Mockito.when(store.readDocument(DEFAULT_MODEL)).thenReturn(defaultDoc);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage("deleted-uuid", null, null, 0, 0));
+
+        assertThat(serviceForModels(store, DEFAULT_MODEL).getModelDoc(AskStroomAiConfig.builder().build(), 1))
+                .isSameAs(defaultDoc);
+    }
+
+    @Test
     void testGetModelDoc_noModelAndNoDefaultSaysWhatToDo() {
         final OpenAIModelStore store = Mockito.mock(OpenAIModelStore.class);
         final AskStroomAIService service = serviceForModels(store, null);
@@ -712,7 +765,7 @@ class TestAskStroomAIService {
     @Test
     void testCompactNow_saysWhenThereIsNothingToCompact() {
         final AskStroomAIService service = Mockito.spy(service());
-        Mockito.doReturn(null).when(service).getModelDocForCompaction(Mockito.any());
+        Mockito.doReturn(null).when(service).getModelDocForCompaction(Mockito.any(), Mockito.any());
         Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
             final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
             work.accept(null);

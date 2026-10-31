@@ -94,4 +94,43 @@ class TestUserPreferencesDaoImpl {
 
         assertThat(userPreferencesDao.clearAskStroomAiConfigs(ADMIN)).isZero();
     }
+
+    @Test
+    void clearAskStroomAiModels_clearsOnlyTheModelForEveryoneIncludingTheDefaults() {
+        final AskStroomAiConfig docked = STALE_CONFIG.copy()
+                .dockType(AskStroomAiConfig.DockType.DOCK)
+                .dockLocation(AskStroomAiConfig.DockLocation.LEFT)
+                .build();
+        userPreferencesDao.update(USER_A, UserPreferences.builder()
+                .theme("Light")
+                .askStroomAiConfig(docked)
+                .build());
+        // User B has never used the chat.
+        userPreferencesDao.update(USER_B, UserPreferences.builder().theme("Dark").build());
+        userPreferencesDao.updateDefault(ADMIN, UserPreferences.builder()
+                .askStroomAiConfig(STALE_CONFIG)
+                .build());
+
+        final int changed = userPreferencesDao.clearAskStroomAiModels(ADMIN);
+
+        assertThat(changed).isEqualTo(2);
+        final AskStroomAiConfig userA = userPreferencesDao.fetch(USER_A).orElseThrow().getAskStroomAiConfig();
+        assertThat(userA.getModelRef()).isNull();
+        // The user's other choices are kept.
+        assertThat(userA.getDockType()).isEqualTo(AskStroomAiConfig.DockType.DOCK);
+        assertThat(userA.getDockLocation()).isEqualTo(AskStroomAiConfig.DockLocation.LEFT);
+        assertThat(userPreferencesDao.fetch(USER_A).orElseThrow().getTheme()).isEqualTo("Light");
+        assertThat(userPreferencesDao.fetchDefault().orElseThrow().getAskStroomAiConfig().getModelRef()).isNull();
+        assertThat(userPreferencesDao.fetch(USER_B).orElseThrow().getAskStroomAiConfig()).isNull();
+    }
+
+    @Test
+    void clearAskStroomAiModels_nothingToClear() {
+        userPreferencesDao.update(USER_A, UserPreferences.builder()
+                .askStroomAiConfig(AskStroomAiConfig.builder().dockType(AskStroomAiConfig.DockType.DOCK).build())
+                .build());
+        userPreferencesDao.update(USER_B, UserPreferences.builder().theme("Dark").build());
+
+        assertThat(userPreferencesDao.clearAskStroomAiModels(ADMIN)).isZero();
+    }
 }

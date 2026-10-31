@@ -16,6 +16,7 @@
 
 package stroom.config.global.impl.dao;
 
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.config.global.impl.UserPreferencesDao;
 import stroom.config.global.impl.db.GlobalConfigDbConnProvider;
 import stroom.db.util.JooqUtil;
@@ -24,6 +25,7 @@ import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
@@ -183,6 +185,27 @@ class UserPreferencesDaoImpl implements UserPreferencesDao {
             }
         }
         LOGGER.info("Cleared the Ask Stroom AI settings from {} preference record(s)", changed);
+        return changed;
+    }
+
+    @Override
+    public int clearAskStroomAiModels(final UserRef userRef) {
+        final List<String> userUuids = JooqUtil.contextResult(connProvider, context ->
+                context
+                        .select(PREFERENCES.USER_UUID)
+                        .from(PREFERENCES)
+                        .fetch(PREFERENCES.USER_UUID));
+        int changed = 0;
+        for (final String userUuid : userUuids) {
+            final UserPreferences userPreferences = fetch(userUuid).orElse(null);
+            final AskStroomAiConfig config = NullSafe.get(userPreferences, UserPreferences::getAskStroomAiConfig);
+            if (config != null && config.getModelRef() != null) {
+                changed += update(userRef, userUuid, userPreferences.copy()
+                        .askStroomAiConfig(config.copy().modelRef(null).build())
+                        .build());
+            }
+        }
+        LOGGER.info("Cleared the choice of Ask Stroom AI model from {} preference record(s)", changed);
         return changed;
     }
 

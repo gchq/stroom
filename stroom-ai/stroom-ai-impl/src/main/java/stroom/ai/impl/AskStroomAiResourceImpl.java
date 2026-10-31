@@ -179,11 +179,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
         // Model name.
         builder.addData(Data.builder()
                 .withName("Model")
-                .withValue(NullSafe.get(
-                        request,
-                        AskStroomAiRequest::getConfig,
-                        AskStroomAiConfig::getModelRef,
-                        DocRef::getName))
+                .withValue(modelName(NullSafe.get(request, AskStroomAiRequest::getConfig)))
                 .build());
 
         // Context-specific structured data.
@@ -351,6 +347,24 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> userPreferencesServiceProvider.get().clearAskStroomAiConfigs())
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Integer clearAllUsersModelChoice() {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "clearAllUsersModelChoice"))
+                .withDescription("Clear every user's own choice of Ask Stroom AI model, so everyone uses the default")
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AskStroomAIConfig")
+                                        .withName("All users' model")
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> userPreferencesServiceProvider.get().clearAskStroomAiModels())
                 .getResultAndLog();
     }
 
@@ -842,6 +856,12 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .getResultAndLog();
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Read as a chat is opened, for its model picker; the user's own chat.
+    @Override
+    public DocRef getChatModel(final int chatId) {
+        return askStroomAIServiceProvider.get().getChatModel(chatId);
+    }
+
     @AutoLogged(OperationType.UNLOGGED) // Polled for badges, and only reads the user's own chats.
     @Override
     public AiChatStatusResponse getChatStatuses(final long sinceVersion) {
@@ -853,8 +873,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
     public List<AiMcpPrompt> listMcpPrompts(final AskStroomAiConfig config) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "listMcpPrompts"))
-                .withDescription("List the prompts of the MCP servers of model "
-                                 + NullSafe.get(config, AskStroomAiConfig::getModelRef))
+                .withDescription("List the prompts of the MCP servers of model " + modelName(config))
                 .withDefaultEventAction(ViewEventAction.builder()
                         .addObject(OtherObject.builder()
                                 .withType("AiMcpPrompts")
@@ -1016,6 +1035,19 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .withType("AiMemory")
                 .withName(path)
                 .build();
+    }
+
+    // The model a request names, or, where it names none, the default the server uses for it.
+    private String modelName(final AskStroomAiConfig config) {
+        final DocRef chosen = NullSafe.get(config, AskStroomAiConfig::getModelRef);
+        if (chosen != null) {
+            return chosen.getName();
+        }
+        final DocRef defaultModel = NullSafe.get(askStroomAIServiceProvider.get().getDefaultConfig(),
+                AskStroomAiConfig::getModelRef);
+        return defaultModel == null
+                ? null
+                : "Default (" + defaultModel.getName() + ")";
     }
 
     private OtherObject chatObject(final int chatId) {

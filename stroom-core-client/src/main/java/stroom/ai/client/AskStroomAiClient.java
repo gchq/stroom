@@ -78,7 +78,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -94,6 +96,9 @@ public class AskStroomAiClient {
     private final UserPreferencesManager userPreferencesManager;
     // The configured defaults, once fetched.
     private AskStroomAiConfig defaultConfig;
+    // A model the user picked in the chat panel for the chat open now, sent with its questions even when it is the
+    // default, so that it replaces the model the chat has used; null for none.
+    private DocRef pickedModel;
 
     @Inject
     public AskStroomAiClient(final RestFactory restFactory,
@@ -102,7 +107,36 @@ public class AskStroomAiClient {
         this.userPreferencesManager = userPreferencesManager;
     }
 
+    /// Saves the user's Ask Stroom AI settings. A model that is the default one is saved as no model, so that the
+    /// user follows any later change to the default (asked for by the user: moving the chat dock, or pressing OK in
+    /// the settings dialog, saved the default model of the time as the user's own, so a new default never reached
+    /// them).
+    ///
+    /// @param config             The settings, with the model shown to the user (the default one if they follow it).
+    /// @param taskMonitorFactory Shows the save in progress.
     public void setConfig(final AskStroomAiConfig config, final TaskMonitorFactory taskMonitorFactory) {
+        getDefaultConfig(defaultConfig -> save(ownChoices(config, defaultConfig), taskMonitorFactory),
+                taskMonitorFactory);
+    }
+
+    /// Changes some of the user's settings, on top of the settings the server holds for them now rather than
+    /// those this browser loaded: an administrator may have changed them since (e.g. cleared everyone's choice of
+    /// model), and saving the browser's copy would put back what they cleared.
+    ///
+    /// @param change             Makes the change, given the user's settings (with no model if they follow the
+    ///                           default).
+    /// @param taskMonitorFactory Shows the save in progress.
+    void updateConfig(final UnaryOperator<AskStroomAiConfig> change, final TaskMonitorFactory taskMonitorFactory) {
+        userPreferencesManager.fetch(serverPreferences -> getDefaultConfig(defaultConfig -> {
+            final AskStroomAiConfig held = NullSafe.get(serverPreferences, UserPreferences::getAskStroomAiConfig);
+            final AskStroomAiConfig base = held != null
+                    ? held
+                    : defaultConfig.copy().modelRef(null).build();
+            save(ownChoices(change.apply(base), defaultConfig), taskMonitorFactory);
+        }, taskMonitorFactory), taskMonitorFactory);
+    }
+
+    private void save(final AskStroomAiConfig config, final TaskMonitorFactory taskMonitorFactory) {
         final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
         final UserPreferences newPrefs = currentPrefs.copy()
                 .askStroomAiConfig(config)
@@ -112,19 +146,151 @@ public class AskStroomAiClient {
         }, taskMonitorFactory);
     }
 
-    /// Gets the user's Ask Stroom AI settings. A user who has not changed any gets the configured defaults, which
-    /// are not copied into their preferences, so they follow any later change to the defaults. A user whose
-    /// settings have no model (e.g. saved before a model was set up) gets the default model.
+    // The settings as the user's own: the default model is no model, so that the default is followed.
+    private static AskStroomAiConfig ownChoices(final AskStroomAiConfig config,
+                                                final AskStroomAiConfig defaultConfig) {
+        final DocRef model = config.getModelRef();
+        final DocRef defaultModel = NullSafe.get(defaultConfig, AskStroomAiConfig::getModelRef);
+        return model != null && defaultModel != null && Objects.equals(model.getUuid(), defaultModel.getUuid())
+                ? config.copy().modelRef(null).build()
+                : config;
+    }
+
+    /// Gets the user's Ask Stroom AI settings, as requests send them. A user who has not changed any gets the
+    /// configured defaults, which are not copied into their preferences. The model is the user's own choice, or
+    /// none if they follow the default: the server then uses the default it has now, which a browser may have
+    /// cached since before it changed.
+    ///
+    /// @param consumer           Given the settings.
+    /// @param taskMonitorFactory Shows the defaults being fetched, if they are.
     void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
         final AskStroomAiConfig config = NullSafe.get(userPreferencesManager.getCurrentUserPreferences(),
                 UserPreferences::getAskStroomAiConfig);
-        if (config != null && config.getModelRef() != null) {
-            consumer.accept(config);
+        if (config != null) {
+            consumer.accept(withPickedModel(config));
         } else {
-            getDefaultConfig(defaultConfig -> consumer.accept(config == null
-                    ? defaultConfig
-                    : config.copy().modelRef(defaultConfig.getModelRef()).build()), taskMonitorFactory);
+            getDefaultConfig(defaultConfig -> consumer.accept(withPickedModel(defaultConfig.copy()
+                    .modelRef(null)
+                    .build())), taskMonitorFactory);
         }
+    }
+
+    private AskStroomAiConfig withPickedModel(final AskStroomAiConfig config) {
+        return pickedModel == null || config.getModelRef() != null
+                ? config
+                : config.copy().modelRef(pickedModel).build();
+    }
+
+    /// Sends a model the user picked in the chat panel with the open chat's questions, even when it is the
+    /// default. A question that names no model is answered with the model its chat has used, so without this,
+    /// picking the default model in a chat that used another would change nothing.
+    ///
+    /// @param model The model picked.
+    void pickModelForThisChat(final DocRef model) {
+        pickedModel = model;
+    }
+
+    /// Gets the model a chat has been answered with, which its later questions use unless the user names another.
+    ///
+    /// @param chatId             The chat.
+    /// @param consumer           Given the model, or null for a chat not yet answered.
+    /// @param taskMonitorFactory Shows it being read.
+    void getChatModel(final int chatId,
+                      final Consumer<DocRef> consumer,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.getChatModel(chatId))
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Gets the model the open chat's next question is answered with, as its model picker shows it: one picked
+    /// for the chat, else the user's own, else the one the chat has been answered with, else the default.
+    ///
+    /// @param chatModel          The model the open chat has been answered with, or null for none.
+    /// @param consumer           Given the model.
+    /// @param taskMonitorFactory Shows the defaults being fetched, if they are.
+    void getChatDisplayModel(final DocRef chatModel,
+                             final Consumer<DocRef> consumer,
+                             final TaskMonitorFactory taskMonitorFactory) {
+        getConfig(config -> {
+            if (config.getModelRef() != null) {
+                consumer.accept(config.getModelRef());
+            } else if (chatModel != null) {
+                consumer.accept(chatModel);
+            } else {
+                getDefaultConfig(defaultConfig -> consumer.accept(defaultConfig.getModelRef()), taskMonitorFactory);
+            }
+        }, taskMonitorFactory);
+    }
+
+    /// Forgets a model picked for the chat that was open, as another chat is opened or a new one started.
+    void forgetPickedModel() {
+        pickedModel = null;
+    }
+
+    /// Reads the user's settings and the defaults from the server again, so that what an administrator has
+    /// changed since Stroom was loaded is used without reloading it (asked for by the user: so clients get the
+    /// latest defaults).
+    ///
+    /// @param then               Run once both are read.
+    /// @param taskMonitorFactory Shows them being read.
+    void refreshSettings(final Runnable then, final TaskMonitorFactory taskMonitorFactory) {
+        defaultConfig = null;
+        userPreferencesManager.fetch(preferences -> {
+            final UserPreferences current = userPreferencesManager.getCurrentUserPreferences();
+            // Only the AI settings are taken: the rest are applied as they are when Stroom loads.
+            if (current != null && preferences != null) {
+                userPreferencesManager.setCurrentPreferences(current.copy()
+                        .askStroomAiConfig(preferences.getAskStroomAiConfig())
+                        .build());
+            }
+            getDefaultConfig(defaults -> then.run(), taskMonitorFactory);
+        }, taskMonitorFactory);
+    }
+
+    /// Gets the user's Ask Stroom AI settings as a model picker shows them: as [#getConfig(Consumer,
+    /// TaskMonitorFactory)] gives them, with the default model if the user follows the default. Saving them
+    /// with [#setConfig(AskStroomAiConfig, TaskMonitorFactory)] keeps the user following it.
+    ///
+    /// @param consumer           Given the settings.
+    /// @param taskMonitorFactory Shows the defaults being fetched, if they are.
+    void getDisplayConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        getConfig(config -> {
+            if (config.getModelRef() != null) {
+                consumer.accept(config);
+            } else {
+                getDefaultConfig(defaultConfig -> consumer.accept(config.copy()
+                        .modelRef(defaultConfig.getModelRef())
+                        .build()), taskMonitorFactory);
+            }
+        }, taskMonitorFactory);
+    }
+
+    /// Clears every user's own choice of Ask Stroom AI model, so that everyone uses the default model; their other
+    /// settings are kept. Needs the Manage Properties permission.
+    ///
+    /// @param consumer           Given how many users' (and default) preference records were changed.
+    /// @param taskMonitorFactory Shows the change in progress.
+    void clearAllUsersModelChoice(final Consumer<Integer> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::clearAllUsersModelChoice)
+                .onSuccess(count -> {
+                    // This user's own choice was cleared too, so stop using the one loaded earlier.
+                    final UserPreferences current = userPreferencesManager.getCurrentUserPreferences();
+                    final AskStroomAiConfig config = NullSafe.get(current, UserPreferences::getAskStroomAiConfig);
+                    if (config != null) {
+                        userPreferencesManager.setCurrentPreferences(current.copy()
+                                .askStroomAiConfig(config.copy().modelRef(null).build())
+                                .build());
+                    }
+                    consumer.accept(count);
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
     }
 
     /// Resets every user's Ask Stroom AI settings to the configured defaults. Needs the Manage Properties

@@ -445,7 +445,7 @@ public class AskStroomAIService {
     public AskStroomAiResponse compactChat(final CompactAiChatRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
         aiService.verifyOwnership(chatId);
-        final OpenAIModelDoc modelDoc = getModelDocForCompaction(request.getConfig());
+        final OpenAIModelDoc modelDoc = getModelDocForCompaction(request.getConfig(), chatId);
         final ChatModel chatModel = modelDoc != null
                 ? getChatModel(modelDoc)
                 : null;
@@ -649,8 +649,8 @@ public class AskStroomAIService {
     /**
      * @return The model to write a compaction's summary with. Separate so tests need no model.
      */
-    OpenAIModelDoc getModelDocForCompaction(final AskStroomAiConfig config) {
-        return getModelDoc(config);
+    OpenAIModelDoc getModelDocForCompaction(final AskStroomAiConfig config, final Integer chatId) {
+        return getModelDoc(config, chatId);
     }
 
     /**
@@ -864,7 +864,7 @@ public class AskStroomAIService {
                 auditLog.answer(ToolSession.chat(chatId), request.getMessage(), responseText,
                         runManager.isUnattended(chatId));
                 chatCompactor.writeDigest(chatId);
-                final ChatModel model = getChatModel(getModelDoc(request.getConfig()));
+                final ChatModel model = getChatModel(getModelDoc(request.getConfig(), chatId));
                 // Keep the chat's name up to date with what it is about, now it has been answered.
                 chatTitler.retitleIfDue(chatId, model);
                 // Last, so the run ends as soon as they are offered.
@@ -1208,7 +1208,7 @@ public class AskStroomAIService {
         LOGGER.debug(() -> "processQuestion: chatId=" + chatId);
 
         final AskStroomAiConfig config = request.getConfig();
-        final OpenAIModelDoc modelDoc = getModelDoc(config);
+        final OpenAIModelDoc modelDoc = getModelDoc(config, chatId);
         final ChatModel chatModel = getChatModel(modelDoc);
         final int maxContextTokens = modelDoc.getMaxContextWindowTokens();
         final boolean debugEnabled = isDebugDetailEnabled(config, defaultConfigProvider.get());
@@ -1781,6 +1781,41 @@ public class AskStroomAIService {
      * @return The user's chosen model, or the default model if they have not chosen one, or the one they chose
      * no longer exists (e.g. their settings were saved before a model was set up, or the model was deleted).
      */
+    /// The model a chat's question is answered with: the one the request names (the user's own choice), else the
+    /// one the chat has used, else the default. So a change to the default model reaches the user's next new chat
+    /// and doesn't switch a chat part-way through (asked for by the user: a model switch mid-chat could have
+    /// undesirable results).
+    ///
+    /// @param config The user's settings, naming their own model or none.
+    /// @param chatId The chat, or null for none.
+    /// @return The model.
+    OpenAIModelDoc getModelDoc(final AskStroomAiConfig config, final Integer chatId) {
+        if (NullSafe.get(config, AskStroomAiConfig::getModelRef) == null && chatId != null) {
+            final String used = NullSafe.get(aiDao.getUsage(chatId), AiDao.ChatUsage::modelDocUuid);
+            final OpenAIModelDoc usedDoc = used == null
+                    ? null
+                    : readModel(new DocRef(OpenAIModelDoc.TYPE, used));
+            if (usedDoc != null) {
+                return usedDoc;
+            }
+        }
+        return getModelDoc(config);
+    }
+
+    /// The model a chat has been answered with, which its later questions use unless the user names another, for
+    /// the chat's model picker to show.
+    ///
+    /// @param chatId The user's own chat.
+    /// @return The model, or null for a chat not yet answered or whose model can no longer be read.
+    public DocRef getChatModel(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        final String used = NullSafe.get(aiDao.getUsage(chatId), AiDao.ChatUsage::modelDocUuid);
+        final OpenAIModelDoc usedDoc = used == null
+                ? null
+                : readModel(new DocRef(OpenAIModelDoc.TYPE, used));
+        return NullSafe.get(usedDoc, OpenAIModelDoc::asDocRef);
+    }
+
     OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
         final DocRef chosen = NullSafe.get(config, AskStroomAiConfig::getModelRef);
         final OpenAIModelDoc chosenDoc = readModel(chosen);
@@ -1980,7 +2015,7 @@ public class AskStroomAIService {
         aiService.verifyOwnership(chatId);
         final ChatModel model;
         try {
-            model = getChatModel(getModelDoc(request.getConfig()));
+            model = getChatModel(getModelDoc(request.getConfig(), chatId));
         } catch (final RuntimeException e) {
             // E.g. no model is set up: suggestions are a nicety, so the chat offers its own.
             LOGGER.debug(() -> "No model to suggest prompts for chatId=" + chatId, e);
