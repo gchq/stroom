@@ -1,0 +1,148 @@
+{
+ "source": "extract-text-several-extractions-read-is-one-variable-and-ru",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "src=(\\S+)",
+    "names": [
+     "src"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "dst=(\\S+)",
+    "names": [
+     "dst"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "ts"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "App"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "app"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "desc"
+   }
+  ],
+  "events": [
+   {
+    "name": "connection",
+    "when": [
+     {
+      "field": "src",
+      "present": true
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "connection"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dst"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "other"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "message",
+      "data_name": "message"
+     }
+    ],
+    "allow_unknown": "lines with no addresses carry no activity"
+   }
+  ],
+  "unmatched": "skip"
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[connection] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[connection] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "connection",
+    "when": [
+     "exists(src[normalize-space(.)])"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[message]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

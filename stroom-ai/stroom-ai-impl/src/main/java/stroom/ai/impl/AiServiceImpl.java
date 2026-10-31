@@ -39,6 +39,7 @@ import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.SsrfGuard;
@@ -54,6 +55,7 @@ import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
@@ -64,6 +66,8 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel.OpenAiChatModelBuilder;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel.OpenAiEmbeddingModelBuilder;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder;
 import dev.langchain4j.model.scoring.ScoringModel;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -75,10 +79,13 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -87,6 +94,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 public class AiServiceImpl implements AiService {
@@ -157,36 +165,126 @@ public class AiServiceImpl implements AiService {
                 getDefaultHttpClientConfig());
         final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(httpClientConfig);
         final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
+        final String modelId = modelDoc.getModelId();
         final String url = getUrl(modelDoc, "models");
 
         try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
-            // Reject cloud-metadata/wildcard targets to prevent SSRF. Any redirect the client follows is
-            // checked the same way, see ConfiguredRedirectStrategy.
-            SsrfGuard.rejectMetadataAndWildcard(url);
-
-            final HttpGet httpGet = new HttpGet(url);
-            // A GET has no body, so it is `Accept` rather than `Content-Type` that tells the endpoint what
-            // we want back.
-            httpGet.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
-
-            // Provide an API key
-            getApiKey(modelDoc).ifPresent(apiKey ->
-                    httpGet.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey));
-
-            final HttpResult result = httpClientProvider.get().execute(httpGet, this::readResponse);
-            LOGGER.debug(() -> "getModel: GET '" + url + "' returned " + result.code() + " " + result.reasonPhrase()
-                               + ", headers: " + result.headers() + ", body:\n" + result.body());
-
-            if (!result.isSuccess()) {
-                throw new RuntimeException(describeFailure(url, result, httpClientConfig));
+            final HttpResult listed = get(httpClientProvider, url, modelDoc, httpClientConfig);
+            if (!listed.isSuccess()) {
+                throw new RuntimeException(describeFailure(url, listed, httpClientConfig));
             }
 
-            return result.body();
+            // Reaching the endpoint is not enough: the model must be one it serves, or every chat fails. What
+            // the endpoint says of that model is the answer, not the whole list.
+            final Optional<JsonNode> entry = modelEntry(listed.body(), modelId);
+            if (entry.isPresent()) {
+                return JsonUtil.getMapper(true).writeValueAsString(entry.get());
+            }
 
+            // Not listed. Some endpoints (gateways routing models by pattern, say) serve models they don't
+            // list, so ask for it by its ID before saying it isn't there.
+            final String modelUrl = url + "/" + URLEncoder.encode(modelId, StandardCharsets.UTF_8)
+                    .replace("+", "%20");
+            final HttpResult retrieved = get(httpClientProvider, modelUrl, modelDoc, httpClientConfig);
+            if (retrieved.isSuccess()) {
+                return modelDescription(retrieved.body(), modelId);
+            }
+            throw new ModelNotFoundException(modelId, url, modelIds(listed.body()));
         } catch (final IOException e) {
             LOGGER.debug(() -> "getModel: GET '" + url + "' failed: " + e.getMessage(), e);
             throw new UncheckedIOException("Error requesting '" + url + "': " + e.getMessage(), e);
         }
+    }
+
+    /// The entry an OpenAI-compatible `/models` response lists for a model: its `id` and whatever else the
+    /// endpoint says of it (`owned_by`, `created`, its context length, ...).
+    ///
+    /// @param body    The response body.
+    /// @param modelId The model's ID.
+    /// @return Its entry; empty when the body lists no such model, or isn't such a list.
+    static Optional<JsonNode> modelEntry(final String body, final String modelId) {
+        for (final JsonNode model : listedModels(body)) {
+            if (model.path("id").isTextual() && model.path("id").asText().equals(modelId)) {
+                return Optional.of(model);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /// What a `/models/{id}` response says of the model, as indented JSON.
+    ///
+    /// @param body    The response body.
+    /// @param modelId The model's ID.
+    /// @return The model's JSON; a short statement it was found when the body isn't JSON.
+    static String modelDescription(final String body, final String modelId) {
+        try {
+            final JsonNode model = JsonUtil.getMapper().readTree(NullSafe.string(body));
+            if (model.isObject()) {
+                return JsonUtil.getMapper(true).writeValueAsString(model);
+            }
+        } catch (final JacksonException e) {
+            LOGGER.debug(() -> "modelDescription: not JSON: " + e.getMessage(), e);
+        }
+        return "Model '" + modelId + "' was found.";
+    }
+
+    /// The IDs of the models an OpenAI-compatible `/models` response lists (`data[].id`).
+    ///
+    /// @param body The response body.
+    /// @return The IDs, in the order listed; none when the body isn't such a list.
+    static List<String> modelIds(final String body) {
+        final List<String> ids = new ArrayList<>();
+        for (final JsonNode model : listedModels(body)) {
+            final JsonNode id = model.path("id");
+            if (id.isTextual()) {
+                ids.add(id.asText());
+            }
+        }
+        return ids;
+    }
+
+    // The entries of a /models response's data array; none when the body isn't such a list.
+    private static List<JsonNode> listedModels(final String body) {
+        if (NullSafe.isBlankString(body)) {
+            return List.of();
+        }
+        try {
+            final List<JsonNode> models = new ArrayList<>();
+            JsonUtil.getMapper().readTree(body).path("data").forEach(models::add);
+            return models;
+        } catch (final JacksonException e) {
+            LOGGER.debug(() -> "listedModels: not a model list: " + e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    // A GET of the endpoint, with the model's API key and headers.
+    private HttpResult get(final HttpClientProvider httpClientProvider,
+                           final String url,
+                           final OpenAIModelDoc modelDoc,
+                           final HttpClientConfig httpClientConfig) throws IOException {
+        // Reject cloud-metadata/wildcard targets to prevent SSRF. Any redirect the client follows is
+        // checked the same way, see ConfiguredRedirectStrategy.
+        SsrfGuard.rejectMetadataAndWildcard(url);
+
+        final HttpGet httpGet = new HttpGet(url);
+        // A GET has no body, so it is `Accept` rather than `Content-Type` that tells the endpoint what
+        // we want back.
+        httpGet.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
+
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(apiKey ->
+                httpGet.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey));
+        HttpClientUtil.headers(httpClientConfig).forEach((name, value) -> {
+            if (!httpGet.containsHeader(name)) {
+                httpGet.addHeader(name, value);
+            }
+        });
+
+        final HttpResult result = httpClientProvider.get().execute(httpGet, this::readResponse);
+        LOGGER.debug(() -> "getModel: GET '" + url + "' returned " + result.code() + " " + result.reasonPhrase()
+                           + ", headers: " + result.headers() + ", body:\n" + result.body());
+        return result;
     }
 
     private HttpResult readResponse(final ClassicHttpResponse response) throws IOException {
@@ -438,10 +536,36 @@ public class AiServiceImpl implements AiService {
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
         }
+        // Only ask for the model's reasoning if it is going to be shown.
+        modelBuilder.returnThinking(modelDoc.isShowReasoning());
 
         return LOGGER.logDurationIfDebugEnabled(
                 modelBuilder::build,
                 r -> "getChatModel: built model '" + modelDoc.getModelId() + "'");
+    }
+
+    @Override
+    public StreamingChatModel getStreamingChatModel(final OpenAIModelDoc modelDoc) {
+        if (STUB_MODEL_ID.equals(modelDoc.getModelId())) {
+            return new StubStreamingChatModel(new StubChatModel());
+        }
+
+        final OpenAiStreamingChatModelBuilder modelBuilder = OpenAiStreamingChatModel.builder()
+                .modelName(modelDoc.getModelId());
+        // Need to specify HTTP 1.1 for vLLM interoperability
+        // Ref: https://github.com/langchain4j/langchain4j/issues/3682
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
+        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
+            // Reject cloud-metadata/wildcard targets to prevent SSRF, as for the non-streaming model.
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
+            modelBuilder.baseUrl(modelDoc.getBaseUrl());
+        }
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
+        if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
+            modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
+        }
+        modelBuilder.returnThinking(modelDoc.isShowReasoning());
+        return modelBuilder.build();
     }
 
     @Override
@@ -472,11 +596,13 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
+        final HttpClientConfig httpClientConfig = NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
-                getDefaultHttpClientConfig()));
-        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
+                getDefaultHttpClientConfig());
+        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(),
+                httpConfigResolver.resolve(httpClientConfig),
+                HttpClientUtil.headers(httpClientConfig));
     }
 
     @Override
@@ -598,6 +724,12 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public List<AiChatMessage> getStreamingMessages(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getStreamingMessages(chatId);
+    }
+
+    @Override
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,
                                       final Integer attachmentId,
@@ -610,6 +742,32 @@ public class AiServiceImpl implements AiService {
     @Override
     public void updateMessageText(final int messageId, final String message) {
         aiDao.updateMessageText(messageId, message);
+    }
+
+    @Override
+    public void askAsQuestion(final int messageId, final String question) {
+        aiDao.askAsQuestion(messageId, question);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return aiDao.changeMessageType(chatId, messageId, from, to);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return aiDao.changeMessageTypes(chatId, from, to);
+    }
+
+    // No ownership check — internal-only, called from background processing.
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return aiDao.hasMessageOfType(chatId, type);
     }
 
     // No ownership check — internal-only, called from background processing.

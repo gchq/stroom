@@ -21,6 +21,8 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -66,6 +68,7 @@ class SecurityFilter implements Filter {
     private final AuthenticationBypassChecker authenticationBypassChecker;
     private final Provider<UriFactory> uriFactoryProvider;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
 
     private static final String CSRF_HEADER = "X-CSRF";
     private static final String CSRF_EXPECTED_VALUE = "1";
@@ -80,8 +83,10 @@ class SecurityFilter implements Filter {
             final OpenIdManager openIdManager,
             final AuthenticationBypassChecker authenticationBypassChecker,
             final Provider<UriFactory> uriFactoryProvider,
-            final Provider<AuthenticationConfig> authenticationConfigProvider) {
+            final Provider<AuthenticationConfig> authenticationConfigProvider,
+            final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.securityContext = securityContext;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdManager = openIdManager;
         this.authenticationBypassChecker = authenticationBypassChecker;
         this.uriFactoryProvider = uriFactoryProvider;
@@ -218,7 +223,24 @@ class SecurityFilter implements Filter {
                 // or no login flow is possible/expected.
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                              "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
+                addMcpSignInHint(fullPath, response);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+            }
+        }
+    }
+
+    // An MCP client that isn't signed in looks for where to sign in in the header of the endpoint's 401, which points
+    // to its protected resource metadata (RFC 9728). Only an external identity provider can sign a client in; with
+    // Stroom's own, a client sends an API key.
+    private void addMcpSignInHint(final String fullPath, final HttpServletResponse response) {
+        if (fullPath != null && fullPath.endsWith(ResourcePaths.MCP_PATH)) {
+            final OpenIdConfiguration openIdConfiguration = NullSafe.get(openIdConfigurationProvider,
+                    Provider::get);
+            if (openIdConfiguration != null
+                && openIdConfiguration.getIdentityProviderType() == IdpType.EXTERNAL_IDP) {
+                response.setHeader("WWW-Authenticate", "Bearer resource_metadata=\""
+                                                       + uriFactoryProvider.get().publicUri(
+                        ResourcePaths.OAUTH_PROTECTED_RESOURCE_PATH) + "\"");
             }
         }
     }

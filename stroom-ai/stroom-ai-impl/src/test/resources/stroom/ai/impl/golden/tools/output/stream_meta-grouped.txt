@@ -1,0 +1,15 @@
+Arguments: {"feeds":["WINDOWS-EVENTS"],"groupBy":["day"],"aggregates":["count","sum(Raw Size)","max:Raw Size"]}
+
+=== Output ===
+Found 3 stream(s). Wrote 2 row(s) to /outputs/stream_meta.csv; use the table tool on it to filter, group or sort. Attribute values: 2 from the database, 1 from the stream store (1 stream(s) read). The first rows:
+
+| day | count | sum(Raw Size) | max(Raw Size) |
+| --- | --- | --- | --- |
+| 2026-10-01 | 2 | 300 | 200 |
+| 2026-10-02 | 1 | 50 | 50 |
+
+=== Workspace file /outputs/stream_meta.csv ===
+day,count,sum(Raw Size),max(Raw Size)
+2026-10-01,2,300,200
+2026-10-02,1,50,50
+

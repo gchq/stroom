@@ -16,6 +16,8 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.ai.client.AiTabSnapshotProvider;
+import stroom.ai.shared.AiTabSnapshot;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
@@ -48,11 +50,17 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.client.event.SteppingCodeChangeEvent;
+import stroom.pipeline.stepping.client.presenter.SteppingSnapshots.ElementState;
+import stroom.pipeline.stepping.client.presenter.SteppingSnapshots.SelectedElement;
+import stroom.pipeline.stepping.client.presenter.SteppingSnapshots.StepPosition;
 import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.query.api.ExpressionOperator;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -109,7 +117,7 @@ import java.util.stream.Collectors;
 
 public class SteppingPresenter
         extends MyPresenterWidget<SteppingPresenter.SteppingView>
-        implements HasChangeHandlers, ClassificationUiHandlers {
+        implements HasChangeHandlers, ClassificationUiHandlers, AiTabSnapshotProvider {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -126,6 +134,8 @@ public class SteppingPresenter
     private final SteppingMetaListPresenter steppingMetaListPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenterProvider;
     private final ExpressionValidator expressionValidator;
+    private final ClientSecurityContext securityContext;
+    private final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider;
     // elementId => ElementPresenter
     private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
     private PipelineModel pipelineModel;
@@ -163,9 +173,13 @@ public class SteppingPresenter
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
                              final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
                              final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
-                             final ExpressionValidator expressionValidator) {
+                             final ExpressionValidator expressionValidator,
+                             final ClientSecurityContext securityContext,
+                             final Provider<CodeChangeReviewPresenter> codeChangeReviewPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.securityContext = securityContext;
+        this.codeChangeReviewPresenterProvider = codeChangeReviewPresenterProvider;
 
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.sourcePresenter = sourcePresenter;
@@ -234,6 +248,8 @@ public class SteppingPresenter
 
     @Override
     protected void onBind() {
+        // Code changes proposed in the AI chat, for this pipeline's elements.
+        registerHandler(getEventBus().addHandler(SteppingCodeChangeEvent.getType(), this::onSteppingCodeChange));
         registerHandler(
                 pipelineTreePresenter.getSelectionModel().addSelectionChangeHandler(event -> {
                     final PipelineElement selectedElement = getSelectedPipeElement();
@@ -895,6 +911,8 @@ public class SteppingPresenter
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : elementPresenterMap.values()) {
+                // Lines changed by an applied code change stay highlighted until the next step.
+                editorPresenter.onBeforeStep();
                 if (editorPresenter.isDirty()) {
                     final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
@@ -1198,6 +1216,177 @@ public class SteppingPresenter
     @Override
     public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
         return addHandlerToSource(ChangeEvent.getType(), handler);
+    }
+
+    /// @return What the stepping screen shows, for the AI chat: where the step is, the pipeline's elements with
+    /// their documents and error counts, and the selected element's input and output panes as displayed, its code
+    /// as edited and its messages. Null if no pipeline has been loaded.
+    @Override
+    public AiTabSnapshot snapshot() {
+        if (pipelineDoc == null || pipelineModel == null) {
+            return null;
+        }
+        final SharedStepData stepData = getEffectiveStepData();
+        final List<ElementState> elements = new ArrayList<>();
+        for (final PipelineElement element : getElementsInOrder()) {
+            final ElementPresenter presenter = elementPresenterMap.get(element.getElementId());
+            final SharedElementData elementData = NullSafe.get(stepData, data -> data.getElementData(element.getId()));
+            elements.add(new ElementState(
+                    element.getId(),
+                    element.getType(),
+                    getElementDocRef(element, presenter),
+                    pipelineModel.hasRole(element, PipelineElementType.ROLE_HAS_CODE),
+                    presenter != null && presenter.isDirty(),
+                    elementData == null
+                            ? null
+                            : displayIndicators(element.getElementId(), elementData)));
+        }
+
+        final PipelineElement selectedElement = getSelectedPipeElement();
+        SelectedElement selected = null;
+        if (selectedElement != null && !PipelineModel.SOURCE_ELEMENT.equals(selectedElement)) {
+            final ElementPresenter presenter = elementPresenterMap.get(selectedElement.getElementId());
+            selected = new SelectedElement(
+                    selectedElement.getId(),
+                    NullSafe.get(presenter, ElementPresenter::getDisplayedInput),
+                    NullSafe.get(presenter, ElementPresenter::getDisplayedOutput),
+                    NullSafe.get(presenter, ElementPresenter::getCode));
+        }
+
+        final StepLocation location = NullSafe.getOrElse(currentResult, SteppingResult::getFoundLocation,
+                requestBuilder.build().getStepLocation());
+        final StepPosition position = new StepPosition(
+                NullSafe.get(meta, Meta::getFeedName),
+                location != null
+                        ? Long.valueOf(location.getMetaId())
+                        : NullSafe.get(meta, Meta::getId),
+                NullSafe.get(meta, Meta::getTypeName),
+                childStreamType,
+                NullSafe.get(location, StepLocation::getPartIndex),
+                NullSafe.get(location, StepLocation::getRecordIndex));
+        final boolean dirty = !getDirtyDocs().isEmpty();
+        final List<String> generalErrors = new ArrayList<>(
+                NullSafe.collection(NullSafe.get(currentResult, SteppingResult::getGeneralErrors)));
+        return SteppingSnapshots.create(pipelineDoc.asDocRef(), dirty, position, elements, selected, generalErrors);
+    }
+
+    // The pipeline's elements, from the source down, as the tree shows them.
+    private List<PipelineElement> getElementsInOrder() {
+        final List<PipelineElement> elements = new ArrayList<>();
+        addDescendants(PipelineModel.SOURCE_ELEMENT, pipelineModel.getChildMap(), elements, new HashSet<>());
+        return elements;
+    }
+
+    private void addDescendants(final PipelineElement parent,
+                                final Map<PipelineElement, List<PipelineElement>> childMap,
+                                final List<PipelineElement> elements,
+                                final Set<PipelineElement> seen) {
+        for (final PipelineElement child : NullSafe.list(childMap.get(parent))) {
+            if (seen.add(child)) {
+                elements.add(child);
+                addDescendants(child, childMap, elements, seen);
+            }
+        }
+    }
+
+    // The document an element uses: as loaded for its editor, or else as its properties name it.
+    private DocRef getElementDocRef(final PipelineElement element, final ElementPresenter presenter) {
+        final DocRef loaded = NullSafe.get(presenter, ElementPresenter::getDocRef);
+        if (loaded != null) {
+            return loaded;
+        }
+        for (final PipelineProperty property : NullSafe.list(pipelineModel.getProperties(element))) {
+            final DocRef entity = NullSafe.get(property, PipelineProperty::getValue, value -> value.getEntity());
+            if (entity != null) {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    private ElementPresenter findElementPresenter(final String elementId) {
+        if (elementId == null) {
+            return null;
+        }
+        for (final ElementPresenter presenter : elementPresenterMap.values()) {
+            if (presenter.getElement() != null && elementId.equals(presenter.getElement().getId())) {
+                return presenter;
+            }
+        }
+        return null;
+    }
+
+    private PipelineElement findPipelineElement(final String elementId) {
+        if (elementId == null || pipelineModel == null) {
+            return null;
+        }
+        for (final PipelineElement element : getElementsInOrder()) {
+            if (elementId.equals(element.getId())) {
+                return element;
+            }
+        }
+        return null;
+    }
+
+    // A code change proposed in the AI chat, if it is for this pipeline and its stepping screen is open.
+    private void onSteppingCodeChange(final SteppingCodeChangeEvent event) {
+        if (pipelineDoc == null
+            || event.getPipeline() == null
+            || !Objects.equals(pipelineDoc.getUuid(), event.getPipeline().getUuid())
+            || !getWidget().isAttached()) {
+            return;
+        }
+        final ElementPresenter presenter = findElementPresenter(event.getElementId());
+        switch (event.getOperation()) {
+            case CAN_UNDO -> {
+                event.setHandled(null);
+                event.setCanUndo(presenter != null && presenter.canUndoApply());
+            }
+            case UNDO -> {
+                event.setHandled(null);
+                event.setUndone(presenter != null && presenter.undoApply());
+            }
+            case REVIEW -> reviewCodeChange(event, presenter);
+            default -> {
+                // Nothing else is asked.
+            }
+        }
+    }
+
+    private void reviewCodeChange(final SteppingCodeChangeEvent event, final ElementPresenter presenter) {
+        final String elementId = event.getElementId();
+        if (presenter == null || presenter.getDocRef() == null) {
+            final PipelineElement element = findPipelineElement(elementId);
+            if (element == null) {
+                event.setHandled("The pipeline no longer has an element '" + elementId + "'.");
+            } else {
+                // Selecting it loads its code.
+                pipelineTreePresenter.getSelectionModel().setSelected(element, true);
+                event.setHandled("Element '" + elementId + "' is now selected. Once its code has loaded, click "
+                                 + "Review and apply again.");
+            }
+            return;
+        }
+        if (event.getElementDoc() != null
+            && !Objects.equals(event.getElementDoc().getUuid(), presenter.getDocRef().getUuid())) {
+            event.setHandled("Element '" + elementId + "' now uses a different document from the one the change "
+                             + "was proposed for. Ask again for a change to its current code.");
+            return;
+        }
+        event.setHandled(null);
+        securityContext.hasDocumentPermission(
+                presenter.getDocRef(),
+                DocumentPermission.EDIT,
+                editable -> codeChangeReviewPresenterProvider.get().showForElement(
+                        presenter,
+                        event.getBaseCode(),
+                        event.getProposedCode(),
+                        editable,
+                        event.getApprover(),
+                        result -> NullSafe.run(event.getOnApplied())),
+                error -> AlertEvent.fireError(this, "Unable to check your permission to edit "
+                                                    + presenter.getDocRef().getName(), error.getMessage(), null),
+                this);
     }
 
     // --------------------------------------------------------------------------------

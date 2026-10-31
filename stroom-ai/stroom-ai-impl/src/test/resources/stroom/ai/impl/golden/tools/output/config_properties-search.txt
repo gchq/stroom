@@ -1,0 +1,17 @@
+Arguments: {"mode":"search","query":"max results"}
+
+=== Output ===
+8 properties found for 'max results' (7 with every word), best first. Values are as on node node1 (YAML can differ by node).
+
+- stroom.ui.defaultMaxResults = `1000000,100,10,1` (Default) - The default maximum number of search results that new dashboard tables will request.
+- stroom.statistics.sql.search.maxResults = `50000` (Database; default `100000`) - The maximum number of records that can be returned from the statistics DB in a single query prior to aggregation
+- stroom.search.resultStore.maxSortedItems = `500000` (Default) - Maximum number of results that can be returned in a single page if the results are sorted. This will affect downloading all search results if results are sorted.
+- stroom.search.resultStore.lmdb.maxStoreSize = `10GiB` (Default) - The maximum size of the LMDB store.
+- stroom.ai.workspace.maxQueryRows = `10000` (Default) - The most rows a StroomQL query run by the agent (run_stroomql) may return.
+- stroom.search.resultStore.map.trimmedSizeLimit = `500000` (Default) - The trimmed size of sorted results for on heap result stores.
+- stroom.ui.process.defaultRecordLimit = `1000000` (Default) - The default number of records that batch search processing will be limited by.
+- stroom.ai.workspace.toolTimeLimit = `PT30S` (Default) - How long a tool call may take.
+
+How a property's value is set (as Stroom works it out: YAML, then database, then default): on each node, the effective value is that node's YAML value if its config.yml sets the property to something other than the default; otherwise the database value, if one is set; otherwise the default. So on a node whose YAML sets a property, a database value for it has no effect.
+- Database value: set on the Properties screen (Administration > Properties, open the property and set its Database Value). It needs the Manage Properties permission, and only editable properties can be set there. It applies to every node (each picks it up within about a minute), without a restart unless the property needs one (a restart of every node, or of the nodes serving the UI).
+- YAML value: set in a node's config.yml under appConfig, by the path without its leading 'stroom' (e.g. stroom.ui.defaultMaxResults is appConfig: ui: defaultMaxResults). It applies only to that node, and it is the only way to set a property that isn't editable. Stroom notices changes to the file and applies them, but a property that needs a restart takes effect only once the node restarts.

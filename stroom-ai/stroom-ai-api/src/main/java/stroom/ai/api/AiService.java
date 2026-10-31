@@ -29,11 +29,13 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.http.HttpClientConfig;
 
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.scoring.ScoringModel;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface AiService {
 
@@ -66,9 +68,23 @@ public interface AiService {
      */
     String chat(DocRef modelRef, String systemPrompt, String message);
 
+    /// Checks the model's endpoint serves its model: the model must be listed by `<base URL>/models`, or found
+    /// by asking for it by its ID (`/models/{id}`), not just the endpoint reached.
+    ///
+    /// @param modelDoc The model.
+    /// @return What the endpoint says of the model (its entry, as indented JSON), not the whole list.
+    /// @throws java.util.NoSuchElementException if the endpoint doesn't serve it (the implementation's says which
+    ///                                          models it does).
+    /// @throws RuntimeException if the endpoint can't be reached or refuses the request.
     String getModel(OpenAIModelDoc modelDoc);
 
     ChatModel getChatModel(OpenAIModelDoc modelDoc);
+
+    /**
+     * @param modelDoc The model.
+     * @return A model that streams its answer as it writes it, or null if it can't be streamed.
+     */
+    StreamingChatModel getStreamingChatModel(OpenAIModelDoc modelDoc);
 
     EmbeddingModel getEmbeddingModel(OpenAIModelDoc modelDoc);
 
@@ -104,12 +120,46 @@ public interface AiService {
     Optional<AiChatMessage> getWorkingMessage(int chatId);
 
     /**
-     * Removes every WORKING message for the chat, including any left behind by a server that stopped
-     * mid-question.
+     * Removes every WORKING message for the chat, and any answer or reasoning still being streamed, including
+     * any left behind by a server that stopped mid-question.
      */
     void deleteWorkingMessages(int chatId);
 
+    /**
+     * @return The chat's answer and reasoning being streamed by the model, oldest first, or an empty list.
+     */
+    List<AiChatMessage> getStreamingMessages(int chatId);
+
     void updateMessageText(int messageId, String message);
+
+    /// Makes a message the user sent into a question that starts a turn of its own, e.g. one sent to steer a run
+    /// that had already given its answer.
+    ///
+    /// @param messageId The message.
+    /// @param question  The question's text.
+    void askAsQuestion(int messageId, String question);
+
+    /// Changes a message's type, if it is one of the given types, e.g. to deliver a queued steering message.
+    ///
+    /// @param chatId    The chat the message must belong to.
+    /// @param messageId The message.
+    /// @param from      The types it may have now.
+    /// @param to        The type it is to have.
+    /// @return True if it was changed, false if the chat has no such message of those types.
+    boolean changeMessageType(int chatId, int messageId, Set<AiMessageType> from, AiMessageType to);
+
+    /// Changes the type of all the chat's messages of the given types.
+    ///
+    /// @param chatId The chat.
+    /// @param from   The types to change.
+    /// @param to     The type they are to have.
+    /// @return How many were changed.
+    int changeMessageTypes(int chatId, Set<AiMessageType> from, AiMessageType to);
+
+    /// @param chatId The chat.
+    /// @param type   A message type.
+    /// @return True if the chat has a message of that type.
+    boolean hasMessageOfType(int chatId, AiMessageType type);
 
     void deleteMessage(int messageId);
 

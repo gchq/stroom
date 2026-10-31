@@ -28,15 +28,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DashboardTableContext.class, name = "dashboardTable"),
         @JsonSubTypes.Type(value = QueryTableContext.class, name = "queryTable"),
-        @JsonSubTypes.Type(value = GeneralTableContext.class, name = "generalTable")
+        @JsonSubTypes.Type(value = GeneralTableContext.class, name = "generalTable"),
+        @JsonSubTypes.Type(value = DocumentReferenceContext.class, name = "documentReference")
 })
 @Schema(
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "dashboardTable", schema = DashboardTableContext.class),
                 @DiscriminatorMapping(value = "queryTable", schema = QueryTableContext.class),
-                @DiscriminatorMapping(value = "generalTable", schema = GeneralTableContext.class)})
-public abstract sealed class AskStroomAiContext permits DashboardTableContext, QueryTableContext, GeneralTableContext {
+                @DiscriminatorMapping(value = "generalTable", schema = GeneralTableContext.class),
+                @DiscriminatorMapping(value = "documentReference", schema = DocumentReferenceContext.class)})
+public abstract sealed class AskStroomAiContext permits DashboardTableContext, QueryTableContext, GeneralTableContext,
+        DocumentReferenceContext {
 
     public AskStroomAiContext() {
     }

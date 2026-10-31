@@ -1,0 +1,40 @@
+name: File server audit (XML with a namespace)
+template: Event Data (XML)
+capabilities: [format_recognition, nesting, schema_variation]
+request: >
+  Onboard this file server audit log. It is XML in the urn:example:fileaudit namespace; each entry is one file
+  operation (read or delete) by an account on a machine. Index the events.
+expected:
+  records: 3
+  event_types: [View, Delete]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Device/HostName]
+sample: |
+  <audit xmlns="urn:example:fileaudit">
+    <entry><when>2026-09-28T12:00:00+01:00</when><account>erin</account><machine>fs01</machine><op>read</op><path>/share/finance/q3.xlsx</path></entry>
+    <entry><when>2026-09-28T12:05:30+01:00</when><account>frank</account><machine>fs01</machine><op>delete</op><path>/share/finance/old.xlsx</path></entry>
+    <entry><when>2026-09-28T12:07:45+01:00</when><account>erin</account><machine>fs02</machine><op>read</op><path>/share/hr/policy.pdf</path></entry>
+  </audit>
+reference:
+  mapping:
+    input: xml
+    root: audit
+    record: entry
+    xml_namespace: "urn:example:fileaudit"
+    common:
+      - {path: EventTime/TimeCreated, field: when, time_format: "yyyy-MM-dd'T'HH:mm:ssXXX"}
+      - {path: EventSource/System/Name, value: File Server}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: fileaudit}
+      - {path: EventSource/Device/HostName, field: machine}
+      - {path: EventSource/User/Id, field: account}
+    events:
+      - name: read
+        when: [{field: op, equals: read}]
+        fields:
+          - {path: EventDetail/TypeId, value: File-Read}
+          - {path: EventDetail/View/File/Path, field: path}
+      - name: delete
+        when: [{field: op, equals: delete}]
+        fields:
+          - {path: EventDetail/TypeId, value: File-Delete}
+          - {path: EventDetail/Delete/File/Path, field: path}

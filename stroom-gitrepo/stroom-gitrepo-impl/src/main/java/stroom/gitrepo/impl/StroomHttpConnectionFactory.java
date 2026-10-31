@@ -29,6 +29,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Supplies JGit with HTTP connections that run on Stroom's shared, configured Apache client.
@@ -47,14 +48,21 @@ class StroomHttpConnectionFactory implements HttpConnectionFactory2 {
 
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
+    private final Map<String, String> headers;
 
     private final List<StroomHttpConnection> connections = new ArrayList<>();
     private HttpClientProvider httpClientProvider;
 
+    /**
+     * @param headers Headers to send with every request. JGit sets its own (e.g. authorisation) afterwards,
+     *                and those replace any of the same name.
+     */
     StroomHttpConnectionFactory(final HttpClientProviderCache httpClientProviderCache,
-                                final HttpClientConfiguration httpClientConfiguration) {
+                                final HttpClientConfiguration httpClientConfiguration,
+                                final Map<String, String> headers) {
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.headers = Map.copyOf(headers);
     }
 
     @Override
@@ -71,6 +79,7 @@ class StroomHttpConnectionFactory implements HttpConnectionFactory2 {
         }
 
         final StroomHttpConnection connection = new StroomHttpConnection(url, provider().get());
+        headers.forEach(connection::setRequestProperty);
         synchronized (connections) {
             connections.add(connection);
         }

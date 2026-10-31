@@ -2,37 +2,96 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+             xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
-                <p:InlineSvgButton ui:field="newChat" text="New Conversation"
+                <p:Button ui:field="newChat" text="New chat"
+                          addStyleNames="allow-focus askStroomAiViewImpl-newChat"/>
+                <p:InlineSvgButton ui:field="overviewToggle"
+                                   addStyleNames="allow-focus navigation-menu-button askStroomAiViewImpl-overviewToggle"/>
+                <p:InlineSvgButton ui:field="tabToggle" text="Open in a Tab"
                                    addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="download" text="Download"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="deleteAll" text="Delete All Messages"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="configure" text="Configure"
+                <p:InlineSvgButton ui:field="menu" text="More"
                                    addStyleNames="allow-focus navigation-menu-button"/>
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
+        <g:FlowPanel ui:field="chatList" styleName="dock-max askStroomAiViewImpl-chatList" visible="false">
+            <g:FlowPanel styleName="ai-chat-list-header">
+                <g:TextBox ui:field="chatSearch" addStyleNames="allow-focus ai-chat-list-search"/>
+                <g:HTML ui:field="chatListActions" styleName="ai-chat-list-actions"/>
+            </g:FlowPanel>
+            <g:HTML ui:field="chatListItems" styleName="ai-chat-list-items"/>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="overview" styleName="dock-max askStroomAiViewImpl-overview" visible="false">
+            <g:FlowPanel styleName="ai-overview-toolbar">
+                <!-- Opens the search; until then, all there is. -->
+                <p:InlineSvgButton ui:field="overviewSearchToggle" addStyleNames="allow-focus"/>
+                <g:FlowPanel ui:field="overviewSearchControls" styleName="ai-overview-search-controls"
+                             visible="false">
+                    <!-- As the Explorer's Quick Filter: a box with a button to clear it. -->
+                    <g:FlowPanel styleName="quickFilter ai-overview-search">
+                        <g:TextBox ui:field="overviewSearch" addStyleNames="allow-focus quickFilter-textBox"/>
+                        <p:InlineSvgButton ui:field="overviewSearchClear" addStyleNames="clear"/>
+                    </g:FlowPanel>
+                    <!-- The search's matches: how many, and going to the one before or after. -->
+                    <g:Label ui:field="overviewSearchCount" styleName="ai-overview-search-count"/>
+                    <p:InlineSvgButton ui:field="overviewPreviousMatch" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewNextMatch" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="ai-overview-body">
+                <g:HTML ui:field="overviewContent" styleName="ai-overview-content"/>
+                <!-- Over the overview's right-hand margin, which matches its left, so the chart stays centred. -->
+                <g:FlowPanel ui:field="overviewZoomStrip" styleName="ai-overview-zoom-strip">
+                    <p:InlineSvgButton ui:field="overviewZoomIn" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewZoomOut" addStyleNames="allow-focus"/>
+                    <p:InlineSvgButton ui:field="overviewFit" addStyleNames="allow-focus"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </g:FlowPanel>
+        <g:FlowPanel ui:field="jumpToLatestBar" styleName="dock-min askStroomAiViewImpl-jumpToLatestBar">
+            <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
+                      title="Scroll to the latest message, and follow the chat"/>
+        </g:FlowPanel>
+        <!-- Suggestions float over the bottom of the conversation, in front of the bottom's shadow, taking no room. -->
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-followUpsBar">
+            <g:FlowPanel ui:field="followUps" styleName="askStroomAiViewImpl-followUps"/>
+        </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
-            <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+            <g:FlowPanel ui:field="taskList" styleName="dock-min askStroomAiViewImpl-taskList">
+                <g:Button ui:field="taskListHeader" styleName="allow-focus askStroomAiViewImpl-taskList-header"/>
+                <g:HTML ui:field="taskListItems" styleName="askStroomAiViewImpl-taskList-items"/>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="commandReference" styleName="dock-min askStroomAiViewImpl-commandReference">
+                <g:SimplePanel ui:field="commandReferenceResize"
+                               styleName="askStroomAiViewImpl-commandReference-resize"/>
+                <p:InlineSvgButton ui:field="commandReferenceClose"
+                                   addStyleNames="allow-focus askStroomAiViewImpl-commandReference-close"/>
+                <g:HTML ui:field="commandReferenceContent"
+                        styleName="markdown askStroomAiViewImpl-commandReference-content"/>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="inputBox"
+                         styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+                <g:FlowPanel ui:field="commandSuggestions" styleName="dock-min askStroomAiViewImpl-commands"/>
+                <g:HTML ui:field="attachments" styleName="dock-min askStroomAiViewImpl-attachments"/>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
                              styleName="askStroomAiViewImpl-contextChip"/>
                     <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
+                    <l:SelectionBox ui:field="agentMode" addStyleNames="askStroomAiViewImpl-agentMode"/>
+                    <p:InlineSvgButton ui:field="autoApprove" addStyleNames="allow-focus askStroomAiViewImpl-autoApprove"/>
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
-                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+                    <g:Button ui:field="contextMeter" styleName="allow-focus askStroomAiViewImpl-contextMeter"/>
+                    <g:HTML ui:field="contextDetails" styleName="askStroomAiViewImpl-contextDetails"/>
+                    <p:InlineSvgButton ui:field="stop" addStyleNames="allow-focus askStroomAiViewImpl-stop"/>
                     <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
                 </g:FlowPanel>
             </g:FlowPanel>

@@ -130,9 +130,9 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
         getElement().appendChild(label.getElement());
 
-//        String uid = DOM.createUniqueId();
-//        inputElem.setPropertyString("id", uid);
-//        labelElem.setHtmlFor(uid);
+        // Link the label to the tick box, so that clicking the label toggles it too. A unique id is used
+        // unless an identity is given (see setIdentity).
+        setIdentity(DOM.createUniqueId());
 
         directionalTextHelper = new DirectionalTextHelper(checkmarkElem, true);
 

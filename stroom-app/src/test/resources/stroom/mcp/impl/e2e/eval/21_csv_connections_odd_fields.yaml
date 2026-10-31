@@ -1,0 +1,77 @@
+name: Connection broker (CSV, fields with no element of their own)
+template: Event Data (Text)
+capabilities: [field_normalization, optional_fields]
+request: >
+  Onboard the connection broker's CSV export (it has a header). Each record is a client's connection to a backend
+  service: CONNECT when it is made, DISCONNECT when it ends. Besides the client and server addresses, ports and
+  protocol, the broker writes its own fields: the zones each side is in, destination_key (the backend service the
+  connection was routed to), the client's TLS fingerprint, the routing policy, a connection id, and byte counts on
+  disconnect. Index the events.
+expected:
+  records: 10
+  event_types: [Network]
+  # Every record is a connection made or ended: none is an unknown event.
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName,
+          EventDetail/Network/Connect/Source/Device/IPAddress|EventDetail/Network/Close/Source/Device/IPAddress,
+          EventDetail/Network/Connect/Destination/Port|EventDetail/Network/Close/Destination/Port]
+  values:
+    EventDetail/Network/Connect/Destination/Port: ['443', '5432']
+  # The broker's own fields have no element: carried as Data where they belong, on the side they describe.
+  data:
+    - {at: EventDetail/Network/Connect/Destination|EventDetail/Network/Close/Destination, name: destination_key}
+    - {at: EventDetail/Network/Connect/Destination, name: destination_key, value: svc/payments-api, every: false}
+    - {at: EventDetail/Network/Connect/Source|EventDetail/Network/Close/Source, name: source_zone}
+    - {at: EventDetail/Network/Connect/Destination|EventDetail/Network/Close/Destination, name: destination_zone}
+sample: |
+  timestamp,sensor,conn_id,event,client_addr,client_port,server_addr,server_port,proto,source_zone,destination_zone,destination_key,tls_ja3,policy,bytes_in,bytes_out
+  2026-10-02T08:00:01Z,lb-east-01,c-1001,CONNECT,198.51.100.23,51514,10.20.0.11,443,TCP,internet,dmz,svc/payments-api,771c0e4a2d1f0e2f6c8a1b3d5e7f9a0b,public-https,,
+  2026-10-02T08:00:04Z,lb-east-01,c-1002,CONNECT,203.0.113.8,49221,10.20.0.12,443,TCP,internet,dmz,svc/storefront,e7d705a3286e19ea42f587b344ee6865,public-https,,
+  2026-10-02T08:00:09Z,lb-east-01,c-1003,CONNECT,10.30.1.15,40112,10.40.0.21,5432,TCP,app,data,db/orders-primary,,internal-db,,
+  2026-10-02T08:00:15Z,lb-east-01,c-1001,DISCONNECT,198.51.100.23,51514,10.20.0.11,443,TCP,internet,dmz,svc/payments-api,771c0e4a2d1f0e2f6c8a1b3d5e7f9a0b,public-https,18342,92211
+  2026-10-02T08:00:22Z,lb-east-02,c-2001,CONNECT,192.0.2.77,60001,10.20.0.13,443,TCP,internet,dmz,svc/payments-api,a0e9f5d64349fb13191bc781f81f42e1,public-https,,
+  2026-10-02T08:00:31Z,lb-east-02,c-2002,CONNECT,10.30.1.16,40200,10.40.0.22,5432,TCP,app,data,db/orders-replica,,internal-db,,
+  2026-10-02T08:00:37Z,lb-east-01,c-1004,CONNECT,198.51.100.90,52000,10.20.0.11,8443,TCP,internet,dmz,svc/admin-portal,cd08e31494f9531f560d64c695473da9,admin-only,,
+  2026-10-02T08:00:44Z,lb-east-02,c-2001,DISCONNECT,192.0.2.77,60001,10.20.0.13,443,TCP,internet,dmz,svc/payments-api,a0e9f5d64349fb13191bc781f81f42e1,public-https,5120,20480
+  2026-10-02T08:00:51Z,lb-east-01,c-1005,CONNECT,10.30.1.17,40300,10.50.0.5,53,UDP,app,infra,dns/resolver,,internal-dns,,
+  2026-10-02T08:00:58Z,lb-east-01,c-1003,DISCONNECT,10.30.1.15,40112,10.40.0.21,5432,TCP,app,data,db/orders-primary,,internal-db,90210,4412
+reference:
+  converter: csv_header
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: timestamp, time_format: "yyyy-MM-dd'T'HH:mm:ssXXX"}
+      - {path: EventSource/System/Name, value: Connection Broker}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: broker}
+      - {path: EventSource/Device/HostName, field: sensor}
+      - {path: EventDetail/TypeId, field: event}
+    events:
+      - name: connected
+        when: [{field: event, equals: CONNECT}]
+        fields:
+          - {path: EventDetail/Network/Connect/Source/Device/IPAddress, field: client_addr}
+          - {path: EventDetail/Network/Connect/Source/Port, field: client_port}
+          - {path: EventDetail/Network/Connect/Source/TransportProtocol, field: proto, map: {TCP: TCP, UDP: UDP}, default: Other}
+          - {path: EventDetail/Network/Connect/Source/Data, data_name: source_zone, field: source_zone}
+          - {path: EventDetail/Network/Connect/Source/Data, data_name: tls_ja3, field: tls_ja3}
+          - {path: EventDetail/Network/Connect/Destination/Device/IPAddress, field: server_addr}
+          - {path: EventDetail/Network/Connect/Destination/Port, field: server_port}
+          - {path: EventDetail/Network/Connect/Destination/Data, data_name: destination_zone, field: destination_zone}
+          - {path: EventDetail/Network/Connect/Destination/Data, data_name: destination_key, field: destination_key}
+          - {path: EventDetail/Network/Connect/Data, data_name: conn_id, field: conn_id}
+          - {path: EventDetail/Network/Connect/Data, data_name: policy, field: policy}
+      - name: closed
+        when: [{field: event, equals: DISCONNECT}]
+        fields:
+          - {path: EventDetail/Network/Close/Source/Device/IPAddress, field: client_addr}
+          - {path: EventDetail/Network/Close/Source/Port, field: client_port}
+          - {path: EventDetail/Network/Close/Source/TransportProtocol, field: proto, map: {TCP: TCP, UDP: UDP}, default: Other}
+          - {path: EventDetail/Network/Close/Source/Data, data_name: source_zone, field: source_zone}
+          - {path: EventDetail/Network/Close/Destination/Device/IPAddress, field: server_addr}
+          - {path: EventDetail/Network/Close/Destination/Port, field: server_port}
+          - {path: EventDetail/Network/Close/Destination/Data, data_name: destination_zone, field: destination_zone}
+          - {path: EventDetail/Network/Close/Destination/Data, data_name: destination_key, field: destination_key}
+          - {path: EventDetail/Network/Close/Data, data_name: conn_id, field: conn_id}
+          - {path: EventDetail/Network/Close/Data, data_name: bytes_in, field: bytes_in}
+          - {path: EventDetail/Network/Close/Data, data_name: bytes_out, field: bytes_out}

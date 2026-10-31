@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="codeChangeReviewViewImpl max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal codeChangeReviewViewImpl-toolbar">
+            <g:Label ui:field="summary" addStyleNames="dock-min codeChangeReviewViewImpl-summary"/>
+            <g:Label ui:field="changePosition" addStyleNames="dock-max codeChangeReviewViewImpl-position"/>
+            <b:Button ui:field="previousChange" addStyleNames="allow-focus Button--contained-primary"
+                      text="Previous"/>
+            <b:Button ui:field="nextChange" addStyleNames="allow-focus Button--contained-primary" text="Next"/>
+            <b:Button ui:field="rejectChange" addStyleNames="allow-focus Button--contained-secondary"
+                      text="Reject change"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="dock-min dock-container-horizontal codeChangeReviewViewImpl-titles">
+            <g:Label addStyleNames="codeChangeReviewViewImpl-title" text="Current code"/>
+            <g:Label addStyleNames="codeChangeReviewViewImpl-title" text="Proposed code"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="dock-max dock-container-horizontal codeChangeReviewViewImpl-editors">
+            <g:SimplePanel ui:field="left" styleName="codeChangeReviewViewImpl-editor dashboard-panel"/>
+            <g:SimplePanel ui:field="right" styleName="codeChangeReviewViewImpl-editor dashboard-panel"/>
+        </g:FlowPanel>
+        <g:Label ui:field="message" addStyleNames="dock-min codeChangeReviewViewImpl-message"/>
+        <g:FlowPanel styleName="dock-min dialog-buttons dialog-buttons-right">
+            <b:Button ui:field="apply" addStyleNames="allow-focus Button--contained-primary"
+                      text="Apply to editor"/>
+            <b:Button ui:field="applyAndStep" addStyleNames="allow-focus Button--contained-primary"
+                      text="Apply and step"/>
+            <b:Button ui:field="cancel" addStyleNames="allow-focus Button--contained-secondary" text="Cancel"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

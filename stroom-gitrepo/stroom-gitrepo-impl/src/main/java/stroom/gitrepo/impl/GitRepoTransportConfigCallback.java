@@ -26,6 +26,8 @@ import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
 
+import java.util.Map;
+
 /**
  * The single transport callback for a Git command.
  * <p>
@@ -46,18 +48,22 @@ class GitRepoTransportConfigCallback implements TransportConfigCallback {
     private final TransportConfigCallback sshCallback;
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
+    private final Map<String, String> headers;
 
     /**
      * @param sshCallback             Applied to SSH transports, or null if the repository has no SSH key.
      * @param httpClientConfiguration Applied to HTTP transports, or null to leave JGit's default HTTP stack
      *                                in place.
+     * @param headers                 Headers to send with every HTTP request.
      */
     GitRepoTransportConfigCallback(final TransportConfigCallback sshCallback,
                                    final HttpClientProviderCache httpClientProviderCache,
-                                   final HttpClientConfiguration httpClientConfiguration) {
+                                   final HttpClientConfiguration httpClientConfiguration,
+                                   final Map<String, String> headers) {
         this.sshCallback = sshCallback;
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
+        this.headers = headers;
     }
 
     @Override
@@ -71,7 +77,8 @@ class GitRepoTransportConfigCallback implements TransportConfigCallback {
                 LOGGER.debug("Configuring HTTP transport to use the configured client");
                 transportHttp.setHttpConnectionFactory(new StroomHttpConnectionFactory(
                         httpClientProviderCache,
-                        httpClientConfiguration));
+                        httpClientConfiguration,
+                        headers));
             }
         }
     }

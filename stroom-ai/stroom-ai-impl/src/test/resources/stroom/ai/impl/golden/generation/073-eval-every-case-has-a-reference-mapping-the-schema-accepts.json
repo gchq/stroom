@@ -1,0 +1,234 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "concat(data[@name='date']/@value, 'T', data[@name='time']/@value, data[@name='tz']/@value)",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FortiGate"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "FortiOS"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "devname"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "srcip"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "logid"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic",
+    "when": [
+     {
+      "field": "type",
+      "equals": "traffic"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Source/Port",
+      "field": "srcport"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Port",
+      "field": "dstport"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "service",
+      "data_name": "service"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "accept": "true",
+       "deny": "false"
+      }
+     }
+    ]
+   },
+   {
+    "name": "admin-login",
+    "when": [
+     {
+      "field": "type",
+      "equals": "event"
+     },
+     {
+      "field": "subtype",
+      "equals": "system"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     },
+     {
+      "path": "EventDetail/Authenticate/Outcome/Success",
+      "field": "status",
+      "map": {
+       "success": "true",
+       "failed": "false"
+      }
+     },
+     {
+      "path": "EventDetail/Description",
+      "field": "msg"
+     }
+    ]
+   },
+   {
+    "name": "ips",
+    "when": [
+     {
+      "field": "type",
+      "equals": "utm"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "value": "Other"
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "severity",
+      "map": {
+       "critical": "Critical",
+       "high": "Major",
+       "medium": "Minor"
+      },
+      "default": "Info"
+     },
+     {
+      "path": "EventDetail/Alert/Description",
+      "field": "attack"
+     },
+     {
+      "path": "EventDetail/Alert/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic] TypeId is read from logid, which its records may lack: those get TypeId 'traffic', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[traffic] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[admin-login] TypeId is read from logid, which its records may lack: those get TypeId 'admin-login', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[admin-login] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[ips] TypeId is read from logid, which its records may lack: those get TypeId 'ips', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[ips] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic",
+    "when": [
+     "data[@name='type']/@value = 'traffic'"
+    ],
+    "fields": [
+     "EventDetail/Network/Open/Data[service]",
+     "EventDetail/Network/Open/Destination/Device/IPAddress",
+     "EventDetail/Network/Open/Destination/Port",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/Network/Open/Source/Port",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "admin-login",
+    "when": [
+     "data[@name='type']/@value = 'event'",
+     "data[@name='subtype']/@value = 'system'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "ips",
+    "when": [
+     "data[@name='type']/@value = 'utm'"
+    ],
+    "fields": [
+     "EventDetail/Alert/Data[action]",
+     "EventDetail/Alert/Description",
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

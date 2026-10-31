@@ -1,0 +1,78 @@
+# Error triage rules, checked in order; the first match decides a group's class.
+# Fields (all optional): severity (list), element (glob on element id), own (true = element set by
+# the pipeline itself, false = inherited from its template), message (regex), class, reason.
+# Classes: blocking (must fix), review (may be caused by our content), benign (report only).
+# Environment-specific rules (e.g. known-harmless decoration lookup misses) go in the Stroom config property
+# stroom.ai.errorTriage.rules, which are checked before these.
+rules:
+  # Elasticsearch rejecting documents (reported by Stroom one per document, or split out of the whole bulk response
+  # older versions logged): the others were indexed.
+  # Stroom's summaries of a batch whose documents it reported one by one: the reasons are in those errors.
+  - {message: 'Elasticsearch rejected \d+ documents in this batch; only the first', class: blocking,
+     reason: "More of the batch's documents were rejected than are listed one by one; they usually share the listed documents' causes: fix those, then process the streams again to see any that remain"}
+  # Stroom's retries of documents Elasticsearch was too busy to index ran out (#5958: only those are retried, with a
+  # growing wait between tries).
+  - {message: 'Elasticsearch was overloaded and rejected', class: blocking,
+     reason: "Elasticsearch was too busy to index some documents and Stroom's retries ran out, so those records are not indexed and the stream's processing stopped: process the stream again once the cluster has capacity. If it recurs, it is for the cluster admin (its load), or smaller requests may ease it (the indexing filter's maxBatchSize, and the stroom.elastic.client.compressRequests property). Documents rejected for other reasons are reported in their own errors"}
+  - {message: 'Bulk indexing request failed: \d+ of \d+ documents rejected', class: blocking,
+     reason: "Elasticsearch rejected documents in a bulk request, so their records are not indexed (the rest of the batch was) and the stream's processing stopped; each rejected document is reported in its own error, with Elasticsearch's reason"}
+  - {message: 'Elasticsearch rejected .*as object, but found a concrete value', class: blocking,
+     reason: "A field is an object in some records and a plain value in others; the index keeps the shape it saw first, so these records are not indexed. Ask the user: leave the field out (discovery drop), or index it as it first appeared and accept the loss"}
+  - {message: 'Elasticsearch rejected .*(failed to parse field|mapper_parsing_exception)', class: blocking,
+     reason: "A value does not fit its field's type in the index; these records are not indexed. Fix the value in the indexing XSLT, change the field's type in the index template, or (discovery) set ignore_malformed"}
+  - {message: 'Elasticsearch rejected .*(metadata field|field name cannot)', class: blocking,
+     reason: "A field name Elasticsearch cannot take (a metadata field such as _id, or an empty name); these records are not indexed: rename it in the indexing XSLT"}
+  - {message: 'Elasticsearch rejected .*Limit of total fields', class: blocking,
+     reason: "The index has reached its total-fields limit, so documents adding fields are rejected: raise index.mapping.total_fields.limit in the index template, or drop the source fields that multiply (keys holding ids or dates)"}
+  # Elasticsearch refusing the cluster connection's account (403), or an index it won't make: nothing is indexed, and
+  # every later run is refused alike until that changes (seen in testing: a wrong index name, then 403 after 403).
+  - {message: '(security_exception|unauthorized).*(auto_create|create_index|auto_configure)', class: blocking,
+     reason: "Elasticsearch refused to create the index (or data stream) for the cluster connection's account: nothing was indexed, and every run is refused the same way until that changes. Check the index name first: it is the Elastic Index doc's, which the agreed template's index_patterns match (a wrong name targets an index the account isn't granted; rename_index changes it everywhere). If it is right, the user has the cluster admin either create it (a data stream: PUT _data_stream/<name>, once the agreed index template is committed; an index: PUT <name>) or grant the account the index privilege auto_configure (or create_index) on its pattern. An account that can't create it needs the admin to create it again after any drop. Then reprocess_streams"}
+  - {message: 'security_exception|is unauthorized for|status.{0,4}403|\b403\b.{0,20}forbidden', class: blocking,
+     reason: "Elasticsearch refused the cluster connection's account (403): it may not write to this index, so nothing was indexed, and every run is refused the same way until that changes. Check the index name first: it is the Elastic Index doc's, which the agreed template's index_patterns match (a wrong name targets an index the account isn't granted; rename_index changes it everywhere). If it is right, the user has the cluster admin grant the account create_doc (a data stream) or index (an index) on its pattern, as Elasticsearch's message names the privileges; then reprocess_streams"}
+  - {message: 'index_not_found_exception|no such index', class: blocking,
+     reason: "The index doesn't exist and Elasticsearch didn't create it (automatic index creation is off on the cluster, or the name is an alias that requires one): nothing was indexed. Check the index name is the Elastic Index doc's; then the user has the cluster admin create it (a data stream: PUT _data_stream/<name>, once the agreed index template is committed), or allow its automatic creation; then reprocess_streams"}
+  - {message: 'Elasticsearch rejected', class: blocking,
+     reason: "Elasticsearch rejected these documents, so their records are not indexed (the rest of the batch was)"}
+  - {message: 'Bulk indexing request failed', class: blocking,
+     reason: "Elasticsearch rejected documents in a bulk request, and its response could not be read in full (a large batch is cut short in the Error stream). Process again with a small batch: create_processor_filter and reprocess_streams set batch size 10 on a workspace pipeline"}
+  # A Data Splitter's records lost (seen in testing: CSV lines of about 20,000 characters, and the agent, told the
+  # DSParser had no buffer property, couldn't go on). Its errors name the converter's element, by id when
+  # build_data_splitter wrote it.
+  # Only a record up to half the buffer is sure to fit (seen in testing: a 751,000-character record lost with
+  # bufferSize 1000000, which the agent then took for a quoting fault).
+  - {message: 'exhausted the buffer', class: blocking,
+     reason: "A record is longer than half the Data Splitter's read buffer, so it is lost: Stroom refills the buffer once half of it is read, so only a record up to half of bufferSize is sure to fit. bufferSize is on the converter's <dataSplitter> element, 20,000 characters by default (not a property of the DSParser element). The error's location is the line the record starts on. build_data_splitter again with buffer_size= about four times the longest record (if its length is unknown, at least double the buffer), save it over the converter (save_text_converter uuid=), then step and process those streams again"}
+  - {message: 'failed to match (all of )?the content|failed to match from the start', class: blocking,
+     reason: "Text the Data Splitter's expressions don't match is lost. The element named (by id: header, record, fields, body, blankLine, unparsed) is the part of the spec that failed, and the unmatched content shows what it met. Common causes: a kind of line the sample didn't hold (add it to the spec, or catch_all with the user's agreement), a key=value value holding the delimiter unquoted (spaced_values), escaped delimiters (escape), records separated by blank lines (blank_line_records), a header line repeated mid-stream. Fix the spec with build_data_splitter (its stroom_check runs Stroom's parser on the sample), save it over the converter, and step again"}
+  - {message: 'No schema locations specified', class: blocking,
+     reason: "The output does not say which schema it follows, and the schema filter's group holds several: the XSLT's root element must carry xsi:schemaLocation. For Elasticsearch, <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">: save the indexing XSLT again from its plan (save_xslt index_plan=..., uuid=...), which writes it. Do not change or remove the schema filter"}
+  - {message: 'Cannot find a .*function named', class: blocking,
+     reason: "The XSLT calls a function that neither XPath nor Stroom has, so it does not compile and no record is translated. In a mapping, a field or condition is an input field's name, never a call: values inside a text field come from the mapping's extract list ({field, regex, names}, the names then used as fields); an expression goes in xpath. Fix the mapping, not the XSLT, and save it again"}
+  - {severity: [FATAL], class: blocking, reason: 'Fatal error stops processing'}
+  - {message: 'Attempt to index unknown field', class: blocking,
+     reason: "The index has no such field, so the value is dropped: save the indexing XSLT from its plan (save_xslt index_plan=...), and create_indexing_pipeline adds the plan's fields to the index"}
+  - {message: 'No effective stream', class: blocking,
+     reason: "No reference data is in effect at the lookup time: the reference feed is not attached (update_pipeline (references=...)), or its stream's effective time is after the events (upload_sample effective_time), or the feed was looked up before its reference data was processed: Stroom keeps that empty answer for 10 minutes (its Reference Data - Effective Stream Cache), so step again once 10 minutes have passed since the first lookup, or ask an administrator to clear that cache (Caches screen)"}
+  # A byte the feed's character set can't decode (seen: Latin-1 and Windows-1252 bytes in a UTF-8 feed). Stroom
+  # replaces it and reads on; the cause is the source's bytes, not the pipeline (inherited parser element).
+  - {message: 'un-decodable byte', class: review,
+     reason: "The source sends bytes that aren't in the feed's character set (its encoding; UTF-8 unless set): Stroom replaces each with the replacement character and reads on, so those characters are lost, but not by anything in the pipeline. fetch_events (streamId) on the raw stream says which bytes they are and how they read. If the whole stream is in one other character set (Windows-1252, say: é, curly quotes), set the feed's encoding to it; if it mixes character sets, no one setting reads it all, and the source is to be fixed. Ask the user which"}
+  # A required element left out, reported at the element after it (not in the Python server; seen: "starting with
+  # element '{Data}'. One of '{Command}' is expected" read as Data put in the wrong place, two rounds of stepping
+  # before Command was given a default).
+  - {element: '*schema*', severity: [ERROR], message: 'Invalid content was found starting with element .*One of .* is expected', class: blocking,
+     reason: "Output fails schema validation: an element the schema requires here (one of those it names as expected) was left out, so the schema reports the element written after it, which is in its place. In a mapping its entry's input was empty in these records: give the entry a default (or any_of with a field that is filled), rather than moving the element named"}
+  - {element: '*schema*', severity: [ERROR], class: blocking, reason: 'Output fails schema validation'}
+  - {own: true, severity: [ERROR], class: blocking, reason: "Error in this pipeline's own element"}
+  - {own: false, severity: [ERROR], class: review, reason: 'Error in an inherited element; check whether our output causes it'}
+  # Records no rule matched with every value the rules test empty: often pieces of a record (seen in testing: CSV
+  # values holding line breaks split each such record into pieces, logged as "(x-action=)", which the agent nearly
+  # added a rule for; the first piece was translated with fields missing, with no error).
+  - {message: 'No event mapping matched record \d* ?\([^=|()]+=( \| [^=|()]+=)*\)\s*$', class: review,
+     reason: "No rule matched these records, and every value the rules test is empty in them. Before adding a rule for them, check they are whole records: in delimited data whose quoted values hold line breaks, a Data Splitter without quoted_newlines splits each such record at the line break, so the later pieces' columns hold the wrong values (often none) and the first piece is translated with fields missing, with no error. If the raw stream has quoted values over several lines, build_data_splitter again with spec quoted_newlines=true, save it over the converter, step and process again. Otherwise they are a kind of record with those fields unset"}
+  - {message: 'Kept as Unknown by rule', class: benign,
+     reason: "A record a rule keeps as EventDetail/Unknown, as the user agreed (allow_unknown): logged so review_coverage finds every one in the whole feed"}
+  - {own: true, severity: [WARNING], class: review, reason: "Warning in this pipeline's own element"}
+  - {severity: [WARNING, INFO], class: benign, reason: 'Warning or info from an inherited element'}
+  - {class: review, reason: 'No rule matched'}

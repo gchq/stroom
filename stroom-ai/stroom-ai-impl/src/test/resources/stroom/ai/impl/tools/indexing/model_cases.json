@@ -1,0 +1,493 @@
+[
+ {
+  "input": {},
+  "errors": [
+   {
+    "type": "missing",
+    "loc": [
+     "backend"
+    ],
+    "msg": "Field required",
+    "input": {}
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "index_name"
+    ],
+    "msg": "Field required",
+    "input": {}
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "time_field"
+    ],
+    "msg": "Field required",
+    "input": {}
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "fields"
+    ],
+    "msg": "Field required",
+    "input": {}
+   }
+  ],
+  "message": "4 validation errors for FieldPlan\nbackend\n  Field required [type=missing]\nindex_name\n  Field required [type=missing]\ntime_field\n  Field required [type=missing]\nfields\n  Field required [type=missing]"
+ },
+ {
+  "input": [],
+  "errors": [
+   {
+    "type": "model_type",
+    "loc": [],
+    "msg": "Input should be a valid dictionary or instance of FieldPlan",
+    "input": []
+   }
+  ],
+  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type]"
+ },
+ {
+  "input": "x",
+  "errors": [
+   {
+    "type": "model_type",
+    "loc": [],
+    "msg": "Input should be a valid dictionary or instance of FieldPlan",
+    "input": "x"
+   }
+  ],
+  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type]"
+ },
+ {
+  "input": {
+   "backend": "solr",
+   "index_name": 1,
+   "time_field": null,
+   "fields": {}
+  },
+  "errors": [
+   {
+    "type": "literal_error",
+    "loc": [
+     "backend"
+    ],
+    "msg": "Input should be 'lucene' or 'elasticsearch'",
+    "input": "solr"
+   },
+   {
+    "type": "string_type",
+    "loc": [
+     "index_name"
+    ],
+    "msg": "Input should be a valid string",
+    "input": 1
+   },
+   {
+    "type": "string_type",
+    "loc": [
+     "time_field"
+    ],
+    "msg": "Input should be a valid string",
+    "input": null
+   },
+   {
+    "type": "list_type",
+    "loc": [
+     "fields"
+    ],
+    "msg": "Input should be a valid list",
+    "input": {}
+   }
+  ],
+  "message": "4 validation errors for FieldPlan\nbackend\n  Input should be 'lucene' or 'elasticsearch' [type=literal_error]\nindex_name\n  Input should be a valid string [type=string_type]\ntime_field\n  Input should be a valid string [type=string_type]\nfields\n  Input should be a valid list [type=list_type]"
+ },
+ {
+  "input": {
+   "backend": "lucene",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [
+    {
+     "name": "a",
+     "type": "uuid",
+     "source": 2
+    }
+   ]
+  },
+  "errors": [
+   {
+    "type": "literal_error",
+    "loc": [
+     "fields",
+     0,
+     "type"
+    ],
+    "msg": "Input should be 'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip'",
+    "input": "uuid"
+   },
+   {
+    "type": "string_type",
+    "loc": [
+     "fields",
+     0,
+     "source"
+    ],
+    "msg": "Input should be a valid string",
+    "input": 2
+   }
+  ],
+  "message": "2 validation errors for FieldPlan\nfields.0.type\n  Input should be 'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip' [type=literal_error]\nfields.0.source\n  Input should be a valid string [type=string_type]"
+ },
+ {
+  "input": {
+   "backend": "lucene",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [
+    {
+     "type": "id"
+    },
+    "f"
+   ],
+   "drop_when": "x",
+   "subobjects": "maybe",
+   "style": {
+    "naming": "Shouty"
+   },
+   "shared": [
+    {
+     "href": "h"
+    }
+   ],
+   "imports": [
+    1
+   ]
+  },
+  "errors": [
+   {
+    "type": "missing",
+    "loc": [
+     "fields",
+     0,
+     "name"
+    ],
+    "msg": "Field required",
+    "input": {
+     "type": "id"
+    }
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "fields",
+     0,
+     "source"
+    ],
+    "msg": "Field required",
+    "input": {
+     "type": "id"
+    }
+   },
+   {
+    "type": "model_type",
+    "loc": [
+     "fields",
+     1
+    ],
+    "msg": "Input should be a valid dictionary or instance of PlannedField",
+    "input": "f"
+   },
+   {
+    "type": "list_type",
+    "loc": [
+     "drop_when"
+    ],
+    "msg": "Input should be a valid list",
+    "input": "x"
+   },
+   {
+    "type": "string_type",
+    "loc": [
+     "imports",
+     0
+    ],
+    "msg": "Input should be a valid string",
+    "input": 1
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "shared",
+     0,
+     "template"
+    ],
+    "msg": "Field required",
+    "input": {
+     "href": "h"
+    }
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "shared",
+     0,
+     "at"
+    ],
+    "msg": "Field required",
+    "input": {
+     "href": "h"
+    }
+   },
+   {
+    "type": "bool_parsing",
+    "loc": [
+     "subobjects"
+    ],
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": "maybe"
+   },
+   {
+    "type": "literal_error",
+    "loc": [
+     "style",
+     "naming"
+    ],
+    "msg": "Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case'",
+    "input": "Shouty"
+   }
+  ],
+  "message": "9 validation errors for FieldPlan\nfields.0.name\n  Field required [type=missing]\nfields.0.source\n  Field required [type=missing]\nfields.1\n  Input should be a valid dictionary or instance of PlannedField [type=model_type]\ndrop_when\n  Input should be a valid list [type=list_type]\nimports.0\n  Input should be a valid string [type=string_type]\nshared.0.template\n  Field required [type=missing]\nshared.0.at\n  Field required [type=missing]\nsubobjects\n  Input should be a valid boolean, unable to interpret input [type=bool_parsing]\nstyle.naming\n  Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case' [type=literal_error]"
+ },
+ {
+  "input": {
+   "backend": "elasticsearch",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [
+    {
+     "name": "a",
+     "type": "id",
+     "source": "s",
+     "transform": "upper",
+     "multiple": "yes",
+     "description": null
+    }
+   ]
+  },
+  "errors": [
+   {
+    "type": "string_type",
+    "loc": [
+     "fields",
+     0,
+     "description"
+    ],
+    "msg": "Input should be a valid string",
+    "input": null
+   },
+   {
+    "type": "literal_error",
+    "loc": [
+     "fields",
+     0,
+     "transform"
+    ],
+    "msg": "Input should be 'outcome'",
+    "input": "upper"
+   }
+  ],
+  "message": "2 validation errors for FieldPlan\nfields.0.description\n  Input should be a valid string [type=string_type]\nfields.0.transform\n  Input should be 'outcome' [type=literal_error]"
+ },
+ {
+  "input": {
+   "backend": "elasticsearch",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [],
+   "discovery": {
+    "input": "csv",
+    "ignore_above": 0,
+    "total_fields_limit": "50",
+    "meta": {
+     "a": 1
+    },
+    "drop": "x"
+   }
+  },
+  "errors": [
+   {
+    "type": "literal_error",
+    "loc": [
+     "discovery",
+     "input"
+    ],
+    "msg": "Input should be 'json', 'delimited' or 'xml'",
+    "input": "csv"
+   },
+   {
+    "type": "missing",
+    "loc": [
+     "discovery",
+     "timestamp_field"
+    ],
+    "msg": "Field required",
+    "input": {
+     "input": "csv",
+     "ignore_above": 0,
+     "total_fields_limit": "50",
+     "meta": {
+      "a": 1
+     },
+     "drop": "x"
+    }
+   },
+   {
+    "type": "string_type",
+    "loc": [
+     "discovery",
+     "meta",
+     "a"
+    ],
+    "msg": "Input should be a valid string",
+    "input": 1
+   },
+   {
+    "type": "list_type",
+    "loc": [
+     "discovery",
+     "drop"
+    ],
+    "msg": "Input should be a valid list",
+    "input": "x"
+   },
+   {
+    "type": "greater_than_equal",
+    "loc": [
+     "discovery",
+     "ignore_above"
+    ],
+    "msg": "Input should be greater than or equal to 1",
+    "input": 0
+   },
+   {
+    "type": "greater_than_equal",
+    "loc": [
+     "discovery",
+     "total_fields_limit"
+    ],
+    "msg": "Input should be greater than or equal to 100",
+    "input": "50"
+   }
+  ],
+  "message": "6 validation errors for FieldPlan\ndiscovery.input\n  Input should be 'json', 'delimited' or 'xml' [type=literal_error]\ndiscovery.timestamp_field\n  Field required [type=missing]\ndiscovery.meta.a\n  Input should be a valid string [type=string_type]\ndiscovery.drop\n  Input should be a valid list [type=list_type]\ndiscovery.ignore_above\n  Input should be greater than or equal to 1 [type=greater_than_equal]\ndiscovery.total_fields_limit\n  Input should be greater than or equal to 100 [type=greater_than_equal]"
+ },
+ {
+  "input": {
+   "backend": "elasticsearch",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [],
+   "discovery": {
+    "timestamp_field": "ts",
+    "ignore_above": "12",
+    "unpack_json": 0,
+    "timestamp_chosen_by_user": "on"
+   }
+  },
+  "plan": {
+   "backend": "elasticsearch",
+   "index_name": "i",
+   "time_field": "@timestamp",
+   "fields": [
+    {
+     "name": "StreamId",
+     "type": "id",
+     "source": "stroom:stream-id()",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "EventId",
+     "type": "id",
+     "source": "stroom:record-no()",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    },
+    {
+     "name": "@timestamp",
+     "type": "date",
+     "source": "ts",
+     "description": "",
+     "transform": null,
+     "multiple": false
+    }
+   ],
+   "drop_when": [],
+   "discovery": {
+    "input": "json",
+    "record": null,
+    "timestamp_field": "ts",
+    "timestamp_chosen_by_user": true,
+    "timestamp_format": null,
+    "meta": {},
+    "drop": [],
+    "unpack_json": false,
+    "ignore_above": 12,
+    "total_fields_limit": 2000
+   },
+   "imports": [],
+   "shared": [],
+   "subobjects": true,
+   "convention": null,
+   "custom_namespaces": [],
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   }
+  }
+ },
+ {
+  "input": {
+   "backend": "elasticsearch",
+   "index_name": "i",
+   "time_field": "t",
+   "fields": [],
+   "custom_namespaces": null,
+   "convention": 5,
+   "discovery": null,
+   "subobjects": 0
+  },
+  "errors": [
+   {
+    "type": "string_type",
+    "loc": [
+     "convention"
+    ],
+    "msg": "Input should be a valid string",
+    "input": 5
+   },
+   {
+    "type": "list_type",
+    "loc": [
+     "custom_namespaces"
+    ],
+    "msg": "Input should be a valid list",
+    "input": null
+   }
+  ],
+  "message": "2 validation errors for FieldPlan\nconvention\n  Input should be a valid string [type=string_type]\ncustom_namespaces\n  Input should be a valid list [type=list_type]"
+ }
+]

@@ -1,0 +1,75 @@
+# propose-query-button
+
+propose_query offers a checked 'Create query…' button, kept with the tool's result for the user; the model is only told it was offered.
+
+== What happened ==
+The user asks: Write me a query of Windows users.
+Run 1: answered: Click Create query… to save it.
+
+== Stored messages ==
+#1 USER_MESSAGE (turn 1)
+    Write me a query of Windows users.
+#2 INTERIM_RESPONSE (turn 1)
+    I'll offer it as a query you can create.
+#3 TOOL_CALL (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_query",
+      "arguments" : "{\"name\":\"Windows users\",\"query\":\"from \\\"Windows events\\\" select User\",\"description\":\"Who logged on\"}",
+      "rationale" : "I'll offer it as a query you can create."
+    }
+#4 TOOL_RESULT (turn 1)
+    {
+      "callId" : "call-1",
+      "tool" : "propose_query",
+      "error" : false,
+      "text" : "The user has been offered a 'Create query…' button for 'Windows users', reading View 'Windows events' (uuid windows-uuid). Nothing is created until they click it and confirm Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab and is attached to the chat, so they can ask you to refine it (propose_query_change). Tell them about the button rather than saying the query was created.",
+      "chars" : 424,
+      "durationMs" : "<time>",
+      "userActions" : [ {
+        "id" : "create-query-N",
+        "action" : "create_query",
+        "label" : "Create query 'Windows users', reading View 'Windows events'",
+        "details" : "Who logged on",
+        "doc" : {
+          "type" : "View",
+          "uuid" : "windows-uuid",
+          "name" : "Windows events"
+        },
+        "request" : "from \"Windows events\"\nselect User",
+        "after" : [ ],
+        "expiresMs" : "<time>",
+        "status" : "PENDING",
+        "name" : "Windows users"
+      } ]
+    }
+
+== Workspace files made ==
+(none)
+
+== Run flags ==
+Read content that could hold planted instructions: true
+Read an untrusted MCP server's output: false
+
+== MCP tools offered ==
+(none)
+
+== Requests to the model ==
+(Built-in tools are listed by name in name order; their definitions have their own reference file.)
+--- Request 1 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Write me a query of Windows users.
+--- Request 2 ---
+Tools offered: ask_user, memory, propose_query, read_turn
+[0] SYSTEM
+    You are Stroom AI. (The real system prompt has its own reference file.)
+[1] USER
+    Write me a query of Windows users.
+[2] AI
+    I'll offer it as a query you can create.
+    Calls propose_query as call-1 with {"name":"Windows users","query":"from \"Windows events\" select User","description":"Who logged on"}
+[3] TOOL RESULT for call-1 (propose_query)
+    The user has been offered a 'Create query…' button for 'Windows users', reading View 'Windows events' (uuid windows-uuid). Nothing is created until they click it and confirm Stroom's New Query dialog, which lets them choose the folder; then the query opens in a new tab and is attached to the chat, so they can ask you to refine it (propose_query_change). Tell them about the button rather than saying the query was created.

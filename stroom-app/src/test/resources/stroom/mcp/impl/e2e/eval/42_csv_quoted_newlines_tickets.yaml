@@ -1,0 +1,45 @@
+name: Service desk ticket export (CSV whose quoted comments hold commas, doubled quotes and new lines)
+template: Event Data (Text)
+capabilities: [multiline, escaping, optional_fields]
+# A ticketing system's CSV export, 600 rows: quoted values hold commas, doubled quotes ("") and new lines (a comment
+# over two or three lines), and a row may end in an empty column. The traps: a record ends at a new line outside
+# quotes only (read a line at a time, such a file was unknown text and a comment's second line a record of its own);
+# a doubled quote is one quote (transform: unescape_quotes); and the first third holds creates and updates only.
+request: >
+  Onboard our service desk's ticket export (the CSV file on my disk). Index the ticket events.
+expected:
+  records: 600
+  event_types: [Create, Update]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventDetail/Description: ['user said "it worked yesterday"']
+files:
+  - {name: tickets-2026-10-11.csv, generate: {kind: ticket_csv, records: 600, seed: 8}}
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: Service Desk}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: service-desk-export}
+      - {path: EventSource/Device/HostName, value: servicedesk01}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Description, field: comment, transform: unescape_quotes}
+    events:
+      - name: create
+        when: [{field: action, equals: create}]
+        fields:
+          - {path: EventDetail/Create/Object/Type, value: Ticket}
+          - {path: EventDetail/Create/Object/Id, field: ticket}
+          - {path: EventDetail/Create/Data, data_name: priority, field: priority}
+      - name: change
+        when: [{field: action, one_of: [update, close, reopen]}]
+        fields:
+          - {path: EventDetail/Update/After/Object/Type, value: Ticket}
+          - {path: EventDetail/Update/After/Object/Id, field: ticket}
+          - {path: EventDetail/Update/Data, data_name: action, field: action}
+          - {path: EventDetail/Update/Data, data_name: priority, field: priority}

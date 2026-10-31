@@ -1,0 +1,261 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "^statement: (\\w+)[\\s\\S]*$",
+    "names": [
+     "verb"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd HH:mm:ss.SSS",
+    "timezone": "UTC"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Finance Database"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "PostgreSQL"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "pg01"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "any_of": [
+     "verb",
+     "level"
+    ]
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   }
+  ],
+  "events": [
+   {
+    "name": "connect",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^connection authorized"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   },
+   {
+    "name": "disconnect",
+    "when": [
+     {
+      "field": "message",
+      "matches": "^disconnection"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "user"
+     }
+    ]
+   },
+   {
+    "name": "query",
+    "when": [
+     {
+      "field": "verb",
+      "equals": "SELECT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/View/Object/Type",
+      "value": "Database query"
+     },
+     {
+      "path": "EventDetail/View/Object/Name",
+      "field": "database"
+     }
+    ]
+   },
+   {
+    "name": "update",
+    "when": [
+     {
+      "field": "verb",
+      "equals": "UPDATE"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Update/After/Object/Type",
+      "value": "Database rows"
+     },
+     {
+      "path": "EventDetail/Update/After/Object/Name",
+      "field": "database"
+     }
+    ]
+   },
+   {
+    "name": "delete",
+    "when": [
+     {
+      "field": "verb",
+      "equals": "DELETE"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Delete/Object/Type",
+      "value": "Database rows"
+     },
+     {
+      "path": "EventDetail/Delete/Object/Name",
+      "field": "database"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[connect] TypeId is read from level or verb, which its records may lack: those get TypeId 'connect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[connect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[disconnect] TypeId is read from level or verb, which its records may lack: those get TypeId 'disconnect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[disconnect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[query] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[update] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[delete] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "connect",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^connection authorized')])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "disconnect",
+    "when": [
+     "exists(data[@name='message']/@value[matches(., '^disconnection')])"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "query",
+    "when": [
+     "verb = 'SELECT'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/View/Object/Name",
+     "EventDetail/View/Object/Type",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "update",
+    "when": [
+     "verb = 'UPDATE'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Object/Name",
+     "EventDetail/Update/After/Object/Type",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "delete",
+    "when": [
+     "verb = 'DELETE'"
+    ],
+    "fields": [
+     "EventDetail/Delete/Object/Name",
+     "EventDetail/Delete/Object/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

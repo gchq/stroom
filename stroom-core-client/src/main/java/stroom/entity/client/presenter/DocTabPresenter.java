@@ -16,6 +16,11 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.ai.client.AiTabSnapshotProvider;
+import stroom.ai.client.AiTabSnapshots;
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshot;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
@@ -26,12 +31,14 @@ import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
+import stroom.entity.client.event.DocTabSelectedEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
+import stroom.util.shared.HasData;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
@@ -43,14 +50,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         extends DocPresenter<V, D>
-        implements DocumentTabData, Refreshable, HasType, HasSave {
+        implements DocumentTabData, Refreshable, HasType, HasSave, AiTabSnapshotProvider {
 
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -189,6 +198,8 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                         getView().getTabBar().selectTab(tab);
                         selectedTab = tab;
 
+                        // The selection is final, so e.g. the AI chat can follow the tab the user is in.
+                        DocTabSelectedEvent.fire(this, this, tab, content);
                         afterSelectTab(content);
                     }
                 });
@@ -202,6 +213,11 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     public TabData getSelectedTab() {
         return selectedTab;
+    }
+
+    /// @return What the selected tab within this document's tab shows, or null if none has been shown yet.
+    public PresenterWidget<?> getSelectedContent() {
+        return currentContent;
     }
 
     @Override
@@ -277,6 +293,90 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public DocRef getDocRef() {
         return docRef;
+    }
+
+    /// @return What the user sees in the tab, as edited (unsaved changes included), for the AI chat: the document's
+    /// text parts and its Documentation tab, without changing the tab. Null if no document has been read.
+    @Override
+    public AiTabSnapshot snapshot() {
+        // A tab within this one that knows better what it shows (e.g. a Pipeline's Stepping view) speaks for it.
+        if (currentContent instanceof final AiTabSnapshotProvider provider && provider != this) {
+            final AiTabSnapshot snapshot = provider.snapshot();
+            if (snapshot != null) {
+                return snapshot;
+            }
+        }
+        final D entity = getEntity();
+        if (docRef == null || entity == null) {
+            return null;
+        }
+        // Documents are immutable, so writing gives an edited copy and leaves the tab as it is.
+        final D edited = write(entity);
+        final List<AiTabSnapshotPart> parts = new ArrayList<>();
+        final List<AiTabSearch> searches = new ArrayList<>();
+        final String note = addAiSnapshotParts(edited, parts, searches);
+        final String documentation = documentationText();
+        if (documentation != null) {
+            parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.DOCUMENTATION, "text/markdown", documentation));
+        }
+        final String innerTab = selectedTab != null
+                ? selectedTab.getLabel()
+                : null;
+        return AiTabSnapshots.create(docRef, docRef.getName(), innerTab, isDirty(), parts, searches, note);
+    }
+
+    /// Adds the parts of the document, as edited, that the AI chat is given. By default a document with text (e.g.
+    /// an XSLT) gives its text, and any other gives nothing and a note that its form's edits aren't shared. Types
+    /// with more to share (e.g. queries and dashboards) override this.
+    ///
+    /// @param edited   The document as edited.
+    /// @param parts    Where to add its text parts.
+    /// @param searches Where to add the search requests behind any tables of results the tab shows.
+    /// @return A note for the model about what is shared, or null.
+    protected String addAiSnapshotParts(final D edited,
+                                        final List<AiTabSnapshotPart> parts,
+                                        final List<AiTabSearch> searches) {
+        if (edited instanceof final HasData hasData) {
+            parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.DATA, null, hasData.getData()));
+            return null;
+        }
+        return AiTabSnapshots.FORM_NOTE;
+    }
+
+    // The Documentation tab's text as edited, if the tab has been opened (otherwise it is as saved).
+    private String documentationText() {
+        final TabData documentationTab = commonTabsMap.get(CommonDocLinkTab.DOCUMENTATION);
+        if (documentationTab == null) {
+            return null;
+        }
+        final PresenterWidget<?> presenter = tabContentProvider.getExistingPresenter(documentationTab);
+        return presenter instanceof final MarkdownEditPresenter markdownEditPresenter
+                ? markdownEditPresenter.getText()
+                : null;
+    }
+
+    /// Switches to this document's Documentation tab and gives its editor, making it and giving it the document
+    /// if the tab hasn't been shown yet.
+    ///
+    /// @return The Documentation tab's editor, or null if this document has no Documentation tab, or hasn't been
+    /// read yet.
+    public MarkdownEditPresenter showDocumentationEditor() {
+        final TabData documentationTab = documentationTab();
+        if (documentationTab == null || !tabContentProvider.hasTab(documentationTab) || getEntity() == null) {
+            return null;
+        }
+        final PresenterWidget<?> presenter = tabContentProvider.getPresenter(documentationTab, this);
+        if (!(presenter instanceof final MarkdownEditPresenter markdownEditPresenter)) {
+            return null;
+        }
+        selectTab(documentationTab);
+        return markdownEditPresenter;
+    }
+
+    /// @return The tab holding this document's documentation editor, or null if it has none: the common
+    /// Documentation tab, which edits its description, unless the type's own content is its documentation.
+    protected TabData documentationTab() {
+        return commonTabsMap.get(CommonDocLinkTab.DOCUMENTATION);
     }
 
     public void setDefaultTab(final TabData defaultTab) {

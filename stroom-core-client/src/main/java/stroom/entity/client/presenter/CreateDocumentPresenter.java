@@ -59,6 +59,8 @@ public class CreateDocumentPresenter
     private String name = "";
     private boolean allowNullFolder;
     private Consumer<ExplorerNode> newDocConsumer;
+    // Given the name and folder chosen, in place of creating the document, or null.
+    private ShowCreateDocumentDialogEvent.Chooser chooser;
 
     @Inject
     public CreateDocumentPresenter(final EventBus eventBus,
@@ -80,6 +82,7 @@ public class CreateDocumentPresenter
     public void onCreate(final ShowCreateDocumentDialogEvent event) {
         docType = event.getDocType();
         newDocConsumer = event.getNewDocConsumer();
+        chooser = event.getChooser();
 
         entityTreePresenter.setSelectedItem(null);
         entityTreePresenter.setSelectedItem(event.getSelected());
@@ -140,6 +143,10 @@ public class CreateDocumentPresenter
                             CreateDocumentPresenter.this,
                             "You must provide a name for the new " + docType.toLowerCase(),
                             e::reset);
+                } else if (chooser != null) {
+                    // Only chosen: nothing is created here.
+                    e.hide();
+                    chooser.chosen(docName, destinationFolder, getView().getPermissionInheritance());
                 } else {
                     CreateDocumentEvent.fire(
                             CreateDocumentPresenter.this,

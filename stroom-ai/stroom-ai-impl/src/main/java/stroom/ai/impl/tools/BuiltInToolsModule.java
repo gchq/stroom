@@ -1,0 +1,97 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools;
+
+import stroom.util.guice.GuiceUtil;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.OptionalBinder;
+
+/**
+ * Binds the built-in chat tools. Add a new {@link StroomTool} implementation and a single
+ * {@code .addBinding(...)} line here.
+ */
+public class BuiltInToolsModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        GuiceUtil.buildMultiBinder(binder(), StroomTool.class)
+                .addBinding(GetCurrentDateTool.class)
+                .addBinding(GetCurrentTimeTool.class)
+                .addBinding(GetCurrentDateTimeTool.class)
+                .addBinding(GetUtcTimeOffsetTool.class)
+                .addBinding(ReadTurnTool.class)
+                .addBinding(SearchHistoryTool.class)
+                .addBinding(MemoryTool.class)
+                .addBinding(LsTool.class)
+                .addBinding(ReadFileTool.class)
+                .addBinding(GrepTool.class)
+                .addBinding(WcTool.class)
+                .addBinding(WriteFileTool.class)
+                .addBinding(StrReplaceTool.class)
+                .addBinding(DeleteFileTool.class)
+                .addBinding(JqTool.class)
+                .addBinding(XPathTool.class)
+                .addBinding(TaskListTool.class)
+                .addBinding(AskUserTool.class)
+                .addBinding(FetchEventsTool.class)
+                .addBinding(SearchEventsTool.class)
+                .addBinding(TableTool.class)
+                .addBinding(PipelineTool.class)
+                .addBinding(RunStroomQlTool.class)
+                .addBinding(SummariseColumnTool.class)
+                .addBinding(DocumentInfoTool.class)
+                .addBinding(ReadDocumentTool.class)
+                .addBinding(DocumentDocumentationTool.class)
+                .addBinding(FolderContentsTool.class)
+                .addBinding(GetInstructionsTool.class)
+                .addBinding(InstructionEvidenceTool.class)
+                .addBinding(ProposeInstructionsTool.class)
+                .addBinding(CurrentResultsTool.class)
+                .addBinding(ListDataSourcesTool.class)
+                .addBinding(DescribeDataSourceTool.class)
+                .addBinding(ValidateStroomQlTool.class)
+                .addBinding(ProposeQueryTool.class)
+                .addBinding(ProposeDashboardTool.class)
+                .addBinding(ProposeQueryChangeTool.class)
+                .addBinding(ProposeCodeChangeTool.class)
+                .addBinding(StreamMetaTool.class)
+                .addBinding(ProcessorTasksTool.class)
+                .addBinding(ExplainProcessingTool.class)
+                .addBinding(ExplainRetentionTool.class)
+                .addBinding(ServerTasksTool.class)
+                .addBinding(DocumentLinksTool.class)
+                .addBinding(FindInContentTool.class)
+                .addBinding(XsltLookupsTool.class)
+                .addBinding(ProposeDashboardChangeTool.class)
+                .addBinding(PreviewExtractionTool.class)
+                .addBinding(ProposeExtractionPipelineTool.class)
+                .addBinding(ListVisualisationsTool.class)
+                .addBinding(ProposeVisualisationTool.class)
+                .addBinding(ProposeDocumentationChangeTool.class)
+                .addBinding(ConfigPropertiesTool.class)
+                .addBinding(VolumesTool.class)
+                .addBinding(ElasticIndexTemplatesTool.class);
+
+        bind(RetentionFacts.class).to(StroomRetentionFacts.class);
+
+        // The guides and conventions bundled for agents, bound by the module that bundles them (stroom-mcp-impl).
+        OptionalBinder.newOptionalBinder(binder(), AgentKnowledge.class);
+        // What read_document says of an index or an XSLT beyond its content, bound by stroom-mcp-impl.
+        OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class);
+    }
+}

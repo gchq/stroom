@@ -18,27 +18,61 @@ package stroom.http.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
-import stroom.http.client.presenter.HttpClientConfigUiHandlers;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.http.HttpHeader;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.button.client.Button;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.customdatebox.client.DurationPicker;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tab.client.view.LinkTabBar;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewImpl;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HttpClientConfigViewImpl
-        extends ViewWithUiHandlers<HttpClientConfigUiHandlers>
+        extends ViewImpl
         implements HttpClientConfigView, ReadOnlyChangeHandler {
 
     private final Widget widget;
+    // Each tab and the panel it shows, in order.
+    private final Map<TabData, Panel> tabs = new LinkedHashMap<>();
+    private final TabData headersTabData;
+    private final FlowPanel headerRows = new FlowPanel();
+    private final InlineSvgButton addHeader = new InlineSvgButton();
+    private boolean readOnly;
 
+    @UiField
+    LinkTabBar tabBar;
+    @UiField
+    FlowPanel generalTab;
+    @UiField
+    SimplePanel tlsTab;
+    @UiField
+    FlowPanel headersTab;
+    @UiField
+    FlowPanel timeoutsTab;
+    @UiField
+    FlowPanel limitsTab;
+    @UiField
+    FlowPanel headers;
+    @UiField
+    TextBox userAgent;
     @UiField
     DurationPicker timeout;
     @UiField
@@ -61,8 +95,6 @@ public class HttpClientConfigViewImpl
     ValueSpinner retries;
     @UiField
     DurationPicker validateAfterInactivityPeriod;
-    @UiField
-    Button setHttpTlsConfig;
 
     @Inject
     public HttpClientConfigViewImpl(final Binder binder) {
@@ -72,6 +104,35 @@ public class HttpClientConfigViewImpl
         maxConnectionsPerRoute.setMin(1);
         maxConnectionsPerRoute.setMax(1000000);
         retries.setMax(1000);
+
+        addTab("General", generalTab);
+        addTab("TLS", tlsTab);
+        headersTabData = addTab("Headers", headersTab);
+        addTab("Timeouts", timeoutsTab);
+        addTab("Limits", limitsTab);
+        tabBar.addSelectionHandler(event -> selectTab(event.getSelectedItem()));
+        selectTab(tabs.keySet().iterator().next());
+
+        addHeader.setSvg(SvgImage.ADD);
+        addHeader.setTitle("Add Header");
+        addHeader.addStyleName("allow-focus");
+        addHeader.addClickHandler(event -> addHeaderRow("", "").focus());
+        headers.add(headerRows);
+        headers.add(addHeader);
+    }
+
+    private TabData addTab(final String text, final Panel panel) {
+        final TabData tab = new TabDataImpl(text, false);
+        tabs.put(tab, panel);
+        tabBar.addTab(tab);
+        return tab;
+    }
+
+    private void selectTab(final TabData selected) {
+        if (selected != null && tabs.containsKey(selected)) {
+            tabBar.selectTab(selected);
+            tabs.forEach((tab, panel) -> panel.setVisible(tab == selected));
+        }
     }
 
     @Override
@@ -81,6 +142,8 @@ public class HttpClientConfigViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        userAgent.setEnabled(!readOnly);
         timeout.setEnabled(!readOnly);
         connectionTimeout.setEnabled(!readOnly);
         connectionRequestTimeout.setEnabled(!readOnly);
@@ -92,11 +155,60 @@ public class HttpClientConfigViewImpl
         keepAlive.setEnabled(!readOnly);
         retries.setEnabled(!readOnly);
         validateAfterInactivityPeriod.setEnabled(!readOnly);
+        addHeader.setEnabled(!readOnly);
+        for (int i = 0; i < headerRows.getWidgetCount(); i++) {
+            ((HeaderRow) headerRows.getWidget(i)).setEnabled(!readOnly);
+        }
     }
 
     @Override
     public void focus() {
-        timeout.focus();
+        followRedirects.focus();
+    }
+
+    @Override
+    public void setUserAgent(final String userAgent) {
+        this.userAgent.setText(userAgent);
+    }
+
+    @Override
+    public String getUserAgent() {
+        final String text = userAgent.getText().trim();
+        return text.isEmpty()
+                ? null
+                : text;
+    }
+
+    @Override
+    public void setHeaders(final List<HttpHeader> headers) {
+        headerRows.clear();
+        if (headers != null) {
+            for (final HttpHeader header : headers) {
+                addHeaderRow(header.getName(), header.getValue());
+            }
+        }
+    }
+
+    @Override
+    public List<HttpHeader> getHeaders() {
+        final List<HttpHeader> list = new ArrayList<>();
+        for (int i = 0; i < headerRows.getWidgetCount(); i++) {
+            final HeaderRow row = (HeaderRow) headerRows.getWidget(i);
+            final String name = row.name.getText().trim();
+            if (!name.isEmpty()) {
+                list.add(new HttpHeader(name, row.value.getText()));
+            }
+        }
+        return list.isEmpty()
+                ? null
+                : list;
+    }
+
+    private HeaderRow addHeaderRow(final String name, final String value) {
+        final HeaderRow row = new HeaderRow(name, value);
+        row.setEnabled(!readOnly);
+        headerRows.add(row);
+        return row;
     }
 
     @Override
@@ -209,14 +321,54 @@ public class HttpClientConfigViewImpl
         return validateAfterInactivityPeriod.getValue();
     }
 
-    @UiHandler("setHttpTlsConfig")
-    public void onSetHttpTlsConfig(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onSetHttpTlsConfig();
-        }
+    @Override
+    public void showHeadersTab() {
+        selectTab(headersTabData);
+    }
+
+    @Override
+    public void setTlsView(final View tlsView) {
+        tlsTab.setWidget(tlsView.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, HttpClientConfigViewImpl> {
 
+    }
+
+    // A header's name and value, with a button to remove it.
+    private static final class HeaderRow extends FlowPanel {
+
+        private final TextBox name = new TextBox();
+        private final TextBox value = new TextBox();
+        private final InlineSvgButton remove = new InlineSvgButton();
+
+        private HeaderRow(final String headerName, final String headerValue) {
+            setStyleName("httpClientConfig-header");
+            name.setText(headerName);
+            name.getElement().setAttribute("placeholder", "Header");
+            name.setTitle("The header's name, e.g. anthropic-version");
+            name.addStyleName("httpClientConfig-headerName allow-focus");
+            value.setText(headerValue);
+            value.getElement().setAttribute("placeholder", "Value");
+            value.setTitle("The header's value, e.g. 2023-06-01");
+            value.addStyleName("httpClientConfig-headerValue allow-focus");
+            remove.setSvg(SvgImage.DELETE);
+            remove.setTitle("Remove Header");
+            remove.addStyleName("allow-focus");
+            remove.addClickHandler(event -> removeFromParent());
+            add(name);
+            add(value);
+            add(remove);
+        }
+
+        private void setEnabled(final boolean enabled) {
+            name.setEnabled(enabled);
+            value.setEnabled(enabled);
+            remove.setEnabled(enabled);
+        }
+
+        private void focus() {
+            name.setFocus(true);
+        }
     }
 }

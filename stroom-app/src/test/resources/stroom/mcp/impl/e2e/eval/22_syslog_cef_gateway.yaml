@@ -1,0 +1,67 @@
+name: Secure web gateway (CEF after a syslog header)
+template: Event Data (Text)
+capabilities: [mixed_formats, escaping, format_recognition]
+request: >
+  Onboard our secure web gateway's logs. They arrive over syslog as CEF: the syslog header, then the CEF header
+  (vendor, product, version, signature id, name, severity) and its key=value extension. Signature ids 1001-1003 are
+  user logons, failed logons and logoffs; 2001 and 2002 are web requests allowed or blocked; 3001 is malware found
+  in a download. Times are UTC. Index the events.
+expected:
+  records: 6
+  event_types: [Authenticate, Network, Alert]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+    EventDetail/Description: [SAML login from the VPN, EICAR test file]
+sample: |
+  <134>Oct  2 09:00:01 swg01 CEF:0|Acme|SecureGateway|5.2|1001|User authenticated|3|suser=alice src=10.1.0.5 act=login outcome=success msg=SAML login from the VPN
+  <134>Oct  2 09:00:40 swg01 CEF:0|Acme|SecureGateway|5.2|1002|Authentication failed|6|suser=bob src=203.0.113.44 act=login outcome=failure msg=Bad password
+  <134>Oct  2 09:02:13 swg01 CEF:0|Acme|SecureGateway|5.2|2001|Web request allowed|1|suser=alice src=10.1.0.5 dst=93.184.216.34 dpt=443 request=https://example.com/report.pdf act=allow cat=business
+  <134>Oct  2 09:03:55 swg01 CEF:0|Acme|SecureGateway|5.2|2002|Web request blocked|5|suser=carol src=10.1.0.9 dst=198.51.100.40 dpt=80 request=http://198.51.100.40/update.bin act=block cat=malware
+  <134>Oct  2 09:04:10 swg02 CEF:0|Acme|SecureGateway|5.2|3001|Malware detected|9|suser=carol src=10.1.0.9 fname=update.bin fileHash=44d88612fea8a8f36de82e1278abb02f act=quarantine msg=EICAR test file
+  <134>Oct  2 09:10:00 swg01 CEF:0|Acme|SecureGateway|5.2|1003|User logged out|1|suser=alice src=10.1.0.5 act=logout msg=Session ended
+reference:
+  # The server's own Data Splitter, inferred from the sample (build_data_splitter): syslog header, CEF header, extension.
+  splitter: infer
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, xpath: "concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))", time_format: "yyyy MMM d HH:mm:ss", timezone: UTC}
+      - {path: EventSource/System/Name, value: Secure Web Gateway}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: cef_product}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/Client/IPAddress, field: src}
+      - {path: EventSource/User/Id, field: suser}
+      - {path: EventDetail/TypeId, field: cef_signature_id}
+      - {path: EventDetail/Description, any_of: [msg, cef_name]}
+    events:
+      - name: logon
+        when: [{field: cef_signature_id, one_of: ['1001', '1002']}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: suser}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: outcome, map: {success: 'true', failure: 'false'}}
+      - name: logoff
+        when: [{field: cef_signature_id, equals: '1003'}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: suser}
+      - name: web request
+        when: [{field: cef_signature_id, one_of: ['2001', '2002']}]
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst}
+          - {path: EventDetail/Network/Open/Destination/Port, field: dpt}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: url, field: request}
+          - {path: EventDetail/Network/Open/Destination/Data, data_name: category, field: cat}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: act, map: {allow: 'true', block: 'false'}}
+      - name: malware
+        when: [{field: cef_signature_id, equals: '3001'}]
+        fields:
+          - {path: EventDetail/Alert/Type, value: Malware}
+          - {path: EventDetail/Alert/Severity, value: Major}
+          - {path: EventDetail/Alert/Data, data_name: file, field: fname}
+          - {path: EventDetail/Alert/Data, data_name: sha_or_md5, field: fileHash}
+          - {path: EventDetail/Alert/Data, data_name: action, field: act}

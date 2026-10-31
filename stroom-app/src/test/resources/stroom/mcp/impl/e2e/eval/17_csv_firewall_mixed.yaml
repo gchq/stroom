@@ -1,0 +1,92 @@
+name: Edge firewall (CSV, mixed records)
+template: Event Data (Text)
+capabilities: [schema_variation, optional_fields, timestamps]
+request: >
+  Onboard the edge firewall's CSV export (it has a header). It mixes three kinds of record, told apart by
+  event_type: TRAFFIC is a connection a rule allowed or denied; ADMIN is an administrator logging in (or failing
+  to), logging out, or changing or backing up the configuration; SYSTEM is the firewall's own status (service start,
+  configuration saved, CPU, VPN tunnel down and up), which analysts treat as alerts. Columns that don't apply to a
+  record are empty or hold a space. Times carry their offset. Index the events.
+expected:
+  records: 20
+  event_types: [Network, Authenticate, Alert]
+  paths: [EventTime/TimeCreated, EventSource/Device/HostName, EventDetail/TypeId]
+sample: |
+  timestamp,device,event_type,severity,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,bytes_sent,bytes_received,username,message
+  2026-10-01T09:00:12+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.10,54321,198.51.100.20,443,TCP,ALLOW,1001,1520,8450,,Outbound HTTPS connection allowed
+  2026-10-01T09:01:05+10:00,FW-EDGE-01,TRAFFIC,WARNING,203.0.113.45,49822,192.0.2.25,22,TCP,DENY,2003,0,0,,Inbound SSH connection blocked
+  2026-10-01T09:02:17+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.11,53002,198.51.100.53,53,UDP,ALLOW,1002,84,192,,DNS query allowed
+  2026-10-01T09:03:44+10:00,FW-EDGE-01,TRAFFIC,WARNING,203.0.113.67,60120,192.0.2.30,3389,TCP,DENY,2004,0,0,,Inbound RDP connection blocked
+  2026-10-01T09:04:09+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.12,51515,198.51.100.80,80,TCP,ALLOW,1001,1024,4096,,Outbound HTTP connection allowed
+  2026-10-01T09:05:33+10:00,FW-EDGE-01,TRAFFIC,WARNING,192.0.2.13,54210,198.51.100.21,21,TCP,DENY,2005,0,0,,Outbound FTP connection blocked
+  2026-10-01T09:06:18+10:00,FW-EDGE-01,TRAFFIC,WARNING,192.0.2.14,55000,198.51.100.25,25,TCP,DENY,2006,0,0,,Outbound SMTP connection blocked
+  2026-10-01T09:07:52+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.15,52001,198.51.100.22,22,TCP,ALLOW,1003,2300,5100,,Outbound SSH connection allowed
+  2026-10-01T09:08:26+10:00,FW-EDGE-01,TRAFFIC,WARNING,203.0.113.89,48888,192.0.2.40,445,TCP,DENY,2007,0,0,,Inbound SMB connection blocked
+  2026-10-01T09:09:41+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.16,53535,198.51.100.54,53,UDP,ALLOW,1002,96,224,,DNS query allowed
+  2026-10-01T09:10:03+10:00,FW-EDGE-01,SYSTEM,INFO,,,,,N/A,START,,, , ,Firewall logging service started
+  2026-10-01T09:11:15+10:00,FW-EDGE-01,ADMIN,INFO,192.0.2.100,,,,HTTPS,LOGIN_SUCCESS,,, ,admin,Administrator logged in via web console
+  2026-10-01T09:12:02+10:00,FW-EDGE-01,ADMIN,WARNING,203.0.113.90,,,,HTTPS,LOGIN_FAILED,,, ,admin,Failed administrator login due to invalid password
+  2026-10-01T09:13:47+10:00,FW-EDGE-01,ADMIN,NOTICE,192.0.2.100,,,,HTTPS,CONFIG_CHANGE,,, ,admin,Firewall rule 1003 updated to restrict SSH destinations
+  2026-10-01T09:14:19+10:00,FW-EDGE-01,SYSTEM,INFO,,,,,N/A,CONFIG_SAVED,,,,,Running configuration saved successfully
+  2026-10-01T09:15:31+10:00,FW-EDGE-01,SYSTEM,WARNING,,,,,N/A,HIGH_CPU,,,,,CPU utilisation exceeded 85 percent
+  2026-10-01T09:16:08+10:00,FW-EDGE-01,ADMIN,INFO,192.0.2.100,,,,HTTPS,LOGOUT,,,,admin,Administrator logged out
+  2026-10-01T09:17:24+10:00,FW-EDGE-01,SYSTEM,ERROR,,,,,N/A,VPN_TUNNEL_DOWN,,,,,Site-to-site VPN tunnel branch-01 went down
+  2026-10-01T09:18:50+10:00,FW-EDGE-01,SYSTEM,INFO,,,,,N/A,VPN_TUNNEL_UP,,,,,Site-to-site VPN tunnel branch-01 restored
+  2026-10-01T09:19:12+10:00,FW-EDGE-01,ADMIN,NOTICE,192.0.2.101,,,,SSH,CONFIG_BACKUP,,,,netadmin,Administrator exported configuration backup
+reference:
+  converter: csv_header
+  mapping:
+    input: data_splitter
+    common:
+      - {path: EventTime/TimeCreated, field: timestamp, time_format: "yyyy-MM-dd'T'HH:mm:ssXXX"}
+      - {path: EventSource/System/Name, value: Edge Firewall}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: firewall}
+      - {path: EventSource/Device/HostName, field: device}
+      - {path: EventDetail/TypeId, field: action}
+      - {path: EventDetail/Description, field: message}
+    events:
+      - name: connection
+        when: [{field: event_type, equals: TRAFFIC}]
+        fields:
+          - {path: EventDetail/Network/Open/Source/Device/IPAddress, field: src_ip}
+          - {path: EventDetail/Network/Open/Source/Port, field: src_port}
+          - {path: EventDetail/Network/Open/Destination/Device/IPAddress, field: dst_ip}
+          - {path: EventDetail/Network/Open/Destination/TransportProtocol, field: protocol}
+          - {path: EventDetail/Network/Open/Destination/Port, field: dst_port}
+          - {path: EventDetail/Network/Open/Rule, field: rule_id}
+          - {path: EventDetail/Network/Open/Outcome/Permitted, field: action, map: {ALLOW: "true", DENY: "false"}}
+          - {path: EventDetail/Network/Open/Data, data_name: bytes_sent, field: bytes_sent}
+          - {path: EventDetail/Network/Open/Data, data_name: bytes_received, field: bytes_received}
+      - name: logon
+        when: [{field: event_type, equals: ADMIN}, {field: action, one_of: [LOGIN_SUCCESS, LOGIN_FAILED]}]
+        fields:
+          - {path: EventSource/User/Id, field: username}
+          - {path: EventSource/Client/IPAddress, field: src_ip}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: username}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: action, map: {LOGIN_SUCCESS: "true", LOGIN_FAILED: "false"}}
+      - name: logoff
+        when: [{field: event_type, equals: ADMIN}, {field: action, equals: LOGOUT}]
+        fields:
+          - {path: EventSource/User/Id, field: username}
+          - {path: EventSource/Client/IPAddress, field: src_ip}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: username}
+      - name: config change
+        when: [{field: event_type, equals: ADMIN}, {field: action, equals: CONFIG_CHANGE}]
+        fields:
+          - {path: EventSource/User/Id, field: username}
+          - {path: EventSource/Client/IPAddress, field: src_ip}
+          - {path: EventDetail/Update/After/Configuration/Name, value: Firewall rules}
+      - name: config backup
+        when: [{field: event_type, equals: ADMIN}, {field: action, equals: CONFIG_BACKUP}]
+        fields:
+          - {path: EventSource/User/Id, field: username}
+          - {path: EventSource/Client/IPAddress, field: src_ip}
+          - {path: EventDetail/Export/Source/Configuration/Name, value: Running configuration}
+      - name: system
+        when: [{field: event_type, equals: SYSTEM}]
+        fields:
+          - {path: EventDetail/Alert/Type, field: action, map: {VPN_TUNNEL_DOWN: Network, VPN_TUNNEL_UP: Network, CONFIG_SAVED: Change}, default: Other}
+          - {path: EventDetail/Alert/Severity, field: severity, map: {INFO: Info, NOTICE: Info, WARNING: Minor, ERROR: Major}}

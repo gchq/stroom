@@ -1,0 +1,3155 @@
+{
+ "format:csv_quoted": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "format:tsv": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "format:pipe": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "format:csv_noheader": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "format:csv_noheader_quoted": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "format:syslog3164_freeform": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 3,
+  "shapes": {
+   "text:sshd|Failed password for bob from <ip> port <n> <n>": 1,
+   "text:sshd|Accepted <*> for <*> from <ip> port <n> <n>": 2
+  }
+ },
+ "format:syslog5424_kv": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 3,
+  "split_format": "syslog rfc5424",
+  "split_records": 3,
+  "shapes": {
+   "text:firewall|action=deny src=<ip> dst=<ip> <n> proto=tcp user=-": 1,
+   "text:firewall|action=allow src=<ip> dst=<ip> <n> <*> <*>": 2
+  }
+ },
+ "format:cef": {
+  "profile_format": "cef",
+  "profile_records": 3,
+  "split_format": "cef",
+  "split_records": 3,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1,
+   "cef:Acme|Gateway|101|User logged out": 1,
+   "cef:Acme|Gateway|102|Login failed": 1
+  }
+ },
+ "format:syslog_cef": {
+  "profile_format": "cef",
+  "profile_records": 3,
+  "split_format": "cef",
+  "split_records": 3,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1,
+   "cef:Acme|Gateway|101|User logged out": 1,
+   "cef:Acme|Gateway|102|Login failed": 1
+  }
+ },
+ "format:kv_quoted": {
+  "profile_format": "key=value",
+  "profile_records": 3,
+  "split_format": "key=value",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,date,devname,dstip,srcip,time,type,user | action=accept, type=traffic": 2,
+   "fields:action,date,devname,dstip,srcip,time,type,user | action=deny, type=traffic": 1
+  }
+ },
+ "format:json_lines": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,src,ts,user.name | event=login": 2,
+   "fields:event,src,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_offsets": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 2,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:csv_zone_names": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "format:json_epoch_fraction": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 2,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_micros": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 2,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_micros": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 2,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_s_micros": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 2,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_array_nested": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,actor.ip,actor.user,tags,time | action=login": 2,
+   "fields:action,actor.ip,actor.user,tags,time | action=logout": 1
+  }
+ },
+ "format:xml_records": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,ip,time,user | action=login": 2,
+   "fields:action,ip,time,user | action=logout": 1
+  }
+ },
+ "format:xml_attributes": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:Entry@action,Entry@ip,Entry@time,Entry@user | Entry@action=login": 2,
+   "fields:Entry@action,Entry@ip,Entry@time,Entry@user | Entry@action=logout": 1
+  }
+ },
+ "format:xml_namespaced": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:Action,Ip,Time,User | Action=login": 2,
+   "fields:Action,Ip,Time,User | Action=logout": 1
+  }
+ },
+ "format:xml_fragments_ns": {
+  "profile_format": "xml fragments",
+  "profile_records": 3,
+  "split_format": "xml fragments",
+  "split_records": 3,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4624": 2,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4634": 1
+  }
+ },
+ "eval:01_csv_vpn:0": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "eval:02_json_alert:0": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:dport,dst,sensor,sev,sig,src,ts": 3
+  }
+ },
+ "eval:03_json_nested_process:0": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:@timestamp,host.ip,host.name,process.args,process.executable,process.pid,user.name": 3
+  }
+ },
+ "eval:04_json_embedded:0": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:host,message,received > message: json:event,ok,time,user | event=login": 2,
+   "fields:host,message,received > message: json:event,ok,time,user | event=logout": 1
+  }
+ },
+ "eval:05_xml_ns_files:0": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:account,machine,op,path,when | op=read": 2,
+   "fields:account,machine,op,path,when | op=delete": 1
+  }
+ },
+ "eval:06_syslog5424_ssh:0": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 3,
+  "split_format": "syslog rfc5424",
+  "split_records": 3,
+  "shapes": {
+   "text:sshd|Failed password for invalid user admin from <ip> port <n> <n>": 1,
+   "text:sshd|Accepted <*> for <*> from <ip> port <n> <n>": 2
+  }
+ },
+ "eval:07_syslog3164_sudo:0": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 3,
+  "shapes": {
+   "text:sudo|grace : <n> ; PWD=/home/grace ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx": 1,
+   "text:sudo|henry : <n> ; PWD=/var/www ; USER=www-data ; COMMAND=/usr/bin/git pull": 1,
+   "text:sudo|grace : <n> ; PWD=/root ; USER=root ; COMMAND=/usr/bin/apt-get upgrade": 1
+  }
+ },
+ "eval:08_kv_firewall:0": {
+  "profile_format": "key=value",
+  "profile_records": 3,
+  "split_format": "key=value",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,dport,dst,proto,src | action=allow": 2,
+   "fields:action,dport,dst,proto,src | action=deny": 1
+  }
+ },
+ "eval:09_csv_noheader_copy:0": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "eval:10_xml_attrs_lock:0": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:event@action,event@host,event@time,event@user | event@action=lock": 2,
+   "fields:event@action,event@host,event@time,event@user | event@action=unlock": 1
+  }
+ },
+ "eval:11_jsonl_message_text:0": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:host,message,received > message: text:|<n> <n> <*> LOGIN <*> login from <ip>": 2,
+   "fields:host,message,received > message: text:|<n> <n> alice LOGOUT Session ended": 1
+  }
+ },
+ "eval:12_xml_fragments_events:0": {
+  "profile_format": "xml fragments",
+  "profile_records": 3,
+  "split_format": "xml fragments",
+  "split_records": 3,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4625": 1,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4634": 1
+  }
+ },
+ "eval:13_json_embedded_message:0": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:host,payload,received > payload: json:level,msg,ts > msg: kv:action=LOGIN": 2,
+   "fields:host,payload,received > payload: json:level,msg,ts > msg: kv:action=LOGOUT": 1
+  }
+ },
+ "eval:14_csv_two_files_variants:0": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=logout": 1
+  }
+ },
+ "eval:14_csv_two_files_variants:1": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=login": 2,
+   "row:action=timeout": 1
+  }
+ },
+ "eval:15_csv_lookup_reference_data:0": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "eval:16_json_batches_items:0": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:batch,events,host": 3
+  }
+ },
+ "eval:17_csv_firewall_mixed:0": {
+  "profile_format": "delimited",
+  "profile_records": 20,
+  "split_format": "delimited",
+  "split_records": 20,
+  "shapes": {
+   "row:event_type=TRAFFIC, action=ALLOW": 5,
+   "row:event_type=TRAFFIC, action=DENY": 5,
+   "row:event_type=SYSTEM, action=START": 1,
+   "row:event_type=ADMIN, action=LOGIN_SUCCESS": 1,
+   "row:event_type=ADMIN, action=LOGIN_FAILED": 1,
+   "row:event_type=ADMIN, action=CONFIG_CHANGE": 1,
+   "row:event_type=SYSTEM, action=CONFIG_SAVED": 1,
+   "row:event_type=SYSTEM, action=HIGH_CPU": 1,
+   "row:event_type=ADMIN, action=LOGOUT": 1,
+   "row:event_type=SYSTEM, action=VPN_TUNNEL_DOWN": 1,
+   "row:event_type=SYSTEM, action=VPN_TUNNEL_UP": 1,
+   "row:event_type=ADMIN, action=CONFIG_BACKUP": 1
+  }
+ },
+ "eval:18_json_event_string_freetext:0": {
+  "profile_format": "json array",
+  "profile_records": 6,
+  "split_format": "json array",
+  "split_records": 6,
+  "shapes": {
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_SUCCESS": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_FAILURE": 1,
+   "fields:event,host,received > event: json:event_type,message,resource,timestamp,username | event_type=DOCUMENT_VIEW": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=PASSWORD_CHANGE": 1,
+   "fields:event,host,received > event: json:event_type,message,resource,timestamp,username | event_type=DOCUMENT_DELETE": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGOUT": 1
+  }
+ },
+ "eval:19_jsonl_message_layouts:0": {
+  "profile_format": "json lines",
+  "profile_records": 8,
+  "split_format": "json lines",
+  "split_records": 8,
+  "shapes": {
+   "fields:host,message,severity,time > message: text:|AUTH fail user=jsmith src=<ip> reason=<s>": 1,
+   "fields:host,message,severity,time > message: text:|AUTH ok <*> src=<ip> <*>": 2,
+   "fields:host,message,severity,time > message: text:|TUNNEL <*> peer=<ip> <n>": 2,
+   "fields:host,message,severity,time > message: text:|SESSION end user=<s> <n>": 1,
+   "fields:host,message,severity,time > message: text:|Heartbeat from monitoring probe <n>": 1,
+   "fields:host,message,severity,time > message: text:|AUTH fail user=<s> src=<ip> reason=<s> <n>": 1
+  }
+ },
+ "eval:20_csv_coded_with_docs:0": {
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 4,
+  "shapes": {
+   "row:all": 4
+  }
+ },
+ "eval:21_csv_connections_odd_fields:0": {
+  "profile_format": "delimited",
+  "profile_records": 10,
+  "split_format": "delimited",
+  "split_records": 10,
+  "shapes": {
+   "row:event=CONNECT": 7,
+   "row:event=DISCONNECT": 3
+  }
+ },
+ "eval:22_syslog_cef_gateway:0": {
+  "profile_format": "cef",
+  "profile_records": 6,
+  "split_format": "cef",
+  "split_records": 6,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 1,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 1,
+   "cef:Acme|SecureGateway|2001|Web request allowed": 1,
+   "cef:Acme|SecureGateway|2002|Web request blocked": 1,
+   "cef:Acme|SecureGateway|3001|Malware detected": 1,
+   "cef:Acme|SecureGateway|1003|User logged out": 1
+  }
+ },
+ "eval:23_pipe_quoted_helpdesk:0": {
+  "profile_format": "delimited",
+  "profile_records": 5,
+  "split_format": "delimited",
+  "split_records": 5,
+  "shapes": {
+   "row:action=create": 2,
+   "row:action=view": 1,
+   "row:action=update": 1,
+   "row:action=close": 1
+  }
+ },
+ "eval:24_csv_noheader_quoted_print:0": {
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 4,
+  "shapes": {
+   "row:all": 4
+  }
+ },
+ "eval:25_syslog_kv_nil_proxy:0": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 5,
+  "split_format": "syslog rfc5424",
+  "split_records": 5,
+  "shapes": {
+   "text:webfilter|user=- src=<ip> dst=<ip> url=http://<ip>/x.bin category=malware action=block referer=-": 1,
+   "text:webfilter|user=bob src=<ip> dst=<ip> url=https://example.com/news category=news action=allow referer=https://example.com/": 1,
+   "text:webfilter|user=- src=<ip> dst=<ip> url=https://<ip>/login category=phishing action=block referer=https://mail.example.org/": 1,
+   "text:webfilter|user=alice src=<ip> dst=<ip> <*> <*> action=allow referer=-": 2
+  }
+ },
+ "eval:26_xml_fragments_windows_ns:0": {
+  "profile_format": "xml fragments",
+  "profile_records": 8,
+  "split_format": "xml fragments",
+  "split_records": 8,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 2,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 2,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4740": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4720": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4634": 1
+  }
+ },
+ "eval:27_endash_auth_messages:0": {
+  "profile_format": "delimited",
+  "profile_records": 5,
+  "split_format": "delimited",
+  "split_records": 5,
+  "shapes": {
+   "row:all": 5
+  }
+ },
+ "eval:28_xml_records_badges:0": {
+  "profile_format": "xml",
+  "profile_records": 4,
+  "split_format": "xml",
+  "split_records": 4,
+  "shapes": {
+   "fields:door,granted,holder,when": 4
+  }
+ },
+ "eval:30_jsonl_two_shapes_idp:0": {
+  "profile_format": "json lines",
+  "profile_records": 8,
+  "split_format": "json lines",
+  "split_records": 8,
+  "shapes": {
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.session.start": 1,
+   "fields:ip,ok,ts,type,user | type=login": 2,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.reason,outcome.result,published | eventType=user.session.start": 1,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.account.lock": 1,
+   "fields:ip,ok,ts,type,user | type=password_change": 1,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.session.end": 1,
+   "fields:ip,ok,ts,type,user | type=logout": 1
+  }
+ },
+ "eval:31_kv_awkward_times_fortigate:0": {
+  "profile_format": "key=value",
+  "profile_records": 5,
+  "split_format": "key=value",
+  "split_records": 5,
+  "shapes": {
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-up, subtype=vpn, type=event": 2,
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=ssl-login-fail, subtype=vpn, type=event": 1,
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-down, subtype=vpn, type=event": 2
+  }
+ },
+ "eval:32_xml_fragments_windows_many:0": {
+  "profile_format": "xml fragments",
+  "profile_records": 22,
+  "split_format": "xml fragments",
+  "split_records": 22,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4634": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4647": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4648": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4688": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4689": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4697": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4719": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4720": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4722": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4723": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4724": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4725": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4726": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4728": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4729": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4740": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4767": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=1102": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=5140": 1
+  }
+ },
+ "eval:34_jsonl_schema_traps_nac:0": {
+  "profile_format": "json lines",
+  "profile_records": 5,
+  "split_format": "json lines",
+  "split_records": 5,
+  "shapes": {
+   "fields:ip,mac,port,result,service,switch,time,user": 5
+  }
+ },
+ "eval:35_xml_fragments_secretserver_messages:0": {
+  "profile_format": "xml fragments",
+  "profile_records": 33,
+  "split_format": "xml fragments",
+  "split_records": 33,
+  "shapes": {
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Move, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Permissions Changed, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Grant, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Revoke, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Access Denied, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkin, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkout, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Copy Password, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Delete, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Edit, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Export, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Heartbeat Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Launch, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Change Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Changed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Displayed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Restore, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=View, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=End, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Recording Viewed, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Start, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Audit Export, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Configuration Changed, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Discovery Completed, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Account Locked, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Login, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Login Failed, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Logout, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=MFA Challenge, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Reset, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Role Changed, Event=User": 1
+  }
+ },
+ "extra:bluecoat": {
+  "text": "#Software: SGOS 6.7.5.12\n#Version: 1.0\n#Start-Date: 2026-10-11 08:00:00\n#Date: 2026-10-11 08:00:00\n#Fields: date time time-taken c-ip cs-username cs-auth-group x-exception-id sc-filter-result cs-categories cs(Referer) sc-status s-action cs-method rs(Content-Type) cs-uri-scheme cs-host cs-uri-port cs-uri-path cs-uri-query cs(User-Agent) s-ip sc-bytes cs-bytes\n#Remark: 4111140007 \"proxy01\" \"192.168.1.10\" \"main\"\n\n2026-10-11 08:00:01 125 192.168.1.100 jsmith Employees - OBSERVED \"Business/Economy\" - 200 TCP_NC_MISS GET text/html https www.example.com 443 /index.html - \"Mozilla/5.0\" 192.168.1.10 12450 820\n2026-10-11 08:00:03 2 192.168.1.102 guest Guests policy_denied DENIED \"Malicious Sources\" - 403 TCP_DENIED GET text/html http malware.example.net 80 /payload.exe - \"Mozilla/5.0\" 192.168.1.10 1250 420\n2026-10-11 08:00:04 210 192.168.1.103 jbloggs Employees - OBSERVED \"Business/Economy\" - 200 TCP_NC_MISS POST application/json https portal.example.org 443 /api/login - \"Mozilla/5.0\" 192.168.1.10 850 1450\n#Software: SGOS 7.3.1\n#Fields: date time c-ip cs-username sc-status\n2026-10-11 09:00:00 192.168.1.200 later 404\n",
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 4,
+  "shapes": {
+   "row:s-action=TCP_NC_MISS": 2,
+   "row:s-action=TCP_DENIED": 1,
+   "row:s-action=": 1
+  }
+ },
+ "extra:zeek": {
+  "text": "#separator \\x09\n#path\tconn\n#open\t2026-10-11-00-00-00\n#fields\tts\tuid\tid.orig_h\tid.resp_h\tid.resp_p\tproto\n#types\ttime\tstring\taddr\taddr\tport\tenum\n1791676800.1\tC1\t10.0.0.1\t93.184.216.34\t443\ttcp\n1791676801.2\tC2\t10.0.0.2\t8.8.8.8\t53\tudp\n1791676802.3\tC3\t10.0.0.3\t10.0.0.9\t22\ttcp\n#close\t2026-10-11\n",
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "extra:cri": {
+  "text": "2026-10-11T08:00:01.1Z stdout F user=alice action=login\n2026-10-11T08:00:02.1Z stderr P user=bo\n2026-10-11T08:00:02.2Z stderr F b action=export\n2026-10-11T08:00:03.1Z stdout F user=carol action=logout\n",
+  "profile_format": "cri",
+  "profile_records": 3,
+  "split_format": "cri",
+  "split_records": 3,
+  "shapes": {
+   "text:|<n> stderr P user=bo": 1,
+   "text:|<n> stdout F <*> <*>": 2
+  }
+ },
+ "extra:multiline": {
+  "text": "2026-10-01 10:00:00 ERROR Failed\njava.lang.IllegalStateException: x\n\tat a.b(C.java:1)\n2026-10-01 10:00:01 INFO Fine\n2026-10-01 10:00:02 WARN Odd\n\tat d.e(F.java:2)\n",
+  "profile_format": "multi-line text",
+  "profile_records": 3,
+  "split_format": "multi-line text",
+  "split_records": 3,
+  "shapes": {
+   "text:|<n> <n> ERROR Failed": 1,
+   "text:|<n> <n> INFO Fine": 1,
+   "text:|<n> <n> WARN Odd": 1
+  }
+ },
+ "extra:tilde": {
+  "text": "2026-10-01T10:00:00Z ~ alice ~ LOGIN ~ OK ~ ws01\n2026-10-01T10:05:00Z ~ bob ~ LOGOUT ~ OK ~ ws02\n",
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:tickets": {
+  "text": "id,opened,summary\n1,2026-10-01T10:00:00Z,\"Printer jams\non floor 2\"\n2,2026-10-01T11:00:00Z,\"VPN drops\"\n3,2026-10-01T12:00:00Z,\"Screen\nflickers\"\n",
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "extra:damaged_jsonl": {
+  "text": "{\"time\":\"2026-10-11T08:00:01Z\",\"user\":\"u1\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:02Z\",\"user\":\"u2\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:03Z\",\"user\":\"u3\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:04Z\",\"user\":\"u4\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:05Z\",\"user\":\"u5\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:06Z\",\"user\":\"cut\n{\"time\":\"2026-10-11T08:00:07Z\",\"user\":\"u7\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:08Z\",\"user\":\"u8\",\"action\":\"login\"}\n{\"time\":\"2026-10-11T08:00:09Z\",\"user\":\"u9\",\"action\":\"login\"}\n",
+  "profile_format": "json lines",
+  "profile_records": 9,
+  "split_refused": true
+ },
+ "extra:bad_csv": {
+  "text": "time,user,action,comment\n2026-10-11T08:00:01Z,u1,login,fine\n2026-10-11T08:00:02Z,u2,login,fine\n2026-10-11T08:00:03Z,u3,login,fine\n2026-10-11T08:00:04Z,u4,login,fine\n2026-10-11T08:00:05Z,u5,login,fine\n2026-10-11T08:00:06Z,u6,login,fine\n2026-10-11T08:00:07Z,bob,login\n2026-10-11T08:00:08Z,carol,update,\"no closing quote\n",
+  "profile_format": "delimited",
+  "profile_records": 8,
+  "split_format": "delimited",
+  "split_records": 8,
+  "shapes": {
+   "row:action=login": 7,
+   "row:action=update": 1
+  }
+ },
+ "extra:bad_kv": {
+  "text": "time=0 user=u0 action=login\ntime=1 user=u1 action=login\ntime=2 user=u2 action=login\ntime=3 user=u3 action=login\n### garbage ###\n",
+  "profile_format": "key=value",
+  "profile_records": 5,
+  "split_format": "key=value",
+  "split_records": 5,
+  "shapes": {
+   "fields:action,time,user | action=login": 4,
+   "fields:": 1
+  }
+ },
+ "extra:people": {
+  "text": "user,name,department,site\nalice,Alice Anderson,Operations,HQ\nbob,Bob Brown,Finance,HQ\n",
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:times_header": {
+  "text": "time,user,host,action\n2026-10-01T08:00:00Z,alice,ws01,start\n2026-10-01T08:05:00Z,bob,ws02,stop\n",
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=start": 1,
+   "row:action=stop": 1
+  }
+ },
+ "extra:noheader3": {
+  "text": "alice,ws01,start\nbob,ws02,stop\ncarol,ws03,start\n",
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "extra:when_who": {
+  "text": "when,who\n01 Oct 2026 10:00:00 GMT,alice\n02 Oct 2026 11:30:00 GMT,bob\n",
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:palo_alto": {
+  "text": "<14>Oct  1 08:00:00 pa01 1,2026/10/01 08:00:00,0011,TRAFFIC,end,2561,10.0.0.5\n<14>Oct  1 08:00:01 pa01 1,2026/10/01 08:00:01,0011,TRAFFIC,deny,2561,10.0.0.6\n<14>Oct  1 08:00:02 pa01 1,2026/10/01 08:00:02,0011,THREAT,url,2561,10.0.0.7\n",
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 3,
+  "shapes": {
+   "fields:app,col1,col2,col3,col4,col5,col6,col7,host,message,pid,pri,time > message: text:|<n> <n>": 3
+  }
+ },
+ "extra:trail": {
+  "text": "{\"Records\": [{\"eventName\": \"ConsoleLogin\", \"eventTime\": \"2026-10-01T10:00:00Z\"}, {\"eventName\": \"GetObject\", \"eventTime\": \"2026-10-01T10:01:00Z\"}]}",
+  "profile_format": "json object",
+  "profile_records": 2,
+  "split_format": "json object",
+  "split_records": 2,
+  "shapes": {
+   "fields:eventName,eventTime | eventName=ConsoleLogin": 1,
+   "fields:eventName,eventTime | eventName=GetObject": 1
+  }
+ },
+ "extra:epochs": {
+  "text": "{\"ts\": 1791712800.123, \"n\": 42}\n{\"ts\": 1791712801, \"n\": 7}\n",
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:n,ts": 2
+  }
+ },
+ "extra:unknown": {
+  "text": "one thing\nanother thing\nhalf a th",
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 3,
+  "shapes": {
+   "text:|one thing": 1,
+   "text:|another thing": 1,
+   "text:|half a th": 1
+  }
+ },
+ "extra:empty": {
+  "text": "",
+  "profile_format": "cef",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:semicolons": {
+  "text": "a;b;c\n1;2;3\n4;5;6\n",
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:tsv_noheader": {
+  "text": "1\t2\t3\n4\t5\t6\n7\t8\t9\n",
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "extra:ssh": {
+  "text": "<38>1 2026-09-28T13:00:00.000Z bastion sshd 812 - - Accepted publickey for frank from 192.0.2.44 port 50122 ssh2\n<38>1 2026-09-28T13:02:10.000Z bastion sshd 815 - - Failed password for invalid user admin from 192.0.2.99 port 40022 ssh2\n<38>1 2026-09-28T13:04:55.000Z bastion sshd 820 - - Accepted password for grace from 192.0.2.45 port 50410 ssh2\n<38>1 2026-09-28T13:05:00.000Z bastion sshd 821 - - Accepted password for henry from 192.0.2.46 port 50411 ssh2",
+  "profile_format": "syslog rfc5424",
+  "profile_records": 4,
+  "split_format": "syslog rfc5424",
+  "split_records": 4,
+  "shapes": {
+   "text:sshd|Failed password for invalid user admin from <ip> port <n> <n>": 1,
+   "text:sshd|Accepted <*> for <*> from <ip> port <n> <n>": 3
+  }
+ },
+ "extra:keycloak": {
+  "text": "[{\"timestamp\": \"t\", \"hostname\": \"kc-1\", \"facility\": 1, \"body\": \"keycloak 1234 org.keycloak.events - \\ufeff{\\\"timestamp\\\": \\\"t\\\", \\\"loggerName\\\": \\\"org.keycloak.events\\\", \\\"level\\\": \\\"INFO\\\", \\\"message\\\": \\\"type=\\\\\\\"LOGIN\\\\\\\", realmId=r1, userId=u1\\\"}\"}, {\"timestamp\": \"t\", \"hostname\": \"kc-2\", \"facility\": 1, \"body\": \"keycloak 1234 org.keycloak.events - \\ufeff{\\\"timestamp\\\": \\\"t\\\", \\\"loggerName\\\": \\\"org.keycloak.events\\\", \\\"level\\\": \\\"INFO\\\", \\\"message\\\": \\\"type=\\\\\\\"LOGIN_ERROR\\\\\\\", error=\\\\\\\"x\\\\\\\"\\\"}\"}, {\"timestamp\": \"t\", \"hostname\": \"kc-1\", \"facility\": 1, \"body\": \"keycloak 1234 org.infinispan.CLUSTER - \\ufeff{\\\"timestamp\\\": \\\"t\\\", \\\"loggerName\\\": \\\"org.infinispan.CLUSTER\\\", \\\"level\\\": \\\"INFO\\\", \\\"message\\\": \\\"ISPN000094: Received new cluster view 42\\\"}\"}, {\"timestamp\": \"t\", \"hostname\": \"kc-1\", \"facility\": 1, \"body\": \"keycloak 1234 org.infinispan.CLUSTER - \\ufeff{\\\"timestamp\\\": \\\"t\\\", \\\"loggerName\\\": \\\"org.infinispan.CLUSTER\\\", \\\"level\\\": \\\"INFO\\\", \\\"message\\\": \\\"ISPN000094: Received new cluster view 43\\\"}\"}]",
+  "profile_format": "json array",
+  "profile_records": 4,
+  "split_format": "json array",
+  "split_records": 4,
+  "shapes": {
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN": 1,
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN_ERROR": 1,
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.infinispan.CLUSTER": 2
+  }
+ },
+ "extra:free_text": {
+  "text": "[{\"host\": \"a\", \"message\": \"Accepted password for frank from 192.0.2.44\"}, {\"host\": \"b\", \"message\": \"Accepted password for grace from 192.0.2.45\"}, {\"host\": \"a\", \"message\": \"Disk /dev/sda1 is 91% full\"}, {\"host\": \"a\", \"message\": \"user \\\"Bob Smith\\\" took 250ms id 0x1f2e3d4c5b6a7980 at x@y.org\"}]",
+  "profile_format": "json array",
+  "profile_records": 4,
+  "split_format": "json array",
+  "split_records": 4,
+  "shapes": {
+   "fields:host,message > message: text:|Accepted password for <*> from <ip>": 2,
+   "fields:host,message > message: text:|Disk <n> is <n> full": 1,
+   "fields:host,message > message: text:|user <s> took <n> id <hex> at <email>": 1
+  }
+ },
+ "extra:secret_server": {
+  "text": "<Event xmlns=\"http://schemas.microsoft.com/win/2004/08/events/event\"><System><EventID>1000</EventID></System><EventData><Data>Sep 27 2026 23:48:10 - User: domain.com\\Patel, Priya - [[SecretServer]] Event: [User] Action: [Login] By User: domain.com\\priya.patel (Item Id: 219); Source IP: 192.0.2.45</Data></EventData></Event>\n<Event xmlns=\"http://schemas.microsoft.com/win/2004/08/events/event\"><System><EventID>1000</EventID></System><EventData><Data>Sep 27 2026 23:48:10 - User: domain.com\\Patel, Priya - [[SecretServer]] Event: [User] Action: [Login Failed] By User: domain.com\\priya.patel (Item Id: 219); Source IP: 192.0.2.45</Data></EventData></Event>\n<Event xmlns=\"http://schemas.microsoft.com/win/2004/08/events/event\"><System><EventID>1000</EventID></System><EventData><Data>Sep 27 2026 23:48:10 - User: domain.com\\Patel, Priya - [[SecretServer]] Event: [Secret] Action: [View] By User: domain.com\\priya.patel (Item Id: 219); Source IP: 192.0.2.45</Data></EventData></Event>",
+  "profile_format": "xml fragments",
+  "profile_records": 3,
+  "split_format": "xml fragments",
+  "split_records": 3,
+  "shapes": {
+   "fields:Data,EventID | EventID=1000 > Data: kv:Action=Login, Event=User": 1,
+   "fields:Data,EventID | EventID=1000 > Data: kv:Action=Login Failed, Event=User": 1,
+   "fields:Data,EventID | EventID=1000 > Data: kv:Action=View, Event=Secret": 1
+  }
+ },
+ "extra:cef_kinds": {
+  "text": "<134>Oct  2 09:00:00 swg01 CEF:0|Acme|SecureGateway|5.2|1001|User authenticated|3|suser=u0 \n<134>Oct  2 09:00:01 swg01 CEF:0|Acme|SecureGateway|5.2|1002|Authentication failed|3|suser=u1 k0=v\n<134>Oct  2 09:00:02 swg01 CEF:0|Acme|SecureGateway|5.2|2001|Web request allowed \\| proxy|3|suser=u2 k0=v k1=v\n<134>Oct  2 09:00:03 swg01 CEF:0|Acme|SecureGateway|5.2|1001|User authenticated|3|suser=u3 k0=v k1=v k2=v\n<134>Oct  2 09:00:04 swg01 CEF:0|Acme|SecureGateway|5.2|1002|Authentication failed|3|suser=u4 \n<134>Oct  2 09:00:05 swg01 CEF:0|Acme|SecureGateway|5.2|2001|Web request allowed \\| proxy|3|suser=u5 k0=v\n<134>Oct  2 09:00:06 swg01 CEF:0|Acme|SecureGateway|5.2|1001|User authenticated|3|suser=u6 k0=v k1=v\n<134>Oct  2 09:00:07 swg01 CEF:0|Acme|SecureGateway|5.2|1002|Authentication failed|3|suser=u7 k0=v k1=v k2=v\n<134>Oct  2 09:00:08 swg01 CEF:0|Acme|SecureGateway|5.2|2001|Web request allowed \\| proxy|3|suser=u8 \n<134>Oct  2 09:00:09 swg01 CEF:0|Acme|SecureGateway|5.2|1001|User authenticated|3|suser=u9 k0=v\n<134>Oct  2 09:00:10 swg01 CEF:0|Acme|SecureGateway|5.2|1002|Authentication failed|3|suser=u10 k0=v k1=v\n<134>Oct  2 09:00:11 swg01 CEF:0|Acme|SecureGateway|5.2|2001|Web request allowed \\| proxy|3|suser=u11 k0=v k1=v k2=v",
+  "profile_format": "cef",
+  "profile_records": 12,
+  "split_format": "cef",
+  "split_records": 12,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 4,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 4,
+   "cef:Acme|SecureGateway|2001|Web request allowed | proxy": 4
+  }
+ },
+ "extra:big_array": {
+  "text": "[{\"timestamp\": \"2026-10-02T09:00:00Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=0 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.0 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:01Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=1 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.1 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:02Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=2 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.2 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:03Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=3 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.3 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:04Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=4 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.4 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:05Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=5 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.5 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:06Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=6 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.6 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:07Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=7 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.7 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:08Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=8 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.8 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:09Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=9 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.9 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:10Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=10 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.10 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:11Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=11 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.11 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:12Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=12 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.12 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:13Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=13 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.13 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:14Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=14 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.14 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:15Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=15 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.15 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:16Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=16 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.16 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:17Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=17 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.17 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:18Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=18 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.18 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:19Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=19 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.19 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:20Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=20 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.20 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:21Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=21 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.21 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:22Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=22 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.22 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:23Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=23 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.23 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:24Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=24 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.24 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:25Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=25 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.25 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:26Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=26 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.26 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:27Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=27 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.27 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:28Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=28 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.28 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:29Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=29 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.29 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:30Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=30 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.30 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:31Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=31 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.31 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:32Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=32 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.32 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:33Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=33 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.33 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:34Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=34 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.34 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:35Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=35 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.35 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:36Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=36 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.36 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:37Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=37 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.37 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:38Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=38 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.38 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:39Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=39 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.39 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:40Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=40 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.40 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:41Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=41 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.41 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:42Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=42 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.42 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:43Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=43 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.43 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:44Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=44 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.44 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:45Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=45 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.45 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:46Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=46 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.46 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:47Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=47 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.47 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:48Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=48 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.48 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:49Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=49 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.49 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:50Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=50 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.50 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:51Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=51 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.51 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:52Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=52 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.52 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:53Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=53 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.53 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:54Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=54 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.54 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:55Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=55 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.55 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:56Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=56 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.56 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:57Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=57 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.57 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:58Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=58 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.58 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:59Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=59 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.59 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:00Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=60 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.60 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:01Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=61 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.61 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:02Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=62 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.62 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:03Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=63 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.63 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:04Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=64 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.64 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:05Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=65 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.65 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:06Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=66 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.66 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:07Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=67 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.67 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:08Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=68 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.68 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:09Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=69 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.69 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:10Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=70 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.70 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:11Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=71 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.71 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:12Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=72 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.72 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:13Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=73 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.73 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:14Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=74 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.74 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:15Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=75 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.75 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:16Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=76 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.76 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:17Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=77 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.77 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:18Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=78 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.78 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:19Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=79 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.79 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:20Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=80 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.80 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:21Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=81 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.81 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:22Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=82 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.82 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:23Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=83 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.83 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:24Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=84 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.84 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:25Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=85 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.85 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:26Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=86 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.86 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:27Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=87 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.87 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:28Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=88 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.88 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:29Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=89 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.89 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:30Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=90 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.90 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:31Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=91 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.91 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:32Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=92 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.92 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:33Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=93 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.93 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:34Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=94 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.94 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:35Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=95 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.95 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:36Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=96 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.96 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:37Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=97 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.97 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:38Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=98 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.98 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:39Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=99 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.99 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:40Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=100 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.100 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:41Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=101 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.101 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:42Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=102 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.102 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:43Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=103 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.103 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:44Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=104 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.104 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:45Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=105 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.105 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:46Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=106 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.106 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:47Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=107 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.107 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:48Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=108 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.108 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:49Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=109 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.109 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:50Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=110 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.110 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:51Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=111 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.111 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:52Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=112 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.112 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:53Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=113 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.113 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:54Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=114 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.114 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:55Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=115 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.115 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:56Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=116 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.116 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:57Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=117 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.117 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:58Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=118 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.118 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:59Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=119 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.119 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:00Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=120 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.120 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:01Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=121 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.121 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:02Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=122 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.122 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:03Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=123 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.123 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:04Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=124 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.124 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:05Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=125 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.125 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:06Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=126 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.126 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:07Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=127 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.127 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:08Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=128 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.128 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:09Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=129 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.129 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:10Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=130 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.130 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:11Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=131 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.131 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:12Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=132 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.132 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:13Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=133 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.133 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:14Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=134 type=\\\"traffic\\\" action=\\\"deny\\\" srcip=10.0.0.134 dstport=443\"}, {\"timestamp\": \"2026-10-02T09:00:15Z\", \"hostname\": \"gs-fw01\", \"body\": \"eventtime=135 type=\\\"traffic\\\" act",
+  "profile_format": "json array",
+  "profile_records": 135,
+  "split_format": "json array",
+  "split_records": 135,
+  "shapes": {
+   "fields:body,hostname,timestamp > body: kv:action=deny, type=traffic": 135
+  }
+ },
+ "extra:nested_json": {
+  "text": "{\"a\": {\"b\": {\"c\": {\"d\": {\"e\": 1}}}}, \"x\": [1, 2]}\n{\"a\": {\"b\": 2}, \"x\": null}\n",
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:a.b.c.d,x": 1,
+   "fields:a.b,x": 1
+  }
+ },
+ "format:csv_quoted:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "format:csv_quoted:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:csv_quoted:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 1,
+   "row:action=logout": 1
+  }
+ },
+ "format:tsv:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "format:tsv:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:tsv:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 1,
+   "row:action=logout": 1
+  }
+ },
+ "format:pipe:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "format:pipe:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:pipe:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 1,
+   "row:action=logout": 1
+  }
+ },
+ "format:csv_noheader:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "format:csv_noheader:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:csv_noheader:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "format:csv_noheader_quoted:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:csv_noheader_quoted:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:csv_noheader_quoted:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "format:syslog3164_freeform:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "syslog rfc3164",
+  "split_records": 2,
+  "shapes": {
+   "text:sshd|Accepted password for alice from <ip> port <n> <n>": 1,
+   "text:sshd|Failed password for bob from <ip> port <n> <n>": 1
+  }
+ },
+ "format:syslog3164_freeform:third:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 1,
+  "split_format": "syslog rfc3164",
+  "split_records": 1,
+  "shapes": {
+   "text:sshd|Accepted password for alice from <ip> port <n> <n>": 1
+  }
+ },
+ "format:syslog3164_freeform:most:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 2,
+  "shapes": {
+   "text:sshd|Accepted password for alice from <ip> port <n> <n>": 1,
+   "text:sshd|Failed password for bob from <ip> port <n> <n>": 1
+  }
+ },
+ "format:syslog5424_kv:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 2,
+  "split_format": "syslog rfc5424",
+  "split_records": 1,
+  "shapes": {
+   "text:firewall|action=allow src=<ip> dst=<ip> <n> proto=tcp user=alice": 1
+  }
+ },
+ "format:syslog5424_kv:third:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:syslog5424_kv:most:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 3,
+  "split_format": "syslog rfc5424",
+  "split_records": 2,
+  "shapes": {
+   "text:firewall|action=allow src=<ip> dst=<ip> <n> proto=tcp user=alice": 1,
+   "text:firewall|action=deny src=<ip> dst=<ip> <n> proto=tcp user=-": 1
+  }
+ },
+ "format:cef:head": {
+  "profile_format": "cef",
+  "profile_records": 2,
+  "split_format": "cef",
+  "split_records": 1,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1
+  }
+ },
+ "format:cef:third:head": {
+  "profile_format": "cef",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:cef:most:head": {
+  "profile_format": "cef",
+  "profile_records": 3,
+  "split_format": "cef",
+  "split_records": 2,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1,
+   "cef:Acme|Gateway|101|User logged out": 1
+  }
+ },
+ "format:syslog_cef:head": {
+  "profile_format": "cef",
+  "profile_records": 2,
+  "split_format": "cef",
+  "split_records": 1,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1
+  }
+ },
+ "format:syslog_cef:third:head": {
+  "profile_format": "cef",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:syslog_cef:most:head": {
+  "profile_format": "cef",
+  "profile_records": 3,
+  "split_format": "cef",
+  "split_records": 2,
+  "shapes": {
+   "cef:Acme|Gateway|100|User logged in": 1,
+   "cef:Acme|Gateway|101|User logged out": 1
+  }
+ },
+ "format:kv_quoted:head": {
+  "profile_format": "key=value",
+  "profile_records": 2,
+  "split_format": "key=value",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,date,devname,dstip,srcip,time,type,user | action=accept, type=traffic": 1
+  }
+ },
+ "format:kv_quoted:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:kv_quoted:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 3,
+  "split_format": "key=value",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,date,devname,dstip,srcip,time,type,user | action=accept, type=traffic": 1,
+   "fields:action,date,devname,dstip,srcip,time,type,user | action=deny, type=traffic": 1
+  }
+ },
+ "format:json_lines:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,src,ts,user.name | event=login": 1,
+   "fields:event,src,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_lines:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_lines:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,src,ts,user.name | event=login": 1,
+   "fields:event,src,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_offsets:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_offsets:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_offsets:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:csv_zone_names:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "format:csv_zone_names:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:csv_zone_names:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 1,
+   "row:action=logout": 1
+  }
+ },
+ "format:json_epoch_fraction:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_fraction:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_epoch_fraction:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_micros:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_micros:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_micros:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_micros:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_micros:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_epoch_micros:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_epoch_s_micros:head": {
+  "profile_format": "json lines",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_epoch_s_micros:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:json_epoch_s_micros:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1,
+   "fields:event,ts,user.name | event=logout": 1
+  }
+ },
+ "format:json_array_nested:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,actor.ip,actor.user,tags,time | action=login": 1,
+   "fields:action,actor.ip,actor.user,tags,time | action=logout": 1
+  }
+ },
+ "format:json_array_nested:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,actor.ip,actor.user,tags,time | action=login": 1
+  }
+ },
+ "format:json_array_nested:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,actor.ip,actor.user,tags,time | action=login": 1,
+   "fields:action,actor.ip,actor.user,tags,time | action=logout": 1
+  }
+ },
+ "format:xml_records:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,ip,time,user | action=login": 1
+  }
+ },
+ "format:xml_records:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:xml_records:most:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,ip,time,user | action=login": 1,
+   "fields:action,ip,time,user | action=logout": 1
+  }
+ },
+ "format:xml_attributes:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:Entry@action,Entry@ip,Entry@time,Entry@user | Entry@action=login": 1
+  }
+ },
+ "format:xml_attributes:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:xml_attributes:most:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:Entry@action,Entry@ip,Entry@time,Entry@user | Entry@action=login": 1,
+   "fields:Entry@action,Entry@ip,Entry@time,Entry@user | Entry@action=logout": 1
+  }
+ },
+ "format:xml_namespaced:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:Action,Ip,Time,User | Action=login": 1
+  }
+ },
+ "format:xml_namespaced:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "format:xml_namespaced:most:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:Action,Ip,Time,User | Action=login": 1,
+   "fields:Action,Ip,Time,User | Action=logout": 1
+  }
+ },
+ "format:xml_fragments_ns:head": {
+  "profile_format": "xml fragments",
+  "profile_records": 2,
+  "split_format": "xml fragments",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4634": 1
+  }
+ },
+ "format:xml_fragments_ns:third:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Data,Data@Name": 1
+  }
+ },
+ "format:xml_fragments_ns:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml fragments",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4634": 1
+  }
+ },
+ "eval:01_csv_vpn:0:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "eval:01_csv_vpn:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:01_csv_vpn:0:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 2
+  }
+ },
+ "eval:02_json_alert:0:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:dport,dst,sensor,sev,sig,src,ts": 2
+  }
+ },
+ "eval:02_json_alert:0:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:dport,dst,sensor,sev,sig,src,ts": 1
+  }
+ },
+ "eval:02_json_alert:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:dport,dst,sensor,sev,sig,src,ts": 2
+  }
+ },
+ "eval:03_json_nested_process:0:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:@timestamp,host.ip,host.name,process.args,process.executable,process.pid,user.name": 2
+  }
+ },
+ "eval:03_json_nested_process:0:third:head": {
+  "split_format": "json array",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "eval:03_json_nested_process:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:@timestamp,host.ip,host.name,process.args,process.executable,process.pid,user.name": 2
+  }
+ },
+ "eval:04_json_embedded:0:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,message,received > message: json:event,ok,time,user | event=login": 2
+  }
+ },
+ "eval:04_json_embedded:0:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:host,message,received > message: json:event,ok,time,user | event=login": 1
+  }
+ },
+ "eval:04_json_embedded:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,message,received > message: json:event,ok,time,user | event=login": 2
+  }
+ },
+ "eval:05_xml_ns_files:0:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:account,machine,op,path,when | op=read": 1
+  }
+ },
+ "eval:05_xml_ns_files:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:05_xml_ns_files:0:most:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:account,machine,op,path,when | op=read": 1,
+   "fields:account,machine,op,path,when | op=delete": 1
+  }
+ },
+ "eval:06_syslog5424_ssh:0:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 2,
+  "split_format": "syslog rfc5424",
+  "split_records": 1,
+  "shapes": {
+   "text:sshd|Accepted publickey for frank from <ip> port <n> <n>": 1
+  }
+ },
+ "eval:06_syslog5424_ssh:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "syslog rfc5424",
+  "split_records": 1,
+  "shapes": {
+   "text:sshd|Accepted publickey for frank from <ip> port <n> <n>": 1
+  }
+ },
+ "eval:06_syslog5424_ssh:0:most:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 3,
+  "split_format": "syslog rfc5424",
+  "split_records": 2,
+  "shapes": {
+   "text:sshd|Accepted publickey for frank from <ip> port <n> <n>": 1,
+   "text:sshd|Failed password for invalid user admin from <ip> port <n> <n>": 1
+  }
+ },
+ "eval:07_syslog3164_sudo:0:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 2,
+  "split_format": "syslog rfc3164",
+  "split_records": 1,
+  "shapes": {
+   "text:sudo|grace : <n> ; PWD=/home/grace ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx": 1
+  }
+ },
+ "eval:07_syslog3164_sudo:0:third:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:07_syslog3164_sudo:0:most:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 2,
+  "shapes": {
+   "text:sudo|grace : <n> ; PWD=/home/grace ; USER=root ; COMMAND=/usr/bin/systemctl restart nginx": 1,
+   "text:sudo|henry : <n> ; PWD=/var/www ; USER=www-data ; COMMAND=/usr/bin/git pull": 1
+  }
+ },
+ "eval:08_kv_firewall:0:head": {
+  "profile_format": "key=value",
+  "profile_records": 2,
+  "split_format": "key=value",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,dport,dst,proto,src | action=allow": 1
+  }
+ },
+ "eval:08_kv_firewall:0:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 1,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:08_kv_firewall:0:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 3,
+  "split_format": "key=value",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,dport,dst,proto,src | action=allow": 1,
+   "fields:action,dport,dst,proto,src | action=deny": 1
+  }
+ },
+ "eval:09_csv_noheader_copy:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:09_csv_noheader_copy:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:09_csv_noheader_copy:0:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "eval:10_xml_attrs_lock:0:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:event@action,event@host,event@time,event@user | event@action=lock": 1,
+   "fields:event@action,event@host,event@time,event@user | event@action=unlock": 1
+  }
+ },
+ "eval:10_xml_attrs_lock:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:10_xml_attrs_lock:0:most:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:event@action,event@host,event@time,event@user | event@action=lock": 1,
+   "fields:event@action,event@host,event@time,event@user | event@action=unlock": 1
+  }
+ },
+ "eval:11_jsonl_message_text:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:11_jsonl_message_text:0:third:head": {
+  "split_format": "cef",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "eval:11_jsonl_message_text:0:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,message,received > message: text:|<n> <n> <*> LOGIN <*> login from <ip>": 2
+  }
+ },
+ "eval:12_xml_fragments_events:0:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Data,Data@Name": 1
+  }
+ },
+ "eval:12_xml_fragments_events:0:third:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:Computer,EventID,TimeCreated@SystemTime | EventID=4624": 1
+  }
+ },
+ "eval:12_xml_fragments_events:0:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml fragments",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,TimeCreated@SystemTime | EventID=4625": 1
+  }
+ },
+ "eval:13_json_embedded_message:0:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,payload,received > payload: json:level,msg,ts > msg: kv:action=LOGIN": 2
+  }
+ },
+ "eval:13_json_embedded_message:0:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:host,payload,received > payload: json:level,msg,ts > msg: kv:action=LOGIN": 1
+  }
+ },
+ "eval:13_json_embedded_message:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,payload,received > payload: json:level,msg,ts > msg: kv:action=LOGIN": 2
+  }
+ },
+ "eval:14_csv_two_files_variants:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "eval:14_csv_two_files_variants:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:14_csv_two_files_variants:0:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 2
+  }
+ },
+ "eval:14_csv_two_files_variants:1:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=login": 1
+  }
+ },
+ "eval:14_csv_two_files_variants:1:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:14_csv_two_files_variants:1:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 1,
+   "row:action=timeout": 1
+  }
+ },
+ "eval:15_csv_lookup_reference_data:0:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "eval:15_csv_lookup_reference_data:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:15_csv_lookup_reference_data:0:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "eval:16_json_batches_items:0:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:batch,events,host": 1
+  }
+ },
+ "eval:16_json_batches_items:0:third:head": {
+  "split_format": "json array",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "eval:16_json_batches_items:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:batch,events,host": 2
+  }
+ },
+ "eval:17_csv_firewall_mixed:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 13,
+  "split_format": "delimited",
+  "split_records": 12,
+  "shapes": {
+   "row:event_type=TRAFFIC, action=ALLOW": 5,
+   "row:event_type=TRAFFIC, action=DENY": 5,
+   "row:event_type=SYSTEM, action=START": 1,
+   "row:event_type=ADMIN, action=LOGIN_SUCCESS": 1
+  }
+ },
+ "eval:17_csv_firewall_mixed:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 6,
+  "split_format": "delimited",
+  "split_records": 5,
+  "shapes": {
+   "row:event_type=TRAFFIC, action=ALLOW": 3,
+   "row:event_type=TRAFFIC, action=DENY": 2
+  }
+ },
+ "eval:17_csv_firewall_mixed:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 18,
+  "split_format": "delimited",
+  "split_records": 17,
+  "shapes": {
+   "row:event_type=TRAFFIC, action=ALLOW": 5,
+   "row:event_type=TRAFFIC, action=DENY": 5,
+   "row:event_type=SYSTEM, action=START": 1,
+   "row:event_type=ADMIN, action=LOGIN_SUCCESS": 1,
+   "row:event_type=ADMIN, action=LOGIN_FAILED": 1,
+   "row:event_type=ADMIN, action=CONFIG_CHANGE": 1,
+   "row:event_type=SYSTEM, action=CONFIG_SAVED": 1,
+   "row:event_type=SYSTEM, action=HIGH_CPU": 1,
+   "row:event_type=ADMIN, action=LOGOUT": 1
+  }
+ },
+ "eval:18_json_event_string_freetext:0:head": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_SUCCESS": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_FAILURE": 1,
+   "fields:event,host,received > event: json:event_type,message,resource,timestamp,username | event_type=DOCUMENT_VIEW": 1
+  }
+ },
+ "eval:18_json_event_string_freetext:0:third:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_SUCCESS": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_FAILURE": 1
+  }
+ },
+ "eval:18_json_event_string_freetext:0:most:head": {
+  "profile_format": "json array",
+  "profile_records": 5,
+  "split_format": "json array",
+  "split_records": 5,
+  "shapes": {
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_SUCCESS": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=LOGIN_FAILURE": 1,
+   "fields:event,host,received > event: json:event_type,message,resource,timestamp,username | event_type=DOCUMENT_VIEW": 1,
+   "fields:event,host,received > event: json:event_type,message,timestamp,username | event_type=PASSWORD_CHANGE": 1,
+   "fields:event,host,received > event: json:event_type,message,resource,timestamp,username | event_type=DOCUMENT_DELETE": 1
+  }
+ },
+ "eval:19_jsonl_message_layouts:0:head": {
+  "profile_format": "json lines",
+  "profile_records": 6,
+  "split_format": "json lines",
+  "split_records": 5,
+  "shapes": {
+   "fields:host,message,severity,time > message: text:|AUTH fail user=jsmith src=<ip> reason=<s>": 1,
+   "fields:host,message,severity,time > message: text:|AUTH ok <*> src=<ip> <*>": 2,
+   "fields:host,message,severity,time > message: text:|TUNNEL <*> peer=<ip> <n>": 2
+  }
+ },
+ "eval:19_jsonl_message_layouts:0:third:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,message,severity,time > message: text:|AUTH ok user=<s> src=<ip> method=radius": 1,
+   "fields:host,message,severity,time > message: text:|AUTH fail user=jsmith src=<ip> reason=<s>": 1
+  }
+ },
+ "eval:19_jsonl_message_layouts:0:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 8,
+  "split_format": "json lines",
+  "split_records": 7,
+  "shapes": {
+   "fields:host,message,severity,time > message: text:|AUTH fail user=jsmith src=<ip> reason=<s>": 1,
+   "fields:host,message,severity,time > message: text:|AUTH ok <*> src=<ip> <*>": 2,
+   "fields:host,message,severity,time > message: text:|TUNNEL <*> peer=<ip> <n>": 2,
+   "fields:host,message,severity,time > message: text:|SESSION end user=<s> <n>": 1,
+   "fields:host,message,severity,time > message: text:|Heartbeat from monitoring probe <n>": 1
+  }
+ },
+ "eval:20_csv_coded_with_docs:0:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "eval:20_csv_coded_with_docs:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:20_csv_coded_with_docs:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "eval:21_csv_connections_odd_fields:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 7,
+  "split_format": "delimited",
+  "split_records": 6,
+  "shapes": {
+   "row:event=CONNECT": 5,
+   "row:event=DISCONNECT": 1
+  }
+ },
+ "eval:21_csv_connections_odd_fields:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:event=CONNECT": 2
+  }
+ },
+ "eval:21_csv_connections_odd_fields:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 9,
+  "split_format": "delimited",
+  "split_records": 8,
+  "shapes": {
+   "row:event=CONNECT": 6,
+   "row:event=DISCONNECT": 2
+  }
+ },
+ "eval:22_syslog_cef_gateway:0:head": {
+  "profile_format": "cef",
+  "profile_records": 4,
+  "split_format": "cef",
+  "split_records": 3,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 1,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 1,
+   "cef:Acme|SecureGateway|2001|Web request allowed": 1
+  }
+ },
+ "eval:22_syslog_cef_gateway:0:third:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "cef",
+  "split_records": 2,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 1,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 1
+  }
+ },
+ "eval:22_syslog_cef_gateway:0:most:head": {
+  "profile_format": "cef",
+  "profile_records": 6,
+  "split_format": "cef",
+  "split_records": 5,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 1,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 1,
+   "cef:Acme|SecureGateway|2001|Web request allowed": 1,
+   "cef:Acme|SecureGateway|2002|Web request blocked": 1,
+   "cef:Acme|SecureGateway|3001|Malware detected": 1
+  }
+ },
+ "eval:23_pipe_quoted_helpdesk:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:action=create": 1,
+   "row:action=view": 1,
+   "row:action=update": 1
+  }
+ },
+ "eval:23_pipe_quoted_helpdesk:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=create": 1
+  }
+ },
+ "eval:23_pipe_quoted_helpdesk:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 5,
+  "split_format": "delimited",
+  "split_records": 4,
+  "shapes": {
+   "row:action=create": 2,
+   "row:action=view": 1,
+   "row:action=update": 1
+  }
+ },
+ "eval:24_csv_noheader_quoted_print:0:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "eval:24_csv_noheader_quoted_print:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:24_csv_noheader_quoted_print:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 4,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "eval:25_syslog_kv_nil_proxy:0:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 4,
+  "split_format": "syslog rfc5424",
+  "split_records": 3,
+  "shapes": {
+   "text:webfilter|user=alice src=<ip> dst=<ip> url=https://example.com/ category=business action=allow referer=-": 1,
+   "text:webfilter|user=- src=<ip> dst=<ip> url=http://<ip>/x.bin category=malware action=block referer=-": 1,
+   "text:webfilter|user=bob src=<ip> dst=<ip> url=https://example.com/news category=news action=allow referer=https://example.com/": 1
+  }
+ },
+ "eval:25_syslog_kv_nil_proxy:0:third:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 2,
+  "split_format": "syslog rfc5424",
+  "split_records": 1,
+  "shapes": {
+   "text:webfilter|user=alice src=<ip> dst=<ip> url=https://example.com/ category=business action=allow referer=-": 1
+  }
+ },
+ "eval:25_syslog_kv_nil_proxy:0:most:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 5,
+  "split_format": "syslog rfc5424",
+  "split_records": 4,
+  "shapes": {
+   "text:webfilter|user=alice src=<ip> dst=<ip> url=https://example.com/ category=business action=allow referer=-": 1,
+   "text:webfilter|user=- src=<ip> dst=<ip> url=http://<ip>/x.bin category=malware action=block referer=-": 1,
+   "text:webfilter|user=bob src=<ip> dst=<ip> url=https://example.com/news category=news action=allow referer=https://example.com/": 1,
+   "text:webfilter|user=- src=<ip> dst=<ip> url=https://<ip>/login category=phishing action=block referer=https://mail.example.org/": 1
+  }
+ },
+ "eval:26_xml_fragments_windows_ns:0:head": {
+  "profile_format": "key=value",
+  "profile_records": 6,
+  "split_format": "xml fragments",
+  "split_records": 5,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 2,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4740": 1
+  }
+ },
+ "eval:26_xml_fragments_windows_ns:0:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 3,
+  "split_format": "xml fragments",
+  "split_records": 2,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1
+  }
+ },
+ "eval:26_xml_fragments_windows_ns:0:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 8,
+  "split_format": "xml fragments",
+  "split_records": 7,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 2,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 2,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4740": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4720": 1
+  }
+ },
+ "eval:27_endash_auth_messages:0:head": {
+  "profile_format": "multi-line text",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 3,
+  "shapes": {
+   "row:all": 3
+  }
+ },
+ "eval:27_endash_auth_messages:0:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:27_endash_auth_messages:0:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 5,
+  "split_format": "delimited",
+  "split_records": 4,
+  "shapes": {
+   "row:all": 4
+  }
+ },
+ "eval:28_xml_records_badges:0:head": {
+  "profile_format": "xml",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:door,granted,holder,when": 2
+  }
+ },
+ "eval:28_xml_records_badges:0:third:head": {
+  "profile_format": "xml",
+  "profile_records": 1,
+  "split_format": "xml",
+  "split_records": 1,
+  "shapes": {
+   "fields:door,granted,holder,when": 1
+  }
+ },
+ "eval:28_xml_records_badges:0:most:head": {
+  "profile_format": "xml",
+  "profile_records": 3,
+  "split_format": "xml",
+  "split_records": 3,
+  "shapes": {
+   "fields:door,granted,holder,when": 3
+  }
+ },
+ "eval:30_jsonl_two_shapes_idp:0:head": {
+  "profile_format": "json lines",
+  "profile_records": 5,
+  "split_format": "json lines",
+  "split_records": 4,
+  "shapes": {
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.session.start": 1,
+   "fields:ip,ok,ts,type,user | type=login": 2,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.reason,outcome.result,published | eventType=user.session.start": 1
+  }
+ },
+ "eval:30_jsonl_two_shapes_idp:0:third:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.session.start": 1,
+   "fields:ip,ok,ts,type,user | type=login": 1
+  }
+ },
+ "eval:30_jsonl_two_shapes_idp:0:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 7,
+  "split_format": "json lines",
+  "split_records": 6,
+  "shapes": {
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.session.start": 1,
+   "fields:ip,ok,ts,type,user | type=login": 2,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.reason,outcome.result,published | eventType=user.session.start": 1,
+   "fields:actor.alternateId,client.ipAddress,eventType,outcome.result,published | eventType=user.account.lock": 1,
+   "fields:ip,ok,ts,type,user | type=password_change": 1
+  }
+ },
+ "eval:31_kv_awkward_times_fortigate:0:head": {
+  "profile_format": "key=value",
+  "profile_records": 4,
+  "split_format": "key=value",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-up, subtype=vpn, type=event": 2,
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=ssl-login-fail, subtype=vpn, type=event": 1
+  }
+ },
+ "eval:31_kv_awkward_times_fortigate:0:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 2,
+  "split_format": "key=value",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-up, subtype=vpn, type=event": 1
+  }
+ },
+ "eval:31_kv_awkward_times_fortigate:0:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 5,
+  "split_format": "key=value",
+  "split_records": 4,
+  "shapes": {
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-up, subtype=vpn, type=event": 2,
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=ssl-login-fail, subtype=vpn, type=event": 1,
+   "fields:action,date,devname,eventtime,itime,logid,msg,remip,subtype,time,type,user | action=tunnel-down, subtype=vpn, type=event": 1
+  }
+ },
+ "eval:32_xml_fragments_windows_many:0:head": {
+  "profile_format": "key=value",
+  "profile_records": 15,
+  "split_format": "xml fragments",
+  "split_records": 14,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4634": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4647": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4648": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4688": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4689": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4697": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4719": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4720": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4722": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4723": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4724": 1
+  }
+ },
+ "eval:32_xml_fragments_windows_many:0:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 8,
+  "split_format": "xml fragments",
+  "split_records": 7,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4634": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4647": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4648": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4688": 1
+  }
+ },
+ "eval:32_xml_fragments_windows_many:0:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 20,
+  "split_format": "xml fragments",
+  "split_records": 19,
+  "shapes": {
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4624": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4625": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4634": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4647": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4648": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4672": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4688": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4689": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4697": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4719": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4720": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4722": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4723": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4724": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4725": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4726": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4728": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4729": 1,
+   "fields:Computer,Data,Data@Name,EventID,Provider@Name,TimeCreated@SystemTime | EventID=4740": 1
+  }
+ },
+ "eval:34_jsonl_schema_traps_nac:0:head": {
+  "profile_format": "json lines",
+  "profile_records": 4,
+  "split_format": "json lines",
+  "split_records": 3,
+  "shapes": {
+   "fields:ip,mac,port,result,service,switch,time,user": 3
+  }
+ },
+ "eval:34_jsonl_schema_traps_nac:0:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "eval:34_jsonl_schema_traps_nac:0:most:head": {
+  "profile_format": "json lines",
+  "profile_records": 5,
+  "split_format": "json lines",
+  "split_records": 4,
+  "shapes": {
+   "fields:ip,mac,port,result,service,switch,time,user": 4
+  }
+ },
+ "eval:35_xml_fragments_secretserver_messages:0:head": {
+  "profile_format": "key=value",
+  "profile_records": 22,
+  "split_format": "xml fragments",
+  "split_records": 21,
+  "shapes": {
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Move, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Permissions Changed, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Grant, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Revoke, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Access Denied, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkin, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkout, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Copy Password, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Delete, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Edit, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Export, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Heartbeat Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Launch, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Change Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Changed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Displayed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Restore, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=View, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=End, Event=Session": 1
+  }
+ },
+ "eval:35_xml_fragments_secretserver_messages:0:third:head": {
+  "profile_format": "key=value",
+  "profile_records": 11,
+  "split_format": "xml fragments",
+  "split_records": 10,
+  "shapes": {
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Move, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Permissions Changed, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Grant, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Revoke, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Access Denied, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkin, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkout, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Copy Password, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Secret": 1
+  }
+ },
+ "eval:35_xml_fragments_secretserver_messages:0:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 30,
+  "split_format": "xml fragments",
+  "split_records": 29,
+  "shapes": {
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Move, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Permissions Changed, Event=Folder": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Grant, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Revoke, Event=Permission": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Access Denied, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkin, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Checkout, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Copy Password, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Create, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Delete, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Edit, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Export, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Heartbeat Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Launch, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Change Failed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Changed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Password Displayed, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Restore, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=View, Event=Secret": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=End, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Recording Viewed, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Start, Event=Session": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Audit Export, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Configuration Changed, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Discovery Completed, Event=System": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Account Locked, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Login, Event=User": 1,
+   "fields:Channel,Computer,Data,EventID,EventRecordID,Keywords,Level,Opcode,Provider@Name,Task,TimeCreated@SystemTime | EventID=1000 > Data: kv:Action=Login Failed, Event=User": 1
+  }
+ },
+ "extra:bluecoat:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:s-action=TCP_NC_MISS": 1
+  }
+ },
+ "extra:bluecoat:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 5,
+  "shapes": {
+   "text:|#Software: SGOS <ip>": 1,
+   "text:|#Version: <n>": 1,
+   "text:|#Start-Date: <n> <n>": 1,
+   "text:|#Date: <n> <n>": 1,
+   "text:|#Fields: date time time-taken c-ip cs-username cs-auth-group x-exception-id sc-filter-result cs-categories cs(Referer) sc-status s-action cs-method rs(Content-Type) cs-uri-scheme cs-host cs-uri-port cs-uri-path cs-uri-query cs(User-Agent) s-ip sc-bytes cs-bytes": 1
+  }
+ },
+ "extra:bluecoat:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:s-action=TCP_NC_MISS": 1,
+   "row:s-action=TCP_DENIED": 1
+  }
+ },
+ "extra:zeek:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:zeek:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 3,
+  "shapes": {
+   "text:|#separator <n>": 1,
+   "text:|#path conn": 1,
+   "text:|#open <n>": 1
+  }
+ },
+ "extra:zeek:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:cri:head": {
+  "profile_format": "cri",
+  "profile_records": 2,
+  "split_format": "cri",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> stdout F user=alice action=login": 1
+  }
+ },
+ "extra:cri:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "cri",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> stdout F user=alice action=login": 1
+  }
+ },
+ "extra:cri:most:head": {
+  "profile_format": "cri",
+  "profile_records": 3,
+  "split_format": "cri",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> stdout F user=alice action=login": 1
+  }
+ },
+ "extra:multiline:head": {
+  "profile_format": "multi-line text",
+  "profile_records": 2,
+  "split_format": "unknown text",
+  "split_records": 3,
+  "shapes": {
+   "text:|<n> <n> ERROR Failed": 1,
+   "text:|java.lang.IllegalStateException: x": 1,
+   "text:|at <n>": 1
+  }
+ },
+ "extra:multiline:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> <n> ERROR Failed": 1
+  }
+ },
+ "extra:multiline:most:head": {
+  "profile_format": "multi-line text",
+  "profile_records": 3,
+  "split_format": "multi-line text",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> <n> ERROR Failed": 1
+  }
+ },
+ "extra:tilde:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> ~ alice ~ LOGIN ~ OK ~ <n>": 1
+  }
+ },
+ "extra:tilde:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:tilde:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "unknown text",
+  "split_records": 1,
+  "shapes": {
+   "text:|<n> ~ alice ~ LOGIN ~ OK ~ <n>": 1
+  }
+ },
+ "extra:tickets:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "delimited",
+  "split_records": 2,
+  "split_refused": true
+ },
+ "extra:tickets:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:tickets:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:all": 2
+  }
+ },
+ "extra:damaged_jsonl:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_refused": true
+ },
+ "extra:damaged_jsonl:third:head": {
+  "profile_format": "json lines",
+  "profile_records": 3,
+  "split_format": "json lines",
+  "split_records": 2,
+  "shapes": {
+   "fields:action,time,user | action=login": 2
+  }
+ },
+ "extra:damaged_jsonl:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_refused": true
+ },
+ "extra:bad_csv:head": {
+  "profile_format": "delimited",
+  "profile_records": 7,
+  "split_format": "delimited",
+  "split_records": 5,
+  "shapes": {
+   "row:action=login": 5
+  }
+ },
+ "extra:bad_csv:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 2,
+  "shapes": {
+   "row:action=login": 2
+  }
+ },
+ "extra:bad_csv:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 7,
+  "shapes": {
+   "row:action=login": 7
+  }
+ },
+ "extra:bad_kv:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "key=value",
+  "split_records": 3,
+  "shapes": {
+   "fields:action,time,user | action=login": 3
+  }
+ },
+ "extra:bad_kv:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "key=value",
+  "split_records": 1,
+  "shapes": {
+   "fields:action,time,user | action=login": 1
+  }
+ },
+ "extra:bad_kv:most:head": {
+  "profile_format": "key=value",
+  "profile_records": 5,
+  "split_format": "key=value",
+  "split_records": 4,
+  "shapes": {
+   "fields:action,time,user | action=login": 4
+  }
+ },
+ "extra:people:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:people:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:people:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:times_header:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=start": 1
+  }
+ },
+ "extra:times_header:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:times_header:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:action=start": 1
+  }
+ },
+ "extra:noheader3:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:noheader3:third:head": {
+  "profile_format": "delimited",
+  "profile_records": 0,
+  "split_format": "cef",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:noheader3:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:when_who:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:when_who:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:when_who:most:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 1,
+  "shapes": {
+   "row:all": 1
+  }
+ },
+ "extra:palo_alto:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 2,
+  "split_format": "syslog rfc3164",
+  "split_records": 1,
+  "shapes": {
+   "fields:app,col1,col2,col3,col4,col5,col6,col7,host,message,pid,pri,time > message: text:|<n> <n>": 1
+  }
+ },
+ "extra:palo_alto:third:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 1,
+  "split_format": "syslog rfc3164",
+  "split_records": 1,
+  "shapes": {
+   "fields:app,col1,col2,col3,col4,col5,col6,col7,host,message,pid,pri,time > message: text:|<n> <n>": 1
+  }
+ },
+ "extra:palo_alto:most:head": {
+  "profile_format": "syslog rfc3164",
+  "profile_records": 3,
+  "split_format": "syslog rfc3164",
+  "split_records": 2,
+  "shapes": {
+   "fields:app,col1,col2,col3,col4,col5,col6,col7,host,message,pid,pri,time > message: text:|<n> <n>": 2
+  }
+ },
+ "extra:trail:head": {
+  "profile_format": "json object",
+  "profile_records": 1,
+  "split_format": "json object",
+  "split_records": 1,
+  "shapes": {
+   "fields:eventName,eventTime | eventName=ConsoleLogin": 1
+  }
+ },
+ "extra:trail:third:head": {
+  "split_format": "cef",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "extra:trail:most:head": {
+  "profile_format": "json object",
+  "profile_records": 1,
+  "split_format": "json object",
+  "split_records": 1,
+  "shapes": {
+   "fields:eventName,eventTime | eventName=ConsoleLogin": 1
+  }
+ },
+ "extra:epochs:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:epochs:third:head": {
+  "split_format": "cef",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "extra:epochs:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:ssh:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 3,
+  "split_format": "syslog rfc5424",
+  "split_records": 2,
+  "shapes": {
+   "text:sshd|Accepted publickey for frank from <ip> port <n> <n>": 1,
+   "text:sshd|Failed password for invalid user admin from <ip> port <n> <n>": 1
+  }
+ },
+ "extra:ssh:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "syslog rfc5424",
+  "split_records": 1,
+  "shapes": {
+   "text:sshd|Accepted publickey for frank from <ip> port <n> <n>": 1
+  }
+ },
+ "extra:ssh:most:head": {
+  "profile_format": "syslog rfc5424",
+  "profile_records": 4,
+  "split_format": "syslog rfc5424",
+  "split_records": 3,
+  "shapes": {
+   "text:sshd|Failed password for invalid user admin from <ip> port <n> <n>": 1,
+   "text:sshd|Accepted <*> for <*> from <ip> port <n> <n>": 2
+  }
+ },
+ "extra:keycloak:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN": 1,
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN_ERROR": 1
+  }
+ },
+ "extra:keycloak:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN": 1
+  }
+ },
+ "extra:keycloak:most:head": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN": 1,
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.keycloak.events > message: kv:type=LOGIN_ERROR": 1,
+   "fields:body,facility,hostname,timestamp > body: json:level,loggerName,message,timestamp | loggerName=org.infinispan.CLUSTER": 1
+  }
+ },
+ "extra:free_text:head": {
+  "profile_format": "json array",
+  "profile_records": 2,
+  "split_format": "json array",
+  "split_records": 2,
+  "shapes": {
+   "fields:host,message > message: text:|Accepted password for <*> from <ip>": 2
+  }
+ },
+ "extra:free_text:third:head": {
+  "profile_format": "json array",
+  "profile_records": 1,
+  "split_format": "json array",
+  "split_records": 1,
+  "shapes": {
+   "fields:host,message > message: text:|Accepted password for frank from <ip>": 1
+  }
+ },
+ "extra:free_text:most:head": {
+  "profile_format": "json array",
+  "profile_records": 3,
+  "split_format": "json array",
+  "split_records": 3,
+  "shapes": {
+   "fields:host,message > message: text:|Accepted password for <*> from <ip>": 2,
+   "fields:host,message > message: text:|Disk <n> is <n> full": 1
+  }
+ },
+ "extra:secret_server:head": {
+  "profile_format": "delimited",
+  "profile_records": 2,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:EventID | EventID=1000": 1,
+   "fields:Data > Data: kv:Action=Login, Event=User": 1
+  }
+ },
+ "extra:secret_server:third:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "xml",
+  "split_records": 2,
+  "shapes": {
+   "fields:EventID | EventID=1000": 1,
+   "fields:Data > Data: kv:Action=Login, Event=User": 1
+  }
+ },
+ "extra:secret_server:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 3,
+  "split_format": "xml fragments",
+  "split_records": 2,
+  "shapes": {
+   "fields:Data,EventID | EventID=1000 > Data: kv:Action=Login, Event=User": 1,
+   "fields:Data,EventID | EventID=1000 > Data: kv:Action=Login Failed, Event=User": 1
+  }
+ },
+ "extra:cef_kinds:head": {
+  "profile_format": "cef",
+  "profile_records": 9,
+  "split_format": "cef",
+  "split_records": 8,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 3,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 3,
+   "cef:Acme|SecureGateway|2001|Web request allowed | proxy": 2
+  }
+ },
+ "extra:cef_kinds:third:head": {
+  "profile_format": "cef",
+  "profile_records": 5,
+  "split_format": "cef",
+  "split_records": 4,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 2,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 1,
+   "cef:Acme|SecureGateway|2001|Web request allowed | proxy": 1
+  }
+ },
+ "extra:cef_kinds:most:head": {
+  "profile_format": "cef",
+  "profile_records": 11,
+  "split_format": "cef",
+  "split_records": 10,
+  "shapes": {
+   "cef:Acme|SecureGateway|1001|User authenticated": 4,
+   "cef:Acme|SecureGateway|1002|Authentication failed": 3,
+   "cef:Acme|SecureGateway|2001|Web request allowed | proxy": 3
+  }
+ },
+ "extra:big_array:head": {
+  "profile_format": "json array",
+  "profile_records": 90,
+  "split_format": "json array",
+  "split_records": 90,
+  "shapes": {
+   "fields:body,hostname,timestamp > body: kv:action=deny, type=traffic": 90
+  }
+ },
+ "extra:big_array:third:head": {
+  "profile_format": "json array",
+  "profile_records": 45,
+  "split_format": "json array",
+  "split_records": 45,
+  "shapes": {
+   "fields:body,hostname,timestamp > body: kv:action=deny, type=traffic": 45
+  }
+ },
+ "extra:big_array:most:head": {
+  "profile_format": "json array",
+  "profile_records": 122,
+  "split_format": "json array",
+  "split_records": 122,
+  "shapes": {
+   "fields:body,hostname,timestamp > body: kv:action=deny, type=traffic": 122
+  }
+ },
+ "extra:nested_json:head": {
+  "profile_format": "unknown text",
+  "profile_records": null,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ },
+ "extra:nested_json:third:head": {
+  "split_format": "cef",
+  "split_records": 0,
+  "profile_refused": true,
+  "shapes": {}
+ },
+ "extra:nested_json:most:head": {
+  "profile_format": "delimited",
+  "profile_records": 1,
+  "split_format": "delimited",
+  "split_records": 0,
+  "shapes": {}
+ }
+}

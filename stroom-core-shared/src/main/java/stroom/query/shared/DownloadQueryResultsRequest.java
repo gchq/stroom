@@ -36,12 +36,25 @@ public class DownloadQueryResultsRequest {
     private final boolean sample;
     @JsonProperty
     private final int percent;
+    @JsonProperty
+    private final boolean includeSourceIds;
 
+    public DownloadQueryResultsRequest(final QuerySearchRequest searchRequest,
+                                       final DownloadSearchResultFileType fileType,
+                                       final Boolean sample,
+                                       final Integer percent) {
+        this(searchRequest, fileType, sample, percent, false);
+    }
+
+    /// @param includeSourceIds True to also write each row's stream and event ids (the hidden StreamId and EventId
+    ///                         columns), so each row can be traced to the event it came from.
     @JsonCreator
     public DownloadQueryResultsRequest(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest,
                                        @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                                        @JsonProperty("sample") final Boolean sample,
-                                       @JsonProperty("percent") final Integer percent) {
+                                       @JsonProperty("percent") final Integer percent,
+                                       @JsonProperty("includeSourceIds") final Boolean includeSourceIds) {
+        this.includeSourceIds = Objects.requireNonNullElse(includeSourceIds, false);
         this.searchRequest = searchRequest;
         this.fileType = fileType;
         this.sample = Objects.requireNonNullElse(sample, false);
@@ -62,5 +75,9 @@ public class DownloadQueryResultsRequest {
 
     public int getPercent() {
         return percent;
+    }
+
+    public boolean isIncludeSourceIds() {
+        return includeSourceIds;
     }
 }

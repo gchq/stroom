@@ -141,6 +141,30 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         currentSearch = null;
     }
 
+    /// Builds the search a new search would run, from the given query, without starting it.
+    ///
+    /// @return The search, or null if there is no data source or no result components.
+    public Search buildSearch(final ExpressionOperator expression,
+                              final List<Param> params,
+                              final TimeRange timeRange,
+                              final String queryInfo) {
+        final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
+        final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
+        if (resultComponentMap == null || dataSourceRef == null || expression == null) {
+            return null;
+        }
+        return Search
+                .builder()
+                .dataSourceRef(dataSourceRef)
+                .expression(ExpressionUtil.copyOperator(expression))
+                .componentSettingsMap(resultComponentMap)
+                .params(params)
+                .timeRange(timeRange)
+                .incremental(true)
+                .queryInfo(queryInfo)
+                .build();
+    }
+
     /**
      * Begin executing a new search using the supplied query expression.
      */

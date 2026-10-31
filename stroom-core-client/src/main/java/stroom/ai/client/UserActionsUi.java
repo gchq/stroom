@@ -1,0 +1,466 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.client;
+
+import stroom.dashboard.client.event.ApplyDashboardChangeEvent;
+import stroom.dashboard.client.table.TableChange;
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.shared.NullSafe;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+
+/// The actions an MCP tool's result can offer the user as buttons, as the server sends them (see the server's
+/// `UserActions`), and what their buttons say.
+final class UserActionsUi {
+
+    static final String ENABLE_PROCESSOR_FILTER = "enable_processor_filter";
+    static final String DISABLE_PROCESSOR_FILTER = "disable_processor_filter";
+    static final String OPEN_DOCUMENT = "open_document";
+    static final String ELASTICSEARCH_REQUEST = "elasticsearch_request";
+    /// A StroomQL query the agent proposed, which the button opens Stroom's New Query dialog to create.
+    static final String CREATE_QUERY = "create_query";
+    /// A dashboard the agent proposed, built from StroomQL, which the button opens Stroom's New Dashboard dialog to
+    /// create.
+    static final String CREATE_DASHBOARD = "create_dashboard";
+    /// A chart the agent planned, drawn with ECharts, which the button opens Stroom's New Visualisation dialog to
+    /// create, then adds to the dashboard (or the query's show clause), unsaved.
+    static final String CREATE_VISUALISATION = "create_visualisation";
+    static final String CREATE_VISUALISATIONS = "create_visualisations";
+    /// A search extraction the agent proposed for a dashboard table, which the button shows (what would be written,
+    /// with the name and folder the user chooses) for them to confirm, then writes and sets the table up to use.
+    static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
+    static final String CHANGE_EXTRACTION_PIPELINE = "change_extraction_pipeline";
+    /// A change to a stepping element's code the agent proposed, which the button opens a review of, from which
+    /// the user can apply it to the element's editor (unsaved).
+    static final String APPLY_CODE_CHANGE = "apply_code_change";
+    /// A revised query the agent proposed for the user's open Query, which the button puts in its editor, unsaved.
+    static final String APPLY_QUERY_CHANGE = "apply_query_change";
+    /// A change to a dashboard table the agent proposed, which the button applies to the open dashboard (unsaved).
+    static final String APPLY_DASHBOARD_CHANGE = "apply_dashboard_change";
+    /// A change to a document's Documentation tab the agent proposed, which the button opens a review of, from which
+    /// the user can apply it to the tab's editor (unsaved).
+    static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
+    /// Standing instructions (an AGENTS doc) the agent proposed for a folder with none, which the button opens a
+    /// review of, from which the user can create the doc, saved.
+    static final String CREATE_INSTRUCTIONS = "create_instructions";
+    /// What an applied dashboard change's card says, as the server writes it.
+    static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or use Undo apply.";
+    /// What an applied code change's card says, as the server writes it.
+    static final String APPLIED = "Applied, not saved";
+    /// What a created standing instructions doc's card says, as the server writes it.
+    static final String CREATED = "Created and saved";
+    /// The text of the button that undoes an applied code change.
+    static final String UNDO_APPLY = "Undo apply";
+    /// What an applied code change's card says once its editor has been edited, so Undo apply would lose edits.
+    static final String UNDO_WITHDRAWN = "The code has been edited since the change was applied, so Undo apply "
+                                         + "would lose those edits. Use Ctrl+Z in the editor to undo it.";
+
+    private UserActionsUi() {
+        // Static methods only.
+    }
+
+    /// An action's label as Markdown, the document it acts on (named in it in quotes, as the server writes it:
+    /// `Enable processor filter 58 on pipeline 'Twitter-Events-V1.1'`) a link that opens it (asked for by the
+    /// user), the rest as plain text.
+    ///
+    /// @param label The action's label.
+    /// @param doc   The document it acts on, or null.
+    /// @return The label as Markdown.
+    static String labelMarkdown(final String label, final DocRef doc) {
+        final String text = escapeMarkdown(label == null
+                ? ""
+                : label);
+        if (doc == null || doc.getName() == null || doc.getName().isEmpty() || doc.getType() == null
+            || doc.getUuid() == null) {
+            return text;
+        }
+        final String quoted = "'" + escapeMarkdown(doc.getName()) + "'";
+        final int at = text.indexOf(quoted);
+        if (at < 0) {
+            return text;
+        }
+        return text.substring(0, at) + "'[" + escapeMarkdown(doc.getName()) + "](?action=open-doc&docType="
+               + doc.getType() + "&docUuid=" + doc.getUuid() + ")'" + text.substring(at + quoted.length());
+    }
+
+    // Text as Markdown that shows it as it is.
+    private static String escapeMarkdown(final String text) {
+        final StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if ("\\`*_[]()<>#!|~&".indexOf(c) >= 0) {
+                out.append('\\');
+            }
+            out.append(c);
+        }
+        return out.toString();
+    }
+
+    /// @param status    The action's status, as stored.
+    /// @param expiresMs When its button stops working.
+    /// @param nowMs     The time now.
+    /// @return True if its button can still be used.
+    static boolean isPending(final String status, final long expiresMs, final long nowMs) {
+        return "PENDING".equals(status) && expiresMs > nowMs;
+    }
+
+    /// @param status  The action's status, as stored.
+    /// @param outcome What happened when it was used, or null.
+    /// @return What to show in place of a button that can't be used.
+    static String outcomeText(final String status, final String outcome) {
+        if (outcome != null && !outcome.isBlank()) {
+            return outcome;
+        }
+        return "PENDING".equals(status)
+                ? "This button has expired."
+                : String.valueOf(status);
+    }
+
+    /// @param action An action.
+    /// @return True if the action shows a request or query as code: an Elasticsearch request (only shown, for the
+    /// cluster admin), or the query of a proposed query or dashboard.
+    static boolean showsCode(final String action) {
+        return ELASTICSEARCH_REQUEST.equals(action) || CREATE_QUERY.equals(action) || CREATE_DASHBOARD.equals(action);
+    }
+
+    /// @param action An action that shows code (see [#showsCode(String)]).
+    /// @return The language its code is in, as its code block's header names it.
+    static String codeLanguage(final String action) {
+        return ELASTICSEARCH_REQUEST.equals(action)
+                ? "elasticsearch"
+                : "stroomql";
+    }
+
+    /// @param action An action.
+    /// @param status Its status, as stored.
+    /// @return True if it is a code or documentation change that has been applied, so its card offers Undo apply.
+    static boolean isAppliedCodeChange(final String action, final String status) {
+        return (APPLY_CODE_CHANGE.equals(action) || APPLY_QUERY_CHANGE.equals(action)
+                || APPLY_DOCUMENTATION_CHANGE.equals(action)) && "DONE".equals(status);
+    }
+
+    /// @param action An action.
+    /// @param status Its status, as stored.
+    /// @return True if it is a dashboard change that has been applied, so its card offers Undo apply.
+    static boolean isAppliedDashboardChange(final String action, final String status) {
+        return APPLY_DASHBOARD_CHANGE.equals(action) && "DONE".equals(status);
+    }
+
+    /// @param action  An action.
+    /// @param request Its request (for a chart, its plan as JSON), or null.
+    /// @return What its button says: for a chart that replaces one, that it updates it.
+    static String buttonText(final String action, final String request) {
+        // A plan's JSON leaves out what it doesn't have, so only a replacement's names the chart it replaces.
+        if (CREATE_VISUALISATION.equals(action) && request != null && request.contains("\"replace\":{")) {
+            return "Update visualisation…";
+        }
+        return buttonText(action);
+    }
+
+    /// @param action An action.
+    /// @return What its button says.
+    static String buttonText(final String action) {
+        if (ENABLE_PROCESSOR_FILTER.equals(action)) {
+            return "Enable";
+        } else if (DISABLE_PROCESSOR_FILTER.equals(action)) {
+            return "Disable";
+        } else if (OPEN_DOCUMENT.equals(action)) {
+            return "Open";
+        } else if (CREATE_QUERY.equals(action)) {
+            return "Create query…";
+        } else if (CREATE_DASHBOARD.equals(action)) {
+            return "Create dashboard…";
+        } else if (CREATE_VISUALISATION.equals(action)) {
+            return "Create visualisation…";
+        } else if (CREATE_VISUALISATIONS.equals(action)) {
+            return "Create visualisations…";
+        } else if (CREATE_EXTRACTION_PIPELINE.equals(action)) {
+            return "Create extraction pipeline…";
+        } else if (CHANGE_EXTRACTION_PIPELINE.equals(action)) {
+            return "Change extraction pipeline…";
+        } else if (APPLY_CODE_CHANGE.equals(action) || APPLY_DOCUMENTATION_CHANGE.equals(action)) {
+            return "Review and apply…";
+        } else if (CREATE_INSTRUCTIONS.equals(action)) {
+            return "Review and create…";
+        } else if (APPLY_QUERY_CHANGE.equals(action)) {
+            return "Apply to query";
+        } else if (APPLY_DASHBOARD_CHANGE.equals(action)) {
+            return "Apply to dashboard";
+        }
+        return "Do it";
+    }
+
+    /// Quotes text as a StroomQL string, e.g. a Visualisation's name in a show clause.
+    ///
+    /// @param text The text.
+    /// @return The text in double quotes, with any quotes or backslashes in it escaped.
+    static String quoteStroomQl(final String text) {
+        return "\"" + NullSafe.string(text).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+
+    /// Puts a show clause in a StroomQL query: in place of the show clause it has (from that clause to the end, as
+    /// show is the last clause), or at its end.
+    ///
+    /// @param query  The query.
+    /// @param clause The show clause, e.g. `show "Chat user connections" (source = "Sender")`.
+    /// @return The query with the clause.
+    static String withShowClause(final String query, final String clause) {
+        final String text = NullSafe.string(query);
+        final String[] lines = text.split("\n", -1);
+        final StringBuilder sb = new StringBuilder();
+        for (final String line : lines) {
+            final String start = line.trim().toLowerCase(Locale.ROOT);
+            if (start.equals("show") || start.startsWith("show ") || start.startsWith("show\t")) {
+                break;
+            }
+            sb.append(line).append('\n');
+        }
+        String kept = sb.toString();
+        while (kept.endsWith("\n\n") || (kept.endsWith("\n") && kept.trim().isEmpty())) {
+            kept = kept.substring(0, kept.length() - 1);
+        }
+        if (!kept.isEmpty() && !kept.endsWith("\n")) {
+            kept = kept + "\n";
+        }
+        return kept + clause + (text.endsWith("\n")
+                ? "\n"
+                : "");
+    }
+
+    /// Says in a sentence how a visualisation drew, from the render report it sent (see `stroom.report`): what it
+    /// drew, what it left out, or why it failed. It never repeats data values: the report has none.
+    ///
+    /// @param report The report, as plain Java (maps, lists, strings, doubles).
+    /// @return The sentence.
+    static String renderReportSummary(final Map<String, Object> report) {
+        final String status = String.valueOf(NullSafe.map(report).get("status"));
+        if (NullSafe.map(report).isEmpty()) {
+            return "It sent a report Stroom couldn't read.";
+        }
+        if ("error".equals(status)) {
+            return "It failed to draw: " + shorten(String.valueOf(report.get("error")), 300);
+        }
+        if ("empty".equals(status)) {
+            return "It drew nothing yet: the table has no rows. It will draw when the table has some.";
+        }
+        final StringBuilder sb = new StringBuilder();
+        if ("nothing-drawn".equals(status)) {
+            sb.append("It drew nothing");
+        } else if ("dom".equals(report.get("source"))) {
+            sb.append("It drew ").append(count(report.get("elementCount"))).append(" elements");
+        } else if (report.get("nodes") instanceof Number) {
+            sb.append("It drew ").append(count(report.get("nodes"))).append(" nodes and ")
+                    .append(count(report.get("links"))).append(" links");
+        } else {
+            sb.append("It drew ").append(count(report.get("points"))).append(" points");
+            if (report.get("series") instanceof final Number series && series.intValue() > 1) {
+                sb.append(" in ").append(count(series)).append(" series");
+            }
+        }
+        if (report.get("library") != null && report.get("libraryVersion") != null) {
+            sb.append(" (").append(report.get("library")).append(" ").append(report.get("libraryVersion"))
+                    .append(")");
+        }
+        if (report.get("droppedRows") instanceof final Map<?, ?> dropped && !dropped.isEmpty()) {
+            sb.append(", leaving out ");
+            boolean first = true;
+            for (final Map.Entry<?, ?> entry : dropped.entrySet()) {
+                if (!first) {
+                    sb.append(", ");
+                }
+                sb.append(count(entry.getValue())).append(" rows (").append(entry.getKey()).append(")");
+                first = false;
+            }
+        }
+        sb.append(".");
+        if (report.get("warnings") instanceof final List<?> warnings && !warnings.isEmpty()) {
+            sb.append(" ").append(shorten(String.valueOf(warnings.get(0)), 200));
+            if (warnings.size() > 1) {
+                sb.append(" (+").append(warnings.size() - 1).append(" more)");
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String count(final Object value) {
+        return value instanceof final Number number
+                ? String.valueOf(number.longValue())
+                : "?";
+    }
+
+    private static String shorten(final String text, final int max) {
+        return text.length() <= max
+                ? text
+                : text.substring(0, max - 1) + "…";
+    }
+
+    /// @param editableWhenProposed True if the user could edit the dashboard when the change was proposed.
+    /// @param open                 True if the dashboard is open now.
+    /// @param editableNow          True if it is open and the user can edit it.
+    /// @return Why the Apply to dashboard button is disabled, as its tooltip, or null if it isn't.
+    static String applyDashboardDisabledReason(final boolean editableWhenProposed,
+                                               final boolean open,
+                                               final boolean editableNow) {
+        if (!editableWhenProposed || (open && !editableNow)) {
+            return ApplyDashboardChangeEvent.NOT_EDITABLE;
+        }
+        return null;
+    }
+
+    /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
+    /// @param query For set_expression, the query's expression as the server wrote it ([#expression(Object)]), or
+    ///              null.
+    /// @return The operation, for the dashboard to apply.
+    static TableChange tableChange(final Function<String, String> field, final Object query) {
+        return tableChange(field, query, null);
+    }
+
+    /// @param field Gives each of a proposed operation's fields as text (numbers as digits), or null if it has none.
+    /// @param query For set_expression, the query's expression as the server wrote it ([#expression(Object)]), or
+    ///              null.
+    /// @param doc   For set_setting of a document, or the Visualisation of add_vis or set_vis_settings, the
+    ///              document as the server wrote it (`type`, `uuid` and `name`), or null.
+    /// @return The operation, for the dashboard to apply.
+    static TableChange tableChange(final Function<String, String> field, final Object query, final Object doc) {
+        final String op = field.apply("op");
+        // A Visualisation's settings are given as a JSON object, which the field gives as its JSON.
+        final boolean vis = TableChange.ADD_VIS.equals(op) || TableChange.SET_VIS_SETTINGS.equals(op);
+        return TableChange.builder(op)
+                .column(field.apply("column"))
+                .level(number(field.apply("level")))
+                .name(field.apply("name"))
+                .expression(field.apply("expression"))
+                .format(field.apply("format"))
+                .position(number(field.apply("position")))
+                .direction(field.apply("direction"))
+                .priority(number(field.apply("priority")))
+                .filter(field.apply("filter"))
+                .query(query == null
+                        ? null
+                        : expression(query))
+                .table(field.apply("table"))
+                .copy("true".equals(field.apply("copy")))
+                .target(field.apply("target"))
+                .targetId(field.apply("target_id"))
+                .setting(field.apply("setting"))
+                .value(vis
+                        ? field.apply("settings")
+                        : field.apply("value"))
+                .ref(field.apply("ref"))
+                .doc(doc instanceof final Map<?, ?> map
+                     && map.get("type") instanceof final String type
+                     && map.get("uuid") instanceof final String uuid
+                        ? new DocRef(type, uuid, map.get("name") instanceof final String name
+                        ? name
+                        : null)
+                        : null)
+                .style(field.apply("style"))
+                .formatType(field.apply("format_type"))
+                .bold("true".equals(field.apply("bold")))
+                .italic("true".equals(field.apply("italic")))
+                .hide("true".equals(field.apply("hide")))
+                .placement(field.apply("placement"))
+                .build();
+    }
+
+    /// Reads a query's expression as the server writes it for a proposed dashboard change: an operator as `op`,
+    /// `enabled` and `children`, and a term as `field`, `condition` (the condition's name), `value`, `enabled` and
+    /// `doc`, given here as maps and lists.
+    ///
+    /// @param value The expression.
+    /// @return The expression, or null if it can't be read.
+    static ExpressionOperator expression(final Object value) {
+        return expressionItem(value) instanceof final ExpressionOperator operator
+                ? operator
+                : null;
+    }
+
+    private static ExpressionItem expressionItem(final Object value) {
+        if (!(value instanceof final Map<?, ?> map)) {
+            return null;
+        }
+        final Boolean enabled = Boolean.FALSE.equals(map.get("enabled"))
+                ? Boolean.FALSE
+                : null;
+        if (map.get("op") instanceof final String op) {
+            final List<ExpressionItem> children = new ArrayList<>();
+            if (map.get("children") instanceof final List<?> list) {
+                for (final Object child : list) {
+                    final ExpressionItem item = expressionItem(child);
+                    if (item == null) {
+                        return null;
+                    }
+                    children.add(item);
+                }
+            }
+            final Op parsed = enumValue(Op.values(), op);
+            return parsed == null
+                    ? null
+                    : ExpressionOperator.builder().op(parsed).enabled(enabled).children(children).build();
+        }
+        if (map.get("field") instanceof final String field && map.get("condition") instanceof final String name) {
+            final Condition condition = enumValue(Condition.values(), name);
+            if (condition == null) {
+                return null;
+            }
+            final ExpressionTerm.Builder term = ExpressionTerm.builder()
+                    .field(field)
+                    .condition(condition)
+                    .enabled(enabled);
+            if (map.get("value") instanceof final String text) {
+                term.value(text);
+            }
+            if (map.get("doc") instanceof final Map<?, ?> doc
+                && doc.get("type") instanceof final String type && doc.get("uuid") instanceof final String uuid) {
+                term.docRef(new DocRef(type, uuid, doc.get("name") instanceof final String docName
+                        ? docName
+                        : null));
+            }
+            return term.build();
+        }
+        return null;
+    }
+
+    private static <E extends Enum<E>> E enumValue(final E[] values, final String name) {
+        for (final E value : values) {
+            if (value.name().equals(name)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static Integer number(final String text) {
+        if (text == null || text.isEmpty()) {
+            return null;
+        }
+        try {
+            return (int) Double.parseDouble(text);
+        } catch (final NumberFormatException e) {
+            return null;
+        }
+    }
+}

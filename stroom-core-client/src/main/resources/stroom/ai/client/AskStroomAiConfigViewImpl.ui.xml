@@ -15,6 +15,10 @@
             <b:Button ui:field="setDefaults"
                       text="Set As Default"
                       addStyleNames="allow-focus"/>
+            <b:Button ui:field="resetAllUsers"
+                      text="Reset Everyone to Defaults…"
+                      title="Reset every user's chat settings (model, prompts, dock position and so on) to the defaults"
+                      addStyleNames="allow-focus"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

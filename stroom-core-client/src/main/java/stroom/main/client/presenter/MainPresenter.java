@@ -16,10 +16,12 @@
 
 package stroom.main.client.presenter;
 
+import stroom.ai.client.PanelState;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.data.client.event.AskStroomAiBadgeEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.main.client.event.DockEvent;
 import stroom.main.client.view.MainToolbar;
@@ -40,6 +42,7 @@ import stroom.widget.util.client.GlobalKeyHandler;
 import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -48,6 +51,7 @@ import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -72,6 +76,7 @@ public class MainPresenter
     private boolean click;
     private final MenuItems menuItems;
     private int taskCount;
+    private boolean aiStateRestored;
     private boolean showingAi;
 
     @Inject
@@ -153,6 +158,24 @@ public class MainPresenter
             showingAi = event.isShow();
             getView().getMainToolBar().getShowAi().setState(showingAi);
         }));
+        registerHandler(eventBus.addHandler(AskStroomAiBadgeEvent.getType(), event -> {
+            // Show a badge on the Ask Stroom AI button when a chat needs the user, is working, or has unread
+            // messages.
+            final Widget showAi = getView().getMainToolBar().getShowAi();
+            showAi.setStyleName("ai-badge--needs-you", event.getNeedsYou() > 0);
+            showAi.setStyleName("ai-badge--busy", event.getNeedsYou() == 0 && event.getBusy() > 0);
+            showAi.setStyleName("ai-badge--unread", event.getNeedsYou() == 0 && event.getBusy() == 0
+                                                     && event.getUnread() > 0);
+            final StringBuilder title = new StringBuilder("Ask Stroom AI");
+            if (event.getNeedsYou() > 0) {
+                title.append(" (").append(event.getNeedsYou()).append(" need you)");
+            } else if (event.getBusy() > 0) {
+                title.append(" (").append(event.getBusy()).append(" working)");
+            } else if (event.getUnread() > 0) {
+                title.append(" (").append(event.getUnread()).append(" unread)");
+            }
+            showAi.setTitle(title.toString());
+        }));
 
         refreshTimer = new Timer() {
             @Override
@@ -209,6 +232,18 @@ public class MainPresenter
                     .popupPosition(popupPosition)
                     .addAutoHidePartner(autoHidePartner)
                     .fire(this);
+        }
+    }
+
+    @Override
+    protected void onReveal() {
+        super.onReveal();
+        // Open the Ask Stroom AI chat again if it was open when the page was last left, e.g. before a refresh.
+        if (!aiStateRestored) {
+            aiStateRestored = true;
+            if (PanelState.wasOpen()) {
+                Scheduler.get().scheduleDeferred(() -> ShowAskStroomAiEvent.fire(this, true));
+            }
         }
     }
 

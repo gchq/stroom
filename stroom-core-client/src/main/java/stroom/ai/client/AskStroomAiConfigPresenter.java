@@ -21,9 +21,13 @@ import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -98,6 +102,13 @@ public class AskStroomAiConfigPresenter
 
     // ---------------------------------------------------------------------
 
+    // True once every user's settings have been reset, so that closing the dialog saves nothing.
+    private boolean resetAllDone;
+    // Only administrators see and change the table analysis settings, which apply to everyone.
+    private boolean isAdmin;
+    // The table analysis settings as loaded, to tell whether the administrator changed them.
+    private String loadedTableAnalysis;
+
     public void show(final AskStroomAiConfig currentConfig,
                      final Consumer<AskStroomAiConfig> configConsumer,
                      final DockBehaviour snapshotDockBehaviour,
@@ -106,10 +117,14 @@ public class AskStroomAiConfigPresenter
         // Wire the dock behaviour callback through to the General sub-presenter.
         generalPresenter.setDockBehaviourChangeHandler(dockBehaviourConsumer);
 
-        final boolean isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
+        isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
+        getView().getTabBar().setTabHidden(TABLE_ANALYSIS, !isAdmin);
+        switchTab(GENERAL);
         getView().setRestoreFromDefaults(this::onRestoreFromDefaults);
         getView().allowSetDefaults(isAdmin);
         getView().setOnSetDefaults(isAdmin ? this::onSetDefaults
+                : null);
+        getView().setOnResetAllUsers(isAdmin ? this::onResetAllUsers
                 : null);
 
         ShowPopupEvent.builder(this)
@@ -121,10 +136,17 @@ public class AskStroomAiConfigPresenter
                     generalPresenter.getView().focus();
                 })
                 .onHideRequest(e -> {
+                    if (resetAllDone) {
+                        // Everyone's settings were just reset, so save nothing back, not even the dock.
+                        resetAllDone = false;
+                        e.hide();
+                        return;
+                    }
                     if (e.isOk()) {
                         final AskStroomAiConfig config = write();
                         dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
                         configConsumer.accept(config);
+                        saveTableAnalysisIfChanged();
                     } else {
                         if (dockBehaviourConsumer != null && snapshotDockBehaviour != null) {
                             dockBehaviourConsumer.accept(snapshotDockBehaviour);
@@ -144,27 +166,100 @@ public class AskStroomAiConfigPresenter
     }
 
     private void onSetDefaults(final TaskMonitorFactory taskMonitorFactory) {
-        final AskStroomAiConfig config = write();
-        askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
-                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
-                taskMonitorFactory);
+        final AskStroomAiConfig config = write().copy()
+                .tableAnalysisConfig(tableAnalysisPresenter.write())
+                .build();
+        askStroomAiClient.getDefaultConfig(previous -> askStroomAiClient.setDefaultAskStroomAIConfig(config,
+                success -> {
+                    if (modelChanged(previous, config)) {
+                        askToApplyModelToEveryone(config.getModelRef(), taskMonitorFactory);
+                    } else {
+                        AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null);
+                    }
+                }, taskMonitorFactory), taskMonitorFactory);
+    }
+
+    private static boolean modelChanged(final AskStroomAiConfig previous, final AskStroomAiConfig config) {
+        final DocRef before = NullSafe.get(previous, AskStroomAiConfig::getModelRef);
+        final DocRef after = config.getModelRef();
+        return after != null && (before == null || !Objects.equals(before.getUuid(), after.getUuid()));
+    }
+
+    // A new default model reaches only the users who follow the default, so offer it to those who chose their own.
+    private void askToApplyModelToEveryone(final DocRef model, final TaskMonitorFactory taskMonitorFactory) {
+        final String name = NullSafe.getOrElse(model, DocRef::getName, "the new default model");
+        ConfirmEvent.fire(this,
+                "Default config updated. Users who chose their own model keep using it. Make everyone use "
+                + name + " now? Only their choice of model is cleared; their other settings are kept.",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.clearAllUsersModelChoice(count -> AlertEvent.fireInfo(
+                                AskStroomAiConfigPresenter.this,
+                                "Cleared the choice of model in " + count + " preference "
+                                + (count == 1
+                                        ? "record"
+                                        : "records")
+                                + ". Everyone now uses " + name + " from their next new chat; chats already "
+                                + "under way keep their model.",
+                                null), taskMonitorFactory);
+                    }
+                });
+    }
+
+    private void onResetAllUsers(final TaskMonitorFactory taskMonitorFactory) {
+        ConfirmEvent.fire(this,
+                "Reset every user's Ask Stroom AI settings (model, prompts, dock position and so on) to the "
+                + "defaults? Their own choices are lost. Users with Stroom open get the defaults when they "
+                + "next load it.",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.resetAllUsersConfig(count -> {
+                            // Close without saving, as saving would store this user's settings again.
+                            resetAllDone = true;
+                            HidePopupRequestEvent.builder(AskStroomAiConfigPresenter.this).fire();
+                            AlertEvent.fireInfo(AskStroomAiConfigPresenter.this,
+                                    "Reset the Ask Stroom AI settings in " + count + " preference "
+                                    + (count == 1
+                                            ? "record"
+                                            : "records")
+                                    + ". Everyone now uses the defaults. Reload Stroom to see them yourself.",
+                                    null);
+                        }, taskMonitorFactory);
+                    }
+                });
     }
 
     private void read(final AskStroomAiConfig config,
                       final DockBehaviour dockBehaviour) {
         generalPresenter.read(config, dockBehaviour);
-        final TableAnalysisConfig tableConfig = config != null
-                ? config.getTableAnalysis()
-                : null;
-        tableAnalysisPresenter.read(
-                tableConfig != null ? tableConfig : new TableAnalysisConfig(),
-                config);
+        if (isAdmin) {
+            // The table analysis settings are always the ones everyone uses, not this user's own.
+            askStroomAiClient.getDefaultConfig(defaults -> {
+                final TableAnalysisConfig tableConfig = defaults.getTableAnalysis() != null
+                        ? defaults.getTableAnalysis()
+                        : new TableAnalysisConfig();
+                tableAnalysisPresenter.read(tableConfig, config);
+                loadedTableAnalysis = tableAnalysisPresenter.write().toString();
+            }, this);
+        }
+    }
+
+    private void saveTableAnalysisIfChanged() {
+        if (!isAdmin || loadedTableAnalysis == null) {
+            return;
+        }
+        final TableAnalysisConfig tableConfig = tableAnalysisPresenter.write();
+        if (!tableConfig.toString().equals(loadedTableAnalysis)) {
+            askStroomAiClient.setTableAnalysisConfig(tableConfig, done -> {
+            }, this);
+        }
     }
 
     private AskStroomAiConfig write() {
         final AskStroomAiConfig.Builder builder = AskStroomAiConfig.builder();
         generalPresenter.write(builder);
-        builder.tableAnalysisConfig(tableAnalysisPresenter.write());
+        // Table analysis settings apply to everyone, so are not kept in a user's own settings.
+        builder.tableAnalysisConfig(null);
         builder.attachmentDownloadTimeoutMs(tableAnalysisPresenter.getAttachmentDownloadTimeoutMs());
         return builder.build();
     }
@@ -181,6 +276,9 @@ public class AskStroomAiConfigPresenter
         void setRestoreFromDefaults(Consumer<TaskMonitorFactory> handler);
 
         void allowSetDefaults(boolean allow);
+
+        /// @param handler Resets every user's settings to the defaults, or null if this user cannot.
+        void setOnResetAllUsers(Consumer<TaskMonitorFactory> handler);
 
         void setOnSetDefaults(Consumer<TaskMonitorFactory> handler);
     }

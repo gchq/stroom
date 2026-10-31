@@ -1,0 +1,205 @@
+{
+ "source": "draft-health-and-state-records-are-drafted-as-alerts",
+ "schema": "3.5.2",
+ "version": "3.5.2",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "FW"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "FW"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "event_type"
+   }
+  ],
+  "events": [
+   {
+    "name": "system_service",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "SYSTEM"
+     },
+     {
+      "field": "action",
+      "equals": "START"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Process/Action",
+      "field": "action",
+      "map": {
+       "START": "Startup"
+      }
+     },
+     {
+      "path": "EventDetail/Process/Type",
+      "value": "Service"
+     },
+     {
+      "path": "EventDetail/Process/Command",
+      "field": "message"
+     },
+     {
+      "path": "EventDetail/Process/Data",
+      "field": "severity",
+      "data_name": "severity"
+     }
+    ]
+   },
+   {
+    "name": "system_alert",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "SYSTEM"
+     },
+     {
+      "field": "action",
+      "one_of": [
+       "HIGH_CPU",
+       "VPN_TUNNEL_DOWN",
+       "VPN_TUNNEL_UP"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Alert/Type",
+      "field": "action",
+      "map": {
+       "HIGH_CPU": "Other",
+       "VPN_TUNNEL_DOWN": "Network",
+       "VPN_TUNNEL_UP": "Network"
+      }
+     },
+     {
+      "path": "EventDetail/Alert/Severity",
+      "field": "severity",
+      "map": {
+       "WARNING": "Minor",
+       "ERROR": "Major",
+       "INFO": "Info",
+       "DEBUG": "Info",
+       "NOTICE": "Info",
+       "WARN": "Minor",
+       "ERR": "Major",
+       "CRITICAL": "Critical",
+       "CRIT": "Critical",
+       "ALERT": "Critical",
+       "EMERGENCY": "Critical",
+       "FATAL": "Critical"
+      }
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[system_service] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Process/Action', 'EventDetail/Process/Command'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[system_alert] required ['EventTime', 'EventDetail', 'EventSource/Device', 'EventDetail/TypeId', 'EventDetail/Alert/Type'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from event_type, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "system_service",
+    "when": [
+     "data[@name='event_type']/@value = 'SYSTEM'",
+     "data[@name='action']/@value = 'START'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Process/Action",
+     "EventDetail/Process/Command",
+     "EventDetail/Process/Data[severity]",
+     "EventDetail/Process/Type",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "system_alert",
+    "when": [
+     "data[@name='event_type']/@value = 'SYSTEM'",
+     "data[@name='action']/@value = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP')"
+    ],
+    "fields": [
+     "EventDetail/Alert/Severity",
+     "EventDetail/Alert/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventDetail/Unknown/Data[severity]",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

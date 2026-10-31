@@ -234,6 +234,26 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         }
     }
 
+    /// Starts each part of a stream afresh. A part that failed part-way through a document leaves the parsing
+    /// state (and the JSON generator) mid-document, which would otherwise stop every later part of the stream
+    /// from being indexed.
+    @Override
+    public void startStream() {
+        try {
+            inOuterArray = false;
+            currentDepth = 0;
+            currentDocFieldName = null;
+            currentDocIndexNameVariables.clear();
+            content.clear();
+            clearDocument();
+            jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
+        } catch (final JacksonException e) {
+            fatalError("Failed to initialise JsonGenerator", e);
+        } finally {
+            super.startStream();
+        }
+    }
+
     private void populateIndexNameVariableNames() {
         indexNameVariables = INDEX_NAME_VALUE_PATTERN.matcher(indexName).results()
                 .map(matchResult -> {

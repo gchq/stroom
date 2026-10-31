@@ -64,6 +64,8 @@ import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.query.api.ColumnRef;
 import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -79,9 +81,11 @@ import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.Row;
 import stroom.query.api.SearchRequestSource;
+import stroom.query.api.Sort;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TextAttributes;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -133,6 +137,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -182,6 +187,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
+    // How many rows the table has, as last shown, or null if not known.
+    private Long currentTotalRows;
     private boolean ignoreRangeChange;
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
@@ -618,48 +625,88 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void askStroomAi() {
+        final DashboardTableContext context = getResultsContext();
+        if (context != null) {
+            AskStroomAiEvent.fire(this, context);
+        }
+    }
+
+    /// @return The search request behind the rows shown, e.g. to fetch or analyse them, or null if the table's query
+    /// hasn't been run.
+    public DashboardTableContext getResultsContext() {
         if (currentSearchModel != null) {
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                // Create a download request just for this table.
-                final Search search = Search
-                        .builder()
-                        .dataSourceRef(currentSearch.getDataSourceRef())
-                        .expression(currentSearch.getExpression())
-                        .componentSettingsMap(currentSearch.getComponentSettingsMap())
-                        .params(currentSearch.getParams())
-                        .timeRange(currentSearch.getTimeRange())
-                        .incremental(true)
-                        .queryInfo(currentSearch.getQueryInfo())
-                        .build();
-
-                final DashboardSearchRequest dashboardSearchRequest = DashboardSearchRequest
-                        .builder()
-                        .searchRequestSource(currentSearchModel.getSearchRequestSource())
-                        .queryKey(queryKey)
-                        .search(search)
-                        .componentResultRequests(Collections.singletonList(createDownloadQueryRequest()))
-                        .dateTimeSettings(getDateTimeSettings())
-                        .build();
-
-                // Build a descriptive summary from the search request source.
-                final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
-                final String dashboardName = NullSafe.get(
-                        source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
-                final String tableName = NullSafe.getOrElseGet(
-                        source,
-                        SearchRequestSource::getComponentName,
-                        () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
-                final String description = buildDashboardDescription(dashboardName, tableName);
-
-                AskStroomAiEvent.fire(this,
-                        new DashboardTableContext(
-                                description,
-                                currentSearchModel.getCurrentNode(),
-                                dashboardSearchRequest));
+                return tableContext(currentSearch, queryKey, currentSearchModel.getCurrentNode());
             }
         }
+        return null;
+    }
+
+    /// @param search A search the table's query would run, e.g. as it is edited now, or null.
+    /// @return The request for just this table's rows from the search, or null if there is no search, or the table
+    /// isn't fed by a query.
+    public DashboardTableContext getContextFor(final Search search) {
+        return search != null && currentSearchModel != null
+                ? tableContext(search, null, null)
+                : null;
+    }
+
+    /// @return The names of the table's columns, as the user sees them, leaving out the hidden special columns.
+    public List<String> getColumnNames() {
+        final List<String> columnNames = new ArrayList<>();
+        for (final Column column : NullSafe.list(getTableComponentSettings().getColumns())) {
+            if (!column.isSpecial()) {
+                columnNames.add(column.getName());
+            }
+        }
+        return columnNames;
+    }
+
+    /// @return How many rows the last search gave the table, or null if it hasn't had any.
+    public Long getTotalRows() {
+        return currentTotalRows;
+    }
+
+    /// @return True while the table's query is searching.
+    public boolean isSearching() {
+        return currentSearchModel != null && currentSearchModel.isSearching();
+    }
+
+    // A request to download just this table's rows, from a search.
+    private DashboardTableContext tableContext(final Search fromSearch, final QueryKey queryKey, final String node) {
+        // Create a download request just for this table.
+        final Search search = Search
+                .builder()
+                .dataSourceRef(fromSearch.getDataSourceRef())
+                .expression(fromSearch.getExpression())
+                .componentSettingsMap(fromSearch.getComponentSettingsMap())
+                .params(fromSearch.getParams())
+                .timeRange(fromSearch.getTimeRange())
+                .incremental(true)
+                .queryInfo(fromSearch.getQueryInfo())
+                .build();
+
+        final DashboardSearchRequest dashboardSearchRequest = DashboardSearchRequest
+                .builder()
+                .searchRequestSource(currentSearchModel.getSearchRequestSource())
+                .queryKey(queryKey)
+                .search(search)
+                .componentResultRequests(Collections.singletonList(createDownloadQueryRequest()))
+                .dateTimeSettings(getDateTimeSettings())
+                .build();
+
+        // Build a descriptive summary from the search request source.
+        final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
+        final String dashboardName = NullSafe.get(
+                source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
+        final String tableName = NullSafe.getOrElseGet(
+                source,
+                SearchRequestSource::getComponentName,
+                () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
+        final String description = buildDashboardDescription(dashboardName, tableName);
+        return new DashboardTableContext(description, node, dashboardSearchRequest);
     }
 
     private String buildDashboardDescription(final String dashboardName, final String tableName) {
@@ -789,6 +836,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
+                    currentTotalRows = tableResult.getTotalResults();
                 }
 
                 // Enable download of current results.
@@ -1361,6 +1409,224 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .requestedRange(new OffsetRange(0L, length))
                 .build();
+    }
+
+    /// @return A copy of the table's settings, to put back with [#restoreSettings(TableComponentSettings)] if a
+    /// change is undone.
+    TableComponentSettings settingsSnapshot() {
+        final TableComponentSettings settings = getTableComponentSettings();
+        return settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build();
+    }
+
+    /// Puts back the table's settings as they were before a change, as an unsaved edit.
+    ///
+    /// @param settings The settings, from [#settingsSnapshot()].
+    void restoreSettings(final TableComponentSettings settings) {
+        setSettings(settings.copy().columns(new ArrayList<>(NullSafe.list(settings.getColumns()))).build());
+        changeSettings();
+        reset();
+        updateColumns();
+        refresh();
+        onChange();
+        getDashboardContext().fireComponentChangeEvent(this);
+    }
+
+    /// Applies changes made programmatically (e.g. proposed elsewhere, that the user chose to apply), in order,
+    /// through the code the column menus use, so the result is what doing them by hand gives: each marks the
+    /// dashboard as changed (unsaved), updates the columns and refreshes the table as its menu item does. Nothing
+    /// is saved.
+    ///
+    /// @param changes The changes.
+    /// @return Why a change couldn't be applied (those before it are applied), or null if they all were.
+    String applyChanges(final List<TableChange> changes) {
+        for (int i = 0; i < changes.size(); i++) {
+            final TableChange change = changes.get(i);
+            final String prefix = "Change " + (i + 1) + " (" + change.getOp() + "): ";
+            if (TableChange.ADD_COLUMN.equals(change.getOp())) {
+                final List<Column> columns = columnsManager.getColumns();
+                final int end = columns.size();
+                final int index = change.getPosition() == null
+                        ? end
+                        : Math.max(0, Math.min(change.getPosition() - 1, end));
+                columnsManager.addColumn(index, Column.builder()
+                        .name(change.getName())
+                        .expression(change.getExpression())
+                        .format(change.getFormat() != null
+                                ? change.getFormat()
+                                : Format.GENERAL)
+                        .visible(true)
+                        .build());
+                continue;
+            }
+            if (TableChange.ADD_FORMAT_RULE.equals(change.getOp())
+                || TableChange.REMOVE_FORMAT_RULE.equals(change.getOp())) {
+                final String failed = changeFormatRules(change);
+                if (failed != null) {
+                    return prefix + failed;
+                }
+                continue;
+            }
+            final Column column = columnsManager.getColumns().stream()
+                    .filter(col -> !col.isSpecial() && Objects.equals(col.getName(), change.getColumn()))
+                    .findFirst()
+                    .orElse(null);
+            if (column == null) {
+                return prefix + "the table has no column '" + change.getColumn() + "'.";
+            }
+            switch (change.getOp()) {
+                case TableChange.GROUP -> columnsManager.setGroup(column, change.getLevel() == null
+                        ? 0
+                        : change.getLevel() - 1);
+                case TableChange.UNGROUP -> columnsManager.setGroup(column, null);
+                case TableChange.EDIT_COLUMN -> {
+                    final Column.Builder builder = column.copy();
+                    if (change.getName() != null) {
+                        builder.name(change.getName());
+                    }
+                    if (change.getExpression() != null) {
+                        builder.expression(change.getExpression());
+                    }
+                    if (change.getFormat() != null) {
+                        builder.format(change.getFormat());
+                    }
+                    columnsManager.replaceColumn(column, builder.build());
+                    onChange();
+                    updateColumns();
+                    refresh();
+                }
+                case TableChange.HIDE_COLUMN -> {
+                    final long visible = columnsManager.getColumns().stream().filter(Column::isVisible).count();
+                    if (column.isVisible() && visible <= 1) {
+                        return prefix + "the table's last visible column can't be hidden.";
+                    }
+                    columnsManager.hideColumn(column);
+                }
+                case TableChange.SHOW_COLUMN -> columnsManager.showColumn(column);
+                case TableChange.MOVE_COLUMN -> {
+                    moveColumn(column, change.getPosition() == null
+                            ? 0
+                            : change.getPosition() - 1);
+                    onChange();
+                    updateColumns();
+                    refresh();
+                }
+                case TableChange.SORT -> {
+                    columnsManager.changeSort(column, change.getSortDirection());
+                    if (change.getSortDirection() != null && change.getPriority() != null) {
+                        setSortPriority(column.getId(), change.getPriority() - 1);
+                    }
+                }
+                case TableChange.FILTER -> {
+                    final String filter = NullSafe.string(change.getFilter());
+                    columnsManager.setColumnFilter(column, filter.isEmpty()
+                            ? null
+                            : ColumnFilter.builder().filter(filter).enabled(true).build());
+                    // As setting a filter from the column menu does.
+                    if (!filter.isEmpty() && !getTableComponentSettings().showValueFilters()) {
+                        toggleShowValueFilters();
+                    }
+                }
+                default -> {
+                    return prefix + "this change isn't known.";
+                }
+            }
+        }
+        return null;
+    }
+
+    // Adds or removes a conditional formatting rule, as the rules editor would.
+    private String changeFormatRules(final TableChange change) {
+        final List<ConditionalFormattingRule> rules = new ArrayList<>(
+                NullSafe.list(getTableComponentSettings().getConditionalFormattingRules()));
+        if (TableChange.REMOVE_FORMAT_RULE.equals(change.getOp())) {
+            final int index = change.getPosition() == null
+                    ? -1
+                    : change.getPosition() - 1;
+            if (index < 0 || index >= rules.size()) {
+                return "the table has no formatting rule " + change.getPosition() + "; it has " + rules.size()
+                       + ".";
+            }
+            rules.remove(index);
+        } else {
+            if (change.getQuery() == null) {
+                return "the rule's conditions can't be read.";
+            }
+            ConditionalFormattingStyle style = null;
+            for (final ConditionalFormattingStyle each : ConditionalFormattingStyle.values()) {
+                if (each.getDisplayValue().equalsIgnoreCase(change.getStyle())) {
+                    style = each;
+                }
+            }
+            final ConditionalFormattingRule rule = ConditionalFormattingRule.builder()
+                    .id(RandomId.createId(5))
+                    .expression(change.getQuery())
+                    .hide(change.isHide())
+                    .enabled(true)
+                    .formattingType("text".equals(change.getFormatType())
+                            ? ConditionalFormattingType.TEXT
+                            : ConditionalFormattingType.BACKGROUND)
+                    .formattingStyle(style)
+                    .textAttributes(TextAttributes.builder().bold(change.isBold()).italic(change.isItalic())
+                            .build())
+                    .build();
+            final int index = change.getPosition() == null
+                    ? rules.size()
+                    : Math.max(0, Math.min(change.getPosition() - 1, rules.size()));
+            rules.add(index, rule);
+        }
+        setSettings(getTableComponentSettings().copy().conditionalFormattingRules(rules).build());
+        changeSettings();
+        return null;
+    }
+
+    // Moves a column to a position (0 first) among the columns the user sees, leaving the special columns where
+    // they are.
+    private void moveColumn(final Column column, final int position) {
+        final List<Column> columns = getTableComponentSettings().getColumns();
+        columns.remove(column);
+        int seen = 0;
+        int index = columns.size();
+        for (int i = 0; i < columns.size(); i++) {
+            if (!columns.get(i).isSpecial()) {
+                if (seen == position) {
+                    index = i;
+                    break;
+                }
+                seen++;
+            }
+        }
+        columns.add(index, column);
+    }
+
+    // Moves a sorted column's sort to a priority (0 first), keeping the order of the other sorts.
+    private void setSortPriority(final String columnId, final int priority) {
+        final List<Column> sorted = new ArrayList<>();
+        for (final Column col : columnsManager.getColumns()) {
+            if (col.getSort() != null) {
+                sorted.add(col);
+            }
+        }
+        sorted.sort(Comparator.comparingInt(col -> col.getSort().getOrder()));
+        final Column moved = sorted.stream()
+                .filter(col -> Objects.equals(col.getId(), columnId))
+                .findFirst()
+                .orElse(null);
+        if (moved == null) {
+            return;
+        }
+        sorted.remove(moved);
+        sorted.add(Math.max(0, Math.min(priority, sorted.size())), moved);
+        for (int order = 0; order < sorted.size(); order++) {
+            final Column col = sorted.get(order);
+            if (col.getSort().getOrder() != order) {
+                columnsManager.replaceColumn(col, col.copy()
+                        .sort(new Sort(order, col.getSort().getDirection()))
+                        .build());
+            }
+        }
+        onChange();
+        updateColumns();
+        refresh();
     }
 
     void refresh() {

@@ -1,0 +1,10 @@
+Arguments: {"folder":"firewalls-uuid"}
+
+=== Output ===
+Folder 'Firewalls' (/Security/Firewalls, uuid firewalls-uuid, [Firewalls](?action=open-doc&docType=Folder&docUuid=firewalls-uuid))
+
+Documents: 3 — 1 Feed, 1 Pipeline, 1 XSLT
+- [FIREWALL-EVENTS](?action=open-doc&docType=Feed&docUuid=feed-uuid) (Feed, uuid feed-uuid)
+- [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid) (Pipeline, uuid pipe-uuid)
+- [Firewall XSLT](?action=open-doc&docType=XSLT&docUuid=xslt-uuid) (XSLT, uuid xslt-uuid)
+Documents in folders you can't view aren't listed.

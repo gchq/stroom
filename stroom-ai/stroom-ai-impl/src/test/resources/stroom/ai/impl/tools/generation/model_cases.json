@@ -1,0 +1,7328 @@
+[
+ {
+  "model": "TranslationMapping",
+  "input": {},
+  "errors": [
+   {
+    "loc": [
+     "input"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {}
+   },
+   {
+    "loc": [
+     "events"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {}
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": [
+   1
+  ],
+  "errors": [
+   {
+    "loc": [],
+    "type": "model_type",
+    "msg": "Input should be a valid dictionary or instance of TranslationMapping",
+    "input": [
+     1
+    ]
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": "x",
+  "errors": [
+   {
+    "loc": [],
+    "type": "model_type",
+    "msg": "Input should be a valid dictionary or instance of TranslationMapping",
+    "input": "x"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "csv",
+   "events": []
+  },
+  "errors": [
+   {
+    "loc": [
+     "input"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'data_splitter', 'json', 'xml' or 'xml_fragments'",
+    "input": "csv"
+   },
+   {
+    "loc": [
+     "events"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": 1,
+     "fields": [
+      {
+       "path": "a",
+       "field": "x",
+       "value": "y"
+      }
+     ],
+     "drop": "maybe"
+    }
+   ],
+   "style": {
+    "variable_min_reads": 0,
+    "naming": "x"
+   },
+   "nil_values": "-",
+   "common": "x"
+  },
+  "errors": [
+   {
+    "loc": [
+     "nil_values"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": "-"
+   },
+   {
+    "loc": [
+     "common"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": "x"
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "name"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 1
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'a': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"a\", \"field\": \"<input field>\"}",
+    "input": {
+     "path": "a",
+     "field": "x",
+     "value": "y"
+    }
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_parsing",
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": "maybe"
+   },
+   {
+    "loc": [
+     "style",
+     "naming"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case'",
+    "input": "x"
+   },
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "greater_than_equal",
+    "msg": "Input should be greater than or equal to 1",
+    "input": 0
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "when": [
+      {
+       "field": "x"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "x",
+       "map": {
+        "a": 1
+       }
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "x",
+     "style": "equals",
+     "keys": []
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "pairs",
+     0,
+     "keys"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "when",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "input": {
+     "field": "x"
+    }
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "map",
+     "a"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 1
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {}
+     ],
+     "when": [
+      3
+     ]
+    }
+   ],
+   "extract": [
+    {
+     "regex": "x",
+     "names": []
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "extract",
+     0,
+     "names"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "when",
+     0
+    ],
+    "type": "model_type",
+    "msg": "Input should be a valid dictionary or instance of Condition",
+    "input": 3
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "path"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {}
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "x",
+       "field": "f",
+       "repeat": "yes",
+       "time_format": 5
+      }
+     ]
+    }
+   ],
+   "style": {
+    "inline_map_max_keys": "3",
+    "function_min_uses": 2.5
+   },
+   "functions": [
+    {
+     "href": "a",
+     "prefix": "xmlx",
+     "namespace": "n"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "time_format"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 5
+   },
+   {
+    "loc": [
+     "style",
+     "function_min_uses"
+    ],
+    "type": "int_from_float",
+    "msg": "Input should be a valid integer, got a number with a fractional part",
+    "input": 2.5
+   },
+   {
+    "loc": [
+     "functions",
+     0,
+     "prefix"
+    ],
+    "type": "value_error",
+    "msg": "Value error, prefix 'xmlx' is not a namespace prefix (letters, digits, _ . -; not xml...)",
+    "input": "xmlx"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "x",
+       "field": "f",
+       "repeat": 2
+      }
+     ]
+    }
+   ],
+   "style": "x",
+   "json_fields": [
+    1
+   ],
+   "shared": [
+    {
+     "href": "a"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "json_fields",
+     0
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 1
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "repeat"
+    ],
+    "type": "bool_parsing",
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": 2
+   },
+   {
+    "loc": [
+     "style"
+    ],
+    "type": "model_type",
+    "msg": "Input should be a valid dictionary or instance of XsltStyle",
+    "input": "x"
+   },
+   {
+    "loc": [
+     "shared",
+     0,
+     "template"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {
+     "href": "a"
+    }
+   },
+   {
+    "loc": [
+     "shared",
+     0,
+     "at"
+    ],
+    "type": "missing",
+    "msg": "Field required",
+    "input": {
+     "href": "a"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": {
+    "a": 1
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "events"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": {
+     "a": 1
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "x",
+       "field": "f",
+       "map": [
+        "a"
+       ],
+       "lookup": {
+        "map": "m"
+       }
+      }
+     ]
+    }
+   ],
+   "unmatched": null,
+   "root": 5
+  },
+  "errors": [
+   {
+    "loc": [
+     "root"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 5
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "lookup"
+    ],
+    "type": "value_error",
+    "msg": "Value error, lookup 'm': give exactly one of field or xpath for the key",
+    "input": {
+     "map": "m"
+    }
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0,
+     "map"
+    ],
+    "type": "dict_type",
+    "msg": "Input should be a valid dictionary",
+    "input": [
+     "a"
+    ]
+   },
+   {
+    "loc": [
+     "unmatched"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'warn' or 'skip'",
+    "input": null
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "xml_namespace": null
+  },
+  "errors": [
+   {
+    "loc": [
+     "xml_namespace"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": null
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": null
+  },
+  "errors": [
+   {
+    "loc": [
+     "events"
+    ],
+    "type": "list_type",
+    "msg": "Input should be a valid list",
+    "input": null
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": 1,
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "input"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'data_splitter', 'json', 'xml' or 'xml_fragments'",
+    "input": 1
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "data_splitter",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      "rule_id"
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, [x] data needs the rule's action element, which none of its fields names: map one field there first (EventDetail/Alert/Type, say; for an element whose only fit is Data, as Network's is for a DNS lookup, a Data entry of it: {\"path\": \"EventDetail/Network/Data\", \"data_name\": \"action\", \"field\": \"action\"}), and data carries the rest beside it",
+    "input": {
+     "name": "x",
+     "data": [
+      "rule_id"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "x",
+       "field": "a",
+       "value": "b"
+      },
+      {
+       "path": "y"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'x': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"x\", \"field\": \"<input field>\"}",
+    "input": {
+     "path": "x",
+     "field": "a",
+     "value": "b"
+    }
+   },
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     1
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'y': give exactly one of field, any_of, join, value, xpath or lookup (none given), e.g. {\"path\": \"y\", \"field\": \"<input field>\"}",
+    "input": {
+     "path": "y"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "allow_unknown": 5
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "allow_unknown"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 5
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "a"
+     ],
+     "names": {
+      "other": "x"
+     }
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "pairs",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, pairs names ['other'], which aren't among its keys",
+    "input": {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "a"
+     ],
+     "names": {
+      "other": "x"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "logon",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "field": "extract(EventData/Data, 'Action: \\[([^\\]]+)\\]')"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventDetail/Authenticate/Action': field \"extract(EventData/Data, 'Action: \\\\[([^\\\\]]+)\\\\]')\" is a function call, not an input field. To take values out of a text field with a regular expression, add an entry to the mapping's extract list, {\"field\": \"<the text field>\", \"regex\": \"<one group per value>\", \"names\": [\"<a name per group>\"]}, and use those names as fields.",
+    "input": {
+     "path": "EventDetail/Authenticate/Action",
+     "field": "extract(EventData/Data, 'Action: \\[([^\\]]+)\\]')"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "logon",
+     "fields": [
+      {
+       "path": "EventSource/User/Id",
+       "any_of": [
+        "user",
+        "lower-case(name)"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "fields",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventSource/User/Id': field 'lower-case(name)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself.",
+    "input": {
+     "path": "EventSource/User/Id",
+     "any_of": [
+      "user",
+      "lower-case(name)"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "logon",
+     "when": [
+      {
+       "field": "extract(msg, \"a\")",
+       "present": true
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "when",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, A condition's field 'extract(msg, \"a\")' is a function call, not an input field. To take values out of a text field with a regular expression, add an entry to the mapping's extract list, {\"field\": \"<the text field>\", \"regex\": \"<one group per value>\", \"names\": [\"<a name per group>\"]}, and use those names as fields.",
+    "input": {
+     "field": "extract(msg, \"a\")",
+     "present": true
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/Client/IPAddress",
+     "value": ""
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventSource/Client/IPAddress': value '' writes an empty element, which the schema refuses: map the field that holds it (extract it first if it is inside another field's text), or leave the entry out",
+    "input": {
+     "path": "EventSource/Client/IPAddress",
+     "value": ""
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "value": "x"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventSource/User/Id': give exactly one of field, any_of, join, value, xpath or lookup (given field and value), e.g. {\"path\": \"EventSource/User/Id\", \"field\": \"<input field>\"}",
+    "input": {
+     "path": "EventSource/User/Id",
+     "field": "user",
+     "value": "x"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "naming": "SCREAMING"
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "naming"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case'",
+    "input": "SCREAMING"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "layout": "one-big-template"
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "layout"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'modes', 'named' or 'inline'",
+    "input": "one-big-template"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [],
+     "reason": "r"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "when"
+    ],
+    "type": "too_short",
+    "msg": "List should have at least 1 item after validation, not 0",
+    "input": []
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "extract": [
+    {
+     "field": "a",
+     "xpath": "b",
+     "regex": "x",
+     "names": [
+      "a"
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "extract",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, An extraction needs exactly one of field or xpath",
+    "input": {
+     "field": "a",
+     "xpath": "b",
+     "regex": "x",
+     "names": [
+      "a"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "functions": [
+    {
+     "href": "a",
+     "prefix": "1x",
+     "namespace": "n"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "functions",
+     0,
+     "prefix"
+    ],
+    "type": "value_error",
+    "msg": "Value error, prefix '1x' is not a namespace prefix (letters, digits, _ . -; not xml...)",
+    "input": "1x"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName**,xpath:",
+     "field": "x"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, path 'EventSource/Device/HostName**,xpath:' holds more than a path (from '*' on): the next key ran into its string. Close the path's string and give the input as a key of its own, e.g. {\"path\": \"EventSource/Device/HostName\", \"xpath\": \"<the xpath>\"}",
+    "input": {
+     "path": "EventSource/Device/HostName**,xpath:",
+     "field": "x"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "meta": "a'b"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventSource/Device/HostName': meta names one stream meta attribute (e.g. 'MyHostName'), and is the entry's only input",
+    "input": {
+     "path": "EventSource/Device/HostName",
+     "meta": "a'b"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "meta": "a",
+     "field": "x"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventSource/Device/HostName': meta names one stream meta attribute (e.g. 'MyHostName'), and is the entry's only input (given field too)",
+    "input": {
+     "path": "EventSource/Device/HostName",
+     "meta": "a",
+     "field": "x"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "xpath": "x",
+     "dictionary": "d"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'X': dictionary needs field (or any_of) as the key",
+    "input": {
+     "path": "X",
+     "xpath": "x",
+     "dictionary": "d"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "value": "x",
+     "transform": "lower"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'X': transform applies to an input, not a constant",
+    "input": {
+     "path": "X",
+     "value": "x",
+     "transform": "lower"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "field": "x",
+     "repeat": true,
+     "map": {
+      "a": "b"
+     }
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'X': repeat takes an input field, any_of or xpath, with transform at most",
+    "input": {
+     "path": "X",
+     "field": "x",
+     "repeat": true,
+     "map": {
+      "a": "b"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "field": "x",
+     "transform": "nope",
+     "scope": "r"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0,
+     "transform"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'lower', 'upper', 'trim', 'strip_domain', 'domain', 'digits', 'unescape_quotes' or 'strip_control'",
+    "input": "nope"
+   },
+   {
+    "loc": [
+     "common",
+     0,
+     "scope"
+    ],
+    "type": "literal_error",
+    "msg": "Input should be 'record' or 'item'",
+    "input": "r"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "field": "a",
+     "lookup": {
+      "map": "M",
+      "field": "a",
+      "xpath": "b"
+     }
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "common",
+     0,
+     "lookup"
+    ],
+    "type": "value_error",
+    "msg": "Value error, lookup 'M': give exactly one of field or xpath for the key",
+    "input": {
+     "map": "M",
+     "field": "a",
+     "xpath": "b"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "X",
+     "field": "a"
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "matches": {
+        "nothing": "x"
+       },
+       "xpath": "p"
+      }
+     ],
+     "reason": "r"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "when",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, A condition needs exactly one of equals, one_of, matches, present or in_dictionary",
+    "input": {
+     "matches": {
+      "nothing": "x"
+     },
+     "xpath": "p"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "drop_when": [
+    {
+     "when": [
+      {
+       "equals": {
+        "value": 3
+       },
+       "xpath": "p"
+      }
+     ],
+     "reason": "r"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "drop_when",
+     0,
+     "when",
+     0,
+     "equals"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 3
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": 1.0
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": true
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": true,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": true,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": 0
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": "TRUE"
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": true
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": true,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": true,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": "Yes"
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": true
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": true,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": true,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": " true "
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_parsing",
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": " true "
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": "off"
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": 1.5
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_type",
+    "msg": "Input should be a valid boolean",
+    "input": 1.5
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": null
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_type",
+    "msg": "Input should be a valid boolean",
+    "input": null
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": []
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_type",
+    "msg": "Input should be a valid boolean",
+    "input": []
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": "x"
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_parsing",
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": "x"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": 2
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0,
+     "drop"
+    ],
+    "type": "bool_parsing",
+    "msg": "Input should be a valid boolean, unable to interpret input",
+    "input": 2
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": true
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "drop": true
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": true,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": true,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": true
+   }
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": 1
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": " 3 "
+   }
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": "3.0"
+   }
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": 3.0
+   }
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": "-1"
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "greater_than_equal",
+    "msg": "Input should be greater than or equal to 1",
+    "input": "-1"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": "abc"
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "int_parsing",
+    "msg": "Input should be a valid integer, unable to parse string as an integer",
+    "input": "abc"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": null
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "int_type",
+    "msg": "Input should be a valid integer",
+    "input": null
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": []
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "int_type",
+    "msg": "Input should be a valid integer",
+    "input": []
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": 1e+20
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "int_parsing_size",
+    "msg": "Unable to parse input string as an integer, exceeded maximum size",
+    "input": 1e+20
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": 1099511627776
+   }
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": 1099511627776
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 1099511627776,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 1099511627776,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "variable_min_reads": "0x10"
+   }
+  },
+  "errors": [
+   {
+    "loc": [
+     "style",
+     "variable_min_reads"
+    ],
+    "type": "int_parsing",
+    "msg": "Input should be a valid integer, unable to parse string as an integer",
+    "input": "0x10"
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "root": true
+  },
+  "errors": [
+   {
+    "loc": [
+     "root"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": true
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "root": 3
+  },
+  "errors": [
+   {
+    "loc": [
+     "root"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": 3
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "root": null
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "root": {}
+  },
+  "errors": [
+   {
+    "loc": [
+     "root"
+    ],
+    "type": "string_type",
+    "msg": "Input should be a valid string",
+    "input": {}
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "allow_unknown": true
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "allow_unknown": ""
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "allow_unknown": "",
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": "",
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ],
+     "allow_unknown": false
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "when": [
+      {
+       "field": "a",
+       "equals": {
+        "value": "x",
+        "field": "b"
+       }
+      },
+      {
+       "matches": {
+        "regex": "x"
+       },
+       "xpath": "p"
+      },
+      {
+       "one_of": {
+        "values": [
+         "a",
+         "b"
+        ],
+        "field": "f"
+       }
+      },
+      {
+       "in_dictionary": {
+        "in_dictionary": "D",
+        "scope": "record",
+        "field": "f"
+       }
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "when": [
+      {
+       "field": "a",
+       "equals": "x"
+      },
+      {
+       "xpath": "p",
+       "matches": "x"
+      },
+      {
+       "field": "f",
+       "one_of": [
+        "a",
+        "b"
+       ]
+      },
+      {
+       "field": "f",
+       "in_dictionary": "D",
+       "scope": "record"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [
+      {
+       "field": "a",
+       "equals": "x"
+      },
+      {
+       "xpath": "p",
+       "matches": "x"
+      },
+      {
+       "field": "f",
+       "one_of": [
+        "a",
+        "b"
+       ]
+      },
+      {
+       "field": "f",
+       "in_dictionary": "D",
+       "scope": "record"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [
+      {
+       "field": "a",
+       "xpath": null,
+       "equals": "x",
+       "one_of": null,
+       "matches": null,
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      },
+      {
+       "field": null,
+       "xpath": "p",
+       "equals": null,
+       "one_of": null,
+       "matches": "x",
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      },
+      {
+       "field": "f",
+       "xpath": null,
+       "equals": null,
+       "one_of": [
+        "a",
+        "b"
+       ],
+       "matches": null,
+       "present": null,
+       "in_dictionary": null,
+       "scope": null
+      },
+      {
+       "field": "f",
+       "xpath": null,
+       "equals": null,
+       "one_of": null,
+       "matches": null,
+       "present": null,
+       "in_dictionary": "D",
+       "scope": "record"
+      }
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "meta": " MyHost "
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "xpath": "stroom:meta('MyHost')"
+    }
+   ],
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "xpath": "stroom:meta('MyHost')",
+     "repeat": false
+    }
+   ],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Device/HostName",
+     "field": null,
+     "any_of": null,
+     "value": null,
+     "xpath": "stroom:meta('MyHost')",
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": null
+    }
+   ],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      "a"
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Data",
+       "data_name": "action",
+       "field": "action"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "action",
+       "data_name": "action"
+      },
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "a",
+       "data_name": "a"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "action",
+       "repeat": false,
+       "data_name": "action"
+      },
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "a",
+       "repeat": false,
+       "data_name": "a"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "action",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "action"
+      },
+      {
+       "path": "EventDetail/Network/Data",
+       "field": "a",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "a"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      "a",
+      "b"
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Port",
+       "field": "p"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "data_name": "a",
+       "field": "zz"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Port",
+       "field": "p"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "zz",
+       "data_name": "a"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "b",
+       "data_name": "b"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Port",
+       "field": "p",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "zz",
+       "repeat": false,
+       "data_name": "a"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "b",
+       "repeat": false,
+       "data_name": "b"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Network/Permit/Source/Port",
+       "field": "p",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "zz",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "a"
+      },
+      {
+       "path": "EventDetail/Network/Permit/Data",
+       "field": "b",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "b"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "style": {
+    "data_names": "camelCase"
+   },
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "data_name": "first_one",
+     "field": "f"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "server_node",
+       "field": "x"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "IPAddress",
+       "field": "y"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "9lives",
+       "field": "y"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "data_name": "firstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "data_name": "serverNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "ipAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "_9Lives"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "data_names": "camelCase"
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "repeat": false,
+     "data_name": "firstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "repeat": false,
+       "data_name": "serverNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "ipAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "_9Lives"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "camelCase",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "field": null,
+     "any_of": null,
+     "value": "g",
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": null
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "any_of": null,
+     "value": null,
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": "firstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "serverNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "ipAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "_9Lives"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "camelCase",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "style": {
+    "data_names": "PascalCase"
+   },
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "data_name": "first_one",
+     "field": "f"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "server_node",
+       "field": "x"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "IPAddress",
+       "field": "y"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "9lives",
+       "field": "y"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "data_name": "FirstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "data_name": "ServerNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "IPAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "_9Lives"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "data_names": "PascalCase"
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "repeat": false,
+     "data_name": "FirstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "repeat": false,
+       "data_name": "ServerNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "IPAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "_9Lives"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "PascalCase",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "field": null,
+     "any_of": null,
+     "value": "g",
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": null
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "any_of": null,
+     "value": null,
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": "FirstOne"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "ServerNode"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "IPAddress"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "_9Lives"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "PascalCase",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "style": {
+    "data_names": "kebab-case"
+   },
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "data_name": "first_one",
+     "field": "f"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "server_node",
+       "field": "x"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "IPAddress",
+       "field": "y"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "9lives",
+       "field": "y"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "data_name": "first-one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "data_name": "server-node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "ip-address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "_9-lives"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "data_names": "kebab-case"
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "repeat": false,
+     "data_name": "first-one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "repeat": false,
+       "data_name": "server-node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "ip-address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "_9-lives"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "kebab-case",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "field": null,
+     "any_of": null,
+     "value": "g",
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": null
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "any_of": null,
+     "value": null,
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": "first-one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "server-node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "ip-address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "_9-lives"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "kebab-case",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "style": {
+    "data_names": "snake_case"
+   },
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "data_name": "first_one",
+     "field": "f"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "server_node",
+       "field": "x"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "IPAddress",
+       "field": "y"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "data_name": "9lives",
+       "field": "y"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g"
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "data_name": "first_one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "data_name": "server_node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "ip_address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "data_name": "_9_lives"
+      }
+     ]
+    }
+   ],
+   "style": {
+    "data_names": "snake_case"
+   }
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "value": "g",
+     "repeat": false
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "repeat": false,
+     "data_name": "first_one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "repeat": false,
+       "data_name": "server_node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "ip_address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "repeat": false,
+       "data_name": "_9_lives"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "snake_case",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [
+    {
+     "path": "EventSource/Generator",
+     "field": null,
+     "any_of": null,
+     "value": "g",
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": null
+    },
+    {
+     "path": "EventDetail/Authenticate/Data",
+     "field": "f",
+     "any_of": null,
+     "value": null,
+     "xpath": null,
+     "meta": null,
+     "lookup": null,
+     "dictionary": null,
+     "transform": null,
+     "repeat": false,
+     "scope": null,
+     "time_format": null,
+     "timezone": null,
+     "map": null,
+     "default": null,
+     "data_name": "first_one"
+    }
+   ],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "x",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "server_node"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "ip_address"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "y",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "_9_lives"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "snake_case",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ],
+   "extract": [
+    {
+     "field": "msg",
+     "regex": "^(\\S+) (.*)$",
+     "names": [
+      "host",
+      "rest"
+     ]
+    }
+   ],
+   "pairs": [
+    {
+     "field": "rest",
+     "style": "equals",
+     "keys": [
+      "user"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "equals",
+     "keys": [
+      "a"
+     ]
+    },
+    {
+     "field": "body",
+     "style": "quoted",
+     "keys": [
+      "type",
+      "Source IP"
+     ],
+     "names": {
+      "type": "kind",
+      "Source IP": ""
+     }
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "extract": [
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])a=([^\\s,;\"]*)",
+     "names": [
+      "a"
+     ]
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])type=\"([^\"]*)\"",
+     "names": [
+      "kind"
+     ]
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])Source IP=\"([^\"]*)\"",
+     "names": [
+      "source_ip"
+     ]
+    },
+    {
+     "field": "msg",
+     "regex": "^(\\S+) (.*)$",
+     "names": [
+      "host",
+      "rest"
+     ]
+    },
+    {
+     "field": "rest",
+     "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+     "names": [
+      "user"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "name": "a",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])a=([^\\s,;\"]*)",
+     "names": [
+      "a"
+     ],
+     "flags": ""
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])type=\"([^\"]*)\"",
+     "names": [
+      "kind"
+     ],
+     "flags": ""
+    },
+    {
+     "field": "body",
+     "regex": "(?:^|[\\s,;])Source IP=\"([^\"]*)\"",
+     "names": [
+      "source_ip"
+     ],
+     "flags": ""
+    },
+    {
+     "field": "msg",
+     "regex": "^(\\S+) (.*)$",
+     "names": [
+      "host",
+      "rest"
+     ],
+     "flags": ""
+    },
+    {
+     "field": "rest",
+     "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+     "names": [
+      "user"
+     ],
+     "flags": ""
+    }
+   ],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "value": "x",
+       "repeat": false
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [
+    {
+     "field": "body",
+     "xpath": null,
+     "regex": "(?:^|[\\s,;])a=([^\\s,;\"]*)",
+     "names": [
+      "a"
+     ],
+     "flags": "",
+     "scope": null
+    },
+    {
+     "field": "body",
+     "xpath": null,
+     "regex": "(?:^|[\\s,;])type=\"([^\"]*)\"",
+     "names": [
+      "kind"
+     ],
+     "flags": "",
+     "scope": null
+    },
+    {
+     "field": "body",
+     "xpath": null,
+     "regex": "(?:^|[\\s,;])Source IP=\"([^\"]*)\"",
+     "names": [
+      "source_ip"
+     ],
+     "flags": "",
+     "scope": null
+    },
+    {
+     "field": "msg",
+     "xpath": null,
+     "regex": "^(\\S+) (.*)$",
+     "names": [
+      "host",
+      "rest"
+     ],
+     "flags": "",
+     "scope": null
+    },
+    {
+     "field": "rest",
+     "xpath": null,
+     "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+     "names": [
+      "user"
+     ],
+     "flags": "",
+     "scope": null
+    }
+   ],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "a",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": null,
+       "any_of": null,
+       "value": "x",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "xml_fragments",
+   "record": "Event",
+   "xml_namespace": "records:2",
+   "json_layout": "lines",
+   "json_fields": [
+    "a"
+   ],
+   "xml_fields": [
+    "b"
+   ],
+   "for_each": "items",
+   "nil_values": [
+    "-"
+   ],
+   "unmatched": "skip",
+   "imports": [
+    "Stream-Meta-V1"
+   ],
+   "shared": [
+    {
+     "href": "C",
+     "template": "t",
+     "at": "Meta",
+     "with_params": {
+      "p": "x"
+     }
+    }
+   ],
+   "functions": [
+    {
+     "href": "F",
+     "prefix": "gs",
+     "namespace": "urn:gs"
+    }
+   ],
+   "style": {
+    "naming": "camelCase",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 0,
+    "function_min_uses": 0,
+    "data_values": "attribute",
+    "data_entries": "guarded",
+    "data_run_min": 2,
+    "variables": "top",
+    "data_names": "as_given",
+    "layout": "named"
+   },
+   "events": [
+    {
+     "name": "e",
+     "keep_unknown": true,
+     "allow_unknown": "why",
+     "drop": false,
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "k",
+       "transform": "lower",
+       "scope": "record",
+       "time_format": "epoch_s",
+       "timezone": "UTC",
+       "default": "d",
+       "map": {
+        "a": "b"
+       },
+       "repeat": false,
+       "dictionary": "D"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "data_name": "n",
+       "lookup": {
+        "map": "M",
+        "xpath": "x",
+        "path": "p"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "xml_fragments",
+   "record": "Event",
+   "xml_namespace": "records:2",
+   "json_layout": "lines",
+   "json_fields": [
+    "a"
+   ],
+   "xml_fields": [
+    "b"
+   ],
+   "for_each": "items",
+   "nil_values": [
+    "-"
+   ],
+   "events": [
+    {
+     "name": "e",
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "k",
+       "dictionary": "D",
+       "transform": "lower",
+       "scope": "record",
+       "time_format": "epoch_s",
+       "timezone": "UTC",
+       "map": {
+        "a": "b"
+       },
+       "default": "d"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "lookup": {
+        "map": "M",
+        "xpath": "x",
+        "path": "p"
+       },
+       "data_name": "n"
+      }
+     ],
+     "allow_unknown": "why",
+     "keep_unknown": true
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "camelCase",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 0,
+    "function_min_uses": 0,
+    "data_values": "attribute",
+    "data_entries": "guarded",
+    "data_run_min": 2,
+    "variables": "top",
+    "layout": "named"
+   },
+   "imports": [
+    "Stream-Meta-V1"
+   ],
+   "shared": [
+    {
+     "href": "C",
+     "template": "t",
+     "at": "Meta",
+     "with_params": {
+      "p": "x"
+     }
+    }
+   ],
+   "functions": [
+    {
+     "href": "F",
+     "prefix": "gs",
+     "namespace": "urn:gs"
+    }
+   ]
+  },
+  "without_none": {
+   "input": "xml_fragments",
+   "record": "Event",
+   "xml_namespace": "records:2",
+   "json_layout": "lines",
+   "json_fields": [
+    "a"
+   ],
+   "xml_fields": [
+    "b"
+   ],
+   "pairs": [],
+   "extract": [],
+   "for_each": "items",
+   "nil_values": [
+    "-"
+   ],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "e",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "k",
+       "dictionary": "D",
+       "transform": "lower",
+       "repeat": false,
+       "scope": "record",
+       "time_format": "epoch_s",
+       "timezone": "UTC",
+       "map": {
+        "a": "b"
+       },
+       "default": "d"
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "lookup": {
+        "map": "M",
+        "xpath": "x",
+        "path": "p"
+       },
+       "repeat": false,
+       "data_name": "n"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": "why",
+     "keep_unknown": true,
+     "data": []
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "camelCase",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 0,
+    "function_min_uses": 0,
+    "data_values": "attribute",
+    "data_entries": "guarded",
+    "data_run_min": 2,
+    "variables": "top",
+    "data_names": "as_given",
+    "layout": "named"
+   },
+   "imports": [
+    "Stream-Meta-V1"
+   ],
+   "shared": [
+    {
+     "href": "C",
+     "template": "t",
+     "at": "Meta",
+     "with_params": {
+      "p": "x"
+     }
+    }
+   ],
+   "functions": [
+    {
+     "href": "F",
+     "prefix": "gs",
+     "namespace": "urn:gs"
+    }
+   ]
+  },
+  "all": {
+   "input": "xml_fragments",
+   "root": null,
+   "record": "Event",
+   "xml_namespace": "records:2",
+   "json_layout": "lines",
+   "json_fields": [
+    "a"
+   ],
+   "xml_fields": [
+    "b"
+   ],
+   "pairs": [],
+   "extract": [],
+   "for_each": "items",
+   "nil_values": [
+    "-"
+   ],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "e",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/TypeId",
+       "field": "k",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": "D",
+       "transform": "lower",
+       "repeat": false,
+       "scope": "record",
+       "time_format": "epoch_s",
+       "timezone": "UTC",
+       "map": {
+        "a": "b"
+       },
+       "default": "d",
+       "data_name": null
+      },
+      {
+       "path": "EventDetail/Unknown/Data",
+       "field": null,
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": {
+        "map": "M",
+        "field": null,
+        "xpath": "x",
+        "path": "p"
+       },
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "n"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": "why",
+     "keep_unknown": true,
+     "data": []
+    }
+   ],
+   "unmatched": "skip",
+   "style": {
+    "naming": "camelCase",
+    "variable_min_reads": 1,
+    "inline_map_max_keys": 0,
+    "function_min_uses": 0,
+    "data_values": "attribute",
+    "data_entries": "guarded",
+    "data_run_min": 2,
+    "variables": "top",
+    "data_names": "as_given",
+    "layout": "named"
+   },
+   "imports": [
+    "Stream-Meta-V1"
+   ],
+   "shared": [
+    {
+     "href": "C",
+     "template": "t",
+     "at": "Meta",
+     "with_params": {
+      "p": "x"
+     }
+    }
+   ],
+   "functions": [
+    {
+     "href": "F",
+     "prefix": "gs",
+     "namespace": "urn:gs"
+    }
+   ]
+  }
+ },
+ {
+  "model": "Condition",
+  "input": {
+   "matches": {
+    "value": "Event: \\[User\\]",
+    "xpath": "/Event/EventData/Data"
+   }
+  },
+  "compact": {
+   "xpath": "/Event/EventData/Data",
+   "matches": "Event: \\[User\\]"
+  },
+  "without_none": {
+   "xpath": "/Event/EventData/Data",
+   "matches": "Event: \\[User\\]"
+  },
+  "all": {
+   "field": null,
+   "xpath": "/Event/EventData/Data",
+   "equals": null,
+   "one_of": null,
+   "matches": "Event: \\[User\\]",
+   "present": null,
+   "in_dictionary": null,
+   "scope": null
+  }
+ },
+ {
+  "model": "Condition",
+  "input": {
+   "equals": {
+    "value": "LOGIN",
+    "field": "action"
+   }
+  },
+  "compact": {
+   "field": "action",
+   "equals": "LOGIN"
+  },
+  "without_none": {
+   "field": "action",
+   "equals": "LOGIN"
+  },
+  "all": {
+   "field": "action",
+   "xpath": null,
+   "equals": "LOGIN",
+   "one_of": null,
+   "matches": null,
+   "present": null,
+   "in_dictionary": null,
+   "scope": null
+  }
+ },
+ {
+  "model": "Condition",
+  "input": {
+   "one_of": {
+    "values": [
+     "a",
+     "b"
+    ],
+    "field": "f"
+   }
+  },
+  "compact": {
+   "field": "f",
+   "one_of": [
+    "a",
+    "b"
+   ]
+  },
+  "without_none": {
+   "field": "f",
+   "one_of": [
+    "a",
+    "b"
+   ]
+  },
+  "all": {
+   "field": "f",
+   "xpath": null,
+   "equals": null,
+   "one_of": [
+    "a",
+    "b"
+   ],
+   "matches": null,
+   "present": null,
+   "in_dictionary": null,
+   "scope": null
+  }
+ },
+ {
+  "model": "Condition",
+  "input": {
+   "field": "a",
+   "xpath": "b",
+   "equals": "x"
+  },
+  "errors": [
+   {
+    "loc": [],
+    "type": "value_error",
+    "msg": "Value error, A condition needs exactly one of field or xpath",
+    "input": {
+     "field": "a",
+     "xpath": "b",
+     "equals": "x"
+    }
+   }
+  ]
+ },
+ {
+  "model": "FieldMapping",
+  "input": {
+   "path": "X",
+   "any_of": []
+  },
+  "compact": {
+   "path": "X",
+   "any_of": []
+  },
+  "without_none": {
+   "path": "X",
+   "any_of": [],
+   "repeat": false
+  },
+  "all": {
+   "path": "X",
+   "field": null,
+   "any_of": [],
+   "value": null,
+   "xpath": null,
+   "meta": null,
+   "lookup": null,
+   "dictionary": null,
+   "transform": null,
+   "repeat": false,
+   "scope": null,
+   "time_format": null,
+   "timezone": null,
+   "map": null,
+   "default": null,
+   "data_name": null
+  }
+ },
+ {
+  "model": "FieldMapping",
+  "input": {
+   "path": "X",
+   "field": "x",
+   "repeat": true,
+   "map": {}
+  },
+  "compact": {
+   "path": "X",
+   "field": "x",
+   "repeat": true,
+   "map": {}
+  },
+  "without_none": {
+   "path": "X",
+   "field": "x",
+   "repeat": true,
+   "map": {}
+  },
+  "all": {
+   "path": "X",
+   "field": "x",
+   "any_of": null,
+   "value": null,
+   "xpath": null,
+   "meta": null,
+   "lookup": null,
+   "dictionary": null,
+   "transform": null,
+   "repeat": true,
+   "scope": null,
+   "time_format": null,
+   "timezone": null,
+   "map": {},
+   "default": null,
+   "data_name": null
+  }
+ },
+ {
+  "model": "EventRule",
+  "input": {
+   "name": "x",
+   "allow_unknown": true
+  },
+  "compact": {
+   "name": "x",
+   "allow_unknown": ""
+  },
+  "without_none": {
+   "name": "x",
+   "when": [],
+   "fields": [],
+   "drop": false,
+   "allow_unknown": "",
+   "keep_unknown": false,
+   "data": []
+  },
+  "all": {
+   "name": "x",
+   "when": [],
+   "fields": [],
+   "drop": false,
+   "allow_unknown": "",
+   "keep_unknown": false,
+   "data": []
+  }
+ },
+ {
+  "model": "XsltStyle",
+  "input": {},
+  "compact": {},
+  "without_none": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  },
+  "all": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ {
+  "model": "Extraction",
+  "input": {
+   "regex": "x",
+   "names": [
+    "a"
+   ]
+  },
+  "errors": [
+   {
+    "loc": [],
+    "type": "value_error",
+    "msg": "Value error, An extraction needs exactly one of field or xpath",
+    "input": {
+     "regex": "x",
+     "names": [
+      "a"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      "lower(x)"
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon"
+      }
+     ]
+    }
+   ]
+  },
+  "errors": [
+   {
+    "loc": [
+     "events",
+     0
+    ],
+    "type": "value_error",
+    "msg": "Value error, 'EventDetail/Authenticate/Data': field 'lower(x)' is an expression, not an input field: give it as xpath (an XPath expression on the record) instead, or name the input field itself.",
+    "input": {
+     "path": "EventDetail/Authenticate/Data",
+     "data_name": "lower(x)",
+     "field": "lower(x)"
+    }
+   }
+  ]
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      "a b"
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "a b",
+       "data_name": "a b"
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "a b",
+       "repeat": false,
+       "data_name": "a b"
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "field": null,
+       "any_of": null,
+       "value": "Logon",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "a b",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": "a b"
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ },
+ {
+  "model": "TranslationMapping",
+  "input": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "data": [
+      ""
+     ],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon"
+      }
+     ]
+    }
+   ]
+  },
+  "compact": {
+   "input": "json",
+   "events": [
+    {
+     "name": "x",
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon"
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "",
+       "data_name": ""
+      }
+     ]
+    }
+   ]
+  },
+  "without_none": {
+   "input": "json",
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "value": "Logon",
+       "repeat": false
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "",
+       "repeat": false,
+       "data_name": ""
+      }
+     ],
+     "drop": false,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  },
+  "all": {
+   "input": "json",
+   "root": null,
+   "record": null,
+   "xml_namespace": "",
+   "json_layout": "array",
+   "json_fields": [],
+   "xml_fields": [],
+   "pairs": [],
+   "extract": [],
+   "for_each": null,
+   "nil_values": [],
+   "drop_when": [],
+   "common": [],
+   "events": [
+    {
+     "name": "x",
+     "when": [],
+     "fields": [
+      {
+       "path": "EventDetail/Authenticate/Action",
+       "field": null,
+       "any_of": null,
+       "value": "Logon",
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": null
+      },
+      {
+       "path": "EventDetail/Authenticate/Data",
+       "field": "",
+       "any_of": null,
+       "value": null,
+       "xpath": null,
+       "meta": null,
+       "lookup": null,
+       "dictionary": null,
+       "transform": null,
+       "repeat": false,
+       "scope": null,
+       "time_format": null,
+       "timezone": null,
+       "map": null,
+       "default": null,
+       "data_name": ""
+      }
+     ],
+     "drop": false,
+     "allow_unknown": null,
+     "keep_unknown": false,
+     "data": []
+    }
+   ],
+   "unmatched": "warn",
+   "style": {
+    "naming": "snake_case",
+    "variable_min_reads": 3,
+    "inline_map_max_keys": 3,
+    "function_min_uses": 2,
+    "data_values": "interpolated",
+    "data_entries": "function",
+    "data_run_min": 4,
+    "variables": "just_in_time",
+    "data_names": "as_given",
+    "layout": "modes"
+   },
+   "imports": [],
+   "shared": [],
+   "functions": []
+  }
+ }
+]

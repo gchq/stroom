@@ -1,0 +1,356 @@
+{
+ "source": "draft-fields-with-no-element-are-drafted-as-data-on-the-side",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Broker"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "sensor"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "client_addr"
+   },
+   {
+    "path": "EventSource/Client/Port",
+    "field": "client_port"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "server_addr"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "server_port"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "Connection Broker"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "event"
+   }
+  ],
+  "events": [
+   {
+    "name": "connected",
+    "when": [
+     {
+      "field": "event",
+      "equals": "CONNECT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Connect/Source/Device/IPAddress",
+      "field": "client_addr"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Source/Port",
+      "field": "client_port"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Source/TransportProtocol",
+      "field": "proto",
+      "map": {
+       "TCP": "TCP",
+       "UDP": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Device/IPAddress",
+      "field": "server_addr"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Port",
+      "field": "server_port"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Data",
+      "field": "conn_id",
+      "data_name": "conn_id"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Source/Data",
+      "field": "source_zone",
+      "data_name": "source_zone"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Data",
+      "field": "destination_zone",
+      "data_name": "destination_zone"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Destination/Data",
+      "field": "destination_key",
+      "data_name": "destination_key"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Data",
+      "field": "tls_ja3",
+      "data_name": "tls_ja3"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Data",
+      "field": "policy",
+      "data_name": "policy"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Data",
+      "field": "bytes_in",
+      "data_name": "bytes_in"
+     },
+     {
+      "path": "EventDetail/Network/Connect/Data",
+      "field": "bytes_out",
+      "data_name": "bytes_out"
+     }
+    ]
+   },
+   {
+    "name": "closed",
+    "when": [
+     {
+      "field": "event",
+      "equals": "DISCONNECT"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Close/Source/Device/IPAddress",
+      "field": "client_addr"
+     },
+     {
+      "path": "EventDetail/Network/Close/Source/Port",
+      "field": "client_port"
+     },
+     {
+      "path": "EventDetail/Network/Close/Source/TransportProtocol",
+      "field": "proto",
+      "map": {
+       "TCP": "TCP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Close/Destination/Device/IPAddress",
+      "field": "server_addr"
+     },
+     {
+      "path": "EventDetail/Network/Close/Destination/Port",
+      "field": "server_port"
+     },
+     {
+      "path": "EventDetail/Network/Close/Data",
+      "field": "conn_id",
+      "data_name": "conn_id"
+     },
+     {
+      "path": "EventDetail/Network/Close/Source/Data",
+      "field": "source_zone",
+      "data_name": "source_zone"
+     },
+     {
+      "path": "EventDetail/Network/Close/Destination/Data",
+      "field": "destination_zone",
+      "data_name": "destination_zone"
+     },
+     {
+      "path": "EventDetail/Network/Close/Destination/Data",
+      "field": "destination_key",
+      "data_name": "destination_key"
+     },
+     {
+      "path": "EventDetail/Network/Close/Data",
+      "field": "tls_ja3",
+      "data_name": "tls_ja3"
+     },
+     {
+      "path": "EventDetail/Network/Close/Data",
+      "field": "policy",
+      "data_name": "policy"
+     },
+     {
+      "path": "EventDetail/Network/Close/Data",
+      "field": "bytes_in",
+      "data_name": "bytes_in"
+     },
+     {
+      "path": "EventDetail/Network/Close/Data",
+      "field": "bytes_out",
+      "data_name": "bytes_out"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "conn_id",
+      "data_name": "conn_id"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "proto",
+      "data_name": "proto"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "source_zone",
+      "data_name": "source_zone"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "destination_zone",
+      "data_name": "destination_zone"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "destination_key",
+      "data_name": "destination_key"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "tls_ja3",
+      "data_name": "tls_ja3"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "policy",
+      "data_name": "policy"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_in",
+      "data_name": "bytes_in"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_out",
+      "data_name": "bytes_out"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[connected] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[closed] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from event, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "connected",
+    "when": [
+     "data[@name='event']/@value = 'CONNECT'"
+    ],
+    "fields": [
+     "EventDetail/Network/Connect/Data[bytes_in]",
+     "EventDetail/Network/Connect/Data[bytes_out]",
+     "EventDetail/Network/Connect/Data[conn_id]",
+     "EventDetail/Network/Connect/Data[policy]",
+     "EventDetail/Network/Connect/Data[tls_ja3]",
+     "EventDetail/Network/Connect/Destination/Data[destination_key]",
+     "EventDetail/Network/Connect/Destination/Data[destination_zone]",
+     "EventDetail/Network/Connect/Destination/Device/IPAddress",
+     "EventDetail/Network/Connect/Destination/Port",
+     "EventDetail/Network/Connect/Source/Data[source_zone]",
+     "EventDetail/Network/Connect/Source/Device/IPAddress",
+     "EventDetail/Network/Connect/Source/Port",
+     "EventDetail/Network/Connect/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "closed",
+    "when": [
+     "data[@name='event']/@value = 'DISCONNECT'"
+    ],
+    "fields": [
+     "EventDetail/Network/Close/Data[bytes_in]",
+     "EventDetail/Network/Close/Data[bytes_out]",
+     "EventDetail/Network/Close/Data[conn_id]",
+     "EventDetail/Network/Close/Data[policy]",
+     "EventDetail/Network/Close/Data[tls_ja3]",
+     "EventDetail/Network/Close/Destination/Data[destination_key]",
+     "EventDetail/Network/Close/Destination/Data[destination_zone]",
+     "EventDetail/Network/Close/Destination/Device/IPAddress",
+     "EventDetail/Network/Close/Destination/Port",
+     "EventDetail/Network/Close/Source/Data[source_zone]",
+     "EventDetail/Network/Close/Source/Device/IPAddress",
+     "EventDetail/Network/Close/Source/Port",
+     "EventDetail/Network/Close/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[bytes_in]",
+     "EventDetail/Unknown/Data[bytes_out]",
+     "EventDetail/Unknown/Data[conn_id]",
+     "EventDetail/Unknown/Data[destination_key]",
+     "EventDetail/Unknown/Data[destination_zone]",
+     "EventDetail/Unknown/Data[policy]",
+     "EventDetail/Unknown/Data[proto]",
+     "EventDetail/Unknown/Data[source_zone]",
+     "EventDetail/Unknown/Data[tls_ja3]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

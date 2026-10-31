@@ -1,0 +1,190 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Helpdesk"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "helpdesk-audit"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "helpdesk.example.org"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "agent"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "comment",
+    "transform": "unescape_quotes"
+   }
+  ],
+  "events": [
+   {
+    "name": "created",
+    "when": [
+     {
+      "field": "action",
+      "equals": "create"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Create/Object/Type",
+      "value": "Ticket"
+     },
+     {
+      "path": "EventDetail/Create/Object/Id",
+      "field": "ticket"
+     },
+     {
+      "path": "EventDetail/Create/Object/Data",
+      "field": "customer",
+      "transform": "unescape_quotes",
+      "data_name": "customer"
+     }
+    ]
+   },
+   {
+    "name": "viewed",
+    "when": [
+     {
+      "field": "action",
+      "equals": "view"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/View/Object/Type",
+      "value": "Ticket"
+     },
+     {
+      "path": "EventDetail/View/Object/Id",
+      "field": "ticket"
+     }
+    ]
+   },
+   {
+    "name": "updated",
+    "when": [
+     {
+      "field": "action",
+      "one_of": [
+       "update",
+       "close"
+      ]
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Update/After/Object/Type",
+      "value": "Ticket"
+     },
+     {
+      "path": "EventDetail/Update/After/Object/Id",
+      "field": "ticket"
+     },
+     {
+      "path": "EventDetail/Update/After/Object/State",
+      "field": "action",
+      "map": {
+       "close": "Closed",
+       "update": "Open"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[created] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[viewed] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[updated] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "created",
+    "when": [
+     "data[@name='action']/@value = 'create'"
+    ],
+    "fields": [
+     "EventDetail/Create/Object/Data[customer]",
+     "EventDetail/Create/Object/Id",
+     "EventDetail/Create/Object/Type",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "viewed",
+    "when": [
+     "data[@name='action']/@value = 'view'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/View/Object/Id",
+     "EventDetail/View/Object/Type",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "updated",
+    "when": [
+     "data[@name='action']/@value = ('update', 'close')"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Update/After/Object/Id",
+     "EventDetail/Update/After/Object/State",
+     "EventDetail/Update/After/Object/Type",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

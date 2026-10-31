@@ -1,0 +1,102 @@
+{
+ "test": "tests/test_network_index.py::test_the_plan_takes_network_fields_once_nested_as_the_example_nests",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "fw",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "@timestamp",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "HostName",
+    "type": "keyword",
+    "source": "EventSource/Device/HostName",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Source.IPAddress",
+    "type": "ip",
+    "source": "EventDetail/Network/*/Source/Device/IPAddress",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Source.Port",
+    "type": "long",
+    "source": "EventDetail/Network/*/Source/Port",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Destination.IPAddress",
+    "type": "ip",
+    "source": "EventDetail/Network/*/Destination/Device/IPAddress",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "User.Id",
+    "type": "keyword",
+    "source": "EventSource/User/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "TypeId",
+    "type": "keyword",
+    "source": "EventDetail/TypeId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "*Action",
+    "type": "keyword",
+    "source": "EventDetail/*/Action",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

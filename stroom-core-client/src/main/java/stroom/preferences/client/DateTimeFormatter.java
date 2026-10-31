@@ -22,6 +22,10 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.NullSafe;
 import stroom.widget.customdatebox.client.MomentJs;
 
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
@@ -171,21 +175,46 @@ public class DateTimeFormatter {
 
         final TimeZoneSettings tz = getTimeZoneSettings();
 
-        String pattern = tz.pattern;
-
-        if (momentPatternOverride != null) {
-            pattern = momentPatternOverride;
-        } else {
-            // If UTC then just display the `Z` suffix.
-            if (Use.UTC.equals(tz.use)) {
-                pattern = pattern.replaceAll("Z", "[Z]");
-            }
-            // Ensure we haven't doubled up square brackets.
-            pattern = pattern.replaceAll("\\[+", "[");
-            pattern = pattern.replaceAll("]+", "]");
-        }
+        final String pattern = momentPatternOverride != null
+                ? momentPatternOverride
+                : toDisplayPattern(tz);
 
         return MomentJs.nativeToDateString(ms, tz.use.getDisplayValue(), pattern, tz.zoneId, tz.offsetMinutes);
+    }
+
+    /// Returns the user's time display settings as JSON, for code that runs outside GWT and so can't use
+    /// this class, e.g. a visualisation in its frame. The patterns are Moment.js style, as [#format(Long)]
+    /// uses, so the same instant reads the same everywhere in the UI.
+    ///
+    /// @return `{dateTimePattern, compactDateTimePattern, timeZone: {use, id, offsetMinutes}}`, where
+    ///         `use` is one of `Local`, `UTC`, `Id` or `Offset`.
+    public JSONObject getTimeDisplaySettings() {
+        final TimeZoneSettings tz = getTimeZoneSettings();
+
+        final JSONObject timeZone = new JSONObject();
+        timeZone.put("use", new JSONString(tz.use.getDisplayValue()));
+        if (tz.zoneId != null) {
+            timeZone.put("id", new JSONString(tz.zoneId));
+        }
+        timeZone.put("offsetMinutes", new JSONNumber(tz.offsetMinutes));
+
+        final JSONObject settings = new JSONObject();
+        settings.put("dateTimePattern", new JSONString(toDisplayPattern(tz)));
+        settings.put("compactDateTimePattern", new JSONString(toCompactPattern(tz.pattern)));
+        settings.put("timeZone", timeZone);
+        return settings;
+    }
+
+    private String toDisplayPattern(final TimeZoneSettings tz) {
+        String pattern = tz.pattern;
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(tz.use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+        return pattern;
     }
 
     /**

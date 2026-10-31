@@ -1813,6 +1813,14 @@ button.main-menu svg {
     margin-bottom: 0.2rem;
 }
 
+/* An unlabelled control (e.g. a tick box) with its help button to its right. */
+.form-group-control-row {
+    display: flex;
+    flex-direction: row;
+    gap: var(--control__gap--horizontal);
+    align-items: center;
+}
+
 .form-group-label-container:has(> label.form-group-label:empty) {
     margin-bottom: 0em;
 }
@@ -2854,4 +2862,36 @@ button.main-menu svg {
 
 .visualisation-asset-tree .gwt-TreeItem-selected {
     background-color: var(--row__background-color--selected);
+}
+
+/* A dialog asking the user for a value. */
+.promptViewImpl {
+    overflow: hidden;
+}
+
+.promptViewImpl-message {
+    margin-bottom: 6px;
+    white-space: pre-wrap;
+}
+
+/* The HTTP client configuration dialog: one tab's settings shown at a time, and a row per header. */
+.httpClientConfig-content {
+    overflow: auto;
+}
+
+.httpClientConfig-header {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    margin-bottom: 4px;
+}
+
+.httpClientConfig-headerName {
+    flex: 2 1 0;
+    min-width: 0;
+}
+
+.httpClientConfig-headerValue {
+    flex: 3 1 0;
+    min-width: 0;
 }

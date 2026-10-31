@@ -116,6 +116,21 @@ class TestStroomHttpConnection {
     }
 
     @Test
+    void settingAHeaderAgainReplacesIt() throws Exception {
+        // As HttpURLConnection does, so a configured header that JGit also sets is not sent twice.
+        final HttpClient httpClient = mockClient(response(200, "ok"));
+        final StroomHttpConnection connection = new StroomHttpConnection(new URL(URL_STRING), httpClient);
+
+        connection.setRequestProperty("User-Agent", "configured");
+        connection.setRequestProperty("User-Agent", "JGit");
+        connection.connect();
+
+        assertThat(capturedRequest(httpClient).getHeaders("User-Agent"))
+                .extracting(org.apache.hc.core5.http.Header::getValue)
+                .containsExactly("JGit");
+    }
+
+    @Test
     void anUnsupportedMethodIsRejected() throws Exception {
         final StroomHttpConnection connection = new StroomHttpConnection(
                 new URL(URL_STRING), mockClient(response(200, "ok")));

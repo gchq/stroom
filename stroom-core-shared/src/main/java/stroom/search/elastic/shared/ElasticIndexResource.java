@@ -34,10 +34,12 @@ import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 @Tag(name = "Elastic Indices")
-@Path("/elasticIndex" + ResourcePaths.V1)
+@Path(ElasticIndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ElasticIndexResource extends RestResource, DirectRestService, FetchWithUuid<ElasticIndexDoc> {
+
+    String BASE_PATH = "/elasticIndex" + ResourcePaths.V1;
 
     @GET
     @Path("/{uuid}")

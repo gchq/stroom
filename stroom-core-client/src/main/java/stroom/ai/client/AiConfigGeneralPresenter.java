@@ -73,14 +73,22 @@ public class AiConfigGeneralPresenter
                 config,
                 AskStroomAiConfig::getHistorySummaryPrompt,
                 AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
-        getView().setMaxHistorySafetyCapMessages(NullSafe.getOrElse(
+        getView().setShowToolCalls(NullSafe.getOrElse(
                 config,
-                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
-                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
+                AskStroomAiConfig::isShowToolCalls,
+                AskStroomAiConfig.DEFAULT_SHOW_TOOL_CALLS));
+        getView().setShowReasoning(NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::isShowReasoning,
+                AskStroomAiConfig.DEFAULT_SHOW_REASONING));
         getView().setEnableDebugDetail(NullSafe.getOrElse(
                 config,
                 AskStroomAiConfig::isEnableDebugDetail,
                 AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL));
+        getView().setBrowserNotifications(NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::isBrowserNotifications,
+                AskStroomAiConfig.DEFAULT_BROWSER_NOTIFICATIONS));
         getView().setDockBehaviour(dockBehaviour);
     }
 
@@ -91,8 +99,10 @@ public class AiConfigGeneralPresenter
                 .dockLocation(getView().getDockBehaviour().getDockLocation())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
-                .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages())
-                .enableDebugDetail(getView().isEnableDebugDetail());
+                .showToolCalls(getView().isShowToolCalls())
+                .showReasoning(getView().isShowReasoning())
+                .enableDebugDetail(getView().isEnableDebugDetail())
+                .browserNotifications(getView().isBrowserNotifications());
     }
 
     public DockBehaviour getDockBehaviour() {
@@ -124,16 +134,24 @@ public class AiConfigGeneralPresenter
 
         String getChatSystemPrompt();
 
-        void setMaxHistorySafetyCapMessages(int max);
-
-        int getMaxHistorySafetyCapMessages();
-
         void setHistorySummaryPrompt(String prompt);
 
         String getHistorySummaryPrompt();
 
+        void setShowToolCalls(boolean show);
+
+        boolean isShowToolCalls();
+
+        void setShowReasoning(boolean show);
+
+        boolean isShowReasoning();
+
         void setEnableDebugDetail(boolean enabled);
 
         boolean isEnableDebugDetail();
+
+        void setBrowserNotifications(boolean enabled);
+
+        boolean isBrowserNotifications();
     }
 }

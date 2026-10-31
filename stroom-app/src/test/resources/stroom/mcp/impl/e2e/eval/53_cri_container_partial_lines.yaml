@@ -1,0 +1,55 @@
+name: Kubernetes container log as the CRI writes it (messages split into partial lines)
+template: Event Data (Text)
+capabilities: [multiline, event_boundaries, format_recognition]
+# A container's log from the node, 500 messages: each line '<time> <stream> <P|F> <content>'; a long message is split
+# into partial (P) lines at arbitrary characters, even mid-word, and ended by a full (F) line. The traps: a record
+# ends at its F line (record_end), not at every line; the parts are joined by taking each continuation line's
+# prefix out (with its new line), so a key split across two lines reads whole; and the stream (stdout, stderr) is
+# a field of its own.
+request: >
+  Onboard our API pod's container log (from the node's /var/log/pods; the file is on my disk). Index the events.
+expected:
+  records: 500
+  event_types: [Authenticate, Export]
+  forbidden_types: [Unknown]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/TypeId]
+  values:
+    EventSource/User/Id: [alice, bob, carol]
+files:
+  - {name: api-7d9f_0.log, generate: {kind: cri_container_log, records: 500, seed: 19}}
+reference:
+  splitter: infer
+  mapping:
+    input: data_splitter
+    # The message's parts joined: each continuation line's prefix (and its new line) taken out.
+    extract:
+      - xpath: "replace(data[@name='message']/@value, '\\n\\S+ (stdout|stderr) [PF] ', '')"
+        regex: '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$'
+        names: [user, action, result, pod, detail, rows]
+    common:
+      - {path: EventTime/TimeCreated, field: time, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSSSSX"}
+      - {path: EventSource/System/Name, value: API}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: stream}
+      - {path: EventSource/Device/HostName, field: pod}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: action}
+    events:
+      - name: logon
+        when: [{field: action, equals: login}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}
+      - name: logoff
+        when: [{field: action, equals: logout}]
+        fields:
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+      - name: export
+        when: [{field: action, equals: export}]
+        fields:
+          - {path: EventDetail/Export/Source/Object/Type, value: Records}
+          - {path: EventDetail/Export/Source/Object/Description, field: detail}
+          - {path: EventDetail/Export/Data, data_name: rows, field: rows}
+          - {path: EventDetail/Export/Outcome/Success, field: result, map: {success: 'true', failure: 'false'}}

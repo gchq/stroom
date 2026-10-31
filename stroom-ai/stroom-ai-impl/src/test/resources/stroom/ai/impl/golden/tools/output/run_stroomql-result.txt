@@ -1,0 +1,30 @@
+Arguments: {"query":"from \"Firewall events\" select Host, count() as N group by Host","out":"/outputs/hosts.md"}
+
+=== Output ===
+Ran the query. The results are in /outputs/hosts.md. The query had no limit, so 'limit 10000' (the most rows a query may return here) was added.
+
+Profile of /outputs/hosts.md: 3 rows, 4 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| Host | text | 0 | 3 | fw1 | fw3 | all different |
+| N | number | 0 | 2 | 3 | 5 | 5 (2) |
+| StreamId | number | 0 | 2 | 100 | 101 | 100 (2) |
+| EventId | number | 0 | 2 | 1 | 2 | 1 (2) |
+
+First 3 rows:
+
+| Host | N | StreamId | EventId |
+| --- | --- | --- | --- |
+| fw1 | 3 | 100 | 1 |
+| fw2 | 5 | 100 | 2 |
+| fw3 | 5 | 101 | 1 |
+
+
+=== Workspace file /outputs/hosts.md ===
+| Host | N | StreamId | EventId |
+| --- | --- | --- | --- |
+| fw1 | 3 | 100 | 1 |
+| fw2 | 5 | 100 | 2 |
+| fw3 | 5 | 101 | 1 |
+

@@ -1,0 +1,7 @@
+Arguments: {"uuid":"filter-uuid"}
+
+=== Output ===
+Processor filter 7 (uuid filter-uuid) of Pipeline [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid) (uuid pipe-uuid, in /Firewalls).
+Selects: streams where Feed is 'FIREWALL-EVENTS' and Type is 'Raw Events', created on or after 2026-01-01T00:00:00.000Z.
+State: enabled, priority 10, Complete, 3 stream(s).
+At most 5 task(s) at a time.

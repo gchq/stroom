@@ -18,11 +18,11 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -52,17 +52,22 @@ public class AiConfigGeneralViewImpl
     @UiField
     TextArea historySummaryPrompt;
     @UiField
-    ValueSpinner maxHistorySafetyCapMessages;
+    CustomCheckBox showToolCalls;
+    @UiField
+    CustomCheckBox showReasoning;
     @UiField
     CustomCheckBox enableDebugDetail;
+    @UiField
+    CustomCheckBox browserNotifications;
 
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        // Only DIALOG and DOCK modes are supported.
-        dockTypeSelectionBox.addItem(DockType.DIALOG);
+        // Docked on the right is the default.
         dockTypeSelectionBox.addItem(DockType.DOCK);
-        dockTypeSelectionBox.setValue(DockType.DIALOG);
+        dockTypeSelectionBox.addItem(DockType.DIALOG);
+        dockTypeSelectionBox.addItem(DockType.TAB);
+        dockTypeSelectionBox.setValue(AskStroomAiConfig.DEFAULT_DOCK_TYPE);
 
         dockLocationSelectionBox.addItem(DockLocation.RIGHT);
         dockLocationSelectionBox.addItem(DockLocation.LEFT);
@@ -70,8 +75,6 @@ public class AiConfigGeneralViewImpl
         dockLocationSelectionBox.addItem(DockLocation.BOTTOM);
         dockLocationSelectionBox.setValue(DockLocation.RIGHT);
 
-        maxHistorySafetyCapMessages.setMin(1);
-        maxHistorySafetyCapMessages.setMax(500);
     }
 
     @Override
@@ -117,16 +120,6 @@ public class AiConfigGeneralViewImpl
     }
 
     @Override
-    public void setMaxHistorySafetyCapMessages(final int max) {
-        maxHistorySafetyCapMessages.setValue(max);
-    }
-
-    @Override
-    public int getMaxHistorySafetyCapMessages() {
-        return maxHistorySafetyCapMessages.getIntValue();
-    }
-
-    @Override
     public void setHistorySummaryPrompt(final String prompt) {
         historySummaryPrompt.setText(prompt);
     }
@@ -137,6 +130,26 @@ public class AiConfigGeneralViewImpl
     }
 
     @Override
+    public void setShowToolCalls(final boolean show) {
+        showToolCalls.setValue(show);
+    }
+
+    @Override
+    public boolean isShowToolCalls() {
+        return showToolCalls.getValue();
+    }
+
+    @Override
+    public void setShowReasoning(final boolean show) {
+        showReasoning.setValue(show);
+    }
+
+    @Override
+    public boolean isShowReasoning() {
+        return showReasoning.getValue();
+    }
+
+    @Override
     public void setEnableDebugDetail(final boolean enabled) {
         enableDebugDetail.setValue(enabled);
     }
@@ -144,6 +157,16 @@ public class AiConfigGeneralViewImpl
     @Override
     public boolean isEnableDebugDetail() {
         return enableDebugDetail.getValue();
+    }
+
+    @Override
+    public void setBrowserNotifications(final boolean enabled) {
+        browserNotifications.setValue(enabled);
+    }
+
+    @Override
+    public boolean isBrowserNotifications() {
+        return browserNotifications.getValue();
     }
 
     // ---------------------------------------------------------------------

@@ -1,0 +1,161 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dashboard.client.main;
+
+import stroom.dashboard.shared.Automate;
+import stroom.dashboard.shared.ComponentSelectionHandler;
+import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestComponentSettingChanges {
+
+    private static final DocRef PIPELINE = new DocRef("Pipeline", "pipeline-uuid", "Extraction");
+
+    @Test
+    void aTablesSettingsAreChangedAsItsSettingsDialogWould() {
+        final TableComponentSettings table = TableComponentSettings.builder().queryId("query-1").build();
+
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "pageSize", "50", null, null))
+                .getPageSize()).isEqualTo(50);
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "maxResults", "1000,10", null, null))
+                .getMaxResults()).containsExactly(1000L, 10L);
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "showDetail", "true", null, null))
+                .showDetail()).isTrue();
+        final TableComponentSettings piped = (TableComponentSettings) ComponentSettingChanges.table(table,
+                "extractionPipeline", "pipeline-uuid", null, PIPELINE);
+        assertThat(piped.getExtractionPipeline()).isEqualTo(PIPELINE);
+        assertThat(piped.extractValues()).isTrue();
+        assertThat(piped.useDefaultExtractionPipeline()).isFalse();
+        assertThat(((TableComponentSettings) ComponentSettingChanges.table(table, "query", "Other", "query-2", null))
+                .getQueryId()).isEqualTo("query-2");
+        final TableComponentSettings longer = (TableComponentSettings) ComponentSettingChanges.table(table,
+                "maxStringFieldLength", "2000", null, null);
+        assertThat(longer.getMaxStringFieldLength()).isEqualTo(2000);
+        assertThat(longer.overrideMaxStringFieldLength()).isTrue();
+    }
+
+    @Test
+    void aQuerysAutomationIsChangedKeepingTheRest() {
+        final QueryComponentSettings query = QueryComponentSettings.builder()
+                .automate(Automate.builder().refreshInterval("10s").build())
+                .build();
+
+        final QueryComponentSettings onOpen = (QueryComponentSettings) ComponentSettingChanges.query(query,
+                "queryOnOpen", "true", null);
+        assertThat(onOpen.getAutomate().isOpen()).isTrue();
+        assertThat(onOpen.getAutomate().getRefreshInterval()).isEqualTo("10s");
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(query, "refreshInterval", "1m", null))
+                .getAutomate().getRefreshInterval()).isEqualTo("1m");
+        final DocRef view = new DocRef("View", "view-uuid", "Windows events");
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(query, "dataSource", "view-uuid", view))
+                .getDataSource()).isEqualTo(view);
+        // Without automation set yet.
+        assertThat(((QueryComponentSettings) ComponentSettingChanges.query(QueryComponentSettings.builder().build(),
+                "autoRefresh", "true", null)).getAutomate().isRefresh()).isTrue();
+    }
+
+    @Test
+    void aTextComponentFollowsATableOrAnyAndShowsThroughAPipelineOrNone() {
+        final TextComponentSettings text = TextComponentSettings.builder().tableId("table-1").pipeline(PIPELINE)
+                .build();
+
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "table", "none", null, null))
+                .getTableId()).isNull();
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "table", "Mentions", "table-2", null))
+                .getTableId()).isEqualTo("table-2");
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "pipeline", "none", null, null))
+                .getPipeline()).isNull();
+        assertThat(((TextComponentSettings) ComponentSettingChanges.text(text, "showAsHtml", "true", null, null))
+                .isShowAsHtml()).isTrue();
+    }
+
+    @Test
+    void unknownSettingsOrMissingValuesAreNotChanged() {
+        final TableComponentSettings table = TableComponentSettings.builder().build();
+
+        assertThat(ComponentSettingChanges.table(table, "colour", "red", null, null)).isNull();
+        assertThat(ComponentSettingChanges.table(table, "extractionPipeline", "x", null, null)).isNull();
+        assertThat(ComponentSettingChanges.table(table, "query", "x", null, null)).isNull();
+        assertThat(ComponentSettingChanges.query(QueryComponentSettings.builder().build(), "dataSource", "x", null))
+                .isNull();
+        assertThat(ComponentSettingChanges.text(TextComponentSettings.builder().build(), "pageSize", "1", null, null))
+                .isNull();
+    }
+
+    @Test
+    void aConvertedChartsFiltersFollowItWhereverTheyAre() {
+        // Seen in testing: a line chart converted to a bar chart left its filter on x, which a bar chart doesn't
+        // select, so it stopped filtering.
+        final ComponentSelectionHandler onX = handler("f1", "From", "${component.vis-1.selection.x}");
+        final ComponentSelectionHandler otherChart = handler("f2", "To", "${component.vis-2.selection.x}");
+        final Map<String, String> renamed = Map.of("x", "category");
+
+        final TableComponentSettings table = (TableComponentSettings) ComponentSettingChanges.withSelectionsRenamed(
+                TableComponentSettings.builder().selectionFilter(List.of(onX, otherChart)).build(), "vis-1",
+                renamed);
+        assertThat(table.getSelectionFilter()).extracting(ComponentSelectionHandler::getId)
+                .containsExactly("f1", "f2");
+        assertThat(table.getSelectionFilter().get(0).getExpression().toString())
+                .contains("${component.vis-1.selection.category}");
+        assertThat(table.getSelectionFilter().get(1)).isSameAs(otherChart);
+
+        final QueryComponentSettings query = (QueryComponentSettings) ComponentSettingChanges.withSelectionsRenamed(
+                QueryComponentSettings.builder().selectionQuery(List.of(onX)).build(), "vis-1", renamed);
+        assertThat(query.getSelectionQuery().getFirst().getExpression().toString())
+                .contains("selection.category}");
+
+        final EmbeddedQueryComponentSettings embedded = (EmbeddedQueryComponentSettings) ComponentSettingChanges
+                .withSelectionsRenamed(EmbeddedQueryComponentSettings.builder()
+                        .selectionQuery(List.of(otherChart))
+                        .selectionFilter(List.of(onX))
+                        .build(), "vis-1", renamed);
+        assertThat(embedded.getSelectionQuery()).containsExactly(otherChart);
+        assertThat(embedded.getSelectionFilter().getFirst().getExpression().toString())
+                .contains("selection.category}");
+
+        // Nothing to change.
+        assertThat(ComponentSettingChanges.withSelectionsRenamed(
+                TableComponentSettings.builder().selectionFilter(List.of(otherChart)).build(), "vis-1", renamed))
+                .isNull();
+        assertThat(ComponentSettingChanges.withSelectionsRenamed(TextComponentSettings.builder().build(), "vis-1",
+                renamed)).isNull();
+    }
+
+    private static ComponentSelectionHandler handler(final String id, final String field, final String value) {
+        return ComponentSelectionHandler.builder()
+                .id(id)
+                .enabled(true)
+                .expression(ExpressionOperator.builder()
+                        .addTerm(ExpressionTerm.builder().field(field).condition(Condition.EQUALS).value(value)
+                                .build())
+                        .build())
+                .build();
+    }
+}

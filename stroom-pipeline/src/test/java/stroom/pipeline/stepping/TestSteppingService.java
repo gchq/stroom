@@ -17,9 +17,12 @@
 package stroom.pipeline.stepping;
 
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.factory.PipelineDataHolder;
 import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory.MidPipelineScope;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
@@ -37,6 +40,7 @@ import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.pipeline.stepping.store.StepDataStoreManager;
 import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -48,6 +52,7 @@ import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -159,6 +164,7 @@ class TestSteppingService {
                 stepDataStoreManager,
                 pipelineDataHolderFactory,
                 Mockito.mock(ElementFingerprinter.class),
+                Mockito.mock(SavedElementCode.class),
                 SteppingConfig::new,
                 sessionStepResolver,
                 sessionRegistry,
@@ -242,5 +248,74 @@ class TestSteppingService {
                 .sessionUuid(SESSION_ID)
                 .timeout(40L)
                 .build();
+    }
+
+    /// A stepping session made for a step that fails is ended: its id never reaches the client, so nothing else
+    /// could end it, and it would hold its capture until it went idle.
+    @Nested
+    class WhenAStepFails {
+
+        private final UserIdentity user = Mockito.mock(UserIdentity.class);
+        private final MetaService metaService = Mockito.mock(MetaService.class);
+        private final SessionStepResolver resolver = Mockito.mock(SessionStepResolver.class);
+        private final SteppingSessionRegistry registry = Mockito.mock(SteppingSessionRegistry.class);
+        private final SteppingSession session = Mockito.mock(SteppingSession.class);
+        private final SecurityContext stepSecurityContext = Mockito.mock(SecurityContext.class);
+        private SteppingService service;
+
+        @BeforeEach
+        void setUp() {
+            Mockito.when(stepSecurityContext.secureResult(Mockito.any(AppPermission.class),
+                            Mockito.<Supplier<Object>>any()))
+                    .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(1).get());
+            Mockito.when(stepSecurityContext.useAsReadResult(Mockito.<Supplier<Object>>any()))
+                    .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(0).get());
+            Mockito.when(stepSecurityContext.getUserIdentity()).thenReturn(user);
+            Mockito.when(metaService.find(Mockito.any(FindMetaCriteria.class)))
+                    .thenReturn(new ResultPage<>(List.of(Meta.builder().id(5L).build())));
+            Mockito.when(registry.getOrCreate(Mockito.eq(user), Mockito.any(), Mockito.eq(List.of(5L)),
+                            Mockito.any()))
+                    .thenReturn(session);
+            Mockito.when(resolver.resolve(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyLong()))
+                    .thenThrow(new IllegalStateException("The pipeline could not be built"));
+            service = new SteppingService(Mockito.mock(TaskContextFactory.class),
+                    () -> Mockito.mock(StreamCaptureDriver.class), () -> Mockito.mock(ReprocessDriver.class),
+                    Mockito.mock(ExecutorProvider.class), metaService, stepSecurityContext,
+                    Mockito.mock(TaskManager.class), Mockito.mock(StepDataStoreManager.class),
+                    Mockito.mock(PipelineDataHolderFactory.class, Mockito.RETURNS_DEEP_STUBS),
+                    Mockito.mock(ElementFingerprinter.class), Mockito.mock(SavedElementCode.class),
+                    SteppingConfig::new, resolver, registry, Mockito.mock(SteppableElements.class));
+        }
+
+        @Test
+        void testASessionMadeForAStepThatFailsIsEnded() {
+            // Seen in review: the agent's tools never learnt such a session's id, so they couldn't end it.
+            Mockito.when(session.getSessionId()).thenReturn("made-for-this-step");
+
+            assertThatThrownBy(() -> service.step(request(null))).hasMessage("The pipeline could not be built");
+
+            Mockito.verify(registry).terminate(user, "made-for-this-step");
+        }
+
+        @Test
+        void testTheClientsOwnSessionIsKeptWhenAStepFails() {
+            // A session the client already holds may step again: a failed step doesn't end it.
+            Mockito.when(session.getSessionId()).thenReturn("the-clients");
+
+            assertThatThrownBy(() -> service.step(request("the-clients"))).isInstanceOf(IllegalStateException.class);
+
+            Mockito.verify(registry, Mockito.never()).terminate(Mockito.any(), Mockito.any());
+        }
+
+        private static PipelineStepRequest request(final String sessionUuid) {
+            return PipelineStepRequest.builder()
+                    .sessionUuid(sessionUuid)
+                    .criteria(new FindMetaCriteria())
+                    .stepType(StepType.FIRST)
+                    .pipelineDoc(PipelineDoc.builder().uuid("pipeline").name("Pipeline").build())
+                    .stepSize(1)
+                    .timeout(100L)
+                    .build();
+        }
     }
 }

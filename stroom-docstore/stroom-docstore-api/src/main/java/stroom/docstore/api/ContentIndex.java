@@ -29,4 +29,11 @@ public interface ContentIndex {
     DocContentHighlights fetchHighlights(FetchHighlightsRequest request);
 
     void reindex();
+
+    /// Says whether the index can be searched now, without waiting for it or starting to build it.
+    ///
+    /// @return True if the index has been initialised, so [#findInContent(FindInContentRequest)] will search it
+    /// straight away. False while it hasn't been built yet on this node, or is still being built for the first
+    /// time.
+    boolean isReady();
 }

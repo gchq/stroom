@@ -1,0 +1,170 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.ProcessorFilterAccess;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/// What the plan reads about a build from Stroom, where it is worked out here: a pipeline's open slots, what the
+/// survey docs say together, and JSON in the fixed layout the build record and its digests are written in.
+class TestStroomBuildFacts {
+
+    @Test
+    void theSlotsAChildMustFillAreItsParsersConverterAndItsFirstXslt() {
+        final BuildWorld world = new BuildWorld();
+        PipelineLayers.given(world.pipelineService, "p", PipelineLayers.of(PipelineLayers.layer("p")
+                .chain("dsParser", "DSParser", "translationFilter", "XSLTFilter", "decorationFilter", "XSLTFilter",
+                        "writer", "XMLWriter")));
+        // A second XSLT step (decoration) is optional.
+        assertThat(StroomBuildFacts.openSlots(world.pipelineShapes.merged("p")))
+                .containsExactly("dsParser.textConverter", "translationFilter.xslt");
+        PipelineLayers.given(world.pipelineService, "q", PipelineLayers.of(PipelineLayers.layer("q")
+                .chain("dsParser", "DSParser", "translationFilter", "XSLTFilter")
+                .property("dsParser", "textConverter", new DocRef(TextConverterDoc.TYPE, "tc", "TC"))
+                .property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, "x", "X"))));
+        assertThat(StroomBuildFacts.openSlots(world.pipelineShapes.merged("q"))).isEmpty();
+    }
+
+    @Test
+    void surveysSayTogetherWhetherTheFeedIsCovered() {
+        final Map<String, Object> one = state(true, "json lines", 5, 3);
+        final Map<String, Object> two = state(false, null, 6, 2);
+        final Map<String, Object> survey = StroomBuildFacts.combine(List.of(one, two)).orElseThrow();
+        assertThat(survey.get("saturated")).isEqualTo(false);
+        assertThat(survey.get("format")).isEqualTo("json lines");
+        assertThat((List<?>) survey.get("locations")).hasSize(5);
+        assertThat(survey.get("streams")).isEqualTo(List.of(5L, 6L));
+        assertThat(String.valueOf(survey.get("sample")).lines()).hasSize(5);
+        // More locations than a call can be given: left out, and stepped over the streams instead.
+        assertThat(StroomBuildFacts.combine(List.of(state(true, null, 5, 61))).orElseThrow().get("locations"))
+                .isNull();
+        assertThat(StroomBuildFacts.combine(List.of())).isEmpty();
+    }
+
+    @Test
+    void theSourceFeedsOfABuildWhoseDocsAreNoCopiesAreFound() {
+        // Seen in an integration test: every upload_sample to a build's feed failed, as no doc in the build was a
+        // working copy or a version, and requireNonNullElse refused the two nulls.
+        final BuildRecords buildRecords = Mockito.mock(BuildRecords.class);
+        Mockito.when(buildRecords.load("b")).thenReturn(Map.of("docs", Map.of(),
+                BuildRecords.SOURCE_FEEDS, List.of("UPSTREAM", "ACME")));
+        final ProcessorFilterAccess processorFilterAccess = Mockito.mock(ProcessorFilterAccess.class);
+        final StroomBuildFacts facts = new StroomBuildFacts(null, buildRecords, null, null, null, null, null, null,
+                processorFilterAccess, null, null, null, null);
+
+        final List<String> feeds = facts.sourceFeeds("b", List.of(
+                Map.of("type", FeedDoc.TYPE, "name", "ACME", "uuid", "f"),
+                Map.of("type", PipelineDoc.TYPE, "name", "ACME-Events", "uuid", "p")));
+
+        // The build's own feed isn't a source of it.
+        assertThat(feeds).containsExactly("UPSTREAM");
+        Mockito.verifyNoInteractions(processorFilterAccess);
+    }
+
+    @Test
+    void thePipelinesTranslatingAFeedAreThoseOfItsReadersThatTranslate() {
+        // Seen: TWITTER's raw data was read by an archiving pipeline and by Twitter-Events; the archiver came first,
+        // so the plan offered it as the pipeline a new version follows.
+        final BuildWorld world = new BuildWorld();
+        PipelineLayers.given(world.pipelineService, "archive", PipelineLayers.of(PipelineLayers.layer("archive")
+                .chain("Source", "Source", "xmlParser", "XMLParser", "writer", "XMLWriter",
+                        "rollingFileAppender", "RollingFileAppender")));
+        PipelineLayers.given(world.pipelineService, "events", PipelineLayers.of(PipelineLayers.layer("events")
+                .chain("Source", "Source", "xmlParser", "XMLParser", "translationFilter", "XSLTFilter",
+                        "streamAppender", "StreamAppender")
+                .property("streamAppender", "streamType", "Events")));
+        final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
+        Mockito.when(processorFilters.pipelinesReading("TWITTER")).thenReturn(List.of(
+                reader("archive", "Twitter-RollingFileAppender"), reader("events", "Twitter-Events")));
+        final StroomBuildFacts facts = new StroomBuildFacts(null, null, null, null, world.pipelineShapes, null,
+                null, null, null, processorFilters, null, null, null);
+
+        assertThat(facts.translating(List.of("TWITTER")))
+                .containsExactly(Map.of("name", "Twitter-Events", "uuid", "events"));
+
+        // None of them seen to translate (one Stroom can't load, here): every reader is given.
+        Mockito.when(processorFilters.pipelinesReading("OTHER")).thenReturn(List.of(
+                reader("archive", "Twitter-RollingFileAppender"), reader("missing", "Unloadable")));
+        assertThat(facts.translating(List.of("OTHER")))
+                .extracting(pipeline -> pipeline.get("uuid"))
+                .containsExactly("archive", "missing");
+    }
+
+    @Test
+    void aSurveysStateIsReadFromItsFence() {
+        assertThat(StroomBuildFacts.readState("# ACME - Survey\n\n```json survey-state\n{\"saturated\": true}\n```\n"))
+                .contains(Map.of("saturated", true));
+        assertThat(StroomBuildFacts.readState("no state")).isEmpty();
+        assertThat(StroomBuildFacts.readState("```json survey-state\n[1]\n```")).isEmpty();
+    }
+
+    @Test
+    void jsonIsWrittenInTheStoredForm() {
+        // json.dumps(['create_feed', {'feed name': 'A', 'n': [1, True, None]}], sort_keys=True)
+        final Map<String, Object> details = new LinkedHashMap<>();
+        details.put("n", Arrays.asList(1, true, null));
+        details.put("feed name", "A");
+        assertThat(ToolJson.dumpsSortedKeys(List.of("create_feed", details)))
+                .isEqualTo("[\"create_feed\", {\"feed name\": \"A\", \"n\": [1, true, null]}]");
+        // json.dumps({'copy_of': 'prod-é', 'verified': []}, indent=1, sort_keys=True)
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("verified", List.of());
+        entry.put("copy_of", "prod-é");
+        assertThat(ToolJson.dumpsSortedKeys(entry, 1))
+                .isEqualTo("{\n \"copy_of\": \"prod-\\u00e9\",\n \"verified\": []\n}");
+    }
+
+    private static Map<String, Object> reader(final String uuid, final String name) {
+        final Map<String, Object> reader = new LinkedHashMap<>();
+        reader.put("uuid", uuid);
+        reader.put("name", name);
+        reader.put("reads_events", false);
+        return reader;
+    }
+
+    private static Map<String, Object> state(final boolean saturated,
+                                             final String format,
+                                             final int stream,
+                                             final int examples) {
+        final List<Map<String, Object>> list = new ArrayList<>();
+        for (int i = 0; i < examples; i++) {
+            list.add(Map.of("text", "{\"n\": " + i + "}", "location", Map.of("stream", stream, "part", 0,
+                    "record", i)));
+        }
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("saturated", saturated);
+        state.put("format", format);
+        state.put("shapes", Map.of("a", Map.of("examples", list)));
+        return state;
+    }
+}

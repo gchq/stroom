@@ -1,0 +1,9 @@
+timestamp,device,event_type,severity,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,username,message
+2026-10-01T09:00:12+10:00,FW-EDGE-01,TRAFFIC,INFO,192.0.2.10,54321,198.51.100.20,443,TCP,ALLOW,1001,,Outbound HTTPS allowed
+2026-10-01T09:01:05+10:00,FW-EDGE-01,TRAFFIC,WARNING,203.0.113.45,49822,192.0.2.25,22,TCP,DENY,2003,,Inbound SSH blocked
+2026-10-01T09:10:03+10:00,FW-EDGE-01,SYSTEM,INFO,,,,,N/A,START,, ,Firewall logging service started
+2026-10-01T09:11:15+10:00,FW-EDGE-01,ADMIN,INFO,192.0.2.100,,,,HTTPS,LOGIN_SUCCESS,,admin,Administrator logged in
+2026-10-01T09:12:02+10:00,FW-EDGE-01,ADMIN,WARNING,203.0.113.90,,,,HTTPS,LOGIN_FAILED,,admin,Failed administrator login
+2026-10-01T09:16:08+10:00,FW-EDGE-01,ADMIN,INFO,192.0.2.100,,,,HTTPS,LOGOUT,,admin,Administrator logged out
+2026-10-01T09:17:24+10:00,FW-EDGE-01,SYSTEM,ERROR,,,,,N/A,VPN_TUNNEL_DOWN,,,VPN tunnel branch-01 went down
+2026-10-01T09:18:50+10:00,FW-EDGE-01,SYSTEM,NOTICE,,,,,N/A,VPN_TUNNEL_UP,,,VPN tunnel branch-01 restored

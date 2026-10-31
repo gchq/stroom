@@ -1,0 +1,77 @@
+{
+ "source": "wild-formats-a-repeated-key-is-guarded-as-values-and-the-dry",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "MX"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "T"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "mx"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "mx"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "value": "send"
+   }
+  ],
+  "events": [
+   {
+    "name": "send",
+    "fields": [
+     {
+      "path": "EventDetail/Send/Source/User/EmailAddress",
+      "field": "from"
+     },
+     {
+      "path": "EventDetail/Send/Destination/User/EmailAddress",
+      "field": "rcpt",
+      "repeat": true
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[send] required ['EventTime', 'EventDetail/Send/Source', 'EventDetail/Send/Destination'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "send",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Send/Destination/User/EmailAddress",
+     "EventDetail/Send/Source/User/EmailAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

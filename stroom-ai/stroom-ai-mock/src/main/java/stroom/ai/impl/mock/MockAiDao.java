@@ -17,11 +17,13 @@
 package stroom.ai.impl.mock;
 
 import stroom.ai.impl.AiDao;
+import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.util.shared.ResultPage;
@@ -29,12 +31,33 @@ import stroom.util.shared.UserRef;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class MockAiDao implements AiDao {
 
     @Override
     public AiChat createChat(final UserRef userRef) {
         return null;
+    }
+
+    @Override
+    public AiChat createSessionChat(final UserRef userRef, final String mcpSessionId) {
+        return null;
+    }
+
+    @Override
+    public Optional<Integer> findSessionChat(final String mcpSessionId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Integer> findSessionChatsNotUpdatedSince(final long timeMs) {
+        return List.of();
+    }
+
+    @Override
+    public void touchChat(final int chatId, final long minIntervalMs) {
+
     }
 
     @Override
@@ -91,8 +114,36 @@ public class MockAiDao implements AiDao {
     }
 
     @Override
+    public List<AiChatMessage> getStreamingMessages(final int chatId) {
+        return List.of();
+    }
+
+    @Override
     public void updateMessageText(final int messageId, final String message) {
 
+    }
+
+    @Override
+    public void askAsQuestion(final int messageId, final String question) {
+
+    }
+
+    @Override
+    public boolean changeMessageType(final int chatId,
+                                     final int messageId,
+                                     final Set<AiMessageType> from,
+                                     final AiMessageType to) {
+        return false;
+    }
+
+    @Override
+    public int changeMessageTypes(final int chatId, final Set<AiMessageType> from, final AiMessageType to) {
+        return 0;
+    }
+
+    @Override
+    public boolean hasMessageOfType(final int chatId, final AiMessageType type) {
+        return false;
     }
 
     @Override
@@ -133,5 +184,121 @@ public class MockAiDao implements AiDao {
     @Override
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         return List.of();
+    }
+
+    @Override
+    public void recordPoll(final int chatId, final long minIntervalMs) {
+        // Presence is not tracked by the mock.
+    }
+
+    @Override
+    public Long getLastPollMs(final String userUuid) {
+        return null;
+    }
+
+    @Override
+    public void recordUsage(final int chatId,
+                            final String modelDocUuid,
+                            final int contextWindowTokens,
+                            final long inputTokens,
+                            final long outputTokens) {
+        // Usage is not tracked by the mock.
+    }
+
+    @Override
+    public void recordModel(final int chatId, final String modelDocUuid, final int contextWindowTokens) {
+        // Usage is not tracked by the mock.
+    }
+
+    @Override
+    public ChatUsage getUsage(final int chatId) {
+        return new ChatUsage(null, null, null, 0, 0);
+    }
+
+    @Override
+    public List<Integer> findChatsNotUpdatedSince(final long timeMs, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public List<String> getChatOwners() {
+        return List.of();
+    }
+
+    @Override
+    public List<Integer> getChatIds(final String userUuid) {
+        return List.of();
+    }
+
+    @Override
+    public boolean compareAndSetMessageText(final int messageId, final String expected, final String message) {
+        return false;
+    }
+
+    @Override
+    public boolean isApproveEverything(final int chatId) {
+        return false;
+    }
+
+    @Override
+    public void setApproveEverything(final int chatId, final boolean enabled) {
+        // Not supported by the mock.
+    }
+
+    @Override
+    public AiAgentMode getAgentMode(final int chatId) {
+        return AiAgentMode.AGENT;
+    }
+
+    @Override
+    public void setAgentMode(final int chatId, final AiAgentMode mode) {
+        // Not supported by the mock.
+    }
+
+    @Override
+    public List<AiChatMessage> getMessagesOfTypeBefore(final AiMessageType messageType, final long before) {
+        return List.of();
+    }
+
+    @Override
+    public void markRead(final int chatId, final int messageId) {
+        // Not tracked by the mock.
+    }
+
+    @Override
+    public boolean setAutoTitle(final int chatId, final String title) {
+        // Not tracked by the mock.
+        return false;
+    }
+
+    @Override
+    public boolean isTitleSetByUser(final int chatId) {
+        return false;
+    }
+
+    @Override
+    public void resetChatTitle(final int chatId) {
+        // Not tracked by the mock.
+    }
+
+    @Override
+    public List<ChatSearchMatch> searchChats(final String userUuid, final String text, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public int markAllRead(final String userUuid) {
+        // Not tracked by the mock.
+        return 0;
+    }
+
+    @Override
+    public List<AiChatStatus> getChatStatuses(final String userUuid, final int limit) {
+        return List.of();
+    }
+
+    @Override
+    public long getStatusVersion(final String userUuid) {
+        return 0;
     }
 }

@@ -1,0 +1,4645 @@
+[
+ {
+  "call": "xslts",
+  "args": [],
+  "result": {
+   "index": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <string key=\"method\">\n            <xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/>\n          </string>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_edited": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <string key=\"method\"><xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/></string><map key=\"body\"><number key=\"bytes\"><xsl:value-of select=\"EventDetail/View/Resource/InboundSize\"/></number></map>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_action": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n      <xsl:apply-templates select=\".\" mode=\"event\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <string key=\"method\">\n            <xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/>\n          </string>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- event: event.action from EventDetail/*/Action -->\n  <xsl:template match=\"Event\" mode=\"event\">\n    <xsl:if test=\"EventDetail/*/Action\">\n      <map key=\"event\">\n        <string key=\"action\">\n          <xsl:value-of select=\"EventDetail/*/Action\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_bytes": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"EventDetail/*/Resource/HTTPMethod\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_saved": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"EventDetail/*/Resource/HTTPMethod\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_var_edited": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"upper-case(EventDetail/*/Resource/HTTPMethod)\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_proposed": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/Method; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"EventDetail/*/Resource/Method\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_old": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod or EventDetail/*/Resource/InboundSize\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n            <string key=\"method\">\n              <xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"EventDetail/*/Resource/InboundSize\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"EventDetail/*/Resource/InboundSize\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_renamed": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod or EventDetail/*/Resource/InboundSize\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n            <string key=\"verb\">\n              <xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"EventDetail/*/Resource/InboundSize\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"EventDetail/*/Resource/InboundSize\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "index_restyled": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"EventDetail/*/Resource/HTTPMethod\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   "translation": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"event-logging:3\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:mcp=\"stroom-mcp:functions\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom xs mcp\">\n  <xsl:template match=\"records\">\n    <Events Version=\"4.1.0\" xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\">\n      <xsl:apply-templates select=\"record\" mode=\"event\"/>\n    </Events>\n  </xsl:template>\n  <xsl:template match=\"*\" mode=\"event\">\n    <xsl:choose>\n      <xsl:when test=\"data[@name='action']/@value = 'login'\">\n        <xsl:apply-templates select=\".\" mode=\"event_type_logon\"/>\n      </xsl:when>\n      <xsl:otherwise>\n        <xsl:apply-templates select=\".\" mode=\"event_type_other\"/>\n      </xsl:otherwise>\n    </xsl:choose>\n  </xsl:template>\n  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->\n  <xsl:template match=\"node()\" mode=\"event_type_logon\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <TypeId>Logon</TypeId>\n        <Authenticate>\n          <Action>Logon</Action>\n          <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n            <User>\n              <Id>\n                <xsl:value-of select=\"data[@name='user']/@value\"/>\n              </Id>\n            </User>\n          </xsl:if>\n          <xsl:if test=\"data[@name='result']/@value = ('ok', 'fail')\">\n            <Outcome>\n              <Success>\n                <xsl:value-of select=\"if (data[@name='result']/@value = 'ok') then 'true' else 'false'\"/>\n              </Success>\n            </Outcome>\n          </xsl:if>\n          <xsl:sequence select=\"mcp:data('session', data[@name='sid']/@value)\"/>\n        </Authenticate>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->\n  <xsl:template match=\"node()\" mode=\"event_type_other\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <xsl:variable name=\"action\" select=\"data[@name='action']/@value[normalize-space(.)]\"/>\n        <TypeId>\n          <xsl:value-of select=\"if ($action) then $action else 'other'\"/>\n        </TypeId>\n        <xsl:if test=\"$action\">\n          <Unknown>\n            <Data Name=\"action\" Value=\"{$action}\"/>\n          </Unknown>\n        </xsl:if>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- event_time: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_time\">\n    <xsl:if test=\"normalize-space(data[@name='time']/@value)\">\n      <EventTime>\n        <TimeCreated>\n          <xsl:value-of select=\"data[@name='time']/@value\"/>\n        </TimeCreated>\n      </EventTime>\n    </xsl:if>\n  </xsl:template>\n  <!-- event_source: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_source\">\n    <EventSource>\n      <System>\n        <Name>Acme VPN</Name>\n        <Environment>Dev</Environment>\n      </System>\n      <Generator>vpnd</Generator>\n      <Device>\n        <HostName>\n          <xsl:value-of select=\"if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'\"/>\n        </HostName>\n      </Device>\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <User>\n          <Id>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </Id>\n        </User>\n      </xsl:if>\n    </EventSource>\n  </xsl:template>\n  <xsl:function name=\"mcp:data\" as=\"element()?\">\n    <!-- A Data entry, Name and Value, when the value is present (not blank) -->\n    <xsl:param name=\"name\" as=\"xs:string\"/>\n    <xsl:param name=\"value\" as=\"item()*\"/>\n    <xsl:if test=\"exists($value[normalize-space(.)])\">\n      <Data Name=\"{$name}\" Value=\"{$value}\"/>\n    </xsl:if>\n  </xsl:function>\n</xsl:stylesheet>\n",
+   "translation_edited": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"event-logging:3\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:mcp=\"stroom-mcp:functions\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom xs mcp\">\n  <xsl:template match=\"records\">\n    <Events Version=\"4.1.0\" xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\">\n      <xsl:apply-templates select=\"record\" mode=\"event\"/>\n    </Events>\n  </xsl:template>\n  <xsl:template match=\"*\" mode=\"event\">\n    <xsl:choose>\n      <xsl:when test=\"data[@name='action']/@value = 'login'\">\n        <xsl:apply-templates select=\".\" mode=\"event_type_logon\"/>\n      </xsl:when>\n      <xsl:otherwise>\n        <xsl:apply-templates select=\".\" mode=\"event_type_other\"/>\n      </xsl:otherwise>\n    </xsl:choose>\n  </xsl:template>\n  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->\n  <xsl:template match=\"node()\" mode=\"event_type_logon\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <TypeId>Logon</TypeId>\n        <Authenticate>\n          <Action>Logon</Action>\n          <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n            <User>\n              <Id>\n                <xsl:value-of select=\"data[@name='user']/@value\"/>\n              </Id>\n            </User>\n          </xsl:if>\n          <xsl:if test=\"data[@name='result']/@value = ('ok', 'fail')\">\n            <Outcome>\n              <Success>\n                <xsl:value-of select=\"if (data[@name='result']/@value = 'ok') then 'true' else 'false'\"/>\n              </Success>\n            </Outcome>\n          </xsl:if>\n          <xsl:sequence select=\"mcp:data('session', data[@name='sid']/@value)\"/>\n        </Authenticate>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->\n  <xsl:template match=\"node()\" mode=\"event_type_other\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <xsl:variable name=\"action\" select=\"data[@name='action']/@value[normalize-space(.)]\"/>\n        <TypeId>\n          <xsl:value-of select=\"if ($action) then $action else 'other'\"/>\n        </TypeId>\n        <xsl:if test=\"$action\">\n          <Unknown>\n            <Data Name=\"action\" Value=\"{$action}\"/>\n          </Unknown>\n        </xsl:if>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- event_time: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_time\">\n    <xsl:if test=\"normalize-space(data[@name='time']/@value)\">\n      <EventTime>\n        <TimeCreated>\n          <xsl:value-of select=\"data[@name='time']/@value\"/>\n        </TimeCreated>\n      </EventTime>\n    </xsl:if>\n  </xsl:template>\n  <!-- event_source: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_source\">\n    <EventSource>\n      <System>\n        <Name>Acme VPN</Name>\n        <Environment>Test</Environment>\n      </System>\n      <Generator>vpnd</Generator>\n      <Device>\n        <HostName>\n          <xsl:value-of select=\"if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'\"/>\n        </HostName>\n      </Device>\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <User>\n          <Id>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </Id>\n        </User>\n      </xsl:if>\n    </EventSource>\n  </xsl:template>\n  <xsl:function name=\"mcp:data\" as=\"element()?\">\n    <!-- A Data entry, Name and Value, when the value is present (not blank) -->\n    <xsl:param name=\"name\" as=\"xs:string\"/>\n    <xsl:param name=\"value\" as=\"item()*\"/>\n    <xsl:if test=\"exists($value[normalize-space(.)])\">\n      <Data Name=\"{$name}\" Value=\"{$value}\"/>\n    </xsl:if>\n  </xsl:function>\n</xsl:stylesheet>\n",
+   "translation_dc": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"event-logging:3\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:mcp=\"stroom-mcp:functions\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom xs mcp\">\n  <xsl:template match=\"records\">\n    <Events Version=\"4.1.0\" xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\">\n      <xsl:apply-templates select=\"record\" mode=\"event\"/>\n    </Events>\n  </xsl:template>\n  <xsl:template match=\"*\" mode=\"event\">\n    <xsl:choose>\n      <xsl:when test=\"data[@name='action']/@value = 'login'\">\n        <xsl:apply-templates select=\".\" mode=\"event_type_logon\"/>\n      </xsl:when>\n      <xsl:otherwise>\n        <xsl:apply-templates select=\".\" mode=\"event_type_other\"/>\n      </xsl:otherwise>\n    </xsl:choose>\n  </xsl:template>\n  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->\n  <xsl:template match=\"node()\" mode=\"event_type_logon\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <TypeId>Logon</TypeId>\n        <Authenticate>\n          <Action>Logon</Action>\n          <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n            <User>\n              <Id>\n                <xsl:value-of select=\"data[@name='user']/@value\"/>\n              </Id>\n            </User>\n          </xsl:if>\n          <xsl:if test=\"data[@name='result']/@value = ('ok', 'fail')\">\n            <Outcome>\n              <Success>\n                <xsl:value-of select=\"if (data[@name='result']/@value = 'ok') then 'true' else 'false'\"/>\n              </Success>\n            </Outcome>\n          </xsl:if>\n          <xsl:sequence select=\"mcp:data('session', data[@name='sid']/@value)\"/>\n        <Data Name=\"device_class\" Value=\"{data[@name='class']/@value}\"/></Authenticate>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->\n  <xsl:template match=\"node()\" mode=\"event_type_other\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <xsl:variable name=\"action\" select=\"data[@name='action']/@value[normalize-space(.)]\"/>\n        <TypeId>\n          <xsl:value-of select=\"if ($action) then $action else 'other'\"/>\n        </TypeId>\n        <xsl:if test=\"$action\">\n          <Unknown>\n            <Data Name=\"action\" Value=\"{$action}\"/>\n          </Unknown>\n        </xsl:if>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- event_time: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_time\">\n    <xsl:if test=\"normalize-space(data[@name='time']/@value)\">\n      <EventTime>\n        <TimeCreated>\n          <xsl:value-of select=\"data[@name='time']/@value\"/>\n        </TimeCreated>\n      </EventTime>\n    </xsl:if>\n  </xsl:template>\n  <!-- event_source: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_source\">\n    <EventSource>\n      <System>\n        <Name>Acme VPN</Name>\n        <Environment>Dev</Environment>\n      </System>\n      <Generator>vpnd</Generator>\n      <Device>\n        <HostName>\n          <xsl:value-of select=\"if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'\"/>\n        </HostName>\n      </Device>\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <User>\n          <Id>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </Id>\n        </User>\n      </xsl:if>\n    </EventSource>\n  </xsl:template>\n  <xsl:function name=\"mcp:data\" as=\"element()?\">\n    <!-- A Data entry, Name and Value, when the value is present (not blank) -->\n    <xsl:param name=\"name\" as=\"xs:string\"/>\n    <xsl:param name=\"value\" as=\"item()*\"/>\n    <xsl:if test=\"exists($value[normalize-space(.)])\">\n      <Data Name=\"{$name}\" Value=\"{$value}\"/>\n    </xsl:if>\n  </xsl:function>\n</xsl:stylesheet>\n",
+   "translation_prod": "<?xml version='1.0' encoding='UTF-8'?>\n<xsl:stylesheet xmlns=\"event-logging:3\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:mcp=\"stroom-mcp:functions\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom xs mcp\">\n  <xsl:template match=\"records\">\n    <Events Version=\"4.1.0\" xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\">\n      <xsl:apply-templates select=\"record\" mode=\"event\"/>\n    </Events>\n  </xsl:template>\n  <xsl:template match=\"*\" mode=\"event\">\n    <xsl:choose>\n      <xsl:when test=\"data[@name='action']/@value = 'login'\">\n        <xsl:apply-templates select=\".\" mode=\"event_type_logon\"/>\n      </xsl:when>\n      <xsl:otherwise>\n        <xsl:apply-templates select=\".\" mode=\"event_type_other\"/>\n      </xsl:otherwise>\n    </xsl:choose>\n  </xsl:template>\n  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->\n  <xsl:template match=\"node()\" mode=\"event_type_logon\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <TypeId>Logon</TypeId>\n        <Authenticate>\n          <Action>Logon</Action>\n          <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n            <User>\n              <Id>\n                <xsl:value-of select=\"data[@name='user']/@value\"/>\n              </Id>\n            </User>\n          </xsl:if>\n          <xsl:if test=\"data[@name='result']/@value = ('ok', 'fail')\">\n            <Outcome>\n              <Success>\n                <xsl:value-of select=\"if (data[@name='result']/@value = 'ok') then 'true' else 'false'\"/>\n              </Success>\n            </Outcome>\n          </xsl:if>\n          <xsl:sequence select=\"mcp:data('session', data[@name='sid']/@value)\"/>\n        </Authenticate>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->\n  <xsl:template match=\"node()\" mode=\"event_type_other\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <xsl:variable name=\"action\" select=\"data[@name='action']/@value[normalize-space(.)]\"/>\n        <TypeId>\n          <xsl:value-of select=\"if ($action) then $action else 'other'\"/>\n        </TypeId>\n        <xsl:if test=\"$action\">\n          <Unknown>\n            <Data Name=\"action\" Value=\"{$action}\"/>\n          </Unknown>\n        </xsl:if>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- event_time: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_time\">\n    <xsl:if test=\"normalize-space(data[@name='time']/@value)\">\n      <EventTime>\n        <TimeCreated>\n          <xsl:value-of select=\"data[@name='time']/@value\"/>\n        </TimeCreated>\n      </EventTime>\n    </xsl:if>\n  </xsl:template>\n  <!-- event_source: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_source\">\n    <EventSource>\n      <System>\n        <Name>Acme VPN</Name>\n        <Environment>Prod</Environment>\n      </System>\n      <Generator>vpnd</Generator>\n      <Device>\n        <HostName>\n          <xsl:value-of select=\"if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'\"/>\n        </HostName>\n      </Device>\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <User>\n          <Id>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </Id>\n        </User>\n      </xsl:if>\n    </EventSource>\n  </xsl:template>\n  <xsl:function name=\"mcp:data\" as=\"element()?\">\n    <!-- A Data entry, Name and Value, when the value is present (not blank) -->\n    <xsl:param name=\"name\" as=\"xs:string\"/>\n    <xsl:param name=\"value\" as=\"item()*\"/>\n    <xsl:if test=\"exists($value[normalize-space(.)])\">\n      <Data Name=\"{$name}\" Value=\"{$value}\"/>\n    </xsl:if>\n  </xsl:function>\n</xsl:stylesheet>\n",
+   "relative": "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:template match=\"Resource\"><xsl:value-of select=\"URL\"/></xsl:template></xsl:stylesheet>",
+   "absolute": "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"><xsl:value-of select=\"EventDetail/View/Resource/URL\"/></xsl:stylesheet>",
+   "broken": "<x",
+   "empty": "<x/>",
+   "texts": "<?xml version=\"1.0\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\"><xsl:template match=\"x\"><xsl:text> lit </xsl:text><xsl:text>&#10;</xsl:text><e:a key=\"k\">  v  <xsl:if test=\"(a) and (b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a><!-- c --><e:Event><e:map><xsl:value-of select=\"$v\"/></e:map></e:Event><xsl:variable name=\"v\" select=\"p/q\"/><xsl:variable name=\"w\" select=\"concat($v, 1)\"/><e:o Name=\"n\" Value=\"{$w}\"/></xsl:template></xsl:stylesheet>"
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethod": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "http",
+     "method"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "string method": [
+     "method"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_edited"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/View/Resource/InboundSize": 1
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "http",
+     "method"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ],
+    "EventDetail/View/Resource/InboundSize": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/View/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_action"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map event": 1,
+    "string action": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 4,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Action": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "http",
+     "method"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Action": [
+     "action",
+     "event"
+    ],
+    "map event": [
+     "event"
+    ],
+    "string action": [
+     "action"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map event": [
+     "EventDetail/*/Action"
+    ],
+    "string action": [
+     "EventDetail/*/Action"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_bytes"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_saved"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_var_edited"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "(upper-case(EventDetail/*/Resource/HTTPMethod))orEventDetail/*/Resource/InboundSize": 1,
+    "upper-case(EventDetail/*/Resource/HTTPMethod)": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "(upper-case(EventDetail/*/Resource/HTTPMethod))orEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "upper-case(EventDetail/*/Resource/HTTPMethod)": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/InboundSize",
+     "upper-case(EventDetail/*/Resource/HTTPMethod)"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/InboundSize",
+     "upper-case(EventDetail/*/Resource/HTTPMethod)"
+    ],
+    "string method": [
+     "upper-case(EventDetail/*/Resource/HTTPMethod)"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_proposed"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/MethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/Method": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/MethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/Method": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/InboundSize",
+     "EventDetail/*/Resource/Method"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/InboundSize",
+     "EventDetail/*/Resource/Method"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/Method"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_old"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_renamed"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string verb": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "request",
+     "verb"
+    ],
+    "string verb": [
+     "verb"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "string verb": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "index_restyled"
+  ],
+  "result": {
+   "writes": {
+    "array": 1,
+    "map": 1,
+    "number StreamId": 1,
+    "number EventId": 1,
+    "string @timestamp": 1,
+    "map user": 1,
+    "string name": 1,
+    "map url": 1,
+    "string original": 1,
+    "map http": 1,
+    "map request": 1,
+    "string method": 1,
+    "map body": 1,
+    "number bytes": 1
+   },
+   "reads": {
+    "Event": 1,
+    "@StreamId": 2,
+    "@EventId": 2,
+    "EventTime/TimeCreated": 2,
+    ".": 3,
+    "EventSource/User/Id": 2,
+    "EventDetail/*/Resource/URL": 2,
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": 1,
+    "EventDetail/*/Resource/HTTPMethod": 2,
+    "EventDetail/*/Resource/InboundSize": 2
+   },
+   "names": {
+    "array": [
+     "array"
+    ],
+    "Event": [],
+    "map": [
+     "map"
+    ],
+    "@StreamId": [
+     "StreamId"
+    ],
+    "number StreamId": [
+     "StreamId"
+    ],
+    "@EventId": [
+     "EventId"
+    ],
+    "number EventId": [
+     "EventId"
+    ],
+    "EventTime/TimeCreated": [
+     "@timestamp"
+    ],
+    "string @timestamp": [
+     "@timestamp"
+    ],
+    ".": [],
+    "EventSource/User/Id": [
+     "name",
+     "user"
+    ],
+    "map user": [
+     "user"
+    ],
+    "string name": [
+     "name"
+    ],
+    "EventDetail/*/Resource/URL": [
+     "original",
+     "url"
+    ],
+    "map url": [
+     "url"
+    ],
+    "string original": [
+     "original"
+    ],
+    "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize": [
+     "http"
+    ],
+    "map http": [
+     "http"
+    ],
+    "map request": [
+     "request"
+    ],
+    "EventDetail/*/Resource/HTTPMethod": [
+     "method",
+     "request"
+    ],
+    "string method": [
+     "method"
+    ],
+    "EventDetail/*/Resource/InboundSize": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "map body": [
+     "body"
+    ],
+    "number bytes": [
+     "bytes"
+    ]
+   },
+   "within": {
+    "array": [
+     "Event"
+    ],
+    "map": [
+     ".",
+     "@EventId",
+     "@StreamId",
+     "EventTime/TimeCreated"
+    ],
+    "number StreamId": [
+     "@StreamId"
+    ],
+    "number EventId": [
+     "@EventId"
+    ],
+    "string @timestamp": [
+     "EventTime/TimeCreated"
+    ],
+    "map user": [
+     "EventSource/User/Id"
+    ],
+    "string name": [
+     "EventSource/User/Id"
+    ],
+    "map url": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "string original": [
+     "EventDetail/*/Resource/URL"
+    ],
+    "map http": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "map request": [
+     "EventDetail/*/Resource/HTTPMethod",
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "string method": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "map body": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "number bytes": [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "translation"
+  ],
+  "result": {
+   "writes": {
+    "Events": 1,
+    "Event": 2,
+    "EventDetail": 2,
+    "TypeId": 2,
+    "TypeId = Logon": 1,
+    "Authenticate": 1,
+    "Action": 1,
+    "Action = Logon": 1,
+    "User": 2,
+    "Id": 2,
+    "Outcome": 1,
+    "Success": 1,
+    "Unknown": 1,
+    "Data action": 1,
+    "EventTime": 1,
+    "TimeCreated": 1,
+    "EventSource": 1,
+    "System": 1,
+    "Name": 1,
+    "Name = Acme VPN": 1,
+    "Environment": 1,
+    "Environment = Dev": 1,
+    "Generator": 1,
+    "Generator = vpnd": 1,
+    "Device": 1,
+    "HostName": 1,
+    "Data {$name}": 1
+   },
+   "reads": {
+    "record": 1,
+    "data[@name='action']/@value='login'": 1,
+    ".": 6,
+    "normalize-space(data[@name='user']/@value)": 2,
+    "data[@name='user']/@value": 2,
+    "data[@name='result']/@value=('ok','fail')": 1,
+    "if(data[@name='result']/@value='ok')then'true'else'false'": 1,
+    "mcp:data('session',data[@name='sid']/@value)": 1,
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": 1,
+    "data[@name='action']/@value[normalize-space(.)]": 2,
+    "normalize-space(data[@name='time']/@value)": 1,
+    "data[@name='time']/@value": 1,
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": 1,
+    "exists($value[normalize-space(.)])": 1,
+    "$name": 1,
+    "$value": 1
+   },
+   "names": {
+    "Events": [
+     "Events"
+    ],
+    "record": [
+     "Events"
+    ],
+    "data[@name='action']/@value='login'": [],
+    ".": [],
+    "Event": [
+     "Event"
+    ],
+    "EventDetail": [
+     "EventDetail"
+    ],
+    "TypeId": [
+     "TypeId"
+    ],
+    "TypeId = Logon": [
+     "TypeId"
+    ],
+    "Authenticate": [
+     "Authenticate"
+    ],
+    "Action": [
+     "Action"
+    ],
+    "Action = Logon": [
+     "Action"
+    ],
+    "normalize-space(data[@name='user']/@value)": [
+     "Authenticate",
+     "EventSource",
+     "User"
+    ],
+    "User": [
+     "User"
+    ],
+    "Id": [
+     "Id"
+    ],
+    "data[@name='user']/@value": [
+     "Id"
+    ],
+    "data[@name='result']/@value=('ok','fail')": [
+     "Authenticate",
+     "Outcome"
+    ],
+    "Outcome": [
+     "Outcome"
+    ],
+    "Success": [
+     "Success"
+    ],
+    "if(data[@name='result']/@value='ok')then'true'else'false'": [
+     "Success"
+    ],
+    "mcp:data('session',data[@name='sid']/@value)": [
+     "Authenticate"
+    ],
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": [
+     "TypeId"
+    ],
+    "data[@name='action']/@value[normalize-space(.)]": [
+     "EventDetail",
+     "Unknown",
+     "action"
+    ],
+    "Unknown": [
+     "Unknown"
+    ],
+    "Data action": [
+     "action"
+    ],
+    "normalize-space(data[@name='time']/@value)": [
+     "EventTime"
+    ],
+    "EventTime": [
+     "EventTime"
+    ],
+    "TimeCreated": [
+     "TimeCreated"
+    ],
+    "data[@name='time']/@value": [
+     "TimeCreated"
+    ],
+    "EventSource": [
+     "EventSource"
+    ],
+    "System": [
+     "System"
+    ],
+    "Name": [
+     "Name"
+    ],
+    "Name = Acme VPN": [
+     "Name"
+    ],
+    "Environment": [
+     "Environment"
+    ],
+    "Environment = Dev": [
+     "Environment"
+    ],
+    "Generator": [
+     "Generator"
+    ],
+    "Generator = vpnd": [
+     "Generator"
+    ],
+    "Device": [
+     "Device"
+    ],
+    "HostName": [
+     "HostName"
+    ],
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": [
+     "HostName"
+    ],
+    "exists($value[normalize-space(.)])": [
+     "{$name}"
+    ],
+    "Data {$name}": [
+     "{$name}"
+    ],
+    "$name": [
+     "{$name}"
+    ],
+    "$value": [
+     "{$name}"
+    ]
+   },
+   "within": {
+    "Events": [
+     "record"
+    ],
+    "Event": [
+     ".",
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "EventDetail": [
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "TypeId": [
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'"
+    ],
+    "TypeId = Logon": [],
+    "Authenticate": [
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "Action": [],
+    "Action = Logon": [],
+    "User": [
+     "data[@name='user']/@value"
+    ],
+    "Id": [
+     "data[@name='user']/@value"
+    ],
+    "Outcome": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Success": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Unknown": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "Data action": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "EventTime": [
+     "data[@name='time']/@value"
+    ],
+    "TimeCreated": [
+     "data[@name='time']/@value"
+    ],
+    "EventSource": [
+     "data[@name='user']/@value",
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "System": [],
+    "Name": [],
+    "Name = Acme VPN": [],
+    "Environment": [],
+    "Environment = Dev": [],
+    "Generator": [],
+    "Generator = vpnd": [],
+    "Device": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "HostName": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "Data {$name}": [
+     "$name",
+     "$value"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "translation_edited"
+  ],
+  "result": {
+   "writes": {
+    "Events": 1,
+    "Event": 2,
+    "EventDetail": 2,
+    "TypeId": 2,
+    "TypeId = Logon": 1,
+    "Authenticate": 1,
+    "Action": 1,
+    "Action = Logon": 1,
+    "User": 2,
+    "Id": 2,
+    "Outcome": 1,
+    "Success": 1,
+    "Unknown": 1,
+    "Data action": 1,
+    "EventTime": 1,
+    "TimeCreated": 1,
+    "EventSource": 1,
+    "System": 1,
+    "Name": 1,
+    "Name = Acme VPN": 1,
+    "Environment": 1,
+    "Environment = Test": 1,
+    "Generator": 1,
+    "Generator = vpnd": 1,
+    "Device": 1,
+    "HostName": 1,
+    "Data {$name}": 1
+   },
+   "reads": {
+    "record": 1,
+    "data[@name='action']/@value='login'": 1,
+    ".": 6,
+    "normalize-space(data[@name='user']/@value)": 2,
+    "data[@name='user']/@value": 2,
+    "data[@name='result']/@value=('ok','fail')": 1,
+    "if(data[@name='result']/@value='ok')then'true'else'false'": 1,
+    "mcp:data('session',data[@name='sid']/@value)": 1,
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": 1,
+    "data[@name='action']/@value[normalize-space(.)]": 2,
+    "normalize-space(data[@name='time']/@value)": 1,
+    "data[@name='time']/@value": 1,
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": 1,
+    "exists($value[normalize-space(.)])": 1,
+    "$name": 1,
+    "$value": 1
+   },
+   "names": {
+    "Events": [
+     "Events"
+    ],
+    "record": [
+     "Events"
+    ],
+    "data[@name='action']/@value='login'": [],
+    ".": [],
+    "Event": [
+     "Event"
+    ],
+    "EventDetail": [
+     "EventDetail"
+    ],
+    "TypeId": [
+     "TypeId"
+    ],
+    "TypeId = Logon": [
+     "TypeId"
+    ],
+    "Authenticate": [
+     "Authenticate"
+    ],
+    "Action": [
+     "Action"
+    ],
+    "Action = Logon": [
+     "Action"
+    ],
+    "normalize-space(data[@name='user']/@value)": [
+     "Authenticate",
+     "EventSource",
+     "User"
+    ],
+    "User": [
+     "User"
+    ],
+    "Id": [
+     "Id"
+    ],
+    "data[@name='user']/@value": [
+     "Id"
+    ],
+    "data[@name='result']/@value=('ok','fail')": [
+     "Authenticate",
+     "Outcome"
+    ],
+    "Outcome": [
+     "Outcome"
+    ],
+    "Success": [
+     "Success"
+    ],
+    "if(data[@name='result']/@value='ok')then'true'else'false'": [
+     "Success"
+    ],
+    "mcp:data('session',data[@name='sid']/@value)": [
+     "Authenticate"
+    ],
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": [
+     "TypeId"
+    ],
+    "data[@name='action']/@value[normalize-space(.)]": [
+     "EventDetail",
+     "Unknown",
+     "action"
+    ],
+    "Unknown": [
+     "Unknown"
+    ],
+    "Data action": [
+     "action"
+    ],
+    "normalize-space(data[@name='time']/@value)": [
+     "EventTime"
+    ],
+    "EventTime": [
+     "EventTime"
+    ],
+    "TimeCreated": [
+     "TimeCreated"
+    ],
+    "data[@name='time']/@value": [
+     "TimeCreated"
+    ],
+    "EventSource": [
+     "EventSource"
+    ],
+    "System": [
+     "System"
+    ],
+    "Name": [
+     "Name"
+    ],
+    "Name = Acme VPN": [
+     "Name"
+    ],
+    "Environment": [
+     "Environment"
+    ],
+    "Environment = Test": [
+     "Environment"
+    ],
+    "Generator": [
+     "Generator"
+    ],
+    "Generator = vpnd": [
+     "Generator"
+    ],
+    "Device": [
+     "Device"
+    ],
+    "HostName": [
+     "HostName"
+    ],
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": [
+     "HostName"
+    ],
+    "exists($value[normalize-space(.)])": [
+     "{$name}"
+    ],
+    "Data {$name}": [
+     "{$name}"
+    ],
+    "$name": [
+     "{$name}"
+    ],
+    "$value": [
+     "{$name}"
+    ]
+   },
+   "within": {
+    "Events": [
+     "record"
+    ],
+    "Event": [
+     ".",
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "EventDetail": [
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "TypeId": [
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'"
+    ],
+    "TypeId = Logon": [],
+    "Authenticate": [
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "Action": [],
+    "Action = Logon": [],
+    "User": [
+     "data[@name='user']/@value"
+    ],
+    "Id": [
+     "data[@name='user']/@value"
+    ],
+    "Outcome": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Success": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Unknown": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "Data action": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "EventTime": [
+     "data[@name='time']/@value"
+    ],
+    "TimeCreated": [
+     "data[@name='time']/@value"
+    ],
+    "EventSource": [
+     "data[@name='user']/@value",
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "System": [],
+    "Name": [],
+    "Name = Acme VPN": [],
+    "Environment": [],
+    "Environment = Test": [],
+    "Generator": [],
+    "Generator = vpnd": [],
+    "Device": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "HostName": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "Data {$name}": [
+     "$name",
+     "$value"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "translation_dc"
+  ],
+  "result": {
+   "writes": {
+    "Events": 1,
+    "Event": 2,
+    "EventDetail": 2,
+    "TypeId": 2,
+    "TypeId = Logon": 1,
+    "Authenticate": 1,
+    "Action": 1,
+    "Action = Logon": 1,
+    "User": 2,
+    "Id": 2,
+    "Outcome": 1,
+    "Success": 1,
+    "Data device_class": 1,
+    "Unknown": 1,
+    "Data action": 1,
+    "EventTime": 1,
+    "TimeCreated": 1,
+    "EventSource": 1,
+    "System": 1,
+    "Name": 1,
+    "Name = Acme VPN": 1,
+    "Environment": 1,
+    "Environment = Dev": 1,
+    "Generator": 1,
+    "Generator = vpnd": 1,
+    "Device": 1,
+    "HostName": 1,
+    "Data {$name}": 1
+   },
+   "reads": {
+    "record": 1,
+    "data[@name='action']/@value='login'": 1,
+    ".": 6,
+    "normalize-space(data[@name='user']/@value)": 2,
+    "data[@name='user']/@value": 2,
+    "data[@name='result']/@value=('ok','fail')": 1,
+    "if(data[@name='result']/@value='ok')then'true'else'false'": 1,
+    "mcp:data('session',data[@name='sid']/@value)": 1,
+    "data[@name='class']/@value": 1,
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": 1,
+    "data[@name='action']/@value[normalize-space(.)]": 2,
+    "normalize-space(data[@name='time']/@value)": 1,
+    "data[@name='time']/@value": 1,
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": 1,
+    "exists($value[normalize-space(.)])": 1,
+    "$name": 1,
+    "$value": 1
+   },
+   "names": {
+    "Events": [
+     "Events"
+    ],
+    "record": [
+     "Events"
+    ],
+    "data[@name='action']/@value='login'": [],
+    ".": [],
+    "Event": [
+     "Event"
+    ],
+    "EventDetail": [
+     "EventDetail"
+    ],
+    "TypeId": [
+     "TypeId"
+    ],
+    "TypeId = Logon": [
+     "TypeId"
+    ],
+    "Authenticate": [
+     "Authenticate"
+    ],
+    "Action": [
+     "Action"
+    ],
+    "Action = Logon": [
+     "Action"
+    ],
+    "normalize-space(data[@name='user']/@value)": [
+     "Authenticate",
+     "EventSource",
+     "User"
+    ],
+    "User": [
+     "User"
+    ],
+    "Id": [
+     "Id"
+    ],
+    "data[@name='user']/@value": [
+     "Id"
+    ],
+    "data[@name='result']/@value=('ok','fail')": [
+     "Authenticate",
+     "Outcome"
+    ],
+    "Outcome": [
+     "Outcome"
+    ],
+    "Success": [
+     "Success"
+    ],
+    "if(data[@name='result']/@value='ok')then'true'else'false'": [
+     "Success"
+    ],
+    "mcp:data('session',data[@name='sid']/@value)": [
+     "Authenticate"
+    ],
+    "Data device_class": [
+     "device_class"
+    ],
+    "data[@name='class']/@value": [
+     "device_class"
+    ],
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": [
+     "TypeId"
+    ],
+    "data[@name='action']/@value[normalize-space(.)]": [
+     "EventDetail",
+     "Unknown",
+     "action"
+    ],
+    "Unknown": [
+     "Unknown"
+    ],
+    "Data action": [
+     "action"
+    ],
+    "normalize-space(data[@name='time']/@value)": [
+     "EventTime"
+    ],
+    "EventTime": [
+     "EventTime"
+    ],
+    "TimeCreated": [
+     "TimeCreated"
+    ],
+    "data[@name='time']/@value": [
+     "TimeCreated"
+    ],
+    "EventSource": [
+     "EventSource"
+    ],
+    "System": [
+     "System"
+    ],
+    "Name": [
+     "Name"
+    ],
+    "Name = Acme VPN": [
+     "Name"
+    ],
+    "Environment": [
+     "Environment"
+    ],
+    "Environment = Dev": [
+     "Environment"
+    ],
+    "Generator": [
+     "Generator"
+    ],
+    "Generator = vpnd": [
+     "Generator"
+    ],
+    "Device": [
+     "Device"
+    ],
+    "HostName": [
+     "HostName"
+    ],
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": [
+     "HostName"
+    ],
+    "exists($value[normalize-space(.)])": [
+     "{$name}"
+    ],
+    "Data {$name}": [
+     "{$name}"
+    ],
+    "$name": [
+     "{$name}"
+    ],
+    "$value": [
+     "{$name}"
+    ]
+   },
+   "within": {
+    "Events": [
+     "record"
+    ],
+    "Event": [
+     ".",
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='class']/@value",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "EventDetail": [
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='class']/@value",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "TypeId": [
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'"
+    ],
+    "TypeId = Logon": [],
+    "Authenticate": [
+     "data[@name='class']/@value",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "Action": [],
+    "Action = Logon": [],
+    "User": [
+     "data[@name='user']/@value"
+    ],
+    "Id": [
+     "data[@name='user']/@value"
+    ],
+    "Outcome": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Success": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Data device_class": [
+     "data[@name='class']/@value"
+    ],
+    "Unknown": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "Data action": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "EventTime": [
+     "data[@name='time']/@value"
+    ],
+    "TimeCreated": [
+     "data[@name='time']/@value"
+    ],
+    "EventSource": [
+     "data[@name='user']/@value",
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "System": [],
+    "Name": [],
+    "Name = Acme VPN": [],
+    "Environment": [],
+    "Environment = Dev": [],
+    "Generator": [],
+    "Generator = vpnd": [],
+    "Device": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "HostName": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "Data {$name}": [
+     "$name",
+     "$value"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "translation_prod"
+  ],
+  "result": {
+   "writes": {
+    "Events": 1,
+    "Event": 2,
+    "EventDetail": 2,
+    "TypeId": 2,
+    "TypeId = Logon": 1,
+    "Authenticate": 1,
+    "Action": 1,
+    "Action = Logon": 1,
+    "User": 2,
+    "Id": 2,
+    "Outcome": 1,
+    "Success": 1,
+    "Unknown": 1,
+    "Data action": 1,
+    "EventTime": 1,
+    "TimeCreated": 1,
+    "EventSource": 1,
+    "System": 1,
+    "Name": 1,
+    "Name = Acme VPN": 1,
+    "Environment": 1,
+    "Environment = Prod": 1,
+    "Generator": 1,
+    "Generator = vpnd": 1,
+    "Device": 1,
+    "HostName": 1,
+    "Data {$name}": 1
+   },
+   "reads": {
+    "record": 1,
+    "data[@name='action']/@value='login'": 1,
+    ".": 6,
+    "normalize-space(data[@name='user']/@value)": 2,
+    "data[@name='user']/@value": 2,
+    "data[@name='result']/@value=('ok','fail')": 1,
+    "if(data[@name='result']/@value='ok')then'true'else'false'": 1,
+    "mcp:data('session',data[@name='sid']/@value)": 1,
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": 1,
+    "data[@name='action']/@value[normalize-space(.)]": 2,
+    "normalize-space(data[@name='time']/@value)": 1,
+    "data[@name='time']/@value": 1,
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": 1,
+    "exists($value[normalize-space(.)])": 1,
+    "$name": 1,
+    "$value": 1
+   },
+   "names": {
+    "Events": [
+     "Events"
+    ],
+    "record": [
+     "Events"
+    ],
+    "data[@name='action']/@value='login'": [],
+    ".": [],
+    "Event": [
+     "Event"
+    ],
+    "EventDetail": [
+     "EventDetail"
+    ],
+    "TypeId": [
+     "TypeId"
+    ],
+    "TypeId = Logon": [
+     "TypeId"
+    ],
+    "Authenticate": [
+     "Authenticate"
+    ],
+    "Action": [
+     "Action"
+    ],
+    "Action = Logon": [
+     "Action"
+    ],
+    "normalize-space(data[@name='user']/@value)": [
+     "Authenticate",
+     "EventSource",
+     "User"
+    ],
+    "User": [
+     "User"
+    ],
+    "Id": [
+     "Id"
+    ],
+    "data[@name='user']/@value": [
+     "Id"
+    ],
+    "data[@name='result']/@value=('ok','fail')": [
+     "Authenticate",
+     "Outcome"
+    ],
+    "Outcome": [
+     "Outcome"
+    ],
+    "Success": [
+     "Success"
+    ],
+    "if(data[@name='result']/@value='ok')then'true'else'false'": [
+     "Success"
+    ],
+    "mcp:data('session',data[@name='sid']/@value)": [
+     "Authenticate"
+    ],
+    "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'": [
+     "TypeId"
+    ],
+    "data[@name='action']/@value[normalize-space(.)]": [
+     "EventDetail",
+     "Unknown",
+     "action"
+    ],
+    "Unknown": [
+     "Unknown"
+    ],
+    "Data action": [
+     "action"
+    ],
+    "normalize-space(data[@name='time']/@value)": [
+     "EventTime"
+    ],
+    "EventTime": [
+     "EventTime"
+    ],
+    "TimeCreated": [
+     "TimeCreated"
+    ],
+    "data[@name='time']/@value": [
+     "TimeCreated"
+    ],
+    "EventSource": [
+     "EventSource"
+    ],
+    "System": [
+     "System"
+    ],
+    "Name": [
+     "Name"
+    ],
+    "Name = Acme VPN": [
+     "Name"
+    ],
+    "Environment": [
+     "Environment"
+    ],
+    "Environment = Prod": [
+     "Environment"
+    ],
+    "Generator": [
+     "Generator"
+    ],
+    "Generator = vpnd": [
+     "Generator"
+    ],
+    "Device": [
+     "Device"
+    ],
+    "HostName": [
+     "HostName"
+    ],
+    "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'": [
+     "HostName"
+    ],
+    "exists($value[normalize-space(.)])": [
+     "{$name}"
+    ],
+    "Data {$name}": [
+     "{$name}"
+    ],
+    "$name": [
+     "{$name}"
+    ],
+    "$value": [
+     "{$name}"
+    ]
+   },
+   "within": {
+    "Events": [
+     "record"
+    ],
+    "Event": [
+     ".",
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "EventDetail": [
+     "data[@name='action']/@value[normalize-space(.)]",
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "TypeId": [
+     "if((data[@name='action']/@value[normalize-space(.)]))then(data[@name='action']/@value[normalize-space(.)])else'other'"
+    ],
+    "TypeId = Logon": [],
+    "Authenticate": [
+     "data[@name='result']/@value=('ok','fail')",
+     "data[@name='user']/@value",
+     "if(data[@name='result']/@value='ok')then'true'else'false'",
+     "mcp:data('session',data[@name='sid']/@value)",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "Action": [],
+    "Action = Logon": [],
+    "User": [
+     "data[@name='user']/@value"
+    ],
+    "Id": [
+     "data[@name='user']/@value"
+    ],
+    "Outcome": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Success": [
+     "if(data[@name='result']/@value='ok')then'true'else'false'"
+    ],
+    "Unknown": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "Data action": [
+     "data[@name='action']/@value[normalize-space(.)]"
+    ],
+    "EventTime": [
+     "data[@name='time']/@value"
+    ],
+    "TimeCreated": [
+     "data[@name='time']/@value"
+    ],
+    "EventSource": [
+     "data[@name='user']/@value",
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'",
+     "normalize-space(data[@name='user']/@value)"
+    ],
+    "System": [],
+    "Name": [],
+    "Name = Acme VPN": [],
+    "Environment": [],
+    "Environment = Prod": [],
+    "Generator": [],
+    "Generator = vpnd": [],
+    "Device": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "HostName": [
+     "if(normalize-space(data[@name='host']/@value))thendata[@name='host']/@valueelse'unknown'"
+    ],
+    "Data {$name}": [
+     "$name",
+     "$value"
+    ]
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "relative"
+  ],
+  "result": {
+   "writes": {},
+   "reads": {
+    "URL": 1
+   },
+   "names": {
+    "URL": []
+   },
+   "within": {}
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "absolute"
+  ],
+  "result": {
+   "writes": {},
+   "reads": {
+    "EventDetail/View/Resource/URL": 1
+   },
+   "names": {
+    "EventDetail/View/Resource/URL": []
+   },
+   "within": {}
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "broken"
+  ],
+  "result": {
+   "writes": {},
+   "reads": {},
+   "names": {},
+   "within": {}
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "empty"
+  ],
+  "result": {
+   "writes": {
+    "x": 1
+   },
+   "reads": {},
+   "names": {
+    "x": [
+     "x"
+    ]
+   },
+   "within": {
+    "x": []
+   }
+  }
+ },
+ {
+  "call": "outline",
+  "args": [
+   "texts"
+  ],
+  "result": {
+   "writes": {
+    "text = lit": 1,
+    "a k": 1,
+    "k = v": 1,
+    "b": 1,
+    "b = {x} {y}": 1,
+    "element z": 1,
+    "Event": 1,
+    "map": 1,
+    "o n": 1
+   },
+   "reads": {
+    "(a)and(b)": 1,
+    "p/q": 1,
+    "concat(p/q,1)": 1,
+    "$w": 1
+   },
+   "names": {
+    "text = lit": [
+     "text"
+    ],
+    "a k": [
+     "k"
+    ],
+    "k = v": [
+     "k"
+    ],
+    "(a)and(b)": [
+     "b",
+     "k"
+    ],
+    "b": [
+     "b"
+    ],
+    "b = {x} {y}": [
+     "b"
+    ],
+    "element z": [
+     "z"
+    ],
+    "Event": [
+     "Event"
+    ],
+    "map": [
+     "map"
+    ],
+    "p/q": [],
+    "concat(p/q,1)": [],
+    "o n": [
+     "n"
+    ],
+    "$w": [
+     "n"
+    ]
+   },
+   "within": {
+    "text = lit": [],
+    "a k": [
+     "(a)and(b)"
+    ],
+    "k = v": [
+     "(a)and(b)"
+    ],
+    "b": [],
+    "b = {x} {y}": [],
+    "element z": [],
+    "Event": [
+     "p/q"
+    ],
+    "map": [
+     "p/q"
+    ],
+    "o n": [
+     "$w"
+    ]
+   }
+  }
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index",
+   "index_edited",
+   "index_action"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "map body",
+    "again": false,
+    "names": [
+     "body"
+    ],
+    "within": [
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "str": "no longer writes map body"
+   },
+   {
+    "verb": "writes",
+    "item": "number bytes",
+    "again": false,
+    "names": [
+     "bytes"
+    ],
+    "within": [
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "str": "no longer writes number bytes"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/View/Resource/InboundSize",
+    "again": false,
+    "names": [
+     "bytes"
+    ],
+    "within": [],
+    "str": "no longer reads EventDetail/View/Resource/InboundSize"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   null,
+   "index_edited",
+   "index"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "map body",
+    "again": false,
+    "names": [
+     "body"
+    ],
+    "within": [
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "str": "no longer writes map body"
+   },
+   {
+    "verb": "writes",
+    "item": "number bytes",
+    "again": false,
+    "names": [
+     "bytes"
+    ],
+    "within": [
+     "EventDetail/View/Resource/InboundSize"
+    ],
+    "str": "no longer writes number bytes"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/View/Resource/InboundSize",
+    "again": false,
+    "names": [
+     "bytes"
+    ],
+    "within": [],
+    "str": "no longer reads EventDetail/View/Resource/InboundSize"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index_saved",
+   "index_var_edited",
+   "index_proposed"
+  ],
+  "result": [
+   {
+    "verb": "reads",
+    "item": "(upper-case(EventDetail/*/Resource/HTTPMethod))orEventDetail/*/Resource/InboundSize",
+    "again": false,
+    "names": [
+     "http"
+    ],
+    "within": [],
+    "str": "no longer reads (upper-case(EventDetail/*/Resource/HTTPMethod))orEventDetail/*/Resource/InboundSize"
+   },
+   {
+    "verb": "reads",
+    "item": "upper-case(EventDetail/*/Resource/HTTPMethod)",
+    "again": false,
+    "names": [
+     "method",
+     "request"
+    ],
+    "within": [],
+    "str": "no longer reads upper-case(EventDetail/*/Resource/HTTPMethod)"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index_saved",
+   "index_old",
+   "index_saved"
+  ],
+  "result": []
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index_saved",
+   "index_renamed",
+   "index_saved"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "string verb",
+    "again": false,
+    "names": [
+     "verb"
+    ],
+    "within": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "str": "no longer writes string verb"
+   },
+   {
+    "verb": "writes",
+    "item": "string method",
+    "again": true,
+    "names": [
+     "method"
+    ],
+    "within": [
+     "EventDetail/*/Resource/HTTPMethod"
+    ],
+    "str": "writes string method again"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "empty",
+   "absolute",
+   "relative"
+  ],
+  "result": []
+ },
+ {
+  "call": "undone",
+  "args": [
+   "translation",
+   "translation_edited",
+   "translation_prod"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "Environment = Test",
+    "again": false,
+    "names": [
+     "Environment"
+    ],
+    "within": [],
+    "str": "no longer writes Environment = Test"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "translation",
+   "translation_dc",
+   "translation"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "Data device_class",
+    "again": false,
+    "names": [
+     "device_class"
+    ],
+    "within": [
+     "data[@name='class']/@value"
+    ],
+    "str": "no longer writes Data device_class"
+   },
+   {
+    "verb": "reads",
+    "item": "data[@name='class']/@value",
+    "again": false,
+    "names": [
+     "device_class"
+    ],
+    "within": [],
+    "str": "no longer reads data[@name='class']/@value"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index",
+   "index_bytes",
+   "index"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "map body",
+    "again": false,
+    "names": [
+     "body"
+    ],
+    "within": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "str": "no longer writes map body"
+   },
+   {
+    "verb": "writes",
+    "item": "number bytes",
+    "again": false,
+    "names": [
+     "bytes"
+    ],
+    "within": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "str": "no longer writes number bytes"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize",
+    "again": false,
+    "names": [
+     "http"
+    ],
+    "within": [],
+    "str": "no longer reads EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/*/Resource/InboundSize",
+    "again": false,
+    "names": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "within": [],
+    "str": "no longer reads EventDetail/*/Resource/InboundSize"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   "index_bytes",
+   "index",
+   "index_bytes"
+  ],
+  "result": [
+   {
+    "verb": "writes",
+    "item": "map body",
+    "again": true,
+    "names": [
+     "body"
+    ],
+    "within": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "str": "writes map body again"
+   },
+   {
+    "verb": "writes",
+    "item": "number bytes",
+    "again": true,
+    "names": [
+     "bytes"
+    ],
+    "within": [
+     "EventDetail/*/Resource/InboundSize"
+    ],
+    "str": "writes number bytes again"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize",
+    "again": true,
+    "names": [
+     "http"
+    ],
+    "within": [],
+    "str": "reads EventDetail/*/Resource/HTTPMethodorEventDetail/*/Resource/InboundSize again"
+   },
+   {
+    "verb": "reads",
+    "item": "EventDetail/*/Resource/InboundSize",
+    "again": true,
+    "names": [
+     "body",
+     "bytes",
+     "request"
+    ],
+    "within": [],
+    "str": "reads EventDetail/*/Resource/InboundSize again"
+   }
+  ]
+ },
+ {
+  "call": "undone",
+  "args": [
+   null,
+   "broken",
+   "index"
+  ],
+  "result": []
+ },
+ {
+  "call": "code_diff",
+  "args": [
+   "index_bytes",
+   "index_restyled"
+  ],
+  "result": []
+ },
+ {
+  "call": "code_diff_limit",
+  "args": [
+   "index_bytes",
+   "index_restyled",
+   2
+  ],
+  "result": []
+ },
+ {
+  "call": "code_diff",
+  "args": [
+   "index",
+   "index_edited"
+  ],
+  "result": [
+   "+ <map key=\"body\">",
+   "+ <number key=\"bytes\">",
+   "+ <xsl:value-of select=\"EventDetail/View/Resource/InboundSize\"/>",
+   "+ </number>",
+   "+ </map>"
+  ]
+ },
+ {
+  "call": "code_diff_limit",
+  "args": [
+   "index",
+   "index_edited",
+   2
+  ],
+  "result": [
+   "+ <map key=\"body\">",
+   "+ <number key=\"bytes\">",
+   "... and 3 more lines"
+  ]
+ },
+ {
+  "call": "code_diff",
+  "args": [
+   "translation",
+   "translation_dc"
+  ],
+  "result": [
+   "+ <Data Name=\"device_class\" Value=\"{data[@name='class']/@value}\"/>"
+  ]
+ },
+ {
+  "call": "code_diff_limit",
+  "args": [
+   "translation",
+   "translation_dc",
+   2
+  ],
+  "result": [
+   "+ <Data Name=\"device_class\" Value=\"{data[@name='class']/@value}\"/>"
+  ]
+ },
+ {
+  "call": "code_diff",
+  "args": [
+   "index",
+   "broken"
+  ],
+  "result": [
+   "- <xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3…",
+   "- <xsl:template match=\"/Events\">",
+   "- <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">",
+   "- <xsl:apply-templates select=\"Event\"/>",
+   "- </array>",
+   "- </xsl:template>",
+   "- <xsl:template match=\"Event\">",
+   "- <map>",
+   "- <xsl:if test=\"@StreamId\">",
+   "- <number key=\"StreamId\">",
+   "- <xsl:value-of select=\"@StreamId\"/>",
+   "- </number>",
+   "... and 47 more lines"
+  ]
+ },
+ {
+  "call": "code_diff_limit",
+  "args": [
+   "index",
+   "broken",
+   2
+  ],
+  "result": [
+   "- <xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3…",
+   "- <xsl:template match=\"/Events\">",
+   "... and 57 more lines"
+  ]
+ },
+ {
+  "call": "code_diff",
+  "args": [
+   "translation",
+   "translation_prod"
+  ],
+  "result": [
+   "- <Environment>Dev</Environment>",
+   "+ <Environment>Prod</Environment>"
+  ]
+ },
+ {
+  "call": "code_diff_limit",
+  "args": [
+   "translation",
+   "translation_prod",
+   2
+  ],
+  "result": [
+   "- <Environment>Dev</Environment>",
+   "+ <Environment>Prod</Environment>"
+  ]
+ },
+ {
+  "call": "collisions",
+  "args": [
+   "index",
+   {
+    "backend": "elasticsearch",
+    "index_name": "ecs-acme-v1",
+    "time_field": "@timestamp",
+    "fields": [
+     {
+      "name": "StreamId",
+      "type": "id",
+      "source": "@StreamId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "EventId",
+      "type": "id",
+      "source": "@EventId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "@timestamp",
+      "type": "date",
+      "source": "EventTime/TimeCreated",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "user.name",
+      "type": "keyword",
+      "source": "EventSource/User/Id",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "url.original",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/URL",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.method",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/HTTPMethod",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.body.bytes",
+      "type": "long",
+      "source": "EventDetail/*/Resource/InboundSize",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     }
+    ],
+    "drop_when": [],
+    "discovery": null,
+    "imports": [],
+    "shared": [],
+    "subobjects": true,
+    "convention": "ecs",
+    "custom_namespaces": [],
+    "style": {
+     "naming": "snake_case",
+     "variable_min_reads": 3,
+     "inline_map_max_keys": 3,
+     "function_min_uses": 2,
+     "data_values": "interpolated",
+     "data_entries": "function",
+     "data_run_min": 4,
+     "variables": "just_in_time",
+     "data_names": "as_given",
+     "layout": "modes"
+    }
+   },
+   {
+    "backend": "elasticsearch",
+    "index_name": "ecs-acme-v1",
+    "time_field": "@timestamp",
+    "fields": [
+     {
+      "name": "StreamId",
+      "type": "id",
+      "source": "@StreamId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "EventId",
+      "type": "id",
+      "source": "@EventId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "@timestamp",
+      "type": "date",
+      "source": "EventTime/TimeCreated",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "user.name",
+      "type": "keyword",
+      "source": "EventSource/User/Id",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "url.original",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/URL",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.method",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/Method",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.body.bytes",
+      "type": "long",
+      "source": "EventDetail/*/Resource/InboundSize",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     }
+    ],
+    "drop_when": [],
+    "discovery": null,
+    "imports": [],
+    "shared": [],
+    "subobjects": true,
+    "convention": "ecs",
+    "custom_namespaces": [],
+    "style": {
+     "naming": "snake_case",
+     "variable_min_reads": 3,
+     "inline_map_max_keys": 3,
+     "function_min_uses": 2,
+     "data_values": "interpolated",
+     "data_entries": "function",
+     "data_run_min": 4,
+     "variables": "just_in_time",
+     "data_names": "as_given",
+     "layout": "modes"
+    }
+   },
+   [
+    "index_saved",
+    "index_var_edited",
+    "index_proposed"
+   ]
+  ],
+  "result": {
+   "http.request.method": [
+    "http.request.method (keyword) from EventDetail/*/Resource/HTTPMethod",
+    "http.request.method (keyword) from EventDetail/*/Resource/Method",
+    [
+     "no longer reads (upper-case(EventDetail/*/Resource/HTTPMethod))orEventDetail/*/Resource/InboundSize",
+     "no longer reads upper-case(EventDetail/*/Resource/HTTPMethod)"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "collisions",
+  "args": [
+   "translation",
+   {
+    "mapping": {
+     "input": "data_splitter",
+     "common": [
+      {
+       "path": "EventTime/TimeCreated",
+       "field": "time"
+      },
+      {
+       "path": "EventSource/System/Name",
+       "value": "Acme VPN"
+      },
+      {
+       "path": "EventSource/System/Environment",
+       "value": "Dev"
+      },
+      {
+       "path": "EventSource/Generator",
+       "value": "vpnd"
+      },
+      {
+       "path": "EventSource/Device/HostName",
+       "field": "host",
+       "default": "unknown"
+      },
+      {
+       "path": "EventSource/User/Id",
+       "field": "user"
+      }
+     ],
+     "events": [
+      {
+       "name": "logon",
+       "when": [
+        {
+         "field": "action",
+         "equals": "login"
+        }
+       ],
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/Action",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/User/Id",
+         "field": "user"
+        },
+        {
+         "path": "EventDetail/Authenticate/Outcome/Success",
+         "field": "result",
+         "map": {
+          "ok": "true",
+          "fail": "false"
+         }
+        },
+        {
+         "path": "EventDetail/Authenticate/Data",
+         "field": "sid",
+         "data_name": "session"
+        }
+       ]
+      },
+      {
+       "name": "other",
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "field": "action"
+        },
+        {
+         "path": "EventDetail/Unknown/Data",
+         "field": "action",
+         "data_name": "action"
+        }
+       ]
+      }
+     ],
+     "unmatched": "skip"
+    }
+   },
+   {
+    "mapping": {
+     "input": "data_splitter",
+     "common": [
+      {
+       "path": "EventTime/TimeCreated",
+       "field": "time"
+      },
+      {
+       "path": "EventSource/System/Name",
+       "value": "Acme VPN"
+      },
+      {
+       "path": "EventSource/System/Environment",
+       "value": "Prod"
+      },
+      {
+       "path": "EventSource/Generator",
+       "value": "vpnd"
+      },
+      {
+       "path": "EventSource/Device/HostName",
+       "field": "host",
+       "default": "unknown"
+      },
+      {
+       "path": "EventSource/User/Id",
+       "field": "user"
+      }
+     ],
+     "events": [
+      {
+       "name": "logon",
+       "when": [
+        {
+         "field": "action",
+         "equals": "login"
+        }
+       ],
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/Action",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/User/Id",
+         "field": "user"
+        },
+        {
+         "path": "EventDetail/Authenticate/Outcome/Success",
+         "field": "result",
+         "map": {
+          "ok": "true",
+          "fail": "false"
+         }
+        },
+        {
+         "path": "EventDetail/Authenticate/Data",
+         "field": "sid",
+         "data_name": "session"
+        }
+       ]
+      },
+      {
+       "name": "other",
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "field": "action"
+        },
+        {
+         "path": "EventDetail/Unknown/Data",
+         "field": "action",
+         "data_name": "action"
+        }
+       ]
+      }
+     ],
+     "unmatched": "skip"
+    }
+   },
+   [
+    "translation",
+    "translation_edited",
+    "translation_prod"
+   ]
+  ],
+  "result": {
+   "common: EventSource/System/Environment": [
+    "common: EventSource/System/Environment: value Dev",
+    "common: EventSource/System/Environment: value Prod",
+    [
+     "no longer writes Environment = Test"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "plan_fields",
+  "args": [
+   "cef",
+   {
+    "vendor": {
+     "value": "Acme"
+    },
+    "product": {
+     "source": "EventSource/System/Name"
+    },
+    "version": {},
+    "name": {
+     "source": "EventDetail/TypeId"
+    },
+    "common": [
+     {
+      "key": "suser",
+      "path": "EventSource/User/Id",
+      "label": "User"
+     }
+    ],
+    "events": {
+     "Logon": [
+      {
+       "key": "act",
+       "path": "EventDetail/*/Action"
+      }
+     ]
+    }
+   }
+  ],
+  "result": {
+   "header vendor": [
+    "{\"value\": \"Acme\"}",
+    "header vendor: 'Acme'",
+    [],
+    []
+   ],
+   "header product": [
+    "{\"source\": \"EventSource/System/Name\"}",
+    "header product: from EventSource/System/Name",
+    [],
+    [
+     "EventSource/System/Name"
+    ]
+   ],
+   "header version": [
+    "{}",
+    "header version: from None",
+    [],
+    []
+   ],
+   "header signature": [
+    "{}",
+    "header signature: from None",
+    [],
+    []
+   ],
+   "header name": [
+    "{\"source\": \"EventDetail/TypeId\"}",
+    "header name: from EventDetail/TypeId",
+    [],
+    [
+     "EventDetail/TypeId"
+    ]
+   ],
+   "header severity": [
+    "{}",
+    "header severity: from None",
+    [],
+    []
+   ],
+   "common: suser": [
+    "{\"key\": \"suser\", \"label\": \"User\", \"path\": \"EventSource/User/Id\"}",
+    "suser from EventSource/User/Id (label 'User')",
+    [
+     "suser"
+    ],
+    [
+     "'suser'",
+     "EventSource/User/Id"
+    ]
+   ],
+   "Logon: act": [
+    "{\"key\": \"act\", \"path\": \"EventDetail/*/Action\"}",
+    "act from EventDetail/*/Action",
+    [
+     "act"
+    ],
+    [
+     "'act'",
+     "EventDetail/*/Action"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "plan_fields",
+  "args": [
+   "index",
+   {
+    "backend": "elasticsearch",
+    "index_name": "ecs-acme-v1",
+    "time_field": "@timestamp",
+    "fields": [
+     {
+      "name": "StreamId",
+      "type": "id",
+      "source": "@StreamId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "EventId",
+      "type": "id",
+      "source": "@EventId",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "@timestamp",
+      "type": "date",
+      "source": "EventTime/TimeCreated",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "user.name",
+      "type": "keyword",
+      "source": "EventSource/User/Id",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "url.original",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/URL",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.method",
+      "type": "keyword",
+      "source": "EventDetail/*/Resource/HTTPMethod",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     },
+     {
+      "name": "http.request.body.bytes",
+      "type": "long",
+      "source": "EventDetail/*/Resource/InboundSize",
+      "description": "",
+      "transform": null,
+      "multiple": false
+     }
+    ],
+    "drop_when": [],
+    "discovery": null,
+    "imports": [],
+    "shared": [],
+    "subobjects": true,
+    "convention": "ecs",
+    "custom_namespaces": [],
+    "style": {
+     "naming": "snake_case",
+     "variable_min_reads": 3,
+     "inline_map_max_keys": 3,
+     "function_min_uses": 2,
+     "data_values": "interpolated",
+     "data_entries": "function",
+     "data_run_min": 4,
+     "variables": "just_in_time",
+     "data_names": "as_given",
+     "layout": "modes"
+    }
+   }
+  ],
+  "result": {
+   "StreamId": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"StreamId\", \"source\": \"@StreamId\", \"transform\": null, \"type\": \"id\"}",
+    "StreamId (id) from @StreamId",
+    [
+     "StreamId"
+    ],
+    [
+     "@StreamId"
+    ]
+   ],
+   "EventId": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"EventId\", \"source\": \"@EventId\", \"transform\": null, \"type\": \"id\"}",
+    "EventId (id) from @EventId",
+    [
+     "EventId"
+    ],
+    [
+     "@EventId"
+    ]
+   ],
+   "@timestamp": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"@timestamp\", \"source\": \"EventTime/TimeCreated\", \"transform\": null, \"type\": \"date\"}",
+    "@timestamp (date) from EventTime/TimeCreated",
+    [
+     "@timestamp"
+    ],
+    [
+     "EventTime/TimeCreated"
+    ]
+   ],
+   "user.name": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"user.name\", \"source\": \"EventSource/User/Id\", \"transform\": null, \"type\": \"keyword\"}",
+    "user.name (keyword) from EventSource/User/Id",
+    [
+     "name"
+    ],
+    [
+     "EventSource/User/Id"
+    ]
+   ],
+   "url.original": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"url.original\", \"source\": \"EventDetail/*/Resource/URL\", \"transform\": null, \"type\": \"keyword\"}",
+    "url.original (keyword) from EventDetail/*/Resource/URL",
+    [
+     "original"
+    ],
+    [
+     "EventDetail/*/Resource/URL"
+    ]
+   ],
+   "http.request.method": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"http.request.method\", \"source\": \"EventDetail/*/Resource/HTTPMethod\", \"transform\": null, \"type\": \"keyword\"}",
+    "http.request.method (keyword) from EventDetail/*/Resource/HTTPMethod",
+    [
+     "method"
+    ],
+    [
+     "EventDetail/*/Resource/HTTPMethod"
+    ]
+   ],
+   "http.request.body.bytes": [
+    "{\"description\": \"\", \"multiple\": false, \"name\": \"http.request.body.bytes\", \"source\": \"EventDetail/*/Resource/InboundSize\", \"transform\": null, \"type\": \"long\"}",
+    "http.request.body.bytes (long) from EventDetail/*/Resource/InboundSize",
+    [
+     "bytes"
+    ],
+    [
+     "EventDetail/*/Resource/InboundSize"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "plan_fields",
+  "args": [
+   "translation",
+   {
+    "mapping": {
+     "input": "data_splitter",
+     "common": [
+      {
+       "path": "EventTime/TimeCreated",
+       "field": "time"
+      },
+      {
+       "path": "EventSource/System/Name",
+       "value": "Acme VPN"
+      },
+      {
+       "path": "EventSource/System/Environment",
+       "value": "Dev"
+      },
+      {
+       "path": "EventSource/Generator",
+       "value": "vpnd"
+      },
+      {
+       "path": "EventSource/Device/HostName",
+       "field": "host",
+       "default": "unknown"
+      },
+      {
+       "path": "EventSource/User/Id",
+       "field": "user"
+      }
+     ],
+     "events": [
+      {
+       "name": "logon",
+       "when": [
+        {
+         "field": "action",
+         "equals": "login"
+        }
+       ],
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/Action",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/User/Id",
+         "field": "user"
+        },
+        {
+         "path": "EventDetail/Authenticate/Outcome/Success",
+         "field": "result",
+         "map": {
+          "ok": "true",
+          "fail": "false"
+         }
+        },
+        {
+         "path": "EventDetail/Authenticate/Data",
+         "field": "sid",
+         "data_name": "session"
+        }
+       ]
+      },
+      {
+       "name": "other",
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "field": "action"
+        },
+        {
+         "path": "EventDetail/Unknown/Data",
+         "field": "action",
+         "data_name": "action"
+        }
+       ]
+      }
+     ],
+     "unmatched": "skip"
+    }
+   }
+  ],
+  "result": {
+   "common: EventTime/TimeCreated": [
+    "{\"field\": \"time\", \"path\": \"EventTime/TimeCreated\"}",
+    "common: EventTime/TimeCreated: field time",
+    [
+     "TimeCreated"
+    ],
+    [
+     "data[@name='time']/@value"
+    ]
+   ],
+   "common: EventSource/System/Name": [
+    "{\"path\": \"EventSource/System/Name\", \"value\": \"Acme VPN\"}",
+    "common: EventSource/System/Name: value Acme VPN",
+    [
+     "Name"
+    ],
+    []
+   ],
+   "common: EventSource/System/Environment": [
+    "{\"path\": \"EventSource/System/Environment\", \"value\": \"Dev\"}",
+    "common: EventSource/System/Environment: value Dev",
+    [
+     "Environment"
+    ],
+    []
+   ],
+   "common: EventSource/Generator": [
+    "{\"path\": \"EventSource/Generator\", \"value\": \"vpnd\"}",
+    "common: EventSource/Generator: value vpnd",
+    [
+     "Generator"
+    ],
+    []
+   ],
+   "common: EventSource/Device/HostName": [
+    "{\"default\": \"unknown\", \"field\": \"host\", \"path\": \"EventSource/Device/HostName\"}",
+    "common: EventSource/Device/HostName: field host, default unknown",
+    [
+     "HostName"
+    ],
+    [
+     "data[@name='host']/@value"
+    ]
+   ],
+   "common: EventSource/User/Id": [
+    "{\"field\": \"user\", \"path\": \"EventSource/User/Id\"}",
+    "common: EventSource/User/Id: field user",
+    [
+     "Id"
+    ],
+    [
+     "data[@name='user']/@value"
+    ]
+   ],
+   "logon: EventDetail/TypeId": [
+    "{\"path\": \"EventDetail/TypeId\", \"value\": \"Logon\"}",
+    "logon: EventDetail/TypeId: value Logon",
+    [
+     "TypeId"
+    ],
+    []
+   ],
+   "logon: EventDetail/Authenticate/Action": [
+    "{\"path\": \"EventDetail/Authenticate/Action\", \"value\": \"Logon\"}",
+    "logon: EventDetail/Authenticate/Action: value Logon",
+    [
+     "Action"
+    ],
+    []
+   ],
+   "logon: EventDetail/Authenticate/User/Id": [
+    "{\"field\": \"user\", \"path\": \"EventDetail/Authenticate/User/Id\"}",
+    "logon: EventDetail/Authenticate/User/Id: field user",
+    [
+     "Id"
+    ],
+    [
+     "data[@name='user']/@value"
+    ]
+   ],
+   "logon: EventDetail/Authenticate/Outcome/Success": [
+    "{\"field\": \"result\", \"map\": {\"fail\": \"false\", \"ok\": \"true\"}, \"path\": \"EventDetail/Authenticate/Outcome/Success\"}",
+    "logon: EventDetail/Authenticate/Outcome/Success: field result, map {'ok': 'true', 'fail': 'false'}",
+    [
+     "Success"
+    ],
+    [
+     "data[@name='result']/@value"
+    ]
+   ],
+   "logon: EventDetail/Authenticate/Data [session]": [
+    "{\"data_name\": \"session\", \"field\": \"sid\", \"path\": \"EventDetail/Authenticate/Data\"}",
+    "logon: EventDetail/Authenticate/Data [session]: field sid, data_name session",
+    [
+     "Data",
+     "session"
+    ],
+    [
+     "data[@name='sid']/@value"
+    ]
+   ],
+   "other: EventDetail/TypeId": [
+    "{\"field\": \"action\", \"path\": \"EventDetail/TypeId\"}",
+    "other: EventDetail/TypeId: field action",
+    [
+     "TypeId"
+    ],
+    [
+     "data[@name='action']/@value"
+    ]
+   ],
+   "other: EventDetail/Unknown/Data [action]": [
+    "{\"data_name\": \"action\", \"field\": \"action\", \"path\": \"EventDetail/Unknown/Data\"}",
+    "other: EventDetail/Unknown/Data [action]: field action, data_name action",
+    [
+     "Data",
+     "action"
+    ],
+    [
+     "data[@name='action']/@value"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "plan_fields",
+  "args": [
+   "index",
+   null
+  ],
+  "result": {}
+ },
+ {
+  "call": "collisions_cef",
+  "args": [
+   {
+    "vendor": {
+     "value": "Acme"
+    },
+    "product": {
+     "source": "EventSource/System/Name"
+    },
+    "version": {},
+    "name": {
+     "source": "EventDetail/TypeId"
+    },
+    "common": [
+     {
+      "key": "suser",
+      "path": "EventSource/User/Id",
+      "label": "User"
+     }
+    ],
+    "events": {
+     "Logon": [
+      {
+       "key": "act",
+       "path": "EventDetail/*/Action"
+      }
+     ]
+    }
+   },
+   {
+    "vendor": {
+     "value": "Acme2"
+    },
+    "product": {
+     "source": "EventSource/System/Name"
+    },
+    "version": {},
+    "name": {
+     "source": "EventDetail/TypeId"
+    },
+    "common": [
+     {
+      "key": "suser",
+      "path": "EventSource/User/Name",
+      "label": "User"
+     }
+    ],
+    "events": {
+     "Logon": [
+      {
+       "key": "act",
+       "path": "EventDetail/*/Action"
+      }
+     ]
+    }
+   }
+  ],
+  "result": {
+   "common: suser": [
+    "suser from EventSource/User/Id (label 'User')",
+    "suser from EventSource/User/Name (label 'User')",
+    [
+     "no longer writes string suser",
+     "no longer reads EventSource/User/Mail"
+    ]
+   ]
+  }
+ },
+ {
+  "call": "expression",
+  "args": [
+   "( a )"
+  ],
+  "result": "a"
+ },
+ {
+  "call": "expression",
+  "args": [
+   "(a) and (b)"
+  ],
+  "result": "(a)and(b)"
+ },
+ {
+  "call": "expression",
+  "args": [
+   "((a))"
+  ],
+  "result": "a"
+ },
+ {
+  "call": "expression",
+  "args": [
+   "f(x)"
+  ],
+  "result": "f(x)"
+ },
+ {
+  "call": "expression",
+  "args": [
+   "(a"
+  ],
+  "result": "(a"
+ },
+ {
+  "call": "expression",
+  "args": [
+   "  "
+  ],
+  "result": ""
+ },
+ {
+  "call": "expression",
+  "args": [
+   "x  y\n"
+  ],
+  "result": "xy"
+ },
+ {
+  "call": "style_round_trip",
+  "args": [
+   "index"
+  ],
+  "result": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:if test=\"EventDetail/*/Resource/HTTPMethod\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <string key=\"method\">\n            <xsl:value-of select=\"EventDetail/*/Resource/HTTPMethod\"/>\n          </string>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n"
+ },
+ {
+  "call": "style_round_trip",
+  "args": [
+   "index_bytes"
+  ],
+  "result": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"http://www.w3.org/2005/xpath-functions\" xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xpath-default-namespace=\"event-logging:3\" version=\"3.0\">\n  <xsl:template match=\"/Events\">\n    <array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions file://xpath-functions.xsd\">\n      <xsl:apply-templates select=\"Event\"/>\n    </array>\n  </xsl:template>\n  <!-- Each Event: one document for the index ecs-acme-v1 -->\n  <xsl:template match=\"Event\">\n    <map>\n      <xsl:if test=\"@StreamId\">\n        <number key=\"StreamId\">\n          <xsl:value-of select=\"@StreamId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"@EventId\">\n        <number key=\"EventId\">\n          <xsl:value-of select=\"@EventId\"/>\n        </number>\n      </xsl:if>\n      <xsl:if test=\"EventTime/TimeCreated\">\n        <string key=\"@timestamp\">\n          <xsl:value-of select=\"EventTime/TimeCreated\"/>\n        </string>\n      </xsl:if>\n      <xsl:apply-templates select=\".\" mode=\"user\"/>\n      <xsl:apply-templates select=\".\" mode=\"url\"/>\n      <xsl:apply-templates select=\".\" mode=\"http\"/>\n    </map>\n  </xsl:template>\n  <!-- user: user.name from EventSource/User/Id -->\n  <xsl:template match=\"Event\" mode=\"user\">\n    <xsl:if test=\"EventSource/User/Id\">\n      <map key=\"user\">\n        <string key=\"name\">\n          <xsl:value-of select=\"EventSource/User/Id\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- url: url.original from EventDetail/*/Resource/URL -->\n  <xsl:template match=\"Event\" mode=\"url\">\n    <xsl:if test=\"EventDetail/*/Resource/URL\">\n      <map key=\"url\">\n        <string key=\"original\">\n          <xsl:value-of select=\"EventDetail/*/Resource/URL\"/>\n        </string>\n      </map>\n    </xsl:if>\n  </xsl:template>\n  <!-- http: http.request.method from EventDetail/*/Resource/HTTPMethod; http.request.body.bytes from\n       EventDetail/*/Resource/InboundSize -->\n  <xsl:template match=\"Event\" mode=\"http\">\n    <xsl:variable name=\"http_request_method\" select=\"EventDetail/*/Resource/HTTPMethod\"/>\n    <xsl:variable name=\"http_request_body_bytes\" select=\"EventDetail/*/Resource/InboundSize\"/>\n    <xsl:if test=\"$http_request_method or $http_request_body_bytes\">\n      <map key=\"http\">\n        <map key=\"request\">\n          <xsl:if test=\"$http_request_method\">\n            <string key=\"method\">\n              <xsl:value-of select=\"$http_request_method\"/>\n            </string>\n          </xsl:if>\n          <xsl:if test=\"$http_request_body_bytes\">\n            <map key=\"body\">\n              <number key=\"bytes\">\n                <xsl:value-of select=\"$http_request_body_bytes\"/>\n              </number>\n            </map>\n          </xsl:if>\n        </map>\n      </map>\n    </xsl:if>\n  </xsl:template>\n</xsl:stylesheet>\n"
+ },
+ {
+  "call": "style_round_trip",
+  "args": [
+   "translation"
+  ],
+  "result": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns=\"event-logging:3\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:stroom=\"stroom\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:mcp=\"stroom-mcp:functions\" version=\"3.0\" xpath-default-namespace=\"records:2\" exclude-result-prefixes=\"stroom xs mcp\">\n  <xsl:template match=\"records\">\n    <Events Version=\"4.1.0\" xsi:schemaLocation=\"event-logging:3 file://event-logging-v4.1.0.xsd\">\n      <xsl:apply-templates select=\"record\" mode=\"event\"/>\n    </Events>\n  </xsl:template>\n  <xsl:template match=\"*\" mode=\"event\">\n    <xsl:choose>\n      <xsl:when test=\"data[@name='action']/@value = 'login'\">\n        <xsl:apply-templates select=\".\" mode=\"event_type_logon\"/>\n      </xsl:when>\n      <xsl:otherwise>\n        <xsl:apply-templates select=\".\" mode=\"event_type_other\"/>\n      </xsl:otherwise>\n    </xsl:choose>\n  </xsl:template>\n  <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->\n  <xsl:template match=\"node()\" mode=\"event_type_logon\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <TypeId>Logon</TypeId>\n        <Authenticate>\n          <Action>Logon</Action>\n          <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n            <User>\n              <Id>\n                <xsl:value-of select=\"data[@name='user']/@value\"/>\n              </Id>\n            </User>\n          </xsl:if>\n          <xsl:if test=\"data[@name='result']/@value = ('ok', 'fail')\">\n            <Outcome>\n              <Success>\n                <xsl:value-of select=\"if (data[@name='result']/@value = 'ok') then 'true' else 'false'\"/>\n              </Success>\n            </Outcome>\n          </xsl:if>\n          <xsl:sequence select=\"mcp:data('session', data[@name='sid']/@value)\"/>\n        </Authenticate>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->\n  <xsl:template match=\"node()\" mode=\"event_type_other\">\n    <Event>\n      <xsl:apply-templates select=\".\" mode=\"event_time\"/>\n      <xsl:apply-templates select=\".\" mode=\"event_source\"/>\n      <EventDetail>\n        <xsl:variable name=\"action\" select=\"data[@name='action']/@value[normalize-space(.)]\"/>\n        <TypeId>\n          <xsl:value-of select=\"if ($action) then $action else 'other'\"/>\n        </TypeId>\n        <xsl:if test=\"$action\">\n          <Unknown>\n            <Data Name=\"action\" Value=\"{$action}\"/>\n          </Unknown>\n        </xsl:if>\n      </EventDetail>\n    </Event>\n  </xsl:template>\n  <!-- event_time: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_time\">\n    <xsl:if test=\"normalize-space(data[@name='time']/@value)\">\n      <EventTime>\n        <TimeCreated>\n          <xsl:value-of select=\"data[@name='time']/@value\"/>\n        </TimeCreated>\n      </EventTime>\n    </xsl:if>\n  </xsl:template>\n  <!-- event_source: shared by the rules 'logon', 'other' -->\n  <xsl:template match=\"node()\" mode=\"event_source\">\n    <EventSource>\n      <System>\n        <Name>Acme VPN</Name>\n        <Environment>Dev</Environment>\n      </System>\n      <Generator>vpnd</Generator>\n      <Device>\n        <HostName>\n          <xsl:value-of select=\"if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'\"/>\n        </HostName>\n      </Device>\n      <xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        <User>\n          <Id>\n            <xsl:value-of select=\"data[@name='user']/@value\"/>\n          </Id>\n        </User>\n      </xsl:if>\n    </EventSource>\n  </xsl:template>\n  <xsl:function name=\"mcp:data\" as=\"element()?\">\n    <!-- A Data entry, Name and Value, when the value is present (not blank) -->\n    <xsl:param name=\"name\" as=\"xs:string\"/>\n    <xsl:param name=\"value\" as=\"item()*\"/>\n    <xsl:if test=\"exists($value[normalize-space(.)])\">\n      <Data Name=\"{$name}\" Value=\"{$value}\"/>\n    </xsl:if>\n  </xsl:function>\n</xsl:stylesheet>\n"
+ },
+ {
+  "call": "style_round_trip",
+  "args": [
+   "texts"
+  ],
+  "result": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\">\n  <xsl:template match=\"x\">\n    <xsl:text> lit </xsl:text>\n    <xsl:text>\n</xsl:text>\n    <e:a key=\"k\">  v  <xsl:if test=\"(a) and (b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a>\n    <!-- c -->\n    <e:Event>\n      <e:map>\n        <xsl:value-of select=\"$v\"/>\n      </e:map>\n    </e:Event>\n    <xsl:variable name=\"v\" select=\"p/q\"/>\n    <xsl:variable name=\"w\" select=\"concat($v, 1)\"/>\n    <e:o Name=\"n\" Value=\"{$w}\"/>\n  </xsl:template>\n</xsl:stylesheet>\n"
+ },
+ {
+  "call": "style_variables",
+  "args": [
+   "texts",
+   {},
+   [
+    "v"
+   ]
+  ],
+  "result": [
+   "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\">\n  <xsl:template match=\"x\">\n    <xsl:text> lit </xsl:text>\n    <xsl:text>\n</xsl:text>\n    <e:a key=\"k\">  v  <xsl:if test=\"(a) and (b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a>\n    <!-- c -->\n    <e:Event>\n      <e:map>\n        <xsl:value-of select=\"$v\"/>\n      </e:map>\n    </e:Event>\n    <xsl:variable name=\"v\" select=\"p/q\"/>\n    <xsl:variable name=\"w\" select=\"concat($v, 1)\"/>\n    <e:o Name=\"n\" Value=\"{$w}\"/>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   [
+    "v"
+   ]
+  ]
+ },
+ {
+  "call": "style_variables",
+  "args": [
+   "texts",
+   {
+    "variables": "top"
+   },
+   [
+    "v"
+   ]
+  ],
+  "result": [
+   "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\">\n  <xsl:template match=\"x\">\n    <xsl:text> lit </xsl:text>\n    <xsl:text>\n</xsl:text>\n    <e:a key=\"k\">  v  <xsl:if test=\"(a) and (b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a>\n    <!-- c -->\n    <e:Event>\n      <e:map>\n        <xsl:value-of select=\"$v\"/>\n      </e:map>\n    </e:Event>\n    <xsl:variable name=\"v\" select=\"p/q\"/>\n    <xsl:variable name=\"w\" select=\"concat($v, 1)\"/>\n    <e:o Name=\"n\" Value=\"{$w}\"/>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   [
+    "v"
+   ]
+  ]
+ },
+ {
+  "call": "style_variables",
+  "args": [
+   "texts",
+   {
+    "variable_min_reads": 1
+   },
+   [
+    "v"
+   ]
+  ],
+  "result": [
+   "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\">\n  <xsl:template match=\"x\">\n    <xsl:text> lit </xsl:text>\n    <xsl:text>\n</xsl:text>\n    <e:a key=\"k\">  v  <xsl:variable name=\"the_a\" select=\"a\"/><xsl:variable name=\"b\" select=\"b\"/><xsl:if test=\"($the_a) and ($b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a>\n    <!-- c -->\n    <xsl:variable name=\"p_q\" select=\"p/q\"/>\n    <xsl:variable name=\"v\" select=\"$p_q\"/>\n    <e:Event>\n      <e:map>\n        <xsl:value-of select=\"$v\"/>\n      </e:map>\n    </e:Event>\n    <xsl:variable name=\"w\" select=\"concat($v, 1)\"/>\n    <e:o Name=\"n\" Value=\"{$w}\"/>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   [
+    "b",
+    "p_q",
+    "the_a",
+    "v"
+   ]
+  ]
+ },
+ {
+  "call": "style_variables",
+  "args": [
+   "texts",
+   {
+    "naming": "camelCase",
+    "layout": "named"
+   },
+   [
+    "v"
+   ]
+  ],
+  "result": [
+   "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns:e=\"e\">\n  <xsl:template match=\"x\">\n    <xsl:text> lit </xsl:text>\n    <xsl:text>\n</xsl:text>\n    <e:a key=\"k\">  v  <xsl:if test=\"(a) and (b)\"><e:b>{x} {y}</e:b><xsl:element name=\"z\"/></xsl:if></e:a>\n    <!-- c -->\n    <e:Event>\n      <e:map>\n        <xsl:value-of select=\"$v\"/>\n      </e:map>\n    </e:Event>\n    <xsl:variable name=\"v\" select=\"p/q\"/>\n    <xsl:variable name=\"w\" select=\"concat($v, 1)\"/>\n    <e:o Name=\"n\" Value=\"{$w}\"/>\n  </xsl:template>\n</xsl:stylesheet>\n",
+   [
+    "v"
+   ]
+  ]
+ },
+ {
+  "call": "part_name",
+  "args": [
+   "EventSource",
+   {},
+   [
+    "event_source"
+   ]
+  ],
+  "result": [
+   "event_source_2",
+   [
+    "event_source",
+    "event_source_2"
+   ]
+  ]
+ },
+ {
+  "call": "with_mapping",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX",
+   "translation",
+   {
+    "schema_version": "4.1.0",
+    "mapping": {
+     "input": "data_splitter",
+     "common": [
+      {
+       "path": "EventTime/TimeCreated",
+       "field": "time"
+      },
+      {
+       "path": "EventSource/System/Name",
+       "value": "Acme VPN"
+      },
+      {
+       "path": "EventSource/System/Environment",
+       "value": "Dev"
+      },
+      {
+       "path": "EventSource/Generator",
+       "value": "vpnd"
+      },
+      {
+       "path": "EventSource/Device/HostName",
+       "field": "host",
+       "default": "unknown"
+      },
+      {
+       "path": "EventSource/User/Id",
+       "field": "user"
+      }
+     ],
+     "events": [
+      {
+       "name": "logon",
+       "when": [
+        {
+         "field": "action",
+         "equals": "login"
+        }
+       ],
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/Action",
+         "value": "Logon"
+        },
+        {
+         "path": "EventDetail/Authenticate/User/Id",
+         "field": "user"
+        },
+        {
+         "path": "EventDetail/Authenticate/Outcome/Success",
+         "field": "result",
+         "map": {
+          "ok": "true",
+          "fail": "false"
+         }
+        },
+        {
+         "path": "EventDetail/Authenticate/Data",
+         "field": "sid",
+         "data_name": "session"
+        }
+       ]
+      },
+      {
+       "name": "other",
+       "fields": [
+        {
+         "path": "EventDetail/TypeId",
+         "field": "action"
+        },
+        {
+         "path": "EventDetail/Unknown/Data",
+         "field": "action",
+         "data_name": "action"
+        }
+       ]
+      }
+     ],
+     "unmatched": "skip"
+    },
+    "note": "a -- b é \u001b"
+   }
+  ],
+  "result": "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp translation mapping: kept by the server, do not edit or delete\n{\"schema_version\":\"4.1.0\",\"mapping\":{\"input\":\"data_splitter\",\"common\":[{\"path\":\"EventTime/TimeCreated\",\"field\":\"time\"},{\"path\":\"EventSource/System/Name\",\"value\":\"Acme VPN\"},{\"path\":\"EventSource/System/Environment\",\"value\":\"Dev\"},{\"path\":\"EventSource/Generator\",\"value\":\"vpnd\"},{\"path\":\"EventSource/Device/HostName\",\"field\":\"host\",\"default\":\"unknown\"},{\"path\":\"EventSource/User/Id\",\"field\":\"user\"}],\"events\":[{\"name\":\"logon\",\"when\":[{\"field\":\"action\",\"equals\":\"login\"}],\"fields\":[{\"path\":\"EventDetail/TypeId\",\"value\":\"Logon\"},{\"path\":\"EventDetail/Authenticate/Action\",\"value\":\"Logon\"},{\"path\":\"EventDetail/Authenticate/User/Id\",\"field\":\"user\"},{\"path\":\"EventDetail/Authenticate/Outcome/Success\",\"field\":\"result\",\"map\":{\"ok\":\"true\",\"fail\":\"false\"}},{\"path\":\"EventDetail/Authenticate/Data\",\"field\":\"sid\",\"data_name\":\"session\"}]},{\"name\":\"other\",\"fields\":[{\"path\":\"EventDetail/TypeId\",\"field\":\"action\"},{\"path\":\"EventDetail/Unknown/Data\",\"field\":\"action\",\"data_name\":\"action\"}]}],\"unmatched\":\"skip\"},\"note\":\"a -\\u002d b é \\u001b\"}\n-->"
+ },
+ {
+  "call": "with_mapping",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp translation mapping: kept by the server, do not edit or delete\n{\"schema_version\":\"4.1.0\",\"mapping\":{\"input\":\"data_splitter\",\"common\":[{\"path\":\"EventTime/TimeCreated\",\"field\":\"time\"},{\"path\":\"EventSource/System/Name\",\"value\":\"Acme VPN\"},{\"path\":\"EventSource/System/Environment\",\"value\":\"Dev\"},{\"path\":\"EventSource/Generator\",\"value\":\"vpnd\"},{\"path\":\"EventSource/Device/HostName\",\"field\":\"host\",\"default\":\"unknown\"},{\"path\":\"EventSource/User/Id\",\"field\":\"user\"}],\"events\":[{\"name\":\"logon\",\"when\":[{\"field\":\"action\",\"equals\":\"login\"}],\"fields\":[{\"path\":\"EventDetail/TypeId\",\"value\":\"Logon\"},{\"path\":\"EventDetail/Authenticate/Action\",\"value\":\"Logon\"},{\"path\":\"EventDetail/Authenticate/User/Id\",\"field\":\"user\"},{\"path\":\"EventDetail/Authenticate/Outcome/Success\",\"field\":\"result\",\"map\":{\"ok\":\"true\",\"fail\":\"false\"}},{\"path\":\"EventDetail/Authenticate/Data\",\"field\":\"sid\",\"data_name\":\"session\"}]},{\"name\":\"other\",\"fields\":[{\"path\":\"EventDetail/TypeId\",\"field\":\"action\"},{\"path\":\"EventDetail/Unknown/Data\",\"field\":\"action\",\"data_name\":\"action\"}]}],\"unmatched\":\"skip\"},\"note\":\"a -\\u002d b é \\u001b\"}\n-->",
+   "index",
+   {
+    "fields": [],
+    "x": null
+   }
+  ],
+  "result": "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp index mapping: kept by the server, do not edit or delete\n{\"fields\":[],\"x\":null}\n-->"
+ },
+ {
+  "call": "with_mapping",
+  "args": [
+   null,
+   "cef",
+   {
+    "a": 1.5,
+    "b": true
+   }
+  ],
+  "result": "*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp cef mapping: kept by the server, do not edit or delete\n{\"a\":1.5,\"b\":true}\n-->"
+ },
+ {
+  "call": "with_mapping",
+  "args": [
+   "Doc\n--- stroom-mcp translation mapping (do not edit) ---\n{\"a\": 1}\n--- end of stroom-mcp translation mapping ---\n",
+   "index",
+   {
+    "b": 2
+   }
+  ],
+  "result": "Doc\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp index mapping: kept by the server, do not edit or delete\n{\"b\":2}\n-->"
+ },
+ {
+  "call": "with_agreed_template",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp index mapping: kept by the server, do not edit or delete\n{\"fields\":[],\"x\":null}\n-->",
+   {
+    "index": "i",
+    "body": {
+     "k": [
+      1,
+      2
+     ]
+    }
+   }
+  ],
+  "result": "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp index mapping: kept by the server, do not edit or delete\n{\"fields\":[],\"x\":null}\n-->\n\n<!-- stroom-mcp agreed index template: kept by the server, do not edit or delete\n{\"index\":\"i\",\"body\":{\"k\":[1,2]}}\n-->"
+ },
+ {
+  "call": "read_agreed_template",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX\n\n*Below, hidden, is what stroom-mcp keeps for this document: the mapping it is generated from, a build's pending changes, an agreed index template. Please don't edit or delete it: change the document through the agent.*\n\n<!-- stroom-mcp index mapping: kept by the server, do not edit or delete\n{\"fields\":[],\"x\":null}\n-->\n\n<!-- stroom-mcp agreed index template: kept by the server, do not edit or delete\n{\"index\":\"i\"}\n-->"
+  ],
+  "result": {
+   "index": "i"
+  }
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX",
+   "Field mapping",
+   " new\n",
+   false
+  ],
+  "result": "Own text.\n\n## Field mapping\n\nnew\n\n## Output\nX"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX",
+   "Field",
+   "x",
+   false
+  ],
+  "result": "Own text.\n\n## Field\n\nx\n\n## Output\nX"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "Own text.\n\n## Field mapping\nold\n\n## Output\nX",
+   "Field",
+   "x",
+   true
+  ],
+  "result": "Own text.\n\n## Field mapping\nold\n\n## Field\n\nx\n\n## Output\nX"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "# T\n\n## Conformance\nc",
+   "Field mapping",
+   "b",
+   false
+  ],
+  "result": "# T\n\n## Field mapping\n\nb\n\n## Conformance\nc"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "# T\n\nend  \n",
+   "Field mapping",
+   "b",
+   false
+  ],
+  "result": "# T\n\nend\n\n## Field mapping\n\nb\n\n"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "## Field mapping (sampled)\nold\n## Next\nn",
+   "Field mapping",
+   "new",
+   false
+  ],
+  "result": "## Field mapping\n\nnew\n\n## Next\nn"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "## Field mapping (sampled)\nold\n## Next\nn",
+   "Field mapping",
+   "new",
+   true
+  ],
+  "result": "## Field mapping (sampled)\nold\n## Next\nn\n\n## Field mapping\n\nnew\n\n"
+ },
+ {
+  "call": "replace_section",
+  "args": [
+   "## Field mapping\nold",
+   "Field mapping",
+   "new $1 \\1",
+   false
+  ],
+  "result": "## Field mapping\n\nnew $1 \\1\n\n"
+ },
+ {
+  "call": "doc_digest",
+  "args": [
+   "x <!-- stroom-mcp field-mapping 0123456789abcdef --> y"
+  ],
+  "result": "0123456789abcdef"
+ },
+ {
+  "call": "doc_digest",
+  "args": [
+   "none"
+  ],
+  "result": null
+ },
+ {
+  "call": "doc_digest",
+  "args": [
+   "<!-- stroom-mcp field-mapping 0123 -->"
+  ],
+  "result": null
+ }
+]

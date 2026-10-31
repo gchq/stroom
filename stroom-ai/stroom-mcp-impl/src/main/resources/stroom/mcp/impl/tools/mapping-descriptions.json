@@ -1,0 +1,356 @@
+{
+ "TranslationMapping": {
+  "input": {
+   "description": "What the XSLT reads: data_splitter (a Data Splitter's records), json (JSONParser), xml (the source XML, one document), xml_fragments (XMLFragmentParser: several root elements, one record each, inside its converter's wrapper).",
+   "model": null
+  },
+  "root": {
+   "description": "Root element to match. Defaults: 'records' (data_splitter), '/' (json, xml_fragments); required for xml.",
+   "model": null
+  },
+  "record": {
+   "description": "Record elements under the root. Defaults: 'record' (data_splitter), the JSON layout's maps; required for xml and xml_fragments, e.g. 'logon' or 'Event'.",
+   "model": null
+  },
+  "xml_namespace": {
+   "description": "xml and xml_fragments: the records' namespace, if any. Fragments that declare none take the wrapper root's namespace: records:2 for a <records> wrapper, event-logging:3 for an <Events> one (profile_sample says which).",
+   "model": null
+  },
+  "json_layout": {
+   "description": "json input only, from profile_sample: 'array' (one JSON array; set jsonParser.addRootObject=false on the pipeline, or leave it: both are matched) or 'lines' (one object per line, or concatenated objects; jsonParser.addRootObject must stay true, which wraps them all in one map).",
+   "model": null
+  },
+  "json_fields": {
+   "description": "Input fields holding JSON text (an event serialised into a string field): a key inside one is the field <field>.<key> (nested: <field>.<a>.<b>) in common, events, when and any_of. Read safely: a record whose field is empty, or isn't JSON, gives nothing. Never map the field itself into an element.",
+   "model": null
+  },
+  "xml_fields": {
+   "description": "Input fields holding XML text (a SOAP payload, an XML audit record inside a JSON or CSV record): a path inside one is the field <field>/<path>, its steps element names matched whatever their namespace (payload/Envelope/Body/Login/User), '//' for anywhere below (payload//User), '@name' for an attribute. Read safely: a record whose field is empty, or isn't XML, gives nothing. Never map the field itself into an element.",
+   "model": null
+  },
+  "pairs": {
+   "description": "Key/value pairs in a text field (srcip=10.0.0.1 type=\"traffic\", or 'Source IP: 192.0.2.45; User: [x]'), each key a field of its own: one entry for many keys, read as extract reads one (each key becomes an extract entry). e.g. {\"field\": \"body\", \"style\": \"quoted\", \"keys\": [\"type\", \"subtype\"]}.",
+   "model": "KeyValuePairs"
+  },
+  "extract": {
+   "description": "Fields parsed out of text fields with regular expressions, e.g. a message string holding the time, user and action; their names are then used as fields in common, events and when.",
+   "model": "Extraction"
+  },
+  "for_each": {
+   "description": "When one record holds several events: the field (JSON key such as 'events', dotted for nested keys) or XPath selecting the items, each of which becomes an Event. Fields, conditions and extractions then read the item; mark those that read the record itself (the batch's host, say) with scope: record.",
+   "model": null
+  },
+  "nil_values": {
+   "description": "Values the source writes for 'none', e.g. ['-'] (syslog's NILVALUE, and many key=value logs): an input holding one counts as empty, so its elements are left out rather than written as '-'.",
+   "model": null
+  },
+  "drop_when": {
+   "description": "Records (items, with for_each) to leave untranslated, tried before the event rules: heartbeats, test traffic, service accounts. Each entry's conditions must all hold; any entry drops.",
+   "model": "DropRule"
+  },
+  "common": {
+   "description": "Fields every event gets, e.g. time, System, Device.",
+   "model": "FieldMapping"
+  },
+  "events": {
+   "description": "Event kinds, tried in order; the first whose conditions hold is written.",
+   "model": "EventRule"
+  },
+  "unmatched": {
+   "description": "Records no rule matches: log a warning, or skip.",
+   "model": null
+  },
+  "style": {
+   "description": "How the XSLT is written: naming, and when to use variables and xsl:maps.",
+   "model": "XsltStyle"
+  },
+  "imports": {
+   "description": "Shared XSLTs imported (xsl:import) for their template rules or because standing instructions require them (an AGENTS doc's Required imports), e.g. 'Stream-Meta-V1'. Named templates from them are called with shared entries, and their xsl:functions with a functions entry for the same href.",
+   "model": null
+  },
+  "shared": {
+   "description": "Named templates from shared XSLTs (xsl:import) that the environment's other translations call, e.g. one writing EventSource/Device from stream meta: the XSLT imports them and calls each in its element's place, in every event. Map nothing below those elements; the shared template writes them.",
+   "model": "SharedTemplate"
+  },
+  "functions": {
+   "description": "Shared XSLTs whose xsl:functions the xpaths (fields, conditions, extractions, with_params) call, as the environment's other XSLTs do (describe_template's shared_xslt lists them): the XSLT imports each and binds its prefix. E.g. {'href': 'IP Lookup', 'prefix': 'gs', 'namespace': '...'}, then a field's \"xpath\": \"gs:parseTimestamp(data[@name='eventtime']/@value)\". Conditions compare strings: test a boolean function as string(gs:isLocalIpAddress(...)) with equals 'true'. Stroom steps the XSLT with the import; the local checks don't run these xpaths.",
+   "model": "SharedFunctions"
+  }
+ },
+ "SharedFunctions": {
+  "href": {
+   "description": "The shared XSLT document, as the other pipelines import it, e.g. 'IP Lookup'.",
+   "model": null
+  },
+  "prefix": {
+   "description": "The prefix its functions are called with, e.g. 'gs' for gs:isLocalIpAddress().",
+   "model": null
+  },
+  "namespace": {
+   "description": "The namespace that prefix is bound to in the shared XSLT (describe_template's shared_xslt gives it with each function), e.g. 'http://example.com/xslt'.",
+   "model": null
+  }
+ },
+ "SharedTemplate": {
+  "href": {
+   "description": "The shared XSLT document, as the other pipelines import it, e.g. 'Common-Event-V1'.",
+   "model": null
+  },
+  "template": {
+   "description": "The named template to call, e.g. 'eventSourceDevice'.",
+   "model": null
+  },
+  "at": {
+   "description": "The element it writes, as a path below Event, e.g. 'EventSource/Device' or 'Meta' (describe_template's shared_xslt gives it). Nothing below it is mapped.",
+   "model": null
+  },
+  "with_params": {
+   "description": "Parameters to pass, name -> XPath read from the record (or item), as the other XSLTs pass them (shared_xslt's with_params), e.g. {'ip': \"data[@name='ip']/@value\"}.",
+   "model": null
+  }
+ },
+ "XsltStyle": {
+  "naming": {
+   "description": "Names of variables and named templates, e.g. client_ip and event_source.",
+   "model": null
+  },
+  "variable_min_reads": {
+   "description": "Read a field into a variable only when a template reads it at least this many times; fewer are written where they're used. An element's guard and value are two reads. 1: always use variables.",
+   "model": null
+  },
+  "inline_map_max_keys": {
+   "description": "A value map used by one element with at most this many keys is written inline as an if; longer or shared maps are declared once as an xsl:map. 0: always an xsl:map.",
+   "model": null
+  },
+  "function_min_uses": {
+   "description": "A conversion (a time format, or a strip_domain, domain or digits transform) used by at least this many elements is declared once as an xsl:function (mcp:parse_time, mcp:strip_domain) and called where it's needed; fewer are written inline. 0: always inline.",
+   "model": null
+  },
+  "data_values": {
+   "description": "How a computed Data value is written: interpolated (the default), <Data Name=\"x\" Value=\"{...}\"/> (an attribute value template); attribute, <Data Name=\"x\"><xsl:attribute name=\"Value\" select=\"...\"/></Data>. An expression holding a brace keeps xsl:attribute. Set it from an AGENTS style guide.",
+   "model": null
+  },
+  "data_entries": {
+   "description": "How a Data entry read from the input is written: function (the default), one line a Data, <xsl:sequence select=\"mcp:data('name', value)\"/>, the function writing it only when the value is present; guarded, an xsl:if around each Data element. A Data entry with a map, default or conversion is always guarded. Set it from an AGENTS style guide.",
+   "model": null
+  },
+  "data_run_min": {
+   "description": "Data entries several rules write the same way, this many or more in a row, are written once as a template of their own and applied in each rule's place (the modes and named layouts). Set it from an AGENTS style guide; a large number keeps every Data entry in its rule.",
+   "model": null
+  },
+  "variables": {
+   "description": "Where variables are declared: just_in_time (the default), immediately before the first element that reads each, inside the innermost element holding every read; top, all at the start of their template. Set it from an AGENTS style guide.",
+   "model": null
+  },
+  "data_names": {
+   "description": "Data element Names in this style (server_node becomes ServerNode in PascalCase), applied to every data_name of the mapping; as_given keeps them as written. Set it from an AGENTS naming convention.",
+   "model": null
+  },
+  "layout": {
+   "description": "How the templates are laid out. modes: each event kind, and each part several kinds share, is a template rule with its own mode (match=\"node()\" mode=\"eventTypeLogon\" in camelCase), applied to the record with select=\".\". named: the same, as named templates called with xsl:call-template. inline: every event kind written in the record template's xsl:choose, shared parts still named templates. Set it from an AGENTS style guide or when the user asks for one.",
+   "model": null
+  }
+ },
+ "EventRule": {
+  "name": {
+   "description": "Short name for this kind of event, e.g. 'logon'.",
+   "model": null
+  },
+  "when": {
+   "description": "All must hold. Empty: every record (put such a rule last).",
+   "model": "Condition"
+  },
+  "fields": {
+   "description": "Fields for this kind of event; they override common fields with the same path.",
+   "model": "FieldMapping"
+  },
+  "drop": {
+   "description": "True: records matching this rule are left untranslated on purpose (no Event, no warning), e.g. kinds set_shape_handling marked drop. No fields.",
+   "model": null
+  },
+  "allow_unknown": {
+   "description": "Only when no action element describes this kind of event, so EventDetail/Unknown is right: the reason, in the user's words. It is kept in the XSLT and the documentation, and the user confirms it when the XSLT is saved. Without it, a rule with conditions that writes Unknown is a problem, as is the rule for the rest when it catches sample records.",
+   "model": null
+  },
+  "keep_unknown": {
+   "description": "With allow_unknown, only when the user still wants Unknown after being shown the action elements the records' values suggest (a refusal names them): e.g. they said so in the chat. They confirm it in the form, which shows those suggestions. Never set it to get past a refusal on your own.",
+   "model": null
+  },
+  "data": {
+   "description": "Input fields carried as Data of this rule's action element, each named after its field, e.g. ['rule_id', 'bytes_sent']: short for one '<action element>/Data' entry with data_name per field. The action element is the one the rule's fields write (EventDetail/Network/Permit, EventDetail/Authenticate, ...).",
+   "model": null
+  }
+ },
+ "FieldMapping": {
+  "path": {
+   "description": "Event-logging path below Event, e.g. 'EventSource/User/Id', 'EventDetail/Authenticate/Outcome/Success', or '.../Data' with data_name.",
+   "model": null
+  },
+  "field": {
+   "description": "Input field: a Data Splitter data name, a JSON key ('user.name' for nested keys), an XML path relative to the record, or a name from extract.",
+   "model": null
+  },
+  "any_of": {
+   "description": "Input fields tried in order; the first with a value is used, for sources whose variants name the same thing differently.",
+   "model": null
+  },
+  "value": {
+   "description": "A constant, e.g. 'Logon'.",
+   "model": null
+  },
+  "xpath": {
+   "description": "Advanced: an XPath expression relative to the record.",
+   "model": null
+  },
+  "meta": {
+   "description": "A stream meta attribute (a receipt header the stream was sent with, e.g. 'MyHostName', 'RemoteHost', 'Feed'; stream_meta streamId= lists a stream's), read with stroom:meta(): for values the records don't hold, such as the sending host.",
+   "model": null
+  },
+  "lookup": {
+   "description": "The value reference data holds for a key field.",
+   "model": "Lookup"
+  },
+  "dictionary": {
+   "description": "With field (the key): the value a Dictionary doc of this name gives it, one key=value per line (save_dictionary). Keys the dictionary lacks give no value, or `default`.",
+   "model": null
+  },
+  "transform": {
+   "description": "Applied to the input value first: lower, upper, trim, strip_domain (DOMAIN\\user or user@domain -> user), domain (the DOMAIN or domain part), digits (digits only), unescape_quotes (a quoted CSV value's doubled quotes as one: Data Splitter keeps them doubled), strip_control (ANSI colour codes and other control characters out: a log written for a terminal).",
+   "model": null
+  },
+  "repeat": {
+   "description": "Write one element per value of the input (a JSON array, an element the record has several of) instead of the first value: the nearest element on the path the schema lets repeat is written once per value, e.g. Group for EventSource/User/Groups/Group/Name, or a Data per value. Nothing else may be mapped below that element; transform is allowed, map and time_format are not.",
+   "model": null
+  },
+  "scope": {
+   "description": "With for_each: 'record' when the input is the record's, not the item's (the default inside for_each).",
+   "model": null
+  },
+  "time_format": {
+   "description": "Input time pattern (Java, e.g. \"yyyy-MM-dd'T'HH:mm:ss\", from profile_sample), or 'epoch_ms' / 'epoch_s' / 'epoch_us' / 'epoch_ns'. Finer than milliseconds is rounded to them.",
+   "model": null
+  },
+  "timezone": {
+   "description": "Input time zone when the time has none, e.g. '+10:00' or 'UTC'.",
+   "model": null
+  },
+  "map": {
+   "description": "Input value -> output value, e.g. {'ok': 'true', 'fail': 'false'}.",
+   "model": null
+  },
+  "default": {
+   "description": "Output when the field is empty (or, with map, matches no key). Without it the element is left out in that case.",
+   "model": null
+  },
+  "data_name": {
+   "description": "For a path ending in Data: the Data element's Name.",
+   "model": null
+  }
+ },
+ "Lookup": {
+  "map": {
+   "description": "The map name, e.g. 'USER_TO_DEPARTMENT'.",
+   "model": null
+  },
+  "field": {
+   "description": "Input field holding the key (or a name from extract).",
+   "model": null
+  },
+  "xpath": {
+   "description": "Or an XPath giving the key.",
+   "model": null
+  },
+  "path": {
+   "description": "Path below the map's value when it holds elements, e.g. 'department'; omit for a text value.",
+   "model": null
+  }
+ },
+ "Condition": {
+  "field": {
+   "description": "An input field, or a name from extract.",
+   "model": null
+  },
+  "xpath": {
+   "description": null,
+   "model": null
+  },
+  "equals": {
+   "description": null,
+   "model": null
+  },
+  "one_of": {
+   "description": null,
+   "model": null
+  },
+  "matches": {
+   "description": "Regular expression (XPath flavour).",
+   "model": null
+  },
+  "present": {
+   "description": "True: the field has a non-empty value; False: it does not.",
+   "model": null
+  },
+  "in_dictionary": {
+   "description": "The value is one of the lines of the Dictionary doc of this name (a list, one entry per line).",
+   "model": null
+  },
+  "scope": {
+   "description": "With for_each: 'record' to test the record rather than the item.",
+   "model": null
+  }
+ },
+ "DropRule": {
+  "when": {
+   "description": "All must hold for the record to be dropped.",
+   "model": "Condition"
+  },
+  "reason": {
+   "description": "Why, in the user's words; kept as a comment in the XSLT and in the documentation.",
+   "model": null
+  }
+ },
+ "Extraction": {
+  "field": {
+   "description": "The input field holding the text (a Data Splitter name, JSON key, XML path, or a name from an earlier extraction).",
+   "model": null
+  },
+  "xpath": {
+   "description": "Or an XPath expression giving the text.",
+   "model": null
+  },
+  "regex": {
+   "description": "XPath regular expression with one capture group per field, e.g. '^(\\S+ \\S+) (\\S+) (\\S+) (.*)$'. Anchor it, and use (?:...) for groups that are not fields. XPath regexes have no lookaround and no named groups. Written once, as XPath reads it (a literal [ is \\[): only your call's JSON doubles the backslash; nothing escapes it again. Copy separators from the sample text exactly (an en dash is not '-'): the sample check says where a regex stops matching.",
+   "model": null
+  },
+  "names": {
+   "description": "A field name per capture group, in order; '' skips a group.",
+   "model": null
+  },
+  "flags": {
+   "description": "XPath regex flags: i (ignore case), m (multi-line), s (dot matches newline), x (ignore whitespace in the pattern).",
+   "model": null
+  },
+  "scope": {
+   "description": "With for_each: 'record' when the text is the record's, not the item's.",
+   "model": null
+  }
+ },
+ "KeyValuePairs": {
+  "field": {
+   "description": "The input field holding the text (a Data Splitter name, JSON key, XML path, or a name from an extract entry).",
+   "model": null
+  },
+  "style": {
+   "description": "How the text writes each pair: equals key=value (to the next space, comma or semicolon), quoted key=\"value\", colon 'Key Words: value' (to the next ; | ( or ), or ' - ' before the next key), bracketed 'Key: [value]'. Keys written two ways go in two entries.",
+   "model": null
+  },
+  "keys": {
+   "description": "The keys, as the text writes them: each value is a field named after its key in snake case ('Source IP' -> source_ip).",
+   "model": null
+  },
+  "names": {
+   "description": "Field names for keys named otherwise: {key: name}, for a name an input field already has, say.",
+   "model": null
+  }
+ }
+}

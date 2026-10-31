@@ -1,0 +1,429 @@
+{
+ "source": "formats-syslog-nil-values-are-left-out-and-never-name-the-ki",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])action=([^\\s,;\"]*)",
+    "names": [
+     "action_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])src=([^\\s,;\"]*)",
+    "names": [
+     "src_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])dst=([^\\s,;\"]*)",
+    "names": [
+     "dst_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])dport=([^\\s,;\"]*)",
+    "names": [
+     "dport_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])proto=([^\\s,;\"]*)",
+    "names": [
+     "proto_2"
+    ]
+   },
+   {
+    "field": "message",
+    "regex": "(?:^|[\\s,;])user=([^\\s,;\"]*)",
+    "names": [
+     "user_2"
+    ]
+   }
+  ],
+  "nil_values": [
+   "-"
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "TODO system name"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "TODO e.g. Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dst"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "dport"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventSource/Generator",
+    "field": "app"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   }
+  ],
+  "events": [
+   {
+    "name": "permitted",
+    "when": [
+     {
+      "field": "action",
+      "equals": "allow"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "proto",
+      "map": {
+       "tcp": "TCP",
+       "udp": "UDP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Port",
+      "field": "dport"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "pri",
+      "data_name": "pri"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "pid",
+      "data_name": "pid"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "msgid",
+      "data_name": "msgid"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "structured",
+      "data_name": "structured"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "action_2",
+      "data_name": "action_2"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Data",
+      "field": "src_2",
+      "data_name": "src_2"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Data",
+      "field": "dst_2",
+      "data_name": "dst_2"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "dport_2",
+      "data_name": "dport_2"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "proto_2",
+      "data_name": "proto_2"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "user_2",
+      "data_name": "user_2"
+     }
+    ]
+   },
+   {
+    "name": "denied",
+    "when": [
+     {
+      "field": "action",
+      "equals": "deny"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+      "field": "proto",
+      "map": {
+       "tcp": "TCP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Port",
+      "field": "dport"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "pri",
+      "data_name": "pri"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "pid",
+      "data_name": "pid"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "msgid",
+      "data_name": "msgid"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "structured",
+      "data_name": "structured"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "action_2",
+      "data_name": "action_2"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Data",
+      "field": "src_2",
+      "data_name": "src_2"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Data",
+      "field": "dst_2",
+      "data_name": "dst_2"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "dport_2",
+      "data_name": "dport_2"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "proto_2",
+      "data_name": "proto_2"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "user_2",
+      "data_name": "user_2"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "pri",
+      "data_name": "pri"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "pid",
+      "data_name": "pid"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "msgid",
+      "data_name": "msgid"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "structured",
+      "data_name": "structured"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "proto",
+      "data_name": "proto"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action_2",
+      "data_name": "action_2"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "src_2",
+      "data_name": "src_2"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "dst_2",
+      "data_name": "dst_2"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "dport_2",
+      "data_name": "dport_2"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "proto_2",
+      "data_name": "proto_2"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "user_2",
+      "data_name": "user_2"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[permitted] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[denied] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from action, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Generator', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "permitted",
+    "when": [
+     "data[@name='action']/@value = 'allow'"
+    ],
+    "fields": [
+     "EventDetail/Network/Permit/Data[action_2]",
+     "EventDetail/Network/Permit/Data[dport_2]",
+     "EventDetail/Network/Permit/Data[msgid]",
+     "EventDetail/Network/Permit/Data[pid]",
+     "EventDetail/Network/Permit/Data[pri]",
+     "EventDetail/Network/Permit/Data[proto_2]",
+     "EventDetail/Network/Permit/Data[structured]",
+     "EventDetail/Network/Permit/Data[user_2]",
+     "EventDetail/Network/Permit/Destination/Data[dst_2]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Destination/Port",
+     "EventDetail/Network/Permit/Source/Data[src_2]",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "denied",
+    "when": [
+     "data[@name='action']/@value = 'deny'"
+    ],
+    "fields": [
+     "EventDetail/Network/Deny/Data[action_2]",
+     "EventDetail/Network/Deny/Data[dport_2]",
+     "EventDetail/Network/Deny/Data[msgid]",
+     "EventDetail/Network/Deny/Data[pid]",
+     "EventDetail/Network/Deny/Data[pri]",
+     "EventDetail/Network/Deny/Data[proto_2]",
+     "EventDetail/Network/Deny/Data[structured]",
+     "EventDetail/Network/Deny/Data[user_2]",
+     "EventDetail/Network/Deny/Destination/Data[dst_2]",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Destination/Port",
+     "EventDetail/Network/Deny/Source/Data[src_2]",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action_2]",
+     "EventDetail/Unknown/Data[dport_2]",
+     "EventDetail/Unknown/Data[dst_2]",
+     "EventDetail/Unknown/Data[msgid]",
+     "EventDetail/Unknown/Data[pid]",
+     "EventDetail/Unknown/Data[pri]",
+     "EventDetail/Unknown/Data[proto]",
+     "EventDetail/Unknown/Data[proto_2]",
+     "EventDetail/Unknown/Data[src_2]",
+     "EventDetail/Unknown/Data[structured]",
+     "EventDetail/Unknown/Data[user_2]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

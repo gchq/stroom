@@ -1,0 +1,121 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Web Proxy"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "proxy"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "value": "proxy01.example.org"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "client_ip"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "action"
+   }
+  ],
+  "events": [
+   {
+    "name": "request",
+    "fields": [
+     {
+      "path": "EventDetail/Network/Open/Source/Device/IPAddress",
+      "field": "client_ip"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "url",
+      "data_name": "url"
+     },
+     {
+      "path": "EventDetail/Network/Open/Destination/Data",
+      "field": "category",
+      "data_name": "category"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "method",
+      "data_name": "method"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "status",
+      "data_name": "status"
+     },
+     {
+      "path": "EventDetail/Network/Open/Data",
+      "field": "bytes",
+      "data_name": "bytes"
+     },
+     {
+      "path": "EventDetail/Network/Open/Outcome/Permitted",
+      "field": "action",
+      "map": {
+       "allowed": "true",
+       "blocked": "false"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[request] TypeId is read from action, which its records may lack: those get TypeId 'request', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[request] required ['EventTime', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "request",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Network/Open/Data[bytes]",
+     "EventDetail/Network/Open/Data[method]",
+     "EventDetail/Network/Open/Data[status]",
+     "EventDetail/Network/Open/Destination/Data[category]",
+     "EventDetail/Network/Open/Destination/Data[url]",
+     "EventDetail/Network/Open/Outcome/Permitted",
+     "EventDetail/Network/Open/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

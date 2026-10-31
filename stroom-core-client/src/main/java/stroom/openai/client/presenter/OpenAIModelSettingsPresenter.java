@@ -42,7 +42,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 
 public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettingsView, OpenAIModelDoc>
         implements OpenAIModelSettingsUiHandlers {
@@ -76,13 +75,19 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
 
     @Override
     public void onTestModel() {
-        final OpenAIModelDoc model = onWrite(OpenAIModelDoc.builder().uuid(UUID.randomUUID().toString()).build());
+        // The model being edited, with the settings as they are on screen: the server checks the user may edit
+        // this model before connecting with them.
+        final OpenAIModelDoc model = onWrite(getEntity());
         restFactory
                 .create(OPEN_AI_MODEL_RESOURCE)
                 .method(res -> res.validateModel(model))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Model Validation Successful", result.getMessage(), null);
+                    } else if (result.getDetail() != null) {
+                        // What failed, with more in the detail (the models the endpoint serves, say).
+                        AlertEvent.fireError(this, "Model Validation Failed: " + result.getMessage(),
+                                result.getDetail(), null);
                     } else {
                         AlertEvent.fireError(this, "Model Validation Failed", result.getMessage(), null);
                     }
@@ -104,6 +109,9 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
         getView().setReasoningEffort(model.getReasoningEffort());
         getView().setEmbeddingModelDimensions(model.getEmbeddingModelDimensions());
+        getView().setToolsEnabled(model.isToolsEnabled());
+        getView().setShowReasoning(model.isShowReasoning());
+        getView().setMaxToolDefinitions(model.getMaxToolDefinitions());
 
         httpClientConfiguration = model.getHttpClientConfiguration();
         if (httpClientConfiguration == null) {
@@ -130,6 +138,9 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
                 .maxContextWindowTokens(getView().getMaxContextWindowTokens())
                 .reasoningEffort(getView().getReasoningEffort())
                 .embeddingModelDimensions(getView().getEmbeddingModelDimensions())
+                .toolsEnabled(getView().isToolsEnabled())
+                .showReasoning(getView().isShowReasoning())
+                .maxToolDefinitions(getView().getMaxToolDefinitions())
                 .httpClientConfiguration(httpClientConfiguration)
                 .build();
     }
@@ -168,5 +179,17 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         int getEmbeddingModelDimensions();
 
         void setEmbeddingModelDimensions(int embeddingModelDimensions);
+
+        boolean isToolsEnabled();
+
+        void setToolsEnabled(boolean toolsEnabled);
+
+        boolean isShowReasoning();
+
+        void setShowReasoning(boolean showReasoning);
+
+        int getMaxToolDefinitions();
+
+        void setMaxToolDefinitions(int maxToolDefinitions);
     }
 }

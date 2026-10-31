@@ -1,0 +1,130 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='time']",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "App"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "log-shipper"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']"
+   },
+   {
+    "path": "EventDetail/Authenticate/User/Id",
+    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='user']"
+   },
+   {
+    "path": "EventDetail/Authenticate/Outcome/Success",
+    "xpath": "json-to-xml(*[@key='message'])/*/*[@key='ok']"
+   }
+  ],
+  "events": [
+   {
+    "name": "logon",
+    "when": [
+     {
+      "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']",
+      "equals": "login"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     }
+    ]
+   },
+   {
+    "name": "logoff",
+    "when": [
+     {
+      "xpath": "json-to-xml(*[@key='message'])/*/*[@key='event']",
+      "equals": "logout"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logoff"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "logon",
+    "when": [
+     "mcp:json-to-xml(*[@key='message'])/*/*[@key='event'] = 'login'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "logoff",
+    "when": [
+     "mcp:json-to-xml(*[@key='message'])/*/*[@key='event'] = 'logout'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Outcome/Success",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

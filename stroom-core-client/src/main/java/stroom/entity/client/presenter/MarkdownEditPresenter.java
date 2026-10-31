@@ -54,8 +54,8 @@ public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
         implements HasDirtyHandlers, HasToolbar {
 
-    // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-light-theme
-    // selectivity added into to stop it conflicting with the dark theme.
+    // See prismjs-light.css which is a modified version of a prismjs light theme with .stroom-theme-light (the
+    // page's theme class) selectivity added into to stop it conflicting with the dark theme.
     private static final String MARKDOWN_FRAME_ID = "markdown-frame";
 
     private final MarkdownPreviewPresenter markdownPreviewPresenter;
@@ -63,6 +63,8 @@ public class MarkdownEditPresenter
     private final UiConfigCache uiConfigCache;
     private final InlineSvgToggleButton editModeButton;
     private final ButtonView helpButton;
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
@@ -88,7 +90,11 @@ public class MarkdownEditPresenter
         this.markdownConverter = markdownConverter;
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
-        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
+        // Same origin lets Stroom's shortcuts (e.g. Alt+W) work while the document has the focus. Scripts are
+        // still not allowed, so nothing in the document can run.
+        iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS, SandboxOption.ALLOW_SAME_ORIGIN);
+        // A link followed in the frame would load Stroom, or another site, in it, where it can't run.
+        iFramePresenter.setLinkHandler(href -> MarkdownLinks.open(this, href));
 //        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
@@ -96,6 +102,8 @@ public class MarkdownEditPresenter
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
         helpButton = SvgButton.create(SvgPresets.HELP.title("Documentation help"));
+        expandAllButton = SvgButton.create(SvgPresets.EXPAND_ALL.title("Expand all headings"));
+        collapseAllButton = SvgButton.create(SvgPresets.COLLAPSE_ALL.title("Collapse all headings"));
 
         registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
@@ -103,19 +111,21 @@ public class MarkdownEditPresenter
 
     @Override
     public List<Widget> getToolbars() {
-        if (readOnly) {
-            return Collections.emptyList();
-        }
         return Collections.singletonList(createToolbar());
     }
 
+    // Expanding and collapsing the headings changes nothing, so they are there for a reader too.
     private ButtonPanel createToolbar() {
         final ButtonPanel toolbar = new ButtonPanel();
-        if (insertedButtons != null) {
+        if (!readOnly && insertedButtons != null) {
             toolbar.addButtons(insertedButtons);
         }
-        toolbar.addButton(editModeButton);
-        toolbar.addButton(helpButton);
+        toolbar.addButton(expandAllButton);
+        toolbar.addButton(collapseAllButton);
+        if (!readOnly) {
+            toolbar.addButton(editModeButton);
+            toolbar.addButton(helpButton);
+        }
         return toolbar;
     }
 
@@ -137,7 +147,24 @@ public class MarkdownEditPresenter
                 showHelp();
             }
         }));
+        registerHandler(expandAllButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                setAllSectionsOpen(true);
+            }
+        }));
+        registerHandler(collapseAllButton.addClickHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                setAllSectionsOpen(false);
+            }
+        }));
         setEditMode(false);
+    }
+
+    // Every heading of the document shown: its preview while it is being edited.
+    private void setAllSectionsOpen(final boolean open) {
+        MarkdownSections.setAllOpen(editMode
+                ? markdownPreviewPresenter.getPreviewElement()
+                : iFramePresenter.getView().asWidget().getElement(), open);
     }
 
     private void toggleEditMode() {
@@ -183,6 +210,25 @@ public class MarkdownEditPresenter
         reading = false;
 
         updateMarkdownOnIFramePresenter();
+    }
+
+    /// Puts text in the editor as an edit the user hasn't saved (e.g. documentation proposed in the AI chat), so
+    /// the document is marked as changed. Nothing is saved.
+    ///
+    /// @param rawMarkdown The text.
+    /// @return False if the editor is read only, so the text wasn't put in it.
+    public boolean setEditedText(final String rawMarkdown) {
+        if (readOnly) {
+            return false;
+        }
+        setText(rawMarkdown);
+        DirtyEvent.fire(this, true);
+        return true;
+    }
+
+    /// @return True if the user may not edit the text.
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     private void updateEditState() {

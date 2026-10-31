@@ -19,7 +19,9 @@ package stroom.iframe.client.presenter;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -27,12 +29,20 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.Predicate;
+
 public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameView>
         implements IFrameLoadUiHandlers, HasDirtyHandlers {
 
+    private final GlobalKeyHandler globalKeyHandler;
+    private Predicate<String> linkHandler;
+
     @Inject
-    public IFramePresenter(final EventBus eventBus, final IFrameView view) {
+    public IFramePresenter(final EventBus eventBus,
+                           final IFrameView view,
+                           final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view);
+        this.globalKeyHandler = globalKeyHandler;
         view.setUiHandlers(this);
     }
 
@@ -67,6 +77,22 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     @Override
     public void onTitleChange(final String title) {
         DirtyEvent.fire(this, true);
+    }
+
+    @Override
+    public void onFrameKeyDown(final NativeEvent nativeEvent) {
+        globalKeyHandler.onKeyDown(nativeEvent);
+    }
+
+    /// @param linkHandler Opens the links clicked in the frame's document some other way than in the frame, e.g. a
+    ///                    document in Stroom, returning true if it has, or null to let the frame follow them all.
+    public void setLinkHandler(final Predicate<String> linkHandler) {
+        this.linkHandler = linkHandler;
+    }
+
+    @Override
+    public boolean onFrameLinkClick(final String href) {
+        return linkHandler != null && linkHandler.test(href);
     }
 
     @Override

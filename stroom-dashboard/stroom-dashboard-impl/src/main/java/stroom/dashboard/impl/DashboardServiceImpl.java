@@ -354,7 +354,8 @@ class DashboardServiceImpl implements DashboardService {
                                         new SampleGenerator(request.isSample(), request.getPercent());
                                 final SearchResultWriter searchResultWriter = new SearchResultWriter(
                                         sampleGenerator,
-                                        target);
+                                        target,
+                                        request.isIncludeSourceIds());
                                 final TableResultCreator tableResultCreator =
                                         new TableResultCreator(formatterFactory,
                                                 expressionPredicateFactory) {

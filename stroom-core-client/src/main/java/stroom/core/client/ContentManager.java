@@ -17,6 +17,7 @@
 package stroom.core.client;
 
 import stroom.content.client.event.CloseContentTabEvent;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.content.client.event.MoveContentTabEvent;
 import stroom.content.client.event.OpenContentTabEvent;
 import stroom.core.client.event.CloseContentEvent;
@@ -48,10 +49,14 @@ public class ContentManager implements HasHandlers {
 
     private final Map<TabData, CloseContentEvent.Handler> handlerMap = new HashMap<>();
     private final EventBus eventBus;
+    // The content tab selected last, or null.
+    private TabData selectedTab;
 
     @Inject
     public ContentManager(final EventBus eventBus) {
         this.eventBus = eventBus;
+
+        eventBus.addHandler(ContentTabSelectionChangeEvent.getType(), event -> selectedTab = event.getTabData());
 
         eventBus.addHandler(RequestCloseTabEvent.getType(), event -> {
             final TabData tabData = event.getTabData();
@@ -143,6 +148,12 @@ public class ContentManager implements HasHandlers {
         } else {
             GWT.log("No close handler for " + tabData.getType() + " - " + tabData.getLabel());
         }
+    }
+
+    /// @return The content tab selected last, or null if none has been (or it is not known, e.g. in the dashboard
+    /// app).
+    public TabData getSelectedTab() {
+        return selectedTab;
     }
 
     public void moveTab(final TabData tabData, final int tabPos) {

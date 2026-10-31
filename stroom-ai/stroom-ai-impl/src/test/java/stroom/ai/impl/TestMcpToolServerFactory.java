@@ -1,0 +1,502 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl;
+
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.openai.shared.McpAuthMode;
+import stroom.openai.shared.McpToolPolicy;
+import stroom.openai.shared.McpToolPolicyRule;
+import stroom.openai.shared.McpToolServerConfig;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.api.UserIdentityFactory;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.openid.api.UserTokenIssuer;
+import stroom.util.shared.http.HttpClientConfig;
+import stroom.util.shared.http.HttpHeader;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
+
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
+import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.service.tool.ToolExecutor;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncResourceSpecification;
+import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
+import io.modelcontextprotocol.spec.McpSchema.Resource;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
+import io.modelcontextprotocol.spec.McpSchema.Tool;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class TestMcpToolServerFactory {
+
+    private final StoredSecrets storedSecrets = new StoredSecrets() {
+        @Override
+        public StoredSecret get(final String name) {
+            return switch (name) {
+                case "token" -> new StoredSecret(null, new AccessTokenSecret("secret-token"), null);
+                case "userpass" -> new StoredSecret(null, new UsernamePasswordSecret("user", "pass"), null);
+                default -> null;
+            };
+        }
+
+        @Override
+        public KeyStore getKeyStore(final String name) {
+            return null;
+        }
+    };
+
+    private final UserIdentity userIdentity = Mockito.mock(UserIdentity.class);
+    private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    private final UserIdentityFactory userIdentityFactory = Mockito.mock(UserIdentityFactory.class);
+    private final OpenIdConfiguration openIdConfiguration = Mockito.mock(OpenIdConfiguration.class);
+    private final UserTokenIssuer userTokenIssuer = Mockito.mock(UserTokenIssuer.class);
+
+    {
+        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.EXTERNAL_IDP);
+    }
+
+    private final McpToolServerFactory factory = new McpToolServerFactory(
+            () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache(),
+            () -> null, AiConfig::new, () -> openIdConfiguration, () -> userTokenIssuer);
+
+    @Test
+    void noneMode() {
+        assertThat(headers(server(McpAuthMode.NONE, null))).isEmpty();
+    }
+
+    @Test
+    void bearerToken() {
+        assertThat(headers(server(McpAuthMode.BEARER_TOKEN, "token")))
+                .containsEntry("Authorization", "Bearer secret-token");
+    }
+
+    @Test
+    void apiKeyHeaderWithPrefix() {
+        final McpToolServerConfig server = McpToolServerConfig.builder()
+                .name("s")
+                .endpoint("https://x/mcp")
+                .authMode(McpAuthMode.API_KEY)
+                .apiKeyHeaderName("X-Api-Key")
+                .apiKeyValuePrefix("key ")
+                .credentialName("token")
+                .build();
+        assertThat(headers(server)).containsEntry("X-Api-Key", "key secret-token");
+    }
+
+    @Test
+    void basicAuth() {
+        assertThat(headers(server(McpAuthMode.BASIC, "userpass")))
+                .containsEntry("Authorization", "Basic dXNlcjpwYXNz"); // base64("user:pass")
+    }
+
+    @Test
+    void missingCredentialIsRejected() {
+        assertThatThrownBy(() -> headers(server(McpAuthMode.BEARER_TOKEN, "absent")))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("cannot be found");
+    }
+
+    @Test
+    void stroomSessionTokenPassThrough() {
+        Mockito.when(securityContext.getUserIdentity()).thenReturn(userIdentity);
+        Mockito.when(userIdentityFactory.getAuthHeaders(userIdentity))
+                .thenReturn(Map.of("Authorization", "Bearer session-jwt"));
+        assertThat(headers(server(McpAuthMode.STROOM_SESSION_TOKEN, null)))
+                .containsEntry("Authorization", "Bearer session-jwt");
+    }
+
+    @Test
+    void stroomSessionTokenWithNoTokenIsRejected() {
+        Mockito.when(securityContext.getUserIdentity()).thenReturn(userIdentity);
+        Mockito.when(userIdentityFactory.getAuthHeaders(userIdentity)).thenReturn(Map.of());
+        assertThatThrownBy(() -> headers(server(McpAuthMode.STROOM_SESSION_TOKEN, null)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("no OAuth2 token");
+    }
+
+    @Test
+    void emptyToolsetWhenNoServers() {
+        final McpToolset toolset = factory.createToolset(
+                OpenAIModelDoc.builder().uuid("u").name("m").build());
+        assertThat(toolset.isEmpty()).isTrue();
+    }
+
+    @Test
+    void metadataEndpointIsRejected() {
+        final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                .uuid("u")
+                .name("m")
+                .mcpToolServers(java.util.List.of(McpToolServerConfig.builder()
+                        .name("ssrf")
+                        .endpoint("http://169.254.169.254/latest/meta-data/")
+                        .build()))
+                .build();
+        try (final McpToolset toolset = factory.createToolset(doc)) {
+            assertThat(toolset.isEmpty()).isTrue();
+            assertThat(toolset.getWarnings())
+                    .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
+                    .contains("'ssrf' is not allowed");
+        }
+    }
+
+    @Test
+    void stroomSessionToken_withTheInternalIdentityProvider_sendsATokenStroomIssues() {
+        internalIdp();
+        Mockito.when(userTokenIssuer.getAccessToken(Mockito.eq("jbloggs"), Mockito.eq("stroom-mcp"), Mockito.isNull(),
+                Mockito.any())).thenReturn(Optional.of("issued"));
+
+        assertThat(headers(issuedTokenServer("https://x/mcp", "stroom-mcp", true)))
+                .containsExactly(Map.entry("Authorization", "Bearer issued"));
+        // Not the session's token.
+        Mockito.verifyNoInteractions(userIdentityFactory);
+        // One that lasts as long as a request may take, as the server keeps using it until it answers.
+        Mockito.verify(userTokenIssuer, Mockito.atLeastOnce())
+                .getAccessToken("jbloggs", "stroom-mcp", null, Duration.ofMinutes(2));
+    }
+
+    @Test
+    void stroomSessionToken_withTheInternalIdentityProvider_needsAnAudienceATrustedServerAndHttps() {
+        internalIdp();
+        Mockito.when(userTokenIssuer.getAccessToken(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(Optional.of("issued"));
+
+        assertThatThrownBy(() -> headers(issuedTokenServer("https://x/mcp", " ", true)))
+                .hasMessageContaining("no token audience");
+        assertThatThrownBy(() -> headers(issuedTokenServer("https://x/mcp", "stroom-mcp", false)))
+                .hasMessageContaining("trusted server");
+        assertThatThrownBy(() -> headers(issuedTokenServer("http://mcp.example.com/mcp", "stroom-mcp", true)))
+                .hasMessageContaining("https");
+        // On the same machine, http is allowed.
+        assertThat(headers(issuedTokenServer("http://localhost:8000/mcp", "stroom-mcp", true))).hasSize(1);
+        Mockito.verify(userTokenIssuer, Mockito.times(2)).getAccessToken(Mockito.eq("jbloggs"),
+                Mockito.eq("stroom-mcp"), Mockito.isNull(), Mockito.any());
+    }
+
+    @Test
+    void secureEndpoints() {
+        assertThat(McpToolServerFactory.isSecureEndpoint("https://mcp.example.com/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://127.0.0.1:8000/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://[::1]:8000/mcp")).isTrue();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://localhost.evil.com/mcp")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint("http://mcp.example.com/mcp")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint("not a url")).isFalse();
+        assertThat(McpToolServerFactory.isSecureEndpoint(null)).isFalse();
+    }
+
+    @Test
+    void connectionFailuresSayWhatWentWrong() {
+        final RuntimeException wrapped = new RuntimeException("Client failed to initialize by explicit API call",
+                new IllegalStateException("Sending message failed with a non-OK HTTP code: 401 - Unauthorized"));
+        assertThat(McpToolServerFactory.describeFailure(wrapped))
+                .startsWith("Client failed to initialize by explicit API call: Sending message failed with a "
+                            + "non-OK HTTP code: 401")
+                .contains("refused Stroom's credentials");
+
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("Client failed to initialize",
+                new javax.net.ssl.SSLHandshakeException("PKIX path building failed"))))
+                .contains("PKIX path building failed")
+                .contains("certificate is trusted");
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("x",
+                new java.nio.channels.UnresolvedAddressException())))
+                .contains("UnresolvedAddressException")
+                .contains("host name could not be found");
+        // Something else is just described.
+        assertThat(McpToolServerFactory.describeFailure(new RuntimeException("odd"))).isEqualTo("odd");
+    }
+
+    @Test
+    void aZeroOrMissingTimeoutUsesTheDefault() {
+        final Duration zero = McpToolServerFactory.toDuration(SimpleDuration.builder().time(0)
+                .timeUnit(TimeUnit.SECONDS).build());
+        assertThat(zero).isEqualTo(Duration.ofMinutes(2));
+        assertThat(McpToolServerFactory.toDuration(null)).isEqualTo(Duration.ofMinutes(2));
+        assertThat(McpToolServerFactory.toDuration(SimpleDuration.builder().time(30)
+                .timeUnit(TimeUnit.SECONDS).build())).isEqualTo(Duration.ofSeconds(30));
+    }
+
+    private void internalIdp() {
+        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
+        Mockito.when(userIdentity.subjectId()).thenReturn("jbloggs");
+        Mockito.when(securityContext.getUserIdentity()).thenReturn(userIdentity);
+    }
+
+    private McpToolServerConfig issuedTokenServer(final String endpoint, final String audience, final boolean trusted) {
+        return McpToolServerConfig.builder()
+                .name("s")
+                .endpoint(endpoint)
+                .authMode(McpAuthMode.STROOM_SESSION_TOKEN)
+                .audience(audience)
+                .trusted(trusted)
+                .build();
+    }
+
+    private Map<String, String> headers(final McpToolServerConfig server) {
+        return factory.buildAuthHeaders(server, server.getName());
+    }
+
+    private McpToolServerConfig server(final McpAuthMode authMode, final String credentialName) {
+        return McpToolServerConfig.builder()
+                .name("s")
+                .endpoint("https://x/mcp")
+                .authMode(authMode)
+                .credentialName(credentialName)
+                .build();
+    }
+
+    @Test
+    void toolsAreListedAndCalledOverHttp() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = modelDoc(server.endpoint(), McpAuthMode.BEARER_TOKEN, "token");
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                final Map<ToolSpecification, ToolExecutor> tools = toolset.tools();
+                // Tool names are prefixed with their server's name.
+                assertThat(tools.keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("echo");
+
+                final String result = execute(tools, "echo", "{\"text\":\"hello\"}");
+                assertThat(result).isEqualTo("hello (auth: Bearer secret-token)");
+            }
+            // Every request carried the credential.
+            assertThat(server.authorizationHeaders())
+                    .isNotEmpty()
+                    .allMatch("Bearer secret-token"::equals);
+        }
+    }
+
+    @Test
+    void configuredHeadersAreSentButAuthenticationWins() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final McpToolServerConfig serverConfig = serverConfig(
+                    "s", server.endpoint(), McpAuthMode.BEARER_TOKEN, "token")
+                    .copy()
+                    .httpClientConfiguration(HttpClientConfig.builder()
+                            .userAgent("Stroom-Test")
+                            .headers(List.of(
+                                    new HttpHeader("X-Tenant", "acme"),
+                                    new HttpHeader("Authorization", "Bearer configured"),
+                                    // The JDK client won't set this, which must not stop every request.
+                                    new HttpHeader("Host", "elsewhere")))
+                            .build())
+                    .build();
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(serverConfig))
+                    .build();
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                assertThat(execute(toolset.tools(), "echo", "{\"text\":\"hi\"}"))
+                        .isEqualTo("hi (auth: Bearer secret-token)");
+            }
+            assertThat(server.requestHeaders())
+                    .isNotEmpty()
+                    .allSatisfy(headers -> assertThat(headers)
+                            .containsEntry("x-tenant", "acme")
+                            .containsEntry("user-agent", "Stroom-Test")
+                            .containsEntry("authorization", "Bearer secret-token"));
+        }
+    }
+
+    @Test
+    void sessionTokenIsFetchedForEachRequest() throws Exception {
+        Mockito.when(securityContext.getUserIdentity()).thenReturn(userIdentity);
+        // Each time Stroom is asked for the user's token it returns a newer one, as it would after a refresh.
+        final int[] calls = {0};
+        Mockito.when(userIdentityFactory.getAuthHeaders(userIdentity))
+                .thenAnswer(invocation -> Map.of("Authorization", "Bearer jwt-" + (++calls[0])));
+
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = modelDoc(server.endpoint(), McpAuthMode.STROOM_SESSION_TOKEN, null);
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                // Requests are sent from the HTTP client's threads, where there is no security context, so
+                // the identity must have been captured when the toolset was built.
+                Mockito.when(securityContext.getUserIdentity()).thenReturn(null);
+                execute(toolset.tools(), "echo", "{\"text\":\"hi\"}");
+            }
+            assertThat(server.authorizationHeaders())
+                    .contains("Bearer jwt-2")
+                    .hasSizeGreaterThan(2)
+                    .doesNotHaveDuplicates();
+        }
+    }
+
+    @Test
+    void resourcesAreOfferedAsTools() throws Exception {
+        final Resource resource = Resource.builder()
+                .uri("stroom://guide/xslt")
+                .name("xslt")
+                .description("How to write XSLT")
+                .build();
+        final SyncResourceSpecification resourceSpec = new SyncResourceSpecification(resource,
+                (exchange, request) -> new ReadResourceResult(List.of(
+                        new TextResourceContents(request.uri(), "text/markdown", "# XSLT guide"))));
+
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of(resourceSpec))) {
+            final OpenAIModelDoc doc = modelDoc(server.endpoint(), McpAuthMode.NONE, null);
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                final Map<ToolSpecification, ToolExecutor> tools = toolset.tools();
+                assertThat(tools.keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("echo", McpToolset.LIST_RESOURCES_TOOL, McpToolset.GET_RESOURCE_TOOL);
+
+                assertThat(execute(tools, McpToolset.LIST_RESOURCES_TOOL, "{}"))
+                        .contains("stroom://guide/xslt")
+                        .contains("How to write XSLT");
+                assertThat(execute(tools, McpToolset.GET_RESOURCE_TOOL,
+                        "{\"mcpServer\":\"s\",\"uri\":\"stroom://guide/xslt\"}"))
+                        .isEqualTo("# XSLT guide");
+            }
+        }
+    }
+
+    @Test
+    void unreachableServerIsLeftOutAndReported() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(
+                            serverConfig("down", "http://127.0.0.1:1/mcp", McpAuthMode.NONE, null),
+                            serverConfig("up", server.endpoint(), McpAuthMode.NONE, null)))
+                    .build();
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                // The server that is up is still used.
+                assertThat(toolset.tools().keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("echo");
+                assertThat(toolset.getWarnings())
+                        .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
+                        .contains("'down' could not be reached");
+            }
+        }
+    }
+
+    @Test
+    void deniedToolsAreNotOffered() throws Exception {
+        final Tool other = Tool.builder().name("delete_all").inputSchema(Map.of()).build();
+        final SyncToolSpecification otherSpec = new SyncToolSpecification(other,
+                (exchange, request) -> CallToolResult.builder().addTextContent("deleted").build());
+
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool(), otherSpec), List.of())) {
+            final OpenAIModelDoc doc = OpenAIModelDoc.builder()
+                    .uuid("u")
+                    .name("m")
+                    .mcpToolServers(List.of(serverConfig("s", server.endpoint(), McpAuthMode.NONE, null)
+                            .copy()
+                            .toolPolicies(List.of(new McpToolPolicyRule("delete_.*", McpToolPolicy.DENY)))
+                            .build()))
+                    .build();
+
+            try (final McpToolset toolset = factory.createToolset(doc)) {
+                assertThat(toolset.tools().keySet())
+                        .extracting(ToolSpecification::name)
+                        .containsExactly("echo");
+            }
+        }
+    }
+
+    @Test
+    void connectionsAreReusedWithinAChat() throws Exception {
+        try (final McpTestServer server = McpTestServer.start(List.of(echoTool()), List.of())) {
+            final OpenAIModelDoc doc = modelDoc(server.endpoint(), McpAuthMode.NONE, null);
+
+            final McpToolset first = factory.createToolset(doc, 1);
+            first.tools();
+            first.close();
+            final int requestsAfterFirst = server.authorizationHeaders().size();
+
+            final McpToolset second = factory.createToolset(doc, 1);
+            second.tools();
+            second.close();
+
+            // The same connection is used, and its tool list is cached, so no more requests were made.
+            assertThat(second.getConnections().getFirst()).isSameAs(first.getConnections().getFirst());
+            assertThat(server.authorizationHeaders()).hasSize(requestsAfterFirst);
+        }
+    }
+
+    private static SyncToolSpecification echoTool() {
+        final Tool tool = Tool.builder()
+                .name("echo")
+                .description("Echoes the text back")
+                .inputSchema(Map.of(
+                        "type", "object",
+                        "properties", Map.of("text", Map.of("type", "string"))))
+                .build();
+        return new SyncToolSpecification(tool, (exchange, request) -> CallToolResult.builder()
+                .addTextContent(request.arguments().get("text")
+                                + " (auth: " + exchange.transportContext().get(McpTestServer.AUTHORIZATION_KEY) + ")")
+                .isError(false)
+                .build());
+    }
+
+    private static String execute(final Map<ToolSpecification, ToolExecutor> tools,
+                                  final String name,
+                                  final String arguments) {
+        final ToolExecutor executor = tools.entrySet().stream()
+                .filter(entry -> entry.getKey().name().equals(name))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElseThrow();
+        return executor.execute(ToolExecutionRequest.builder().id("1").name(name).arguments(arguments).build(), 1);
+    }
+
+    private static OpenAIModelDoc modelDoc(final String endpoint,
+                                           final McpAuthMode authMode,
+                                           final String credentialName) {
+        return OpenAIModelDoc.builder()
+                .uuid("u")
+                .name("m")
+                .mcpToolServers(List.of(serverConfig("s", endpoint, authMode, credentialName)))
+                .build();
+    }
+
+    private static McpToolServerConfig serverConfig(final String name,
+                                                    final String endpoint,
+                                                    final McpAuthMode authMode,
+                                                    final String credentialName) {
+        return McpToolServerConfig.builder()
+                .enabled(true)
+                .name(name)
+                .endpoint(endpoint)
+                .authMode(authMode)
+                .credentialName(credentialName)
+                .build();
+    }
+}

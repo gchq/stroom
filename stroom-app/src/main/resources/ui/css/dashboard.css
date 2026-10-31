@@ -517,18 +517,61 @@
     height: 100%;
 }
 
-.dashboardVis-refresh {
-	position: absolute;
-	right: 9px;
-	top: 27px;
-	z-index: 5;
-	width: 18px;
-	height: 18px;
-	visibility: hidden;
+/* The toolbar above a visualisation, under the pane's title, as a table has one: the chart's controls and its
+   refresh button. */
+.dashboardVis-toolbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--dashboardVis-toolbar__height);
+    padding: 0 5px;
+    gap: var(--control__gap--horizontal);
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+    /* A line between it and the chart, so it reads as the pane's toolbar rather than part of the chart. */
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--dashboard-panel__background-color);
 }
 
-.DashboardViewImpl-content .dashboardVis-refresh {
-	top: 35px;
+/* The chart's frame is placed over its container: below the toolbar. */
+.dashboardVis-outerLayout--toolbar {
+    --dashboardVis-toolbar__height: 28px;
+}
+
+.dashboardVis-outerLayout--toolbar > .dashboardVis-innerLayout,
+.dashboardVis-outerLayout--toolbar > .queryVis-innerLayout {
+    top: var(--dashboardVis-toolbar__height);
+    height: calc(100% - var(--dashboardVis-toolbar__height));
+}
+
+.dashboardVis-toolbarSelected,
+.dashboardVis-toolbarNote {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.dashboardVis-toolbarSelected {
+    flex-shrink: 1;
+}
+
+.dashboardVis-toolbarNote {
+    flex-shrink: 2;
+    opacity: 0.7;
+}
+
+/* The interval Auto Interval groups a chart's time by. */
+.dashboardVis-toolbarInterval {
+    width: 130px;
+    flex-shrink: 0;
+}
+
+/* The refresh button on the right, as a table's pager has it. */
+.dashboardVis-toolbarRight {
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .dashboardVis-messageOuter {

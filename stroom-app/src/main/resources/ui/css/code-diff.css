@@ -1,0 +1,215 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Styles for showing a proposed code change: the side by side review dialog, the Ace markers used in
+ * its editors and in a stepping element's editor once applied, and the compact diff card body.
+ */
+
+/* ---------- Ace markers ---------- */
+
+/* Marker layers sit behind the text, so these only tint the background. */
+.editor .codeDiff-removed,
+.editor .codeDiff-added,
+.editor .codeDiff-changed,
+.editor .codeDiff-filler,
+.editor .codeDiff-applied,
+.editor .codeDiff-rejected,
+.editor .codeDiff-removedChars,
+.editor .codeDiff-addedChars {
+    position: absolute;
+}
+
+.editor .codeDiff-removed {
+    background-color: var(--code-diff__background-color--removed);
+}
+
+.editor .codeDiff-added {
+    background-color: var(--code-diff__background-color--added);
+}
+
+.editor .codeDiff-changed {
+    background-color: var(--code-diff__background-color--changed);
+}
+
+.editor .codeDiff-filler {
+    background-color: var(--code-diff__background-color--filler);
+    background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 4px,
+            var(--code-diff__border-color--filler) 4px,
+            var(--code-diff__border-color--filler) 5px);
+}
+
+.editor .codeDiff-removedChars {
+    background-color: var(--code-diff__background-color--removed--strong);
+    border-radius: 2px;
+}
+
+.editor .codeDiff-addedChars {
+    background-color: var(--code-diff__background-color--added--strong);
+    border-radius: 2px;
+}
+
+/* A change the user rejected in the review, so it isn't applied: greyed over its own colour, with a bar at its
+   left edge. */
+.editor .codeDiff-rejected {
+    background-color: var(--code-diff__background-color--rejected, rgba(128, 128, 128, 0.45));
+    box-shadow: inset 3px 0 0 var(--code-diff__border-color--rejected, rgba(128, 128, 128, 0.9));
+}
+
+/* Lines changed by an applied change, until the next edit or step. */
+.editor .codeDiff-applied {
+    background-color: var(--code-diff__background-color--applied);
+}
+
+/* ---------- Review dialog ---------- */
+
+.codeChangeReviewViewImpl {
+    min-width: 400px;
+    min-height: 300px;
+}
+
+.codeChangeReviewViewImpl-toolbar {
+    align-items: center;
+    gap: 6px;
+    padding: 6px 6px 4px 6px;
+}
+
+.codeChangeReviewViewImpl-summary {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.codeChangeReviewViewImpl-position {
+    padding-left: 12px;
+    opacity: 0.8;
+    white-space: nowrap;
+}
+
+.codeChangeReviewViewImpl-titles {
+    gap: 6px;
+    padding: 0 6px;
+}
+
+.codeChangeReviewViewImpl-title {
+    flex: 1 1 0;
+    min-width: 0;
+    opacity: 0.8;
+    padding: 2px 0;
+}
+
+.codeChangeReviewViewImpl-editors {
+    gap: 6px;
+    padding: 0 6px 6px 6px;
+    min-height: 0;
+}
+
+.codeChangeReviewViewImpl-editor {
+    flex: 1 1 0;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Fill the pane whatever height the flex layout gives it. */
+.codeChangeReviewViewImpl-editor > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.codeChangeReviewViewImpl-message {
+    margin: 0 6px 6px 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background-color: var(--code-diff__background-color--changed);
+}
+
+/* ---------- Diff card body ---------- */
+
+.codeDiffCard {
+    font-size: var(--font-size-13);
+}
+
+.codeDiffCard-summary {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.codeDiffCard-hunk {
+    font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, monospace;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    overflow-x: auto;
+}
+
+.codeDiffCard-header {
+    padding: 1px 6px;
+    opacity: 0.7;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.codeDiffCard-line {
+    display: flex;
+    white-space: pre;
+}
+
+.codeDiffCard-lineNo {
+    flex: 0 0 auto;
+    min-width: 3em;
+    padding: 0 4px;
+    text-align: right;
+    opacity: 0.6;
+    user-select: none;
+}
+
+.codeDiffCard-marker {
+    flex: 0 0 auto;
+    width: 1.2em;
+    text-align: center;
+    user-select: none;
+}
+
+.codeDiffCard-text {
+    flex: 1 0 auto;
+    padding-right: 6px;
+}
+
+.codeDiffCard-line--removed {
+    background-color: var(--code-diff__background-color--removed);
+}
+
+.codeDiffCard-line--removed .codeDiffCard-marker {
+    color: var(--code-diff__text-color--removed);
+}
+
+.codeDiffCard-line--added {
+    background-color: var(--code-diff__background-color--added);
+}
+
+.codeDiffCard-line--added .codeDiffCard-marker {
+    color: var(--code-diff__text-color--added);
+}
+
+.codeDiffCard-more > summary {
+    cursor: pointer;
+    margin-bottom: 4px;
+}

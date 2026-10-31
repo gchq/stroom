@@ -1,0 +1,11 @@
+Arguments: {"folder":"/Security","depth":3}
+
+=== Output ===
+Folder 'Security' (/Security, uuid security-uuid, [Security](?action=open-doc&docType=Folder&docUuid=security-uuid))
+
+Documents (3 levels down): 4 — 1 Feed, 1 Folder, 1 Pipeline, 1 XSLT
+- [Firewalls](?action=open-doc&docType=Folder&docUuid=firewalls-uuid) (Folder, uuid firewalls-uuid)
+  - [FIREWALL-EVENTS](?action=open-doc&docType=Feed&docUuid=feed-uuid) (Feed, uuid feed-uuid)
+  - [Firewall pipeline](?action=open-doc&docType=Pipeline&docUuid=pipe-uuid) (Pipeline, uuid pipe-uuid)
+  - [Firewall XSLT](?action=open-doc&docType=XSLT&docUuid=xslt-uuid) (XSLT, uuid xslt-uuid)
+Documents in folders you can't view aren't listed.

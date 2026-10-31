@@ -16,6 +16,8 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.QueryTableContext;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
@@ -27,6 +29,8 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.pipeline.stepping.client.presenter.ApplyCodeChangeResult;
+import stroom.pipeline.stepping.client.presenter.CodeChangeApplier;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.GroupSelection;
@@ -37,6 +41,7 @@ import stroom.query.api.Result;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.view.QueryResultTabsView;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DefaultLocation;
@@ -44,6 +49,7 @@ import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
+import stroom.util.shared.diff.LineReplacement;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -81,6 +87,8 @@ public class QueryEditPresenter
     private final QueryHelpPresenter queryHelpPresenter;
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
+    // Applies the revised queries proposed in the AI chat, and undoes them.
+    private final CodeChangeApplier codeChangeApplier;
     private final QueryResultTableSplitPresenter queryResultPresenter;
     private final QueryModel queryModel;
     private final QueryResultTabsView linkTabsLayoutView;
@@ -220,6 +228,8 @@ public class QueryEditPresenter
         queryModel.addSearchStateListener(queryToolbarPresenter);
 
         this.editorPresenter = editorPresenter;
+
+        this.codeChangeApplier = new CodeChangeApplier(createCodeEditorAdapter());
         this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
         this.editorPresenter.getBasicAutoCompletionOption().setOff();
 
@@ -288,6 +298,7 @@ public class QueryEditPresenter
         super.onBind();
         //noinspection unused event
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
+            codeChangeApplier.onEditorChange();
             final String query = editorPresenter.getText();
             updateQuery(query);
             onChange();
@@ -422,13 +433,7 @@ public class QueryEditPresenter
         // so the values travel as ordinary Params and the text is left alone. That also keeps the
         // error offsets the editor highlights aligned with what the user is looking at, which
         // rewriting the text silently broke.
-        List<Param> params = null;
-        if (queryVariables != null && !queryVariables.isEmpty()) {
-            params = new ArrayList<>();
-            for (final Map.Entry<String, String> entry : queryVariables.entrySet()) {
-                params.add(new Param(entry.getKey(), entry.getValue()));
-            }
-        }
+        final List<Param> params = queryParams();
         queryModel.startNewSearch(
                 null,
                 null,
@@ -439,6 +444,39 @@ public class QueryEditPresenter
                 true,
                 queryInfo.getMessage(),
                 null);
+    }
+
+    // The query's variables as params, or null if it has none.
+    private List<Param> queryParams() {
+        List<Param> params = null;
+        if (queryVariables != null && !queryVariables.isEmpty()) {
+            params = new ArrayList<>();
+            for (final Map.Entry<String, String> entry : queryVariables.entrySet()) {
+                params.add(new Param(entry.getKey(), entry.getValue()));
+            }
+        }
+        return params;
+    }
+
+    /// @param name The query's name, as the user sees it.
+    /// @return The query's results table for the AI chat: the search request behind the rows shown (if it has been
+    /// run), and the request a run would use now, from the editor's text and time range.
+    public AiTabSearch aiTabSearch(final String name) {
+        final QueryResultTablePresenter tablePresenter = queryResultPresenter.getTablePresenter();
+        final QuerySearchRequest liveRequest = queryModel.buildSearchRequest(null, null, editorPresenter.getText(),
+                        queryParams(), queryToolbarPresenter.getTimeRange(), true, queryInfo.getMessage(), null)
+                .copy()
+                .storeHistory(false)
+                .requestedRange(OffsetRange.UNBOUNDED)
+                .build();
+        final String description = "Query '" + name + "'";
+        return new AiTabSearch(name,
+                null,
+                tablePresenter.getResultsContext(),
+                new QueryTableContext(description, null, liveRequest),
+                tablePresenter.getCurrentColumnNames(),
+                tablePresenter.getCurrentTotalRows(),
+                tablePresenter.isSearching());
     }
 
     public TimeRange getTimeRange() {
@@ -479,6 +517,58 @@ public class QueryEditPresenter
 
     public String getQuery() {
         return editorPresenter.getText();
+    }
+
+    /// @param baseQuery     The query a change was proposed against.
+    /// @param proposedQuery The whole revised query.
+    /// @return True if the editor holds the query the change was proposed against, or the change can be put on top
+    /// of the changes applied since (see [CodeChangeApplier#rebase(String, String)]).
+    public boolean canApplyCodeChange(final String baseQuery, final String proposedQuery) {
+        return codeChangeApplier.rebase(baseQuery, proposedQuery) != null;
+    }
+
+    /// Applies a revised query proposed in the AI chat to the editor, unsaved, keeping the editor's undo history, if
+    /// the editor still holds the query it was proposed against, or the change can be put on top of the changes
+    /// applied since.
+    ///
+    /// @param baseQuery     The query the change was proposed against.
+    /// @param proposedQuery The whole revised query.
+    /// @return What happened.
+    public ApplyCodeChangeResult applyCodeChange(final String baseQuery, final String proposedQuery) {
+        return codeChangeApplier.apply(baseQuery, proposedQuery);
+    }
+
+    /// @return True if the change last applied can still be undone: the editor holds exactly the applied query.
+    public boolean canUndoCodeChange() {
+        return codeChangeApplier.canUndo();
+    }
+
+    /// Puts back the query the editor held before the change last applied, if it can still be undone.
+    ///
+    /// @return True if it was undone.
+    public boolean undoCodeChange() {
+        return codeChangeApplier.undo();
+    }
+
+    // Lets the code change applier work on the query editor. The editor's markers show the search's errors, so
+    // the lines a change applies aren't marked.
+    private CodeChangeApplier.CodeEditor createCodeEditorAdapter() {
+        return new CodeChangeApplier.CodeEditor() {
+            @Override
+            public String getCode() {
+                return editorPresenter.getText();
+            }
+
+            @Override
+            public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+                return editorPresenter.applyLineReplacements(replacements);
+            }
+
+            @Override
+            public void setChangedLineMarkers(final List<int[]> ranges) {
+                // Not marked: see above.
+            }
+        };
     }
 
     private void onChange() {

@@ -67,6 +67,8 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -104,6 +106,7 @@ public class SteppingService {
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
+    private final SavedElementCode savedElementCode;
     // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
     // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
     private final Provider<SteppingConfig> steppingConfigProvider;
@@ -134,6 +137,7 @@ public class SteppingService {
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
+                           final SavedElementCode savedElementCode,
                            final Provider<SteppingConfig> steppingConfigProvider,
                            final SessionStepResolver sessionStepResolver,
                            final SteppingSessionRegistry sessionRegistry,
@@ -148,6 +152,7 @@ public class SteppingService {
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
+        this.savedElementCode = savedElementCode;
         this.steppingConfigProvider = steppingConfigProvider;
         this.demandPlanner = new StepDemandPlanner(steppingConfigProvider);
         this.sessionStepResolver = sessionStepResolver;
@@ -334,9 +339,13 @@ public class SteppingService {
      * per session as they are the same for every stream.
      */
     public ElementFingerprints computeFingerprints(final PipelineStepRequest request) {
+        final PipelineData mergedPipelineData = pipelineDataHolderFactory.create(request.getPipelineDoc())
+                .getMergedPipelineData();
+        final Map<String, String> code = NullSafe.map(request.getCode());
         return elementFingerprinter.fingerprint(
-                pipelineDataHolderFactory.create(request.getPipelineDoc()).getMergedPipelineData(),
-                NullSafe.map(request.getCode()));
+                mergedPipelineData,
+                code,
+                savedElementCode.versions(mergedPipelineData, code));
     }
 
     public void deleteCaptureSession(final String sessionId) {
@@ -878,28 +887,40 @@ public class SteppingService {
                     streamIds,
                     () -> createSession(streamIds));
 
-            // The fingerprints are what this step is served under. If an element was edited they have
-            // changed, so it is served under new keys while the untouched elements are still read from what
-            // was already captured.
-            final SessionStepResult sessionResult;
             try {
-                sessionResult = sessionStepResolver.resolve(
-                        session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
-            } catch (final RuntimeException e) {
-                if (!session.isClosed()) {
-                    throw e;
+                // The fingerprints are what this step is served under. If an element was edited they have
+                // changed, so it is served under new keys while the untouched elements are still read from what
+                // was already captured.
+                final SessionStepResult sessionResult;
+                try {
+                    sessionResult = sessionStepResolver.resolve(
+                            session, request, fingerprints, NullSafe.getLong(request.getTimeout()));
+                } catch (final RuntimeException e) {
+                    if (!session.isClosed()) {
+                        throw e;
+                    }
+                    // The session was terminated (the user pressed Stop) while this step was waiting on it, so
+                    // the step failed on a closed session or its deleted store. That is the termination, not an
+                    // error: answer as an unfinished step, which a client that has stopped simply drops.
+                    LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
+                            session.getSessionId(), LogUtil.exceptionMessage(e)));
+                    return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
                 }
-                // The session was terminated (the user pressed Stop) while this step was waiting on it, so the
-                // step failed on a closed session or its deleted store. That is the termination, not an error:
-                // answer as an unfinished step, which a client that has stopped simply drops.
-                LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
-                        session.getSessionId(), LogUtil.exceptionMessage(e)));
-                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+
+                sessionRegistry.reapIdle();
+
+                return resultMapper.toResult(request, session, sessionResult);
+            } catch (final RuntimeException e) {
+                if (!Objects.equals(session.getSessionId(), request.getSessionUuid())) {
+                    // A session made for this step, whose id never reaches the client as the step failed:
+                    // nothing could use or end it, so it would hold its capture until it went idle.
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Ending stepping session {} made for a step that failed",
+                            session.getSessionId()));
+                    sessionRegistry.terminate(userIdentity, session.getSessionId());
+                }
+                throw e;
             }
-
-            sessionRegistry.reapIdle();
-
-            return resultMapper.toResult(request, session, sessionResult);
         });
     }
 

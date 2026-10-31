@@ -30,6 +30,8 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConve
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
+import stroom.pipeline.stepping.client.presenter.CodeChangeReviewPresenter;
+import stroom.pipeline.stepping.client.presenter.CodeChangeReviewPresenter.CodeChangeReviewView;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -44,6 +46,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
+import stroom.pipeline.stepping.client.view.CodeChangeReviewViewImpl;
 import stroom.pipeline.stepping.client.view.ElementViewImpl;
 import stroom.pipeline.stepping.client.view.StepControlViewImpl;
 import stroom.pipeline.stepping.client.view.StepLocationLinkViewImpl;
@@ -132,6 +135,8 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(XPathFilterPresenter.class, XPathFilterView.class, XPathFilterViewImpl.class);
 
         bindPresenterWidget(ElementPresenter.class, ElementView.class, ElementViewImpl.class);
+        bindPresenterWidget(CodeChangeReviewPresenter.class, CodeChangeReviewView.class,
+                CodeChangeReviewViewImpl.class);
 
         // Add processor bindings.
         bindPresenterWidget(ProcessorPresenter.class, ProcessorView.class, ProcessorViewImpl.class);

@@ -1,0 +1,35 @@
+name: Log shipper wrapping app events
+template: Event Data (JSON)
+capabilities: [mixed_formats, nesting]
+request: >
+  Onboard these application logs forwarded by a log shipper (a JSON array). The shipper adds host and received
+  time; the real event is JSON held as a string in the message field: user, event (login or logout) and ok.
+  Index the events.
+expected:
+  records: 3
+  event_types: [Authenticate]
+  paths: [EventTime/TimeCreated, EventSource/User/Id, EventDetail/Authenticate/Action]
+sample: |
+  [{"host": "app01", "received": "2026-09-28T12:00:02Z", "message": "{\"time\": \"2026-09-28T12:00:01Z\", \"user\": \"dave\", \"event\": \"login\", \"ok\": true}"},
+   {"host": "app01", "received": "2026-09-28T12:03:12Z", "message": "{\"time\": \"2026-09-28T12:03:11Z\", \"user\": \"erin\", \"event\": \"login\", \"ok\": false}"},
+   {"host": "app02", "received": "2026-09-28T12:30:00Z", "message": "{\"time\": \"2026-09-28T12:29:59Z\", \"user\": \"dave\", \"event\": \"logout\", \"ok\": true}"}]
+reference:
+  mapping:
+    input: json
+    common:
+      - {path: EventTime/TimeCreated, xpath: "json-to-xml(*[@key='message'])/*/*[@key='time']", time_format: "yyyy-MM-dd'T'HH:mm:ssX"}
+      - {path: EventSource/System/Name, value: App}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: log-shipper}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventSource/User/Id, xpath: "json-to-xml(*[@key='message'])/*/*[@key='user']"}
+      - {path: EventDetail/TypeId, xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']"}
+      - {path: EventDetail/Authenticate/User/Id, xpath: "json-to-xml(*[@key='message'])/*/*[@key='user']"}
+      - {path: EventDetail/Authenticate/Outcome/Success, xpath: "json-to-xml(*[@key='message'])/*/*[@key='ok']"}
+    events:
+      - name: logon
+        when: [{xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']", equals: login}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logon}]
+      - name: logoff
+        when: [{xpath: "json-to-xml(*[@key='message'])/*/*[@key='event']", equals: logout}]
+        fields: [{path: EventDetail/Authenticate/Action, value: Logoff}]

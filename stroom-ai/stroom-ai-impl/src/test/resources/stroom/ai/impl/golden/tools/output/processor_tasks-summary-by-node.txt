@@ -1,0 +1,8 @@
+Arguments: {"mode":"summary","group_by":["node","status"]}
+
+=== Output ===
+Processing tasks, counted by node, status:
+- node node1: 1 Complete, 3 Failed (4 in all)
+- node node2: 2 Complete, 1 Failed (3 in all)
+- no node yet: 1 Queued (1 in all)
+- node node3: 1 Processing (1 in all)

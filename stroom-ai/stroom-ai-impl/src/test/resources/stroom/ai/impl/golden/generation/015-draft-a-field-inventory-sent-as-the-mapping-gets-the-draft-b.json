@@ -1,0 +1,302 @@
+{
+ "source": "draft-a-field-inventory-sent-as-the-mapping-gets-the-draft-b",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "json",
+  "json_layout": "lines",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "timestamp",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "TODO system name"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "TODO e.g. Prod"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "device"
+   },
+   {
+    "path": "EventSource/Client/IPAddress",
+    "field": "src_ip"
+   },
+   {
+    "path": "EventSource/Client/Port",
+    "field": "src_port"
+   },
+   {
+    "path": "EventSource/Server/IPAddress",
+    "field": "dst_ip"
+   },
+   {
+    "path": "EventSource/Server/Port",
+    "field": "dst_port"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "username"
+   },
+   {
+    "path": "EventDetail/Description",
+    "field": "message"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "TODO generator"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "field": "event_type"
+   }
+  ],
+  "events": [
+   {
+    "name": "traffic_permitted",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "TRAFFIC"
+     },
+     {
+      "field": "action",
+      "equals": "ALLOW"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "src_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Port",
+      "field": "src_port"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+      "field": "protocol",
+      "map": {
+       "TCP": "TCP"
+      },
+      "default": "Other"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dst_ip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Port",
+      "field": "dst_port"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "login",
+    "when": [
+     {
+      "field": "event_type",
+      "equals": "LOGIN"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/Authenticate/Action",
+      "value": "Logon"
+     },
+     {
+      "path": "EventDetail/Authenticate/User/Id",
+      "field": "username"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "protocol",
+      "data_name": "protocol"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Authenticate/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   },
+   {
+    "name": "other",
+    "fields": [
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "severity",
+      "data_name": "severity"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "protocol",
+      "data_name": "protocol"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "action",
+      "data_name": "action"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "rule_id",
+      "data_name": "rule_id"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_sent",
+      "data_name": "bytes_sent"
+     },
+     {
+      "path": "EventDetail/Unknown/Data",
+      "field": "bytes_received",
+      "data_name": "bytes_received"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[traffic_permitted] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[login] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] TypeId is read from event_type, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "traffic_permitted",
+    "when": [
+     "*[@key='event_type'] = 'TRAFFIC'",
+     "*[@key='action'] = 'ALLOW'"
+    ],
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/Network/Permit/Data[bytes_received]",
+     "EventDetail/Network/Permit/Data[bytes_sent]",
+     "EventDetail/Network/Permit/Data[rule_id]",
+     "EventDetail/Network/Permit/Data[severity]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Destination/Port",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Port",
+     "EventDetail/Network/Permit/Source/TransportProtocol",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "login",
+    "when": [
+     "*[@key='event_type'] = 'LOGIN'"
+    ],
+    "fields": [
+     "EventDetail/Authenticate/Action",
+     "EventDetail/Authenticate/Data[action]",
+     "EventDetail/Authenticate/Data[bytes_received]",
+     "EventDetail/Authenticate/Data[bytes_sent]",
+     "EventDetail/Authenticate/Data[protocol]",
+     "EventDetail/Authenticate/Data[rule_id]",
+     "EventDetail/Authenticate/Data[severity]",
+     "EventDetail/Authenticate/User/Id",
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "other",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Description",
+     "EventDetail/TypeId",
+     "EventDetail/Unknown/Data[action]",
+     "EventDetail/Unknown/Data[bytes_received]",
+     "EventDetail/Unknown/Data[bytes_sent]",
+     "EventDetail/Unknown/Data[protocol]",
+     "EventDetail/Unknown/Data[rule_id]",
+     "EventDetail/Unknown/Data[severity]",
+     "EventSource/Client/IPAddress",
+     "EventSource/Client/Port",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/Server/IPAddress",
+     "EventSource/Server/Port",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

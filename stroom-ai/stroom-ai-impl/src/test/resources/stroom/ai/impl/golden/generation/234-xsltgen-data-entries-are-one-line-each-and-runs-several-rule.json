@@ -1,0 +1,274 @@
+{
+ "source": "xsltgen-data-entries-are-one-line-each-and-runs-several-rule",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "data_splitter",
+  "extract": [
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)srcip=\"([^\"]*)\"",
+    "names": [
+     "srcip"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)dstip=\"([^\"]*)\"",
+    "names": [
+     "dstip"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)dstintfrole=\"([^\"]*)\"",
+    "names": [
+     "dstintfrole"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)proto=(\\S+)",
+    "names": [
+     "proto"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)user=\"([^\"]*)\"",
+    "names": [
+     "user"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)srcintfrole=\"([^\"]*)\"",
+    "names": [
+     "srcintfrole"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)logid=\"([^\"]*)\"",
+    "names": [
+     "logid"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)service=\"([^\"]*)\"",
+    "names": [
+     "service"
+    ]
+   },
+   {
+    "field": "msg",
+    "regex": "(?:^|\\s)policyid=(\\S+)",
+    "names": [
+     "policyid"
+    ]
+   }
+  ],
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "time"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Acme VPN"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Dev"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "vpnd"
+   },
+   {
+    "path": "EventSource/Device/HostName",
+    "field": "host",
+    "default": "unknown"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "user"
+   }
+  ],
+  "events": [
+   {
+    "name": "deny",
+    "when": [
+     {
+      "field": "action",
+      "equals": "deny"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "deny"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "dstintfrole",
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "proto",
+      "data_name": "proto"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "policyid",
+      "data_name": "policyid"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "service",
+      "data_name": "service"
+     },
+     {
+      "path": "EventDetail/Network/Deny/Data",
+      "field": "srcintfrole",
+      "data_name": "srcintfrole"
+     }
+    ]
+   },
+   {
+    "name": "permit",
+    "when": [
+     {
+      "field": "action",
+      "equals": "accept"
+     }
+    ],
+    "fields": [
+     {
+      "path": "EventDetail/TypeId",
+      "value": "permit"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+      "field": "srcip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+      "field": "dstip"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "dstintfrole",
+      "data_name": "dstintfrole"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "proto",
+      "data_name": "proto"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "logid",
+      "data_name": "logid"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "policyid",
+      "data_name": "policyid"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "service",
+      "data_name": "service"
+     },
+     {
+      "path": "EventDetail/Network/Permit/Data",
+      "field": "srcintfrole",
+      "data_name": "srcintfrole"
+     }
+    ]
+   }
+  ],
+  "unmatched": "skip",
+  "style": {
+   "data_entries": "guarded",
+   "data_run_min": 99
+  }
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[deny] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[deny] required ['EventTime', 'EventDetail/Network/Deny/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[permit] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[permit] required ['EventTime', 'EventDetail/Network/Permit/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "deny",
+    "when": [
+     "data[@name='action']/@value = 'deny'"
+    ],
+    "fields": [
+     "EventDetail/Network/Deny/Data[dstintfrole]",
+     "EventDetail/Network/Deny/Data[logid]",
+     "EventDetail/Network/Deny/Data[policyid]",
+     "EventDetail/Network/Deny/Data[proto]",
+     "EventDetail/Network/Deny/Data[service]",
+     "EventDetail/Network/Deny/Data[srcintfrole]",
+     "EventDetail/Network/Deny/Destination/Device/IPAddress",
+     "EventDetail/Network/Deny/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   },
+   {
+    "event": "permit",
+    "when": [
+     "data[@name='action']/@value = 'accept'"
+    ],
+    "fields": [
+     "EventDetail/Network/Permit/Data[dstintfrole]",
+     "EventDetail/Network/Permit/Data[logid]",
+     "EventDetail/Network/Permit/Data[policyid]",
+     "EventDetail/Network/Permit/Data[proto]",
+     "EventDetail/Network/Permit/Data[service]",
+     "EventDetail/Network/Permit/Data[srcintfrole]",
+     "EventDetail/Network/Permit/Destination/Device/IPAddress",
+     "EventDetail/Network/Permit/Source/Device/IPAddress",
+     "EventDetail/TypeId",
+     "EventSource/Device/HostName",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}

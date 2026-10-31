@@ -35,6 +35,8 @@ public class AiConfigTableAnalysisViewImpl
     @UiField
     ValueSpinner maxTotalRows;
     @UiField
+    ValueSpinner maxRowsWithoutTools;
+    @UiField
     ValueSpinner maxRowsPerBatch;
     @UiField
     ValueSpinner maxParallelBatches;
@@ -53,6 +55,8 @@ public class AiConfigTableAnalysisViewImpl
 
         maxTotalRows.setMin(1);
         maxTotalRows.setMax(1_000_000);
+        maxRowsWithoutTools.setMin(1);
+        maxRowsWithoutTools.setMax(1_000_000);
         maxRowsPerBatch.setMin(1);
         maxRowsPerBatch.setMax(1_000_000);
         maxParallelBatches.setMin(1);
@@ -83,6 +87,16 @@ public class AiConfigTableAnalysisViewImpl
     @Override
     public int getMaxTotalRows() {
         return maxTotalRows.getIntValue();
+    }
+
+    @Override
+    public void setMaxRowsWithoutTools(final int maxRowsWithoutTools) {
+        this.maxRowsWithoutTools.setValue(maxRowsWithoutTools);
+    }
+
+    @Override
+    public int getMaxRowsWithoutTools() {
+        return maxRowsWithoutTools.getIntValue();
     }
 
     @Override

@@ -107,7 +107,7 @@ class TestSummaryMerger {
     }
 
     private SummaryMerger merger(final Function<String, String> answer) {
-        return new SummaryMerger(chatModel(answer), config, null, (messages, response) -> "");
+        return new SummaryMerger(chatModel(answer), config, "the question", null, (messages, response) -> "");
     }
 
     /**

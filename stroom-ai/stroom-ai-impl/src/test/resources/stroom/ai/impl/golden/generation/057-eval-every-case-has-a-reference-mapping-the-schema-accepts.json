@@ -1,0 +1,89 @@
+{
+ "source": "eval-every-case-has-a-reference-mapping-the-schema-accepts",
+ "schema": "4.1.0",
+ "version": "4.1.0",
+ "mark_rules": false,
+ "mapping": {
+  "input": "xml",
+  "root": "records",
+  "record": "record",
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "field": "when",
+    "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+   },
+   {
+    "path": "EventSource/System/Name",
+    "value": "Door Control"
+   },
+   {
+    "path": "EventSource/System/Environment",
+    "value": "Eval"
+   },
+   {
+    "path": "EventSource/Generator",
+    "value": "door-controller"
+   },
+   {
+    "path": "EventSource/Device/Name",
+    "field": "door"
+   },
+   {
+    "path": "EventSource/User/Id",
+    "field": "holder"
+   },
+   {
+    "path": "EventDetail/TypeId",
+    "value": "badge"
+   }
+  ],
+  "events": [
+   {
+    "name": "badge",
+    "fields": [
+     {
+      "path": "EventDetail/Authorise/Action",
+      "value": "Request"
+     },
+     {
+      "path": "EventDetail/Authorise/Resource/Name",
+      "field": "door"
+     },
+     {
+      "path": "EventDetail/Authorise/Outcome/Success",
+      "field": "granted"
+     }
+    ]
+   }
+  ]
+ },
+ "result": {
+  "ok": true,
+  "problems": [],
+  "warnings": [
+   "[badge] EventDetail/Authorise/Outcome/Success: Success is true/false; map the input values, e.g. {'ok': 'true', 'fail': 'false'}, unless they already are",
+   "[badge] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+  ],
+  "events": [
+   {
+    "event": "badge",
+    "when": "every record",
+    "fields": [
+     "EventDetail/Authorise/Action",
+     "EventDetail/Authorise/Outcome/Success",
+     "EventDetail/Authorise/Resource/Name",
+     "EventDetail/TypeId",
+     "EventSource/Device/Name",
+     "EventSource/Generator",
+     "EventSource/System/Environment",
+     "EventSource/System/Name",
+     "EventSource/User/Id",
+     "EventTime/TimeCreated"
+    ]
+   }
+  ],
+  "reference_maps": [],
+  "dictionaries": []
+ }
+}
