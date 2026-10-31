@@ -39,7 +39,9 @@ import java.util.function.Consumer;
 /// (`apply_documentation_change`). The document is opened if it isn't open, on its Documentation tab, and the change
 /// is reviewed side by side; applying it is checked and recorded by the server first (which needs Edit), then put
 /// in the tab's editor as an unsaved edit for the user to save. Undo apply puts back the text the tab held, while
-/// it still holds the applied text.
+/// it still holds the applied text. A Documentation document's own content is its Documentation tab, so a change to
+/// an AGENTS doc is applied the same way; standing instructions for a folder with none are reviewed and created
+/// (`create_instructions`).
 @Singleton
 public class AiDocumentationChanges {
 
@@ -102,6 +104,42 @@ public class AiDocumentationChanges {
                 review.showProblem(problem);
             }
         });
+    }
+
+    /// Shows the review of standing instructions (an AGENTS doc) proposed for a folder that has none
+    /// (`create_instructions`); applying it asks the server to create the doc with the parts kept and save it (which
+    /// needs Create in the folder), then opens it.
+    ///
+    /// @param handlers  Where to fire events.
+    /// @param monitor   Shows the server's calls in progress.
+    /// @param change    The proposal: its doc is the folder, and its base is empty.
+    /// @param onCreated Called once the doc has been created.
+    public void reviewNewInstructions(final HasHandlers handlers,
+                                      final TaskMonitorFactory monitor,
+                                      final Change change,
+                                      final Runnable onCreated) {
+        final CodeChangeReviewPresenter review = reviewPresenterProvider.get();
+        review.show("Review Proposed Standing Instructions - " + name(change.doc()), "", change.proposed(),
+                AceEditorMode.MARKDOWN, false, (andStep, text, rejected, onResult) ->
+                        askStroomAiClient.applyCodeChange(change.chatId(), change.messageId(), change.actionId(),
+                                rejected,
+                                result -> {
+                                    if (!result.isDone()) {
+                                        onResult.accept(NullSafe.nonBlankStringElse(result.getMessage(),
+                                                "The standing instructions can't be created."));
+                                        return;
+                                    }
+                                    onResult.accept(null);
+                                    if (result.getOpenDocument() != null) {
+                                        OpenDocumentEvent.builder(handlers, result.getOpenDocument())
+                                                .forceOpen(true)
+                                                .fire();
+                                    }
+                                    onCreated.run();
+                                },
+                                error -> onResult.accept(NullSafe.nonBlankStringElse(error.getMessage(),
+                                        "Unable to create the standing instructions.")),
+                                monitor));
     }
 
     /// Opens the document on its Documentation tab and undoes the change, if the tab still holds the text applied.

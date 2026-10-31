@@ -321,6 +321,31 @@ class TestPromoteBuildTool {
         assertThat(((List<?>) promoted.get("folders")).stream()
                 .map(entry -> String.valueOf(((Map<?, ?>) entry).get("folder"))))
                 .containsExactly("System/Feeds/Acme");
+        // Over /mcp, whose sessions are no evidence, no standing instructions are offered.
+        assertThat(promoted).doesNotContainKey("standing_instructions");
+    }
+
+    @Test
+    void inTheChatPromotionOffersStandingInstructionsFromTheUsersChats() {
+        exists("System/Feeds/Acme");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = docs.call(tool, user.chatContext(),
+                DocumentationWorld.args(args(destinations, null)));
+        final Map<String, Object> promoted = docs.call(tool, user.chatContext(),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(world.documentAccess.path(documentation)).isEqualTo("/Feeds/Acme");
+        assertThat(String.valueOf(promoted.get("standing_instructions")))
+                .contains("call instruction_evidence", "offer once", "propose_instructions", "Don't offer if it "
+                                                                                           + "finds none");
     }
 
     @Test
