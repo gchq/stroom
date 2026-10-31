@@ -54,9 +54,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// An in-memory Stroom explorer for the tests of the write guard and the build record (as the Stroom MCP server's
-/// `tests/fake_explorer.py`): folders and documents with tags, as Stroom's explorer services show them, and
-/// Documentation docs that refuse a stale save. Each part is a Mockito mock answering from the tree.
+/// An in-memory Stroom explorer for the tests of the write guard and the build record: folders and documents with
+/// tags, as Stroom's explorer services show them, and Documentation docs that refuse a stale save. Each part is a
+/// Mockito mock answering from the tree.
 final class BuildWorld {
 
     static final String WORKSPACE = "MCP Workspace";

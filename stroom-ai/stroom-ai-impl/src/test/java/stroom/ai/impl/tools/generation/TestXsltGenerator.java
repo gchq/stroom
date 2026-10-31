@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Stroom MCP server's generator tests (`tests/test_xsltgen.py`), case by case: the XSLT the ported generator
-/// writes, run with Saxon over the tests' records and validated against the event-logging schema.
+/// The generator, case by case: the XSLT it writes, run with Saxon over the tests' records and validated against
+/// the event-logging schema.
 class TestXsltGenerator extends XsltRuns {
 
     private static XsltGenerator.Generated generate(final TranslationMapping mapping) {
@@ -266,7 +266,7 @@ class TestXsltGenerator extends XsltRuns {
     @Test
     void timesFinerThanAMillisecondAreCutNotRounded() throws SaxonApiException {
         // Seen in eval case 31: an epoch_ns time 0.555 ms into its millisecond was written a millisecond late, as
-        // the Stroom MCP server's generator rounded half up (23:59:59.9996 became the next day).
+        // the generator then rounded half up (23:59:59.9996 became the next day).
         assertThat(epochMs("epoch_ns", "1790899198000555000")).isEqualTo("1790899198000");
         assertThat(epochMs("epoch_us", "1790899198000999")).isEqualTo("1790899198000");
         assertThat(epochMs("epoch_s", "1790899198.9999")).isEqualTo("1790899198999");
@@ -332,7 +332,7 @@ class TestXsltGenerator extends XsltRuns {
         assertThatThrownBy(() -> FieldMapping.fromJson(json("""
                 {"path": "EventDetail/Authenticate/Data", "data_parent": "a//b", "data_name": "c", "field": "f"}""")))
                 .hasMessageContaining("data_parent");
-        // Written only when set, so a mapping without it dumps as the Python server's does.
+        // Written only when set, so a mapping without it dumps as it did before the entry existed.
         assertThat(FieldMapping.fromJson(json("""
                 {"path": "EventDetail/Authenticate/Data", "data_name": "c", "field": "f"}""")).toJson(DumpMode.ALL))
                 .doesNotContainKey("data_parent");
@@ -466,8 +466,7 @@ class TestXsltGenerator extends XsltRuns {
 
     @Test
     void theRuleMarkIsOnlyInTheDocumentationRun() {
-        // From test_sampled_field_mapping_matches_events_to_rules_by_the_marker: the marker the documentation run
-        // puts in each Event (its tables are ported with the documentation).
+        // The marker the documentation run puts in each Event (its tables are tested with the documentation).
         final TranslationMapping m = mapping();
         assertThat(XsltGenerator.generate(m, SCHEMA, "4.1.0", true).xslt())
                 .contains("<xsl:processing-instruction name=\"stroom-mcp-rule\">logon</xsl:processing-instruction>");
@@ -900,7 +899,7 @@ class TestXsltGenerator extends XsltRuns {
 
     @Test
     void theExampleMappingGenerates() {
-        // test_generation.py: the shape of a mapping, whole, shown in a reply that refuses one, generates.
+        // The shape of a mapping, whole, shown in a reply that refuses one, generates.
         final TranslationMapping example = TranslationMapping.fromJson(json("""
                 {"input": "xml_fragments", "record": "Event", "xml_namespace": "records:2",
                  "common": [{"path": "EventTime/TimeCreated", "xpath": "System/TimeCreated/@SystemTime",
@@ -918,7 +917,7 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
-    void theResultIsThePythonGeneratorsDict() {
+    void theResultHoldsTheGeneratorsFields() {
         final Map<String, Object> map = generate(mapping(with("for_each", "items"))).toMap();
         assertThat(map.keySet()).containsExactly("ok", "problems", "warnings", "events", "xslt", "reference_maps",
                 "dictionaries", "items");

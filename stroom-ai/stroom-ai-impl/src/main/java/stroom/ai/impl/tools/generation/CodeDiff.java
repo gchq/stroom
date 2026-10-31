@@ -16,15 +16,14 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /// What an XSLT has that the expected code hasn't (`+`) and the reverse (`-`), element by element: both
-/// pretty-printed alike, so only real differences show. For a hand edit: what to carry into the mapping. The Stroom
-/// MCP server's `mappingstore.code_diff`.
+/// pretty-printed alike, so only real differences show. For a hand edit: what to carry into the mapping.
 public final class CodeDiff {
 
     /// How many changed lines are shown by default.
@@ -78,8 +77,8 @@ public final class CodeDiff {
             text = stripped;
         }
         final List<String> out = new ArrayList<>();
-        for (final String line : PyText.splitlines(text)) {
-            final String trimmed = PyText.strip(line);
+        for (final String line : ToolText.splitlines(text)) {
+            final String trimmed = ToolText.strip(line);
             if (!trimmed.isEmpty()) {
                 out.add(trimmed);
             }

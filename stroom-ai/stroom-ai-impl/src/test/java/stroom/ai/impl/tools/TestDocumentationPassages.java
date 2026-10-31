@@ -24,7 +24,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Long reference documents read back a passage at a time, as the Stroom MCP server's tests have it.
+/// Long reference documents read back a passage at a time.
 class TestDocumentationPassages {
 
     private static final Map<String, Object> DOC = Map.of("type", "Documentation", "uuid", "d", "name",

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,22 +32,21 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Parses the XPath expressions of one stylesheet, with its namespace bindings, into trees of [XPathNode]: the
-/// Stroom MCP server's `xpathtree.XPathParser`, which parses with elementpath (a strict XPath 3.1 parser). This
-/// parser writes the trees elementpath writes, node for node (the same symbols, values and children), and gives each
-/// node the text elementpath's token positions give it, so an expression read back is written as it was.
+/// Parses the XPath expressions of one stylesheet, with its namespace bindings, into trees of [XPathNode], strictly
+/// as XPath 3.1. Each node is given the text its tokens' positions give it, so an expression read back is written as
+/// it was.
 ///
 /// Parsing only, nothing is evaluated. Stroom's functions (`stroom:`), the XSLT's own (`mcp:`, or a prefix added by
 /// hand) and an imported XSLT's are functions of any arity, as long as the stylesheet binds their prefix; a prefix
 /// it doesn't bind is an error (XPST0081), as it is in Stroom; so is a standard function it doesn't know, or one
 /// called with the wrong number of arguments (XPST0017).
 ///
-/// Unlike elementpath, constant parts of an expression are not evaluated as it is parsed (elementpath refuses
-/// `xs:integer('abc')` or `1 div 0` as it parses them), and inline functions (`function($x) {...}`) and URI-qualified
+/// Constant parts of an expression are not evaluated as it is parsed (`xs:integer('abc')` and `1 div 0` parse),
+/// and inline functions (`function($x) {...}`) and URI-qualified
 /// names (`Q{uri}name`) are not read: they are errors here.
 public final class XPathTreeParser {
 
-    // elementpath's tokenizer for XPath 3.1, as it builds it: literals, symbols (operators, keywords, axis and
+    // The tokenizer for XPath 3.1: literals, symbols (operators, keywords, axis and
     // function names, judged by what follows them), names, anything else.
     private static final Pattern TOKENS = Pattern.compile(
             "('(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|(?:\\d+|\\.\\d+)(?:\\.\\d*)?(?:[Ee][+-]?\\d+)?)"
@@ -77,7 +76,7 @@ public final class XPathTreeParser {
             "le", "gt", "ge", "is", "<<", ">>");
     private static final Map<String, Integer> BINDING = bindingPowers();
     private static final Set<String> STEP_SYMBOLS = Set.of("*", "@", "..", ".", "(", "{", "Q{", "$");
-    // The tokens a path step may be, by symbol (elementpath's PATH_STEP_SYMBOLS).
+    // The tokens a path step may be, by symbol.
     private static final Set<String> STEP_TOKENS = Set.of("(integer)", "(string)", "(float)", "(decimal)", "(name)",
             "*", "@", "..", ".", "(", "{", "Q{", "$");
     /// The most parsers kept, one per set of bindings: the least recently used are dropped first (the bindings
@@ -106,7 +105,7 @@ public final class XPathTreeParser {
     }
 
     /// @param namespaces The stylesheet's namespace bindings.
-    /// @return A parser for them (one per set of bindings, as the Python server caches them, up to [#MAX_PARSERS]).
+    /// @return A parser for them (one per set of bindings, cached, up to [#MAX_PARSERS]).
     public static XPathTreeParser parserFor(final Map<String, String> namespaces) {
         final Map<String, String> own = new TreeMap<>();
         namespaces.forEach((prefix, uri) -> {
@@ -168,7 +167,7 @@ public final class XPathTreeParser {
         return out;
     }
 
-    // --- tokens to nodes, as xpathtree's _node and _span make them ------------------------------------------------
+    // --- tokens to nodes ------------------------------------------------------------------------------------------
 
     private static XPathNode node(final Token token, final String text, final List<Lexeme> lexemes) {
         final String symbol;
@@ -311,7 +310,7 @@ public final class XPathTreeParser {
 
         private Run(final String text, final List<Lexeme> all) {
             this.text = text;
-            // Comments are skipped, as elementpath skips them; their lexemes still count in a node's text.
+            // Comments are skipped; their lexemes still count in a node's text.
             boolean comment = false;
             for (final Lexeme lexeme : all) {
                 if (comment) {
@@ -454,7 +453,7 @@ public final class XPathTreeParser {
             return paren;
         }
 
-        // [a, b]: elementpath's square array, a function named [ placed at its first member.
+        // [a, b]: a square array, a function named [ placed at its first member.
         private Token squareArray(final Lexeme lexeme) {
             final Lexeme first = peek();
             final int at = first == null
@@ -618,7 +617,7 @@ public final class XPathTreeParser {
                                        && !MappingFacts.XS.equals(namespace);
             final Lexeme open = peek();
             // A function registered for a prefix the stylesheet binds, with a name the standard functions have too
-            // (stroom:format-date, mcp:data), is placed at its bracket, as elementpath places it.
+            // (stroom:format-date, mcp:data), is placed at its bracket.
             final Token call = registered && XPathFunctions.isStandard(name)
                     ? new Token(name, name, open.start, open.end, TokenKind.FUNCTION)
                     : new Token(name, name, lexeme.start, lexeme.end, kindOf(name, namespace));
@@ -672,7 +671,7 @@ public final class XPathTreeParser {
             };
         }
 
-        // a/b, a//b: as elementpath, only after a step (a name, a call, a predicate, a variable, ...) and before
+        // a/b, a//b: only after a step (a name, a call, a predicate, a variable, ...) and before
         // one (a lookup's result, say, is no step: $m?a/b is refused).
         private Token path(final Lexeme lexeme, final Token left) {
             final boolean isStep = Set.of("/", "//", ":", "[", "$").contains(left.symbol)
@@ -726,7 +725,7 @@ public final class XPathTreeParser {
             if ("*".equals(next.text)) {
                 return token("*", next);
             }
-            // A name, not a function elementpath knows ($m?normalize-space(x) is refused, as it refuses it).
+            // A name, not a known function ($m?normalize-space(x) is refused).
             if (WORD.matcher(next.text).matches() && !(isNext("(") && knownFunction(next.text))) {
                 return name(next);
             }
@@ -798,13 +797,13 @@ public final class XPathTreeParser {
                 return;
             }
             if (!bound) {
-                throw new XPathParseException("prefix " + PyText.repr(prefix) + " isn't bound in the "
+                throw new XPathParseException("prefix " + ToolText.repr(prefix) + " isn't bound in the "
                                               + "stylesheet (XPST0081)");
             }
         }
 
         // instance of, treat as, castable as, cast as: the expression and its type (the occurrence indicator
-        // is left out of the tree, as elementpath leaves it).
+        // is left out of the tree).
         private Token typed(final Lexeme lexeme, final Token left, final String word) {
             expect(word);
             final Token type;
@@ -841,8 +840,7 @@ public final class XPathTreeParser {
             return test;
         }
 
-        // a => f(b): the function's name (a call of nothing) and its arguments in brackets, as elementpath holds
-        // them.
+        // a => f(b): the function's name (a call of nothing) and its arguments in brackets.
         private Token arrow(final Lexeme lexeme, final Token left) {
             final Lexeme name = advance();
             if (!WORD.matcher(name.text).matches()) {
@@ -922,7 +920,7 @@ public final class XPathTreeParser {
             if (lexeme == null) {
                 return new XPathParseException("unexpected end of source (XPST0003)");
             }
-            return new XPathParseException("unexpected " + PyText.repr(lexeme.text) + " at " + (lexeme.start + 1)
+            return new XPathParseException("unexpected " + ToolText.repr(lexeme.text) + " at " + (lexeme.start + 1)
                                            + " in " + text + " (XPST0003)");
         }
     }
@@ -955,7 +953,7 @@ public final class XPathTreeParser {
     /// One lexeme: where it is and its text.
     private record Lexeme(int start, int end, String text, Kind kind) {
 
-        // How it changes the depth of brackets: xpathtree counts a lexeme that is one of ([{ or )]}.
+        // How it changes the depth of brackets: a lexeme that is one of ([{ or )]} counts.
         private int depthChange() {
             if (text.length() == 1 && OPEN.contains(text)) {
                 return 1;
@@ -971,7 +969,7 @@ public final class XPathTreeParser {
     // --------------------------------------------------------------------------------
 
 
-    /// A token of the parse, as elementpath holds it: its own place in the text (its lexeme) and its children.
+    /// A token of the parse: its own place in the text (its lexeme) and its children.
     private static final class Token {
 
         private final String symbol;

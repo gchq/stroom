@@ -42,11 +42,11 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Standing instructions: Documentation docs named `AGENTS` in Stroom's folders, the equivalent of an AGENTS.md,
-/// as the Stroom MCP server reads them. A doc applies to its folder and everything below it, and one directly under
-/// the System root applies everywhere. Where several apply they are given from the most general to the most
-/// specific, so the more specific reads last. They may hold anything the agent should follow there, e.g. XSLT
-/// style, how fields are mapped and how things are named.
+/// Standing instructions: Documentation docs named `AGENTS` in Stroom's folders, the equivalent of an AGENTS.md.
+/// A doc applies to its folder and everything below it, and one directly under the System root applies everywhere.
+/// Where several apply they are given from the most general to the most specific, so the more specific reads last.
+/// They may hold anything the agent should follow there, e.g. XSLT style, how fields are mapped and how things are
+/// named.
 ///
 /// One section is applied by the tools themselves rather than only handed to the agent: `## Ignore`, whose
 /// `- folders:` line names folders (relative to the doc's folder, or by their path within it) that searches for
@@ -62,9 +62,9 @@ public class AgentInstructions {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AgentInstructions.class);
 
-    /// The name of a Documentation doc that holds standing instructions, as the Stroom MCP server uses.
+    /// The name of a Documentation doc that holds standing instructions.
     public static final String DOC_NAME = "AGENTS";
-    /// The most characters of instructions given in one tool result, as the Stroom MCP server gives.
+    /// The most characters of instructions given in one tool result.
     static final int MAX_CHARS = 20_000;
     /// What the agent is told about following them.
     static final String FOLLOW = "Follow these standing instructions (AGENTS docs), the most specific last; the "
@@ -104,7 +104,7 @@ public class AgentInstructions {
         final List<UnreadableDoc> unreadable = new ArrayList<>();
         final List<DocRef> found;
         try {
-            // Allowing wild cards makes the name match ignore case, as the MCP server's does.
+            // Allowing wild cards makes the name match ignore case.
             found = NullSafe.list(docFinderProvider.get().findByName(DocumentationDoc.TYPE, DOC_NAME, true));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to find the " + DOC_NAME + " docs", e);
@@ -162,7 +162,7 @@ public class AgentInstructions {
                 paths.add(folderPath(found.get()));
             } else if (path.startsWith("/")) {
                 // A folder given by its path may not exist yet, e.g. where the work will be promoted to. The docs
-                // above it still apply, as the MCP server's do; the caller is told it wasn't found.
+                // above it still apply; the caller is told it wasn't found.
                 paths.add(normalise(path));
                 notFound.add(folder);
             } else {
@@ -190,13 +190,13 @@ public class AgentInstructions {
         return new Targets(paths.stream().distinct().toList(), List.copyOf(notFound));
     }
 
-    /// The standing instructions that apply where some work is, as the Stroom MCP server's `get_instructions`
-    /// gives them, for other tools to hand back with their results.
+    /// The standing instructions that apply where some work is, as `get_instructions` gives them, for other tools
+    /// to hand back with their results.
     ///
     /// @param session The session, e.g. the chat.
     /// @param purpose Why they are read, for the audit log.
     /// @param targets Where the work is, from [#targets].
-    /// @return The MCP server's JSON: `doc_name`, `instructions` (each `folder`, `uuid`, `applies_to`,
+    /// @return JSON: `doc_name`, `instructions` (each `folder`, `uuid`, `applies_to`,
     /// `instructions`, most general first), `other_instruction_docs` (each `folder`, `uuid`),
     /// `unreadable_instruction_docs` (each `folder`, `uuid`, `reason`; only if there are any) and `hint`.
     public Map<String, Object> applicableInstructions(final ToolSession session,
@@ -464,8 +464,8 @@ public class AgentInstructions {
         }
 
         /// @param paths Explorer paths the work touches: folders, or documents' folders.
-        /// @return The docs that apply there and the others, as the Stroom MCP server's `get_instructions` gives
-        /// them (see [AgentInstructions#applicableInstructions]).
+        /// @return The docs that apply there and the others, as `get_instructions` gives them (see
+        /// [AgentInstructions#applicableInstructions]).
         public Map<String, Object> asJson(final Collection<String> paths) {
             final List<InstructionDoc> applying = applyingTo(paths);
             final List<Map<String, Object>> instructions = new ArrayList<>();
@@ -551,7 +551,7 @@ public class AgentInstructions {
     // --------------------------------------------------------------------------------
 
 
-    /// A document some work touches, by type and name, as the Stroom MCP server's `get_instructions` takes it.
+    /// A document some work touches, by type and name, as `get_instructions` takes it.
     ///
     /// @param type Its type, e.g. `Pipeline`.
     /// @param name Its name.

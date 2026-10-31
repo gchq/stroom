@@ -45,8 +45,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 
-/// The streams a rebuilt mapping is proven on ([SampleStreams]: the Stroom MCP server's `tools/rebuild.py`
-/// `sample_streams`, tested in `tests/test_rebuild.py`).
+/// The streams a rebuilt mapping is proven on ([SampleStreams]).
 class TestSampleStreams {
 
     private final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);

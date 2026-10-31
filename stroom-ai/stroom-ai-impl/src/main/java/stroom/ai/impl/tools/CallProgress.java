@@ -27,10 +27,10 @@ import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.function.LongSupplier;
 
-/// What a long tool call is doing, told to its client as it goes (ported from the Stroom MCP server's
-/// `utils/progress.py`), through the call's [ToolProgress]: `CallProgress.of(context).say("Searching ...")`. A
-/// client that asked for progress shows each message while the call runs; for any other, nothing is sent. Asked for
-/// by the user: describe_document on an index ran for minutes with nothing to show what it was doing.
+/// What a long tool call is doing, told to its client as it goes, through the call's [ToolProgress]:
+/// `CallProgress.of(context).say("Searching ...")`. A client that asked for progress shows each message while the
+/// call runs; for any other, nothing is sent. Asked for by the user: a survey of an index ran for minutes with
+/// nothing to show what it was doing.
 ///
 /// There is one for the whole call, wherever in it it is asked for, so [#nowAndThen] counts from whatever was said
 /// last in the call. It never fails the call: a message that can't be sent is logged and dropped.

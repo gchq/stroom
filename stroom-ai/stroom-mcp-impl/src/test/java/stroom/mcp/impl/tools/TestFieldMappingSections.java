@@ -42,8 +42,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// The Field mapping section of a pipeline's documentation (the Stroom MCP server's `tools/builds.py`
-/// `field_mapping_section`, `_no_events` and `_agreed_line`, and their tests in `tests/test_fielddoc.py`).
+/// The Field mapping section of a pipeline's documentation: what is said when no events were sampled, and the line
+/// for the template the user agreed.
 class TestFieldMappingSections {
 
     private final TranslationWorld world = new TranslationWorld();
@@ -72,7 +72,7 @@ class TestFieldMappingSections {
         Mockito.when(stepping.open(any(), anyLong(), any())).thenReturn(walk);
         final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", TranslationWorld.mapping()));
 
-        assertThatThrownBy(() -> sections.fieldMappingSection(PortedToolCalls.context(), "b", pipeline, kept,
+        assertThatThrownBy(() -> sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline, kept,
                 List.of(873L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("no events (1 records stepped). stream 873 (ACME, Events): its records "
@@ -84,7 +84,7 @@ class TestFieldMappingSections {
                 .thenReturn(Map.of("path_population", Map.of()));
         final KeptMappings.KeptXslt plan = kept("index", plan("lucene", "acme", "EventTime"));
 
-        assertThatThrownBy(() -> sections.fieldMappingSection(PortedToolCalls.context(), "b", pipeline, plan,
+        assertThatThrownBy(() -> sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline, plan,
                 List.of(873L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("streams ['873 (ACME, Events)'] hold no events");
@@ -108,7 +108,7 @@ class TestFieldMappingSections {
         final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", TranslationWorld.mapping()));
 
         // The second stream's step runs out of time: it and the third are named, not stepped.
-        assertThatThrownBy(() -> sections.fieldMappingSection(PortedToolCalls.context(), "b", pipeline, kept,
+        assertThatThrownBy(() -> sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline, kept,
                 List.of(873L, 874L, 875L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("stream 873 (ACME, Raw Events): its records produced no Event; streams 874, "
@@ -125,7 +125,7 @@ class TestFieldMappingSections {
                 agreed)).build();
         final KeptMappings.KeptXslt kept = kept("index", plan("elasticsearch", "stroom-door-v1", "@timestamp"));
 
-        final String section = sections.fieldMappingSection(PortedToolCalls.context(), "b", agreedPipeline, kept,
+        final String section = sections.fieldMappingSection(BuildToolCalls.context(), "b", agreedPipeline, kept,
                 List.of(), FieldDocs.BY_EVENT_TYPE, new Descriptions());
 
         assertThat(section).contains("Elasticsearch index template `stroom-door-v1`, agreed with the user "

@@ -39,7 +39,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// create_feed (the Stroom MCP server's `tools/feeds.py` `create_feed`, and its tests in `tests/test_uploads.py`).
+/// create_feed, the tool.
 class TestCreateFeedTool {
 
     private final FeedWorld feeds = new FeedWorld();
@@ -52,7 +52,7 @@ class TestCreateFeedTool {
                                  + "\"UTF-16LE\", \"description\": \"The VPN's audit log\"}";
 
         // A client that can't show forms can't ask the user: nothing is made, and no id is given to pass back.
-        final ToolResult refused = call(arguments, PortedToolCalls.context());
+        final ToolResult refused = call(arguments, BuildToolCalls.context());
 
         assertThat(refused.isError()).isTrue();
         assertThat(refused.text()).startsWith("Not done: Create feed 'ACME-VPN-V1.0'. This needs the user's "
@@ -60,7 +60,7 @@ class TestCreateFeedTool {
                 .doesNotContain("confirmation_id");
         assertThat(feeds.feedNamed("ACME-VPN-V1.0")).isNull();
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
         final Map<String, Object> made = json(call(arguments, user.context()));
 
         assertThat(user.shown()).singleElement().asString().startsWith("Create feed 'ACME-VPN-V1.0'")
@@ -92,14 +92,14 @@ class TestCreateFeedTool {
         feeds.buildFeed("onboard-delinea", "Delinea-SecretServer-V1.0");
 
         final ToolResult refused = call("{\"build\": \"bb\", \"name\": \"DELINEA-SECRETSERVER-V1.0\"}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(refused.isError()).isTrue();
         assertThat(refused.text()).startsWith("A feed named 'Delinea-SecretServer-V1.0' (/MCP Workspace/"
                                               + "onboard-delinea) already exists, differing from "
                                               + "'DELINEA-SECRETSERVER-V1.0' only in case.");
         // Refused before the user is asked.
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         assertThat(call("{\"build\": \"bb\", \"name\": \"DELINEA-SECRETSERVER-V1.0\"}", user.context()).text())
                 .contains("only in case");
         assertThat(user.shown()).isEmpty();
@@ -116,7 +116,7 @@ class TestCreateFeedTool {
         feeds.feedAt("System/Feeds/ACME", "ACME-VPN-V1.0", "f1");
 
         final ToolResult refused = call("{\"build\": \"onboard-acme\", \"name\": \"ACME-VPN-V1.0\"}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(refused.text()).startsWith("A feed named 'ACME-VPN-V1.0' already exists (/Feeds/ACME), and "
                                               + "Stroom keeps one feed per name.");
@@ -124,7 +124,7 @@ class TestCreateFeedTool {
 
         final DocRef own = feeds.buildFeed("onboard-acme", "ACME-EVENTS-V1.0");
         final Map<String, Object> again = json(call("{\"build\": \"onboard-acme\", \"name\": \"ACME-EVENTS-V1.0\"}",
-                PortedToolCalls.context()));
+                BuildToolCalls.context()));
 
         assertThat(again).containsEntry("existing", true).containsEntry("uuid", own.getUuid());
         assertThat(String.valueOf(again.get("note"))).contains("nothing new was made");
@@ -139,11 +139,11 @@ class TestCreateFeedTool {
         feeds.facts.sources = List.of("VPN-GATEWAY");
 
         final ToolResult refused = call("{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-SAMPLES\"}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(refused.text()).startsWith("Build 'bb' works from the existing feed(s) VPN-GATEWAY:")
                 .contains("user_samples=");
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
         final String arguments = "{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-SAMPLES\", \"user_samples\": "
                                  + "[\"samples/vpn_1.csv\"]}";
 
@@ -172,7 +172,7 @@ class TestCreateFeedTool {
         for (final String asked : List.of("\"test_feed\": true", "\"stream_type\": \"Events\"")) {
             final String name = "VPN-GATEWAY-TEST-V" + (++made);
             final Map<String, Object> result = json(call("{\"build\": \"bb\", \"name\": \"" + name + "\", " + asked
-                                                         + "}", PortedToolCalls.answering(Map.of())));
+                                                         + "}", BuildToolCalls.answering(Map.of())));
 
             assertThat(result).containsEntry("test_feed", true).containsEntry("name", name)
                     .containsEntry("works_from", List.of("VPN-GATEWAY"));
@@ -187,20 +187,20 @@ class TestCreateFeedTool {
             assertThat(feeds.world.records().entry("bb", feed.getUuid()).get(BuildFeeds.OUTPUT_FOR))
                     .isEqualTo(List.of("VPN-GATEWAY"));
         }
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         call("{\"build\": \"bb\", \"name\": \"VPN-GATEWAY-TEST-V9\", \"test_feed\": true}", user.context());
         assertThat(user.shown()).singleElement().asString()
                 .startsWith("Create test feed 'VPN-GATEWAY-TEST-V9' for the Events made from VPN-GATEWAY");
 
         feeds.facts.sources = List.of();
         assertThat(call("{\"build\": \"bb\", \"name\": \"ACME-TEST\", \"test_feed\": true}",
-                PortedToolCalls.context()).text()).contains("no test feed to name");
+                BuildToolCalls.context()).text()).contains("no test feed to name");
     }
 
     @Test
     void theNameTheUserSettlesOnInTheFormIsMadeAndSaid() {
         final Map<String, Object> made = json(call("{\"build\": \"bb\", \"name\": \"ACME-VPN-V1.0\"}",
-                PortedToolCalls.answering(Map.of("name", "ACME-VPN-V2.0"))));
+                BuildToolCalls.answering(Map.of("name", "ACME-VPN-V2.0"))));
 
         assertThat(feeds.feedNamed("ACME-VPN-V1.0")).isNull();
         assertThat(made).containsEntry("name", "ACME-VPN-V2.0")
@@ -213,7 +213,7 @@ class TestCreateFeedTool {
         feeds.buildFeed("other", "acme-vpn-v2.0");
 
         final ToolResult refused = call("{\"build\": \"bb\", \"name\": \"ACME-VPN-V1.0\"}",
-                PortedToolCalls.answering(Map.of("name", "ACME-VPN-V2.0")));
+                BuildToolCalls.answering(Map.of("name", "ACME-VPN-V2.0")));
 
         assertThat(refused.text()).contains("differing from 'ACME-VPN-V2.0' only in case");
         assertThat(feeds.world.created).isEmpty();
@@ -225,7 +225,7 @@ class TestCreateFeedTool {
                 .when(feeds.world.explorerService).create(anyString(), anyString(), any(ExplorerNode.class), any());
 
         final ToolResult refused = call("{\"build\": \"bb\", \"name\": \"acme vpn\"}",
-                PortedToolCalls.answering(Map.of()));
+                BuildToolCalls.answering(Map.of()));
 
         assertThat(refused.text()).isEqualTo("Stroom rejected the feed name: Invalid name \"acme vpn\" "
                                              + "(^[A-Z0-9_-]{3,}$). Propose a name that matches the pattern shown.");
@@ -239,7 +239,7 @@ class TestCreateFeedTool {
                 row(12, 1_000L, Status.UNLOCKED), row(11, 2_000L, Status.DELETED), row(13, 9_000L, Status.UNLOCKED))));
 
         final Map<String, Object> made = json(call("{\"build\": \"bb\", \"name\": \"ACME-VPN-V1.0\"}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat(String.valueOf(made.get("note"))).startsWith("Stroom still holds 1 stream(s) from an earlier "
                                                                 + "feed named ACME-VPN-V1.0, since deleted (e.g. "
@@ -259,11 +259,11 @@ class TestCreateFeedTool {
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        return tool.execute(PortedToolCalls.call(CreateFeedTool.NAME, arguments), context);
+        return tool.execute(BuildToolCalls.call(CreateFeedTool.NAME, arguments), context);
     }
 
     private static Map<String, Object> json(final ToolResult result) {
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

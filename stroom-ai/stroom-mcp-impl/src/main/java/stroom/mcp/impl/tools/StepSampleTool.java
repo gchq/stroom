@@ -20,7 +20,6 @@ import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -31,6 +30,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -47,10 +47,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-/// `step_sample` - steps every record of the sample streams to completion and returns one verdict for the whole
-/// sample: error groups triaged (blocking / review / benign) with the records they affect, plus per-record status.
-/// The correctness check before processing. A clean verdict is recorded in the build's record for the code stepped,
-/// for promotion. Ported from the Stroom MCP server's `tools/stepping.py`.
+/// `step_sample` - steps every record of the sample streams to completion and returns one verdict for the whole sample:
+/// error groups triaged (blocking / review / benign) with the records they affect, plus per-record status. The
+/// correctness check before processing. A clean verdict is recorded in the build's record for the code stepped, for
+/// promotion.
 ///
 /// Stepped as the user, who needs the Stepping permission, one stepping session per stream on this node, each ended
 /// when its stream is done. It takes a run slot over `/mcp`, says where it is now and then, stops at once when its
@@ -120,12 +120,11 @@ class StepSampleTool extends AbstractBuiltInTool {
 
     @Override
     public boolean isReadOnly() {
-        // Read-only, although a clean verdict is recorded in the build's record of the pipeline stepped, as the
-        // Stroom MCP server's step_sample did (it said readOnlyHint false for that), and as check_events records
-        // Events that pass. The record is the tools' own bookkeeping, kept only for pipelines in a build
-        // (WriteGuard's own), never for anything a person wrote or anything that runs: stepping changes no data,
-        // document content or processing, and promotion, which reads the record, asks for its own approval. Taken
-        // as a write, every step would need approving over /mcp, and none could be made while the user is away.
+        // Read-only, although a clean verdict is recorded in the build's record of the pipeline stepped, as
+        // check_events records Events that pass. The record is the tools' own bookkeeping, kept only for pipelines in a
+        // build (WriteGuard's own), never for anything a person wrote or anything that runs: stepping changes no data,
+        // document content or processing, and promotion, which reads the record, asks for its own approval. Taken as a
+        // write, every step would need approving over /mcp, and none could be made while the user is away.
         return true;
     }
 
@@ -175,9 +174,9 @@ class StepSampleTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The sample stepped, as the Stroom MCP server gave it: `pipeline`, `records_stepped`, `records_with_errors`,
-    /// `draft_code_used`, the triage (`verdict`, `groups_by_class`, `groups`, each group with its `records`),
-    /// `first_record_output`, and any `hint`, `stopped_early`, `record` and `next`.
+    /// The sample stepped: `pipeline`, `records_stepped`, `records_with_errors`, `draft_code_used`, the triage
+    /// (`verdict`, `groups_by_class`, `groups`, each group with its `records`), `first_record_output`, and any `hint`,
+    /// `stopped_early`, `record` and `next`.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> stepSample(final ToolCall call,
@@ -359,7 +358,7 @@ class StepSampleTool extends AbstractBuiltInTool {
             result.put("verdict", summary.get("verdict"));
         }
         if (keys.isEmpty()) {
-            SteppingVerdicts.nothingStepped(result, walked.markers, "streams " + PyText.repr(streamIds));
+            SteppingVerdicts.nothingStepped(result, walked.markers, "streams " + ToolText.repr(streamIds));
         }
         if (walked.cut) {
             // A verdict of fewer records than asked for isn't the clean step promotion relies on: not recorded.

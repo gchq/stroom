@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/// The fixtures of the reader's tests: the generator's golden files (XSLTs the Stroom MCP server's generator wrote,
-/// with their mappings), and parsed expressions written as the Python fixtures write them.
+/// The fixtures of the reader's tests: the generator's golden files (generated XSLTs, with their mappings), and
+/// parsed expressions written as the fixtures write them.
 final class ReadingFixtures {
 
     private static final String GOLDEN = "/stroom/ai/impl/golden/generation";
@@ -78,11 +78,11 @@ final class ReadingFixtures {
     /// @return Its JSON, read.
     @SuppressWarnings("unchecked")
     static <T> T json(final String name) {
-        return (T) PyJson.loads(GenerationFixtures.resource(name));
+        return (T) ToolJson.loads(GenerationFixtures.resource(name));
     }
 
     /// @param node A parsed expression.
-    /// @return It as the Python fixtures write a tree: `[symbol, value, start, end, children...]`, numbers as
+    /// @return It as the fixtures write a tree: `[symbol, value, start, end, children...]`, numbers as
     /// `{"int": "1"}`, `{"decimal": "1.5"}` or `{"float": "1000.0"}`.
     static List<Object> tree(final XPathNode node) {
         final List<Object> out = new ArrayList<>();
@@ -98,7 +98,7 @@ final class ReadingFixtures {
         return switch (value) {
             case final BigInteger number -> Map.of("int", number.toString());
             case final BigDecimal number -> Map.of("decimal", number.toPlainString());
-            case final Double number -> Map.of("float", PyJson.dumps(number));
+            case final Double number -> Map.of("float", ToolJson.dumps(number));
             case null, default -> value;
         };
     }
@@ -108,7 +108,7 @@ final class ReadingFixtures {
     static String digest(final Object value) {
         try {
             final byte[] hash = MessageDigest.getInstance("SHA-256")
-                    .digest(PyJson.dumps(value).getBytes(StandardCharsets.US_ASCII));
+                    .digest(ToolJson.dumps(value).getBytes(StandardCharsets.US_ASCII));
             return HexFormat.of().formatHex(hash).substring(0, 16);
         } catch (final NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);

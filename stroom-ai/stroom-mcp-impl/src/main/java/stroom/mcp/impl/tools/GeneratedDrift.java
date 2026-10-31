@@ -18,7 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
@@ -35,9 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/// Whether a build's XSLTs are still what their kept mappings generate, for the checks before promotion
-/// ([BuildChecks]) and the Field mapping section: the Stroom MCP server's `tools/builds.py` `_drift`, `_plan_drift`
-/// and `lost_mappings`, which regenerate an XSLT from its mapping (the ported generators) and compare.
+/// Whether a build's XSLTs are still what their kept mappings generate, for the checks before promotion ([BuildChecks])
+/// and the Field mapping section: each XSLT is regenerated from its mapping and compared.
 class GeneratedDrift {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GeneratedDrift.class);
@@ -83,7 +82,7 @@ class GeneratedDrift {
             return Optional.of("the mapping kept with its XSLT no longer generates (" + e.getMessage() + ")");
         }
         if (!regenerated.ok()) {
-            return Optional.of("the mapping kept with its XSLT no longer generates: " + PyText.list(
+            return Optional.of("the mapping kept with its XSLT no longer generates: " + ToolText.list(
                     regenerated.problems().subList(0, Math.min(2, regenerated.problems().size()))));
         }
         if (XsltCode.normalise(regenerated.xslt()).equals(XsltCode.normalise(code))) {
@@ -98,8 +97,8 @@ class GeneratedDrift {
         final String differs = " What differs (- what the mapping generates, + the XSLT): " + String.join(" | ",
                 CodeDiff.diff(regenerated.xslt(), code));
         if (same.orElse(false) && saved.map(XsltVersionHistory.Saved::hand).orElse(false)) {
-            // Not in the Python server, which took this for an earlier generator's code and offered to regenerate
-            // it, undoing the edit (seen: TWITTER's mentions and links, saved with save_xslt, and the
+            // A hand edit, never an earlier generator's code to regenerate, which would undo the edit (seen in testing:
+            // TWITTER's mentions and links, saved with save_xslt, taken for an earlier generator's code, and the
             // documentation generated from the mapping without them).
             return Optional.of(HAND_SAVED + " (save_xslt) since its mapping was kept, and "
                                + "differs from what that mapping generates: the mapping no longer says what it "
@@ -111,8 +110,8 @@ class GeneratedDrift {
                                + "undoes the edit." + differs);
         }
         if (same.orElse(false)) {
-            // Seen in production after 0.16.43: reported as edited by hand, and the agent went looking for the
-            // edit.
+            // Seen in production after a generator change: reported as edited by hand, and the agent went looking for
+            // the edit.
             return Optional.of("its XSLT was written by an earlier generator (" + NullSafe.nonBlankStringElse(by,
                     "an earlier version") + ") and is unchanged since; the generator now writes its mapping "
                                + "differently (e.g. its style defaults). " + regenerate + ", as the generator writes "
@@ -135,7 +134,6 @@ class GeneratedDrift {
 
     /// The drift of an XSLT edited since its mapping was kept, by hand in Stroom or saved as written by hand
     /// (save_xslt): its mapping no longer says what it writes, so documentation generated from it would be wrong.
-    /// Not in the Python server, which documented such an XSLT from its mapping, with a note.
     ///
     /// @param kept A translation mapping kept with its XSLT.
     /// @return Why the XSLT is no longer what its mapping generates, when it was edited; else empty (it is, or
@@ -149,7 +147,7 @@ class GeneratedDrift {
     public Optional<String> planDrift(final KeptMappings.KeptXslt kept) {
         final XsltDoc xslt = kept.xslt();
         final String code = NullSafe.string(xslt.getData());
-        // Saved by hand (save_xslt) counts as an edit too: not in the Python server.
+        // Saved by hand (save_xslt) counts as an edit too.
         if (!Optional.of(false).equals(XsltVersionHistory.asGenerated(xslt.getDescription(), code))) {
             return Optional.empty();
         }

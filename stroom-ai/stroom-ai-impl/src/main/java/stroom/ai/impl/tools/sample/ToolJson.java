@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -28,16 +28,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-/// JSON read and written as Python's `json` module does, which the sample analysis ported from the Stroom MCP
-/// server relies on: which texts parse (a `NaN`, a big integer, a byte order mark refused), the messages a text that
-/// doesn't parse gives ("Invalid \escape", "Expecting value"), reading one value from a place in a text
-/// (`raw_decode`), and how a value is written back (`json.dumps`: `{"a": 1, "b": [true, null]}`, non-ASCII escaped).
+/// JSON read and written for the sample analysis and the JSON the tools keep: which texts parse (a `NaN`, a big
+/// integer, a byte order mark refused), the messages a text that doesn't parse gives ("Invalid \escape",
+/// "Expecting value", with line, column and character), reading one value from a place in a text, and how a value
+/// is written back (`{"a": 1, "b": [true, null]}`, non-ASCII escaped). The messages are what agents are shown and
+/// tests pin, and the written forms are those kept in documents and digested, so neither changes lightly.
 ///
 /// Values are read as [Map] (in key order), [List], [String], [Long] or [BigInteger], [Double], [Boolean] and
 /// null.
-public final class PyJson {
+public final class ToolJson {
 
-    private PyJson() {
+    private ToolJson() {
         // Static methods only.
     }
 
@@ -45,7 +46,7 @@ public final class PyJson {
     ///
     /// @param text The text.
     /// @return Its value.
-    /// @throws JsonDecodeException if it isn't one JSON value, with Python's message.
+    /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
     public static Object loads(final String text) {
         if (text.startsWith("﻿")) {
             throw new JsonDecodeException("Unexpected UTF-8 BOM (decode using utf-8-sig)", text, 0);
@@ -95,9 +96,8 @@ public final class PyJson {
     }
 
     /// @param value A value made of maps (with string keys), collections, strings, numbers, booleans or null.
-    /// @return It written as `json.dumps(value, ensure_ascii=False, separators=(',', ':'))` writes it: compact, and
-    /// characters past ASCII as they are, as the Stroom MCP server writes the JSON it keeps in a document's
-    /// description.
+    /// @return It written compact (no spaces after `,` and `:`), with characters past ASCII as they are: the form of
+    /// the JSON kept in a document's description.
     public static String dumpsCompact(final Object value) {
         final StringBuilder out = new StringBuilder();
         writeCompact(out, value);
@@ -105,8 +105,9 @@ public final class PyJson {
     }
 
     /// @param value A value made of maps (with string keys), collections, strings, numbers, booleans or null.
-    /// @return It written as `json.dumps(value, sort_keys=True)` writes it, as the Stroom MCP server writes the
-    /// JSON whose text matters (a build's record, and digests of JSON, which must come out the same from both).
+    /// @return It written with every map's keys sorted (`{"a": 1, "b": [true, null]}`, non-ASCII escaped): the form
+    /// of JSON whose text matters (a build's record, and digests of JSON, which must come out the same every time,
+    /// as a digest kept in a build record is compared with one made later).
     public static String dumpsSortedKeys(final Object value) {
         return dumps(sortedKeys(value));
     }
@@ -118,8 +119,8 @@ public final class PyJson {
         return dumps(sortedKeys(value), indent);
     }
 
-    // The value with every map's keys in order. Python sorts by code point, Java's String order by UTF-16 unit,
-    // which differ only past the Basic Multilingual Plane.
+    // The value with every map's keys in order: by UTF-16 unit, which differs from code point order only past the
+    // Basic Multilingual Plane.
     private static Object sortedKeys(final Object value) {
         if (value instanceof final Map<?, ?> map) {
             final Map<String, Object> sorted = new TreeMap<>();
@@ -269,7 +270,7 @@ public final class PyJson {
                     ? "Infinity"
                     : "-Infinity";
         }
-        return PyText.floatRepr(value);
+        return ToolText.floatRepr(value);
     }
 
     // As json.dumps writes a string: with ensureAscii, every character past ASCII escaped too.
@@ -309,7 +310,7 @@ public final class PyJson {
 
     }
 
-    /// A text that isn't JSON, said as Python's `json.JSONDecodeError` says it.
+    /// A text that isn't JSON: what is wrong and where, e.g. `Expecting value: line 1 column 1 (char 0)`.
     public static final class JsonDecodeException extends RuntimeException {
 
         private final String msg;
@@ -336,12 +337,12 @@ public final class PyJson {
             return msg + ": line " + line + " column " + column + " (char " + pos + ")";
         }
 
-        /// @return What is wrong, without where, e.g. `Expecting value` (Python's `e.msg`).
+        /// @return What is wrong, without where, e.g. `Expecting value`.
         public String msg() {
             return msg;
         }
 
-        /// @return The index in the text where it went wrong (Python's `e.pos`).
+        /// @return The index in the text where it went wrong.
         public int pos() {
             return pos;
         }
@@ -373,7 +374,7 @@ public final class PyJson {
             return decoded;
         }
 
-        // A value at idx, or null when none starts there (Python's StopIteration).
+        // A value at idx, or null when none starts there.
         private Decoded scanOnce(final int idx) {
             if (idx >= length) {
                 return null;

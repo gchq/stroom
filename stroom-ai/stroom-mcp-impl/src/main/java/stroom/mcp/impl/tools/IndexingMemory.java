@@ -38,12 +38,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
 
-/// What the indexing tools remember for each user, in this node's memory, as the Stroom MCP server kept it in its
-/// own (`tools/indexing.py`'s session stores): how the user chose in a form to name the index's fields
-/// (`field_naming_chosen`), the time field they picked for a discovery index (`discovery_time_chosen`), the component
-/// templates given (`component_templates_given`), the index templates shown for review (`templates_shown`), the plans
-/// drafted (`index_plans_drafted`) and the verification checks that passed (`verify_checks_passed`). Each is a
-/// convenience: without it, the user is asked again, or the agent gives the template or plan again.
+/// What the indexing tools remember for each user, in this node's memory: how the user chose in a form to name the
+/// index's fields, the time field they picked for a discovery index, the component templates given, the index templates
+/// shown for review, the plans drafted and the verification checks that passed. Each is a convenience: without it, the
+/// user is asked again, or the agent gives the template or plan again.
 @Singleton
 class IndexingMemory {
 
@@ -110,7 +108,7 @@ class IndexingMemory {
     }
 
     /// Remembers what the user chose in the form to index a discovery index's stand-ins for none as, with what they
-    /// chose before (not in the Stroom MCP server).
+    /// chose before.
     ///
     /// @param indexName The discovery index.
     /// @param chosen    What each stand-in is indexed as, by value (see Discovery#STAND_IN_TREATMENTS).
@@ -191,9 +189,9 @@ class IndexingMemory {
         plans.put(user() + "\n" + plan.indexName(), plan.toJson());
     }
 
-    /// Keeps how often the Events a plan was drafted from populate each path, so an amendment that gives no
-    /// streams is checked against them without reading them again (not in the Stroom MCP server; seen: a field
-    /// added by changes= from a path no event has, unchecked).
+    /// Keeps how often the Events a plan was drafted from populate each path, so an amendment that gives no streams is
+    /// checked against them without reading them again (seen in testing: a field added by changes= from a path no event
+    /// has, unchecked).
     ///
     /// @param indexName  The plan's index name.
     /// @param population The % of events each path (and each named Data entry) is populated in; null keeps
@@ -225,8 +223,8 @@ class IndexingMemory {
         return out;
     }
 
-    /// The plans this user drafted or amended, as save_xslt reads them (the plans are kept per user, as the Stroom
-    /// MCP server kept them, so the session doesn't narrow them). A kept plan that no longer reads is left out.
+    /// The plans this user drafted or amended, as save_xslt reads them (the plans are kept per user, so the session
+    /// doesn't narrow them). A kept plan that no longer reads is left out.
     ///
     /// @param session The session asking.
     /// @return The plans, by index name.

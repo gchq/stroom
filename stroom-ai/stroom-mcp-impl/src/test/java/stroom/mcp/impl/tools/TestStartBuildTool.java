@@ -30,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// start_build (the Stroom MCP server's `tools/builds.py` `start_build`, and its test in
-/// `tests/test_existing_data_plan.py`).
+/// start_build: the build's folder, the existing feeds it works from, and the kind of work recorded.
 class TestStartBuildTool {
 
     private final FeedWorld feeds = new FeedWorld();
@@ -46,8 +45,8 @@ class TestStartBuildTool {
         feeds.feedAt("System/Feeds/ACME", "ACME", "prod");
         feeds.buildFeed("bb", "ACME-COPY");
 
-        final Map<String, Object> started = json(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
-                "{\"build\": \"bb\", \"feeds\": [\"ACME\", \"ACME-COPY\", \"NEW\"]}"), PortedToolCalls.context()));
+        final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\", \"feeds\": [\"ACME\", \"ACME-COPY\", \"NEW\"]}"), BuildToolCalls.context()));
 
         // Only a feed outside the build counts: the build's own (a test feed) and one not made yet don't.
         assertThat(started).containsEntry("works_from", List.of("ACME"))
@@ -68,22 +67,22 @@ class TestStartBuildTool {
         // naming no build was refused rather than taking it.
         Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
                 .thenReturn(Map.of("instructions", List.of()));
-        final ToolCallContext context = PortedToolCalls.context();
+        final ToolCallContext context = BuildToolCalls.context();
 
-        tool.execute(PortedToolCalls.call(StartBuildTool.NAME, "{\"build\": \"bb\"}"), context);
+        tool.execute(BuildToolCalls.call(StartBuildTool.NAME, "{\"build\": \"bb\"}"), context);
 
         assertThat(feeds.plan.currentBuild(context)).contains("bb");
     }
 
     @Test
     void aBuildWithNoFeedsIsJustItsFolder() {
-        final Map<String, Object> started = json(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
-                "{\"build\": \"acme-door-v1.3\"}"), PortedToolCalls.context()));
+        final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"acme-door-v1.3\"}"), BuildToolCalls.context()));
 
         assertThat(started).containsEntry("build", "acme-door-v1.3").doesNotContainKeys("works_from", "not_found");
         assertThat(feeds.world.guard().buildFolder("acme-door-v1.3", false)).isPresent();
-        assertThat(tool.execute(PortedToolCalls.call(StartBuildTool.NAME, "{\"build\": \"a b\"}"),
-                PortedToolCalls.context()).text()).startsWith("Build names are 2 to 64 letters");
+        assertThat(tool.execute(BuildToolCalls.call(StartBuildTool.NAME, "{\"build\": \"a b\"}"),
+                BuildToolCalls.context()).text()).startsWith("Build names are 2 to 64 letters");
     }
 
     @Test
@@ -94,8 +93,8 @@ class TestStartBuildTool {
                 .thenReturn(Map.of("instructions", List.of()));
         // The plan reads the build's kind from Stroom (here, the fake facts) as the record keeps it.
         feeds.facts.kind = "reference";
-        final Map<String, Object> started = json(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
-                "{\"build\": \"hr-users\", \"kind\": \"reference\"}"), PortedToolCalls.context()));
+        final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"hr-users\", \"kind\": \"reference\"}"), BuildToolCalls.context()));
 
         assertThat(feeds.world.records().kind("hr-users")).hasValue("reference");
         assertThat(started).containsEntry("kind", "reference");
@@ -103,8 +102,8 @@ class TestStartBuildTool {
                 .as("the build's own steps")
                 .contains("feed", "samples", "reference_pipeline", "reference_processed", "promoted")
                 .doesNotContain("translation", "index");
-        assertThat(tool.execute(PortedToolCalls.call(StartBuildTool.NAME,
-                "{\"build\": \"hr-users\", \"kind\": \"lookup\"}"), PortedToolCalls.context()).text())
+        assertThat(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"hr-users\", \"kind\": \"lookup\"}"), BuildToolCalls.context()).text())
                 .contains("kind is one of ['events', 'discovery', 'reference'], not 'lookup'");
     }
 
@@ -117,6 +116,6 @@ class TestStartBuildTool {
 
     private static Map<String, Object> json(final ToolResult result) {
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

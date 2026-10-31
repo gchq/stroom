@@ -49,9 +49,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /// `create_feed` - creates a feed in the build folder, under the name the agent proposes and the user confirms or
-/// corrects (the Stroom MCP server's `tools/feeds.py` `create_feed`). In a build on an existing feed's data, it makes
-/// only a test feed: for sample files the user chose (`user_samples`), or the one the build's Events are written to
-/// (`test_feed`).
+/// corrects. In a build on an existing feed's data, it makes only a test feed: for sample files the user chose
+/// (`user_samples`), or the one the build's Events are written to (`test_feed`).
 class CreateFeedTool extends AbstractBuiltInTool {
 
     static final String NAME = "create_feed";

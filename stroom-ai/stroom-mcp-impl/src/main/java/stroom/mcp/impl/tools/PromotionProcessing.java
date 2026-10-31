@@ -41,10 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongSupplier;
 
-/// What a build's pipelines go on processing once promoted, and the feed-wide filters made for them, disabled for
-/// the user to enable. Ported from the Stroom MCP server's `tools/processing_writes.py` (`promotion_processing`,
-/// `_test_feed`, `create_promotion_filters`, `_covering_filter` and `_before_promoted_indexing`), for the builds'
-/// port (`promote_build`) to use.
+/// What a build's pipelines go on processing once promoted, and the feed-wide filters made for them, disabled for the
+/// user to enable, for `promote_build` to use.
 class PromotionProcessing {
 
     private final ProcessorFilterWrites filterWrites;
@@ -90,8 +88,7 @@ class PromotionProcessing {
         this.clockMs = clockMs;
     }
 
-    /// What each promoted pipeline should go on processing: the feeds and stream types of its sample filters
-    /// (`promotion_processing`).
+    /// What each promoted pipeline should go on processing: the feeds and stream types of its sample filters.
     ///
     /// A build on data already in Stroom works from its source feeds (the feed it surveyed, the one a production
     /// pipeline it copies processes, those start_build was given): a translation pipeline processes those, never the
@@ -162,17 +159,17 @@ class PromotionProcessing {
         return plan;
     }
 
-    /// Feed-wide filters for promoted pipelines, created disabled for the user (`create_promotion_filters`). No
-    /// minimum stream creation time (asked for by the user): enabled, a filter processes the feed's data, existing
-    /// data included, and what the pipeline processed in its build too: Stroom does those again for a new filter.
-    /// An index starts fresh: dropped (or emptied) before its filter is enabled, it holds each event once (asked for
-    /// by the user, in place of leaving out the streams processed in the build, which an index would otherwise hold
-    /// twice). A pipeline with an enabled filter already selecting what arrives is given none (asked for by the
-    /// user): a second would process everything twice.
+    /// Feed-wide filters for promoted pipelines, created disabled for the user. No minimum stream creation time (asked
+    /// for by the user): enabled, a filter processes the feed's data, existing data included, and what the pipeline
+    /// processed in its build too: Stroom does those again for a new filter. An index starts fresh: dropped (or
+    /// emptied) before its filter is enabled, it holds each event once (asked for by the user, in place of leaving out
+    /// the streams processed in the build, which an index would otherwise hold twice). A pipeline with an enabled
+    /// filter already selecting what arrives is given none (asked for by the user): a second would process everything
+    /// twice.
     ///
     /// @param links How the caller links to Stroom.
     /// @param plan  What [#promotionProcessing] planned.
-    /// @return What was made for each entry, in order, as the Stroom MCP server gave it.
+    /// @return What was made for each entry, in order.
     List<Map<String, Object>> createPromotionFilters(final StroomLinks links, final List<Entry> plan) {
         final List<Map<String, Object>> made = new ArrayList<>();
         for (final Entry entry : plan) {

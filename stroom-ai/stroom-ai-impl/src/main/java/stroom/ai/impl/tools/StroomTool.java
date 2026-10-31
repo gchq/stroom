@@ -100,10 +100,9 @@ public interface StroomTool {
     }
 
     /// Whether the tool asks the user itself before every change it makes, with a form that says what it will do
-    /// and lets them change it (see the build layer's `Consent`), as the Stroom MCP server's write tools do. Over
-    /// MCP such a call isn't also approved as a whole first, so the user is asked once; in the chat, such a call
-    /// isn't put on an approval card after the chat has read untrusted content either (see
-    /// [#changesNeedApprovalAfterUntrustedContent()]).
+    /// and lets them change it (see the build layer's `Consent`). Over MCP such a call isn't also approved as a
+    /// whole first, so the user is asked once; in the chat, such a call isn't put on an approval card after the chat
+    /// has read untrusted content either (see [#changesNeedApprovalAfterUntrustedContent()]).
     ///
     /// @return True if every change the tool makes is confirmed by the tool itself. Defaults to false.
     default boolean confirmsItself() {

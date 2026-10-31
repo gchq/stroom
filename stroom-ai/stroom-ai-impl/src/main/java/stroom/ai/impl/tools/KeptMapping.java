@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -30,7 +30,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The mapping an XSLT was generated from, kept with the XSLT, as the Stroom MCP server keeps it.
+/// The mapping an XSLT was generated from, kept with the XSLT.
 ///
 /// An XSLT doc's description (its Documentation tab in Stroom) carries the translation mapping (or an indexing
 /// field plan, or a CEF plan), so the documentation's Field mapping section can be regenerated later, a change can
@@ -130,8 +130,8 @@ public final class KeptMapping {
         return text.strip();
     }
 
-    /// The description with a block (hidden, as compact JSON, written as the Stroom MCP server's
-    /// `json.dumps(payload, ensure_ascii=False, separators=(',', ':'))` writes it) replacing any earlier one of its
+    /// The description with a block (hidden, as compact JSON: no spaces after `,` or `:`, and characters beyond
+    /// ASCII written as they are, the form blocks already in documents hold) replacing any earlier one of its
     /// name, after the note. A comment can't hold '--': written '-\\u002d', which JSON reads back as '--' (it only
     /// occurs inside a string).
     ///
@@ -140,7 +140,7 @@ public final class KeptMapping {
     /// @param payload     What the block holds.
     /// @return The description with the block.
     public static String withBlock(final String description, final String name, final Object payload) {
-        final String body = PyJson.dumpsCompact(payload).replace("--", "-\\u002d");
+        final String body = ToolJson.dumpsCompact(payload).replace("--", "-\\u002d");
         final String block = "<!-- stroom-mcp " + name + ": kept by the server, do not edit or delete\n" + body
                              + "\n-->";
         final String text = NOTE_PATTERN.matcher(withoutBlock(description, name)).replaceAll("\n\n").strip();
@@ -163,8 +163,7 @@ public final class KeptMapping {
         return String.join("\n\n", parts);
     }
 
-    /// The description with the mapping block replacing any earlier one (of any kind): the Stroom MCP server's
-    /// `mappingstore.with_mapping`.
+    /// The description with the mapping block replacing any earlier one (of any kind).
     ///
     /// @param description A document's description, or null.
     /// @param kind        The mapping's kind, one of [#KINDS].
@@ -207,8 +206,7 @@ public final class KeptMapping {
     }
 
     /// The markdown with the `## heading` section's body replaced, or the section added before Output (else
-    /// Conformance, Open items or Change log, else at the end): the Stroom MCP server's
-    /// `mappingstore.replace_section`.
+    /// Conformance, Open items or Change log, else at the end).
     ///
     /// @param markdown A documentation doc's text.
     /// @param heading  The section's heading, without `## `.
@@ -312,7 +310,7 @@ public final class KeptMapping {
             final List<Object> fields = new ArrayList<>(common);
             fields.addAll(JsonValues.listOrEmpty(rule.get("fields")));
             for (final Object field : fields) {
-                final String path = PyText.strip(NullSafe.string(stringOf(JsonValues.mapOrEmpty(field).get("path"))),
+                final String path = ToolText.strip(NullSafe.string(stringOf(JsonValues.mapOrEmpty(field).get("path"))),
                         "/");
                 final String[] parts = path.split("/");
                 if (path.startsWith("EventDetail/") && parts.length > 1 && !"TypeId".equals(parts[1])

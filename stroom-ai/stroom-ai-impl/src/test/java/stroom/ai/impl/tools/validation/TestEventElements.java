@@ -27,9 +27,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// What an event-logging element takes, from the schema. Ported from the Stroom MCP server's
-/// `tests/test_validation.py` (`test_describe_event_element_says_what_an_element_takes`): Qwen in VS Code spent
-/// twelve minutes writing PowerShell to read the action elements and their children out of the XSD.
+/// What an event-logging element takes, from the schema: Qwen in VS Code spent twelve minutes writing PowerShell to
+/// read the action elements and their children out of the XSD.
 class TestEventElements {
 
     private final HeldSchemas held = new HeldSchemasWorld()

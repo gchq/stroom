@@ -31,11 +31,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What a translation XSLT does, as the Stroom MCP server's `describe_translation` said it (ported from
-/// `tools/validation.py`'s `describe_translation`, `_describe` and `index_fields`): for each output element or
-/// attribute, the input field, expression or constant that fills it (grouped by the template it is written in),
-/// the input fields it reads, and the XSLT libraries, dictionaries and reference lookups it uses. An indexing XSLT
-/// is described by its fields instead.
+/// What a translation XSLT does: for each output element or attribute, the input field, expression or constant
+/// that fills it (grouped by the template it is written in), the input fields it reads, and the XSLT libraries,
+/// dictionaries and reference lookups it uses. An indexing XSLT is described by its fields instead.
 public final class TranslationDescriptions {
 
     private static final String FN = XsltSafety.FN;
@@ -208,7 +206,7 @@ public final class TranslationDescriptions {
                 : path;
     }
 
-    // A template's match, else its name (null if it has neither), as Python's `a or b`.
+    // A template's match if it is not empty, else its name (null if it has neither).
     private static String matchOrName(final Element template) {
         final String match = XmlTrees.attribute(template, "match");
         return match != null && !match.isEmpty()
@@ -278,7 +276,8 @@ public final class TranslationDescriptions {
         return current;
     }
 
-    // As Python's `a or b`, with None written as Python writes it.
+    // The first if it is not empty, else the second, a missing second written `None`: the descriptions'
+    // established wording, which the tests pin.
     private static String pythonOr(final String first, final String second) {
         if (first != null && !first.isEmpty()) {
             return first;

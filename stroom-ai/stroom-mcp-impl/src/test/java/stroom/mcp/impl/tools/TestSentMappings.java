@@ -22,8 +22,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The mappings kept in the session's workspace for changes= (the Stroom MCP server's `tools/generation.py`
-/// `_remember_mapping` and `_sent`, which kept them in the replica's memory).
+/// The mappings kept in the session's workspace for changes=.
 class TestSentMappings {
 
     private final TranslationWorld world = new TranslationWorld();
@@ -52,8 +51,8 @@ class TestSentMappings {
 
     @Test
     void aSessionWithoutAWorkspaceRemembersNothing() {
-        SentMappings.remember(PortedToolCalls.context(), "x-1", Map.of("input", "json"));
+        SentMappings.remember(BuildToolCalls.context(), "x-1", Map.of("input", "json"));
 
-        assertThat(SentMappings.sent(PortedToolCalls.context(), "x-1")).isEmpty();
+        assertThat(SentMappings.sent(BuildToolCalls.context(), "x-1")).isEmpty();
     }
 }

@@ -51,11 +51,10 @@ import java.util.Map;
 import java.util.UUID;
 
 /// Searches an index as a dashboard does, through Stroom's dashboard search (as the user, so with their
-/// permissions; nothing is saved), ported from the Stroom MCP server's `_search`, `_count` and `_column`: a query
-/// on the index and a table of columns, polled until Stroom has finished or the wait is up, when what it has found
-/// by then is the answer, said to be partial. Every search is stopped once read ([AgentSearches]): a search left
-/// behind runs to its end even when nobody asks for its results (seen: three whole-index scans of a large
-/// Elasticsearch index carried on after the survey gave up on them).
+/// permissions; nothing is saved): a query on the index and a table of columns, polled until Stroom has finished or
+/// the wait is up, when what it has found by then is the answer, said to be partial. Every search is stopped once
+/// read ([AgentSearches]): a search left behind runs to its end even when nobody asks for its results (seen: three
+/// whole-index scans of a large Elasticsearch index carried on after the survey gave up on them).
 public class IndexSearches {
 
     /// How long a search is polled; past that, what it has found so far is the answer, said to be partial.

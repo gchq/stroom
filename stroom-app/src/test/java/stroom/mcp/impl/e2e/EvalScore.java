@@ -37,9 +37,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-/// A case's score, as the Stroom MCP server's `dev/eval/run_eval.py` keeps it, and its scoring of a case's
-/// Events against what the case expects (`score_events`): the record count, the event types, the paths every
-/// event has, values some event holds, values and types none may hold, and Data where it belongs.
+/// A case's score, and the scoring of a case's Events against what the case expects: the record count, the event types,
+/// the paths every event has, values some event holds, values and types none may hold, and Data where it belongs.
 @SuppressWarnings("unchecked")
 final class EvalScore {
 
@@ -177,8 +176,8 @@ final class EvalScore {
         return events;
     }
 
-    /// @return Whether the case passed: its Events as expected and indexed (`passed`, with no hints for a
-    /// reference run), and, stricter than `run_eval.py`, no other problem found (its documentation, stepping).
+    /// @return Whether the case passed: its Events as expected and indexed (with no hints for a reference run),
+    /// and no other problem found (its documentation, stepping).
     boolean passed() {
         return stage1 && indexed && problems.isEmpty() && missingTypes.isEmpty() && missingPaths.isEmpty();
     }
@@ -202,7 +201,7 @@ final class EvalScore {
         return sb.toString();
     }
 
-    /// @return The score, as `run_eval.py` writes it to its results.
+    /// @return The score, as written to the results.
     Map<String, Object> toMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("case", caseId);
@@ -342,7 +341,7 @@ final class EvalScore {
         return children;
     }
 
-    // lxml's node.text: the text before the first child.
+    // The element's own text before its first child.
     private static String directText(final Element element) {
         final StringBuilder sb = new StringBuilder();
         for (Node node = element.getFirstChild(); node != null && node.getNodeType() != Node.ELEMENT_NODE;

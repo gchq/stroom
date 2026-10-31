@@ -28,15 +28,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/// Text handling as the Stroom MCP server's Python did it, so the sample analysis ported from it reads a sample the
-/// same way: its regexes (Unicode `\w`, `\d`, `\s`; only `\n` ends a line), `str.strip()`, `str.splitlines()`,
-/// lengths and slices in code points, `repr()` of values in messages, and the rounding and printing of floats.
-public final class PyText {
+/// Text handling the sample analysis and the tools' messages depend on, kept as it is because field documentation,
+/// CEF regexes and many messages follow it: its regexes (Unicode `\w`, `\d`, `\s`; only `\n` ends a line),
+/// stripping, splitting into lines, lengths and slices in code points, values in messages written in Python's
+/// notation (`repr()`: `'a'`, `['x', 'y']`, `None`, `True`), and the rounding and printing of floats.
+public final class ToolText {
 
     /// The flags a Python `str` regex behaves with: Unicode character classes, and only `\n` as a line end.
     public static final int FLAGS = Pattern.UNICODE_CHARACTER_CLASS | Pattern.UNIX_LINES;
 
-    private PyText() {
+    private ToolText() {
         // Static methods only.
     }
 
@@ -188,7 +189,7 @@ public final class PyText {
         return text.substring(0, end);
     }
 
-    /// @return True if the text is empty or only whitespace (falsy once stripped, in Python).
+    /// @return True if the text is empty or only whitespace.
     public static boolean isBlank(final String text) {
         return strip(text).isEmpty();
     }
@@ -384,7 +385,7 @@ public final class PyText {
     /// @param items Strings.
     /// @return Them as Python writes a list of them, e.g. `['a', 'b']`.
     public static String list(final Collection<String> items) {
-        return items.stream().map(PyText::repr).collect(Collectors.joining(", ", "[", "]"));
+        return items.stream().map(ToolText::repr).collect(Collectors.joining(", ", "[", "]"));
     }
 
     /// @return The value as Python's `repr()` writes it, e.g. `'a'`, `['x', 'y']`, `{'k': 1}`, `None`, `True`.

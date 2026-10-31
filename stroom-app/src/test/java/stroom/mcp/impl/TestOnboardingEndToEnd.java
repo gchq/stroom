@@ -48,12 +48,11 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Onboarding a source end to end, as an MCP client would, through the REAL tools ([McpTools]) on a real Stroom
-/// (the integration test database and stream store, the standard content packs' template pipelines and event-logging
-/// schemas): the intent of the Stroom MCP server's `dev/e2e_translation.py` (the CSV case, a field fix, promotion),
-/// `dev/e2e_plan_walk.py` (the plan's `next` at each step, and wrong moves refused) and `dev/e2e_errors.py` (invalid
-/// data found by stepping). The user's part is played by the test: it agrees to every form, makes the decisions a
-/// mapping's notes ask for, and runs the processor tasks Stroom's job would run.
+/// Onboarding a source end to end, as an MCP client would, through the REAL tools ([McpTools]) on a real Stroom (the
+/// integration test database and stream store, the standard content packs' template pipelines and event-logging
+/// schemas): the CSV case, a field fix and promotion, the plan's `next` at each step with wrong moves refused, and
+/// invalid data found by stepping. The user's part is played by the test: it agrees to every form, makes the decisions
+/// a mapping's notes ask for, and runs the processor tasks Stroom's job would run.
 ///
 /// Indexing (the plan's second stage) is not covered: its Elasticsearch path needs a cluster.
 @SuppressWarnings("unchecked")

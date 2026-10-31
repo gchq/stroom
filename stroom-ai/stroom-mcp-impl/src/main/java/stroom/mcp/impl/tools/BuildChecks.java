@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -33,11 +33,10 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What a build's pipelines still lack before promotion (the Stroom MCP server's `tools/builds.py`
-/// `build_checks`): a clean step of their current code (recorded in the build's record), a Documentation doc (for
-/// new pipelines), an Elasticsearch index template agreed and the sample indexed and verified (for indexing
-/// pipelines), a Field mapping section that matches the current mapping and XSLT, and an XSLT that is what its
-/// mapping generates ([GeneratedDrift]).
+/// What a build's pipelines still lack before promotion: a clean step of their current code (recorded in the build's
+/// record), a Documentation doc (for new pipelines), an Elasticsearch index template agreed and the sample indexed and
+/// verified (for indexing pipelines), a Field mapping section that matches the current mapping and XSLT, and an XSLT
+/// that is what its mapping generates ([GeneratedDrift]).
 class BuildChecks {
 
     /// Said of a check promotion waits for, rather than one shown in the approval: documentation left behind by the
@@ -157,7 +156,7 @@ class BuildChecks {
     /// @param kept A mapping kept with its XSLT.
     /// @return The digest of the mapping and the XSLT the documentation's Field mapping is generated from.
     static String mappingDigest(final KeptMappings.KeptXslt kept) {
-        return XsltCode.digest(PyJson.dumpsSortedKeys(kept.kept().payload()),
+        return XsltCode.digest(ToolJson.dumpsSortedKeys(kept.kept().payload()),
                 XsltCode.normalise(kept.xslt().getData()));
     }
 

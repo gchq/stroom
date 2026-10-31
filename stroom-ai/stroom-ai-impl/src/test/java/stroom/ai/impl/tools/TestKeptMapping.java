@@ -26,10 +26,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The mapping kept with an XSLT, read as the Stroom MCP server wrote it.
+/// The mapping kept with an XSLT, read as the build tools write it.
 class TestKeptMapping {
 
-    /// The mapping of the MCP server's tests (`tests/test_xsltgen.py`'s `mapping()`), as it keeps it.
+    /// A translation mapping, as it is kept.
     static final String MAPPING = """
             {"input":"data_splitter","unmatched":"skip",
              "common":[{"path":"EventTime/TimeCreated","field":"time"},
@@ -90,7 +90,8 @@ class TestKeptMapping {
 
     @Test
     void blocksWrittenBeforeAreStillRead() {
-        // Shown between --- markers, as earlier versions of the server wrote them.
+        // Shown between --- markers, the older layout of a kept mapping: still read, so an XSLT saved in it keeps
+        // its mapping.
         final String description = "Old\n\n--- stroom-mcp translation mapping (kept by the server) ---\n"
                                    + "{\"schema_version\":\"3.5.2\",\"mapping\":{\"events\":[]}}\n"
                                    + "--- end of stroom-mcp translation mapping ---\n";
@@ -131,7 +132,7 @@ class TestKeptMapping {
                 .containsExactly("noise: left untranslated (any other record)");
     }
 
-    /// @return A description as the MCP server wrote it for an XSLT it generated and then changed in a build: its
+    /// @return A description as the build tools write it for an XSLT they generated and then changed in a build: its
     /// own text, the note, the kept mapping and the build's pending changes.
     static String described(final String text) {
         final String mapping = "{\"schema_version\":\"4.1.0\",\"mapping\":" + MAPPING.replaceAll("\\s*\\n\\s*", "")

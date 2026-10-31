@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.generation.MappingValidationException;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
@@ -94,7 +94,7 @@ class TestPlannedObjects {
                     assertThat(login.source()).isEqualTo("EventSource/User/Id | EventDetail//User/Id");
                     assertThat(login.multiple()).isTrue();
                 });
-        final String template = PyJson.dumps(plan.elasticTemplate("acme-v1", null, false, null));
+        final String template = ToolJson.dumps(plan.elasticTemplate("acme-v1", null, false, null));
         assertThat(template).contains("\"users\": {\"properties\": {\"login\": {\"type\": \"keyword\"}, \"email\": "
                                       + "{\"type\": \"keyword\"}, \"organisation\": {\"type\": \"keyword\"}}}");
         // Its paths count as mapped.

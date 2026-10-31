@@ -37,8 +37,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// record_source_notes (the Stroom MCP server's `tools/feeds.py` `record_source_notes`, its test in
-/// `tests/test_sourcenotes.py`, and what `dev/e2e_source_docs.py` expects of it).
+/// record_source_notes, and what `TestE2eSourceDocs` (stroom-app) expects of it.
 class TestRecordSourceNotesTool {
 
     private static final String FIELDS = "[{\"field\": \"evt\", \"meaning\": \"Event id\"}, {\"field\": \"usr\", "
@@ -97,7 +96,7 @@ class TestRecordSourceNotesTool {
                           + "reference` (kept in Stroom)");
         final Map<String, Object> notes = SourceNotes.readNotes(text);
         assertThat(notes.get("source")).isEqualTo("Acme directory");
-        // Each note as the MCP server dumped it: its defaults left out.
+        // Each note as the tools write it: its defaults left out.
         assertThat(notes.get("fields")).isEqualTo(List.of(Map.of("field", "evt", "meaning", "Event id"),
                 Map.of("field", "usr", "meaning", "Account name", "event_logging_path", "EventSource/User/Id")));
         assertThat(((List<?>) notes.get("events")).getFirst()).isEqualTo(Map.of("event", "4624", "description",
@@ -244,12 +243,12 @@ class TestRecordSourceNotesTool {
     }
 
     private ToolResult call(final String arguments) {
-        return tool.execute(PortedToolCalls.call(RecordSourceNotesTool.NAME, arguments), PortedToolCalls.context());
+        return tool.execute(BuildToolCalls.call(RecordSourceNotesTool.NAME, arguments), BuildToolCalls.context());
     }
 
     private static Map<String, Object> json(final ToolResult result) {
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private static EventSchema schema() {

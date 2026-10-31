@@ -32,8 +32,7 @@ import java.util.TreeSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Network events indexed whichever action they record (one field for a source address, not one per Permit and
-/// Deny), and a source naming the paths below it. Ported from the Stroom MCP server's `tests/test_network_index.py`,
-/// case by case.
+/// Deny), and a source naming the paths below it.
 class TestFieldPlans {
 
     // A user's example unrelated to the source (it was a Twitter index's), with one field named IpAddress.

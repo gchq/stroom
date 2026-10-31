@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -34,20 +34,18 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The ported indexing XSLT generator against the Stroom MCP server's own: each golden pair under
-/// `golden/indexing/` is a plan (as `model_dump` wrote it) and the XSLT the server's `FieldPlan.xslt` wrote for it,
-/// recorded while the server's test suite ran (named after the test), and from crafted plans (styles, layouts,
-/// shared templates, drop_when, discovery inputs). The port must read the plan back to the same JSON and write the
-/// same XSLT, to the byte.
+/// The indexing XSLT generator against its golden files: each golden pair under `golden/indexing/` is a plan (as
+/// its JSON is written) and the XSLT written for it, from the tests' plans (named after the test) and from crafted
+/// plans (styles, layouts, shared templates, drop_when, discovery inputs). The plan must read back to the same JSON
+/// and the XSLT be written the same, to the byte.
 ///
-/// The files were made by running the server's code (the recorder and `make_cases.py` of this port); they are not
-/// regenerated from the Java side.
+/// The files pin the generator's established output; they are not regenerated from the Java side.
 class TestFieldPlanGolden {
 
     private static final String DIRECTORY = "/stroom/ai/impl/golden/indexing";
 
     @TestFactory
-    Stream<DynamicTest> theIndexingXsltIsThePythonGeneratorsToTheByte() {
+    Stream<DynamicTest> theIndexingXsltIsTheGoldenToTheByte() {
         return cases().map(json -> DynamicTest.dynamicTest(json.getFileName().toString(), () -> check(json)));
     }
 
@@ -56,7 +54,7 @@ class TestFieldPlanGolden {
         final Map<String, Object> golden = IndexingFixtures.json(Files.readString(json, StandardCharsets.UTF_8));
         final Map<String, Object> given = (Map<String, Object>) golden.get("plan");
         final FieldPlan plan = FieldPlan.fromJson(given);
-        assertThat(PyJson.dumps(plan.toJson())).isEqualTo(PyJson.dumps(given));
+        assertThat(ToolJson.dumps(plan.toJson())).isEqualTo(ToolJson.dumps(given));
         final Path xslt = json.resolveSibling(json.getFileName().toString().replace(".json", ".xslt"));
         assertThat(plan.xslt((String) golden.get("version"))).isEqualTo(Files.readString(xslt,
                 StandardCharsets.UTF_8));

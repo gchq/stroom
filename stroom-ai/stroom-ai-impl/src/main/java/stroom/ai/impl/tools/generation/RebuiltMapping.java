@@ -21,9 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// A mapping read back from an XSLT by [XsltReader#rebuild] (the Stroom MCP server's `xsltread.Rebuilt`): the
-/// mapping (null if what was read doesn't validate), and how it was come by: entries kept from the mapping kept
-/// before, new ones, ones no longer written, ones kept as the expression itself, and what wasn't read.
+/// A mapping read back from an XSLT by [XsltReader#rebuild]: the mapping (null if what was read doesn't validate), and
+/// how it was come by: entries kept from the mapping kept before, new ones, ones no longer written, ones kept as the
+/// expression itself, and what wasn't read.
 public final class RebuiltMapping {
 
     private TranslationMapping mapping;
@@ -97,7 +97,7 @@ public final class RebuiltMapping {
         reused++;
     }
 
-    /// @return What the rebuild found, as the Python server's `summary()` writes it: entries_kept, then
+    /// @return What the rebuild found, as rebuild_mapping reports it: entries_kept, then
     /// entries_new, entries_removed, kept_as_xpath, calls_imported_functions, not_read and problems where they
     /// aren't empty.
     public Map<String, Object> summary() {

@@ -55,11 +55,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-/// What an existing index holds, surveyed through Stroom (the Stroom MCP server's `tools/indexing.py`
-/// `survey_index`, `index_profile`, `feeding_pipelines` and `_path_of`): the fields Stroom has for the index doc, a
-/// sample of its documents read through dashboard searches that are never saved, the pipelines that feed it, and
-/// the whole index's totals and sources. Used for read_document's survey of an index doc (the Stroom MCP server's
-/// describe_document's, through [DocumentAnalysesImpl]) and write_documentation's documentation of an index.
+/// What an existing index holds, surveyed through Stroom: the fields Stroom has for the index doc, a sample of its
+/// documents read through dashboard searches that are never saved, the pipelines that feed it, and the whole index's
+/// totals and sources. Used for read_document's survey of an index doc (through [DocumentAnalysesImpl]) and
+/// write_documentation's documentation of an index.
 class IndexSurveys {
 
     /// Fields read per survey; more are listed as not surveyed.
@@ -116,11 +115,10 @@ class IndexSurveys {
     /// index's totals and sources too ([#indexProfile]). A wide index is read in groups of columns, joined on
     /// StreamId and EventId; past [#SURVEY_FIELDS] fields, the rest are listed as not surveyed.
     ///
-    /// The sample is not sorted: Stroom sorts a table itself, so a sorted search reads every document in the
-    /// index, while an unsorted one stops at maxDocuments (seen: the newest 100 documents of a large
-    /// Elasticsearch index, sorted on its time field, took searches of a minute each, and describe_document three
-    /// minutes). It is read from the last [#RECENT_DAYS] days when there are documents that recent, so it shows
-    /// what the index is written with now.
+    /// The sample is not sorted: Stroom sorts a table itself, so a sorted search reads every document in the index,
+    /// while an unsorted one stops at maxDocuments (seen: the newest 100 documents of a large Elasticsearch index,
+    /// sorted on its time field, took searches of a minute each, and the survey three minutes). It is read from the
+    /// last [#RECENT_DAYS] days when there are documents that recent, so it shows what the index is written with now.
     ///
     /// An unsorted search stops early only once it has its rows, and Stroom drops every hit whose StreamId isn't a
     /// stream the user may read: an index holding fewer readable documents than asked for is read to its end
@@ -132,7 +130,7 @@ class IndexSurveys {
     /// @param index        The Lucene Index or Elastic Index doc.
     /// @param maxDocuments The most documents sampled.
     /// @param profile      True for the whole index's totals and sources too.
-    /// @return The survey, as the Stroom MCP server gave it.
+    /// @return The survey.
     /// @throws ToolRefusal if the index doc can't be read.
     Map<String, Object> surveyIndex(final ToolCallContext context,
                                     final DocRef index,
@@ -317,7 +315,7 @@ class IndexSurveys {
 
     // The other groups read exactly the documents the first did, by their ids: an unsorted search returns
     // whichever documents it reaches first, which need not be the same ones twice. Each is a short search for up
-    // to maxDocuments documents, made one after the other (the Stroom MCP server's ran them at once).
+    // to maxDocuments documents, made one after the other.
     private List<String> otherGroups(final ToolCallContext context,
                                      final DocRef ref,
                                      final String name,

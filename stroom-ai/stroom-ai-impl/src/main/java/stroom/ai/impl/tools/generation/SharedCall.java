@@ -20,14 +20,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /// A named template of an imported XSLT, called in place by a rule (a mapping's shared entry), as [XsltReader]
-/// reads it (the Stroom MCP server's `xsltread.SharedCall`).
+/// reads it.
 ///
 /// @param path     Where it is called: the element it writes goes below this.
 /// @param template The template's name.
 /// @param params   What the call passes, by parameter name.
 public record SharedCall(String path, String template, Map<String, String> params) {
 
-    /// @return It as the Python reading's fields: path, template, params.
+    /// @return It as a map, keys in the order the reader fixtures pin: path, template, params.
     public Map<String, Object> toMap() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("path", path);

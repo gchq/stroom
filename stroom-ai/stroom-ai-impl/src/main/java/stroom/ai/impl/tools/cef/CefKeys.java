@@ -27,7 +27,7 @@ import java.util.TreeSet;
 /// ArcSight's CEF dictionary as the CEF mapping uses it: each key's full name, type, length and meaning (from the
 /// CEF implementation standard), its custom slots (`cs1`-`cs6`, `cn1`-`cn3`, `cfp1`-`cfp4`, `deviceCustomDate1`-`2`,
 /// `flexString1`-`2`, `flexDate1`, each with its Label key), the header's fields, and where Event values go by
-/// default. Ported from the Stroom MCP server's `utils/cef.py`.
+/// default.
 public final class CefKeys {
 
     /// The event-logging namespace.
@@ -169,7 +169,7 @@ public final class CefKeys {
         // Static only.
     }
 
-    /// `key_of`: a CEF key from its short or full name.
+    /// A CEF key from its short or full name.
     ///
     /// @param name A key's short or full name, e.g. `deviceCustomString6`.
     /// @return Its short name, e.g. `cs6`; a name outside the dictionary as it is.

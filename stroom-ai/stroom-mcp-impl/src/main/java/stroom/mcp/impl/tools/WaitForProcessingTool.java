@@ -21,7 +21,6 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -31,6 +30,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -58,9 +58,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 
-/// `wait_for_processing` - waits until each input stream's processor task has ended (complete or failed), then
-/// reports per input stream the output (Events, or Reference) and Error streams it produced: the gate before the
-/// next stage. Ported from the Stroom MCP server's `tools/processing_writes.py`.
+/// `wait_for_processing` - waits until each input stream's processor task has ended (complete or failed), then reports
+/// per input stream the output (Events, or Reference) and Error streams it produced: the gate before the next stage.
 ///
 /// It stops waiting at once when nothing will process the streams (no filter, none selecting them, or only disabled
 /// ones, for the user to enable), and before the session's time limit for a long call (its query time limit) runs
@@ -68,11 +67,11 @@ import java.util.stream.Collectors;
 /// interrupted (the client gave up on the call) or the chat's run is stopped. Once indexing passes, the build's
 /// Elasticsearch indexing pipeline's development batch size is taken off again ([IndexingRuns#developmentBatch]).
 ///
-/// Unlike the Stroom MCP server's, an input stream is only done once none of its outputs is still locked (being
-/// written) and no task for it is still to end (seen: "finished" with a 100,000-event stream still being written, so
-/// it couldn't be read, and its Error stream not yet made). The warnings and errors processing wrote beside the
-/// output are given (`look_into`), triaged, for the agent to look into and fix or tell the user of (asked for by the
-/// user: a warning that invalid XML characters were removed went unread); errors that must be fixed fail the gate.
+/// An input stream is only done once none of its outputs is still locked (being written) and no task for it is still to
+/// end (seen: "finished" with a 100,000-event stream still being written, so it couldn't be read, and its Error stream
+/// not yet made). The warnings and errors processing wrote beside the output are given (`look_into`), triaged, for the
+/// agent to look into and fix or tell the user of (asked for by the user: a warning that invalid XML characters were
+/// removed went unread); errors that must be fixed fail the gate.
 ///
 /// Read as the user: the filters and their tasks need the Manage Processors permission and View on the pipeline,
 /// and only streams of feeds the user may view are seen.
@@ -194,11 +193,10 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
 
     @Override
     public boolean isReadOnly() {
-        // Read-only, though once indexing passes it takes the development batch size off the build's own
-        // Elasticsearch indexing pipeline (the Stroom MCP server's said readOnlyHint false for that): it only undoes
-        // what create_processor_filter and reprocess_streams set, on a pipeline tagged as the tools' own in a build,
-        // never on a document a person wrote. As a write, every wait would need approving over MCP, and none could
-        // be made while the user is away.
+        // Read-only, though once indexing passes it takes the development batch size off the build's own Elasticsearch
+        // indexing pipeline: it only undoes what create_processor_filter and reprocess_streams set, on a pipeline
+        // tagged as the tools' own in a build, never on a document a person wrote. As a write, every wait would need
+        // approving over MCP, and none could be made while the user is away.
         return true;
     }
 
@@ -468,7 +466,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         if (errorsOnly) {
             return errors.isEmpty()
                     ? List.of()
-                    : List.of("Stream " + raw + " produced Error stream(s) " + PyText.repr(errors)
+                    : List.of("Stream " + raw + " produced Error stream(s) " + ToolText.repr(errors)
                               + ": summarise_streams (kind=errors) " + raw);
         }
         if (events.isEmpty()) {
@@ -494,7 +492,7 @@ class WaitForProcessingTool extends AbstractBuiltInTool {
         }
         if (idle) {
             return "Every task of the pipeline's filters has ended, but none for stream(s) "
-                   + PyText.repr(pending) + ": waiting again won't change that. explain_processing with "
+                   + ToolText.repr(pending) + ": waiting again won't change that. explain_processing with "
                    + "these stream_ids, one at a time, says why (which filter selects each, its tracker and "
                    + "tasks).";
         }

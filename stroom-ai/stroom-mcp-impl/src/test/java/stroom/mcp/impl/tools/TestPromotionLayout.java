@@ -29,10 +29,9 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Promotion's layout (the Stroom MCP server's `tools/builds.py` `_version_folders`, `_joining` and
-/// `promotion_tree`, and their tests in `tests/test_promotion_layout.py`), from testing in production: where an
-/// amended pipeline's documents would go wasn't plain (a list in a form), and a new version went beside the old one
-/// with nothing to tell them apart (asked for by the user).
+/// Promotion's layout (version folders, the documents that join a version, and the tree shown), from testing in
+/// production: where an amended pipeline's documents would go wasn't plain (a list in a form), and a new version went
+/// beside the old one with nothing to tell them apart (asked for by the user).
 class TestPromotionLayout {
 
     private final BuildWorld world = new BuildWorld();

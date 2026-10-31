@@ -30,7 +30,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.draft.SourceNotes;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -51,11 +51,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-/// `record_source_notes` - keeps the user's vendor or event reference documentation in Stroom, and the notes
-/// condensed from it, as Documentation docs in the build (the Stroom MCP server's `tools/feeds.py`
-/// `record_source_notes`): each document verbatim (`<source> reference - <title>`), and `<source> source notes` with
-/// the field dictionary and event catalogue, carried as a block the tools read back ([SourceNotes]). Called again for
-/// the same source, the notes doc is updated: what earlier calls recorded stays unless given again.
+/// `record_source_notes` - keeps the user's vendor or event reference documentation in Stroom, and the notes condensed
+/// from it, as Documentation docs in the build: each document verbatim (`<source> reference - <title>`), and `<source>
+/// source notes` with the field dictionary and event catalogue, carried as a block the tools read back ([SourceNotes]).
+/// Called again for the same source, the notes doc is updated: what earlier calls recorded stays unless given again.
 class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RecordSourceNotesTool.class);
@@ -419,7 +418,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         Object value = argsMap(call).get(name);
         if (value instanceof final String text && !text.isBlank()) {
             try {
-                value = PyJson.loads(text.strip());
+                value = ToolJson.loads(text.strip());
             } catch (final RuntimeException e) {
                 throw new ToolRefusal(name + " must be a list of objects, not text");
             }
@@ -438,8 +437,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return objects;
     }
 
-    // A note with only the keys it may have, in their order, each left out at its default (as the Stroom MCP
-    // server's model_dump(exclude_defaults=True)); the required keys have no default.
+    // A note with only the keys it may have, in their order, each left out at its default; the required keys have no
+    // default.
     private static Map<String, Object> normalised(final Map<?, ?> note,
                                                   final List<String> keys,
                                                   final List<String> required) {

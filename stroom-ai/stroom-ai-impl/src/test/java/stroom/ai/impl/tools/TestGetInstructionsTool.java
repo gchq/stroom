@@ -33,8 +33,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// `get_instructions`, as the Stroom MCP server's tests of its tool of the same name have it: a doc applies to its
-/// folder and below, one at the top everywhere, most general first.
+/// `get_instructions`: a doc applies to its folder and below, one at the top everywhere, most general first.
 class TestGetInstructionsTool {
 
     @TempDir
@@ -129,8 +128,7 @@ class TestGetInstructionsTool {
 
     @Test
     void aDocThatCantBeReadIsSaidAndTheOthersStillFollowed() {
-        // Seen with the Stroom MCP server: one such doc had failed every tool that hands back standing
-        // instructions.
+        // Seen in testing: one such doc had failed every tool that hands back standing instructions.
         fixture.folders.put("gone", List.of("Feeds"));
         fixture.add(new DocRef(DocumentationDoc.TYPE, "gone", AgentInstructions.DOC_NAME), null, true);
 

@@ -16,16 +16,15 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/// How the translation generator writes each kind of XPath expression, one method each, as the Stroom MCP server's
-/// generator writes them (`utils/xsltgen.py`). The server's XSLT reader (`utils/xsltread`) reads an XSLT back with
-/// patterns made by calling these same functions with slots, so the reader follows whatever the generator writes
-/// (asked for by the user: one definition, not two that drift apart).
+/// How the translation generator writes each kind of XPath expression, one method each. The XSLT reader ([XsltReader])
+/// reads an XSLT back with patterns made by calling these same functions with slots, so the reader follows whatever the
+/// generator writes (asked for by the user: one definition, not two that drift apart).
 public final class XPathText {
 
     /// Epoch values other than milliseconds, to milliseconds: seconds (a fraction kept), microseconds and
@@ -53,12 +52,12 @@ public final class XPathText {
     /// path of keys), or an XML path as given.
     public static String fieldText(final String kind, final String fieldName) {
         if ("data_splitter".equals(kind)) {
-            return PyText.split(fieldName, "/").stream()
+            return ToolText.split(fieldName, "/").stream()
                            .map(part -> "data[@name=" + literal(part) + "]")
                            .collect(Collectors.joining("/")) + "/@value";
         }
         if ("json".equals(kind)) {
-            return PyText.split(fieldName, ".").stream()
+            return ToolText.split(fieldName, ".").stream()
                     .map(part -> "*[@key=" + literal(part) + "]")
                     .collect(Collectors.joining("/"));
         }
@@ -80,7 +79,7 @@ public final class XPathText {
         if (path == null || path.isEmpty()) {
             return found;
         }
-        final String steps = PyText.split(PyText.strip(path, "/"), "/").stream()
+        final String steps = ToolText.split(ToolText.strip(path, "/"), "/").stream()
                 .filter(step -> !step.isEmpty())
                 .map(step -> step.contains(":") || step.startsWith("@") || ".".equals(step) || "*".equals(step)
                         ? step
@@ -124,7 +123,7 @@ public final class XPathText {
     /// @param sources   The fields' selectors, in order.
     /// @param separator What goes between their values.
     /// @return Each one's first value that has text, joined with the separator: empty when none has one, as an
-    /// empty input is (not in the Python server, which had no join).
+    /// empty input is.
     public static String joinText(final List<String> sources, final String separator) {
         return "string-join((" + sources.stream()
                 .map(source -> "(" + source + ")[normalize-space(.)][1]")
@@ -219,8 +218,8 @@ public final class XPathText {
     /// @param timezone The time zone, or null.
     /// @param one      The value's expression.
     /// @return The value as Stroom's ISO 8601 time, to the millisecond: finer digits cut, not rounded, as an event's
-    /// time is never moved on (unlike the Stroom MCP server's, which rounded them half up: 23:59:59.9996 became the
-    /// next day; seen in eval case 31, an epoch_ns time a millisecond late). Stroom's format-date cuts a pattern's
+    /// time is never moved on (rounded half up, 23:59:59.9996 became the next day; seen in eval case 31, an epoch_ns
+    /// time a millisecond late). Stroom's format-date cuts a pattern's
     /// digits below the millisecond itself.
     public static String timeExpression(final String format, final String timezone, final String one) {
         if ("epoch_ms".equals(format)) {

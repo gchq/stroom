@@ -41,10 +41,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// Keeps an edit made by hand in Stroom's editor since the tools saved an XSLT (the Stroom MCP server's
-/// `tools/translation.py` `hand_edit_gate`, `_remembered` and `_CARRY`): new code that undoes it is refused, saying
-/// what it changed, so it can be carried into the mapping or plan; where the agent's change changes a field the edit
-/// changed too, the user decides whether to keep their edit or use the proposed field.
+/// Keeps an edit made by hand in Stroom's editor since the tools saved an XSLT: new code that undoes it is refused,
+/// saying what it changed, so it can be carried into the mapping or plan; where the agent's change changes a field the
+/// edit changed too, the user decides whether to keep their edit or use the proposed field.
 @Singleton
 class HandEditGate {
 

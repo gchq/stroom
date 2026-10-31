@@ -50,8 +50,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The searches search_events makes of an index, as a dashboard makes them, ported from the Stroom MCP server's
-/// tests of `_search` and `_count` (`tests/test_fielddoc.py`, `tests/test_token_time.py`).
+/// The searches search_events makes of an index, as a dashboard makes them: a search, and a count.
 class TestIndexSearches {
 
     private static final QueryKey KEY = new QueryKey("k");

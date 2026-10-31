@@ -65,18 +65,14 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_evaluate_and_fix.py`: evaluating an existing events pipeline, and fixing a
-/// reported issue in it, driving the real tools. The pipeline is production content the server did not build (a
-/// feed, text converter, XSLT and pipeline made directly in Stroom, outside any workspace, processing two raw
-/// streams of CSV logons through its own processor filter), with the script's flaws: an 'n/a' IP fails the schema,
-/// a locked account's logon is written as a success, the agent column is never read, and a record with no IP
-/// leaves IPAddress out. Every numbered part is covered: the evaluation's 1 to 6 (describe, errors first, the
-/// input never read, the events' inventory, a suggested fix proven, the report saved beside the pipeline with
-/// nothing else changed) and the fix's 1 to 4 (locate the reported event, reproduce it, a fix proven to change only
-/// the reported field, applied through a working copy, documented and promoted, the production XSLT backed up).
-///
-/// The tools the script names that are now part of Stroom's own: find_documents is folder_contents, read_stream
-/// is fetch_events with streamId, describe_document is read_document, and update_xslt is save_xslt with uuid.
+/// Evaluating an existing events pipeline, and fixing a reported issue in it, driving the real tools. The pipeline is
+/// production content the tools did not build (a feed, text converter, XSLT and pipeline made directly in Stroom,
+/// outside any workspace, processing two raw streams of CSV logons through its own processor filter), with flaws: an
+/// 'n/a' IP fails the schema, a locked account's logon is written as a success, the agent column is never read, and a
+/// record with no IP leaves IPAddress out. Every numbered part is covered: the evaluation's 1 to 6 (describe, errors
+/// first, the input never read, the events' inventory, a suggested fix proven, the report saved beside the pipeline
+/// with nothing else changed) and the fix's 1 to 4 (locate the reported event, reproduce it, a fix proven to change
+/// only the reported field, applied through a working copy, documented and promoted, the production XSLT backed up).
 @SuppressWarnings("unchecked")
 class TestE2eEvaluateAndFix extends AbstractE2eTest {
 
@@ -131,7 +127,7 @@ class TestE2eEvaluateAndFix extends AbstractE2eTest {
         fix(prod);
     }
 
-    // ### production content the server did not build
+    // ### production content the tools did not build
     private Production production() {
         final ExplorerNode folder = folder(FOLDER);
         final String feed = create(FeedDoc.TYPE, FEED, folder).getUuid();

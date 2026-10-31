@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Reads JSON-like values (maps, lists, strings, numbers, booleans, null) into the mapping's models as pydantic's
-/// lax mode reads them in the Stroom MCP server, collecting every [MappingError] with pydantic's wording: a string
-/// must be a string; a boolean may be given as 0 or 1 or a word such as `yes` or `off`; an integer as a whole
-/// number, or a string or float holding one; keys a model doesn't have are ignored.
+/// Reads JSON-like values (maps, lists, strings, numbers, booleans, null) into the mapping's models with lax types,
+/// collecting every [MappingError] in the wording the agent is shown and the model fixtures pin: a string must be a
+/// string; a boolean may be given as 0 or 1 or a word such as `yes` or `off`; an integer as a whole number, or a string
+/// or float holding one; keys a model doesn't have are ignored.
 public final class ModelReader {
 
     private static final Set<String> TRUE_WORDS = Set.of("1", "on", "t", "true", "y", "yes");
@@ -56,14 +56,14 @@ public final class ModelReader {
     /// Notes an error.
     ///
     /// @param loc     Where it is.
-    /// @param type    pydantic's error type.
-    /// @param message pydantic's message.
+    /// @param type    The error type, e.g. `missing`.
+    /// @param message The message, e.g. `Field required`.
     /// @param input   The value given.
     public void error(final List<Object> loc, final String type, final String message, final Object input) {
         errors.add(new MappingError(List.copyOf(loc), type, message, input));
     }
 
-    /// A model's own check failing, as a ValueError raised in a pydantic validator.
+    /// A model's own check failing (type `value_error`, the message after `Value error, `).
     public void valueError(final List<Object> loc, final String message, final Object input) {
         error(loc, "value_error", "Value error, " + message, input);
     }
@@ -105,7 +105,7 @@ public final class ModelReader {
 
     /// @param value A value.
     /// @param loc   Where it is.
-    /// @return It as a boolean (as pydantic reads 0, 1, yes, off, ...), or null (with an error).
+    /// @return It as a boolean (0, 1, yes, off, ... read as booleans), or null (with an error).
     public Boolean bool(final Object value, final List<Object> loc) {
         switch (value) {
             case final Boolean bool -> {
@@ -220,7 +220,7 @@ public final class ModelReader {
         return null;
     }
 
-    // pydantic's list of the literal values: 'a', 'b' or 'c'.
+    // The list of the literal values in an error: 'a', 'b' or 'c'.
     private static String expected(final List<String> choices) {
         final List<String> quoted = choices.stream().map(choice -> "'" + choice + "'").toList();
         if (quoted.size() == 1) {

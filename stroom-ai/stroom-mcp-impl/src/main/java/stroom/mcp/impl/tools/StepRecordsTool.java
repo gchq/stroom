@@ -20,7 +20,6 @@ import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -34,6 +33,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -53,9 +53,8 @@ import java.util.TreeSet;
 
 /// `step_records` - steps chosen records of existing streams, in place, and returns one verdict for them all, like
 /// step_sample: error groups triaged, and per record the events it produced and its errors. With survey_feed's
-/// locations it checks a translation against every kind of event a feed holds, without copying or processing
-/// anything. A clean verdict over every shape is recorded in the build's record for the code stepped. Ported from
-/// the Stroom MCP server's `tools/stepping.py`.
+/// locations it checks a translation against every kind of event a feed holds, without copying or processing anything.
+/// A clean verdict over every shape is recorded in the build's record for the code stepped.
 ///
 /// Stepped as the user, who needs the Stepping permission; locations in a row from one stream share a stepping
 /// session on this node, ended when they are done. It takes a run slot over `/mcp`, says where it is now and then,
@@ -177,10 +176,9 @@ class StepRecordsTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The records stepped, as the Stroom MCP server gave them: `pipeline`, `records_stepped`,
-    /// `records_with_errors`, `records_not_found`, `shapes_not_clean`, `left_untranslated_as_intended`,
-    /// `draft_code_used`, the triage (`verdict`, `groups_by_class`, `groups`) and `records` (the first 100), and any
-    /// `hint`, `stopped_early` and `record`.
+    /// The records stepped: `pipeline`, `records_stepped`, `records_with_errors`, `records_not_found`,
+    /// `shapes_not_clean`, `left_untranslated_as_intended`, `draft_code_used`, the triage (`verdict`,
+    /// `groups_by_class`, `groups`) and `records` (the first 100), and any `hint`, `stopped_early` and `record`.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> stepRecords(final ToolCall call,
@@ -339,7 +337,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
         result.put("records", records.subList(0, Math.min(100, records.size())));
         if (records.size() == missing.size()) {
             SteppingVerdicts.nothingStepped(result, walked.markers, "the records "
-                                                                    + PyText.list(missing.subList(0,
+                                                                    + ToolText.list(missing.subList(0,
                     Math.min(5, missing.size()))));
         }
         if (walked.cut) {

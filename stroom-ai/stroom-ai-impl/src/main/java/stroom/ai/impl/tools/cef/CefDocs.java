@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.XmlElement;
@@ -33,8 +33,7 @@ import java.util.stream.Collectors;
 
 /// The Field mapping section of a CEF pipeline's documentation: the header, then by event type (the default) a
 /// table of the keys every event gets and one per kind of event (kinds with roughly the same keys together); compact,
-/// one table with an Event type column; and the values not sent. Ported from the Stroom MCP server's
-/// `plan_markdown` in `utils/cef.py`.
+/// one table with an Event type column; and the values not sent.
 public final class CefDocs {
 
     private static final Pattern QUOTED = Pattern.compile("'[^']*'");
@@ -49,7 +48,7 @@ public final class CefDocs {
         // Static only.
     }
 
-    /// `description_key`: how a CEF field's description is kept: by key for every event's, by kind and key
+    /// How a CEF field's description is kept: by key for every event's, by kind and key
     /// otherwise (a custom slot holds what each kind of event puts in it).
     ///
     /// @param kind The kind of event, or `common`.
@@ -61,7 +60,7 @@ public final class CefDocs {
                 : kind + ": " + key;
     }
 
-    /// `plan_markdown`: the Field mapping section: the header, then by event type (the default) a table of the
+    /// The Field mapping section: the header, then by event type (the default) a table of the
     /// keys every event gets and one per kind of event; compact, one table with an Event type column.
     ///
     /// @param plan      The plan.
@@ -77,13 +76,13 @@ public final class CefDocs {
     }
 
     /// [#planMarkdown(CefPlan, Map, String, Descriptions)], with what the sample Events show, for a pipeline's
-    /// administrators (asked for by the user; not in the Stroom MCP server): an example for each field the lines
-    /// gave none of, from the Events of its kind; under each event type, the TypeIds its Events have; and at the
-    /// bottom of each, the fields not sent, with a sample of each.
+    /// administrators (asked for by the user): an example for each field the lines gave none of, from the Events of its
+    /// kind; under each event type, the TypeIds its Events have; and at the bottom of each, the fields not sent, with a
+    /// sample of each.
     ///
     /// @param plan      The plan.
     /// @param examples  Example values by (kind or `common` or `header`, key), from sampled lines.
-    /// @param events    The sample Events, or null for none (the section as the Stroom MCP server wrote it).
+    /// @param events    The sample Events, or null for none (the section without what they show).
     /// @param layout    [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
     /// @param described The field descriptions (what each means here), or null for ArcSight's words.
     /// @return The section's text, ending with a new line.
@@ -96,7 +95,7 @@ public final class CefDocs {
         out.add("Each Event becomes one CEF (ArcSight Common Event Format) line: `CEF:0|Device Vendor|Device "
                 + "Product|Device Version|Device Event Class ID|Name|Severity|` then key=value pairs. "
                 + (CefPlan.KAFKA.equals(plan.output())
-                ? "Each line is the value of one Kafka record on topic `" + PyText.str(plan.topic())
+                ? "Each line is the value of one Kafka record on topic `" + ToolText.str(plan.topic())
                   + "`, one Event a record"
                   + (JsonValues.truthy(plan.kafkaKey())
                         ? ", keyed by `" + plan.kafkaKey() + "`"
@@ -173,7 +172,7 @@ public final class CefDocs {
                                       + " | " + cell(n.get("why")) + " |"));
             out.add("");
         }
-        return PyText.rstrip(String.join("\n", out)) + "\n";
+        return ToolText.rstrip(String.join("\n", out)) + "\n";
     }
 
     // The lines' examples, and for each field they gave none of, up to three values of its path in the Events of its
@@ -231,7 +230,7 @@ public final class CefDocs {
         }
         return "TypeIds: " + counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .map(e -> "`" + e.getKey() + "` (" + PyText.formatG(100.0 * e.getValue() / events.size()) + "%)")
+                .map(e -> "`" + e.getKey() + "` (" + ToolText.formatG(100.0 * e.getValue() / events.size()) + "%)")
                 .collect(Collectors.joining(", ")) + ".";
     }
 
@@ -353,7 +352,7 @@ public final class CefDocs {
                 : text).replace("|", "\\|").replace("\n", " ");
     }
 
-    // Python's line.rsplit('|', 2)[0]: the line before its second-last pipe.
+    // The line before its second-last pipe.
     private static String rsplitFirst(final String line) {
         final int last = line.lastIndexOf('|');
         final int before = last > 0

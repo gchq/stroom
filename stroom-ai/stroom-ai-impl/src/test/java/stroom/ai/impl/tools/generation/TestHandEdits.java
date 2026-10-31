@@ -23,9 +23,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's tests of hand edits that are about [HandEdits] itself (`tests/test_hand_edits.py`; its
-/// other tests are of the save tools, ported with them). The XSLTs are the server's indexing generator's, for the
-/// tests' plans, kept in `store_cases.json`.
+/// Hand edits, as [HandEdits] itself finds them (the save tools' cases are tested with them). The XSLTs are the
+/// indexing generator's, for the tests' plans, kept in `store_cases.json`.
 class TestHandEdits {
 
     private static final List<Map<String, Object>> CASES = GenerationFixtures.json(GenerationFixtures.resource(
@@ -96,12 +95,10 @@ class TestHandEdits {
 
     @Test
     void aTranslationEditedByHandIsNoLongerWrittenByTheRegeneratedCode() {
-        // From test_a_translation_edited_by_hand_is_kept_through_build_translation_xslt: a Data added by hand to the
-        // generated translation is what regenerating it would undo.
+        // A Data added by hand to the generated translation is what regenerating it would undo.
         assertThat(lost(xslt("translation"), xslt("translation_dc"), xslt("translation")))
                 .contains("no longer writes Data device_class");
-        // test_a_constant_changed_by_hand_and_in_the_mapping_is_asked_about: the constant changed by hand, and the
-        // mapping's change to the same field, collide.
+        // The constant changed by hand, and the mapping's change to the same field, collide.
         final List<String> lost = lost(xslt("translation"), xslt("translation_edited"),
                 xslt("translation_prod"));
         assertThat(lost).contains("no longer writes Environment = Test");

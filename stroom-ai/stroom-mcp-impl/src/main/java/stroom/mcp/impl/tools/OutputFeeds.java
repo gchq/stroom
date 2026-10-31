@@ -37,10 +37,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/// The build's test feed, where a pipeline processing the existing feeds a build works from writes its Events
-/// (asked for by the user): set on the pipeline's StreamAppender (its feed property) in the build, and taken off
-/// again at promotion. Ported from the Stroom MCP server's `tools/processing_writes.py` (`_feed_taken`,
-/// `_free_feed_name`, `output_feed` and `restore_output_feed`; its `make_test_feed` is [BuildFeeds#makeTestFeed]).
+/// The build's test feed, where a pipeline processing the existing feeds a build works from writes its Events (asked
+/// for by the user): set on the pipeline's StreamAppender (its feed property) in the build, and taken off again at
+/// promotion. The test feed itself is made by [BuildFeeds#makeTestFeed].
 class OutputFeeds {
 
     /// What the tools call a build's test feed: the source feed's name with this after it.
@@ -166,7 +165,7 @@ class OutputFeeds {
     }
 
     /// Takes a promoted pipeline's StreamAppender feed property off where it names one of the build's feeds: in
-    /// production its Events go into the input's feed, as Stroom does by default (`restore_output_feed`).
+    /// production its Events go into the input's feed, as Stroom does by default.
     ///
     /// @param pipelineUuid The pipeline.
     /// @param buildFeeds   The UUIDs of the build's feeds.
@@ -211,7 +210,7 @@ class OutputFeeds {
     /// @param worksFrom The existing feeds whose streams the pipeline processes.
     record OutputFeed(String name, String uuid, boolean made, List<String> worksFrom) {
 
-        /// @return It as the Stroom MCP server gave it.
+        /// @return It as a result gives it.
         Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("name", name);

@@ -111,9 +111,9 @@ class PipelineIndex {
 
     /// @param type A document type.
     /// @param text Text the documents' content must contain, e.g. `reference-data:2`.
-    /// @return The documents of the type the user can view whose content contains the text, in name order: found
-    /// with Stroom's content index, as the Stroom MCP server found them (its explorer content search); while the
-    /// index isn't ready, every document of the type, for the caller to look in itself.
+    /// @return The documents of the type the user can view whose content contains the text, in name order: found with
+    /// Stroom's content index (the explorer's content search); while the index isn't ready, every document of the type,
+    /// for the caller to look in itself.
     List<DocRef> containing(final String type, final String text) {
         final ContentIndex contentIndex = contentIndexProvider.get();
         try {
@@ -138,8 +138,7 @@ class PipelineIndex {
     /// @param type    A document type.
     /// @param pattern A name, with `*` for any characters, e.g. `*CEF*`.
     /// @param limit   The most to give.
-    /// @return The documents of the type so named that the user can view, in name order (as the Stroom MCP
-    /// server's `find_documents` found them by name); none if they can't be listed.
+    /// @return The documents of the type so named that the user can view, in name order; none if they can't be listed.
     List<DocRef> named(final String type, final String pattern, final int limit) {
         try {
             return NullSafe.list(docFinderProvider.get().findByName(type, pattern, true)).stream()
@@ -156,11 +155,11 @@ class PipelineIndex {
 
     /// @param text  Text the documents' content must contain, e.g. `CEF:0`.
     /// @param limit The most matches asked of the content index.
-    /// @return The documents of any type the user can view whose content contains it (any case), in the content
-    /// index's order; none while the index is still being built, or if it can't be searched. As the Stroom MCP
-    /// server's explorer content search did, the search itself starts the index's first build on this node (and
-    /// waits a moment for it), so a later call finds what it holds: seen in e2e, asked only once it was ready, an
-    /// index nothing else had started was never searched.
+    /// @return The documents of any type the user can view whose content contains it (any case), in the content index's
+    /// order; none while the index is still being built, or if it can't be searched. As the explorer's content search
+    /// does, the search itself starts the index's first build on this node (and waits a moment for it), so a later call
+    /// finds what it holds: seen in testing, asked only once it was ready, an index nothing else had started was never
+    /// searched.
     List<DocRef> withContent(final String text, final int limit) {
         final ContentIndex contentIndex = contentIndexProvider.get();
         try {

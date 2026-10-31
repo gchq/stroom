@@ -28,7 +28,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// get_field_conventions, as the Stroom MCP server's tests/test_indexing.py tests it.
+/// get_field_conventions, the tool.
 class TestGetFieldConventionsTool {
 
     private final IndexingWorld world = new IndexingWorld();
@@ -152,7 +152,7 @@ class TestGetFieldConventionsTool {
         assertThat(((Map<String, Object>) ecs.get("profile")).get("field_map")).isNotNull();
         assertThat(((Map<String, Object>) ecs.get("ecs")).get("version")).isNotNull();
         assertThat((Map<String, Object>) ecs.get("ecs_fields")).containsKey("process.command_line");
-        final ToolResult unknown = world.conventionsTool().execute(PortedToolCalls.call(
+        final ToolResult unknown = world.conventionsTool().execute(BuildToolCalls.call(
                 GetFieldConventionsTool.NAME, "{\"name\": \"nope\"}"), IndexingWorld.noForms());
         assertThat(unknown.isError()).isTrue();
         assertThat(unknown.text()).isEqualTo("No convention profile 'nope'. Profiles: ecs, stroom-flat");
@@ -180,9 +180,9 @@ class TestGetFieldConventionsTool {
     }
 
     private Map<String, Object> call(final String arguments, final ToolCallContext context) {
-        final ToolResult result = world.conventionsTool().execute(PortedToolCalls.call(GetFieldConventionsTool.NAME,
+        final ToolResult result = world.conventionsTool().execute(BuildToolCalls.call(GetFieldConventionsTool.NAME,
                 arguments), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

@@ -33,8 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The event-logging version a translation writes: the user's choice from those Stroom holds, the newest
-/// recommended (the Stroom MCP server's `tests/test_event_versions.py`, its tool cases). Seen: the server defaulted
-/// to 3.5.2 on a Stroom that didn't hold it.
+/// recommended. Seen in testing: a default of 3.5.2 on a Stroom that didn't hold it.
 class TestEventVersions {
 
     private static final String CSV = "time,user,action\n2026-10-01T10:00:00Z,alice,logon\n"

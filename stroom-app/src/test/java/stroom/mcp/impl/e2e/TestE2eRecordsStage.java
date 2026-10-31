@@ -31,10 +31,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_records_stage.py`: a pipeline writing Records, built in a build, through the
-/// REAL tools on a real Stroom. A translation's build subfolder is named for what it writes, Events or Records. The
-/// fixture mirrors live's 'Stroom Proxy Receive Events' template: a child of 'Event Data (Text)' with the RECORDS
-/// schema group and the Records stream type, made under Template Pipelines. All five of the script's parts:
+/// A pipeline writing Records, built in a build, through the REAL tools on a real Stroom. A translation's build
+/// subfolder is named for what it writes, Events or Records. The fixture mirrors live's 'Stroom Proxy Receive Events'
+/// template: a child of 'Event Data (Text)' with the RECORDS schema group and the Records stream type, made under
+/// Template Pipelines. In five parts:
 ///
 /// 1. The fixture is found as a records-stage template.
 /// 2. A build: a Raw Events feed and a CSV sample; its Data Splitter, saved before any pipeline, goes in Events.

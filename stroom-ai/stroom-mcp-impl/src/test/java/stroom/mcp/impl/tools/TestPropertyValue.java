@@ -26,8 +26,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// A pipeline property as the tools read it (the Stroom MCP server's `tools/pipeline_writes.py` `PropertyValue`,
-/// and its test in `tests/test_pipelines.py`).
+/// A pipeline property as the tools read it.
 class TestPropertyValue {
 
     private static final String UUID = "0443f53b-a694-4d3d-90a4-e3310716cf0c";

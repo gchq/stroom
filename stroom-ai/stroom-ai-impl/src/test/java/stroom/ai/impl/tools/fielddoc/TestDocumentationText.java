@@ -22,9 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// A Documentation doc's title is its name; its sections at `## `; text added under the agent's own. Ported from the
-/// Stroom MCP server's `tests/test_documentation_title.py` (seen in production: the title said V1.2 on the doc of
-/// the V1.1 pipeline) and `test_the_summary_goes_under_the_agents_own_purpose` in `test_fielddoc.py`.
+/// A Documentation doc's title is its name (seen in production: the title said V1.2 on the doc of the V1.1
+/// pipeline); its sections at `## `; text added under the agent's own.
 class TestDocumentationText {
 
     @Test

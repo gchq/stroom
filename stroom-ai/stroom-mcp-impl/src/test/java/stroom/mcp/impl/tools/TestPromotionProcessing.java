@@ -34,8 +34,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What promoted pipelines go on processing (the Stroom MCP server's `tests/test_processing.py`, its cases for
-/// `promotion_processing` and `create_promotion_filters`).
+/// What promoted pipelines go on processing, and the filters promotion creates.
 class TestPromotionProcessing {
 
     private static final DocRef TP = new DocRef("Pipeline", "tp", "Acme-Events");

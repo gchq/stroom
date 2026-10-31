@@ -33,8 +33,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Every action EventDetail may hold, generated and validated: asked for by the user, as the Stroom MCP server's
-/// tests cover only the actions their samples happen to use (none used Search, Import, Uninstall or Approval).
+/// Every action EventDetail may hold, generated and validated: asked for by the user, as the other tests cover only
+/// the actions their samples happen to use (none used Search, Import, Uninstall or Approval).
 ///
 /// The cases are made from the schema itself, so a new schema version is covered as it is. For each action, one
 /// case per member of each choice directly in it (View's Document, Object and Resource, say), else one case; each

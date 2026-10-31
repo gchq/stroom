@@ -61,8 +61,8 @@ import java.util.Objects;
 /// finds text in each, and writes a table of the results keyed by StreamId and EventId, optionally added as a
 /// column to the table the events came from, so they can be analysed with the table tool.
 ///
-/// Or, given an index, finds events in it through Stroom as the user would on a dashboard ([IndexEvents], the
-/// Stroom MCP server's find_events, merged into this tool): for an event the user describes but can't point at.
+/// Or, given an index, finds events in it through Stroom as the user would on a dashboard ([IndexEvents]): for an
+/// event the user describes but can't point at.
 class SearchEventsTool extends AbstractWorkspaceTool {
 
     static final String NAME = "search_events";
@@ -324,7 +324,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
                                + "count, group or filter. The first rows:\n\n" + markdown(table));
     }
 
-    // Finds events in an index, as the Stroom MCP server's find_events did.
+    // Finds events in an index.
     private ToolResult findInIndex(final ToolCall request, final ToolCallContext context) {
         final Integer limit = intArg(request, LIMIT_ARG);
         final Find find = new Find(stringArg(request, INDEX_ARG), terms(request), stringArg(request, TIME_FROM_ARG),

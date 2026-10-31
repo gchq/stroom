@@ -21,8 +21,8 @@ import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 
-/// Makes [McpTestClient]s of the endpoint's REAL tools, for tests outside this package (the ports of the Stroom MCP
-/// server's `dev/e2e_*.py` scripts, in `stroom.mcp.impl.e2e`), which can't see [McpTools] itself.
+/// Makes [McpTestClient]s of the endpoint's REAL tools, for tests outside this package (the end-to-end suites in
+/// `stroom.mcp.impl.e2e`), which can't see [McpTools] itself.
 public final class McpTestClients {
 
     private final McpTools mcpTools;

@@ -21,9 +21,9 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.XsltDoc;
@@ -46,9 +46,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/// The shared XSLTs standing instructions require each stage's XSLTs to import (the Stroom MCP server's
-/// `tools/generation.py` `_required_for` and `_import_notes`, and `tools/translation.py`
-/// `_refuse_without_required_imports`, with `xslt_role` and `_ROLE_STAGE`).
+/// The shared XSLTs standing instructions require each stage's XSLTs to import.
 class RequiredImports {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RequiredImports.class);
@@ -162,8 +160,8 @@ class RequiredImports {
                         .map(doc -> SharedXslt.templatesOf(NullSafe.string(doc.getData())).keySet())
                         .orElse(Set.of());
                 if (!offered.isEmpty() && offered.stream().noneMatch(called::contains)) {
-                    out.add(PyText.repr(r.href()) + " is imported (the AGENTS doc in " + root(r.from())
-                            + " requires it), but none of its named templates " + PyText.list(new TreeSet<>(offered))
+                    out.add(ToolText.repr(r.href()) + " is imported (the AGENTS doc in " + root(r.from())
+                            + " requires it), but none of its named templates " + ToolText.list(new TreeSet<>(offered))
                             + " is called: call each where it writes (shared entries), unless the user says this "
                             + "XSLT needs none of them.");
                 }
@@ -198,7 +196,7 @@ class RequiredImports {
         final Set<String> from = new TreeSet<>();
         missing.forEach(r -> from.add(root(r.from())));
         throw new ToolRefusal("Standing instructions require every " + stage + " XSLT to import "
-                              + missing.stream().map(r -> PyText.repr(r.href()))
+                              + missing.stream().map(r -> ToolText.repr(r.href()))
                                       .collect(Collectors.joining(", "))
                               + " (the AGENTS doc in " + String.join(", ", from) + "): add "
                               + missing.stream().map(r -> "<xsl:import href=\"" + r.href() + "\"/>")

@@ -32,9 +32,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The plan for a build on data already in Stroom: an existing feed's records, a production pipeline's new version
-/// or working copy (the Stroom MCP server's `tests/test_existing_data_plan.py`). Seen in VS Code: `next` said
-/// create_feed and upload_sample whatever the build was, so the agent uploaded a workspace file though the user chose
-/// production streams, and made a new feed to build an indexing pipeline's next version.
+/// or working copy. Seen in VS Code: `next` said create_feed and upload_sample whatever the build was, so the agent
+/// uploaded a workspace file though the user chose production streams, and made a new feed to build an indexing
+/// pipeline's next version.
 class TestBuildPlanOnExistingData {
 
     private final FakeBuildFacts facts = new FakeBuildFacts();
@@ -575,10 +575,9 @@ class TestBuildPlanOnExistingData {
 
     @Test
     void aTranslationXsltSavedFromItsMappingStartsTheEventsStageWithoutASurvey() {
-        // The Stroom MCP server's plan.py counts a translation XSLT saved from a mapping as starting the events stage
-        // (tests/test_new_version.py: "Not surveyed first: the XSLT saved from its mapping is what starts the events
-        // stage"). Seen in its e2e: the XSLT saved, the plan still said to choose the work (stream_meta), and never
-        // reached its pipeline.
+        // A translation XSLT saved from a mapping counts as starting the events stage, with no survey first. Seen in
+        // an end-to-end run: the XSLT saved, the plan still said to choose the work (stream_meta), and never reached
+        // its pipeline.
         facts.docs = List.of(FakeBuildFacts.doc("XSLT", "x", "ACME-Events"));
         facts.sources = List.of("ACME");
         facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
@@ -594,9 +593,8 @@ class TestBuildPlanOnExistingData {
 
     @Test
     void anExistingFeedsNextVersionIsMadeFromThePipelineTranslatingIt() {
-        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 of a Fortigate feed, its XSLT
-        // saved, and the plan's pipeline step said to find the best template, so the agent offered copying V1.2 or a
-        // pipeline unlike it, and the user asked why.
+        // Seen in testing: V1.3 of a Fortigate feed, its XSLT saved, and the plan's pipeline step said to find the
+        // best template, so the agent offered copying V1.2 or a pipeline unlike it, and the user asked why.
         facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "FG - Survey"),
                 FakeBuildFacts.doc("XSLT", "x13", "FG-Events-V1.3"));
         facts.sources = List.of("FG");
@@ -626,8 +624,8 @@ class TestBuildPlanOnExistingData {
 
     @Test
     void theExistingDataAdviceGivesBothRoutesToANextVersion() {
-        // The Stroom MCP server's FINDINGS (0.18.41): the copy for a change of parts, the next version written anew
-        // through create_pipeline version_of=, and the user asked which.
+        // Seen in testing: the copy for a change of parts, the next version written anew through create_pipeline
+        // version_of=, and the user asked which.
         facts.sources = List.of("FG");
         facts.translating = List.of(Map.of("name", "FG-V1.2-Events", "uuid", "prod-ev"));
         assertThat(String.valueOf(next(status()).get("then")))

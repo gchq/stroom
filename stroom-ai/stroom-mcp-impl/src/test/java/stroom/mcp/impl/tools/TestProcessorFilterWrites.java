@@ -38,8 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 
-/// The processing tools' filters (the Stroom MCP server's `tests/test_processing.py` and
-/// `tests/test_stream_types.py`, their cases for `_create_filter`, `feed_stream_type` and `_refuse_duplicate`).
+/// The processing tools' filters: a new filter, the stream types a feed gives, and a filter the same as one already
+/// there.
 class TestProcessorFilterWrites {
 
     private ProcessingWorld w;

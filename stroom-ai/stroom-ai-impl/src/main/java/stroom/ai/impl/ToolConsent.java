@@ -34,7 +34,7 @@ import java.util.Optional;
 /// Decides whether a tool call the model asks for runs straight away, needs the user's approval first, or is not
 /// run:
 ///
-/// - Stroom's own (built-in and ported) tools run as the user, within the user's permissions and tool policies.
+/// - Stroom's own (built-in and build) tools run as the user, within the user's permissions and tool policies.
 ///   A call that only reads always runs. A call that changes something runs without asking until the chat has
 ///   read untrusted content (anything that could hold instructions planted by someone other than the user: see
 ///   [AiChatRunManager#isTainted(int)]); after that it asks on an approval card, which can allow the tool for the

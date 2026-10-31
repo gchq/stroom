@@ -18,8 +18,7 @@ package stroom.ai.impl.tools.generation;
 
 import java.util.List;
 
-/// A mapping (or a part of one) that doesn't validate: pydantic's `ValidationError` in the Stroom MCP server, with
-/// each [MappingError] it found.
+/// A mapping (or a part of one) that doesn't validate, with each [MappingError] found.
 public final class MappingValidationException extends IllegalArgumentException {
 
     private final String model;
@@ -38,12 +37,12 @@ public final class MappingValidationException extends IllegalArgumentException {
         return model;
     }
 
-    /// @return What is wrong, in the order pydantic finds it.
+    /// @return What is wrong, in the order it was found.
     public List<MappingError> errors() {
         return errors;
     }
 
-    // As pydantic's str(ValidationError) starts: the count, the model, then each error's place and message.
+    // The count, the model, then each error's place and message (`1 validation error for TranslationMapping`).
     private static String message(final String model, final List<MappingError> errors) {
         final StringBuilder sb = new StringBuilder().append(errors.size()).append(" validation error")
                 .append(errors.size() == 1

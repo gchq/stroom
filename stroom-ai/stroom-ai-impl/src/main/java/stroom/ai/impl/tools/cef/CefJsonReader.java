@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-// Reads the CEF plan's models from JSON-like values as pydantic validates them in the Stroom MCP server (lax mode),
-// collecting each error with pydantic's location, type and message.
+// Reads the CEF plan's models from JSON-like values with lax types (a number or a word such as `yes` for a boolean,
+// say), collecting each error with its location, type and message, in the form [MappingError] gives the agent.
 final class CefJsonReader {
 
     private static final Set<String> TRUE_WORDS = Set.of("true", "t", "yes", "y", "on", "1");
@@ -37,7 +37,7 @@ final class CefJsonReader {
 
     private final List<MappingError> errors = new ArrayList<>();
 
-    /// The result, or the errors as pydantic raises them.
+    /// The result, or the errors noted.
     ///
     /// @param model  The model read, e.g. `CefPlan`.
     /// @param result What was read.
@@ -54,8 +54,8 @@ final class CefJsonReader {
     /// Notes an error.
     ///
     /// @param loc     Where it is.
-    /// @param type    pydantic's error type.
-    /// @param message pydantic's message.
+    /// @param type    The error's type, e.g. `missing`.
+    /// @param message What is wrong.
     /// @param input   The value given there.
     void error(final List<Object> loc, final String type, final String message, final Object input) {
         errors.add(new MappingError(List.copyOf(loc), type, message, input));
@@ -157,7 +157,7 @@ final class CefJsonReader {
     /// @param loc          Where the model is.
     /// @param key          The field.
     /// @param defaultValue Its default.
-    /// @return Its value as pydantic reads a boolean (0, 1, yes, off, ...), or the default (with an error).
+    /// @return Its value read as a boolean (0, 1, yes, off, ...), or the default (with an error).
     boolean bool(final Map<String, Object> data, final List<Object> loc, final String key,
                  final boolean defaultValue) {
         if (!data.containsKey(key)) {
@@ -243,7 +243,7 @@ final class CefJsonReader {
         return out;
     }
 
-    // pydantic's list of the literal values: 'a', 'b' or 'c'.
+    // The literal values listed: 'a', 'b' or 'c'.
     private static String expected(final List<String> choices) {
         final List<String> quoted = choices.stream().map(choice -> "'" + choice + "'").toList();
         if (quoted.size() == 1) {

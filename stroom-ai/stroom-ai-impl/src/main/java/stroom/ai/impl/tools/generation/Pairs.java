@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 /// Key/value pairs in a text field: the regex that reads one key's value, for each way a text writes its pairs.
-/// Ported from the Stroom MCP server's `utils/pairs.py`.
 ///
 /// A mapping's pairs entry ([KeyValuePairs]) names a text field, its style and its keys; it stands for an extract
 /// entry a key, with these regexes (as the draft writes them, and as the XSLT folds them into one function called

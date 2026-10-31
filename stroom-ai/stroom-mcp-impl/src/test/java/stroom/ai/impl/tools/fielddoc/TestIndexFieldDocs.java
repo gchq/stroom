@@ -16,12 +16,12 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 
 import org.junit.jupiter.api.Test;
@@ -38,10 +38,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The Field mapping section of an indexing pipeline's documentation and of an existing index's, from the index
-/// plan, the documents written and the survey. Ported from the index cases of the Stroom MCP server's
-/// `tests/test_fielddoc.py`, `test_sharedxslt.py` and `test_validation.py`, and checked against what its
-/// `utils/fielddoc.py` writes for the same plans, documents and surveys (golden files). Here, beside the bundled
-/// ECS conventions the descriptions fall back on (they are stroom-mcp-impl's resources).
+/// plan, the documents written and the survey, checked against golden files of the text written for the same plans,
+/// documents and surveys. Here, beside the bundled ECS conventions the descriptions fall back on (they are
+/// stroom-mcp-impl's resources).
 class TestIndexFieldDocs {
 
     private static final EventSchema SCHEMA = EventSchema.parse(resource(
@@ -132,9 +131,9 @@ class TestIndexFieldDocs {
         final String lucene = "<records xmlns=\"records:2\"><record><data name=\"UserId\" value=\"bob\"/><data "
                               + "name=\"UserId\" value=\"carol\"/></record></records>";
         final List<Map<String, List<String>>> documents = IndexFieldDocs.indexDocuments(List.of(elastic));
-        assertThat(PyJson.dumps(documents)).isEqualTo("[{\"@timestamp\": [\"2026-10-01T10:00:00.000Z\"], \"user\": "
+        assertThat(ToolJson.dumps(documents)).isEqualTo("[{\"@timestamp\": [\"2026-10-01T10:00:00.000Z\"], \"user\": "
                                                       + "[], \"user.name\": [\"alice\"]}]");
-        assertThat(PyJson.dumps(IndexFieldDocs.indexDocuments(List.of(lucene))))
+        assertThat(ToolJson.dumps(IndexFieldDocs.indexDocuments(List.of(lucene))))
                 .isEqualTo("[{\"UserId\": [\"bob\", \"carol\"]}]");
         final String section = section(plan, Map.of("EventSource/User/Id", 100.0), documents, null);
         assertThat(section).contains("Sample values are what the 1 documents written from the sample got.",
@@ -511,7 +510,7 @@ class TestIndexFieldDocs {
 
     @Test
     void aSharedTemplatesFieldSaysWhichWritesIt() {
-        // From test_sharedxslt.py: the index still maps the field; the documentation says where it comes from.
+        // The index still maps the field; the documentation says where it comes from.
         final FieldPlan plan = new FieldPlan("elasticsearch", "x", "@timestamp", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
                 PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
@@ -528,7 +527,6 @@ class TestIndexFieldDocs {
 
     @Test
     void anIndexingXsltWithoutAPlanIsDocumentedFromTheDocumentsItWrites() {
-        // From test_validation.py.
         final String section = IndexFieldDocs.writtenFieldsMarkdown(json("""
                 [{"UserId": ["alice"], "Host": ["ws01"], "Empty": [""]}, {"UserId": ["bob"], "Host": [""]}]"""));
         assertThat(section).contains("| `UserId` | Not described: no plan or schema covers it. | 100% of documents | "
@@ -538,7 +536,7 @@ class TestIndexFieldDocs {
     }
 
     @Test
-    void theIndexSectionsAreThePythonText() {
+    void theIndexSectionsAreTheirGoldens() {
         final FieldPlan plan = plan(golden("plan.json"));
         final Map<String, Object> sample = golden("plan-docs.json");
         @SuppressWarnings("unchecked") final Map<String, Object> rawPopulation =
@@ -553,11 +551,11 @@ class TestIndexFieldDocs {
         assertThat(section(plan, null, null, null)).isEqualTo(goldenText("plan-bare.md"));
         final Descriptions asking = Descriptions.asking(true);
         IndexFieldDocs.indexFieldMappingMarkdown(plan, population, documents, SCHEMA, FieldDocs.BY_EVENT_TYPE, asking);
-        assertThat(PyJson.dumps(asking.wanted())).isEqualTo(PyJson.dumps(golden("plan-wanted.json")));
+        assertThat(ToolJson.dumps(asking.wanted())).isEqualTo(ToolJson.dumps(golden("plan-wanted.json")));
     }
 
     @Test
-    void theExistingIndexSectionsAreThePythonText() {
+    void theExistingIndexSectionsAreTheirGoldens() {
         final Map<String, Object> given = golden("survey.json");
         @SuppressWarnings("unchecked") final Map<String, Object> survey = (Map<String, Object>) given.get("survey");
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
@@ -581,7 +579,7 @@ class TestIndexFieldDocs {
     }
 
     @Test
-    void theWrittenAndDiscoverySectionsAreThePythonText() {
+    void theWrittenAndDiscoverySectionsAreTheirGoldens() {
         assertThat(IndexFieldDocs.writtenFieldsMarkdown(json("""
                 [{"UserId": ["alice"], "Host": ["ws01"], "Empty": [""], "EventId": ["3"]},
                  {"UserId": ["bob"], "Host": [""], "n": ["1", "2"]}, {"n": ["3"]}]""")))
@@ -589,7 +587,7 @@ class TestIndexFieldDocs {
         final List<String> outputs = List.of(goldenText("elastic.xml"), goldenText("lucene.xml"), "<broken");
         final List<Map<String, List<String>>> documents = IndexFieldDocs.indexDocuments(outputs);
         final Map<String, Object> golden = golden("documents.json");
-        assertThat(PyJson.dumps(documents)).isEqualTo(PyJson.dumps(golden.get("documents")));
+        assertThat(ToolJson.dumps(documents)).isEqualTo(ToolJson.dumps(golden.get("documents")));
         final List<String> arrays = IndexFieldDocs.objectArrays(List.of(goldenText("elastic.xml")));
         assertThat(arrays).isEqualTo(golden.get("arrays"));
         final FieldPlan plan = plan(golden("discovery-plan.json"));
@@ -604,7 +602,7 @@ class TestIndexFieldDocs {
                 null);
     }
 
-    // _survey(fed_by, stored) of the Python tests.
+    // An existing index's survey: what feeds it, and whether http.status is stored.
     private static Map<String, Object> survey(final List<Object> fedBy, final boolean stored) {
         final Map<String, Object> survey = json("""
                 {"index": {"type": "ElasticIndex", "uuid": "i", "name": "legacy-web", "path": "System/Prod/legacy-web"},
@@ -649,12 +647,12 @@ class TestIndexFieldDocs {
         return out;
     }
 
-    // Python's strip('| `').
+    // The text without the '|', '`' and spaces at either end.
     private static String strip(final String text) {
-        return PyText.strip(text, "| `");
+        return ToolText.strip(text, "| `");
     }
 
-    // A plan as the MCP server dumped it, read as the MCP server reads one.
+    // A plan as JSON, read as the tools read one.
     private static FieldPlan plan(final Map<String, Object> json) {
         return FieldPlan.fromJson(json);
     }
@@ -666,16 +664,16 @@ class TestIndexFieldDocs {
 
     @SuppressWarnings("unchecked")
     private static <T> T json(final String text) {
-        return (T) PyJson.loads(text);
+        return (T) ToolJson.loads(text);
     }
 
     private static <T> T golden(final String name) {
         return json(goldenText(name));
     }
 
-    // Python's text with its rows laid out as the port lays them out (not in the Stroom MCP server: only what every
-    // event has is common, without the In sample column; what only some events have, and what is read from
-    // whichever action element, elsewhere): the text before the tables, and each row, as Python wrote them.
+    // A golden file's text with its rows laid out as Stroom lays them out (only what every event has is common,
+    // without the In sample column; what only some events have, and what is read from whichever action element,
+    // elsewhere): the text before the tables, and each row, as the golden file has them.
     private static String inPortLayout(final String python, final Map<String, Double> population) {
         final List<String> lines = python.lines().toList();
         final int start = lines.indexOf("### Common fields");

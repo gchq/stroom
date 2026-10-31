@@ -31,8 +31,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/// The guides and field convention profiles bundled with Stroom for agents, as the Stroom MCP server bundled them
-/// (its `knowledge/guides` and `conventions`), read from the classpath under [#ROOT].
+/// The guides and field convention profiles bundled with Stroom for agents (`guides/` and `conventions/`), read from
+/// the classpath under [#ROOT].
 ///
 /// The files are listed here, not found by listing the folder, as a folder can't be listed reliably inside a jar.
 @Singleton
@@ -61,13 +61,13 @@ public class BundledKnowledge implements AgentKnowledge {
     /// The ECS component template file the indexing tools read, in `conventions/`.
     public static final String ECS_COMPONENT = "ecs_component.json";
 
-    /// The Stroom MCP server's instructions to its clients (its rules for every run), as they apply to Stroom.
+    /// The instructions every agent is given (the rules for every run).
     static final String SERVER_INSTRUCTIONS = "server-instructions.md";
 
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    /// @return What the Stroom MCP server told every client at connection, so the rules hold whichever client runs
-    /// the model: the order of work, the rules for every run, how to ask the user, and so on.
+    /// @return What every client is told at connection, so the rules hold whichever client runs the model: the
+    /// order of work, the rules for every run, how to ask the user, and so on.
     static String serverInstructions() {
         return readResource(SERVER_INSTRUCTIONS).strip();
     }

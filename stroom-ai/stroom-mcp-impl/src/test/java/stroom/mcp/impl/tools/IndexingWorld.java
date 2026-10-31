@@ -164,7 +164,7 @@ final class IndexingWorld {
 
     /// @return A call's context from a client that shows no forms.
     static ToolCallContext noForms() {
-        return PortedToolCalls.context();
+        return BuildToolCalls.context();
     }
 
     /// @param answers What the user answers each form with, by its question.

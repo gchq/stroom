@@ -19,23 +19,22 @@ package stroom.ai.impl.tools.generation;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/// One reason a mapping (or part of one) doesn't validate, as pydantic reports it in the Stroom MCP server
-/// (`ValidationError.errors()`): the agent is shown these, so the wording is pydantic's (and, for the models' own
-/// checks, the server's).
+/// One reason a mapping (or part of one) doesn't validate. The agent is shown these and acts on them, so the types and
+/// messages are a fixed vocabulary, pinned by the model fixtures.
 ///
 /// @param loc     Where it is, from the top of what was read: keys and list positions, e.g.
 ///                `["events", 0, "fields", 1]`.
-/// @param type    pydantic's error type, e.g. `missing`, `string_type`, `literal_error`, `value_error`.
-/// @param message pydantic's message, e.g. `Field required`, or `Value error, ...` for a model's own check.
+/// @param type    The error type, e.g. `missing`, `string_type`, `literal_error`, `value_error`.
+/// @param message The message, e.g. `Field required`, or `Value error, ...` for a model's own check.
 /// @param input   The value given there (for a missing key, the object it is missing from).
 public record MappingError(List<Object> loc, String type, String message, Object input) {
 
-    /// @return The location as pydantic writes it in a message: the parts joined with dots, e.g. `events.0.name`.
+    /// @return The location as a message writes it: the parts joined with dots, e.g. `events.0.name`.
     public String dotted() {
         return loc.stream().map(String::valueOf).collect(Collectors.joining("."));
     }
 
-    /// @return The location as the Stroom MCP server's `mapping_problems` writes it, e.g. `events[2].fields[0].path`
+    /// @return The location as the problems the agent reads write it, e.g. `events[2].fields[0].path`
     /// (empty for the top).
     public String where() {
         final StringBuilder sb = new StringBuilder();

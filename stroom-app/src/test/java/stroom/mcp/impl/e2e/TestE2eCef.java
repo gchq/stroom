@@ -46,13 +46,12 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_cef.py`: CEF for ArcSight, through Kafka, from Events, through the REAL tools on
-/// a real Stroom. Events go to a build's feed; draft_cef_mapping drafts and saves the CEF XSLT (keys in ArcSight's
-/// dictionary only); with no forwarding template, create_pipeline builds a pipeline of its own (XMLParser,
-/// SplitFilter one Event a record, XSLTFilter, SchemaFilter on kafka-records:1, StandardKafkaProducer with a
-/// KafkaConfig made here for the test); stepping it gives the CEF lines (nothing is sent: there is no Kafka);
-/// draft_cef_mapping reviews them, and write_documentation documents them to the field. Then, with an environment
-/// around it. All eight of the script's parts:
+/// CEF for ArcSight, through Kafka, from Events, through the REAL tools on a real Stroom. Events go to a build's feed;
+/// draft_cef_mapping drafts and saves the CEF XSLT (keys in ArcSight's dictionary only); with no forwarding template,
+/// create_pipeline builds a pipeline of its own (XMLParser, SplitFilter one Event a record, XSLTFilter, SchemaFilter on
+/// kafka-records:1, StandardKafkaProducer with a KafkaConfig made here for the test); stepping it gives the CEF lines
+/// (nothing is sent: there is no Kafka); draft_cef_mapping reviews them, and write_documentation documents them to the
+/// field. Then, with an environment around it. In eight parts:
 ///
 /// 1. Events in a build feed, and a KafkaConfig for the test.
 /// 2. The user is asked about keys outside the dictionary; the draft keeps to it.
@@ -67,8 +66,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// 8. The Kafka XSLT changed (one override, with its reason): pending until promotion, which writes one version line
 ///    for both of its changes, and a version control row in each doc.
 ///
-/// The script's `describe_document` (the XSLT's pending changes and kept mapping) is read here from the XSLT's
-/// description, as Stroom AI's read_document shows it; its `templates._shape` from build_status's pipeline stage.
+/// The XSLT's pending changes and kept mapping are read from the XSLT's description, as Stroom AI's read_document
+/// shows it; the template's shape from build_status's pipeline stage.
 @SuppressWarnings("unchecked")
 class TestE2eCef extends AbstractE2eTest {
 
@@ -211,7 +210,8 @@ class TestE2eCef extends AbstractE2eTest {
 
     @Test
     void aMixedSampleKeepsEachSystemsVersionAndAPlanThatWontCompileIsNotSaved() {
-        // Not in the Stroom MCP server's e2e_cef.py: what changed here since the port, through the real tools.
+        // A mixed sample keeps each system's version, and a plan that won't compile isn't saved, through the real
+        // tools.
         final String build = "cef-mixed";
         final String feedName = "CEF-MIXED-EVENTS";
         final Map<String, Object> feed = agreed("create_feed", args("build", build, "name", feedName,
@@ -486,7 +486,7 @@ class TestE2eCef extends AbstractE2eTest {
                 : List.of();
     }
 
-    // The doc's version control rows, released ones only (the Stroom MCP server's versionlog.rows_of).
+    // The doc's version control rows, released ones only.
     private static List<String> rowsOf(final String markdown) {
         final String heading = "## Version control";
         if (!markdown.contains(heading)) {

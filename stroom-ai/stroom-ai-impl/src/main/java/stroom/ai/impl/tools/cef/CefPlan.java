@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 /// (vendor, product, version, class id, name, severity), the fields every event shares, and per kind of event (its
 /// action element: Authenticate, View, Network...) the rest. It generates the XSLT ([CefXslt]) and the
 /// documentation's tables ([CefDocs]). Plans are kept in documents (the CEF XSLT's description), so the JSON is the
-/// Python model's: read with [#fromJson(Map)], written with [#toJson(DumpMode)]. Ported from the Stroom MCP
-/// server's `CefPlan` model in `utils/cef.py`.
+/// stored form, which a plan already kept must still read in: read with [#fromJson(Map)], written with
+/// [#toJson(DumpMode)].
 ///
 /// @param output     `kafka`: one kafka-records:1 record per Event, its value the CEF line (a StandardKafkaProducer
 ///                   sends it); `text`: one CEF line per Event (a TextWriter writes them).
@@ -123,9 +123,9 @@ public record CefPlan(String output,
                 events, List.of(), List.of(), null);
     }
 
-    /// @param json A plan as JSON-like values (`model_dump()` of the Python model, or what an agent sends).
-    /// @return It validated, as the Python model validates it.
-    /// @throws MappingValidationException if it doesn't validate, with pydantic's errors.
+    /// @param json A plan as JSON-like values (as [#toJson(DumpMode)] writes it, or what an agent sends).
+    /// @return It validated (lax types, defaults and its own checks).
+    /// @throws MappingValidationException if it doesn't validate, with each error's location, type and message.
     public static CefPlan fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
         final Map<String, Object> data = reader.model(json, List.of(), "CefPlan");
@@ -331,8 +331,8 @@ public record CefPlan(String output,
     }
 
     /// The record key's problems: it is read on each Event, with event-logging as the default namespace, so a
-    /// path names no prefix and doesn't start at the document (not in the Stroom MCP server; seen:
-    /// `//d:EventSource/d:SessionId`, its prefix declared nowhere, which failed to compile only once Stroom ran it).
+    /// path names no prefix and doesn't start at the document (seen in testing: `//d:EventSource/d:SessionId`, its
+    /// prefix declared nowhere, which failed to compile only once Stroom ran it).
     ///
     /// @param key A `kafka_key`, or null.
     /// @return Its problems; none for no key.
@@ -424,9 +424,9 @@ public record CefPlan(String output,
                 : layout, described);
     }
 
-    /// @param mode How to write it: [DumpMode#ALL] is `model_dump()`, [DumpMode#COMPACT] is
-    ///             `model_dump(exclude_defaults=True)` (how a plan is kept in a document).
-    /// @return It as JSON, as the Python model writes it.
+    /// @param mode How to write it: [DumpMode#ALL] is every field, [DumpMode#COMPACT] leaves out the defaults (how a
+    ///             plan is kept in a document).
+    /// @return It as JSON, keys in field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         final Map<String, Object> out = new LinkedHashMap<>();
         CefValue.put(out, mode, "output", output, KAFKA);

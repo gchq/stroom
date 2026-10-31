@@ -22,7 +22,7 @@ import java.util.Map;
 /// Reference data: what `stroom:lookup()` finds for a key in a map a reference loader provides
 /// (`find_reference_data` lists the maps). The pipeline must name the loader as a pipeline reference
 /// (`create_pipeline` references, or `update_pipeline (references=...)`); a key the map lacks gives no value, so the
-/// element is left out (or `default`). Ported from the Stroom MCP server's `Lookup` model.
+/// element is left out (or `default`).
 ///
 /// @param map   The map name, e.g. `USER_TO_DEPARTMENT`.
 /// @param field Input field holding the key (or a name from extract).
@@ -33,7 +33,7 @@ public record Lookup(String map,
                      String xpath,
                      String path) {
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -57,7 +57,7 @@ public record Lookup(String map,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("map", map, null)

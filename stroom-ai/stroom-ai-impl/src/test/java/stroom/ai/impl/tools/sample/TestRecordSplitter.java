@@ -125,12 +125,12 @@ class TestRecordSplitter {
     void cutOffHeadsKeepOnlyCompleteRecords() {
         final List<Object> items = new ArrayList<>();
         IntStream.range(0, 50).forEach(i -> items.add(SampleProfiler.map("n", (long) i, "action", "x")));
-        final String array = PyJson.dumps(items);
+        final String array = ToolJson.dumps(items);
 
         final RecordSplitter.Chunk json = RecordSplitter.split(array.substring(0, 500), 5000, true);
 
         assertThat(json.format()).isEqualTo("json array");
-        assertThat(json.records()).hasSizeBetween(1, 49).allSatisfy(r -> assertThat(PyJson.loads(r)).isNotNull());
+        assertThat(json.records()).hasSizeBetween(1, 49).allSatisfy(r -> assertThat(ToolJson.loads(r)).isNotNull());
         final String xml = "<audit>" + IntStream.range(0, 50).mapToObj(i -> "<entry><op>read</op><n>" + i
                                                                             + "</n></entry>")
                 .collect(Collectors.joining()) + "</audit>";

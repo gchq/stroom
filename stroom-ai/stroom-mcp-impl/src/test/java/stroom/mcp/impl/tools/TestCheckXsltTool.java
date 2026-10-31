@@ -39,10 +39,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// check_xslt, the tool: its checks wired together, its import lookup and the schemas it reads. Ported from the
-/// Stroom MCP server's `tests/test_validation.py`, `tests/test_saxon.py`, `tests/test_schema_locations.py` and
-/// `tests/test_formats.py` (the cases that call check_xslt; the checks themselves are [XsltChecks]'s, tested with
-/// it).
+/// check_xslt, the tool: its checks wired together, its import lookup and the schemas it reads (the checks
+/// themselves are [XsltChecks]'s, tested with it).
 class TestCheckXsltTool {
 
     private static final String XSLT = """
@@ -195,9 +193,9 @@ class TestCheckXsltTool {
                             + "</xsl:template></xsl:stylesheet>";
 
         final List<?> flagged = (List<?>) call(hand).get("errors");
-        final List<?> fine = (List<?>) PortedToolCalls.json(tool.execute(PortedToolCalls.call(CheckXsltTool.NAME,
+        final List<?> fine = (List<?>) BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME,
                         JsonUtil.writeValueAsString(Map.of("xslt", hand, "input_namespace", ""), false)),
-                PortedToolCalls.context()).text()).get("errors");
+                BuildToolCalls.context()).text()).get("errors");
 
         assertThat(flagged).anySatisfy(error -> assertThat(String.valueOf(error)).contains("namespace records:2"));
         assertThat(fine).noneSatisfy(error -> assertThat(String.valueOf(error)).contains("namespace records:2"));
@@ -227,22 +225,22 @@ class TestCheckXsltTool {
         call(XSLT.replace("<Event>", "<Events Version=\"4.1.0\"><Event>").replace("</Event>", "</Event></Events>"));
         Mockito.verify(heldSchemas).eventSchema("4.1.0");
 
-        PortedToolCalls.json(tool.execute(PortedToolCalls.call(CheckXsltTool.NAME, JsonUtil.writeValueAsString(
-                Map.of("xslt", XSLT, "schema_version", "3.5.2"), false)), PortedToolCalls.context()).text());
+        BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME, JsonUtil.writeValueAsString(
+                Map.of("xslt", XSLT, "schema_version", "3.5.2"), false)), BuildToolCalls.context()).text());
         Mockito.verify(heldSchemas).eventSchema("3.5.2");
     }
 
     @Test
     void anXsltIsNeededToCheck() {
-        final ToolResult result = tool.execute(PortedToolCalls.call(CheckXsltTool.NAME, "{}"),
-                PortedToolCalls.context());
+        final ToolResult result = tool.execute(BuildToolCalls.call(CheckXsltTool.NAME, "{}"),
+                BuildToolCalls.context());
 
         assertThat(result.isError()).isTrue();
         assertThat(result.text()).startsWith("Give xslt");
     }
 
     private Map<String, Object> call(final String xslt) {
-        return PortedToolCalls.json(tool.execute(PortedToolCalls.call(CheckXsltTool.NAME,
-                JsonUtil.writeValueAsString(Map.of("xslt", xslt), false)), PortedToolCalls.context()).text());
+        return BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME,
+                JsonUtil.writeValueAsString(Map.of("xslt", xslt), false)), BuildToolCalls.context()).text());
     }
 }

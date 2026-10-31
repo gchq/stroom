@@ -32,8 +32,7 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Data Splitter XML a spec is written as (the Stroom MCP server's `generate_splitter`, and its tests in
-/// `tests/test_directive_logs.py`, `test_formats.py`, `test_sources.py` and `test_wild_formats.py`).
+/// The Data Splitter XML a spec is written as.
 class TestSplitterXml extends DraftFixtures {
 
     private static final String DS = "data-splitter:3";
@@ -61,7 +60,7 @@ class TestSplitterXml extends DraftFixtures {
                 .containsEntry("pattern", SplitterXml.BLANK_LINE);
         assertThat(attributes(only(root.childElements(DS, "split").getLast(), "group"))).containsEntry("id",
                 "fields");
-        // As the Stroom MCP server wrote it: no ids, no blank line regex.
+        // generateSplitter writes the plain form: no ids, no blank line regex.
         assertThat(SplitterXml.generateSplitter(spec)).doesNotContain(" id=\"header\"").doesNotContain("blankLine");
     }
 

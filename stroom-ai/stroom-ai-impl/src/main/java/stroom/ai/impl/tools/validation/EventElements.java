@@ -28,9 +28,8 @@ import java.util.Map;
 
 /// What an event-logging element takes, from the schema in this Stroom: its children in order, each with whether
 /// it is required or repeatable, whether it is one of a choice (and whether one of that choice must be given), and
-/// for a leaf its type and allowed values, each with the schema's description. Ported from the Stroom MCP server's
-/// `describe_event_element` (`describe_document`'s element=). Seen: Qwen in VS Code spent twelve minutes writing
-/// PowerShell to read these out of the XSD.
+/// for a leaf its type and allowed values, each with the schema's description. Seen: Qwen in VS Code spent twelve
+/// minutes writing PowerShell to read these out of the XSD.
 public final class EventElements {
 
     /// The element described when none is named: EventDetail, whose children are the action elements.

@@ -48,10 +48,8 @@ import javax.xml.transform.stream.StreamSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// An XSLT is compiled as Stroom compiles it: with Stroom's functions and its imports read by name. Ported from
-/// the Stroom MCP server's `tests/test_saxon.py`
-/// (`test_an_xslt_is_compiled_with_stroom_and_imported_functions_and_templates_stood_in_for`), where the
-/// functions and imports were stood in for; here they are Stroom's own.
+/// An XSLT is compiled as Stroom compiles it: with Stroom's functions and its imports read by name, not stood in
+/// for.
 class TestXsltCompileCheck {
 
     private static final String GEO = "http://example.com/geo";
@@ -122,8 +120,8 @@ class TestXsltCompileCheck {
 
     @Test
     void testAnImportThatCantBeReadIsTheError() {
-        // The Stroom MCP server stood in for imports, and said a variable nothing declared was fine only if an
-        // import declared it; here the import is read, so one that can't be is the error.
+        // With imports stood in for, a variable nothing declared would be fine only if an import declared it;
+        // here the import is read, so one that can't be is the error.
         final Compiled compiled = check.compile(sheet("<xsl:import href=\"Missing-V1\"/>",
                 "<xsl:value-of select=\"$kv\"/>"));
         assertThat(compiled.errors()).containsExactly("Resource not found: \"Missing-V1\"");

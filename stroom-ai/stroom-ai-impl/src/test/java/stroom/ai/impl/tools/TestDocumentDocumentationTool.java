@@ -123,7 +123,7 @@ class TestDocumentDocumentationTool {
 
     @Test
     void aDocumentationDocumentOfTheSameNameBesideItIsNamed() {
-        // Seen: an indexing pipeline's tab, holding only the server's hidden block, read as its documentation lost,
+        // Seen: an indexing pipeline's tab, holding only the tools' hidden block, read as its documentation lost,
         // and its Documentation document rewritten three times over.
         canView(true);
         documentation("<!-- stroom-mcp agreed index template ... -->");

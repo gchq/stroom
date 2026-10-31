@@ -67,10 +67,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// create_indexing_pipeline (the Stroom MCP server's `tools/indexing.py` `create_indexing_pipeline`,
-/// `_events_available` and `_missing_index_fields`): the cases of its `tests/test_indexing.py`,
-/// `tests/test_index_rename.py` and `tests/test_authoring_guards.py`, and what `dev/e2e_lucene_indexing.py` and
-/// `dev/e2e_elastic_handover.py` expect of it.
+/// create_indexing_pipeline: whether the Events it would index are available, the fields its index lacks, and what
+/// `TestE2eLuceneIndexing` and `TestE2eElasticHandover` (stroom-app) expect of it.
 class TestCreateIndexingPipelineTool {
 
     private static final List<PlannedField> FIELDS = List.of(PlannedField.of("StreamId", "id", "@StreamId"),
@@ -101,7 +99,7 @@ class TestCreateIndexingPipelineTool {
         Mockito.when(pipelines.fromTemplate(any(), any(), any())).thenReturn(Map.of("type", "Pipeline", "uuid", "p",
                 "name", "n"));
         xslt("");
-        // The build's own events pipeline will produce the Events (the Python tests patch _events_available).
+        // The build's own events pipeline will produce the Events.
         Mockito.when(guard.folderContents(anyString())).thenReturn(List.of(new BuildDoc(PipelineDoc.TYPE, "ev",
                 "Acme-Events", List.of(), "/acme", "Events")));
         Mockito.when(shapes.shape("ev")).thenReturn(shape("translation", null, List.of(), List.of()));
@@ -272,7 +270,7 @@ class TestCreateIndexingPipelineTool {
 
     @Test
     void anIndexWithEveryFieldTheXsltWritesGetsNoneAdded() {
-        // dev/e2e_lucene_indexing.py: the index doc made with the plan's fields, then the pipeline.
+        // As TestE2eLuceneIndexing has it: the index doc made with the plan's fields, then the pipeline.
         final FieldPlan lucene = FieldPlan.of("lucene", "acme", "EventTime", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId")));
         docs.put(LuceneIndexDoc.TYPE, LuceneIndexDoc.builder().uuid("i-1").name("ACME-INDEX").build());
@@ -321,11 +319,11 @@ class TestCreateIndexingPipelineTool {
 
     @Test
     void withNoTemplateItSaysWhereToFindOneNotTheFallback() {
-        final String refused = tool.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", "
+        final String refused = tool.execute(BuildToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", "
                                                                                                   + "\"name\": \"n\", "
                                                                                                   + "\"xslt_uuid\": "
                                                                                                   + "\"x\"}"),
-                PortedToolCalls.context()).text();
+                BuildToolCalls.context()).text();
         assertThat(refused).contains("Give template_uuid: an indexing template (find_pipeline_templates "
                                      + "stage=indexing), or a discovery one")
                 .as("the last resort isn't offered").doesNotContain("standalone");
@@ -433,8 +431,8 @@ class TestCreateIndexingPipelineTool {
 
     @Test
     void aLuceneIndexingPipelineIsMadeAsAChildOfTheTemplateWithTheIndexAndThePlansFields() {
-        // dev/e2e_lucene_indexing.py, on create_pipeline's own path: confirmed, then made with the XSLT and the index,
-        // the index given the fields its plan writes.
+        // As TestE2eLuceneIndexing has it, on create_pipeline's own path: confirmed, then made with the XSLT and the
+        // index, the index given the fields its plan writes.
         final PipelineWorld world = new PipelineWorld();
         final IndexResource indexResource = Mockito.mock(IndexResource.class);
         final List<String> have = new ArrayList<>();
@@ -462,16 +460,16 @@ class TestCreateIndexingPipelineTool {
                                  + "\"events_stream_ids\": [7]}";
 
         // Without a form the user can't confirm it: nothing is made.
-        final ToolResult refused = made.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, arguments),
-                PortedToolCalls.context());
+        final ToolResult refused = made.execute(BuildToolCalls.call(CreateIndexingPipelineTool.NAME, arguments),
+                BuildToolCalls.context());
 
         assertThat(refused.text()).startsWith("Not done: Create pipeline 'ACME-INDEX - Indexing' from template "
                                               + "'Indexing'.");
         assertThat(world.pipelineNamed("ACME-INDEX - Indexing")).isNull();
         assertThat(have).isEmpty();
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
-        final Map<String, Object> result = PipelineWorld.json(made.execute(PortedToolCalls.call(
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
+        final Map<String, Object> result = PipelineWorld.json(made.execute(BuildToolCalls.call(
                 CreateIndexingPipelineTool.NAME, arguments), user.context()));
 
         assertThat(user.shown()).singleElement().asString()
@@ -585,20 +583,20 @@ class TestCreateIndexingPipelineTool {
                     ? "\"build\": \"b\""
                     : "\"build\": \"b\", " + arguments;
         }
-        final ToolCall call = PortedToolCalls.call(CreateIndexingPipelineTool.NAME, "{" + given + ", \"name\": "
+        final ToolCall call = BuildToolCalls.call(CreateIndexingPipelineTool.NAME, "{" + given + ", \"name\": "
                                                                                    + "\"n\", \"template_uuid\": \"t\", "
                                                                                    + "\"xslt_uuid\": \"" + xsltUuid
                                                                                    + "\"}");
-        return tool.execute(call, PortedToolCalls.context());
+        return tool.execute(call, BuildToolCalls.context());
     }
 
     // A call for a discovery pipeline of its own, with the arguments, on build b.
     private ToolResult standalone(final String arguments) {
-        return tool.execute(PortedToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", \"name\": "
+        return tool.execute(BuildToolCalls.call(CreateIndexingPipelineTool.NAME, "{\"build\": \"b\", \"name\": "
                                                                                   + "\"n\", \"standalone\": "
                                                                                   + "\"discovery\", \"xslt_uuid\": "
                                                                                   + "\"x\", " + arguments + "}"),
-                PortedToolCalls.context());
+                BuildToolCalls.context());
     }
 
     // The XSLT kept with a discovery plan for the raw data.

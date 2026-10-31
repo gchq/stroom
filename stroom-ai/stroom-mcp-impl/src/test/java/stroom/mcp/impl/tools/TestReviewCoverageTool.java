@@ -61,8 +61,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// The Stroom MCP server's `tests/test_coverage.py`: whole-feed coverage of an events pipeline, and the pipelines
-/// that follow it.
+/// review_coverage: whole-feed coverage of an events pipeline, and the pipelines that follow it.
 class TestReviewCoverageTool {
 
     static final String EVENTS = """

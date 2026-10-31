@@ -694,8 +694,7 @@ class TestStroomMcpServer {
 
     @Test
     void theGuideTemplateNamesEveryGuide() {
-        // As the Stroom MCP server's test of its guide index: a guide added without its name in the description
-        // fails here.
+        // A guide added without its name in the description fails here.
         final String listed = McpResources.GUIDE_DESCRIPTION.replaceFirst("^Working guides: ", "")
                 .replaceFirst("\\.$", "");
         assertThat(List.of(listed.split(", "))).containsExactlyInAnyOrderElementsOf(BundledKnowledge.GUIDES);
@@ -716,8 +715,8 @@ class TestStroomMcpServer {
 
     @Test
     void theInstructionsSayWhichWorkFitsWhatTheUserWants() {
-        // Seen: a discovery index was never offered, and a table to look values up in was onboarded as events; the
-        // Stroom MCP server's entry points were workflow prompts, which a user must know to pick.
+        // Seen in testing: a discovery index was never offered, and a table to look values up in was onboarded as
+        // events; with workflow prompts as the entry points, a user had to know which to pick.
         final String text = String.join(" ", StroomMcpServer.INSTRUCTIONS.split("\\s+"));
         assertThat(text)
                 .contains("Which work: what the user has and wants decides the path, before any tool.")
@@ -725,7 +724,7 @@ class TestStroomMcpServer {
                           + "discovery index")
                 .contains("A table to look values up in (users, assets, codes): reference data")
                 .contains("When what the user wants fits more than one, ask which.")
-                // A discovery index's choices are asked together, as the Stroom MCP server's design has it.
+                // A discovery index's choices are asked together.
                 .contains("Ask the user, in one message: the cluster, the index name");
     }
 

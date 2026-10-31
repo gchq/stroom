@@ -29,7 +29,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
@@ -54,18 +54,15 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What build_translation_xslt and draft_translation_mapping share (the Stroom MCP server's `tools/generation.py`
-/// `_mapping_to_change`, `_kept_mapping`, `_generated`, `_meta_not_sent`, `zone_not_kept`, `_unknown_markdown`,
-/// `_unknown_key`, `_unknown_agreed`, `_remember_unknown_agreed` and `_fix_hint`, and `utils/sourcenotes.py`
-/// `notes_in_build`): the mapping a change starts from, the XSLT generated and compiled, and what the sample and
-/// the user's documentation say of it.
+/// What build_translation_xslt and draft_translation_mapping share: the mapping a change starts from, the XSLT
+/// generated and compiled, and what the sample and the user's documentation say of it.
 class TranslationBuilds {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TranslationBuilds.class);
 
     /// The block an XSLT keeps the rules the user agreed to keep as Unknown in.
     static final String UNKNOWN_AGREED = "unknown agreed";
-    // What the user chose for each field whose Ids carry a domain: split or kept (not in the Stroom MCP server).
+    // What the user chose for each field whose Ids carry a domain: split or kept.
     static final String DOMAIN_CHOSEN = "domain split chosen";
     /// What the user chose for values that stand for none, by value (see [PlaceholderChoices]).
     static final String PLACEHOLDERS_CHOSEN = "placeholders chosen";
@@ -169,7 +166,7 @@ class TranslationBuilds {
     /// @param mapping The mapping.
     /// @param schema  The event-logging schema.
     /// @param version Its version.
-    /// @return The generator's result, as the Stroom MCP server's dict, its lists open to more.
+    /// @return The generator's result as a map, its lists open to more.
     Map<String, Object> generated(final TranslationMapping mapping, final EventSchema schema, final String version) {
         final Map<String, Object> result = open(XsltGenerator.generate(mapping, schema, version).toMap());
         if (Boolean.TRUE.equals(result.get("ok"))) {
@@ -271,7 +268,7 @@ class TranslationBuilds {
         key.put("when", rule.when().stream().map(c -> c.toJson(DumpMode.WITHOUT_NONE)).toList());
         key.put("reason", rule.allowUnknown());
         key.put("keep", rule.keepUnknown());
-        return PyJson.dumpsSortedKeys(key);
+        return ToolJson.dumpsSortedKeys(key);
     }
 
     /// The records rules keep as Unknown, for the user in the chat: per rule, how many of the sample, what they
@@ -452,7 +449,7 @@ class TranslationBuilds {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> copy(final Map<?, ?> map) {
-        return PyJson.loads(PyJson.dumps(map)) instanceof final Map<?, ?> copied
+        return ToolJson.loads(ToolJson.dumps(map)) instanceof final Map<?, ?> copied
                 ? (Map<String, Object>) copied
                 : new LinkedHashMap<>((Map<String, Object>) map);
     }

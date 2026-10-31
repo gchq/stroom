@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -26,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -42,8 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 /// `reprocess_streams` - processes streams again through a pipeline under development, after changing it, at most
-/// [ProcessorFilterWrites#MAX_REPROCESS_STREAMS] a call, one task at a time. Ported from the Stroom MCP server's
-/// `tools/processing_writes.py`.
+/// [ProcessorFilterWrites#MAX_REPROCESS_STREAMS] a call, one task at a time.
 ///
 /// A new filter on the pipeline selects the streams by id, made through Stroom's processor filter service as the
 /// user, as the data browser's Process action makes one with the pipeline chosen; Stroom marks the pipeline's
@@ -177,7 +176,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         final Set<Long> done = Set.copyOf(filterWrites.alreadyProcessed(ref, streamIds));
         final List<Long> fresh = streamIds.stream().filter(id -> !done.contains(id)).toList();
         if (!fresh.isEmpty()) {
-            throw new ToolRefusal("Stream(s) " + PyText.repr(fresh) + " have not been processed by '"
+            throw new ToolRefusal("Stream(s) " + ToolText.repr(fresh) + " have not been processed by '"
                                   + pipeline.getName() + "': use create_processor_filter");
         }
         // As create_processor_filter: reprocessing is of code proved first (asked for by the user; found reviewing

@@ -20,8 +20,8 @@ import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XPathChecks;
 import stroom.util.json.JsonUtil;
 
@@ -42,22 +42,20 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The mapping checked against the sample before anything is generated or stepped (the Stroom MCP server's
-/// `tools/generation.py` `_sample_check`, the mapping-level checks of `utils/xpathcheck.py`, their cases in
-/// `tests/test_sample_check_speed.py` and `test_generation.py`, and `dev/eval/offline.py`'s check of each evaluation
-/// case's reference mapping).
+/// The mapping checked against the sample before anything is generated or stepped: the mapping-level XPath checks,
+/// their speed, and the check of each evaluation case's reference mapping.
 class TestMappingSampleCheck {
 
     private static final List<String> KEYS = List.of("logid", "type", "action", "srcip", "dstip", "user", "msg");
     private static final List<String> QUOTED = List.of("logid", "type", "action", "user", "msg");
     private static final String SAMPLE = IntStream.range(0, 400)
-            .mapToObj(i -> PyJson.dumps(line(i, "")))
+            .mapToObj(i -> ToolJson.dumps(line(i, "")))
             .collect(Collectors.joining("\n"));
 
     @Test
     void eachEvaluationCasesReferenceMappingPassesTheChecksOffline() {
-        // dev/eval/offline.py: what build_translation_xslt checks before it saves, for each case's reference (the
-        // cases whose samples are under 60 KB; the Python server passed every one).
+        // What build_translation_xslt checks before it saves, for each evaluation case's reference mapping (the
+        // cases whose samples are under 60 KB): every one passes.
         for (final Map<String, Object> c : cases()) {
             final TranslationMapping mapping = TranslationMapping.parse(c.get("mapping"));
             @SuppressWarnings("unchecked") final List<String> texts = (List<String>) c.get("texts");
@@ -235,7 +233,7 @@ class TestMappingSampleCheck {
         final String extra = IntStream.range(0, 50).mapToObj(j -> "k" + j + "=\"v" + j + "\"")
                 .collect(Collectors.joining(" "));
         final String sample = IntStream.range(0, 3000)
-                .mapToObj(i -> PyJson.dumps(line(i, " " + extra)))
+                .mapToObj(i -> ToolJson.dumps(line(i, " " + extra)))
                 .collect(Collectors.joining("\n"));
         final List<Map<String, Object>> more = IntStream.range(0, 50)
                 .mapToObj(j -> extraction("(?:^|[\\s,;])k" + j + "=\"([^\"]*)\"", "k" + j))
@@ -247,8 +245,8 @@ class TestMappingSampleCheck {
                 LocalCheck.sampleRecords(m, List.of(sample), null).records(), null, Clock.systemUTC());
 
         assertThat(found.problems()).isEmpty();
-        // Within the check's own time (the MCP server's test allowed 20 s, with its Python twin of each regex
-        // counting most texts): Saxon reads every text here, some 13 s on its own, longer on a loaded machine.
+        // Within the check's own time: Saxon reads every text here, some 13 s on its own, longer on a loaded
+        // machine.
         assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(MappingSampleCheck.CHECK_TIME);
     }
 
@@ -281,7 +279,7 @@ class TestMappingSampleCheck {
     void theXpathsCheckedAreThoseOnlyTheRecordAnswers() {
         // Not those calling a shared XSLT's functions (only Stroom, which imports it, can run them), nor those
         // reading a variable, which only the XSLT binds; a regex replacement's $1 is not one.
-        final TranslationMapping m = TranslationMapping.parse(PyJson.loads("""
+        final TranslationMapping m = TranslationMapping.parse(ToolJson.loads("""
                 {"input": "xml", "root": "logs", "record": "log",
                  "functions": [{"href": "GeoIP-V1", "prefix": "geo", "namespace": "http://example.com/geo"}],
                  "common": [{"path": "EventTime/TimeCreated", "xpath": "@time"},
@@ -300,7 +298,7 @@ class TestMappingSampleCheck {
     void fragmentsAreCheckedInTheirWrappersNamespace() {
         // As the XMLFragmentParser's wrapper gives them: a fragment declaring no namespace takes its default. Read
         // without it, the checks passed xpaths that select nothing in Stroom.
-        final TranslationMapping m = TranslationMapping.parse(PyJson.loads("""
+        final TranslationMapping m = TranslationMapping.parse(ToolJson.loads("""
                 {"input": "xml_fragments", "record": "Event", "xml_namespace": "records:2",
                  "common": [{"path": "EventTime/TimeCreated", "xpath": "System/TimeCreated/@SystemTime"}],
                  "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "xpath": "System/EventID"}]}]}"""));
@@ -311,7 +309,7 @@ class TestMappingSampleCheck {
         assertThat(documents).hasSize(3).allSatisfy(d -> assertThat(d).startsWith("<Event xmlns=\"records:2\">"));
         assertThat(MappingSampleCheck.checkXPaths(m, List.of(TestSampleProfiling.FRAGMENTS), null)).isEmpty();
         // An xpath no record answers is said.
-        final TranslationMapping missing = TranslationMapping.parse(PyJson.loads(PyJson.dumps(
+        final TranslationMapping missing = TranslationMapping.parse(ToolJson.loads(ToolJson.dumps(
                 m.toJson(DumpMode.COMPACT)).replace("System/EventID",
                 "System/Nope")));
         assertThat(MappingSampleCheck.checkXPaths(missing, List.of(TestSampleProfiling.FRAGMENTS), null))
@@ -353,7 +351,7 @@ class TestMappingSampleCheck {
         json.put("input", "json");
         json.put("json_layout", "lines");
         json.put("extract", extract);
-        json.put("common", PyJson.loads("""
+        json.put("common", ToolJson.loads("""
                 [{"path": "EventTime/TimeCreated", "field": "time"},
                  {"path": "EventSource/System/Name", "value": "FortiOS"},
                  {"path": "EventSource/System/Environment", "value": "Test"},

@@ -32,9 +32,8 @@ import jakarta.inject.Inject;
 
 import java.util.Map;
 
-/// `save_dictionary` - saves a Dictionary doc a translation reads at run time with stroom:dictionary(): creates it
-/// in the build, or replaces the entries of one the tools created (the Stroom MCP server's `tools/translation.py`
-/// `save_dictionary`, on [TranslationDocs]).
+/// `save_dictionary` - saves a Dictionary doc a translation reads at run time with stroom:dictionary(): creates it in
+/// the build, or replaces the entries of one the tools created (on [TranslationDocs]).
 class SaveDictionaryTool extends AbstractBuiltInTool {
 
     static final String NAME = "save_dictionary";

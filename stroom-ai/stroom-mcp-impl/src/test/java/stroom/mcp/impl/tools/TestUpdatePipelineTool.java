@@ -29,8 +29,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// update_pipeline (the Stroom MCP server's `tools/pipeline_writes.py` `update_pipeline`, and its test in
-/// `tests/test_surface.py`).
+/// update_pipeline, the tool.
 class TestUpdatePipelineTool {
 
     private static final String XSLT_UUID = "5f0a2c1e-3b4d-4e6f-8a9b-0c1d2e3f4a5b";
@@ -102,6 +101,6 @@ class TestUpdatePipelineTool {
     }
 
     private ToolResult call(final String arguments) {
-        return tool.execute(PortedToolCalls.call(UpdatePipelineTool.NAME, arguments), PortedToolCalls.context());
+        return tool.execute(BuildToolCalls.call(UpdatePipelineTool.NAME, arguments), BuildToolCalls.context());
     }
 }

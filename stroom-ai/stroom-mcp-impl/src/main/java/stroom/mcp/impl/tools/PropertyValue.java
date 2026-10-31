@@ -18,7 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolRefusal;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -27,9 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/// A pipeline element's property as a tool is asked to set it (the Stroom MCP server's
-/// `tools/pipeline_writes.py` `PropertyValue`): a document (`doc_uuid` and `doc_type`) or a plain value (text, a
-/// number or true/false).
+/// A pipeline element's property as a tool is asked to set it: a document (`doc_uuid` and `doc_type`) or a plain value
+/// (text, a number or true/false).
 ///
 /// @param element The element's id, e.g. `translationFilter`.
 /// @param name    The property's name, e.g. `xslt`.
@@ -75,8 +74,7 @@ record PropertyValue(String element, String name, String docUuid, String docType
         return element + "." + name;
     }
 
-    /// Reads the properties a call gives, in the shapes models send: a list, one property, or the list as JSON
-    /// text (the MCP server's `ONE_OR_MORE`).
+    /// Reads the properties a call gives, in the shapes models send: a list, one property, or the list as JSON text.
     ///
     /// @param given    The argument, as the call's JSON gives it, or null.
     /// @param argument The argument's name, for a refusal.
@@ -161,7 +159,7 @@ record PropertyValue(String element, String name, String docUuid, String docType
                     ? (Object) number.longValue()
                     : String.valueOf(number);
         }
-        return PyJson.dumps(value);
+        return ToolJson.dumps(value);
     }
 
     private static String text(final Object value) {
@@ -180,7 +178,7 @@ record PropertyValue(String element, String name, String docUuid, String docType
     }
 
     private static IllegalArgumentException notAProperty(final Object given) {
-        final String shown = PyJson.dumps(given);
+        final String shown = ToolJson.dumps(given);
         return new IllegalArgumentException("a property is {element, name} with doc_uuid and doc_type (a "
                                             + "document) or value (a plain property), e.g. " + EXAMPLE
                                             + "; given " + shown.substring(0, Math.min(160, shown.length())));

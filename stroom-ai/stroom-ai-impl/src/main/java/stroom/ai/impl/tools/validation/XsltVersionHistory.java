@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The version history of each XSLT the tools save, kept in its description (the XSLT's Documentation tab in
-/// Stroom), not in the code. Ported from the Stroom MCP server's `utils/xsltversion.py`.
+/// Stroom), not in the code.
 ///
 /// One row per version: its number, date, author, whether the agent made it (through the tools) or someone changed
 /// the XSLT by hand (in Stroom's editor), what changed, and for an agent change who made it (the tools' version,
@@ -182,7 +182,7 @@ public final class XsltVersionHistory {
     }
 
     /// Whether the code is what the tools last generated: neither changed since they saved it, nor last saved as
-    /// written by hand (save_xslt's code, not a mapping's or plan's; not in the Python server, where an agent's
+    /// written by hand (save_xslt's code, not a mapping's or plan's; seen in testing: without that, an agent's
     /// hand edit saved so was taken for what an earlier generator wrote, and regenerating it from the mapping,
     /// undoing the edit, was offered).
     ///
@@ -270,7 +270,7 @@ public final class XsltVersionHistory {
             entry.put("digest", digest(code));
         }
         if (hand) {
-            // Only when so, so a generated save's entry is the Python server's.
+            // Only when so, so a generated save's entry is stored as it always has been.
             entry.put("hand", true);
         }
         entries.add(entry);

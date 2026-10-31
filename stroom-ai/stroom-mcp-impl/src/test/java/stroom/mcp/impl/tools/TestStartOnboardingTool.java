@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// start_onboarding and build_status (the Stroom MCP server's `tests/test_plan.py`).
+/// start_onboarding and build_status: the build started from its samples, and the plan.
 class TestStartOnboardingTool {
 
     private final BuildWorld world = new BuildWorld();
@@ -78,8 +78,8 @@ class TestStartOnboardingTool {
                 "build", "onboard-fortios-firewall", "name", "<the feed name the user confirmed>")));
         assertThat(result.get("standing_instructions")).isEqualTo(Map.of("instructions", List.of()));
 
-        final ToolResult refused = tool.execute(PortedToolCalls.call(StartOnboardingTool.NAME,
-                "{\"source_name\": \"x\", \"samples\": {}}"), PortedToolCalls.context());
+        final ToolResult refused = tool.execute(BuildToolCalls.call(StartOnboardingTool.NAME,
+                "{\"source_name\": \"x\", \"samples\": {}}"), BuildToolCalls.context());
         assertThat(refused.isError()).isTrue();
         assertThat(refused.text()).startsWith("Give the sample files");
     }
@@ -141,8 +141,8 @@ class TestStartOnboardingTool {
     @Test
     void buildStatusGivesThePlan() {
         final BuildStatusTool status = new BuildStatusTool(plan);
-        final Map<String, Object> result = PortedToolCalls.json(status.execute(PortedToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\"}"), PortedToolCalls.context()).text());
+        final Map<String, Object> result = BuildToolCalls.json(status.execute(BuildToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
         assertThat(result.get("build")).isEqualTo("b");
         assertThat(((Map<?, ?>) result.get("next")).get("step")).isEqualTo("feed");
         assertThat(status.definition().description().toString()).startsWith("Onboarding, any step: ");
@@ -156,10 +156,10 @@ class TestStartOnboardingTool {
     void buildStatusIsBriefUnlessAskedForInFull() {
         // Seen: its 10 KB result saved to the workspace and called for again and again.
         final BuildStatusTool status = new BuildStatusTool(plan);
-        final Map<String, Object> brief = PortedToolCalls.json(status.execute(PortedToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\"}"), PortedToolCalls.context()).text());
-        final Map<String, Object> full = PortedToolCalls.json(status.execute(PortedToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\", \"full\": true}"), PortedToolCalls.context()).text());
+        final Map<String, Object> brief = BuildToolCalls.json(status.execute(BuildToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
+        final Map<String, Object> full = BuildToolCalls.json(status.execute(BuildToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"b\", \"full\": true}"), BuildToolCalls.context()).text());
 
         assertThat(brief.keySet()).startsWith("next", "before_promotion", "steps");
         final Map<String, Object> states = (Map<String, Object>) brief.get("steps");
@@ -178,10 +178,10 @@ class TestStartOnboardingTool {
     }
 
     private Map<String, Object> call(final Map<String, Object> arguments) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(StartOnboardingTool.NAME,
-                JsonUtil.writeValueAsString(arguments, false)), PortedToolCalls.context());
+        final ToolResult result = tool.execute(BuildToolCalls.call(StartOnboardingTool.NAME,
+                JsonUtil.writeValueAsString(arguments, false)), BuildToolCalls.context());
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     // Profiles any text as key=value.
@@ -251,9 +251,9 @@ class TestStartOnboardingTool {
     void aReferenceTableIsStartedAsReferenceData() {
         // Asked for by the user: a table to look values up in was planned as an events onboarding.
         facts.kind = "reference";
-        final Map<String, Object> started = PortedToolCalls.json(tool.execute(PortedToolCalls.call(
+        final Map<String, Object> started = BuildToolCalls.json(tool.execute(BuildToolCalls.call(
                 StartOnboardingTool.NAME, "{\"source_name\": \"HR users\", \"files\": [\"users.csv\"], "
-                                          + "\"kind\": \"reference\"}"), PortedToolCalls.context()).text());
+                                          + "\"kind\": \"reference\"}"), BuildToolCalls.context()).text());
 
         assertThat(world.records().kind("onboard-hr-users")).hasValue("reference");
         assertThat(((List<Map<String, Object>>) started.get("plan")).stream().map(step -> step.get("step")))

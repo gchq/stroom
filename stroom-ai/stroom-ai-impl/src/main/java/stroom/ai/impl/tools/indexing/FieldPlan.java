@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ModelReader;
 import stroom.ai.impl.tools.generation.SharedTemplate;
@@ -44,9 +44,9 @@ import java.util.TreeSet;
 /// Elasticsearch: every record is copied with its own field names and Elasticsearch maps them dynamically, so
 /// nothing is surveyed up front. Only StreamId, EventId and @timestamp are mapped explicitly.
 ///
-/// Ported from the Stroom MCP server's `utils/fieldplan.py` `FieldPlan` model. Its JSON ([#toJson()], which Jackson
-/// writes too) is the server's, field for field, as plans are kept in documents' descriptions; read one with
-/// [#fromJson(Map)] (as Jackson does), which validates it as pydantic does, with pydantic's messages.
+/// Its JSON ([#toJson()], which Jackson writes too) is the form kept in documents' descriptions, field for field, so
+/// plans already kept still read; read one with [#fromJson(Map)] (as Jackson does), which validates it with the
+/// established validation messages (`Input should be a valid string` and the like), which the tests pin.
 ///
 /// @param backend          `lucene` or `elasticsearch`.
 /// @param indexName        `index_name`: Lucene index doc name, or Elasticsearch index / data stream name.
@@ -75,7 +75,7 @@ import java.util.TreeSet;
 ///                         the defaults.
 /// @param standIns         `stand_ins`: values the Events hold for none (e.g. `-`), each with what the user chose to
 ///                         index it as: left out, or null (Elasticsearch), or kept as written (see
-///                         [Discovery#STAND_IN_TREATMENTS]). Not in the Stroom MCP server; asked for by the user.
+///                         [Discovery#STAND_IN_TREATMENTS]). Asked for by the user.
 public record FieldPlan(String backend,
                         String indexName,
                         String timeField,
@@ -134,23 +134,23 @@ public record FieldPlan(String backend,
     }
 
     /// @param json A plan as JSON-like values, e.g. as kept in an XSLT doc's description.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with its own checks.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate, with every error
-    /// pydantic would give.
+    /// found.
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static FieldPlan fromJson(final Map<String, Object> json) {
         return parse(json);
     }
 
     /// @param json A plan as JSON-like values, which may be anything (an error says what it should be).
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with its own checks.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     public static FieldPlan parse(final Object json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("FieldPlan", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values, validating it with lax types, defaults and its own checks.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -180,7 +180,7 @@ public record FieldPlan(String backend,
                 : null;
     }
 
-    /// @return It as JSON, as the Python model's `model_dump` writes it (every field).
+    /// @return It as JSON, the form it is kept in (every field).
     @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
@@ -198,7 +198,7 @@ public record FieldPlan(String backend,
         json.put("convention", convention);
         json.put("custom_namespaces", new ArrayList<>(customNamespaces));
         json.put("style", style.toJson(DumpMode.ALL));
-        // Only when there are any, so a plan without them is written as the Python model writes it.
+        // Only when there are any, so a plan without them is kept as it always has been.
         if (!standIns.isEmpty()) {
             json.put("stand_ins", new LinkedHashMap<>(standIns));
         }
@@ -331,7 +331,7 @@ public record FieldPlan(String backend,
         }
         final List<String> objects = fields.stream().filter(PlannedField::isObjects).map(PlannedField::name).toList();
         if (!isElasticsearch() && !objects.isEmpty()) {
-            problems.add(PyText.list(objects) + ": a Lucene index holds no objects; plan a field of values for each "
+            problems.add(ToolText.list(objects) + ": a Lucene index holds no objects; plan a field of values for each "
                          + "item instead (e.g. user_login from EventSource/User/Id | EventDetail//User/Id), which "
                          + "is several values in one event");
         }
@@ -340,7 +340,7 @@ public record FieldPlan(String backend,
                     .filter(n -> List.of(n.split("\\.", -1)).stream().anyMatch(part -> part.startsWith("_")))
                     .toList();
             if (!hidden.isEmpty()) {
-                problems.add(PyText.list(hidden) + ": Stroom's Elasticsearch indexing filter drops fields whose "
+                problems.add(ToolText.list(hidden) + ": Stroom's Elasticsearch indexing filter drops fields whose "
                              + "names start with _ (silently); rename them");
             }
             // Nested names make 'time' an object if 'time.min' exists; with subobjects: false (flat names) both
@@ -352,7 +352,7 @@ public record FieldPlan(String backend,
                             .toList();
                     if (!inner.isEmpty()) {
                         problems.add("'" + name + "' is a value and also the object holding "
-                                     + PyText.list(inner) + ": an Elasticsearch field cannot be both; rename one");
+                                     + ToolText.list(inner) + ": an Elasticsearch field cannot be both; rename one");
                     }
                 }
             }
@@ -404,7 +404,7 @@ public record FieldPlan(String backend,
 
     /// @param version The XSLT version, e.g. `3.0`.
     /// @return A draft indexing XSLT reading Events (xpath-default-namespace event-logging:3), or for a discovery
-    /// index, reading the parser's records; the same text the Stroom MCP server writes for the plan.
+    /// index, reading the parser's records; the golden plans pin the text to the byte.
     /// @throws IllegalArgumentException for an XML discovery plan without its record element's name.
     public String xslt(final String version) {
         if (discovery != null) {

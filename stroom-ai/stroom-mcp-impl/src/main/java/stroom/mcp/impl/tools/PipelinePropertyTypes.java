@@ -30,9 +30,9 @@ import jakarta.inject.Provider;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/// The type Stroom declares for each pipeline element type's properties, as the pipeline editor reads them (the
-/// Stroom MCP server's `property_types`, from `/pipeline/v1/propertyTypes`): `boolean`, `int`, `long`, `String`,
-/// or the type of document the property names.
+/// The type Stroom declares for each pipeline element type's properties, as the pipeline editor reads them (as
+/// `/pipeline/v1/propertyTypes` gives them): `boolean`, `int`, `long`, `String`, or the type of document the property
+/// names.
 class PipelinePropertyTypes {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelinePropertyTypes.class);

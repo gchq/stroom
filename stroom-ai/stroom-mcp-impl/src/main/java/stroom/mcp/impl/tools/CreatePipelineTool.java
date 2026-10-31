@@ -19,7 +19,6 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -30,6 +29,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.tools.PipelineWrites.Filled;
@@ -58,9 +58,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// `create_pipeline` - creates a pipeline in the build as a child of a template, setting only what the child
-/// supplies (the Stroom MCP server's `tools/pipeline_writes.py` `create_pipeline`, with `_standalone_kafka` for a
-/// pipeline of its own sending Events to Kafka where no template exists). The user confirms the template and name
+/// `create_pipeline` - creates a pipeline in the build as a child of a template, setting only what the child supplies
+/// (or a pipeline of its own sending Events to Kafka where no template exists). The user confirms the template and name
 /// first.
 class CreatePipelineTool extends AbstractBuiltInTool {
 
@@ -320,8 +319,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(elements);
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("The pipeline has no element(s) " + PyText.list(
-                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
+            throw new ToolRefusal("The pipeline has no element(s) " + ToolText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + ToolText.list(
                     PipelineWrites.sorted(elements)));
         }
         PipelineWrites.keepValidation(merged.elements(), given);
@@ -336,7 +335,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         if (previous != null) {
             final List<PropertyValue> kept = PipelineWrites.plainSettings(previous, elementTypes, properties);
             properties.addAll(kept);
-            kept.forEach(property -> filled.add(property.dotted() + " = " + PyText.str(property.value()) + " (as "
+            kept.forEach(property -> filled.add(property.dotted() + " = " + ToolText.str(property.value()) + " (as "
                                                 + previous.getName() + " has it)"));
         }
         final Optional<PropertyValue> array = writes.jsonArrayParser(merged.elements(), properties,
@@ -436,7 +435,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         }
         if (!slots.stillOpen().isEmpty()) {
             result.put("still_to_set", slots.stillOpen());
-            result.put("hint", "The pipeline cannot run until " + PyText.list(slots.stillOpen())
+            result.put("hint", "The pipeline cannot run until " + ToolText.list(slots.stillOpen())
                                + " is set: save the translation XSLT (build_translation_xslt build=, name=) and "
                                + "update_pipeline with set_properties=[{element, name: 'xslt', doc_uuid, "
                                + "doc_type: 'XSLT'}]");
@@ -468,15 +467,15 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(types.keySet());
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("The Kafka pipeline has no element(s) " + PyText.list(
-                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
+            throw new ToolRefusal("The Kafka pipeline has no element(s) " + ToolText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + ToolText.list(
                     List.copyOf(types.keySet())));
         }
         final List<String> missing = List.of("xsltFilter.xslt", "standardKafkaProducer.kafkaConfig").stream()
                 .filter(key -> !givenKeys.contains(key))
                 .toList();
         if (!missing.isEmpty()) {
-            throw new ToolRefusal("set_properties needs " + PyText.list(missing) + ": the CEF XSLT "
+            throw new ToolRefusal("set_properties needs " + ToolText.list(missing) + ": the CEF XSLT "
                                   + "draft_cef_mapping saved, and the KafkaConfig the user picks "
                                   + "(draft_cef_mapping lists them as kafka_configs)");
         }
@@ -546,7 +545,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<String> existing = templateNames("translation");
         if (!existing.isEmpty()) {
             throw new ToolRefusal("standalone='events' is only for a Stroom with no translation template, and this "
-                                  + "one has " + PyText.list(existing) + ": inherit one (create_pipeline "
+                                  + "one has " + ToolText.list(existing) + ": inherit one (create_pipeline "
                                   + "template=...), with replace_parser= if its parser doesn't read the sample.");
         }
         final Map<String, Object> sample = plan.sampleFormat(build)
@@ -563,8 +562,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         given.forEach(property -> unknown.add(property.element()));
         unknown.removeAll(types.keySet());
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("The events pipeline has no element(s) " + PyText.list(
-                    PipelineWrites.sorted(unknown)) + "; its elements are " + PyText.list(
+            throw new ToolRefusal("The events pipeline has no element(s) " + ToolText.list(
+                    PipelineWrites.sorted(unknown)) + "; its elements are " + ToolText.list(
                     List.copyOf(types.keySet())));
         }
         final Set<String> givenKeys = new HashSet<>();
@@ -575,7 +574,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         }
         final List<String> missing = needed.stream().filter(key -> !givenKeys.contains(key)).toList();
         if (!missing.isEmpty()) {
-            throw new ToolRefusal("set_properties needs " + PyText.list(missing) + ": the build's translation XSLT "
+            throw new ToolRefusal("set_properties needs " + ToolText.list(missing) + ": the build's translation XSLT "
                                   + "(build_translation_xslt saved it)" + (CONVERTER_PARSERS.contains(parser)
                     ? " and its text converter (build_data_splitter save_as=, or save_text_converter)"
                     : ""));
@@ -690,7 +689,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         final List<PipelineReference> carried = CurrentTranslations.ownReferences(previous);
         if (!carried.isEmpty() && request.keepReferences() == null) {
             throw new ToolRefusal("'" + previous.getName() + "' loads reference data for its lookups: "
-                                  + PyText.list(carried.stream().map(CurrentTranslations::referenceText).toList())
+                                  + ToolText.list(carried.stream().map(CurrentTranslations::referenceText).toList())
                                   + ". Ask the user whether the new version keeps them (its XSLT looks them up only "
                                   + "if its mapping does), then call again with keep_references=true or false.");
         }

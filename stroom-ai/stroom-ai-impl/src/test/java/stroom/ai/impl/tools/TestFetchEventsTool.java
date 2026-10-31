@@ -36,7 +36,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// fetch_events reading records from one stream, as the Stroom MCP server's read_stream did.
+/// fetch_events reading records from one stream.
 class TestFetchEventsTool {
 
     @TempDir

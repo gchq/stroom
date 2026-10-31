@@ -35,7 +35,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The processor filters the ported tools read: what each pipeline's filters read, and who may read them.
+/// The processor filters the build tools read: what each pipeline's filters read, and who may read them.
 class TestProcessorFilters {
 
     private final ProcessorFilterAccess processorFilterAccess = Mockito.mock(ProcessorFilterAccess.class);

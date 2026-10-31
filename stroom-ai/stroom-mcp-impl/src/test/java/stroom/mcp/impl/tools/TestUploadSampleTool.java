@@ -48,8 +48,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// upload_sample (the Stroom MCP server's `tools/feeds.py` `upload_sample` and `upload_ticket`, and their tests in
-/// `tests/test_uploads.py` and `tests/test_samples.py`).
+/// upload_sample: sample text sent to a feed, and the commands that post the user's files.
 class TestUploadSampleTool {
 
     private final FeedWorld feeds = new FeedWorld();
@@ -101,7 +100,7 @@ class TestUploadSampleTool {
 
         final Map<String, Object> result = json(call("{\"feed\": \"ACME-EVENTS\", \"sample\": \"a=1\"}"));
 
-        // A null stream_id is left out, as every ported tool's JSON leaves nulls out.
+        // A null stream_id is left out, as every build tool's JSON leaves nulls out.
         assertThat(result).containsEntry("receipt_id", "receipt-1").doesNotContainKey("stream_id")
                 .doesNotContainKey("bytes");
         assertThat(String.valueOf(result.get("hint"))).contains("check stream_meta feeds=['ACME-EVENTS'] shortly");
@@ -281,11 +280,11 @@ class TestUploadSampleTool {
     }
 
     private ToolResult call(final String arguments) {
-        return tool.execute(PortedToolCalls.call(UploadSampleTool.NAME, arguments), PortedToolCalls.context());
+        return tool.execute(BuildToolCalls.call(UploadSampleTool.NAME, arguments), BuildToolCalls.context());
     }
 
     private static Map<String, Object> json(final ToolResult result) {
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

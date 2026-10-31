@@ -28,8 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 
-/// set_processor_filter_enabled (the Stroom MCP server's `tools/processing_writes.py`, which has no tests of its
-/// own): it only ever disables, and only a filter on a pipeline in a build.
+/// set_processor_filter_enabled: it only ever disables, and only a filter on a pipeline in a build.
 class TestSetProcessorFilterEnabledTool {
 
     private ProcessingWorld w;
@@ -85,7 +84,7 @@ class TestSetProcessorFilterEnabledTool {
     }
 
     private ToolResult call(final String arguments) {
-        return w.setEnabledTool().execute(PortedToolCalls.call(SetProcessorFilterEnabledTool.NAME, arguments),
+        return w.setEnabledTool().execute(BuildToolCalls.call(SetProcessorFilterEnabledTool.NAME, arguments),
                 ProcessingWorld.context());
     }
 }

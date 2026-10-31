@@ -36,9 +36,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The build record (the Stroom MCP server's `security/record.py`), and the clean steps, verifications and
-/// validations kept in it (its `tests/test_build_checks.py`): in the same format, so a record either server wrote
-/// reads in the other.
+/// The build record, and the clean steps, verifications and validations kept in it: in a fixed format, so a record
+/// already in Stroom (`stored-build-record.md` is one) still reads, and is written back as it was.
 class TestBuildRecords {
 
     private static final String BUILD = "acme-v1";
@@ -66,7 +65,7 @@ class TestBuildRecords {
     void onlyThePipelinesOwnCodeIsFingerprinted() {
         final Map<String, String> prints = records.codeFingerprint("p", null);
         assertThat(prints).containsOnlyKeys("translationFilter");
-        // As the Stroom MCP server digests it.
+        // The digest is fixed: were it to change, every clean step already recorded would no longer match.
         assertThat(prints.get("translationFilter"))
                 .isEqualTo("61b12115efa32e92a6176df5b0526c120b8df483378e659a67ac1bec0f97152b");
         assertThat(BuildRecords.fingerprintDigest(prints)).isEqualTo("2ab6098c06a45eba");
@@ -210,8 +209,8 @@ class TestBuildRecords {
     }
 
     @Test
-    void aRecordIsWrittenAsThePythonServerWritesIt() throws IOException {
-        final String python = resource("python-build-record.md");
+    void aRecordIsWrittenInTheStoredForm() throws IOException {
+        final String python = resource("stored-build-record.md");
         final Map<String, Object> state = BuildRecords.parse(python);
         assertThat(BuildRecords.render(BUILD, state)).isEqualTo(python);
         // And reads back to the same state.
@@ -219,9 +218,9 @@ class TestBuildRecords {
     }
 
     @Test
-    void aRecordWrittenByThePythonServerIsRead() throws IOException {
+    void aRecordInTheStoredFormatIsRead() throws IOException {
         final DocRef record = world.inBuild(BUILD, DocumentationDoc.TYPE, BuildRecords.NAME, "r");
-        world.docs.put("r", ((DocumentationDoc) world.docs.get("r")).copy().data(resource("python-build-record.md"))
+        world.docs.put("r", ((DocumentationDoc) world.docs.get("r")).copy().data(resource("stored-build-record.md"))
                 .build());
         assertThat(records.entry(BUILD, "p").get("copy_of")).isEqualTo("prod-1");
         assertThat(world.guard().copyOf(P)).contains("prod-1");

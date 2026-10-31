@@ -32,8 +32,7 @@ import java.util.List;
 import javax.xml.transform.stream.StreamSource;
 
 /// The CEF lines a plan's XSLT writes for sample Events, run with the locked-down Saxon processor (no resource is
-/// read), for draft_cef_mapping's example line, documentation examples and its review of its own lines (the Stroom
-/// MCP server ran the plan's XSLT with saxonche for the same).
+/// read), for draft_cef_mapping's example line, documentation examples and its review of its own lines.
 public final class CefSample {
 
     private CefSample() {

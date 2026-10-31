@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 ///   ([#JSON_OPTIONS]);
 /// - draft_index_mapping for an index of Events: as missing, null, or as written ([#EVENTS_OPTIONS]).
 ///
-/// Not in the Stroom MCP server; asked for by the user (seen: W3C logs' `-` for a missing address went on into an
-/// Elasticsearch ip field, which refused the documents).
+/// Asked for by the user (seen: W3C logs' `-` for a missing address went on into an Elasticsearch ip field, which
+/// refused the documents).
 final class PlaceholderChoices {
 
     /// The option that leaves the value out.

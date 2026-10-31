@@ -21,8 +21,8 @@ import stroom.ai.impl.tools.Globs;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.KeptMapping.Kept;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.TranslationDescriptions;
 import stroom.ai.impl.tools.validation.XmlTrees;
@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-/// The pure parts of the Stroom MCP server's indexing tools (`tools/indexing.py`) that the indexing tools share:
+/// The pure parts of the indexing tools that they share:
 /// marking a plan's fields that hold several values, choosing the plan a tool was given, the convention profiles,
 /// which index a pipeline's index name writes to, what to tell the user of fields the index lacks, the component
 /// templates an example needs, and what a draft leaves out of the index it replaces. What reads Stroom (the
@@ -173,8 +173,7 @@ public final class IndexingHelpers {
 
     /// The planned fields no event of the sample fills: their source is a path the Events never have (seen: an
     /// agent's user.target.name from EventDetail/*/User/Name, which the translation never writes, documented as
-    /// "not in the sample"). Not in the Stroom MCP server. The ids, and fields a shared template writes, are left
-    /// out.
+    /// "not in the sample"). The ids, and fields a shared template writes, are left out.
     ///
     /// @param plan      A plan.
     /// @param populated The % of events each path (and each named Data entry) is populated in.
@@ -276,7 +275,7 @@ public final class IndexingHelpers {
         if (!index.contains("{")) {
             return new TemplateTarget(index, index);
         }
-        final String name = PyText.strip(SEPARATORS.matcher(VALUE_PART.matcher(index).replaceAll(""))
+        final String name = ToolText.strip(SEPARATORS.matcher(VALUE_PART.matcher(index).replaceAll(""))
                 .replaceAll("$1"), "-_.");
         return new TemplateTarget(name.isEmpty()
                 ? "index"
@@ -332,11 +331,11 @@ public final class IndexingHelpers {
         // is its only ECS component template), let go as one the user couldn't give. Only its content, given,
         // shows it exists.
         final List<String> unknown = composedOf.stream()
-                .filter(n -> PyText.lower(n).startsWith("ecs@") && !EcsSchema.COMPONENT.equals(n)
+                .filter(n -> ToolText.lower(n).startsWith("ecs@") && !EcsSchema.COMPONENT.equals(n)
                              && !components.containsKey(n))
                 .toList();
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal(PyText.list(unknown) + ": not a component template Elasticsearch has: "
+            throw new ToolRefusal(ToolText.list(unknown) + ": not a component template Elasticsearch has: "
                                   + EcsSchema.COMPONENT + " is its only ECS one, built in. Don't compose it "
                                   + "(leave it out of include_components). Only if the user's cluster has one by "
                                   + "that name: its content in component_templates (GET _component_template/"
@@ -379,7 +378,7 @@ public final class IndexingHelpers {
     public static List<String> componentNotes(final List<String> missing) {
         return missing.isEmpty()
                 ? List.of()
-                : List.of("composed_of " + PyText.list(missing) + " not given, so not checked: their fields "
+                : List.of("composed_of " + ToolText.list(missing) + " not given, so not checked: their fields "
                           + "aren't seen here. Ask the user for them (GET _component_template/<name>) and check "
                           + "again with component_templates.");
     }
@@ -420,7 +419,7 @@ public final class IndexingHelpers {
         }
         final List<Map<String, Object>> missing = new ArrayList<>();
         for (final Map<String, String> field : old) {
-            final String source = PyText.strip(Objects.requireNonNullElse(field.get("source"), "")
+            final String source = ToolText.strip(Objects.requireNonNullElse(field.get("source"), "")
                     .split(" ! ", -1)[0]);
             if (source.isEmpty() || covered(source, plan)) {
                 continue;

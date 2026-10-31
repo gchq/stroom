@@ -17,15 +17,15 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.TimePatterns;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// A starting translation mapping, drafted from the sample (the Stroom MCP server's `utils/draftmap.py`).
+/// A starting translation mapping, drafted from the sample.
 ///
 /// A model asked to write a mapping from nothing tends to send back the field inventory instead. The draft gives it
 /// a valid mapping to edit: the input kind from the profile, the obvious event-logging homes for fields by name
@@ -80,16 +80,16 @@ public final class DraftMapping {
     private static final Set<String> EVENT_ID_KEYS = Set.of("eventid", "event_id", "eventcode", "event_code");
     // Key/value pairs in a text field, as survey_feed signs them (kv:): the ways a text writes them are Pairs'.
     // Seen in production: the agent writing 33 extractions by hand after the draft carried such a text whole.
-    private static final Pattern COLON_KEY = PyText.re(Pairs.BOUND + "(" + Pairs.WORDS + "): (\\[)?");
-    private static final Pattern EQ_KEY = PyText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=(\")?");
+    private static final Pattern COLON_KEY = ToolText.re(Pairs.BOUND + "(" + Pairs.WORDS + "): (\\[)?");
+    private static final Pattern EQ_KEY = ToolText.re("(?:^|[\\s,;])([A-Za-z_][A-Za-z0-9_.-]*)=(\")?");
     private static final Pattern SOURCE_SIDE = ignoringCase("^(src|source|client|orig|origin)(_|$)");
     private static final Pattern DESTINATION_SIDE = ignoringCase(
             "^(dst|dest|destination|server|target|resp|responder)(_|$)");
     private static final Pattern KEY_SPLIT = Pattern.compile("[./]");
-    private static final Pattern CLOCK = PyText.re("\\d{1,2}:\\d{2}(:\\d{2})?(\\.\\d+)?");
-    private static final Pattern ZONE_NAME = PyText.re("[A-Z][a-z]+/[A-Za-z_]+(?:/[A-Za-z_]+)?");
-    private static final Pattern LETTER = PyText.re("[A-Za-z]");
-    private static final Pattern NOT_NAME = PyText.re("[^A-Za-z0-9]+");
+    private static final Pattern CLOCK = ToolText.re("\\d{1,2}:\\d{2}(:\\d{2})?(\\.\\d+)?");
+    private static final Pattern ZONE_NAME = ToolText.re("[A-Z][a-z]+/[A-Za-z_]+(?:/[A-Za-z_]+)?");
+    private static final Pattern LETTER = ToolText.re("[A-Za-z]");
+    private static final Pattern NOT_NAME = ToolText.re("[^A-Za-z0-9]+");
     private static final String TIME_ZONE_PATH = "EventSource/Device/Location/TimeZoneName";
     private static final String TIMESTAMP = "timestamp";
     private static final String TIMESTAMP_PREFIX = "timestamp (";
@@ -118,7 +118,7 @@ public final class DraftMapping {
     }
 
     private static Pattern ignoringCase(final String regex) {
-        return PyText.ignoringCase(regex);
+        return ToolText.ignoringCase(regex);
     }
 
     /// A valid mapping to edit, and what is left to decide.
@@ -171,7 +171,7 @@ public final class DraftMapping {
                 case SampleProfiler.JSON_OBJECT -> {
                     // The wrapper's array holds the records: the draft's fields are the items' (for_each reads
                     // them).
-                    final Map.Entry<String, List<Object>> found = SampleProfiler.wrappedRecords(PyText.strip(text));
+                    final Map.Entry<String, List<Object>> found = SampleProfiler.wrappedRecords(ToolText.strip(text));
                     if (found != null) {
                         found.getValue().forEach(r -> records.add(asText(SampleProfiler.flatten(r), "")));
                     }
@@ -183,7 +183,7 @@ public final class DraftMapping {
                     final String prefix = badLines
                             ? "json."
                             : "";
-                    for (final Object value : jsonValues(PyText.strip(text))) {
+                    for (final Object value : jsonValues(ToolText.strip(text))) {
                         if (value instanceof Map) {
                             records.add(asText(SampleProfiler.flatten(value), prefix));
                         }
@@ -215,12 +215,12 @@ public final class DraftMapping {
 
     private static List<Object> jsonValues(final String stripped) {
         if (stripped.startsWith("[")) {
-            return PyJson.loads(stripped) instanceof final List<?> list
+            return ToolJson.loads(stripped) instanceof final List<?> list
                     ? new ArrayList<>(list)
                     : List.of();
         }
         final List<Object> values = new ArrayList<>();
-        for (final String line : PyText.splitlines(stripped)) {
+        for (final String line : ToolText.splitlines(stripped)) {
             final Object value = jsonOrNull(line);
             if (JsonValues.truthy(value)) {
                 values.add(value);
@@ -230,12 +230,12 @@ public final class DraftMapping {
     }
 
     private static Object jsonOrNull(final String line) {
-        if (PyText.isBlank(line)) {
+        if (ToolText.isBlank(line)) {
             return null;
         }
         try {
-            return PyJson.loads(line);
-        } catch (final PyJson.JsonDecodeException e) {
+            return ToolJson.loads(line);
+        } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
     }
@@ -248,7 +248,7 @@ public final class DraftMapping {
                     : fragments;
         }
         try {
-            return XmlTree.parse(PyText.strip(text)).elements();
+            return XmlTree.parse(ToolText.strip(text)).elements();
         } catch (final XmlTree.XmlException e) {
             // A big document read only to here: its complete records.
             final XmlTree.Pull cut = SampleProfiler.cutDocument(text);
@@ -334,12 +334,12 @@ public final class DraftMapping {
     @SuppressWarnings("unchecked")
     public static void withPairs(final List<Map<String, Object>> records, final List<Map<String, Object>> extracts) {
         final List<Pattern> patterns = new ArrayList<>();
-        extracts.forEach(ex -> patterns.add(PyText.re((String) ex.get("regex"))));
+        extracts.forEach(ex -> patterns.add(ToolText.re((String) ex.get("regex"))));
         for (final Map<String, Object> record : records) {
             for (int i = 0; i < extracts.size(); i++) {
                 final Map<String, Object> ex = extracts.get(i);
                 final Matcher found = patterns.get(i).matcher(JsonValues.text(record.get((String) ex.get(FIELD))));
-                if (found.find() && found.group(1) != null && !PyText.isBlank(found.group(1))) {
+                if (found.find() && found.group(1) != null && !ToolText.isBlank(found.group(1))) {
                     record.put(((List<String>) ex.get(NAMES)).getFirst(), found.group(1));
                 }
             }
@@ -380,11 +380,11 @@ public final class DraftMapping {
     // destination_key under Destination, a source_zone under Source); otherwise the action element itself.
     private static String dataHome(final String element, final String field) {
         if (element.startsWith("EventDetail/Network/")) {
-            final String name = PyText.lastPart(field, '.');
-            if (PyText.match(SOURCE_SIDE, name)) {
+            final String name = ToolText.lastPart(field, '.');
+            if (ToolText.match(SOURCE_SIDE, name)) {
                 return element + "/Source";
             }
-            if (PyText.match(DESTINATION_SIDE, name)) {
+            if (ToolText.match(DESTINATION_SIDE, name)) {
                 return element + "/Destination";
             }
         }
@@ -393,19 +393,19 @@ public final class DraftMapping {
 
     private static boolean jsonObject(final String text) {
         try {
-            return PyJson.loads(text) instanceof Map;
-        } catch (final PyJson.JsonDecodeException e) {
+            return ToolJson.loads(text) instanceof Map;
+        } catch (final ToolJson.JsonDecodeException e) {
             return false;
         }
     }
 
     // A field value that is an XML element, as text (a SOAP payload held in a JSON string).
     private static boolean xmlElement(final String value) {
-        if (!PyText.strip(value).startsWith("<")) {
+        if (!ToolText.strip(value).startsWith("<")) {
             return false;
         }
         try {
-            XmlTree.parse(PyText.strip(value));
+            XmlTree.parse(ToolText.strip(value));
             return true;
         } catch (final XmlTree.XmlException e) {
             return false;
@@ -413,7 +413,7 @@ public final class DraftMapping {
     }
 
     private static String reprs(final List<String> names) {
-        return String.join(", ", names.stream().map(PyText::repr).toList());
+        return String.join(", ", names.stream().map(ToolText::repr).toList());
     }
 
 
@@ -744,7 +744,7 @@ public final class DraftMapping {
         // date-only field beside a time-of-day field (FortiOS's date= and time=) is joined.
         private String time() {
             String timeField = names.stream()
-                    .filter(n -> PyText.match(TIME, key(n)) && type(n).startsWith(TIMESTAMP))
+                    .filter(n -> ToolText.match(TIME, key(n)) && type(n).startsWith(TIMESTAMP))
                     .findFirst()
                     .orElseGet(() -> names.stream().filter(n -> type(n).startsWith(TIMESTAMP)).findFirst()
                             .orElse(null));
@@ -752,7 +752,7 @@ public final class DraftMapping {
             boolean dateOnly = timeField != null && !type(timeField).contains("H") && !type(timeField).contains("h");
             String clock = names.stream()
                     .filter(n -> !n.equals(first) && !values.get(n).isEmpty()
-                                 && values.get(n).stream().allMatch(v -> PyText.fullmatch(CLOCK, PyText.strip(v))))
+                                 && values.get(n).stream().allMatch(v -> ToolText.fullmatch(CLOCK, ToolText.strip(v))))
                     .findFirst()
                     .orElse(null);
             final boolean chosenPrecise = timeField != null && dateOnly && clock != null
@@ -792,15 +792,15 @@ public final class DraftMapping {
         private void joinedTime(final String timeField, final String clock) {
             final String datePattern = patternOf(type(timeField));
             final List<String> clocks = values.get(clock);
-            String seconds = clocks.stream().allMatch(v -> PyText.count(v, ":") == 2)
+            String seconds = clocks.stream().allMatch(v -> ToolText.count(v, ":") == 2)
                     ? ":ss"
                     : "";
             // A fraction of a second the clock values carry is kept, at their width.
             final Set<Integer> widths = new LinkedHashSet<>();
             clocks.stream().filter(v -> v.contains("."))
-                    .forEach(v -> widths.add(PyText.len(PyText.strip(v).split("\\.", 2)[1])));
+                    .forEach(v -> widths.add(ToolText.len(ToolText.strip(v).split("\\.", 2)[1])));
             if (!seconds.isEmpty() && widths.size() == 1
-                && clocks.stream().filter(v -> !PyText.isBlank(v)).allMatch(v -> v.contains("."))) {
+                && clocks.stream().filter(v -> !ToolText.isBlank(v)).allMatch(v -> v.contains("."))) {
                 seconds += "." + "S".repeat(widths.iterator().next());
             }
             common.add(dict(PATH, "EventTime/TimeCreated",
@@ -845,9 +845,9 @@ public final class DraftMapping {
         private void timeZoneField() {
             final String zoneField = names.stream()
                     .filter(n -> !taken.contains(n) && !values.get(n).isEmpty()
-                                 && values.get(n).stream().filter(v -> !PyText.isBlank(v))
-                                         .allMatch(v -> PyText.fullmatch(ZONE_NAME, PyText.strip(v)))
-                                 && values.get(n).stream().anyMatch(v -> !PyText.isBlank(v)))
+                                 && values.get(n).stream().filter(v -> !ToolText.isBlank(v))
+                                         .allMatch(v -> ToolText.fullmatch(ZONE_NAME, ToolText.strip(v)))
+                                 && values.get(n).stream().anyMatch(v -> !ToolText.isBlank(v)))
                     .findFirst()
                     .orElse(null);
             if (zoneField != null && common.stream().noneMatch(e -> TIME_ZONE_PATH.equals(e.get(PATH)))) {
@@ -905,8 +905,8 @@ public final class DraftMapping {
         }
 
         // What the notes say of the event's message: where the draft put it, or, if it found none, a field of free text
-        // that may be it. Unlike the Stroom MCP server's draft, which said neither (seen in eval cases 22, 23 and 42:
-        // the message, a CEF msg or a ticket's comment, went into a Document's Description or a Data entry).
+        // that may be it (seen in eval cases 22, 23 and 42, with neither said: the message, a CEF msg or a ticket's
+        // comment, went into a Document's Description or a Data entry).
         private void descriptionNote() {
             final Optional<Object> mapped = common.stream()
                     .filter(e -> DESCRIPTION.equals(e.get(PATH)) && e.get(FIELD) != null)
@@ -931,7 +931,7 @@ public final class DraftMapping {
         private boolean namesKinds(final String name) {
             final Set<String> kinds = new HashSet<>(values.get(name));
             kinds.removeAll(NIL);
-            return PyText.match(NAMING, key(name)) && !kinds.isEmpty() && kinds.size() <= MAX_RULES;
+            return ToolText.match(NAMING, key(name)) && !kinds.isEmpty() && kinds.size() <= MAX_RULES;
         }
 
         // Seen: syslog's msgid, always '-', taken over an action field: a field with only nil values names no kind.
@@ -941,7 +941,7 @@ public final class DraftMapping {
         private boolean oneNumber(final String name) {
             final Set<String> kinds = new LinkedHashSet<>(values.get(name));
             kinds.removeAll(NIL);
-            return kinds.size() == 1 && !PyText.search(LETTER, kinds.iterator().next());
+            return kinds.size() == 1 && !ToolText.search(LETTER, kinds.iterator().next());
         }
 
         private Object commonSource(final String path) {
@@ -1010,7 +1010,7 @@ public final class DraftMapping {
                                final Set<String> usedNames,
                                final List<Map<String, Object>> rules,
                                final List<String> recognised) {
-            String name = PyText.strip(NOT_NAME.matcher(kind).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
+            String name = ToolText.strip(NOT_NAME.matcher(kind).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
             if (name.isEmpty()) {
                 name = "event";
             }
@@ -1022,14 +1022,14 @@ public final class DraftMapping {
                     ? WINDOWS_LOGON.get(kind)
                     : null;
             final List<Map<String, Object>> ofKind = records.stream().filter(r -> kind.equals(r.get(naming))).toList();
-            if (PyText.search(AUTH, kind) || windows != null) {
+            if (ToolText.search(AUTH, kind) || windows != null) {
                 final String action;
                 final Boolean success;
                 if (windows != null) {
                     action = windows.action();
                     success = windows.success();
                 } else {
-                    action = PyText.search(LOGOFF, kind)
+                    action = ToolText.search(LOGOFF, kind)
                             ? "Logoff"
                             : "Logon";
                     success = null;
@@ -1083,20 +1083,20 @@ public final class DraftMapping {
             if (found.rules().isEmpty() || !found.left().isEmpty()) {
                 final List<String> kept = held(ofKind, rest);
                 // Its records holding none of the rest, the kind field: a rule with no action element fails the
-                // mapping. With no rest at all, as the Python server drafted it.
+                // mapping. With no rest at all, it has no Data.
                 rules.add(kindRule(name, naming, kind, dataEntries("Unknown", kept.isEmpty() && !rest.isEmpty()
                         ? List.of(naming)
                         : kept)));
             }
         }
 
-        // The fields of the rest a rule's records hold: what its Data carries. Not the Python server's draft, which
-        // gave every rule the whole rest (seen: 23 SecretServer rules, each with the same 63 Data entries, a logon's
+        // The fields of the rest a rule's records hold: what its Data carries (seen in testing, with every rule
+        // given the whole rest: 23 SecretServer rules, each with the same 63 Data entries, a logon's
         // checkout_id and old_role among them, kept by the agent beside the elements it then mapped them to).
         private static List<String> held(final List<Map<String, Object>> taken, final List<String> rest) {
             return rest.stream()
                     .filter(n -> taken.stream()
-                            .anyMatch(r -> r.get(n) != null && !PyText.isBlank(PyText.str(r.get(n)))))
+                            .anyMatch(r -> r.get(n) != null && !ToolText.isBlank(ToolText.str(r.get(n)))))
                     .toList();
         }
 
@@ -1109,12 +1109,12 @@ public final class DraftMapping {
                 final Object value = r.get(c.get(FIELD));
                 final String text = value == null
                         ? null
-                        : PyText.str(value);
+                        : ToolText.str(value);
                 if (c.get("equals") != null) {
-                    return PyText.str(c.get("equals")).equals(text);
+                    return ToolText.str(c.get("equals")).equals(text);
                 }
                 if (c.get("one_of") instanceof final List<?> values) {
-                    return values.stream().map(PyText::str).toList().contains(text);
+                    return values.stream().map(ToolText::str).toList().contains(text);
                 }
                 return true;
             })).toList();
@@ -1140,7 +1140,7 @@ public final class DraftMapping {
             final List<Map<String, Object>> rules = kinds.rules();
             final String command = kinds.anyPairs()
                     ? null
-                    : kinds.rest().stream().filter(n -> PyText.match(COMMAND, key(n))).findFirst().orElse(null);
+                    : kinds.rest().stream().filter(n -> ToolText.match(COMMAND, key(n))).findFirst().orElse(null);
             if (command != null) {
                 final List<Map<String, Object>> fields = new ArrayList<>();
                 fields.add(dict(PATH, "EventDetail/TypeId", VALUE, "Command"));
@@ -1198,7 +1198,7 @@ public final class DraftMapping {
                             .anyMatch(f -> ((String) f.get(PATH)).startsWith("EventDetail/Unknown")));
             final String values = String.join(", ", kinds.kinds());
             if (!kinds.kinds().isEmpty() && !unknownKinds) {
-                notes.add("One rule per value of " + String.join(" or ", kinds.namings().stream().map(PyText::repr)
+                notes.add("One rule per value of " + String.join(" or ", kinds.namings().stream().map(ToolText::repr)
                         .toList()) + " (" + values + "), each with its action element; 'other' catches the rest. "
                           + "Work through the schema problems build_translation_xslt reports: each names what the "
                           + "element takes.");
@@ -1255,13 +1255,13 @@ public final class DraftMapping {
             // Syslog's NILVALUE, and many key=value logs' "none": seen written as a user called '-'.
             final Set<String> nil = new HashSet<>();
             records.forEach(r -> r.forEach((k, v) -> {
-                if ("-".equals(PyText.strip(PyText.str(v))) && !"msgid".equals(k) && !"structured".equals(k)) {
+                if ("-".equals(ToolText.strip(ToolText.str(v))) && !"msgid".equals(k) && !"structured".equals(k)) {
                     nil.add(k);
                 }
             }));
             if (!nil.isEmpty()) {
                 mapping.put("nil_values", new ArrayList<>(List.of("-")));
-                notes.add(PyText.repr(nil.stream().sorted(PyText::compare).toList()) + " hold '-' for none: "
+                notes.add(ToolText.repr(nil.stream().sorted(ToolText::compare).toList()) + " hold '-' for none: "
                           + "nil_values ['-'] leaves those elements out rather than writing '-'.");
             }
         }
@@ -1275,7 +1275,7 @@ public final class DraftMapping {
             final String doubledQuote = spec.quote() + spec.quote();
             final Set<String> doubled = new HashSet<>();
             records.forEach(r -> r.forEach((k, v) -> {
-                if (PyText.str(v).contains(doubledQuote)) {
+                if (ToolText.str(v).contains(doubledQuote)) {
                     doubled.add(k);
                 }
             }));
@@ -1289,7 +1289,7 @@ public final class DraftMapping {
                 }
             }
             if (!doubled.isEmpty()) {
-                notes.add(PyText.repr(doubled.stream().sorted(PyText::compare).toList()) + " hold doubled quotes "
+                notes.add(ToolText.repr(doubled.stream().sorted(ToolText::compare).toList()) + " hold doubled quotes "
                           + "inside quoted values, which Data Splitter keeps doubled: the draft reads them with "
                           + "transform unescape_quotes.");
             }

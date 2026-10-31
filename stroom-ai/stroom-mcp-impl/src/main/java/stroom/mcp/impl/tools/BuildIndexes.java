@@ -41,10 +41,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// The index names a build uses (the Stroom MCP server's `tools/indexing.py` `_build_destinations`,
-/// `_build_index_docs`, `other_index`, `_literal_names`, `_set_index_name`, `_the_cluster_in_use` and `_same_index`):
-/// the build's Elastic Index docs and the Elasticsearch indexing pipelines writing to them, which name one index
-/// between them. create_indexing_pipeline's and create_pipeline's ports check an index name with [#otherIndex].
+/// The index names a build uses: the build's Elastic Index docs and the Elasticsearch indexing pipelines writing to
+/// them, which name one index between them. create_indexing_pipeline and create_pipeline check an index name with
+/// [#otherIndex].
 class BuildIndexes {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildIndexes.class);

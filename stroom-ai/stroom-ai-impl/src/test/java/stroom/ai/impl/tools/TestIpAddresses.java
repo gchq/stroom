@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestIpAddresses {
 
     @Test
-    void ipAddressesAreReadAsPythonReadsThem() {
+    void ipAddressesAreReadStrictly() {
         assertThat(IpAddresses.isAddress("10.0.0.1")).isTrue();
         // Python refuses an octet with a leading zero.
         assertThat(IpAddresses.isAddress("010.0.0.1")).isFalse();
