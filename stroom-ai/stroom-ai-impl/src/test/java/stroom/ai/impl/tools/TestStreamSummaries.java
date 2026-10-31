@@ -20,6 +20,7 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.ErrorTriageConfig;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -101,6 +102,29 @@ class TestStreamSummaries {
         // Not clean, with one not read (seen in testing: an Error stream still being written, said to be clean).
         assertThat(out.get("verdict")).isEqualTo(StreamSummaries.UNREAD);
         assertThat((String) out.get("hint")).contains("doesn't say they are clean").contains("wait_for_processing");
+    }
+
+    @Test
+    void severalErrorStreamsAreTriagedTogether() {
+        // evaluate_pipeline's processing summary: a pipeline's newest Error streams, each of a different raw stream.
+        final PipelineDoc pipeline = pipeline("p", "Acme-Events", "translationFilter");
+        final Meta first = world.add(9, StreamTypeNames.ERROR, 5L, pipeline.getUuid(), Map.of());
+        final Meta second = world.add(10, StreamTypeNames.ERROR, 6L, pipeline.getUuid(), Map.of());
+        for (final long id : List.of(9L, 10L)) {
+            world.bytes.put(id, "[2:14 translationFilter] ERROR: Unknown element 'Foo'\n"
+                    .getBytes(StandardCharsets.UTF_8));
+        }
+
+        final Map<String, Object> result = summaries.summariseErrorStreams(List.of(second, first));
+
+        assertThat(result.get("error_streams")).isEqualTo(List.of(10L, 9L));
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(groups(result)).singleElement()
+                .satisfies(group -> {
+                    assertThat(group.get("count")).isEqualTo(2);
+                    assertThat(group.get("own_element")).isEqualTo(true);
+                });
+        assertThat(summaries.summariseErrorStreams(List.of()).get("verdict")).isEqualTo("clean");
     }
 
     @Test

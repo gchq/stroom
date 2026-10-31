@@ -212,9 +212,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
     private Map<String, Object> checkStreams(final ToolCallContext context,
                                              final List<Long> streamIds,
                                              final String schemaVersion) {
-        final EventStreams.Read read = eventStreams.read(streamIds, MAX_RECORDS);
-        final Map<String, Object> result = new LinkedHashMap<>(check(read.eventsXml(), schemaVersion));
-        result.put("read", read.read());
+        final Map<String, Object> result = checkRead(streamIds, schemaVersion, MAX_RECORDS);
         if (Boolean.TRUE.equals(result.get("ok"))) {
             final List<DocRef> recorded = recordValidated(streamIds);
             result.put("recorded_for", recorded.stream().map(DocRef::getName).toList());
@@ -223,6 +221,22 @@ class CheckEventsTool extends AbstractBuiltInTool {
                 return plan.nextFor(context, recorded.getFirst(), result);
             }
         }
+        return result;
+    }
+
+    /// The events of Events streams, read and checked as [#check(String, String)] checks a document, and recorded
+    /// nowhere.
+    ///
+    /// @param streamIds     Events streams.
+    /// @param schemaVersion The event-logging version to validate against, or null.
+    /// @param cap           The most records read in all.
+    /// @return As [#check(String, String)] gives it, with `read`: each stream's records read and held.
+    /// @throws ToolRefusal                      if a stream can't be read or is not Events.
+    /// @throws StreamReader.StreamReadException if the user may not read a stream.
+    Map<String, Object> checkRead(final List<Long> streamIds, final String schemaVersion, final int cap) {
+        final EventStreams.Read read = eventStreams.read(streamIds, cap);
+        final Map<String, Object> result = new LinkedHashMap<>(check(read.eventsXml(), schemaVersion));
+        result.put("read", read.read());
         return result;
     }
 

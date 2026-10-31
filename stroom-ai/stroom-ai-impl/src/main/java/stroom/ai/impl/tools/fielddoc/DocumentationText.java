@@ -32,8 +32,8 @@ public final class DocumentationText {
             Pattern.UNICODE_CHARACTER_CLASS);
     // The guide's sections (stroom://guide/documentation) and an evaluation report's.
     private static final Pattern SECTION = Pattern.compile("^#[ \\t]+(Purpose and data|Processing|Field mapping|"
-                                                           + "Output|Conformance|Errors|Open items|Event types|"
-                                                           + "Version control|Change log)\\b",
+                                                           + "Reference maps|Output|Conformance|Errors|Open items|"
+                                                           + "Event types|Version control|Change log)\\b",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.UNICODE_CHARACTER_CLASS);
     private static final Pattern LEVEL_ONE = Pattern.compile("^#[ \\t]");
     private static final Pattern LEVEL_ONE_TO_FIVE = Pattern.compile("^#{1,5}[ \\t]");
