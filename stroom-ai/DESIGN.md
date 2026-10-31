@@ -82,7 +82,7 @@ Non-goals:
 * Managing users, permissions, nodes or volumes.
 * Writing to Elasticsearch: index templates are drafted and checked, and the cluster administrator commits them.
 * Deleting production content, or editing it in place. Production documents change through a working copy that
-  promotion writes back after a backup.
+  promotion writes back after a backup, asking the user first if production changed since the copy was taken.
 * Reading node logs (2026-10-20). A failed task's reason stays in the operator's log system.
 * Model-written JavaScript in visualisations (2026-10-24).
 
@@ -302,9 +302,10 @@ flowchart TD
     check's first hit traced back to its record by stepping. A pass is recorded by the code's digest.
 18. **index_documented.** `write_documentation` on the indexing pipeline.
 19. **promoted.** `build_status` shows what the build still lacks. `promote_build` returns the layout for review
-    (`needs_review`), then asks for approval in a form bound to that layout; it moves the documents, writes working
-    copies back after a backup, and creates each promoted pipeline's processor filter disabled, for the user to
-    review and enable.
+    (`needs_review`), then asks for approval in a form bound to that layout (first asking about any working copy
+    whose production original changed since it was copied); it moves the documents, writes working copies back
+    after a backup, and creates each promoted pipeline's processor filter disabled, for the user to review and
+    enable.
 
 The Elasticsearch hand-over:
 
@@ -420,7 +421,8 @@ flowchart TD
 * Promotion: a new version is moved into place beside its predecessor (in a version subfolder named from the version
   in its name, `PromotionLayout.versionFolders`); its filter is created disabled, with buttons to disable the
   predecessor's enabled filters. A working copy is written back over the original after a backup to
-  `<workspace>/backups/` (`<name> backup <yyyyMMddHHmmss>`). Reprocessing production data is the user's.
+  `<workspace>/backups/` (`<name> backup <yyyyMMddHHmmss>`); if the original changed since the copy was taken, the
+  user chooses first (see [Promotion](#promotion-built)). Reprocessing production data is the user's.
 
 ### Fix a reported issue
 
@@ -600,7 +602,7 @@ The contract has nothing of the chat or of LangChain4j in it.
 | `changesNeedApprovalAfterUntrustedContent()` | true | Whether a write asks on an approval card once the chat is tainted. |
 | `changesOnlyItsBuild()` | false | Changes stay in the build folder, so no approval is asked; promotion asks. |
 | `boundsItsOutput()` | false | Its result is never moved to the workspace in place of being returned. |
-| `permissions()` | none | Metadata only; tools make their own checks. |
+| `permissions()` | none | Metadata only; tools make their own checks. `TestToolPermissionMetadata` compares a built-in tool's declared permissions, app and document, with those it checks when called. |
 
 `ToolSummaries` holds each built-in tool's one-line summary for the MCP Tool Policies screen; every built-in tool
 needs one (a test checks it).
@@ -711,8 +713,9 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
   `destructiveHint` for a write tool with no read-only calls, `openWorldHint` from `readsUntrustedContent()` (it
   carries "may return content someone else wrote", not "reaches outside"). No `_meta` group is set: groups are the
   chat's.
-* Chat-only tools are never listed and are refused if called: the `propose_*` tools, `task_list`, `memory`,
-  `read_turn`, `search_history`, `current_results`.
+* Chat-only tools are never listed and are refused if called: the chat's `propose_*` tools (not
+  `propose_index_template`), `preview_extraction`, `instruction_evidence`, `task_list`, `memory`, `read_turn`,
+  `search_history`, `current_results`.
 * **A call** (`McpTools.call`): offered, allowed by policy, then for a write: refused if the client can't show forms
   (`FormsRequired`); else approved in a yes-or-no form (`McpApprovals`) unless the tool confirms itself or changes
   only its build; then a run slot for heavy tools (`McpCallSlot`), then the call under a deadline
@@ -740,7 +743,7 @@ The building tools share a layer in `stroom.mcp.impl.tools`:
 | Class | Role |
 | --- | --- |
 | `WriteGuard` | Creates land in `System/<workspace>/<build>/` (`stroom.ai.builds.workspaceFolder`, default `MCP Workspace`), in role subfolders (Events, Records, Indexing, CEF, Reference). Updates only on documents tagged `mcp-managed`. Refusals are audited. A duplicate type and name in a build is refused (seen in testing: after a summarised conversation an indexing pipeline was made twice). Folder creation takes one of 64 locks, so parallel calls can't make twin folders. |
-| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`), versions (`version_of`), digests that stepped clean, verified or validated, sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. |
+| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`, and `copy_of_version`, the original's version when copied), versions (`version_of`), digests that stepped clean, verified or validated, sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. |
 | `BuildPlan` | The plan: steps, each one's state derived from what the build holds, and `next`. |
 | `BuildChecks`, `BuildStatusTool` | What the build still lacks before promotion. |
 | `Consent` | Confirmations and approvals as forms; `needs_review` rounds with a `review_id` digest. |
@@ -765,6 +768,7 @@ says so, but nothing enforces it.
 | A session's draft mapping | Session workspace, `/outputs/mappings/` (`SentMappings`) | A fix sends only its changes. |
 | Choices made in forms | Session workspace, `/outputs/choices/` (`UnsavedChoices`) | A call that fails before saving doesn't ask again. |
 | Lookup agreements | Session, by document and function (`LookupAgreements`) | Not asked twice for the same XSLT. |
+| The build a session works on | Node memory, per session (`BuildPlan.rememberBuild`): set by `start_onboarding`, `start_build` and any call naming a build | Calls that name no build work on it. |
 | Build facts | The build record doc | Every node; survives restarts; travels with the build. |
 | A mapping or plan | The XSLT's description, hidden JSON (`KeptMapping`) | Any session can regenerate it. |
 | Version history | The XSLT's description, and the Documentation doc's Version control | Travels with the content. |
@@ -816,6 +820,11 @@ The agent guides and conventions are resources of `stroom-mcp-impl`, not stroom-
 * **A raw stream Stroom holds as one record** is split by the tools (`StreamReader.splitRaw`; seen in production:
   reads of records 200, 450, 700 and 950 each returned the first four).
 * **Streams older than their feed** (from an earlier, deleted feed of the same name) are refused as samples.
+* **A Lucene index's analyzers.** The query service's fields for a Lucene index say a field is TEXT, not which
+  analyzer it has, and CONTAINS on a keyword field or a range on a text field finds nothing through Stroom. So
+  `run_stroomql` and `search_events` read the index's own field list (`IndexResource.findFields`, as the user,
+  `LuceneTextFields`) and refuse those searches (`MisleadingSearches`). Found reviewing the tools (2026-10-31): such
+  a search ran and found nothing.
 * **One bad item.** A tool that reads many items (pipelines, XSLTs, index and cluster docs, AGENTS docs, streams)
   reads each separately. One Stroom can't give is named with Stroom's reason, or passed over where it can't change
   the answer (seen in production: a feed's description failed outright because one pipeline set a property its
@@ -1124,7 +1133,7 @@ The steps, in order:
 flowchart LR
     A["build_status:<br/>what is missing"] --> B["promote_build destinations=:<br/>needs_review, the layout"]
     B --> C["The agent shows the layout"]
-    C --> D["promote_build reviewed=<review_id>:<br/>approval form (warnings in it)"]
+    C --> D["promote_build reviewed=<review_id>:<br/>changed originals asked about,<br/>approval form (warnings in it)"]
     D --> E["Version histories consolidated"]
     E --> F["Moves (UUIDs kept);<br/>working copies written back after a backup"]
     F --> G["Processor filters, disabled,<br/>with before_enabling"]
@@ -1145,6 +1154,18 @@ flowchart LR
   role is moved.
 * **Working copies** are written back over the original (its data, converter type, documentation and description)
   after a backup to `<workspace>/backups/`; an unchanged copy is discarded.
+* **Production changed since the copy** (2026-10-31). `copy_pipeline` records the version each working copy's
+  original had when copied (`copy_of_version` in the build record). At promotion, before the layout is built (so the
+  reviewed tree shows the choice), each working copy whose original's version has changed (e.g. edited by hand in
+  production) is put to the user in a form (`PromoteBuildTool.askAboutChangedOriginals`): who changed production
+  and when, then what overwriting would lose from production and what the copy brings (lost lines first: in code
+  order, the copy's change filled the lines shown and production's own edit was cut off). "Overwrite production
+  with the working copy" writes it back, the production change then only in the backup; "Keep production as it is"
+  leaves production alone, and the copy and its working-copy pipeline in the build, for the change to be made again
+  on a fresh working copy. The answer is kept in the build record against the original's version until the
+  promotion is carried out, so it is asked once per promotion. Asked for by the user: the copy used to be written
+  over the production change silently, which survived only in the backup; they chose a question that explains the
+  difference over a refusal. A copy taken before the version was recorded is written back without asking.
 * **Version histories** are consolidated into one line per XSLT and one row per Documentation doc before any move
   (`consolidateVersions`).
 * **Processing is handed over** (`PromotionProcessing`): each promoted pipeline gets a filter on its feed (the source
@@ -1566,6 +1587,10 @@ button (the server side and the GWT compile are tested).
   process), and runs at most 2 tasks. A filter is refused for a stream the pipeline already processed (or an existing
   filter already selects); those go through `reprocess_streams`, at most 10 streams a call, one task at a time, which
   refuses streams not yet processed. A duplicate feed filter is refused.
+* **Code proved first.** `create_processor_filter` and `reprocess_streams` both refuse a pipeline with no clean step
+  of its current code recorded (`CreateProcessorFilterTool.steppedClean`): a change to its XSLT or converter since
+  the last clean step is stepped again before anything is processed. `reprocess_streams` gained the check on
+  2026-10-31, asked for by the user, after streams were found reprocessed through code never stepped.
 * **Indexing input.** Every indexing filter over Events carries `Pipeline IS_DOC_REF <events pipeline>`, with the
   stream ids, or the stream type and no feed condition for new data: indexing never picks up Events another pipeline
   wrote, even on a shared feed (asked for by the user). Stream ids are checked: each must be an Events stream that
@@ -1742,7 +1767,7 @@ flowchart TD
 | A rebuild that would lose unread XSLT | `rebuild_mapping` | Until `accept_unread` |
 | Data Splitter run through Stroom's parser; buffer sized; schema-valid ids | `build_data_splitter` | Yes |
 | A template whose parser can't read the sample; XSLT from outside the build | `create_pipeline` | Until overridden |
-| Every sample record stepped clean, code digest recorded | `step_sample`; `create_processor_filter` refuses without it | Yes |
+| Every sample record stepped clean, code digest recorded | `step_sample`; `create_processor_filter` and `reprocess_streams` refuse without it | Yes |
 | Events against the schema this Stroom holds, plus quality rules | `check_events` | Recorded; the plan waits |
 | Error triage of stepping and Error streams | `ErrorTriage` | Blocking groups fail the gate |
 | Processing gate: one output per input, none locked, no blocking errors | `wait_for_processing` | Yes |
@@ -1751,9 +1776,10 @@ flowchart TD
 | An agreed index template for the pipeline's current code; committed by the admin | `ProcessingApprovals`, `IndexTemplateAgreements` | Yes |
 | A template against the documents the pipeline writes | `TemplateCheck` | Problems block |
 | An index written to before: dropped first | `drop_first` | Until the user says so |
-| Searches that answer wrongly through Stroom | `MisleadingSearches` | Refused or rewritten |
+| Searches that answer wrongly through Stroom (for Lucene, with each text field's analyzer from `LuceneTextFields`) | `MisleadingSearches` | Refused or rewritten |
 | Documentation not older than the mapping or XSLT | `BuildChecks` | Blocks promotion only for the build's own change |
 | The promotion layout as shown | `review_id` digest | Yes |
+| A working copy written over a production document changed since it was copied | `PromoteBuildTool.askAboutChangedOriginals`, a form; refused without forms | Until the user chooses |
 | A form too large to show | `ElicitationSchema` | Refused; the agent asks in the chat |
 | Regular expressions, jq and XPath the agent gives | Capped in length and time (`SafePattern`, `SafeJq`, `SafeXPath`) | Yes |
 | Workspace paths | `WorkspacePath`: confined areas, no `..`, no backslash | Yes |
@@ -1980,6 +2006,7 @@ Known local failures in the full build, neither caused by this code:
 | Shared imports at drafting and saving | Built (2026-10-31, 2cbf795bf8) |
 | AGENTS suggestions from chats: the evidence (`instruction_evidence`) | Built (2026-10-31, d6e64473b8) |
 | AGENTS suggestions from chats: proposal, review and apply, create on apply, nudge at promotion | Built (2026-10-31); not yet tried in a browser |
+| Fixes from reviewing the tools against the docs; promotion asks about a changed production original | Built (2026-10-31, eeca441632, 6e4f231958, 03e056b92f) |
 | User documentation (stroom-docs `gh-146-ai-user-guide`) | Drafted; reviewed at the end |
 
 
@@ -1991,6 +2018,9 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-10-31 | Promotion asks before writing a working copy over a production document changed since it was copied: who changed it and when, and how production differs from the copy; the user overwrites production (the change then only in the backup) or keeps it (the copy stays in the build). The user chose asking, with the difference explained, over refusing. | Builds |
+| 2026-10-31 | `reprocess_streams` needs a clean step of the pipeline's current code, as `create_processor_filter` does (asked for by the user). | Processing |
+| 2026-10-31 | Fixes from reviewing the tools against the docs: `xslt_lookups` works over `/mcp` (XSLTs as saved), and `preview_extraction` and `propose_extraction_pipeline` are chat only; `run_stroomql` and `search_events` read a Lucene index's analyzers (`LuceneTextFields`), so CONTAINS on a keyword field and a range on a text field are refused; `document_documentation` leaves out the build tools' hidden blocks; `start_build` remembers its build; `list_visualisations` and `propose_visualisation` declare the permissions they check; tool text says "the agent created", not "this server"; `draft_index_mapping` no longer promises an indexing XSLT; `create_processor_filter` states its feed filters' 2 tasks; `save_xslt`, `save_text_converter` and `save_dictionary` no longer require `build` and `name`; `build_reference_xslt` takes the highest reference-data schema version; the workspace folder setting no longer mentions the retired MCP server. | Architecture, Processing, Builds |
 | 2026-10-31 | `propose_instructions`: a typed-section line naming nothing the tools know is pointed out, not refused (a `- note:` bullet is legitimate); a new doc is created with the parts kept and saved on apply, then opened; the nudge at promotion is in the chat only. | Standing instructions |
 | 2026-10-31 | AGENTS suggestions descoped from `/mcp`: evidence is the user's own Stroom AI chats only, read from their stored messages; no new table. Window and threshold configurable (`evidenceWindow` 90 days, `minChats` 2). Not refused in a tainted chat: the evidence tool counts as reading untrusted content, and nothing changes until the user applies the review. | Standing instructions |
 | 2026-10-31 | AGENTS suggestions: own sessions only; a choice repeated in two or more sessions in 90 days and never contradicted; reviewed like `propose_documentation_change` (needs Edit); create on apply where there is no AGENTS doc (needs Create); one user's preference to memory, an environment convention to AGENTS; on request plus one nudge at promotion. (Evidence and taint superseded the same day, above.) | Standing instructions |
