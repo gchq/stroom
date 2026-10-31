@@ -76,6 +76,8 @@ public class UserActionService {
     static final String APPLY_DASHBOARD_COMMAND = "Apply proposed dashboard change";
     static final String UNDO_DASHBOARD_COMMAND = "Undo applied dashboard change";
     static final String APPLY_DOCUMENTATION_COMMAND = "Apply proposed documentation change";
+    static final String CREATE_INSTRUCTIONS_COMMAND = "Create proposed standing instructions";
+    static final String CREATED = "Created and saved";
     static final String UNDO_DOCUMENTATION_COMMAND = "Undo applied documentation change";
     static final String WRITE_EXTRACTION_COMMAND = "Write proposed search extraction";
     /// What a written extraction's card says.
@@ -171,7 +173,8 @@ public class UserActionService {
         } catch (final NumberFormatException e) {
             return new AiUserActionResult(false, "The rejected parts of the change weren't understood.", null);
         }
-        if (!rejected.isEmpty() && !isCodeChange(action)) {
+        if (!rejected.isEmpty() && !isCodeChange(action)
+            && !UserActions.CREATE_INSTRUCTIONS.equals(action.action())) {
             return new AiUserActionResult(false, "Only a proposed code change can be applied in part.", null);
         }
 
@@ -188,6 +191,7 @@ public class UserActionService {
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
             case UserActions.APPLY_DASHBOARD_CHANGE -> applyDashboardChange(chatId, message, result, action);
+            case UserActions.CREATE_INSTRUCTIONS -> createInstructions(chatId, message, result, action, rejected);
             // Only shown, for the cluster admin to run. Stroom never runs these.
             default -> new AiUserActionResult(false, "Stroom does not run this action.", null);
         };
@@ -712,6 +716,61 @@ public class UserActionService {
         return doc == null
                 ? "the document"
                 : doc.getType() + " '" + NullSafe.nonBlankStringElse(doc.getName(), doc.getUuid()) + "'";
+    }
+
+    /// Creates the standing instructions doc (AGENTS) a `create_instructions` button proposed for a folder, with the
+    /// parts of it the user kept, and saves it, as the user: creating it checks their permission to create in the
+    /// folder, and logs it as any new document is. Refused if the folder has one by now, as the proposal was
+    /// written for a folder with none.
+    private AiUserActionResult createInstructions(final int chatId,
+                                                  final AiChatMessage message,
+                                                  final ToolResultRecord result,
+                                                  final UserActionRecord action,
+                                                  final Set<Integer> rejected) {
+        final String target = "standing instructions in " + describeDoc(action);
+        if (action.doc() == null || lookup.find(action.doc()).isEmpty()) {
+            final String problem = "The folder no longer exists, or you cannot see it.";
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+                    false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (lookup.instructionsIn(action.doc()).isPresent()) {
+            final String problem = "The folder has standing instructions (an AGENTS doc) now, so this can't create "
+                                   + "them: ask for the change to be proposed to that doc.";
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+                    false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        final LineDiffResult proposed = LineDiff.diff("", action.request());
+        final int parts = proposed.getChangedBlocks().size();
+        if (rejected.stream().anyMatch(index -> index < 0 || index >= parts)) {
+            return new AiUserActionResult(false, "The rejected parts aren't parts of this change.", null);
+        }
+        if (!rejected.isEmpty() && rejected.size() >= parts) {
+            return new AiUserActionResult(false, "Every part was rejected, so there is nothing to create.", null);
+        }
+        final String text = rejected.isEmpty()
+                ? action.request()
+                : proposed.withChangesExcept(rejected, "\n");
+        final DocRef created;
+        try {
+            created = lookup.createInstructions(action.doc(), text);
+        } catch (final RuntimeException e) {
+            final String problem = "The standing instructions couldn't be created: "
+                                   + NullSafe.nonBlankStringElse(e.getMessage(), e.getClass().getSimpleName());
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), CREATE_INSTRUCTIONS_COMMAND, target, problem,
+                    false);
+            return new AiUserActionResult(false, problem, null);
+        }
+        if (update(message, result, action.withStatus(Status.DONE, CREATED)) == null) {
+            LOGGER.warn(() -> "Created " + created + " but couldn't mark the button in chat " + chatId + " done");
+        }
+        auditLog.processed(ToolSession.chat(chatId), created, CREATE_INSTRUCTIONS_COMMAND, target,
+                "Created and saved the proposed standing instructions", true);
+        // So the model knows on its next turn (or now, if it is working).
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I created the "
+                                                                     + target + " and saved it.");
+        return new AiUserActionResult(true, CREATED, created);
     }
 
     /// @return True for a change to code (a stepping element's, or an open Query's) or to a document's

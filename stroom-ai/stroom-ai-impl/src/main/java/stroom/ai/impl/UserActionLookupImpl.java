@@ -16,11 +16,15 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.impl.tools.AgentInstructions;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.PermissionInheritance;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -40,7 +44,9 @@ import jakarta.inject.Provider;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -61,6 +67,7 @@ public class UserActionLookupImpl implements UserActionLookup {
     @SuppressWarnings("rawtypes")
     private final Map<DocumentTypeName, DocumentActionHandler> documentActionHandlers;
     private final Provider<QueryService> queryServiceProvider;
+    private Provider<ExplorerService> explorerServiceProvider = () -> null;
 
     @SuppressWarnings("rawtypes")
     UserActionLookupImpl(final ProcessorFilterService processorFilterService,
@@ -82,6 +89,12 @@ public class UserActionLookupImpl implements UserActionLookup {
         this.explorerNodeService = explorerNodeService;
         this.securityContext = securityContext;
         this.documentActionHandlers = documentActionHandlers;
+    }
+
+    /// @param explorerServiceProvider Creates the documents the user's buttons create.
+    @Inject
+    void setExplorerService(final Provider<ExplorerService> explorerServiceProvider) {
+        this.explorerServiceProvider = explorerServiceProvider;
     }
 
     @Override
@@ -145,6 +158,10 @@ public class UserActionLookupImpl implements UserActionLookup {
         if (doc == null) {
             return Optional.empty();
         }
+        if (doc instanceof final DocumentationDoc documentation) {
+            // A Documentation document's text is its content, not its description: a standing instructions doc's.
+            return Optional.of(NullSafe.string(documentation.getData()));
+        }
         try {
             final Object description = doc.getClass().getMethod("getDescription").invoke(doc);
             return Optional.of(description instanceof final String text
@@ -153,6 +170,45 @@ public class UserActionLookupImpl implements UserActionLookup {
         } catch (final ReflectiveOperationException | RuntimeException e) {
             LOGGER.debug(() -> "Unable to read the documentation of " + docRef, e);
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<DocRef> instructionsIn(final DocRef folder) {
+        if (folder == null) {
+            return Optional.empty();
+        }
+        return explorerNodeService.getChildren(folder).stream()
+                .map(ExplorerNode::getDocRef)
+                .filter(child -> DocumentationDoc.TYPE.equals(child.getType())
+                                 && AgentInstructions.DOC_NAME.equals(child.getName()))
+                .filter(child -> securityContext.hasDocumentPermission(child, DocumentPermission.VIEW))
+                .findFirst();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public DocRef createInstructions(final DocRef folder, final String text) {
+        final ExplorerService explorerService = Objects.requireNonNull(explorerServiceProvider.get(),
+                "No explorer service");
+        final ExplorerNode folderNode = explorerNodeService.getNode(folder)
+                .orElseThrow(() -> new IllegalStateException("The folder no longer exists."));
+        // Checks the user's permission to create it there, and logs it as any new document is.
+        final DocRef made = explorerService.create(DocumentationDoc.TYPE, AgentInstructions.DOC_NAME, folderNode,
+                PermissionInheritance.DESTINATION).getDocRef();
+        try {
+            final DocumentActionHandler<DocumentationDoc> handler = documentActionHandlers.get(
+                    new DocumentTypeName(DocumentationDoc.TYPE));
+            final DocumentationDoc doc = handler.readDocument(made);
+            handler.writeDocument(doc.copy().data(text).build());
+            return made;
+        } catch (final RuntimeException e) {
+            try {
+                explorerNodeService.getNode(made).ifPresent(node -> explorerService.delete(List.of(node)));
+            } catch (final RuntimeException deleteError) {
+                LOGGER.warn(() -> "Unable to delete the empty " + made + " after failing to fill it", deleteError);
+            }
+            throw e;
         }
     }
 

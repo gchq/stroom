@@ -526,6 +526,39 @@ class TestUserActions {
     }
 
     @Test
+    void aNewInstructionsButtonIsOfferedOnlyByStroomForAFolderWithNone() {
+        final DocRef folder = new DocRef("Folder", OTHER_UUID, "Acme");
+        Mockito.when(lookup.find(new DocRef("Folder", OTHER_UUID))).thenReturn(Optional.of(folder));
+        Mockito.when(lookup.instructionsIn(folder)).thenReturn(Optional.empty());
+        final Map<String, Object> create = new HashMap<>();
+        create.put("id", "instructions-1");
+        create.put("action", "create_instructions");
+        create.put("doc", doc("Folder", OTHER_UUID, "Something else"));
+        create.put("request", "# Standing instructions\n\n- Times are UTC.\n");
+        create.put("added", 3);
+
+        // From an MCP server, it is dropped, as other changes to documents are.
+        assertThat(userActions.check(List.of(create), NOW)).isEmpty();
+
+        // From one of Stroom's own tools, it is offered, described by Stroom.
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo("create_instructions");
+            assertThat(action.doc()).isEqualTo(folder);
+            assertThat(action.label()).isEqualTo("Create standing instructions (AGENTS) in folder 'Acme': +3 lines");
+            assertThat(action.codeChange().baseCode()).isEmpty();
+        });
+
+        // Not once the folder has some, nor for a document that isn't a folder.
+        Mockito.when(lookup.instructionsIn(folder)).thenReturn(Optional.of(new DocRef("Documentation", "x")));
+        assertThat(userActions.check(null, List.of(create), NOW)).isEmpty();
+        final Map<String, Object> notAFolder = new HashMap<>(create);
+        notAFolder.put("doc", doc("Dashboard", OTHER_UUID, "Logons"));
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID)))
+                .thenReturn(Optional.of(new DocRef("Dashboard", OTHER_UUID, "Logons")));
+        assertThat(userActions.check(null, List.of(notAFolder), NOW)).isEmpty();
+    }
+
+    @Test
     void aDashboardChangeButtonNeedsADashboardTheUserCanSeeAndGoodChanges() {
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.empty());
         assertThat(userActions.check(null, List.of(dashboardChange("d1")), NOW)).isEmpty();

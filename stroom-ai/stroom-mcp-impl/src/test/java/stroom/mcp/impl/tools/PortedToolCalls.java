@@ -90,6 +90,13 @@ final class PortedToolCalls {
             this.answer = answer;
         }
 
+        /// @return The context of a call in a Stroom AI chat, with no workspace, whose forms this user answers.
+        ToolCallContext chatContext() {
+            return ToolCallContext.builder(ToolSession.chat(1))
+                    .userQuestions(this)
+                    .build();
+        }
+
         /// @return The context of a call from an MCP client, with no workspace, whose forms this user answers.
         ToolCallContext context() {
             return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",

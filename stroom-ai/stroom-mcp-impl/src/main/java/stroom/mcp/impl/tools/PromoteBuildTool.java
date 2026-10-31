@@ -777,6 +777,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!warnings.isEmpty()) {
             result.put("promoted_with_warnings", warnings);
         }
+        if (context.session().isChat()) {
+            // Once per build, at its end (asked for by the user): the choices made building it, and in earlier
+            // chats, written down so the next build follows them. Only in the chat, whose sessions are the
+            // evidence.
+            result.put("standing_instructions", "Once the user has what they need about the promotion, call "
+                                                + "instruction_evidence: if it finds repeated choices, offer once "
+                                                + "to propose them as standing instructions for the feed's folder "
+                                                + "(propose_instructions, which they review and apply). Don't "
+                                                + "offer if it finds none, or if the folder's AGENTS doc says them "
+                                                + "already.");
+        }
         final List<Object> buttons = new ArrayList<>();
         for (final Map<String, Object> filter : filters) {
             final Object actions = filter.remove(UserActionEntries.USER_ACTIONS);

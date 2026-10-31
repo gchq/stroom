@@ -296,6 +296,13 @@ Needs: View (document)
 - nothing: REFUSED or limited: You don't have permission to view this document.
 - admin: runs (the same as with everything)
 
+## propose_instructions {"folder":"/Test","markdown":"# Standing instructions\n\n- Times are UTC.","summary":"Times as chosen in two chats."}
+Needs: View (document)
+- everything: runs: The user has been shown the change to the AGENTS doc in folder '/' (+3 −1 lines) as a diff, with a 'Review and apply' button. Nothing changes until they apply it: that puts it in the doc's editor, uns…
+- without View (document): REFUSED or limited: Error: no folder '/Test' that you can see. Give a folder's UUID or Explorer path.
+- nothing: REFUSED or limited: Error: no folder '/Test' that you can see. Give a folder's UUID or Explorer path.
+- admin: runs (the same as with everything)
+
 ## current_results {}
 Needs: Use (document)
 - everything: runs: Error running built-in tool 'current_results': Cannot invoke "stroom.ai.impl.TableDownloader$Downloaded.rows()" because "downloaded" is null
