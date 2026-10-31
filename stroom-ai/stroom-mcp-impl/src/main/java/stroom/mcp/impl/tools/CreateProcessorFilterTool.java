@@ -413,6 +413,13 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
     }
 
     private boolean steppedClean(final DocRef ref) {
+        return steppedClean(buildRecords, ref);
+    }
+
+    /// @param buildRecords The builds' records.
+    /// @param ref          A pipeline.
+    /// @return True if a clean step of its current code is recorded.
+    static boolean steppedClean(final BuildRecords buildRecords, final DocRef ref) {
         try {
             return buildRecords.steppedClean(ref);
         } catch (final RuntimeException e) {

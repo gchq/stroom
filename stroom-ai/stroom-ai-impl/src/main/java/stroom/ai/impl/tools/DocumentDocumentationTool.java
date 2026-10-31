@@ -105,7 +105,11 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
         if (doc.isEmpty()) {
             return ToolResult.text("Error: " + ReadDocumentTool.describe(docRef) + " couldn't be read.");
         }
-        final String documentation = description(doc.get()).orElse(null);
+        // What the build tools keep hidden in it (an XSLT's mapping, a build's pending changes) is theirs, not the
+        // documentation: left out, as read_document leaves it out.
+        final String documentation = description(doc.get())
+                .map(DocumentDocumentationTool::withoutKeptBlocks)
+                .orElse(null);
         final String elsewhere = documentedBeside(docRef);
         if (documentation == null || documentation.isBlank()) {
             return ToolResult.text(elsewhere.isEmpty()
@@ -146,6 +150,14 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
                                 + "tab holds only what is kept with the " + docRef.getType().toLowerCase(Locale.ROOT)
                                 + " itself.")
                 .orElse("");
+    }
+
+    // The text without the build tools' hidden blocks; as it is when it has none.
+    private static String withoutKeptBlocks(final String text) {
+        final String without = KeptMapping.withoutBlock(text, null);
+        return without.strip().equals(text.strip())
+                ? text
+                : without;
     }
 
     /// @param doc A document, as its handler read it.

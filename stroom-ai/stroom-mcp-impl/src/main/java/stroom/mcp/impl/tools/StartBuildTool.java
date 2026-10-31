@@ -145,6 +145,8 @@ class StartBuildTool extends AbstractBuiltInTool {
                                       final List<String> folders,
                                       final String kind) {
         final WriteGuard.Folder folder = guard.buildFolder(build);
+        // The build later calls naming none work on, as start_onboarding's.
+        plan.rememberBuild(context, build);
         if (kind != null) {
             buildRecords.rememberKind(build, kind);
         }
