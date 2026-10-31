@@ -54,7 +54,8 @@ public final class CefLines {
         // Static only.
     }
 
-    /// CEF lines in a pipeline element's output: Kafka records' values, or lines of text.
+    /// CEF lines in a pipeline element's output: Kafka records' values, lines of text, or the lines in the text of
+    /// XML that a TextWriter writes as text.
     ///
     /// @param output The output, or null.
     /// @return The CEF lines.
@@ -80,6 +81,15 @@ public final class CefLines {
         // Stroom's stepping puts an XML declaration before a text XSLT's output (seen: '<?xml version="1.1"
         // encoding="UTF-8"?>CEF:0|...'): not part of the line. A syslog prefix is, and stays.
         text = DECLARATION.matcher(text).replaceAll("");
+        if (text.strip().startsWith("<")) {
+            // XML a TextWriter turns into text (e.g. a line element per Event): it writes the XML's text, in order,
+            // without the tags. Text that isn't XML (a line with a syslog prefix, '<134>...') is read as text.
+            try {
+                text = itertext(XmlParser.parse(text.strip()));
+            } catch (final XmlParser.XmlParseException e) {
+                // Read as text.
+            }
+        }
         return ToolText.splitlines(text).stream()
                 .filter(line -> ToolText.strip(line).startsWith("CEF:") || CEF_START.matcher(line).find())
                 .map(ToolText::strip)

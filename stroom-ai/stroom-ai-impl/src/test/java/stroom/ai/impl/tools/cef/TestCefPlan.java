@@ -336,6 +336,20 @@ class TestCefPlan {
                                                    + "viewed: a=b|c')");
     }
 
+    @Test
+    void xmlATextWriterWritesAsTextGivesItsLinesWithoutTheTags() {
+        // A hand-written CEF XSLT writing XML for a TextWriter: the writer writes the XML's text, without the tags,
+        // its entities unescaped.
+        final String out = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<lines>\n"
+                           + "<line>CEF:0|D|S|1|User-Login|User logged in|3|suser=a&amp;b</line>\n"
+                           + "<line>CEF:0|D|S|1|Secret-View|Secret viewed|3|suser=b</line>\n</lines>";
+        assertThat(CefLines.linesIn(out)).containsExactly("CEF:0|D|S|1|User-Login|User logged in|3|suser=a&b",
+                "CEF:0|D|S|1|Secret-View|Secret viewed|3|suser=b");
+        // Text that starts with '<' but isn't XML is read as text.
+        assertThat(CefLines.linesIn("<134>Oct 10 09:00:00 fw CEF:0|D|S|1|X|Y|3|suser=c"))
+                .containsExactly("<134>Oct 10 09:00:00 fw CEF:0|D|S|1|X|Y|3|suser=c");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"spaces and an equals sign", "ending with a backslash", "a backslash then an equals sign",
             "line breaks", "what looks like another key", "a pipe, needing no escape here"})

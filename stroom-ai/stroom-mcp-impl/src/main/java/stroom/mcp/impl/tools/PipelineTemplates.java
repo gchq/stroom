@@ -149,7 +149,11 @@ class PipelineTemplates {
             final Entry pipeline = candidate.pipeline();
             final Shape shape;
             try {
-                shape = PipelineShapes.shape(pipelineShapes.merged(pipeline.uuid()), stages);
+                final MergedPipeline merged = pipelineShapes.merged(pipeline.uuid());
+                // A CEF pipeline writing text is told by its XSLTs: read only when it is CEF output that is sought.
+                final boolean cefSought = "forwarding".equals(stage);
+                shape = PipelineShapes.shape(merged, stages,
+                        () -> cefSought && pipelineShapes.writesCef(merged, pipeline.uuid()));
             } catch (final PipelineUnreadableException e) {
                 // One pipeline Stroom can't build (seen: an element type this Stroom doesn't have, StateFilter)
                 // must not hide the others: the whole search failed, and the agent fell back to a template by its

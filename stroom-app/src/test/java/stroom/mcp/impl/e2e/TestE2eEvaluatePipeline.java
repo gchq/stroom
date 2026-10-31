@@ -27,20 +27,10 @@ import stroom.feed.shared.FeedDoc;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.mcp.impl.McpTestClient;
 import stroom.meta.api.MetaProperties;
-import stroom.meta.shared.MetaFields;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.textconverter.TextConverterStore;
-import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorType;
-import stroom.processor.shared.QueryData;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 
@@ -128,10 +118,6 @@ class TestE2eEvaluatePipeline extends AbstractE2eTest {
     @Inject
     private TextConverterStore textConverterStore;
     @Inject
-    private ProcessorFilterService processorFilterService;
-    @Inject
-    private ProcessorService processorService;
-    @Inject
     private SecurityContext securityContext;
 
     @Test
@@ -188,7 +174,7 @@ class TestE2eEvaluatePipeline extends AbstractE2eTest {
         for (final String text : PRODUCTION_STREAMS) {
             raw.add(datafeed(feed, text));
         }
-        productionFilter(feed, pipeline);
+        feedFilter(feed, StreamTypeNames.RAW_EVENTS, pipeline);
         processAll();
         final Map<String, Object> done = json("wait_for_processing", args("pipeline_uuid", pipeline, "stream_ids",
                 raw, "timeout_seconds", 10));
@@ -416,26 +402,6 @@ class TestE2eEvaluatePipeline extends AbstractE2eTest {
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-        });
-    }
-
-    // The production pipeline's own processor filter on its feed.
-    private void productionFilter(final String feed, final String pipeline) {
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
-                .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                .build();
-        asUser(admin, () -> {
-            final ProcessorFilter filter = processorFilterService.create(CreateProcessFilterRequest.builder()
-                    .processorType(ProcessorType.PIPELINE)
-                    .pipeline(new DocRef(PipelineDoc.TYPE, pipeline))
-                    .queryData(QueryData.builder().dataSource(MetaFields.STREAM_STORE_DOC_REF).expression(expression)
-                            .build())
-                    .enabled(true)
-                    .priority(10)
-                    .maxProcessingTasks(2)
-                    .build());
-            processorService.setEnabled(filter.getProcessor().getId(), true);
         });
     }
 }
