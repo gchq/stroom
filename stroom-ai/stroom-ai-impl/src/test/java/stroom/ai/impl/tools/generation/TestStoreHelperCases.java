@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -33,26 +33,25 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The ported hand-edit checks ([HandEdits]), XSLT styling ([StyledXslt]), code diff ([CodeDiff]) and the write side
-/// of the kept mapping ([KeptMapping]) against the Stroom MCP server's own `utils/handedit.py`,
-/// `utils/xsltstyle.py` and `utils/mappingstore.py`: each case in `store_cases.json` is a call and what the server's
-/// code gave (made by `make_parity2.py`), over XSLTs its indexing and translation generators wrote and the hand
-/// edits its tests make.
-class TestStoreParity {
+/// The hand-edit checks ([HandEdits]), XSLT styling ([StyledXslt]), code diff ([CodeDiff]) and the write side of
+/// the kept mapping ([KeptMapping]) against their fixed results: each case in `store_cases.json` is a call and what
+/// it must give, over XSLTs the indexing and translation generators wrote and hand edits made to them. They pin
+/// these helpers' established behaviour.
+class TestStoreHelperCases {
 
     @TestFactory
     @SuppressWarnings("unchecked")
-    Stream<DynamicTest> theStoreAndHandEditHelpersGiveWhatThePythonOnesGive() {
+    Stream<DynamicTest> theStoreAndHandEditHelpersGiveTheRecordedResults() {
         final List<Map<String, Object>> cases = GenerationFixtures.json(GenerationFixtures.resource(
                 "store_cases.json"));
         final Map<String, String> xslts = (Map<String, String>) cases.getFirst().get("result");
         assertThat(cases).hasSizeGreaterThan(70);
         return IntStream.range(1, cases.size()).mapToObj(n -> {
             final Map<String, Object> c = cases.get(n);
-            final String title = n + " " + c.get("call") + " " + PyJson.dumps(c.get("args"));
+            final String title = n + " " + c.get("call") + " " + ToolJson.dumps(c.get("args"));
             return DynamicTest.dynamicTest(title.substring(0, Math.min(200, title.length())), () -> {
                 final Object actual = call((String) c.get("call"), (List<Object>) c.get("args"), xslts);
-                assertThat(PyJson.dumps(actual, 1)).isEqualTo(PyJson.dumps(c.get("result"), 1));
+                assertThat(ToolJson.dumps(actual, 1)).isEqualTo(ToolJson.dumps(c.get("result"), 1));
             });
         });
     }
@@ -62,7 +61,7 @@ class TestStoreParity {
         return switch (name) {
             case "outline" -> outline(HandEdits.outline(xslts.get((String) args.getFirst())));
             case "undone" -> HandEdits.undone(code(xslts, args.get(0)), xslts.get((String) args.get(1)),
-                    xslts.get((String) args.get(2))).stream().map(TestStoreParity::undone).toList();
+                    xslts.get((String) args.get(2))).stream().map(TestStoreHelperCases::undone).toList();
             case "code_diff" -> CodeDiff.diff(xslts.get((String) args.get(0)), xslts.get((String) args.get(1)));
             case "code_diff_limit" -> CodeDiff.diff(xslts.get((String) args.get(0)), xslts.get((String) args.get(1)),
                     ((Number) args.get(2)).intValue());

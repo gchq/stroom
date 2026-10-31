@@ -29,7 +29,7 @@ class TestSecretRedactor {
 
     @Test
     void aClustersCredentialsAreRedacted() {
-        // As the Stroom MCP server's get_document redacted an Elastic cluster's connection.
+        // An Elastic cluster's connection: its credentials are never given to the model.
         final Object doc = Map.of("name", "ES_PROD", "connection", Map.of(
                 "connectionUrls", List.of("https://es:9200"),
                 "apiKeySecret", "s3cret",

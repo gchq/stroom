@@ -24,8 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Names in an [XsltStyle]'s naming (variables, templates, modes, Data Names), as the Stroom MCP server's generator
-/// makes them (`style_name`, `unique_name` and `data_name_in` in `utils/xsltgen.py`).
+/// Names in an [XsltStyle]'s naming (variables, templates, modes, Data Names), as the generator makes them.
 public final class XsltNames {
 
     private static final Pattern WORDS = Pattern.compile("[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\\d+",
@@ -105,7 +104,7 @@ public final class XsltNames {
         return styleName(name, naming);
     }
 
-    // Python's str.capitalize for a word of letters and digits: its first character upper case, the rest lower.
+    // A word of letters and digits capitalised: its first character upper case, the rest lower.
     private static String capitalise(final String word) {
         return word.isEmpty()
                 ? word

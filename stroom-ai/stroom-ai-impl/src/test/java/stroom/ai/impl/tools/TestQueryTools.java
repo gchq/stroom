@@ -151,7 +151,7 @@ class TestQueryTools {
 
     @Test
     void describeDataSourceSaysWhichSearchesOfAnIndexWouldMislead() {
-        // As the Stroom MCP server's find_events refused them, merged into search_events.
+        // As search_events refuses them.
         Mockito.when(queryService.findFields(Mockito.any())).thenReturn(new ResultPage<>(List.of(
                 QueryField.createText("UserId"))));
 
@@ -189,7 +189,7 @@ class TestQueryTools {
 
     @Test
     void describeDataSourceGivesTheDocumentationOfThePipelinesThatFeedItAndItsAgentsDocs() {
-        // As the Stroom MCP server documents a pipeline: a Documentation doc beside it, with its name.
+        // As write_documentation documents a pipeline: a Documentation doc beside it, with its name.
         final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Linux indexing");
         final DocRef pipelineDoc = new DocRef(DocumentationDoc.TYPE, "pipe-doc-uuid", "Linux indexing");
         final DocRef hidden = new DocRef("Pipeline", "hidden-pipe-uuid", "Hidden indexing");

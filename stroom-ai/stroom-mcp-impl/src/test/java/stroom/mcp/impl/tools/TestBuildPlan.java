@@ -40,8 +40,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The plan with its state, and `next` in results (the Stroom MCP server's `tests/test_plan.py`, and the
-/// with_next case of `tests/test_consent.py`).
+/// The plan with its state, and `next` in results.
 class TestBuildPlan {
 
     private static final ToolSession SESSION = new ToolSession(ToolSession.Kind.MCP, "s1",
@@ -257,10 +256,10 @@ class TestBuildPlan {
 
     @Test
     void theSamplesStepSendsEachFileFromTheUsersDiskNotItsText() {
-        // The Stroom MCP server's FINDINGS (0.16.18, VS Code): `next` after create_feed named upload_sample with
-        // sample="<one file's text>", and the agent read each file (cut at 2,000 characters) and uploaded its first
-        // two records. The plan's call is upload_sample with files=, a command per file for the user's terminal;
-        // sample= only for text the user pasted.
+        // Seen in testing (VS Code): `next` after create_feed named upload_sample with sample="<one file's text>",
+        // and the agent read each file (cut at 2,000 characters) and uploaded its first two records. The plan's call
+        // is upload_sample with files=, a command per file for the user's terminal; sample= only for text the user
+        // pasted.
         final Map<String, Object> status = plan.status("b", new DocRef("Feed", "f", "ACME"));
         final Map<?, ?> next = (Map<?, ?>) status.get("next");
         assertThat(next.get("step")).isEqualTo("samples");

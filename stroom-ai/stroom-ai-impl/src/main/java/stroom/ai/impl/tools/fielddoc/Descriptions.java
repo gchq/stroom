@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -39,11 +39,10 @@ import java.util.stream.Collectors;
 ///
 /// A Data name read from the same source under several elements is asked once, by its name
 /// ([FieldDocs#dataKey(String)]): seen, 224 fields asked of the agent for one feed, most of them its 18 Data names
-/// once per action element. A description given by full path still wins for that row. Ported from the Stroom MCP
-/// server's `Descriptions` in `utils/fielddoc.py`.
+/// once per action element. A description given by full path still wins for that row.
 ///
 /// Each description is kept with where its field came from when it was given ([#sources()]), and asked for again
-/// when that changes: not in the Python server, where a description outlived its field's source (seen: TWITTER's
+/// when that changes. Seen in testing, without that: a description outlived its field's source (TWITTER's
 /// Description, "the tweet's text, including mentions and links", kept once both were taken out of it).
 public final class Descriptions {
 
@@ -52,7 +51,7 @@ public final class Descriptions {
     /// The event-logging schema's words.
     public static final String EVENT_LOGGING = "event-logging";
 
-    // Fields the server describes exactly itself: never asked of the agent.
+    // Fields the tools describe exactly themselves: never asked of the agent.
     private static final Set<String> SELF_DESCRIBED = Set.of("@StreamId", "@EventId", "StreamId", "EventId");
     private static final Pattern DATA_PATH = Pattern.compile("^(.*)/Data\\[@Name='([^']*)'\\]/@Value$");
     private static final Pattern NAME = Pattern.compile("\\[@Name='([^']*)'\\]");
@@ -91,8 +90,8 @@ public final class Descriptions {
         final Map<String, String> kept = new LinkedHashMap<>();
         if (given != null) {
             given.forEach((key, value) -> {
-                if (value instanceof final String text && !PyText.strip(text).isEmpty()) {
-                    kept.put(key, PyText.strip(text));
+                if (value instanceof final String text && !ToolText.strip(text).isEmpty()) {
+                    kept.put(key, ToolText.strip(text));
                 }
             });
         }
@@ -275,7 +274,7 @@ public final class Descriptions {
                 asking.put("was", was);
             }
             asking.put("values", values.subList(0, Math.min(3, values.size())).stream()
-                    .map(v -> PyText.head(v, 60))
+                    .map(v -> ToolText.head(v, 60))
                     .toList());
             if (!said.isEmpty()) {
                 asking.put("schemas_say", said);
@@ -329,20 +328,20 @@ public final class Descriptions {
 
     // One note's words: its meaning, and up to eight of its codes.
     private static String said(final Map<String, Object> note) {
-        final String meaning = PyText.rstrip(text(note.get("meaning")), ".") + ".";
+        final String meaning = ToolText.rstrip(text(note.get("meaning")), ".") + ".";
         if (!JsonValues.truthy(note.get("values")) || !(note.get("values") instanceof final Map<?, ?> codes)) {
             return meaning;
         }
         return meaning + " Codes: " + codes.entrySet().stream()
                 .limit(8)
-                .map(e -> PyText.str(e.getKey()) + ": " + PyText.str(e.getValue()))
+                .map(e -> ToolText.str(e.getKey()) + ": " + ToolText.str(e.getValue()))
                 .collect(Collectors.joining("; ")) + ".";
     }
 
     private static String text(final Object value) {
         return value == null
                 ? ""
-                : PyText.str(value);
+                : ToolText.str(value);
     }
 
 

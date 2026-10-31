@@ -59,8 +59,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 
-/// verify_index's checks, ported from the Stroom MCP server's `tests/test_indexing.py` (`_searchable`,
-/// `_as_searched`, `_same_value`, `_traced`, `_trace_checks` and `run_test_searches`).
+/// verify_index's checks: the test searches it makes or refuses, each hit traced to its record, the counts, and the
+/// time it has.
 class TestIndexChecks {
 
     private static final EcsSchema ECS = EcsSchema.from(new BundledKnowledge()).orElseThrow();

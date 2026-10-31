@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ProcessorFilterAccess;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
@@ -36,7 +36,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// What the plan reads about a build from Stroom, where it is worked out here: a pipeline's open slots, what the
-/// survey docs say together, and JSON as the Stroom MCP server writes it.
+/// survey docs say together, and JSON in the fixed layout the build record and its digests are written in.
 class TestStroomBuildFacts {
 
     @Test
@@ -112,7 +112,7 @@ class TestStroomBuildFacts {
         assertThat(facts.translating(List.of("TWITTER")))
                 .containsExactly(Map.of("name", "Twitter-Events", "uuid", "events"));
 
-        // None of them seen to translate (one Stroom can't load, here): every reader, as the Python server gives.
+        // None of them seen to translate (one Stroom can't load, here): every reader is given.
         Mockito.when(processorFilters.pipelinesReading("OTHER")).thenReturn(List.of(
                 reader("archive", "Twitter-RollingFileAppender"), reader("missing", "Unloadable")));
         assertThat(facts.translating(List.of("OTHER")))
@@ -129,18 +129,18 @@ class TestStroomBuildFacts {
     }
 
     @Test
-    void jsonIsWrittenAsThePythonServerWritesIt() {
+    void jsonIsWrittenInTheStoredForm() {
         // json.dumps(['create_feed', {'feed name': 'A', 'n': [1, True, None]}], sort_keys=True)
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("n", Arrays.asList(1, true, null));
         details.put("feed name", "A");
-        assertThat(PyJson.dumpsSortedKeys(List.of("create_feed", details)))
+        assertThat(ToolJson.dumpsSortedKeys(List.of("create_feed", details)))
                 .isEqualTo("[\"create_feed\", {\"feed name\": \"A\", \"n\": [1, true, null]}]");
         // json.dumps({'copy_of': 'prod-é', 'verified': []}, indent=1, sort_keys=True)
         final Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("verified", List.of());
         entry.put("copy_of", "prod-é");
-        assertThat(PyJson.dumpsSortedKeys(entry, 1))
+        assertThat(ToolJson.dumpsSortedKeys(entry, 1))
                 .isEqualTo("{\n \"copy_of\": \"prod-\\u00e9\",\n \"verified\": []\n}");
     }
 

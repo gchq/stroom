@@ -33,9 +33,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// The evaluation set's sample files too large to keep in a case (a case's `files: [{generate: {kind, ...}}]`):
-/// the Stroom MCP server's `dev/eval/generated.py`, ported so that each makes the same bytes from the same seed
-/// ([PyRandom] draws as CPython does, in the order Python evaluates each expression, and JSON is written as
-/// `json.dumps` writes it).
+/// each made from its seed, the same bytes every run, so that they match the SHA-256 the set pins for each
+/// (`generated-sha256.json`, checked by `TestEvalSamples`), the bytes the cases' expectations were written for
+/// ([SeededRandom] draws as Python's `random` does, in the order of each generator's draws, and JSON is written as
+/// Python's `json.dumps` writes it).
 final class EvalSamples {
 
     private static final List<String> USERS = List.of("alice", "bob", "carol", "dave", "erin", "frank", "grace",
@@ -114,10 +115,10 @@ final class EvalSamples {
     }
 
     // --------------------------------------------------------------------------------
-    // The generators, as generated.py has them.
+    // The generators.
 
     private static String proxyAccess(final String day, final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = LocalDateTime.parse(day + "T00:00:00");
         final List<String> lines = new ArrayList<>(List.of("time,client_ip,user,method,url,status,bytes,category,"
                                                            + "action"));
@@ -145,7 +146,7 @@ final class EvalSamples {
         final Pattern headKind = Pattern.compile("Event: \\[(User|Secret)\\] Action: \\[(Login|Login Failed|Logout|"
                                                  + "View)\\]");
         final List<String> headKinds = templates.stream().filter(t -> headKind.matcher(t).find()).toList();
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = LocalDateTime.of(2026, 9, 27, 23, 48, 10);
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -166,7 +167,7 @@ final class EvalSamples {
     }
 
     private static String cefGateway(final int records, final int seed, final int plainHead) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = LocalDateTime.of(2026, 10, 2, 9, 0, 0);
         final List<String> users = List.of("alice", "bob", "carol", "dave", "erin");
         final List<List<Object>> sites = List.of(
@@ -220,7 +221,7 @@ final class EvalSamples {
     }
 
     private static String jsonAlertsOneLine(final int records, final int seed, final int plainHead) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = LocalDateTime.of(2026, 9, 28, 10, 0, 0);
         final List<List<Object>> sigs = List.of(List.of("ET SCAN Nmap Scripting Engine", 2),
                 List.of("ET POLICY curl User-Agent", 3));
@@ -245,7 +246,7 @@ final class EvalSamples {
     }
 
     private static String bluecoatAccess(final int records, final int seed, final int restartAt) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> first = List.of(("date time time-taken c-ip cs-username cs-auth-group x-exception-id "
                                             + "sc-filter-result cs-categories cs(Referer) sc-status s-action "
@@ -332,7 +333,7 @@ final class EvalSamples {
     }
 
     private static String cloudtrail(final int records, final int seed, final int plainHead) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> users = List.of("alice", "bob", "carol");
         final List<String> early = List.of("ConsoleLogin", "GetObject");
@@ -391,7 +392,7 @@ final class EvalSamples {
     }
 
     private static String javaAppLog(final int records, final int seed, final int plainHead) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> users = List.of("alice", "bob", "carol", "dave");
         final List<String> early = List.of("login", "invoice", "logout");
@@ -440,7 +441,7 @@ final class EvalSamples {
     }
 
     private static String ticketCsv(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> users = List.of("alice", "bob", "carol", "dave");
         final List<String> lines = new ArrayList<>(List.of("time,ticket,user,action,priority,comment"));
@@ -463,7 +464,7 @@ final class EvalSamples {
     }
 
     private static String paloAltoTraffic(final int records, final int seed, final int plainHead) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> users = List.of("corp\\alice", "corp\\bob", "corp\\carol", "");
         final List<List<String>> later = List.of(List.of("end", "allow"), List.of("deny", "deny"),
@@ -543,7 +544,7 @@ final class EvalSamples {
     }
 
     private static String tildeAudit(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -559,7 +560,7 @@ final class EvalSamples {
     }
 
     private static String gelfApp(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final double base = 1791676800.0;
         final List<String> out = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -599,7 +600,7 @@ final class EvalSamples {
     }
 
     private static String ecsJson(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> out = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -637,7 +638,7 @@ final class EvalSamples {
     }
 
     private static String fortiosNative(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -675,7 +676,7 @@ final class EvalSamples {
     }
 
     private static String damagedJsonl(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -702,7 +703,7 @@ final class EvalSamples {
     }
 
     private static String soapGateway(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> lines = new ArrayList<>();
         for (int n = 0; n < records; n++) {
@@ -732,7 +733,7 @@ final class EvalSamples {
     }
 
     private static String mailGateway(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> people = List.of("bob@example.com", "carol@example.com", "dave@example.org",
                 "erin@example.net");
@@ -753,7 +754,7 @@ final class EvalSamples {
     }
 
     private static String unicodeApp(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<List<String>> users = List.of(List.of("jalvarez", "José Álvarez"), List.of("zoe", "Zoë Brontë"),
                 List.of("tyamada", "山田太郎"), List.of("eleni", "Ελένη Παππά"));
@@ -778,7 +779,7 @@ final class EvalSamples {
     }
 
     private static String postgresLog(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final List<String> users = List.of("alice", "bob", "svc_report");
         final List<String> lines = new ArrayList<>();
@@ -814,7 +815,7 @@ final class EvalSamples {
     }
 
     private static String criContainerLog(final int records, final int seed) {
-        final PyRandom rng = new PyRandom(seed);
+        final SeededRandom rng = new SeededRandom(seed);
         final LocalDateTime start = OCT_11;
         final DateTimeFormatter stampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
                 Locale.ENGLISH);

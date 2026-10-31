@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// The Stroom MCP server's CEF test fixtures (`tests/test_cef.py`): three Events (an Authenticate with a failed
+/// The CEF test fixtures: three Events (an Authenticate with a failed
 /// outcome and Data, a View, a Network Deny) and the plan drafted from them.
 final class CefFixtures {
 

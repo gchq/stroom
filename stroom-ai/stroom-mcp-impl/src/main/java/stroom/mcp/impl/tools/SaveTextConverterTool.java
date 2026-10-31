@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /// `save_text_converter` - saves a text converter: creates it in the build, or replaces the code of one the tools
-/// created (the Stroom MCP server's `tools/translation.py` `save_text_converter`, on [TranslationDocs]).
+/// created (on [TranslationDocs]).
 class SaveTextConverterTool extends AbstractBuiltInTool {
 
     static final String NAME = "save_text_converter";

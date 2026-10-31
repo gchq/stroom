@@ -27,8 +27,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The version control of a pipeline's documentation (the Stroom MCP server's `utils/versionlog.py`, and its test
-/// in `tests/test_version_history.py`).
+/// The version control of a pipeline's documentation.
 class TestDocumentationVersions {
 
     private static final Instant DAY1 = Instant.parse("2026-10-10T23:59:00Z");
@@ -48,8 +47,7 @@ class TestDocumentationVersions {
                 .containsExactly("Created", "Mapped CODE");
         assertThat(second).doesNotContain("## Change log").contains("Newer text.").doesNotContain("New text.");
         assertThat(DocumentationVersions.pendingOf(second)).hasSize(2);
-        // Not in the Stroom MCP server, which ran the changes together with "; " (asked for by the user: a bullet
-        // each, a line each).
+        // A bullet each, a line each, not run together with "; " (asked for by the user).
         assertThat(second).contains("| • Rule for Checkout events<br>• Field mapping regenerated |");
 
         final String released = DocumentationVersions.consolidate(second, DAY2).orElseThrow();

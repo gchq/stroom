@@ -37,9 +37,8 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Whether an XSLT is still what its kept mapping or plan generates ([GeneratedDrift]: the Stroom MCP server's
-/// `tools/builds.py` `_drift`, `_plan_drift` and `lost_mappings`), as `tests/test_version_history.py` and
-/// `tests/test_hand_edits.py` test them.
+/// Whether an XSLT is still what its kept mapping or plan generates ([GeneratedDrift]), and an XSLT whose mapping is
+/// gone.
 class TestGeneratedDrift {
 
     private static final String METHOD = "<string key=\"method\"><xsl:value-of "
@@ -53,8 +52,8 @@ class TestGeneratedDrift {
 
     @Test
     void driftTellsAGeneratorUpgradeFromAnEditMadeByHand() {
-        // Seen in production after 0.16.43: build_status called a generated XSLT "edited by hand", because the
-        // generator's defaults had changed, and the agent went looking for the edit.
+        // Seen in production: build_status called a generated XSLT "edited by hand", because the generator's defaults
+        // had changed, and the agent went looking for the edit.
         final TranslationMapping mapping = TranslationWorld.parsed();
         final Map<String, Object> styled = TranslationWorld.mapping();
         styled.put("style", Map.of("variables", "top", "data_values", "attribute"));
@@ -136,7 +135,7 @@ class TestGeneratedDrift {
 
         assertThat(drift.drift(new KeptMappings.KeptXslt(new KeptMapping.Kept("translation", payload),
                 "translationFilter", xslt)).orElseThrow())
-                // Its first two problems, as the Python server wrote the list.
+                // Its first two problems, as a list.
                 .startsWith("the mapping kept with its XSLT no longer generates: [\"[bare] EventDetail/Nope: ")
                 .endsWith(", '[bare] Event/EventTime is required by the schema; map it']");
     }

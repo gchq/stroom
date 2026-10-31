@@ -19,7 +19,7 @@ package stroom.ai.impl.tools.indexing;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DynamicTest;
@@ -35,24 +35,24 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// A field plan read as the Stroom MCP server's pydantic model reads it: `tools/indexing/model_cases.json` holds
-/// plans given to `FieldPlan.model_validate` (crafted to reach each field's checks), with the plan it made or the
-/// errors pydantic gave (place, type, message and input), which the port must give in the same order.
+/// A field plan read and validated: `tools/indexing/model_cases.json` holds plans (crafted to reach each field's
+/// checks), with the plan read from each or the errors it must give (place, type, message and input), in the same
+/// order. They pin the established wording the agent is shown.
 class TestFieldPlanValidation {
 
     @TestFactory
     Stream<DynamicTest> aPlanIsValidatedAsPydanticValidatesIt() {
-        final List<Object> cases = JsonValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
+        final List<Object> cases = JsonValues.listOrEmpty(ToolJson.loads(IndexingFixtures.resource(
                 "/stroom/ai/impl/tools/indexing/model_cases.json")));
         assertThat(cases).hasSizeGreaterThan(8);
-        return cases.stream().map(item -> DynamicTest.dynamicTest(PyJson.dumps(JsonValues.map(item).get("input")),
+        return cases.stream().map(item -> DynamicTest.dynamicTest(ToolJson.dumps(JsonValues.map(item).get("input")),
                 () -> check(JsonValues.map(item))));
     }
 
     private static void check(final Map<String, Object> given) {
         if (given.containsKey("plan")) {
-            assertThat(PyJson.dumps(FieldPlan.parse(given.get("input")).toJson()))
-                    .isEqualTo(PyJson.dumps(given.get("plan")));
+            assertThat(ToolJson.dumps(FieldPlan.parse(given.get("input")).toJson()))
+                    .isEqualTo(ToolJson.dumps(given.get("plan")));
             return;
         }
         try {
@@ -80,7 +80,7 @@ class TestFieldPlanValidation {
                 entry.put("input", error.get("input"));
                 expected.add(entry);
             }
-            assertThat(PyJson.dumps(errors, 1)).isEqualTo(PyJson.dumps(expected, 1));
+            assertThat(ToolJson.dumps(errors, 1)).isEqualTo(ToolJson.dumps(expected, 1));
             assertThat(e.getMessage()).startsWith(((String) given.get("message")).lines().findFirst().orElseThrow());
         }
     }
@@ -90,7 +90,7 @@ class TestFieldPlanValidation {
         final FieldPlan plan = FieldPlan.forDiscovery("d", Discovery.of("xml", "@at"));
         final ObjectMapper mapper = new ObjectMapper();
         final String json = mapper.writeValueAsString(plan);
-        assertThat(PyJson.dumps(PyJson.loads(json))).isEqualTo(PyJson.dumps(plan.toJson()));
+        assertThat(ToolJson.dumps(ToolJson.loads(json))).isEqualTo(ToolJson.dumps(plan.toJson()));
         assertThat(mapper.readValue(json, FieldPlan.class)).isEqualTo(plan);
     }
 

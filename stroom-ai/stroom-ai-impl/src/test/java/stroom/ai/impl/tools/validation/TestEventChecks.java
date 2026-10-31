@@ -26,8 +26,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// Event XML checked against the schema this Stroom holds and against the quality rules. Ported from the Stroom
-/// MCP server's `tests/test_validation.py`.
+/// Event XML checked against the schema this Stroom holds and against the quality rules.
 class TestEventChecks {
 
     static final String EVENT = """

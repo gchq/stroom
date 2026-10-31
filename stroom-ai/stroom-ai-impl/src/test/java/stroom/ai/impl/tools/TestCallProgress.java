@@ -26,8 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-/// What a long tool call tells the client as it goes (the Stroom MCP server's `tests/test_progress.py`; asked for
-/// by the user: describe_document on an index ran for minutes with nothing to show what it was doing).
+/// What a long tool call tells the client as it goes (asked for by the user: describe_document on an index ran for
+/// minutes with nothing to show what it was doing).
 class TestCallProgress {
 
     private static final ToolSession SESSION = new ToolSession(ToolSession.Kind.MCP, "s1",

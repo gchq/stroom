@@ -44,8 +44,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /// What the tools won't run or save: XPath expressions (a mapping's xpaths, a CEF plan's sources and fields) and
-/// XSLTs that read the environment or a resource, or look a function up by a name made at run time. Ported from
-/// the Stroom MCP server's `utils/saxon.py`.
+/// XSLTs that read the environment or a resource, or look a function up by a name made at run time.
 ///
 /// What they run is not the tools' own: expressions come from the model, and documents from the samples, written
 /// by whoever the logs record. Saxon as it comes reads whatever the process can: doc() and unparsed-text() open
@@ -334,8 +333,7 @@ public final class XsltSafety {
         return allowed;
     }
 
-    // Scans an element (its instruction, attributes and text), then its children, in document order as lxml's
-    // iter() gives them.
+    // Scans an element (its instruction, attributes and text), then its children, in document order.
     private static void scanNode(final Element element, final Scan found) {
         final boolean xsl = XmlTrees.isXsl(element);
         final String local = element.getLocalName();
@@ -367,7 +365,7 @@ public final class XsltSafety {
                     : attribute.getName();
             scan(name + "/@" + attributeName, element, expressions, namespaces, found);
         }
-        // Each run of text is read with the prefixes of the element holding it, as lxml's text and tails are.
+        // Each run of text, before or between the children, is read with the prefixes of the element holding it.
         final StringBuilder run = new StringBuilder();
         for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child.getNodeType() == Node.TEXT_NODE || child.getNodeType() == Node.CDATA_SECTION_NODE) {

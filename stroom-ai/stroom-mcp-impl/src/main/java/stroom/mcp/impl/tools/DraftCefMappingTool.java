@@ -25,7 +25,6 @@ import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -37,6 +36,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefDocs;
 import stroom.ai.impl.tools.cef.CefDraft;
 import stroom.ai.impl.tools.cef.CefEvents;
@@ -53,7 +53,7 @@ import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltStyle;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -77,17 +77,15 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// `draft_cef_mapping` - CEF (ArcSight Common Event Format) output: drafts which Event value goes to which CEF key,
-/// one CEF line per Event, from sample Events; saves its XSLT with the plan in a build; or reviews an existing CEF
-/// pipeline by stepping it over Events streams. Ported from the Stroom MCP server's `tools/cef.py`, on the CEF core
-/// (`stroom.ai.impl.tools.cef`).
+/// `draft_cef_mapping` - CEF (ArcSight Common Event Format) output: drafts which Event value goes to which CEF key, one
+/// CEF line per Event, from sample Events; saves its XSLT with the plan in a build; or reviews an existing CEF pipeline
+/// by stepping it over Events streams. Built on the CEF core (`stroom.ai.impl.tools.cef`).
 ///
-/// The user is asked first (a form where the session can show one, else the agent asks) whether keys outside
-/// ArcSight's CEF dictionary may be sent, unless the standing instructions say. A save goes through [XsltSaves], as
-/// the MCP server's went through `create_xslt` and `update_xslt`: it asks the user nothing itself, except about a
-/// hand edit its change would undo, so the call as a whole is approved over `/mcp`. Streams are read and stepped as
-/// the user; it takes a run slot, says where it is, stops at once when its thread is interrupted, and steps within
-/// the session's time limit for a long call.
+/// The user is asked first (a form where the session can show one, else the agent asks) whether keys outside ArcSight's
+/// CEF dictionary may be sent, unless the standing instructions say. A save goes through [XsltSaves], the translation
+/// tools' save path: it asks the user nothing itself, except about a hand edit its change would undo, so the call as a
+/// whole is approved over `/mcp`. Streams are read and stepped as the user; it takes a run slot, says where it is,
+/// stops at once when its thread is interrupted, and steps within the session's time limit for a long call.
 class DraftCefMappingTool extends AbstractBuiltInTool {
 
     static final String NAME = "draft_cef_mapping";
@@ -305,7 +303,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The draft, review or save, as the Stroom MCP server's `draft_cef_mapping` gives it.
+    /// The draft, review or save.
     ///
     /// @param call    The call, for the user's forms.
     /// @param context The call's context.
@@ -427,8 +425,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         if (!done.isEmpty()) {
             result.put("applied", done);
         }
-        // Not in the Stroom MCP server: the not-sent list once, by reason (seen: 125 entries, each saying the same
-        // why, given in the plan and again beside it, which the agent then read back from a result over 100 KB).
+        // The not-sent list once, by reason (seen in testing: 125 entries, each saying the same why, given in the plan
+        // and again beside it, which the agent then read back from a result over 100 KB).
         final Map<String, Object> shown = drafted.toJson(DumpMode.COMPACT);
         shown.remove("not_sent");
         result.put("plan", shown);
@@ -493,8 +491,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                         : target != null
                                 ? "Saved again from its CEF plan"
                                 : "Created from its CEF plan";
-        // Compiled as Stroom compiles it, so one that wouldn't run isn't saved (not in the Stroom MCP server; seen: a
-        // record key's undeclared prefix found only by Stroom's log when the pipeline ran).
+        // Compiled as Stroom compiles it, so one that wouldn't run isn't saved (seen in testing: a record key's
+        // undeclared prefix found only by Stroom's log when the pipeline ran).
         final List<String> errors = compileCheck.compile(toSave.xslt()).errors();
         if (!errors.isEmpty()) {
             result.put("problems", errors.stream().map(error -> "the XSLT doesn't compile: " + error).toList());
@@ -605,8 +603,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 header.get("name"), header.get("severity"), List.of(), events, notSent, List.of(), null);
     }
 
-    /// `_stepped`: the CEF lines a pipeline writes from these Events streams, the Events they came from (in order,
-    /// null where not known), the element read, and how it sends them (`output`: kafka or text, `topic`).
+    /// The CEF lines a pipeline writes from these Events streams, the Events they came from (in order, null where not
+    /// known), the element read, and how it sends them (`output`: kafka or text, `topic`).
     ///
     /// @throws ToolRefusal if the user may not step, or the pipeline can't be read.
     Stepped stepped(final ToolCallContext context,
@@ -663,7 +661,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 events.subList(0, Math.min(cap, events.size())), at, sent, spread.stopped());
     }
 
-    /// `_apply`: overrides on a plan that exists: a path moved to another key (or label), or left out.
+    /// Overrides on a plan that exists: a path moved to another key (or label), or left out.
     ///
     /// @param plan      The plan.
     /// @param overrides The overrides, in order.
@@ -735,7 +733,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         return new Applied(CefPlan.fromJson(data), done);
     }
 
-    /// `_next`: what to do next with the plan.
+    /// What to do next with the plan.
     ///
     /// @param drafted  The plan.
     /// @param xsltUuid The saved XSLT, or null.
@@ -767,8 +765,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
 
     // The user's answer: given, from the standing instructions, the plan kept with the XSLT the call works on, the
     // user's answer for the build earlier, or asked now (a form; else the agent asks), and then kept for the build.
-    // Not in the Stroom MCP server, which asked every call not given it (seen: asked again to review a pipeline
-    // whose kept plan said, and again to save after that).
+    // Seen in testing, when every call not given it asked: asked again to review a pipeline whose kept plan said, and
+    // again to save after that.
     private Optional<Boolean> customKeys(final ToolCall call,
                                          final ToolCallContext context,
                                          final Request request,
@@ -887,8 +885,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final Set<String> unknown = new TreeSet<>(header.keySet());
         unknown.removeAll(names);
         if (!unknown.isEmpty()) {
-            throw new ToolRefusal("header has no " + PyText.list(unknown) + ": its fields are "
-                                  + PyText.list(names));
+            throw new ToolRefusal("header has no " + ToolText.list(unknown) + ": its fields are "
+                                  + ToolText.list(names));
         }
         return new Request(StartOnboardingTool.streamIds(call, STREAM_IDS_ARG),
                 bool(args.get(CUSTOM_KEYS_ARG)),
@@ -914,8 +912,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         Object given = value;
         if (given instanceof final String text) {
             try {
-                given = PyJson.loads(text);
-            } catch (final PyJson.JsonDecodeException e) {
+                given = ToolJson.loads(text);
+            } catch (final ToolJson.JsonDecodeException e) {
                 throw ToolArgs.notJson(OVERRIDES_ARG, e.msg(), "pass a list of objects");
             }
         }
@@ -1005,8 +1003,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
 
     private static Object readJson(final String text, final String name) {
         try {
-            return PyJson.loads(text);
-        } catch (final PyJson.JsonDecodeException e) {
+            return ToolJson.loads(text);
+        } catch (final ToolJson.JsonDecodeException e) {
             throw ToolArgs.notJson(name, ToolArgs.where(e), null);
         }
     }

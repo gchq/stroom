@@ -58,9 +58,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// The processing tools' world (the Stroom MCP server's `tests/test_processing.py` `mock_stroom`): the in-memory
-/// explorer and feeds of [FeedWorld], pipelines as Stroom runs them, streams the user may view, each pipeline's
-/// processor filters, and Stroom's processor filter and index services as mocks that keep what was asked of them.
+/// The processing tools' world: the in-memory explorer and feeds of [FeedWorld], pipelines as Stroom runs them,
+/// streams the user may view, each pipeline's processor filters, and Stroom's processor filter and index services as
+/// mocks that keep what was asked of them.
 final class ProcessingWorld {
 
     static final String BUILD = "acme-v1";
@@ -283,12 +283,12 @@ final class ProcessingWorld {
 
     /// @return The tool's result, read.
     static Map<String, Object> json(final ToolResult result) {
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     /// @return A call's context, from an MCP client that shows no forms.
     static ToolCallContext context() {
-        return PortedToolCalls.context();
+        return BuildToolCalls.context();
     }
 
     private void wireStreams() {

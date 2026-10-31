@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.XmlElement;
 
 import java.util.ArrayList;
@@ -37,8 +37,7 @@ import java.util.stream.Collectors;
 /// A CEF plan inferred from sample Events: ArcSight's standard keys first, then its custom slots (each with its
 /// label), and keys outside the dictionary only where the user allows them (ArcSight usually indexes none of
 /// those); the user's (or the standing instructions') overrides first of all. And what a plan lacks for more
-/// Events, placed where the draft would place it. Ported from the Stroom MCP server's `draft` and `extend` in
-/// `utils/cef.py`.
+/// Events, placed where the draft would place it.
 public final class CefDraft {
 
     /// Where a value the draft leaves out on the user's word comes from.
@@ -153,7 +152,7 @@ public final class CefDraft {
                             p)))
                     .map(CefOverride::path)
                     .toList();
-            draft.notes.add("overrides for paths no sample Event holds, not used: " + PyText.list(missing));
+            draft.notes.add("overrides for paths no sample Event holds, not used: " + ToolText.list(missing));
         }
         final CefPlan plan = new CefPlan(output, topic, kafkaKey, customKeys, head.get("vendor"), head.get("product"),
                 head.get("version"), head.get("signature"), head.get("name"), head.get("severity"), common, eventsOut,
@@ -237,7 +236,7 @@ public final class CefDraft {
                 .filter(n -> !plan.notSent().contains(n))
                 .toList();
         if (!unsent.isEmpty()) {
-            notes.add(unsent.size() + " new value(s) no key or free slot takes: " + PyText.list(unsent.stream()
+            notes.add(unsent.size() + " new value(s) no key or free slot takes: " + ToolText.list(unsent.stream()
                     .map(n -> n.get("path"))
                     .limit(8)
                     .toList()));
@@ -245,7 +244,7 @@ public final class CefDraft {
         return new Extended(added, notes);
     }
 
-    /// `label_for`: a custom slot's label from its Event path.
+    /// A custom slot's label from its Event path.
     ///
     /// @param path An Event path.
     /// @return A Data's Name, else the path's last three steps (below EventSource and EventDetail).
@@ -254,7 +253,7 @@ public final class CefDraft {
         if (data.find()) {
             return data.group(1);
         }
-        final List<String> steps = PyText.split(path, "/").stream()
+        final List<String> steps = ToolText.split(path, "/").stream()
                 .filter(s -> !NOT_LABEL.contains(s) && !s.startsWith("@"))
                 .toList();
         return String.join(" ", steps.subList(Math.max(0, steps.size() - 3), steps.size()));
@@ -266,8 +265,8 @@ public final class CefDraft {
     /// @param path    An Event path.
     /// @return True if it matches.
     public static boolean matches(final String pattern, final String path) {
-        final List<String> want = PyText.split(pattern, "/");
-        final List<String> have = PyText.split(path, "/");
+        final List<String> want = ToolText.split(pattern, "/");
+        final List<String> have = ToolText.split(path, "/");
         if (want.size() != have.size()) {
             return false;
         }
@@ -295,8 +294,8 @@ public final class CefDraft {
                 head.put(name, CefValue.from("(" + path + ", " + CefKeys.ACTION_NAME
                                              + ")[normalize-space(.) != ''][1]"));
             } else if (share >= 0.5 || "version".equals(name)) {
-                // Not in the Stroom MCP server, for the version: from its path however few of the sample's events
-                // have it (asked for by the user: an empty constant stayed empty for the events that do).
+                // The version: from its path however few of the sample's events have it (asked for by the user:
+                // an empty constant stayed empty for the events that do).
                 head.put(name, CefValue.from(path));
             } else if ("name".equals(name)) {
                 head.put(name, CefValue.from(CefKeys.ACTION_NAME));
@@ -341,7 +340,7 @@ public final class CefDraft {
         return java.util.Arrays.asList(kind, path);
     }
 
-    // _camel: a key outside the dictionary named after the path's label.
+    // A key outside the dictionary named after the path's label.
     private static String camel(final String path) {
         final List<String> words = new ArrayList<>();
         final Matcher matcher = WORD.matcher(labelFor(path));
@@ -450,7 +449,7 @@ public final class CefDraft {
                 return;
             }
             if (home != null) {
-                notes.add("[" + where + "] " + path + ": values like " + PyText.list(values.subList(0,
+                notes.add("[" + where + "] " + path + ": values like " + ToolText.list(values.subList(0,
                         Math.min(2, values.size()))) + " don't fit " + home.key() + " (" + CefKeys.KEYS.get(home.key())
                                   .type() + "), so it goes to a custom slot");
             }

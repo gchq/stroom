@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,9 +25,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// Key/value pairs in one text field, each key a field of its own: an extract entry a key, written as one. Ported
-/// from the Stroom MCP server's `KeyValuePairs` model; a [TranslationMapping] turns each into its extract entries
-/// when it is validated, so it always holds none.
+/// Key/value pairs in one text field, each key a field of its own: an extract entry a key, written as one. A
+/// [TranslationMapping] turns each into its extract entries when it is validated, so it always holds none.
 ///
 /// @param field The input field holding the text.
 /// @param style How the text writes each pair: one of [Pairs#STYLES].
@@ -45,7 +44,7 @@ public record KeyValuePairs(String field,
         names = Objects.requireNonNullElse(names, Map.of());
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -65,14 +64,14 @@ public record KeyValuePairs(String field,
         final Set<String> unknown = new TreeSet<>(pairs.names.keySet());
         pairs.keys.forEach(unknown::remove);
         if (!unknown.isEmpty()) {
-            fields.valueError("pairs names " + PyText.list(unknown) + ", which aren't among its keys");
+            fields.valueError("pairs names " + ToolText.list(unknown) + ", which aren't among its keys");
             return null;
         }
         return pairs;
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("field", field, null)

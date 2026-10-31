@@ -36,8 +36,8 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// search_events given an index: the Stroom MCP server's find_events, merged into it. What the search finds is
-/// tested in [TestIndexEvents]; this is the call: its arguments, and its JSON result.
+/// search_events given an index. What the search finds is tested in [TestIndexEvents]; this is the call: its
+/// arguments, and its JSON result.
 class TestSearchEventsTool {
 
     private final ChatWorkspace workspace = Mockito.mock(ChatWorkspace.class);

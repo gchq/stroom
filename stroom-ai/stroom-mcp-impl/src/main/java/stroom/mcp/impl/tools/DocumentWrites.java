@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /// Documents read and written through Stroom's stores as the user (who needs View to read, Edit to write), for the
-/// builds' tools: a build's Documentation docs, and a working copy's content written back over its original (the
-/// Stroom MCP server's `get_doc` and `put_doc`). A document of any type is handled as its JSON, so the fields the
-/// Stroom MCP server copied (`data`, `converterType`, `documentation`, `description`) are copied whatever its type.
+/// builds' tools: a build's Documentation docs, and a working copy's content written back over its original. A document
+/// of any type is handled as its JSON, so its `data`, `converterType`, `documentation` and `description` are copied
+/// whatever its type.
 class DocumentWrites {
 
     private final DocumentAccess documentAccess;

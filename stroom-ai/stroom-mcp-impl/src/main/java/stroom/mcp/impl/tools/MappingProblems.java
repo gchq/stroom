@@ -16,10 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.MappingValidationException;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.json.JsonUtil;
 
 import java.io.IOException;
@@ -33,11 +33,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// What is wrong with a translation mapping that doesn't validate, for the agent (the Stroom MCP server's
-/// `tools/generation.py` `mapping_problems`, `_described`, `MAPPING_EXAMPLE` and `ESCAPING`): each error where it
-/// is (`events[2].fields[0].path`) with the value given, and for a key left out, what the key is.
+/// What is wrong with a translation mapping that doesn't validate, for the agent: each error where it is
+/// (`events[2].fields[0].path`) with the value given, and for a key left out, what the key is.
 ///
-/// What each key is comes from the server's models' own descriptions (`mapping-descriptions.json`, made from them).
+/// What each key is comes from the mapping models' key descriptions (`mapping-descriptions.json`).
 final class MappingProblems {
 
     /// How a regex or xpath travels: written once, as XPath reads it; the call's JSON doubles each backslash; the
@@ -71,7 +70,7 @@ final class MappingProblems {
             final Object given = error.input();
             String shown = given == null || given instanceof Map || given instanceof List
                     ? ""
-                    : " (given " + cut(PyJson.dumps(given instanceof String || given instanceof Number
+                    : " (given " + cut(ToolJson.dumps(given instanceof String || given instanceof Number
                                                     || given instanceof Boolean
                     ? given
                     : String.valueOf(given)), 80) + ")";
@@ -90,8 +89,8 @@ final class MappingProblems {
             out.add("and " + (errors.size() - 8) + " more");
         }
         if (!unknownKeys.isEmpty()) {
-            out.add("keys that are not part of a mapping: " + PyText.list(unknownKeys) + " (it has "
-                    + PyText.list(mappingKeys()) + ")");
+            out.add("keys that are not part of a mapping: " + ToolText.list(unknownKeys) + " (it has "
+                    + ToolText.list(mappingKeys()) + ")");
         }
         return out;
     }

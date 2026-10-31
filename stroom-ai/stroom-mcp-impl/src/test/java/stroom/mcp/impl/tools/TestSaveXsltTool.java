@@ -36,8 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// save_xslt (the Stroom MCP server's `tools/translation.py` `save_xslt`: its cases in `tests/test_generation.py`,
-/// `tests/test_surface.py`, `tests/test_index_names.py`, `tests/test_required_imports.py` and `tests/test_saxon.py`).
+/// save_xslt, the tool.
 class TestSaveXsltTool {
 
     private static final String BUILD = "acme-v1";

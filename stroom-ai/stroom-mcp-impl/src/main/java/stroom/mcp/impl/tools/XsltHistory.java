@@ -33,9 +33,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
-/// The version history kept in the description of each XSLT the tools save ([XsltVersionHistory]), as the Stroom
-/// MCP server's `tools/translation.py` `_pending` and `_previewed` keep it: who made each save, with what, and the
-/// build's changes previewed as Unreleased rows.
+/// The version history kept in the description of each XSLT the tools save ([XsltVersionHistory]): who made each save,
+/// with what, and the build's changes previewed as Unreleased rows.
 class XsltHistory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltHistory.class);
@@ -82,9 +81,8 @@ class XsltHistory {
         return "Stroom " + NullSafe.nonBlankStringElse(version, "unknown");
     }
 
-    /// Who made an agent change: Stroom's version and the session's caller (the chat, or the client that
-    /// connected over MCP). The Stroom MCP server's `agent_line` also named the model as the client gave it; the
-    /// caller is what Stroom knows here.
+    /// Who made an agent change: Stroom's version and the session's caller (the chat, or the client that connected over
+    /// MCP).
     ///
     /// @param session The session of the call.
     /// @return The `by` of the change.
@@ -131,8 +129,7 @@ class XsltHistory {
                 hand);
     }
 
-    /// Who made a documentation change, as a doc's version control row names them (the Stroom MCP server's
-    /// `tools/builds.py` `_with_change`): the user, and through what.
+    /// Who made a documentation change, as a doc's version control row names them: the user, and through what.
     ///
     /// @param session The session of the call.
     /// @return E.g. `jbloggs (agent: Stroom 7.13, Ask Stroom AI)`.

@@ -46,8 +46,8 @@ import java.util.TreeSet;
 /// view them, and stepping needs the Stepping permission.
 class EventLocations {
 
-    /// The most records stepped from the head of a raw stream to find one event in (the Stroom MCP server's
-    /// max_sample_records).
+    /// The most records stepped from the head of a raw stream to find one event in (also the most records a stepping
+    /// call steps, [PipelineStepping#MAX_SAMPLE_RECORDS]).
     static final int MAX_RECORDS = 500;
     /// The longest one step may take.
     static final Duration STEP_TIME_LIMIT = Duration.ofMinutes(2);

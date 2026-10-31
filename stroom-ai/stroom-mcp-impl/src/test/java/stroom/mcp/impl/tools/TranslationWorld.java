@@ -69,10 +69,10 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// The translation tools' world (as the Stroom MCP server's tests patch theirs): the in-memory explorer of
-/// [BuildWorld], whose XSLTs, text converters and dictionaries are saved as Stroom saves them; Stroom holding the
-/// event-logging 4.1.0 schema (the test resource); no AGENTS docs unless a test gives some; every XSLT compiling
-/// unless a test says otherwise; and the translation tools wired on them.
+/// The translation tools' world: the in-memory explorer of [BuildWorld], whose XSLTs, text converters and
+/// dictionaries are saved as Stroom saves them; Stroom holding the event-logging 4.1.0 schema (the test resource); no
+/// AGENTS docs unless a test gives some; every XSLT compiling unless a test says otherwise; and the translation tools
+/// wired on them.
 final class TranslationWorld {
 
     /// The event-logging version this Stroom holds.
@@ -242,7 +242,7 @@ final class TranslationWorld {
         if (result.isError()) {
             return Map.of("error", result.text());
         }
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     /// @return A document made in a build by the tools.
@@ -266,7 +266,7 @@ final class TranslationWorld {
         return files;
     }
 
-    /// @return A mapping (`tests/test_xsltgen.py`'s `mapping()`): a Data Splitter's records, logons and the rest.
+    /// @return A mapping: a Data Splitter's records, logons and the rest.
     static Map<String, Object> mapping() {
         return JsonUtil.readValue(MAPPING, Map.class);
     }
@@ -281,7 +281,7 @@ final class TranslationWorld {
         return mapping.toJson(DumpMode.COMPACT);
     }
 
-    /// The mapping of `tests/test_xsltgen.py`: BASE, LOGON and a rule for the rest.
+    /// The mapping: common fields, logons and a rule for the rest.
     static final String MAPPING = """
             {"input": "data_splitter", "unmatched": "skip",
              "common": [{"path": "EventTime/TimeCreated", "field": "time"},

@@ -795,7 +795,7 @@ final class ModelEvaluationWorld {
     }
 
     // One trusted MCP server, `stroom`, with a tool that makes an index template only once the user has reviewed
-    // it, as the Stroom MCP server's does.
+    // it.
     private static McpToolset mcpToolset() {
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         final Tool tool = Tool.builder()

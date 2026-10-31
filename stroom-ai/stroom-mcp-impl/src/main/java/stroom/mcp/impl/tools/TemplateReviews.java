@@ -23,7 +23,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.IndexTemplates;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.NullSafe;
@@ -43,11 +43,10 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/// How an index template is agreed with the user, for propose_index_template and check_index_template (the Stroom
-/// MCP server's `tools/indexing.py` `_agree`, `_asking`, `_template_summary`, `_not_theirs` and `_commit_action`):
-/// shown in the chat first (needs_review), then confirmed in a short form, then kept with the pipeline (its
-/// description) as the agreed one, which create_processor_filter asks the user to confirm is committed to the
-/// cluster. Nothing is written to Elasticsearch: the user's cluster admin commits the template.
+/// How an index template is agreed with the user, for propose_index_template and check_index_template: shown in the
+/// chat first (needs_review), then confirmed in a short form, then kept with the pipeline (its description) as the
+/// agreed one, which create_processor_filter asks the user to confirm is committed to the cluster. Nothing is written
+/// to Elasticsearch: the user's cluster admin commits the template.
 class TemplateReviews {
 
     private final Consent consent;
@@ -309,7 +308,7 @@ class TemplateReviews {
                 ? list.stream().map(String::valueOf).sorted().toList()
                 : List.of();
         return Objects.equals(parsed.name(), name)
-               && PyJson.dumpsSortedKeys(parsed.body()).equals(PyJson.dumpsSortedKeys(body))
+               && ToolJson.dumpsSortedKeys(parsed.body()).equals(ToolJson.dumpsSortedKeys(body))
                && Objects.equals(kept.get("index"), destination.get("index name"))
                && Objects.equals(kept.get("cluster"), destination.get("cluster"))
                && keptComponents.equals(components.keySet().stream().sorted().toList())

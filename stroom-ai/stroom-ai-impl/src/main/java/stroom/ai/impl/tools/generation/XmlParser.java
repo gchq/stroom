@@ -26,10 +26,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-/// XML text read into an [XmlElement] tree as lxml's `etree.fromstring` reads it: namespace declarations and
-/// attributes in the order written, text and tails kept (or, with `removeBlankText`, whitespace between elements
-/// left out as libxml2's `remove_blank_text` leaves it out), comments kept (or left out). DTDs and external
-/// entities are not read: the text comes from the model, or from users.
+/// XML text read into an [XmlElement] tree: namespace declarations and attributes in the order written, text and tails
+/// kept (or, with `removeBlankText`, whitespace between elements left out), comments kept (or left out). DTDs and
+/// external entities are not read: the text comes from the model, or from users.
 public final class XmlParser {
 
     private XmlParser() {
@@ -44,7 +43,7 @@ public final class XmlParser {
     }
 
     /// @param text            XML text.
-    /// @param removeBlankText True to leave out whitespace between elements, as lxml's `remove_blank_text` does.
+    /// @param removeBlankText True to leave out whitespace between elements.
     /// @param removeComments  True to leave out comments.
     /// @return Its root element.
     /// @throws XmlParseException if it is not well-formed.

@@ -23,9 +23,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The event-logging element an input field's name says it belongs in (a client address, a user, a host, a session
-/// id): the Stroom MCP server's `HOMES` and `_matches` in `utils/draftmap.py`. The draft maps a field to its home;
-/// the translation generator warns of a Data entry whose name has a home the event doesn't map. The rest of the
-/// draft (`draft_mapping`) is ported separately and uses these.
+/// id). The draft ([stroom.ai.impl.tools.draft.DraftMapping]) maps a field to its home; the translation generator
+/// warns of a Data entry whose name has a home the event doesn't map.
 public final class FieldHomes {
 
     /// Each home, with the pattern (matched ignoring case) of the field names that belong there, in the order they
@@ -95,8 +94,7 @@ public final class FieldHomes {
 
     /// @param regex A home's pattern.
     /// @param name  A field name.
-    /// @return True if one of the names the field may be known by matches it (at its start, as Python's
-    /// `re.match`).
+    /// @return True if one of the names the field may be known by matches it (at its start).
     public static boolean matches(final Pattern regex, final String name) {
         return keys(name).stream().anyMatch(key -> regex.matcher(key).lookingAt());
     }
@@ -116,7 +114,7 @@ public final class FieldHomes {
     /// An element a field may belong in.
     ///
     /// @param path    The path below Event.
-    /// @param pattern The pattern of the field names that belong there, as the Python source writes it.
+    /// @param pattern The pattern of the field names that belong there, as written.
     /// @param regex   The pattern, compiled ignoring case.
     public record Home(String path, String pattern, Pattern regex) {
 

@@ -54,11 +54,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/// What write_documentation reads and writes besides the Field mapping section (the Stroom MCP server's
-/// `tools/builds.py` `_documentation_of`, `_stepped_streams`, `_raw_parents`, `_vendor_notes`, `needs_descriptions`,
-/// `_layout`, `_errors_markdown`, `_errors_section`, `_with_change` and `_written`): where a pipeline's
-/// documentation is, the streams it is generated from, the user's errors accepted as benign, and the version
-/// control of the doc. Read and written as the user.
+/// What write_documentation reads and writes besides the Field mapping section: where a pipeline's documentation is,
+/// the streams it is generated from, the user's errors accepted as benign, and the version control of the doc. Read and
+/// written as the user.
 class BuildDocumentation {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildDocumentation.class);
@@ -120,7 +118,7 @@ class BuildDocumentation {
         return facts.buildDocs(build);
     }
 
-    /// `_documentation_of`: where a pipeline's documentation is.
+    /// Where a pipeline's documentation is.
     ///
     /// @param build    The build.
     /// @param pipeline The pipeline.
@@ -153,7 +151,7 @@ class BuildDocumentation {
         return new Placed(name, copyOf, inBuild, named(inBuild, DocumentationDoc.TYPE, name), beside);
     }
 
-    /// `_stepped_streams`: the streams the build's record says the pipeline last stepped clean on.
+    /// The streams the build's record says the pipeline last stepped clean on.
     ///
     /// @param pipelineUuid A pipeline.
     /// @return The streams; none outside a build or before.
@@ -175,7 +173,7 @@ class BuildDocumentation {
         }
     }
 
-    /// `_raw_parents`: an Events stream this pipeline made, in place of the raw stream it was made from.
+    /// An Events stream this pipeline made, in place of the raw stream it was made from.
     ///
     /// @param streamIds    The streams given.
     /// @param pipelineUuid The events pipeline.
@@ -205,7 +203,7 @@ class BuildDocumentation {
         return new Parents(List.copyOf(out), notes);
     }
 
-    /// `_vendor_notes`: the field dictionary of the vendor documentation kept in the build (record_source_notes).
+    /// The field dictionary of the vendor documentation kept in the build (record_source_notes).
     ///
     /// @param build The build.
     /// @return Its fields; none when there are none.
@@ -225,8 +223,8 @@ class BuildDocumentation {
         return translationBuilds.notesInBuild(build);
     }
 
-    /// `_layout`: the Field mapping layout the user asked for, else the applicable AGENTS doc's, else by event type
-    /// (asked for by the user).
+    /// The Field mapping layout the user asked for, else the applicable AGENTS doc's, else by event type (asked for by
+    /// the user).
     ///
     /// @param session The session, for the AGENTS docs' audit.
     /// @param ref     The pipeline or index documented.
@@ -263,8 +261,7 @@ class BuildDocumentation {
                 : FieldDocs.readDescriptionSources(writes.text(previous));
     }
 
-    /// `_errors_markdown`: the error groups processing the streams gave, from the Error streams this pipeline wrote
-    /// for them.
+    /// The error groups processing the streams gave, from the Error streams this pipeline wrote for them.
     ///
     /// @param pipelineUuid The pipeline.
     /// @param streamIds    Its sample streams.
@@ -294,8 +291,7 @@ class BuildDocumentation {
         return groups;
     }
 
-    /// `_errors_section`: the Errors section: what processing the sample gave, and the errors the user accepted as
-    /// benign.
+    /// The Errors section: what processing the sample gave, and the errors the user accepted as benign.
     ///
     /// @param groups   The error groups, or null when no streams were given.
     /// @param accepted The errors accepted.
@@ -368,8 +364,8 @@ class BuildDocumentation {
         return round;
     }
 
-    /// `_with_change`: the doc's new text: its version control rows as they were, and this change pending until
-    /// the build is promoted, when the build's changes become one row.
+    /// The doc's new text: its version control rows as they were, and this change pending until the build is promoted,
+    /// when the build's changes become one row.
     ///
     /// @param session The session of the call.
     /// @param text    The doc's new text, titled.
@@ -405,8 +401,8 @@ class BuildDocumentation {
         return made;
     }
 
-    /// `_written`: what became of the documentation doc, said plainly: seen, a doc just created came back as
-    /// updated: false, and the agent spent two or three calls checking it had been written.
+    /// What became of the documentation doc, said plainly: seen, a doc just created came back as updated: false, and
+    /// the agent spent two or three calls checking it had been written.
     ///
     /// @param existing The doc in the build that was updated, or null.
     /// @param beside   The doc outside it a working copy was made of, or null.

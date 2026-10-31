@@ -21,7 +21,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.index.shared.AddField;
 import stroom.index.shared.IndexFieldImpl;
@@ -44,7 +44,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
-/// create_index_doc, as the Stroom MCP server's tests/test_indexing.py and test_index_rename.py test it.
+/// create_index_doc: the build's index doc, made from a field plan or given the plan's new fields.
 class TestCreateIndexDocTool {
 
     private final IndexingWorld world = new IndexingWorld();
@@ -131,8 +131,7 @@ class TestCreateIndexDocTool {
     @Test
     void theBuildsLuceneIndexDocGetsAPlansNewFieldsWhenNamedAgain() {
         // Seen in eval cases 02 and 13: a field wanted after indexing couldn't be added to the build's index, and the
-        // agent asked the user to add it in Stroom, or made a second index (the Stroom MCP server had
-        // set_index_fields for this).
+        // agent asked the user to add it in Stroom, or made a second index.
         final Map<String, Object> first = lucene(FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId"))));
         final String uuid = (String) call(first, world.forms(question -> Map.of("name", "ACME-INDEX"))).get("uuid");
@@ -191,15 +190,15 @@ class TestCreateIndexDocTool {
     }
 
     private Map<String, Object> call(final Map<String, Object> arguments, final ToolCallContext context) {
-        final ToolResult result = world.createTool().execute(PortedToolCalls.call(CreateIndexDocTool.NAME,
-                PyJson.dumps(arguments)), context);
+        final ToolResult result = world.createTool().execute(BuildToolCalls.call(CreateIndexDocTool.NAME,
+                ToolJson.dumps(arguments)), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final Map<String, Object> arguments) {
-        final ToolResult result = world.createTool().execute(PortedToolCalls.call(CreateIndexDocTool.NAME,
-                PyJson.dumps(arguments)), IndexingWorld.noForms());
+        final ToolResult result = world.createTool().execute(BuildToolCalls.call(CreateIndexDocTool.NAME,
+                ToolJson.dumps(arguments)), IndexingWorld.noForms());
         assertThat(result.isError()).as(result.text()).isTrue();
         return result.text();
     }

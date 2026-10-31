@@ -36,8 +36,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// Shared XSLTs standing instructions require (the Stroom MCP server's `tests/test_required_imports.py`, its tool
-/// cases; reading the section is `InstructionRules`', the generator writing imports first the generators' own).
+/// Shared XSLTs standing instructions require (the tools' cases; reading the section is `InstructionRules`', the
+/// generator writing imports first the generators' own).
 /// Asked for by the user: every Raw Events to Events translation imports a Stream-Meta-V1 translation: an AGENTS doc
 /// says so per stage, the generator adds the import, and an XSLT written by hand without it is refused.
 class TestRequiredImports {

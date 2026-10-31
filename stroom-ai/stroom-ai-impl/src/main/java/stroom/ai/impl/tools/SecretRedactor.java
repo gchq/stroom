@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Keeps credentials out of what the tools give the model, as the Stroom MCP server does: the fields of a
-/// document that hold secrets (e.g. an Elastic cluster's API key secret and CA certificate) are given as
-/// `<redacted>`, wherever they are in the document.
+/// Keeps credentials out of what the tools give the model: the fields of a document that hold secrets (e.g. an
+/// Elastic cluster's API key secret and CA certificate) are given as `<redacted>`, wherever they are in the
+/// document.
 public final class SecretRedactor {
 
     /// The fields never given to the model.
@@ -78,7 +78,7 @@ public final class SecretRedactor {
                 : JsonUtil.writeValueAsString(redacted, true);
     }
 
-    // As Python's truth test, which the MCP server's redaction used: an empty value is no secret to hide.
+    // An empty value (null, false, zero, or an empty text, list or map) is no secret to hide.
     private static boolean hasValue(final Object value) {
         if (value == null || Boolean.FALSE.equals(value)) {
             return false;

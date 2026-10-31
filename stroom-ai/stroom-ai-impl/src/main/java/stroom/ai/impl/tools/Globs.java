@@ -18,8 +18,8 @@ package stroom.ai.impl.tools;
 
 import java.util.regex.Pattern;
 
-/// Glob patterns as the Stroom MCP server matched them (Python's `fnmatch.fnmatchcase`): `*` for any characters,
-/// `?` for one, `[abc]` for one of a set and `[!abc]` for one not in it, case-sensitive.
+/// Glob patterns: `*` for any characters, `?` for one, `[abc]` for one of a set and `[!abc]` for one not in it,
+/// case-sensitive.
 public final class Globs {
 
     private Globs() {

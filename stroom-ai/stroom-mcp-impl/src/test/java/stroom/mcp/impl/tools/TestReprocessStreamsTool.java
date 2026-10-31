@@ -45,8 +45,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
-/// reprocess_streams (the Stroom MCP server's `tests/test_processing.py`, its reprocessing cases, and
-/// `tests/test_off_path.py`'s wrong move for it): each case was seen in testing, as its comment says.
+/// reprocess_streams, and the wrong move refused: each case was seen in testing, as its comment says.
 class TestReprocessStreamsTool {
 
     private static final DocRef P1 = ProcessingWorld.P1;
@@ -141,7 +140,7 @@ class TestReprocessStreamsTool {
 
     @Test
     void reprocessWhatWasNeverProcessedSaysToCreateAFilter() {
-        // The Stroom MCP server's tests/test_off_path.py: the message names the call that puts it right.
+        // The message names the call that puts it right.
         translationInBuild();
 
         final ToolResult result = call(Map.of("stream_ids", List.of(5)));
@@ -275,7 +274,7 @@ class TestReprocessStreamsTool {
     private ToolResult call(final Map<String, Object> arguments, final ToolCallContext context) {
         final Map<String, Object> all = new LinkedHashMap<>(arguments);
         all.put("pipeline_uuid", "p1");
-        return w.reprocessTool().execute(PortedToolCalls.call(ReprocessStreamsTool.NAME,
+        return w.reprocessTool().execute(BuildToolCalls.call(ReprocessStreamsTool.NAME,
                 JsonUtil.writeValueAsString(all)), context);
     }
 
@@ -285,7 +284,7 @@ class TestReprocessStreamsTool {
         final Map<String, Object> given = new LinkedHashMap<>(arguments);
         final List<Map<String, Object>> gates = new ArrayList<>();
         // The user agrees in every form the call shows.
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         while (true) {
             final int asked = user.forms().size();
             final ToolResult called = call(given, user.context());

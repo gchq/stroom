@@ -38,8 +38,7 @@ import java.util.stream.Collectors;
 /// The CEF XSLT a plan generates: a Kafka record per Event whose value is the CEF line (or the lines as text),
 /// written as an Events translation is (asked for by the user): a template a part (the line, each kind of event's
 /// keys, the keys every event gets), in its own mode, or named, or inline (the style's layout), named in the style's
-/// naming, each with a comment; an input read often, a variable. Ported from the Stroom MCP server's `render_xslt`
-/// in `utils/cef.py`; the text is the same as the server's.
+/// naming, each with a comment; an input read often, a variable.
 public final class CefXslt {
 
     /// The XSLT's functions: escaping a header field and a key=value pair (and a custom slot's label), a time as
@@ -50,7 +49,7 @@ public final class CefXslt {
         // Static only.
     }
 
-    /// `render_xslt`: the CEF XSLT.
+    /// The CEF XSLT.
     ///
     /// @param plan The plan.
     /// @return The XSLT's text.

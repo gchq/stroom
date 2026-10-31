@@ -16,9 +16,9 @@
 
 package stroom.ai.impl.tools;
 
-/// A ported tool's refusal: what the tool, or a helper it calls, tells the caller when it can't go on, worded for
-/// the agent to act on (as the Stroom MCP server's `ToolError`s were): e.g. a sample that is a file path, a check
-/// that can't be made because this Stroom holds no event-logging XML schema, or a mapping change that can't apply.
+/// A tool's refusal: what the tool, or a helper it calls, tells the caller when it can't go on, worded for the
+/// agent to act on: e.g. a sample that is a file path, a check that can't be made because this Stroom holds no
+/// event-logging XML schema, or a mapping change that can't apply.
 /// A tool gives its message as an error result.
 public class ToolRefusal extends RuntimeException {
 

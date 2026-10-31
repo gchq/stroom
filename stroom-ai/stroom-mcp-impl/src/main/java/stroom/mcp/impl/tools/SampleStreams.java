@@ -46,10 +46,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/// The streams to prove a rebuilt mapping on, and where they came from (the Stroom MCP server's `tools/rebuild.py`
-/// `sample_streams`): the pipeline's original samples (the stream ids of the processor filters the tools made for
-/// them, those still there), else its feed's newest raw streams. Asked for by the user: the original sample data,
-/// without the agent having to find it.
+/// The streams to prove a rebuilt mapping on, and where they came from: the pipeline's original samples (the stream ids
+/// of the processor filters the tools made for them, those still there), else its feed's newest raw streams. Asked for
+/// by the user: the original sample data, without the agent having to find it.
 class SampleStreams {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SampleStreams.class);

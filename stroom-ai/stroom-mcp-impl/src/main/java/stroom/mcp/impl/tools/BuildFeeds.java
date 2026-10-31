@@ -33,9 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /// The feeds of builds: a feed made in a build, never one of the same name elsewhere or one differing only in case;
-/// samples sent only to a build's feeds; and the test feed of a build on existing feeds (ported from the Stroom MCP
-/// server's `tools/feeds.py` `_existing_feed`, `_refuse_case_twin`, `_build_feed`, `_sample_files` and
-/// `_works_from_message`, and `tools/processing_writes.py` `make_test_feed`).
+/// samples sent only to a build's feeds; and the test feed of a build on existing feeds.
 class BuildFeeds {
 
     /// The build record's key for the sample files the user chose instead of an existing feed's data.

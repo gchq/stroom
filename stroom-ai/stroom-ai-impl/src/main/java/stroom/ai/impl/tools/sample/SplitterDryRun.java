@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.DeadlineCharSequence;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.impl.workspace.SafePattern;
@@ -31,11 +31,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// A [SplitterSpec] inferred from a sample and run on it locally, as the Data Splitter generated from it would run
-/// in Stroom (the dry run of the Stroom MCP server's `utils/dsgen.py`): the records as name to value, the lines that
-/// match nothing, and the field names seen (what a mapping's `field` may name). The dry run follows the subset of
-/// Data Splitter the generator writes, not the whole language. Its regexes run as Java regexes, as Data Splitter
-/// runs them.
+/// A [SplitterSpec] inferred from a sample and run on it locally, as the Data Splitter generated from it would run in
+/// Stroom: the records as name to value, the lines that match nothing, and the field names seen (what a mapping's
+/// `field` may name). The dry run follows the subset of Data Splitter the generator writes, not the whole language. Its
+/// regexes run as Java regexes, as Data Splitter runs them.
 ///
 /// The generation of the Data Splitter XML itself is not here.
 public final class SplitterDryRun {
@@ -94,7 +93,7 @@ public final class SplitterDryRun {
     /// @param directive A directive, e.g. `#Software:`.
     /// @return The field its value is kept in: the directive as the file writes it, without a trailing colon.
     public static String directiveField(final String directive) {
-        return PyText.strip(PyText.rstrip(PyText.strip(directive), ":"));
+        return ToolText.strip(ToolText.rstrip(ToolText.strip(directive), ":"));
     }
 
     /// The regex for a record of named columns (no header line): one group per column, quoted or not. A quoted
@@ -105,7 +104,7 @@ public final class SplitterDryRun {
     /// @param spec A delimited spec with column names.
     /// @return The regex.
     public static String namedColumnsPattern(final SplitterSpec spec) {
-        final String d = PyText.escape(spec.delimiter());
+        final String d = ToolText.escape(spec.delimiter());
         final List<String> cells = new ArrayList<>();
         if (spec.delimiter().length() > 1) {
             // A separator of several characters (' ~ ', '||'): a column runs to the next whole separator.
@@ -114,7 +113,7 @@ public final class SplitterDryRun {
         }
         final String cell;
         if (spec.quote() != null) {
-            final String q = PyText.escape(spec.quote());
+            final String q = ToolText.escape(spec.quote());
             cell = q + "?((?<=" + q + ")(?:[^" + q + "]|" + q + q + ")*(?=" + q + ")|(?<!" + q + ")[^" + d + q + "]*)"
                    + q + "?";
         } else {
@@ -131,15 +130,15 @@ public final class SplitterDryRun {
     /// @param spec A key_value spec.
     /// @return The regexes.
     public static List<String> kvPatterns(final SplitterSpec spec) {
-        final String d = PyText.isBlank(spec.delimiter())
+        final String d = ToolText.isBlank(spec.delimiter())
                 ? "\\s"
-                : PyText.escape(spec.delimiter());
-        final String s = PyText.escape(spec.pairSeparator());
+                : ToolText.escape(spec.delimiter());
+        final String s = ToolText.escape(spec.pairSeparator());
         final String key = "[^" + s + d + "]+";
         if (spec.quote() != null) {
             // Stroom neither tries a group's regexes in turn at each place nor lets a value name a group that didn't
             // match.
-            final String q = PyText.escape(spec.quote());
+            final String q = ToolText.escape(spec.quote());
             return List.of(d + "*(" + key + ")" + s + q + "?((?<=" + q + ")[^" + q + "]*(?=" + q + ")|(?<!" + q
                            + ")[^" + d + q + "]*)" + q + "?");
         }
@@ -154,10 +153,10 @@ public final class SplitterDryRun {
     /// @param spec A key_value spec.
     /// @return The regex.
     public static String spacedPairPattern(final SplitterSpec spec) {
-        final String d = PyText.isBlank(spec.delimiter())
+        final String d = ToolText.isBlank(spec.delimiter())
                 ? "\\s"
-                : PyText.escape(spec.delimiter());
-        final String s = PyText.escape(spec.pairSeparator());
+                : ToolText.escape(spec.delimiter());
+        final String s = ToolText.escape(spec.pairSeparator());
         return "\\s*([^" + s + "]+)" + s + "([^" + d + "]+)(?:" + d + ")*";
     }
 
@@ -187,7 +186,7 @@ public final class SplitterDryRun {
                                            final String escape) {
         final boolean escapes = escape != null && !escape.isEmpty() && line.contains(escape);
         if (!escapes && (quote == null || quote.isEmpty() || !line.contains(quote))) {
-            return PyText.split(line, delimiter);
+            return ToolText.split(line, delimiter);
         }
         final List<String> out = new ArrayList<>();
         final StringBuilder cell = new StringBuilder();
@@ -290,7 +289,7 @@ public final class SplitterDryRun {
                 if (heading != null) {
                     fields.putIfAbsent(n < heading.size()
                             ? heading.get(n)
-                            : StroomSplitterRun.UNNAMED, PyText.strip(cells.get(n)));
+                            : StroomSplitterRun.UNNAMED, ToolText.strip(cells.get(n)));
                 }
             }
         } else if (applied.escape() != null) {
@@ -298,7 +297,7 @@ public final class SplitterDryRun {
             final List<String> cells = splitQuoted(text, applied.delimiter(), applied.quote(), applied.escape());
             fields = new LinkedHashMap<>();
             for (int n = 0; n < Math.min(applied.columns().size(), cells.size()); n++) {
-                fields.put(applied.columns().get(n), PyText.strip(cells.get(n)));
+                fields.put(applied.columns().get(n), ToolText.strip(cells.get(n)));
             }
             if (cells.size() > applied.columns().size()) {
                 // Stroom reports the cells past the last column as content no expression matched.
@@ -318,7 +317,7 @@ public final class SplitterDryRun {
         if (applied.body() != null && fields.containsKey(applied.bodyField())) {
             final String bodyText = fields.get(applied.bodyField());
             final Map<String, String> inner = applyRecord(applied.body(), bodyText, null);
-            if ((inner == null || inner.isEmpty()) && bodyText != null && !PyText.isBlank(bodyText)) {
+            if ((inner == null || inner.isEmpty()) && bodyText != null && !ToolText.isBlank(bodyText)) {
                 // Stroom reports a body its expressions don't match ("Expressions failed to match all of the
                 // content"): so does the dry run, rather than keeping the record without the body's fields (seen: a
                 // Palo Alto body short of a column, fine here and refused in Stroom).
@@ -345,7 +344,7 @@ public final class SplitterDryRun {
         while (pair.find()) {
             fields.put(pair.group(1), pair.group(2));
         }
-        if (spec.body() != null && !PyText.isBlank(m.group(1))) {
+        if (spec.body() != null && !ToolText.isBlank(m.group(1))) {
             final Map<String, String> prefixed = new LinkedHashMap<>();
             final Map<String, String> prefix = applyRecord(spec.body(), m.group(1), null);
             if (prefix != null) {
@@ -370,7 +369,7 @@ public final class SplitterDryRun {
         while (at < text.length()) {
             Matcher found = null;
             for (final Pattern pattern : patterns) {
-                final Matcher m = PyText.matchFrom(pattern, new DeadlineCharSequence(text), at);
+                final Matcher m = ToolText.matchFrom(pattern, new DeadlineCharSequence(text), at);
                 if (m != null && m.end() > at) {
                     found = m;
                     break;
@@ -384,7 +383,7 @@ public final class SplitterDryRun {
             fields.putIfAbsent(found.group(1), found.group(2));
             at = found.end();
         }
-        if (!PyText.isBlank(text.substring(at))) {
+        if (!ToolText.isBlank(text.substring(at))) {
             // Stroom reports the rest as content its expressions failed to match (seen: a value holding a space
             // unquoted, `zones=Zone 1`, the record kept with zones=Zone and the error raised).
             return Map.of();
@@ -400,7 +399,7 @@ public final class SplitterDryRun {
         final Map<String, String> fields = new LinkedHashMap<>();
         int at = 0;
         while (at < reversed.length()) {
-            final Matcher m = PyText.matchFrom(pair, new DeadlineCharSequence(reversed), at);
+            final Matcher m = ToolText.matchFrom(pair, new DeadlineCharSequence(reversed), at);
             if (m == null || m.end() <= at) {
                 break;
             }
@@ -408,7 +407,7 @@ public final class SplitterDryRun {
                     new StringBuilder(m.group(1)).reverse().toString());
             at = m.end();
         }
-        return PyText.isBlank(reversed.substring(at))
+        return ToolText.isBlank(reversed.substring(at))
                 ? fields
                 : Map.of();
     }
@@ -430,8 +429,8 @@ public final class SplitterDryRun {
                 m = SafePattern.matcher(pattern, rest);
             }
         }
-        if (spec.catchAll() && !PyText.isBlank(rest)) {
-            fields.put(SplitterSpec.UNPARSED, PyText.strip(rest));
+        if (spec.catchAll() && !ToolText.isBlank(rest)) {
+            fields.put(SplitterSpec.UNPARSED, ToolText.strip(rest));
         }
         return fields.isEmpty()
                 ? null
@@ -444,13 +443,13 @@ public final class SplitterDryRun {
     static SplitterSpec bodySpec(final List<String> messages) {
         final List<String> bodies = new ArrayList<>();
         for (final String message : messages) {
-            if (!PyText.isBlank(message)) {
+            if (!ToolText.isBlank(message)) {
                 bodies.add(message);
             }
         }
         int pairs = 0;
         for (final String body : bodies) {
-            if (PyText.findallGroups(SampleProfiler.KEY_VALUE, body).size() >= 2) {
+            if (ToolText.findallGroups(SampleProfiler.KEY_VALUE, body).size() >= 2) {
                 pairs++;
             }
         }
@@ -495,7 +494,7 @@ public final class SplitterDryRun {
         final SplitterSpec spaced = plain.toBuilder().spacedValues(true).build();
         boolean needed = false;
         for (final String line : lines.subList(0, Math.min(200, lines.size()))) {
-            if (PyText.isBlank(line) || !applyKeyValue(plain, line).isEmpty()) {
+            if (ToolText.isBlank(line) || !applyKeyValue(plain, line).isEmpty()) {
                 continue;
             }
             if (applyKeyValue(spaced, line).isEmpty()) {
@@ -514,7 +513,7 @@ public final class SplitterDryRun {
     public static Inferred inferSpec(final String sample) {
         final Map<String, Object> info = SampleProfiler.profile(sample);
         final String format = (String) info.get("format");
-        final List<String> lines = PyText.nonBlankLines(sample);
+        final List<String> lines = ToolText.nonBlankLines(sample);
         final boolean delimited = SampleProfiler.DELIMITED.equals(format);
         if (delimited && info.get("header_directive") != null) {
             return new Inferred(SplitterSpec.builder("delimited")
@@ -594,7 +593,7 @@ public final class SplitterDryRun {
             }
         }
         SplitterSpec body = null;
-        if (prefixes.stream().anyMatch(prefix -> !PyText.isBlank(prefix))) {
+        if (prefixes.stream().anyMatch(prefix -> !ToolText.isBlank(prefix))) {
             Map.Entry<String, List<String>> chosen = CEF_PREFIXES.getLast();
             for (final Map.Entry<String, List<String>> candidate : CEF_PREFIXES) {
                 final Pattern pattern = Pattern.compile(candidate.getKey());
@@ -649,7 +648,7 @@ public final class SplitterDryRun {
     }
 
     private static DryRun dryRunLimited(final SplitterSpec spec, final String sample, final int maxRecords) {
-        List<String> lines = PyText.nonBlankLines(sample);
+        List<String> lines = ToolText.nonBlankLines(sample);
         final boolean delimited = "delimited".equals(spec.kind());
         if (spec.blankLineRecords()) {
             lines = blankLineRecords(sample);
@@ -668,7 +667,7 @@ public final class SplitterDryRun {
         if (delimited && spec.headerLine() && !lines.isEmpty()) {
             heading = new ArrayList<>();
             for (final String cell : splitQuoted(lines.getFirst(), spec.delimiter(), spec.quote())) {
-                heading.add(PyText.strip(cell));
+                heading.add(ToolText.strip(cell));
             }
             lines = lines.subList(1, lines.size());
         }
@@ -681,9 +680,9 @@ public final class SplitterDryRun {
                 records.add(fields);
             } else if (spec.catchAll()) {
                 // Kept whole, as the converter's catch-all writes it.
-                records.add(Map.of(SplitterSpec.UNPARSED, PyText.rstrip(line, "\n")));
+                records.add(Map.of(SplitterSpec.UNPARSED, ToolText.rstrip(line, "\n")));
             } else {
-                unmatched.add(PyText.head(line, 200));
+                unmatched.add(ToolText.head(line, 200));
             }
         }
         return new DryRun(records, unmatched, fieldNames(records), heading);
@@ -696,7 +695,7 @@ public final class SplitterDryRun {
         }
         final List<T> picked = new ArrayList<>();
         for (int i = 0; i < most; i++) {
-            picked.add(items.get((int) PyText.round(i * (items.size() - 1) / (double) (most - 1))));
+            picked.add(items.get((int) ToolText.round(i * (items.size() - 1) / (double) (most - 1))));
         }
         return picked;
     }
@@ -728,9 +727,9 @@ public final class SplitterDryRun {
         if (spec.blankLineRecords()) {
             records = blankLineRecords(text);
         } else if (spec.recordStart() != null && !delimited) {
-            records = groupLines(PyText.nonBlankLines(text), spec.recordStart());
+            records = groupLines(ToolText.nonBlankLines(text), spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {
-            records = groupLinesToEnd(PyText.nonBlankLines(text), spec.recordEnd());
+            records = groupLinesToEnd(ToolText.nonBlankLines(text), spec.recordEnd());
         } else if (delimited && spec.quotedNewlines() && spec.quote() != null) {
             records = quotedLines(text, spec.quote());
         } else {
@@ -761,16 +760,16 @@ public final class SplitterDryRun {
     public static List<String> quotedLines(final String text, final String quote) {
         final List<String> records = new ArrayList<>();
         String current = null;
-        for (final String line : PyText.splitlines(text)) {
+        for (final String line : ToolText.splitlines(text)) {
             if (current == null) {
-                if (PyText.isBlank(line)) {
+                if (ToolText.isBlank(line)) {
                     continue;
                 }
                 current = line;
             } else {
                 current = current + "\n" + line;
             }
-            if (PyText.count(current, quote) % 2 == 0) {
+            if (ToolText.count(current, quote) % 2 == 0) {
                 records.add(current);
                 current = null;
             }
@@ -792,12 +791,12 @@ public final class SplitterDryRun {
     }
 
     private static List<String> groupedToEnd(final List<String> lines, final String end) {
-        final Pattern ends = SafePattern.compile(end, PyText.FLAGS);
+        final Pattern ends = SafePattern.compile(end, ToolText.FLAGS);
         final List<String> records = new ArrayList<>();
         final List<String> current = new ArrayList<>();
         for (final String line : lines) {
             current.add(line);
-            if (PyText.match(ends, new DeadlineCharSequence(line))) {
+            if (ToolText.match(ends, new DeadlineCharSequence(line))) {
                 records.add(String.join("\n", current));
                 current.clear();
             }
@@ -820,10 +819,10 @@ public final class SplitterDryRun {
     }
 
     private static List<String> grouped(final List<String> lines, final String start) {
-        final Pattern begins = SafePattern.compile(start, PyText.FLAGS);
+        final Pattern begins = SafePattern.compile(start, ToolText.FLAGS);
         final List<String> records = new ArrayList<>();
         for (final String line : lines) {
-            if (records.isEmpty() || PyText.match(begins, new DeadlineCharSequence(line))) {
+            if (records.isEmpty() || ToolText.match(begins, new DeadlineCharSequence(line))) {
                 records.add(line);
             } else {
                 records.set(records.size() - 1, records.getLast() + "\n" + line);
@@ -854,15 +853,15 @@ public final class SplitterDryRun {
         for (final String line : lines) {
             if (spec.headerDirective() != null && line.startsWith(spec.headerDirective())) {
                 heading = new ArrayList<>();
-                for (final String cell : splitQuoted(PyText.strip(line.substring(spec.headerDirective().length())),
+                for (final String cell : splitQuoted(ToolText.strip(line.substring(spec.headerDirective().length())),
                         spec.delimiter(), spec.quote())) {
-                    heading.add(PyText.strip(cell));
+                    heading.add(ToolText.strip(cell));
                 }
                 continue;
             }
             final String directive = spec.directives().stream().filter(line::startsWith).findFirst().orElse(null);
             if (directive != null) {
-                held.put(directiveField(directive), PyText.strip(line.substring(directive.length())));
+                held.put(directiveField(directive), ToolText.strip(line.substring(directive.length())));
                 continue;
             }
             if (line.startsWith(spec.commentPrefix())) {
@@ -879,7 +878,7 @@ public final class SplitterDryRun {
                 record.putAll(fields);
                 records.add(record);
             } else {
-                unmatched.add(PyText.head(line, 200));
+                unmatched.add(ToolText.head(line, 200));
             }
         }
         records = spread(records, maxRecords);
@@ -909,7 +908,7 @@ public final class SplitterDryRun {
                          List<String> fields,
                          List<String> heading) {
 
-        /// @return It as the Python dry run returned it: `records`, `unmatched_lines`, `fields` and `heading`.
+        /// @return It as JSON: `records`, `unmatched_lines`, `fields` and `heading`.
         public Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("records", records);

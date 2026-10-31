@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// set_shape_handling (the Stroom MCP server's `tools/sampling.py` `set_shape_handling`).
+/// set_shape_handling: kinds of record dropped or translated again, confirmed and kept in the survey doc.
 class TestSetShapeHandlingTool {
 
     private static final String RECORDS = """
@@ -58,11 +58,11 @@ class TestSetShapeHandlingTool {
                                  + "\"handling\": \"drop\", \"reason\": \"cluster housekeeping, no security value\"}";
 
         // Nothing written until the user agrees, which they can't without a form.
-        assertThat(call(arguments, PortedToolCalls.context()).text())
+        assertThat(call(arguments, BuildToolCalls.context()).text())
                 .startsWith("Not done: Leave untranslated (no Events): 1 kind(s) of event in feed 'ACME'.");
         assertThat(SurveyDoc.dropped(SurveyDoc.readState(world.body(uuid)))).isEmpty();
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final Map<String, Object> done = json(call(arguments, user.context()));
 
         assertThat(user.forms()).singleElement().satisfies(asked -> {
@@ -88,7 +88,7 @@ class TestSetShapeHandlingTool {
     @Test
     void translatingKindsAgainUndoesTheDrop() {
         survey();
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", \"handling\": \"drop\", "
              + "\"reason\": \"noise\"}", user.context());
         final String translate = "{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": \"org.jgroups\", "
@@ -106,17 +106,17 @@ class TestSetShapeHandlingTool {
     @Test
     void whatCantBeDoneIsRefusedSayingWhy() {
         assertThat(call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"x\"], \"handling\": "
-                        + "\"drop\", \"reason\": \"r\"}", PortedToolCalls.context()).text())
+                        + "\"drop\", \"reason\": \"r\"}", BuildToolCalls.context()).text())
                 .isEqualTo("No survey of 'ACME' in build 'acme-v1': run survey_feed with build first");
         survey();
         assertThat(call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"loggerName\"], "
-                        + "\"handling\": \"drop\", \"reason\": \"r\"}", PortedToolCalls.context()).text())
+                        + "\"handling\": \"drop\", \"reason\": \"r\"}", BuildToolCalls.context()).text())
                 .isEqualTo("'loggerName' matches 2 kinds of event in the survey; give the exact signature");
         assertThat(call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"org.jgroups\"], "
-                        + "\"handling\": \"drop\"}", PortedToolCalls.context()).text())
+                        + "\"handling\": \"drop\"}", BuildToolCalls.context()).text())
                 .isEqualTo("Give the reason for leaving these records untranslated (the user's words)");
         assertThat(call("{\"build\": \"acme-v1\", \"feed\": \"ACME\", \"shapes\": [\"org.jgroups\"], "
-                        + "\"handling\": \"ignore\"}", PortedToolCalls.context()).text())
+                        + "\"handling\": \"ignore\"}", BuildToolCalls.context()).text())
                 .isEqualTo("handling must be 'drop' or 'translate'");
     }
 
@@ -149,7 +149,7 @@ class TestSetShapeHandlingTool {
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        return tool.execute(PortedToolCalls.call(SetShapeHandlingTool.NAME, arguments), context);
+        return tool.execute(BuildToolCalls.call(SetShapeHandlingTool.NAME, arguments), context);
     }
 
     private static Map<String, Object> json(final ToolResult result) {

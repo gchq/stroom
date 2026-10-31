@@ -38,8 +38,8 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// run_stroomql refuses a query on a Lucene or Elastic index whose answer through Stroom would mislead, as the
-/// Stroom MCP server's find_events (merged into search_events) refused such a search.
+/// run_stroomql refuses a query on a Lucene or Elastic index whose answer through Stroom would mislead, as
+/// search_events refuses such a search.
 class TestRunStroomQlTool {
 
     private static final DocRef ELASTIC = new DocRef("ElasticIndex", "e", "web");

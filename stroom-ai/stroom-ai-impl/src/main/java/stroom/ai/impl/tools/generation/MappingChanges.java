@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /// Changes to a translation mapping (or an index field plan), merged into the whole one: a fix sends only what it
-/// changes. The Stroom MCP server's `utils/mappingchanges.py`.
+/// changes.
 ///
 /// Seen (Gemma 4 31B in VS Code, about 22 tokens a second): each fix resent the whole mapping, some 800 tokens and
 /// 40 seconds of writing, five times over. A rule is replaced whole by name, a common entry by its path (and Data
@@ -193,7 +193,7 @@ public final class MappingChanges {
         return (Map<String, Object>) map;
     }
 
-    // The list held at a key of the merged mapping, made if it isn't there (Python's setdefault).
+    // The list held at a key of the merged mapping, made if it isn't there.
     @SuppressWarnings("unchecked")
     private static List<Object> listIn(final Map<String, Object> merged, final String key) {
         if (merged.get(key) instanceof final List<?> list) {
@@ -220,7 +220,7 @@ public final class MappingChanges {
         return -1;
     }
 
-    // [r.get('name') for r in rules], as Python writes the list.
+    // The items' names, as a list's text: `['a', 'b']`.
     private static String names(final List<Object> items) {
         final List<Object> names = new ArrayList<>();
         for (final Object item : items) {
@@ -228,17 +228,17 @@ public final class MappingChanges {
                     ? map.get("name")
                     : null);
         }
-        return PyText.repr(names);
+        return ToolText.repr(names);
     }
 
-    // Python's str() of a JSON value.
+    // A JSON value as text: a string as it is, anything else as its literal.
     private static String str(final Object value) {
         return value instanceof final String text
                 ? text
-                : PyText.repr(value);
+                : ToolText.repr(value);
     }
 
-    // copy.deepcopy of JSON-like values: maps and lists copied, so the base is left alone.
+    // A deep copy of JSON-like values: maps and lists copied, so the base is left alone.
     private static Map<String, Object> copyMap(final Map<String, Object> map) {
         final Map<String, Object> out = new LinkedHashMap<>();
         map.forEach((key, value) -> out.put(key, copy(value)));

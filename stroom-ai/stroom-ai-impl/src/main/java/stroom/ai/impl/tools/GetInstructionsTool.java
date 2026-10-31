@@ -35,9 +35,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /// `get_instructions` - the standing instructions (AGENTS docs) that apply to some folders, feeds or documents,
-/// as the Stroom MCP server's tool of the same name gives them: most general first, with their text. They may say
-/// how XSLT is written, how fields are mapped, how things are named, or which folders to leave out. Read as the
-/// user. The result's structured content is the MCP server's JSON ([AgentInstructions#applicableInstructions]).
+/// most general first, with their text. They may say how XSLT is written, how fields are mapped, how things are
+/// named, or which folders to leave out. Read as the user. The result's structured content is JSON
+/// ([AgentInstructions#applicableInstructions]).
 ///
 /// It also gives the working guides bundled with Stroom ([AgentKnowledge]), which MCP clients can read as
 /// resources too, so that the chat can read them.

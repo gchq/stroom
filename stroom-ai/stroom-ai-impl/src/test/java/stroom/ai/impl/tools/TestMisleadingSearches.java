@@ -35,8 +35,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The searches through Stroom whose answer would mislead, ported from the Stroom MCP server's tests of
-/// `_searchable` (`tests/test_indexing.py`, `tests/test_templatecheck.py`, `tests/test_off_path.py`).
+/// The searches through Stroom whose answer would mislead.
 class TestMisleadingSearches {
 
     private static final String ELASTIC = MisleadingSearches.ELASTICSEARCH;

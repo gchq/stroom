@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/// One rebuild of a mapping from an XSLT (the Stroom MCP server's `xsltread.rebuild`): the XSLT read, the kept
+/// One rebuild of a mapping from an XSLT: the XSLT read, the kept
 /// mapping's rules matched to it by their templates, each element kept, read as an idiom, or kept as written, and
 /// what every rule writes alike put in common. See [XsltReader#rebuild].
 final class MappingRebuild {
@@ -336,10 +336,10 @@ final class MappingRebuild {
         if (kept != null) {
             final Map<List<String>, Integer> position = new LinkedHashMap<>();
             for (final FieldMapping entry : kept.common()) {
-                position.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), position.size());
+                position.put(Arrays.asList(ToolText.strip(entry.path(), "/"), entry.dataKey()), position.size());
             }
             common.sort(Comparator.comparingInt(entry -> position.getOrDefault(Arrays.asList(
-                    PyText.strip((String) entry.get("path"), "/"), dataKey(entry)), position.size())));
+                    ToolText.strip((String) entry.get("path"), "/"), dataKey(entry)), position.size())));
         }
         for (int i = 0; i < rulesOut.size(); i++) {
             if (!Boolean.TRUE.equals(rulesOut.get(i).get("drop"))) {
@@ -354,7 +354,7 @@ final class MappingRebuild {
 
     private static Set<List<String>> commonKeysOf(final TranslationMapping mapping) {
         final Set<List<String>> out = new HashSet<>();
-        mapping.common().forEach(entry -> out.add(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey())));
+        mapping.common().forEach(entry -> out.add(Arrays.asList(ToolText.strip(entry.path(), "/"), entry.dataKey())));
         return out;
     }
 
@@ -509,10 +509,10 @@ final class MappingRebuild {
         for (final EventRule rule : mapping.events()) {
             final Map<List<String>, FieldMapping> fields = new LinkedHashMap<>();
             for (final FieldMapping entry : mapping.common()) {
-                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), entry);
+                fields.put(Arrays.asList(ToolText.strip(entry.path(), "/"), entry.dataKey()), entry);
             }
             for (final FieldMapping entry : rule.fields()) {
-                fields.put(Arrays.asList(PyText.strip(entry.path(), "/"), entry.dataKey()), entry);
+                fields.put(Arrays.asList(ToolText.strip(entry.path(), "/"), entry.dataKey()), entry);
             }
             out.add(fields);
         }

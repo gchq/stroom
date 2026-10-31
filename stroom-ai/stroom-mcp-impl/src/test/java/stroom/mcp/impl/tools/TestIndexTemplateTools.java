@@ -36,7 +36,7 @@ import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.IndexingHelpers.TemplateTarget;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateCheck;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.mcp.impl.BundledKnowledge;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -60,10 +60,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// propose_index_template and check_index_template (the Stroom MCP server's `tests/test_templatecheck.py` tool
-/// cases, and those of `tests/test_indexing.py` and `tests/test_index_rename.py` for the template tools): the
-/// pipeline's destination and the documents it writes are given, as the Python tests patched `_destination` and
-/// `_documents`; the pipeline itself, its description and the user's confirmations are the in-memory world's.
+/// propose_index_template and check_index_template: the pipeline's destination and the documents it writes are
+/// given; the pipeline itself, its description and the user's confirmations are the in-memory world's.
 class TestIndexTemplateTools {
 
     private static final String OUTPUT = """
@@ -91,7 +89,7 @@ class TestIndexTemplateTools {
     private static final List<String> COMPONENTS = List.of("""
             PUT _component_template/ecs-base
             {"template": {"mappings": {"properties": {"@timestamp": {"type": "date"}, "host": {"properties": \
-            {"name": {"type": "keyword"}}}}}}}""", PyJson.dumps(Map.of("component_templates", List.of(Map.of(
+            {"name": {"type": "keyword"}}}}}}}""", ToolJson.dumps(Map.of("component_templates", List.of(Map.of(
             "name", "ecs-source", "component_template", Map.of("template", Map.of("mappings", Map.of("properties",
                     Map.of("source", Map.of("properties", Map.of("ip", Map.of("type", "ip"))))))))))));
     private static final DocRef P1 = ProcessingWorld.P1;
@@ -150,7 +148,7 @@ class TestIndexTemplateTools {
         properties.put("source", Map.of("properties", Map.of("ip", Map.of("type", "ip"))));
         final Map<String, Object> body = template(properties);
         body.put("composed_of", List.of("ecs-base"));
-        final String text = "PUT _index_template/ecs-acme\n" + PyJson.dumps(body);
+        final String text = "PUT _index_template/ecs-acme\n" + ToolJson.dumps(body);
         // Asked for by the user: the fields a template maps are its own and its components' together, so a
         // component not given is asked for before anything is checked.
         final Map<String, Object> asked = check(args("template", text));
@@ -197,7 +195,7 @@ class TestIndexTemplateTools {
         assertThat(refused(proposeTool(), ProposeIndexTemplateTool.NAME, reviewedArgs))
                 .startsWith("Not done: Use Elasticsearch index template 'ecs-acme-v2'");
         assertThat(KeptMapping.readAgreedTemplate(description())).isEmpty();
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final Map<String, Object> agreed = propose(reviewedArgs, user);
         final Map<String, Object> asked = user.forms().getFirst();
         assertThat(asked).containsEntry("status", "needs_confirmation").containsEntry("summary",
@@ -229,14 +227,14 @@ class TestIndexTemplateTools {
 
         // The agreed template checked again, retyped on one line: already agreed, not reviewed and confirmed again
         // (seen in Ask Stroom AI, once the user said it was committed).
-        final String again = "PUT _index_template/ecs-acme-v2 " + PyJson.dumps(agreed.get("template"));
+        final String again = "PUT _index_template/ecs-acme-v2 " + ToolJson.dumps(agreed.get("template"));
         final Map<String, Object> checked = check(args("template", again, "component_templates", COMPONENTS));
         assertThat(checked).containsEntry("agreed", true).doesNotContainKey("status");
 
         // The user corrects it (a higher priority): their version is confirmed and replaces the agreed one.
         final Map<String, Object> corrected = new LinkedHashMap<>((Map<String, Object>) agreed.get("template"));
         corrected.put("priority", 500);
-        final String text = "PUT _index_template/ecs-acme-v2\n" + PyJson.dumps(corrected);
+        final String text = "PUT _index_template/ecs-acme-v2\n" + ToolJson.dumps(corrected);
         // Reviewed only as shown: the first template's id, or true, is no review of this one.
         for (final Object reviewed : List.of(true, shown.get("review_id"))) {
             final Map<String, Object> stale = check(args("template", text, "reviewed", reviewed));
@@ -246,7 +244,7 @@ class TestIndexTemplateTools {
         final Map<String, Object> shownAgain = check(args("template", text));
         assertThat(shownAgain).containsEntry("status", "needs_review");
         assertThat(String.valueOf(shownAgain.get("dev_tools"))).contains("\"priority\": 500");
-        final PortedToolCalls.FormUser again2 = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser again2 = BuildToolCalls.user(Map.of("value", true));
         check(args("template", text, "reviewed", shownAgain.get("review_id")), again2);
         final Map<String, Object> askedAgain = again2.forms().getFirst();
         assertThat(askedAgain).containsEntry("status", "needs_confirmation");
@@ -254,7 +252,7 @@ class TestIndexTemplateTools {
                 .contains("(priority 500)");
         final String devTools = String.valueOf(KeptMapping.readAgreedTemplate(description()).orElseThrow()
                 .get("dev_tools"));
-        assertThat(((Map<String, Object>) PyJson.loads(devTools.split("\n", 2)[1])).get("priority"))
+        assertThat(((Map<String, Object>) ToolJson.loads(devTools.split("\n", 2)[1])).get("priority"))
                 .isEqualTo(500L);
         assertThat(description().split("<!-- stroom-mcp agreed index template: kept by the server", -1))
                 .hasSize(2);
@@ -268,7 +266,7 @@ class TestIndexTemplateTools {
                 PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
                 PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
                 PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
-        final Object asJson = PyJson.loads(EXAMPLE.split("\n", 2)[1]);
+        final Object asJson = ToolJson.loads(EXAMPLE.split("\n", 2)[1]);
 
         final Map<String, Object> asText = propose(args("plan", plan.toJson(), "example_template", EXAMPLE,
                 "component_templates", COMPONENTS));
@@ -300,7 +298,7 @@ class TestIndexTemplateTools {
         Mockito.when(pipelines.componentChoices(any(), anyString(), anyList())).thenReturn(
                 new TemplatePipelines.ComponentChoices(List.of("org-ilm"), List.of("legacy-base"), List.of()));
         final Map<String, Object> result = check(args("template", "PUT _index_template/ecs-acme\n"
-                                                                  + PyJson.dumps(body),
+                                                                  + ToolJson.dumps(body),
                 "component_templates", List.of("PUT _component_template/legacy-base\n{\"template\": "
                                                + "{\"mappings\": {}}}")));
         assertThat(JsonValues.strings(result.get("notes")))
@@ -351,7 +349,7 @@ class TestIndexTemplateTools {
                 .contains("without_example=true");
         // Only when the user says they have none: built from the plan, and they confirm it as shown.
         final Map<String, Object> shown = propose(args("plan", plan.toJson(), "without_example", true));
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final Map<String, Object> asked = propose(args("plan", plan.toJson(), "without_example", true,
                 "reviewed", shown.get("review_id")), user);
         assertThat(user.forms()).extracting(form -> form.get("status")).containsExactly("needs_confirmation");
@@ -469,7 +467,7 @@ class TestIndexTemplateTools {
         final Map<String, Object> withStreams = with(arguments, "events_stream_ids", List.of(8));
         final ToolResult result = tool.execute(call(name, withStreams), context(user));
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     // The refusal of a call without forms.
@@ -491,7 +489,7 @@ class TestIndexTemplateTools {
     }
 
     private static ToolCall call(final String name, final Map<String, Object> arguments) {
-        return PortedToolCalls.call(name, JsonUtil.writeValueAsString(arguments, false));
+        return BuildToolCalls.call(name, JsonUtil.writeValueAsString(arguments, false));
     }
 
     private static ToolCallContext context(final UserQuestions user) {

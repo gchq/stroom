@@ -40,8 +40,8 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.validation.Schema;
 import javax.xml.validation.ValidatorHandler;
 
-/// Validates XML text against a compiled XML Schema, as the Stroom MCP server's `errors_for` did with lxml: each
-/// error with its line, the path of the element it is in and the message. The schema's messages for one fault (the
+/// Validates XML text against a compiled XML Schema: each error with its line, the path of the element it is in
+/// and the message. The schema's messages for one fault (the
 /// value, then the element holding it) are given as one error.
 public final class SchemaErrors {
 
@@ -95,7 +95,7 @@ public final class SchemaErrors {
     /// @param message What is wrong, as the validator says it.
     public record SchemaError(int line, String path, String message) {
 
-        /// @return It as the Stroom MCP server gave it: `line`, `path` and `message`.
+        /// @return It as the tools give it: `line`, `path` and `message`.
         public Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("line", line);

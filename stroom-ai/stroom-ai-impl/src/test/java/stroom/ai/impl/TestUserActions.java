@@ -500,7 +500,7 @@ class TestUserActions {
     @Test
     void aDocumentationChangeButtonIsOfferedForADashboard() {
         // Seen in testing: asked to document a dashboard, the agent could not, as the only way to write a
-        // Documentation tab is the MCP server's, which writes a pipeline's or an XSLT's. No action of Stroom's
+        // Documentation tab was write_documentation, which writes a pipeline's or an XSLT's. No action of Stroom's
         // own puts proposed Markdown on a document's Documentation tab, so this one is dropped.
         final DocRef dashboard = new DocRef("Dashboard", OTHER_UUID, "Logons");
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID))).thenReturn(Optional.of(dashboard));

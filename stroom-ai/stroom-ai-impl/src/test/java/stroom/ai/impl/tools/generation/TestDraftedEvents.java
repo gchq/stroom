@@ -27,8 +27,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The events the XSLT generated from a draft writes (the Stroom MCP server's `tests/test_draft.py`, run with plain
-/// Saxon here, Stroom's format-date standing in as the time itself).
+/// The events the XSLT generated from a draft writes (run with plain Saxon here, Stroom's format-date standing in
+/// as the time itself).
 class TestDraftedEvents extends XsltRuns {
 
     private static final String FW_JSON = """
@@ -79,7 +79,7 @@ class TestDraftedEvents extends XsltRuns {
     @Test
     @SuppressWarnings("unchecked")
     void theKeyValuePairsOfATextFieldComeOutAsTheirFields() {
-        final Map<String, Object> drafts = json(resource("/stroom/ai/impl/tools/draft/draft_parity.json")
+        final Map<String, Object> drafts = json(resource("/stroom/ai/impl/tools/draft/draft_cases.json")
                 .replaceFirst("^\\[", "{\"all\": [") + "}");
         final Map<String, Object> audit = ((List<Map<String, Object>>) drafts.get("all")).stream()
                 .filter(entry -> "test audit".equals(entry.get("name")))

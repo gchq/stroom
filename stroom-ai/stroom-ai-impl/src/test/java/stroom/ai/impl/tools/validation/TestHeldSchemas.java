@@ -26,10 +26,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The schemas a Stroom holds, and a schema location naming a system id it doesn't hold. Ported from the Stroom
-/// MCP server's `tests/test_schema_locations.py` and the schema cases of `tests/test_event_versions.py`. Seen on
-/// Stroom 7.13: file:///event-logging-v4.1.0.xsd (three slashes) was not refused as unknown; the schema filter
-/// validated against event-logging 3.2.3's schema instead, refusing Version 4.1.0, and the error hid the cause.
+/// The schemas a Stroom holds, and a schema location naming a system id it doesn't hold. Seen on Stroom 7.13:
+/// file:///event-logging-v4.1.0.xsd (three slashes) was not refused as unknown; the schema filter validated against
+/// event-logging 3.2.3's schema instead, refusing Version 4.1.0, and the error hid the cause.
 class TestHeldSchemas {
 
     private final HeldSchemas held = new HeldSchemasWorld()

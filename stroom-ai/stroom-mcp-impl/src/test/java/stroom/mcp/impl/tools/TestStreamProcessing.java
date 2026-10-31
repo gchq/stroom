@@ -45,9 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// The processing helpers ported from the Stroom MCP server's `tools/processing_writes.py` for
-/// wait_for_processing and its write tools: which streams a filter selects, the outputs and ended tasks of input
-/// streams, and why nothing will process one.
+/// The processing helpers for wait_for_processing and its write tools: which streams a filter selects, the outputs
+/// and ended tasks of input streams, and why nothing will process one.
 class TestStreamProcessing {
 
     private static final Meta RAW = Meta.builder().id(6).feedName("ACME").typeName("Raw Events").createMs(2_000)

@@ -29,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// Guards against the mistakes a model makes when it writes an XSLT by hand: non-existent stroom: functions, no
 /// input namespace, elements the event-logging schema has no place for, json-to-xml() unguarded, and XML sent
-/// HTML-escaped. Ported from the Stroom MCP server's `tests/test_authoring_guards.py` and
-/// `tests/test_validation.py` (the parts of `check_xslt` that need no Stroom).
+/// HTML-escaped (the parts of `check_xslt` that need no Stroom).
 class TestXsltChecks {
 
     private static final String HANDWRITTEN = """

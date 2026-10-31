@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// JSON-like values (maps, lists, strings, numbers, booleans and nulls, as [PyJson] or Jackson reads them) handled
-/// as the Stroom MCP server's Python handles its dicts and lists: truth, `dict` literals, `dict.get(...) or {}`,
-/// the maps or strings a list holds, numbers compared across types, deep copies and `Counter`.
+/// JSON-like values (maps, lists, strings, numbers, booleans and nulls, as [ToolJson] or Jackson reads them) handled
+/// alike wherever the tools read them: truthiness, ordered maps, a missing map read as an empty one, the maps or
+/// strings a list holds, numbers compared across types, deep copies and counting.
 public final class JsonValues {
 
     private JsonValues() {
@@ -38,7 +38,7 @@ public final class JsonValues {
     }
 
     /// @param value A value.
-    /// @return Python's truth of it: not null, false, zero, or an empty string, list or map.
+    /// @return True if it is something: not null, false, zero, or an empty string, list or map.
     public static boolean truthy(final Object value) {
         return switch (value) {
             case null -> false;
@@ -52,7 +52,7 @@ public final class JsonValues {
     }
 
     /// @param keysAndValues Keys and their values, in turn.
-    /// @return A map of them, in that order (a Python `dict` literal).
+    /// @return A map of them, in that order.
     public static Map<String, Object> dict(final Object... keysAndValues) {
         final Map<String, Object> out = new LinkedHashMap<>();
         for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
@@ -62,7 +62,7 @@ public final class JsonValues {
     }
 
     /// @param names Names.
-    /// @return A set of them that can be asked about null (Set.of can't), as a Python set can.
+    /// @return A set of them that can be asked about null (Set.of can't).
     public static Set<String> nullSafeSet(final String... names) {
         return Collections.unmodifiableSet(new HashSet<>(List.of(names)));
     }
@@ -115,21 +115,21 @@ public final class JsonValues {
     }
 
     /// @param value A list of names, or anything else.
-    /// @return Its items as text, as Python's `str()` writes them (a string as it is); none if it isn't a list.
+    /// @return Its items as text, as [ToolText#str(Object)] writes them (a string as it is); none if it isn't a list.
     public static List<String> strings(final Object value) {
         final List<String> out = new ArrayList<>();
         if (value instanceof final Collection<?> items) {
-            items.forEach(item -> out.add(PyText.str(item)));
+            items.forEach(item -> out.add(ToolText.str(item)));
         }
         return out;
     }
 
     /// @param value A record's value.
     /// @return The value as the record's text: "" for a falsy one, a string as it is, anything else (a number read
-    /// from JSON) as Python's `str()` writes it.
+    /// from JSON) as [ToolText#str(Object)] writes it.
     public static String text(final Object value) {
         return truthy(value)
-                ? PyText.str(value)
+                ? ToolText.str(value)
                 : "";
     }
 
@@ -138,12 +138,12 @@ public final class JsonValues {
     public static String jsonText(final Object value) {
         return value instanceof final String string
                 ? string
-                : PyJson.dumps(value);
+                : ToolJson.dumps(value);
     }
 
     /// @param value  A value.
     /// @param number A whole number.
-    /// @return True if the value is a number equal to it, as Python's `==` compares them (`1024.0 == 1024`).
+    /// @return True if the value is a number equal to it, compared by value across types (`1024.0` equals `1024`).
     public static boolean equalsNumber(final Object value, final long number) {
         return switch (value) {
             case final Boolean bool -> (bool

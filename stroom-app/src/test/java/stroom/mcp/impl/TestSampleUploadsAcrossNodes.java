@@ -77,8 +77,8 @@ import static stroom.ai.impl.db.jooq.tables.AiSampleUploadFile.AI_SAMPLE_UPLOAD_
 /// The sample files upload_sample gives commands for, as a cluster of nodes takes their posts to `/mcp/upload`:
 /// the REAL tool gives the commands on one node, and the posts reach the REAL upload servlet on that node or on
 /// others (each another instance of the servlet and [SampleUploads], named as its node, with a clock of its own,
-/// sharing only the test database). Ports what `dev/e2e_*.py` checked of the upload tickets: a file is stored once,
-/// only for the user, feed and file it was given for, until the commands run out.
+/// sharing only the test database). A file is stored once, only for the user, feed and file it was given for, until
+/// the commands run out.
 class TestSampleUploadsAcrossNodes extends AbstractAiIntegrationTest {
 
     private static final String NODE_1 = AppConfigTestModule.NODE1;

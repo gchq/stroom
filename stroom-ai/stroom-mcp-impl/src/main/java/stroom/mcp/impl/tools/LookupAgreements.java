@@ -33,9 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// The user's agreement to an XSLT the tools save or step calling Stroom's DNS lookup functions
-/// (`stroom:host-name()`, `stroom:host-address()`: [XsltSafety#STROOM_ASKED]). Not in the Stroom MCP server, which
-/// let them through.
+/// The user's agreement to an XSLT the tools save or step calling Stroom's DNS lookup functions (`stroom:host-name()`,
+/// `stroom:host-address()`: [XsltSafety#STROOM_ASKED]).
 ///
 /// A lookup carries the looked-up value (a record's data) to the DNS server, on Stroom's nodes, whenever the
 /// pipeline runs, so a function the XSLT being replaced doesn't already call is asked about in a form

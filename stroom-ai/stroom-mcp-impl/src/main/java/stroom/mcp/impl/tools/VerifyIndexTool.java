@@ -23,7 +23,6 @@ import stroom.ai.impl.tools.IndexSearches.Found;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MisleadingSearches;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -34,6 +33,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
@@ -62,10 +62,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// `verify_index` - verifies indexed events through Stroom, not by querying the backend (the Stroom MCP server's
-/// `tools/indexing.py` `verify_index`): a workspace dashboard on the index doc, made in the build once the user
-/// confirms its columns, then the test searches of the sample's streams ([IndexChecks]), each hit traced back to its
-/// record with the indexing pipeline; a pass is recorded as verified for the build's pipelines writing to the index.
+/// `verify_index` - verifies indexed events through Stroom, not by querying the backend: a workspace dashboard on the
+/// index doc, made in the build once the user confirms its columns, then the test searches of the sample's streams
+/// ([IndexChecks]), each hit traced back to its record with the indexing pipeline; a pass is recorded as verified for
+/// the build's pipelines writing to the index.
 class VerifyIndexTool extends AbstractBuiltInTool {
 
     static final String NAME = "verify_index";
@@ -317,7 +317,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final IndexChecks.Dashboard probe = IndexChecks.Dashboard.unsaved(name,
                 IndexChecks.dashboardConfig(source, fields, timeField, null));
         final Found sample = indexSearches.search(context, probe.probe(IndexChecks.byStream(streamIds)), 100,
-                "Reading a sample of streams " + PyText.repr(streamIds) + " from "
+                "Reading a sample of streams " + ToolText.repr(streamIds) + " from "
                 + NullSafe.nonBlankStringElse(index.indexName(), index.name()));
         final String window = timeField == null
                 ? null

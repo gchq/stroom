@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.FieldMapping;
 
@@ -31,8 +31,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// What every Field mapping section is made of: grouping, paths, sources and conditions in words, the schema's
-/// words, field descriptions and those kept with the documentation. Ported from the Stroom MCP server's
-/// `tests/test_fielddoc.py` (and checked against its `utils/fielddoc.py`'s own outputs).
+/// words, field descriptions and those kept with the documentation.
 class TestFieldDocs {
 
     @Test
@@ -110,7 +109,7 @@ class TestFieldDocs {
     }
 
     @Test
-    void eachSchemaDescriptionIsThePythons() {
+    void eachSchemaDescriptionIsItsGolden() {
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("fielddoc/schema-descriptions.json");
         golden.forEach((path, said) -> assertThat(FieldDocs.schemaDescription(FieldDocFixtures.SCHEMA, path))
                 .as(path)
@@ -208,17 +207,17 @@ class TestFieldDocs {
     }
 
     @Test
-    void numbersAreFormattedAsPythonFormatsThem() {
-        assertThat(PyText.formatG(30.0)).isEqualTo("30");
-        assertThat(PyText.formatG(66.66666)).isEqualTo("66.6667");
-        assertThat(PyText.formatG(100.0)).isEqualTo("100");
-        assertThat(PyText.formatG(0.00001)).isEqualTo("1e-05");
-        assertThat(PyText.formatG(1234567.0)).isEqualTo("1.23457e+06");
-        assertThat(PyText.formatFixed0(12.5)).isEqualTo("12");
-        assertThat(PyText.formatFixed0(66.666)).isEqualTo("67");
-        assertThat(PyText.strip("  x \n")).isEqualTo("x");
-        assertThat(PyText.head("abc", 2)).isEqualTo("ab");
-        assertThat(PyText.split("a//b/", "/")).containsExactly("a", "", "b", "");
+    void numbersAreFormattedWithTheirRounding() {
+        assertThat(ToolText.formatG(30.0)).isEqualTo("30");
+        assertThat(ToolText.formatG(66.66666)).isEqualTo("66.6667");
+        assertThat(ToolText.formatG(100.0)).isEqualTo("100");
+        assertThat(ToolText.formatG(0.00001)).isEqualTo("1e-05");
+        assertThat(ToolText.formatG(1234567.0)).isEqualTo("1.23457e+06");
+        assertThat(ToolText.formatFixed0(12.5)).isEqualTo("12");
+        assertThat(ToolText.formatFixed0(66.666)).isEqualTo("67");
+        assertThat(ToolText.strip("  x \n")).isEqualTo("x");
+        assertThat(ToolText.head("abc", 2)).isEqualTo("ab");
+        assertThat(ToolText.split("a//b/", "/")).containsExactly("a", "", "b", "");
     }
 
     private static String compared(final String path) {

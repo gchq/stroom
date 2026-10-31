@@ -28,11 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// The one save path for the XSLTs the tools write (the Stroom MCP server's `tools/translation.py` `create_xslt`,
-/// `update_xslt`, `lost_mapping`, `xslt_role` and `hand_edit_gate`, and `tools/generation.py` `_required_for`), for
-/// the tools outside the translation tools that save an XSLT (draft_cef_mapping, the index tools). It is the
-/// translation tools' own path ([TranslationDocs], [RequiredImports], [HandEditGate]): the version check, the
-/// kept mapping or plan and whether the code is what it generates, the version history and the hand-edit check.
+/// The one save path for the XSLTs the tools write, for the tools outside the translation tools that save an XSLT
+/// (draft_cef_mapping, the index tools). It is the translation tools' own path ([TranslationDocs], [RequiredImports],
+/// [HandEditGate]): the version check, the kept mapping or plan and whether the code is what it generates, the version
+/// history and the hand-edit check.
 public class XsltSaves {
 
     /// The kinds of what an XSLT is generated from, as kept with it ([stroom.ai.impl.tools.KeptMapping#KINDS]).

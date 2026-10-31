@@ -28,11 +28,11 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// JSON-like values handled as the Stroom MCP server's Python handled its dicts and lists.
+/// JSON-like values handled as Python handles dicts and lists.
 class TestJsonValues {
 
     @Test
-    void truthIsPythons() {
+    void emptyZeroAndNullAreFalse() {
         assertThat(JsonValues.truthy(null)).isFalse();
         assertThat(JsonValues.truthy(false)).isFalse();
         assertThat(JsonValues.truthy(true)).isTrue();
@@ -80,7 +80,7 @@ class TestJsonValues {
     }
 
     @Test
-    void theStringsAListHoldsAreWrittenAsPythonsStrWritesThem() {
+    void theStringsAListHoldsAreWrittenAsToolTextWritesThem() {
         assertThat(JsonValues.strings(Arrays.asList("a", 1, true, null, 1.5, 1e16, List.of("x"))))
                 .containsExactly("a", "1", "True", "None", "1.5", "1e+16", "['x']");
         assertThat(JsonValues.strings("a")).isEmpty();
@@ -98,7 +98,7 @@ class TestJsonValues {
     }
 
     @Test
-    void numbersAreComparedAcrossTypesAsPythonComparesThem() {
+    void numbersAreComparedAcrossTypesByValue() {
         assertThat(JsonValues.equalsNumber(1024.0, 1024)).isTrue();
         assertThat(JsonValues.equalsNumber(1024L, 1024)).isTrue();
         assertThat(JsonValues.equalsNumber(true, 1)).isTrue();

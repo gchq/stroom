@@ -31,10 +31,10 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
-/// The MCP resources Stroom serves on `/mcp`, as the Stroom MCP server registered them: the working guides
-/// (`stroom://guide/<name>`, and their index, `stroom://guides`) and the field convention profiles
-/// (`stroom://conventions/<name>`), from [AgentKnowledge]. Each guide and profile is listed as a resource of its
-/// own, as well as by the two templates, for clients that don't read templates.
+/// The MCP resources Stroom serves on `/mcp`: the working guides (`stroom://guide/<name>`, and their index,
+/// `stroom://guides`) and the field convention profiles (`stroom://conventions/<name>`), from [AgentKnowledge]. Each
+/// guide and profile is listed as a resource of its own, as well as by the two templates, for clients that don't read
+/// templates.
 class McpResources {
 
     static final String GUIDES_URI = "stroom://guides";

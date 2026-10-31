@@ -28,8 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 /// Sample files sent from the user's machine (the tools' `upload_sample files=`): a command per file, for the
-/// user's terminal, posts the file to `/mcp/upload` as the user, into the feed the tool named. As the Stroom MCP
-/// server's `upload_ticket_minutes` and `max_upload_mb`.
+/// user's terminal, posts the file to `/mcp/upload` as the user, into the feed the tool named.
 @JsonPropertyOrder(alphabetic = true)
 public class AiSampleUploadsConfig extends AbstractConfig implements IsStroomConfig {
 

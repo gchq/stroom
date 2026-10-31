@@ -55,9 +55,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 
-/// The Stroom MCP server's `tests/test_cef.py` tool cases: asking the user about keys outside ArcSight's
-/// dictionary, what the standing instructions say, and saving; and the overrides on a plan, a review of a CEF
-/// pipeline and a save the user is asked about.
+/// draft_cef_mapping, the tool: asking the user about keys outside ArcSight's dictionary, what the standing
+/// instructions say, and saving; and the overrides on a plan, a review of a CEF pipeline and a save the user is asked
+/// about.
 class TestDraftCefMappingTool {
 
     static final String EVENTS = """

@@ -52,9 +52,8 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// search_events with an index: an event the user describes, found in an index through Stroom (the Stroom MCP
-/// server's find_events, asked for by the user: one rare event among many indexed streams, which sampling would
-/// miss). Ported from its `tests/test_find_events.py`.
+/// search_events with an index: an event the user describes, found in an index through Stroom (asked for by the
+/// user: one rare event among many indexed streams, which sampling would miss).
 class TestIndexEvents {
 
     private static final DocRef WEB = new DocRef(ElasticIndexDoc.TYPE, "i", "web");

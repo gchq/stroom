@@ -330,7 +330,7 @@ class TestSplitterDryRun {
     }
 
     @Test
-    void anInconsistentSpecIsRefusedAsThePythonModelRefusesIt() {
+    void anInconsistentSpecIsRefused() {
         assertThatThrownBy(() -> SplitterSpec.builder("delimited").build())
                 .hasMessage("delimited needs header: True (a header line) or the column names");
         assertThatThrownBy(() -> SplitterSpec.builder("delimited").header(true).headerDirective("#Fields:").build())

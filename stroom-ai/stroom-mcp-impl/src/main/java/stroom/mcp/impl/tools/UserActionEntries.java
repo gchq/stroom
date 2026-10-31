@@ -31,14 +31,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/// Steps that are the user's, as entries a client can show as buttons (asked for by the user: Stroom's Ask Stroom
-/// AI shows each on the tool call's card, where a click is the user's consent; the model can neither make nor
-/// click one). Ported from the Stroom MCP server's `utils/useractions.py` (`enable_filter`, `disable_filter`,
-/// `open_document` and `actions`). The same steps stay in each result's text for other clients, and the tools
-/// never take a step as done: they read Stroom's state (wait_for_processing, build_status).
+/// Steps that are the user's, as entries a client can show as buttons (asked for by the user: Stroom's Ask Stroom AI
+/// shows each on the tool call's card, where a click is the user's consent; the model can neither make nor click one).
+/// The same steps stay in each result's text for other clients, and the tools never take a step as done: they read
+/// Stroom's state (wait_for_processing, build_status).
 ///
-/// A result gives them as `user_actions`, as the Stroom MCP server's did, and the chat is given them as
-/// [ToolUserAction]s ([#withActions]), which it checks ([UserActions]) before showing them.
+/// A result gives them as `user_actions`, and the chat is given them as [ToolUserAction]s ([#withActions]), which it
+/// checks ([UserActions]) before showing them.
 final class UserActionEntries {
 
     /// The key a result gives its user actions under.
@@ -95,7 +94,7 @@ final class UserActionEntries {
         return entry;
     }
 
-    /// `disable_filter`: a button that disables a filter, e.g. an earlier version's once a new one takes over.
+    /// A button that disables a filter, e.g. an earlier version's once a new one takes over.
     ///
     /// @param links    How the caller links to Stroom.
     /// @param filterId A processor filter.

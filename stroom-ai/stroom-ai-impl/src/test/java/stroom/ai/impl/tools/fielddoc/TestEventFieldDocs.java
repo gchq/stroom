@@ -22,7 +22,7 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 
 import org.junit.jupiter.api.Test;
@@ -42,9 +42,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The Field mapping section of an events pipeline's documentation, from its translation mapping and the sample's
-/// events. Ported from the documentation cases of the Stroom MCP server's `tests/test_xsltgen.py`,
-/// `test_fielddoc.py`, `test_extract.py`, `test_multi.py` and `test_draft_reply.py`, and checked against what its
-/// `utils/fielddoc.py` writes for the same mappings and events (golden files).
+/// events, checked against golden files for the same mappings and events.
 class TestEventFieldDocs {
 
     private static final String NOT_IN_THE_MAPPING = "not in the mapping";
@@ -66,7 +64,7 @@ class TestEventFieldDocs {
             "multi-mapping.json,,by_event_type,multi.md",
             "extract-mapping.json,,by_event_type,extract.md",
             "expressions-mapping.json,,by_event_type,expressions.md"})
-    void theSectionIsThePythonText(final String mapping, final String events, final String layout,
+    void theSectionIsItsGolden(final String mapping, final String events, final String layout,
                                    final String expected) {
         final List<String> outputs = new ArrayList<>();
         if (events != null) {
@@ -85,14 +83,14 @@ class TestEventFieldDocs {
                 FieldDocFixtures.golden("fielddoc/" + expected)), text));
     }
 
-    // The Python text without its Extracted fields section, which the port leaves to the XSLT (asked for by the
-    // user).
+    // The golden text without its Extracted fields section, which the documentation now leaves to the XSLT (asked
+    // for by the user).
     private static String withoutExtractedFields(final String python) {
         return python.replaceAll("(?s)### Extracted fields\n\n.*?\n\n(?=###|\\z)", "");
     }
 
     @Test
-    void theFieldsAskedForAreThePythons() {
+    void theFieldsAskedForAreTheGoldens() {
         final Descriptions asking = Descriptions.asking(true);
         EventFieldDocs.fieldMappingMarkdown(golden("sampled-mapping.json"), SCHEMA, EventFieldDocs.sampledEvents(
                 List.of(FieldDocFixtures.golden("fielddoc/sampled-events.xml"), "<Events xmlns=\"event-logging:3\">"
@@ -100,8 +98,8 @@ class TestEventFieldDocs {
                                                                                + "</TypeId><View/></EventDetail>"
                                                                                + "</Event></Events>")),
                 FieldDocs.BY_EVENT_TYPE, asking);
-        assertThat(PyJson.dumps(asking.wanted()))
-                .isEqualTo(PyJson.dumps(FieldDocFixtures.goldenJson("fielddoc/sampled-wanted.json")));
+        assertThat(ToolJson.dumps(asking.wanted()))
+                .isEqualTo(ToolJson.dumps(FieldDocFixtures.goldenJson("fielddoc/sampled-wanted.json")));
     }
 
     @Test
@@ -269,9 +267,8 @@ class TestEventFieldDocs {
 
     @Test
     void theExtractionsAreLeftToTheXslt() {
-        // test_extract.py has the documentation list them; asked for by the user, the port doesn't: a long list of
-        // regexes is more than documentation needs, and the XSLT holds them. The fields they give are still named
-        // where they are read.
+        // Asked for by the user, the documentation doesn't list them: a long list of regexes is more than
+        // documentation needs, and the XSLT holds them. The fields they give are still named where they are read.
         final String text = EventFieldDocs.fieldMappingMarkdown(golden("extract-mapping.json"), SCHEMA);
         assertThat(text).startsWith("### Common fields")
                 .doesNotContain("Extracted fields", "parsed from")
@@ -280,7 +277,7 @@ class TestEventFieldDocs {
 
     @Test
     void eachItemIsAnEventWithRecordFieldsRepeatsAndDrops() {
-        // From test_multi.py: the documentation's part.
+        // A record holding several events: the documentation's part.
         final String doc = EventFieldDocs.fieldMappingMarkdown(golden("multi-mapping.json"), SCHEMA);
         assertThat(doc).startsWith("Each record holds several events: one per `events` item.")
                 .contains("- `host` (of the record) matches `^qa-`: QA traffic", "one per value");
@@ -288,7 +285,7 @@ class TestEventFieldDocs {
 
     @Test
     void allowUnknownOnARuleThatWritesAnActionElementMeansNothing() {
-        // From test_draft_reply.py. Seen: a rule moved from Unknown to Alert kept its allow_unknown; the user was
+        // Seen: a rule moved from Unknown to Alert kept its allow_unknown; the user was
         // asked to keep it Unknown ("none of the 20 records"), and the documentation listed it under Kept as
         // Unknown.
         final TranslationMapping mapping = TranslationMapping.fromJson(FieldDocFixtures.json("""
@@ -344,14 +341,14 @@ class TestEventFieldDocs {
         final String asked = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, asking);
         assertThat(withoutCommonData(asked)).isEqualTo(withoutCommonData(FieldDocFixtures.golden(
                 "fielddoc/data-names.md"), asked));
-        // Folder, written alike by every event type, is one common field (not the Python server's Folder per
-        // type), asked of once all the same.
+        // Folder, written alike by every event type, is one common field (not a Folder per type, as the golden
+        // text has it), asked of once all the same.
         final Map<String, Map<String, Object>> wanted = new LinkedHashMap<>(asking.wanted());
         final Map<String, Object> folder = wanted.remove("EventDetail/*/Data[@Name='Folder']/@Value");
         final Map<String, Object> python = new LinkedHashMap<>(FieldDocFixtures.goldenJson(
                 "fielddoc/data-names-wanted.json"));
         python.remove("Data[@Name='Folder']");
-        assertThat(PyJson.dumps(wanted)).isEqualTo(PyJson.dumps(python));
+        assertThat(ToolJson.dumps(wanted)).isEqualTo(ToolJson.dumps(python));
         assertThat(folder).containsEntry("from", "`folder`");
         // Result: read from two fields.
         assertThat(asking.wanted().keySet()).containsExactlyInAnyOrder("EventDetail/*/Data[@Name='Folder']/@Value",
@@ -485,8 +482,8 @@ class TestEventFieldDocs {
                 "`EventDetail/Authorise/RemoveGroups/Group/Name`");
     }
 
-    // The Python server's text without the Data rows the port shows once, as common fields (each Data name the
-    // port's text has a common row for, in every table), and the port's without its common rows.
+    // The golden text without the Data rows now shown once, as common fields (each Data name the text written now
+    // has a common row for, in every table), and the text written now without its common rows.
     private static String withoutCommonData(final String text) {
         return withoutCommonData(text, text);
     }
@@ -524,13 +521,13 @@ class TestEventFieldDocs {
         @SuppressWarnings("unchecked") final Map<String, String> session = (Map<String, String>) asking.wanted()
                 .get("EventDetail/Authenticate/Data[@Name='session']/@Value").get("schemas_say");
         assertThat(session.get("vendor documentation")).isEqualTo("VPN session. Codes: s1: first session.");
-        // As the server writes it, from the events it wrote.
+        // As write_documentation writes it, from the events the XSLT wrote.
         final Descriptions again = new Descriptions(null, true, notes);
         assertThat(EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, EventFieldDocs.sampledEvents(List.of(
                 FieldDocFixtures.golden("fielddoc/vendor-events.xml"))), FieldDocs.BY_EVENT_TYPE, again))
                 .isEqualTo(FieldDocFixtures.golden("fielddoc/vendor.md"));
-        assertThat(PyJson.dumps(again.wanted()))
-                .isEqualTo(PyJson.dumps(FieldDocFixtures.goldenJson("fielddoc/vendor-wanted.json")));
+        assertThat(ToolJson.dumps(again.wanted()))
+                .isEqualTo(ToolJson.dumps(FieldDocFixtures.goldenJson("fielddoc/vendor-wanted.json")));
     }
 
     @Test

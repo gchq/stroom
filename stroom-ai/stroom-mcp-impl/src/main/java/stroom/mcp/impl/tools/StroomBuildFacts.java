@@ -58,9 +58,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What the plan reads about a build, from Stroom, as the user (the Stroom MCP server's `tools/plan.py` and
-/// `tools/builds.py` helpers: `_build_docs`, `sample_streams`, `source_feeds`, `_survey_state`, `_translating`,
-/// `_suggested_columns`, and `tools/pipeline_writes.py` `open_slots`).
+/// What the plan reads about a build, from Stroom, as the user.
 class StroomBuildFacts implements BuildFacts {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomBuildFacts.class);
@@ -208,9 +206,9 @@ class StroomBuildFacts implements BuildFacts {
         return openSlots(pipelineShapes.merged(pipelineUuid));
     }
 
-    /// The properties a child must supply for the template's chain to run (the Stroom MCP server's `open_slots`):
-    /// the parser's text converter (DSParser, XMLFragmentParser, CombinedParser) and the first XSLT step's xslt,
-    /// where the template leaves them unset.
+    /// The properties a child must supply for the template's chain to run (its open slots): the parser's text converter
+    /// (DSParser, XMLFragmentParser, CombinedParser) and the first XSLT step's xslt, where the template leaves them
+    /// unset.
     ///
     /// @param merged A pipeline as Stroom runs it.
     /// @return Each as `element.property`.
@@ -491,10 +489,10 @@ class StroomBuildFacts implements BuildFacts {
                 LOGGER.debug("Unable to find the pipelines reading {}", feed, e);
             }
         }
-        // A deliberate departure from the Python server, which gives every pipeline reading the raw data: those of
-        // them that translate it, when any can be told to (seen: TWITTER's raw data was read by an archiving
-        // pipeline, Twitter-RollingFileAppender, and by Twitter-Events; the archiver came first, so the plan
-        // offered it as the one a new version follows, and the drafts read its XSLTs, of which it has none).
+        // Of the pipelines reading the raw data, those that translate it, when any can be told to, not every one (seen
+        // in testing: TWITTER's raw data was read by an archiving pipeline, Twitter-RollingFileAppender, and by
+        // Twitter-Events; the archiver came first, so the plan offered it as the one a new version follows, and the
+        // drafts read its XSLTs, of which it has none).
         final List<Map<String, Object>> translations = found.stream()
                 .filter(pipeline -> TRANSLATION.equals(stage(String.valueOf(pipeline.get("uuid")))))
                 .toList();

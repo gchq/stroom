@@ -23,7 +23,6 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -33,6 +32,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.shared.XsltDoc;
@@ -55,10 +55,9 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /// `summarise_fix` - proves a fix and packages it for the user. Steps every record of the streams (and exactly the
-/// records of the indexed events given) with the fix (a draft, or the code saved on a copy of the pipeline), diffs
-/// the outputs against the pipeline's saved code (only the expected paths should change), and returns the code
-/// diff, whether the fix is ready, and step-by-step instructions for applying it by hand. Saves nothing. Ported
-/// from the Stroom MCP server's `tools/diagnosis.py`.
+/// records of the indexed events given) with the fix (a draft, or the code saved on a copy of the pipeline), diffs the
+/// outputs against the pipeline's saved code (only the expected paths should change), and returns the code diff,
+/// whether the fix is ready, and step-by-step instructions for applying it by hand. Saves nothing.
 ///
 /// It is made of the stepping tools: compare_outputs' comparison, and step_sample's and step_records' verdicts,
 /// once with the fix and once with the saved code, so a blocking error the saved code already has doesn't hold
@@ -153,9 +152,9 @@ class SummariseFixTool extends AbstractBuiltInTool {
 
     @Override
     public boolean isReadOnly() {
-        // Read-only, as the Stroom MCP server said (readOnlyHint true): it saves nothing. Like step_sample and
-        // step_records, whose verdicts it is made of, a clean verdict may be recorded in the build's record of the
-        // pipeline stepped: the tools' own bookkeeping, changing no data, document content or processing.
+        // Read-only (readOnlyHint true): it saves nothing. Like step_sample and step_records, whose verdicts it is made
+        // of, a clean verdict may be recorded in the build's record of the pipeline stepped: the tools' own
+        // bookkeeping, changing no data, document content or processing.
         return true;
     }
 
@@ -210,11 +209,10 @@ class SummariseFixTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The fix, proven and packaged, as the Stroom MCP server gave it: `issue`, `pipeline`, `element`, `doc`,
-    /// `inherited_from_template`, `set_by`, `ready`, `problems`, `records_compared`, `records_changed`,
-    /// `fields_changed`, `step_verdict`, `step_groups`, any `errors_resolved`, `errors_before_too` and its note,
-    /// `diff`, `draft`, `manual_steps` and `hint`. When the call's time ran out first, a shorter result that isn't
-    /// ready, with `stopped_early` and a hint.
+    /// The fix, proven and packaged: `issue`, `pipeline`, `element`, `doc`, `inherited_from_template`, `set_by`,
+    /// `ready`, `problems`, `records_compared`, `records_changed`, `fields_changed`, `step_verdict`, `step_groups`, any
+    /// `errors_resolved`, `errors_before_too` and its note, `diff`, `draft`, `manual_steps` and `hint`. When the call's
+    /// time ran out first, a shorter result that isn't ready, with `stopped_early` and a hint.
     ///
     /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
@@ -249,7 +247,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         final Map<String, TranslationDoc> docs = translationDocs(pipeline, request.pipelineUuid());
         if (!docs.containsKey(element)) {
             throw new ToolRefusal("Element '" + element + "' has no XSLT or text converter; elements with code: "
-                                  + PyText.list(new TreeSet<>(docs.keySet())));
+                                  + ToolText.list(new TreeSet<>(docs.keySet())));
         }
         final TranslationDoc target = docs.get(element);
         final String saved = code(target);
@@ -421,13 +419,13 @@ class SummariseFixTool extends AbstractBuiltInTool {
             problems.add("The draft changes no output on these records: it does not reach the reported case");
         }
         if (!unexpected.isEmpty()) {
-            problems.add("Fields outside expected_paths change too: " + PyText.list(unexpected));
+            problems.add("Fields outside expected_paths change too: " + ToolText.list(unexpected));
         }
         if (!introduced.isEmpty()) {
             problems.add("Stepping with the draft has blocking errors the saved code does not: "
                          + introduced.stream()
-                                 .map(g -> "(" + PyText.repr(stringOrNull(g.get("element"))) + ", "
-                                           + PyText.repr(cut(exampleMessage(g), 150)) + ")")
+                                 .map(g -> "(" + ToolText.repr(stringOrNull(g.get("element"))) + ", "
+                                           + ToolText.repr(cut(exampleMessage(g), 150)) + ")")
                                  .collect(Collectors.joining(", ", "[", "]")));
         }
         return problems;
@@ -450,7 +448,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
                    + ") in Stroom.");
         manual.add("Apply the change in 'diff' below (or paste the complete fixed code), then save.");
         manual.add("Open pipeline '" + pipeline.name() + "', enter stepping on raw stream(s) "
-                   + PyText.repr(streams) + " and check the reported record now gives the expected output "
+                   + ToolText.repr(streams) + " and check the reported record now gives the expected output "
                    + "with no errors.");
         manual.add("Reprocess the affected streams yourself if you want existing events corrected; new data picks up "
                    + "the fix automatically.");
@@ -489,7 +487,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         if (element != null) {
             if (!copy.containsKey(element)) {
                 throw new ToolRefusal("The copy has no XSLT or text converter on '" + element + "'; it has: "
-                                      + PyText.list(new TreeSet<>(copy.keySet())));
+                                      + ToolText.list(new TreeSet<>(copy.keySet())));
             }
             return Map.entry(element, copy.get(element));
         }
@@ -499,7 +497,7 @@ class SummariseFixTool extends AbstractBuiltInTool {
         if (differing.size() != 1) {
             throw new ToolRefusal(differing.isEmpty()
                     ? "The copy's code is the same as the pipeline's: nothing to prove"
-                    : "Give element: the copy's code differs from the pipeline's on " + PyText.list(differing));
+                    : "Give element: the copy's code differs from the pipeline's on " + ToolText.list(differing));
         }
         return Map.entry(differing.getFirst(), copy.get(differing.getFirst()));
     }

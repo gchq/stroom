@@ -34,9 +34,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// A mapping's xpath inputs and extraction regexes are tried on the sample records as the translation will see
-/// them. Ported from the Stroom MCP server's `tests/test_xpathcheck.py`, `tests/test_extraction_check.py` and
-/// the mapping cases of `tests/test_saxon.py`, with the records given as documents (the mapping model is the
-/// translation build's).
+/// them, with the records given as documents (the mapping model is the translation build's).
 class TestXPathChecks {
 
     private static final String JSON_NS = XsltChecks.JSON_NS;

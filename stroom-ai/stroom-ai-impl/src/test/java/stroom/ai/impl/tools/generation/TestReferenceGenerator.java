@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -30,11 +30,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The reference-data XSLT generator (the Stroom MCP server's `utils/refgen.py`): its tests' cases
-/// (`tests/test_sources.py`, `test_multi.py`, `test_required_imports.py`), and the port against the server's own:
+/// The reference-data XSLT generator: its own cases, and the generator against its fixed results:
 /// `reference_cases.json` holds reference mappings (the tests', the evaluation cases', the end-to-end suites', and
-/// more forms) with what pydantic makes of each and what `generate_reference` gives for it. Made by running the
-/// server's code (`make_reference.py`).
+/// more forms) with what reading each must give and what generating from it must give.
 class TestReferenceGenerator extends XsltRuns {
 
     private static final String REF = ReferenceGenerator.REF;
@@ -43,7 +41,7 @@ class TestReferenceGenerator extends XsltRuns {
                                                 + "name=\"name\" value=\"Alice A\"/></record></records>";
 
     @TestFactory
-    Stream<DynamicTest> theReferenceXsltIsThePythonGeneratorsToTheByte() {
+    Stream<DynamicTest> theReferenceXsltIsTheGoldenToTheByte() {
         final List<Map<String, Object>> cases = ReadingFixtures.json("reference_cases.json");
         assertThat(cases).hasSizeGreaterThan(25);
         return IntStream.range(0, cases.size()).mapToObj(n -> {
@@ -67,15 +65,15 @@ class TestReferenceGenerator extends XsltRuns {
                 map.put("input", error.input());
                 return (Object) map;
             }).toList();
-            assertThat(PyJson.dumps(errors, 1)).isEqualTo(PyJson.dumps(c.get("errors"), 1));
+            assertThat(ToolJson.dumps(errors, 1)).isEqualTo(ToolJson.dumps(c.get("errors"), 1));
             return;
         }
         assertThat(c).doesNotContainKey("errors");
-        assertThat(PyJson.dumps(mapping.toJson(DumpMode.COMPACT))).isEqualTo(PyJson.dumps(c.get("compact")));
-        assertThat(PyJson.dumps(mapping.toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(c.get("all")));
+        assertThat(ToolJson.dumps(mapping.toJson(DumpMode.COMPACT))).isEqualTo(ToolJson.dumps(c.get("compact")));
+        assertThat(ToolJson.dumps(mapping.toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(c.get("all")));
         ((Map<String, Object>) c.get("results")).forEach((version, result) ->
-                assertThat(PyJson.dumps(ReferenceGenerator.generate(mapping, version).toMap(), 1))
-                        .isEqualTo(PyJson.dumps(result, 1)));
+                assertThat(ToolJson.dumps(ReferenceGenerator.generate(mapping, version).toMap(), 1))
+                        .isEqualTo(ToolJson.dumps(result, 1)));
     }
 
     @Test

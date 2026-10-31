@@ -31,7 +31,7 @@ import java.util.Optional;
 ///   the user answers, asks questions as a form in the chat ([McpElicitations]), and holds to the stricter rules of
 ///   a run the user is away from;
 /// * an MCP session (later) can ask with a short form where its client supports elicitation, and otherwise give
-///   the client an approval id that the user confirms and the client passes back, as the Stroom MCP server does.
+///   the client an approval id that the user confirms and the client passes back.
 ///
 /// The rules for what needs approval stay with each tool and policy ([ToolConsent], `AiMemoryService`): the gate
 /// only says how a session applies them and asks.

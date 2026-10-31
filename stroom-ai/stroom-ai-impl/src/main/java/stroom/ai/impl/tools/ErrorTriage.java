@@ -214,8 +214,7 @@ public final class ErrorTriage {
     /// @param recordCount How many records were stepped or processed, or null if not known.
     /// @param examples    The most different examples kept per group.
     /// @param accepted    The errors the user accepted as benign for the pipeline.
-    /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`, as the Stroom MCP server
-    /// gave them.
+    /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`.
     public Map<String, Object> triage(final List<Marker> markers,
                                       final Set<String> ownElements,
                                       final Integer recordCount,
