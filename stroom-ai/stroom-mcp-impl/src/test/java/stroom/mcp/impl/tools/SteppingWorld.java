@@ -187,6 +187,14 @@ final class SteppingWorld {
                 : null;
     }
 
+    /// Records whose translation's templates match nothing, so XSLT's built-in rules copy the input's text through.
+    void copiedThrough(final int count, final String text) {
+        stepper = (stream, at) -> at.getRecordIndex() < count
+                ? stepFrom(stream, at.getPartIndex(), at.getRecordIndex(),
+                "<records><record><data>" + text + "</data></record></records>", text)
+                : null;
+    }
+
     private SteppingWalks.Walk walk(final long streamId, final Map<String, String> code) {
         opened.add(Map.entry(streamId, code == null
                 ? Map.of()
@@ -227,8 +235,26 @@ final class SteppingWorld {
                                final long record,
                                final String output,
                                final String schemaError) {
+        return stepFrom(stream, part, record, "<records/>", output, schemaError);
+    }
+
+    /// @return A step that found the record, its translation filter reading the input and giving the output.
+    static SteppingResult stepFrom(final long stream,
+                                   final long part,
+                                   final long record,
+                                   final String input,
+                                   final String output) {
+        return stepFrom(stream, part, record, input, output, null);
+    }
+
+    private static SteppingResult stepFrom(final long stream,
+                                           final long part,
+                                           final long record,
+                                           final String input,
+                                           final String output,
+                                           final String schemaError) {
         final Map<String, SharedElementData> elements = new LinkedHashMap<>();
-        elements.put("translationFilter", new SharedElementData("<records/>", output, null, false, false, true));
+        elements.put("translationFilter", new SharedElementData(input, output, null, false, false, true));
         if (schemaError != null) {
             final Indicators indicators = new Indicators();
             indicators.add(new StoredError(Severity.ERROR, new DefaultLocation(5, 6), new ElementId("schemaFilter"),

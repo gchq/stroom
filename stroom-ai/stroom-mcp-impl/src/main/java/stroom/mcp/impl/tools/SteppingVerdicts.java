@@ -39,6 +39,9 @@ final class SteppingVerdicts {
     private static final Pattern ELEMENT = Pattern.compile("<[A-Za-z_]");
     private static final Pattern CEF_LINE = Pattern.compile("^\\s*CEF:\\d+\\|", Pattern.MULTILINE);
     private static final Pattern XML_DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>");
+    private static final Pattern CDATA = Pattern.compile("<!\\[CDATA\\[(.*?)]]>", Pattern.DOTALL);
+    private static final Pattern MARKUP = Pattern.compile("<[^>]*>");
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
     // EventDetail/Unknown: the schema's only Unknown.
     private static final Pattern UNKNOWN = Pattern.compile("<(?:[\\w.-]+:)?Unknown[\\s>/]",
             Pattern.UNICODE_CHARACTER_CLASS);
@@ -67,10 +70,11 @@ final class SteppingVerdicts {
         return CEF_LINE.matcher(text).find() || text.contains("<kafkaRecord");
     }
 
-    /// A marker when an XSLT produced no elements at all.
+    /// A marker when an XSLT produced no elements at all, and no text other than the input's own.
     ///
     /// When no template matches the input (typically a wrong xpath-default-namespace), XSLT's built-in rules copy
-    /// the text through, nothing raises an error, and processing silently writes nothing.
+    /// the text through, nothing raises an error, and processing silently writes nothing. Text that is not only the
+    /// input's (CSV or JSON lines from an XSLT with `xsl:output method="text"`) is written on purpose.
     ///
     /// @param result  A step.
     /// @param element The element whose output to look at.
@@ -80,13 +84,39 @@ final class SteppingVerdicts {
                                                 final String element,
                                                 final String record) {
         final String body = XML_DECLARATION.matcher(SteppingWalks.output(result, element)).replaceFirst("");
-        if (ELEMENT.matcher(body).find() || sendsOn(body)) {
+        if (ELEMENT.matcher(body).find() || sendsOn(body)
+            || writtenOnPurpose(body, SteppingWalks.input(result, element))) {
             return List.of();
         }
         return List.of(ErrorTriage.marker("ERROR", element, NO_ELEMENTS + ": the XSLT's templates did not match "
                                                             + "the input. Check xpath-default-namespace and the "
                                                             + "match patterns against the element's input.", null)
                 .withRecord(record));
+    }
+
+    // Whether text output is the XSLT's own: not blank, and not just the input's text copied through (escaped, as by
+    // the xml output method, or not, as by the text one). Without the input, it can't be told, so it isn't.
+    private static boolean writtenOnPurpose(final String body, final String input) {
+        final String written = squash(body);
+        if (input == null || written.isEmpty()) {
+            return false;
+        }
+        final String escaped = squash(MARKUP.matcher(CDATA.matcher(input).replaceAll(
+                match -> Matcher.quoteReplacement(escape(match.group(1))))).replaceAll(""));
+        return !written.equals(escaped) && !written.equals(unescape(escaped));
+    }
+
+    private static String squash(final String text) {
+        return WHITESPACE.matcher(text).replaceAll("");
+    }
+
+    private static String escape(final String text) {
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private static String unescape(final String text) {
+        return text.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'")
+                .replace("&amp;", "&");
     }
 
     /// @param output An element's output.
