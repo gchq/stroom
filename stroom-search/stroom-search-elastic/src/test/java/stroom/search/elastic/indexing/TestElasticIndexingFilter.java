@@ -38,6 +38,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -904,6 +905,39 @@ class TestElasticIndexingFilter {
         } finally {
             filter.endStream();
         }
+    }
+
+    @Test
+    void testRetryBackoffDoubles() {
+        // The lowest wait is half the delay for each retry, the highest just under all of it
+        assertThat(IntStream.range(0, 5)
+                .mapToLong(retry -> ElasticIndexingFilter.retryBackoffMs(1000, retry, 0)))
+                .containsExactly(500L, 1000L, 2000L, 4000L, 8000L);
+        assertThat(IntStream.range(0, 5)
+                .mapToLong(retry -> ElasticIndexingFilter.retryBackoffMs(1000, retry, 0.999999)))
+                .containsExactly(999L, 1999L, 3999L, 7999L, 15999L);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 2, 0.5))
+                .isEqualTo(3000);
+    }
+
+    @Test
+    void testRetryBackoffCapped() {
+        // 1,000 x 2^10 is over the 60 second cap
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 10, 0))
+                .isEqualTo(30_000);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 10, 0.999999))
+                .isEqualTo(59_999);
+        // A retry count big enough to overflow is still capped
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 5000, 0.999999))
+                .isEqualTo(59_999);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(Integer.MAX_VALUE, 0, 0))
+                .isEqualTo(30_000);
+    }
+
+    @Test
+    void testRetryBackoffWithNoInitialDelay() {
+        assertThat(ElasticIndexingFilter.retryBackoffMs(0, 3, 0.5))
+                .isZero();
     }
 
     private ElasticIndexingFilter createFilter(final String indexName) {
