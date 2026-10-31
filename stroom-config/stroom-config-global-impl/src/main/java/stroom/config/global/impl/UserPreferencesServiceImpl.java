@@ -88,6 +88,12 @@ public class UserPreferencesServiceImpl implements UserPreferencesService {
                 userPreferencesDao.clearAskStroomAiConfigs(securityContext.getUserRef()));
     }
 
+    @Override
+    public int clearAskStroomAiModels() {
+        return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () ->
+                userPreferencesDao.clearAskStroomAiModels(securityContext.getUserRef()));
+    }
+
     public UserPreferences setDefaultUserPreferences(final UserPreferences userPreferences) {
         return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Special userUuid for the default prefs
