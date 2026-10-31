@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.ai.shared.AiToolCategory;
@@ -82,6 +83,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     static final List<String> WRITTEN_BACK = List.of("data", "converterType", "documentation", "description");
 
     private static final String KEEP = "keep";
+    static final String OVERWRITE_ORIGINAL = "Overwrite production with the working copy";
+    static final String KEEP_ORIGINAL = "Keep production as it is";
     private static final DateTimeFormatter BACKUP_STAMP = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
             .withZone(ZoneOffset.UTC);
     private static final List<String> INDEX_TYPES = List.of(ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE);
@@ -309,6 +312,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
         }
+        askAboutChangedOriginals(call, context, build, plan);
         consent.require(call, context, Consent.Request.approval(NAME,
                 "Promote build '" + build + "' as shown in the chat", shortForm));
         final List<String> done = new ArrayList<>();
@@ -663,6 +667,69 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             }
             default -> writeBack(ref, step.target());
         };
+    }
+
+    // Each working copy whose original was changed since it was taken (e.g. edited by hand in production): the user
+    // chooses whether the copy overwrites it, told how the two differ; kept, the copy stays in the build (asked for
+    // by the user: a production edit made after the copy was taken was lost, but for its backup).
+    private void askAboutChangedOriginals(final ToolCall call,
+                                          final ToolCallContext context,
+                                          final String build,
+                                          final List<PromotionLayout.Step> plan) {
+        for (int i = 0; i < plan.size(); i++) {
+            final PromotionLayout.Step step = plan.get(i);
+            if (!PromotionLayout.WRITE_BACK.equals(step.action())) {
+                continue;
+            }
+            final DocRef copy = ref(step.doc());
+            final Optional<String> changed = changedSinceCopied(build, copy, step.target());
+            if (changed.isEmpty()) {
+                continue;
+            }
+            final Optional<String> chosen = consent.choose(call, context, NAME, changed.get(),
+                    List.of(OVERWRITE_ORIGINAL, KEEP_ORIGINAL), copy.getType() + " '" + copy.getName()
+                                                                + "' was changed in production since it was copied");
+            if (chosen.isEmpty()) {
+                throw new ToolRefusal("Not promoted: " + changed.get() + " Explain the difference to the user, ask "
+                                      + "which they want, then promote_build again.");
+            }
+            if (KEEP_ORIGINAL.equals(chosen.get())) {
+                plan.set(i, new PromotionLayout.Step(step.doc(), PromotionLayout.KEEP, step.target(), step.role()));
+            }
+        }
+    }
+
+    /// @param build        The build.
+    /// @param copy         A working copy.
+    /// @param originalUuid Its original's UUID.
+    /// @return What changed in the original since the copy was taken, said for the user, with the choice; empty if
+    /// it is as it was (or it isn't known, for a copy taken before this was recorded).
+    Optional<String> changedSinceCopied(final String build, final DocRef copy, final String originalUuid) {
+        final Object copiedVersion = buildRecords.entry(build, copy.getUuid()).get(BuildRecords.COPY_OF_VERSION);
+        if (copiedVersion == null) {
+            return Optional.empty();
+        }
+        final Map<String, Object> original = writes.fields(new DocRef(copy.getType(), originalUuid));
+        if (copiedVersion.equals(original.get("version"))) {
+            return Optional.empty();
+        }
+        final Map<String, Object> copied = writes.fields(copy);
+        final String by = original.get("updateUser") == null
+                ? ""
+                : " by " + original.get("updateUser");
+        final String when = original.get("updateTimeMs") instanceof final Number ms
+                ? " at " + Instant.ofEpochMilli(ms.longValue())
+                : "";
+        final String difference = original.get("data") instanceof final String productionCode
+                                  && copied.get("data") instanceof final String copyCode
+                ? " Writing the copy back changes production so (- production now, + the working copy): "
+                  + String.join(" | ", CodeDiff.diff(productionCode, copyCode)) + "."
+                : "";
+        return Optional.of(copy.getType() + " '" + copy.getName() + "' was changed in production since its working "
+                           + "copy was taken" + by + when + "." + difference + " " + OVERWRITE_ORIGINAL + " (the "
+                           + "production change is then kept only in its backup), or "
+                           + KEEP_ORIGINAL.toLowerCase(Locale.ROOT) + " (the working copy stays in the build, for "
+                           + "its change to be made again on a fresh working copy)?");
     }
 
     // A working copy written back over its original, after the original is backed up.
