@@ -283,6 +283,10 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                 : null, false, role);
         if (!workingCopy) {
             records.update(build, ref, entry -> entry.put("version_of", original.getUuid()));
+        } else if (content instanceof final AbstractDoc copied && copied.getVersion() != null) {
+            // The original's version when copied: promotion asks before writing the copy back over an original
+            // changed since (asked for by the user: a production edit made after the copy was lost).
+            records.update(build, ref, entry -> entry.put(BuildRecords.COPY_OF_VERSION, copied.getVersion()));
         }
         final Object made = documentAccess.read(ref)
                 .orElseThrow(() -> new ToolRefusal(original.getType() + " '" + name + "' was made but can't be "

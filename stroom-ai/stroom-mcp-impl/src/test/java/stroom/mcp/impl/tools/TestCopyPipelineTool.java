@@ -130,6 +130,16 @@ class TestCopyPipelineTool {
                 .findFirst()
                 .orElseThrow();
         assertThat(pipelines.world.records().entry(BUILD, copy.getUuid())).containsEntry("copy_of", "p1");
+        // Its XSLT's copy records the version it was copied at, so promotion can tell if production has changed
+        // since (found reviewing the tools: a production edit made after the copy was lost on promotion).
+        final XsltDoc xsltCopy = pipelines.world.docs.values().stream()
+                .filter(doc -> doc instanceof final XsltDoc xslt && !"x1".equals(xslt.getUuid()))
+                .map(XsltDoc.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertThat(pipelines.world.records().entry(BUILD, xsltCopy.getUuid()))
+                .containsEntry("copy_of", "x1")
+                .containsEntry(BuildRecords.COPY_OF_VERSION, "v0");
     }
 
     private void source() {

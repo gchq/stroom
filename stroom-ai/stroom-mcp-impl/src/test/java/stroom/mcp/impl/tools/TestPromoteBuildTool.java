@@ -326,6 +326,80 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aWorkingCopyOverAnOriginalChangedSinceItWasTakenIsWrittenBackOnlyIfTheUserSays() {
+        // Found reviewing the tools: an XSLT edited by hand in production after its working copy was taken lost
+        // the edit when the copy was promoted (kept only in the backup). The user is asked, told the difference.
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
+                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+
+        final Map<String, Object> shown = call(destinations, null);
+        docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(user.shown().getFirst())
+                .startsWith("XSLT 'ACME-XSLT' was changed in production since its working copy was taken by john.smith")
+                .contains("- production now, + the working copy", "v1-by-hand", "v2",
+                        PromoteBuildTool.OVERWRITE_ORIGINAL, "kept only in its backup");
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+    }
+
+    @Test
+    void aWorkingCopyOverAChangedOriginalTheUserKeepsStaysInTheBuild() {
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
+                PromoteBuildTool.KEEP_ORIGINAL, "value", true));
+
+        final Map<String, Object> shown = call(destinations, null);
+        final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
+                destinations, shown.get("review_id"))));
+
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData())
+                .isEqualTo("<xsl:stylesheet>v1-by-hand</xsl:stylesheet>");
+        assertThat(world.nodes).containsKey("x-copy");
+        assertThat(promoted.get("promoted")).asList().contains("left XSLT 'ACME-XSLT' in the workspace");
+    }
+
+    @Test
+    void aWorkingCopyOverAnUnchangedOriginalAsksNothingMore() {
+        final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
+        // As it was when copied.
+        world.docs.put("x-prod", ((XsltDoc) world.docs.get("x-prod")).copy().version("v0").build());
+        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+
+        final Map<String, Object> shown = call(destinations, null);
+        docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(user.shown()).noneMatch(form -> form.contains("was changed in production"));
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
+    }
+
+    // A build whose working copy of production XSLT 'ACME-XSLT' (copied at version v0) is v2, while production was
+    // edited by hand since (v1, by john.smith): the destinations to promote it with.
+    private Map<String, Object> workingCopyOfAChangedOriginal() {
+        exists("System/Feeds/Acme");
+        final String prodFolder = world.folder("System/Feeds/Acme").uuid;
+        world.add(XsltDoc.TYPE, "ACME-XSLT", prodFolder, "x-prod");
+        world.docs.put("x-prod", XsltDoc.builder().uuid("x-prod").name("ACME-XSLT").version("v1")
+                .updateUser("john.smith").data("<xsl:stylesheet>v1-by-hand</xsl:stylesheet>").build());
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        final DocRef documentation = world.inBuild(BUILD, DocumentationDoc.TYPE, "ACME-Events", "d");
+        world.docs.put("d", ((DocumentationDoc) world.docs.get("d")).copy()
+                .data(DocumentationVersions.withPending("# ACME-Events\n\nDoors.", "", "Created", "jane (agent)",
+                        "", Instant.parse("2026-10-20T00:00:00Z"))).build());
+        final DocRef copy = world.inBuild(BUILD, XsltDoc.TYPE, "ACME-XSLT", "x-copy");
+        world.docs.put("x-copy", XsltDoc.builder().uuid("x-copy").name("ACME-XSLT").version("v0")
+                .data("<xsl:stylesheet>v2</xsl:stylesheet>").build());
+        world.records().update(BUILD, copy, entry -> {
+            entry.put("copy_of", "x-prod");
+            entry.put(BuildRecords.COPY_OF_VERSION, "v0");
+        });
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
+        docs.facts.docs.add(FakeBuildFacts.doc(XsltDoc.TYPE, "x-copy", "ACME-XSLT", "working_copy_of", "x-prod"));
+        assertThat(documentation).isNotNull();
+        return Map.of("Pipeline", "/Feeds/Acme");
+    }
+
+    @Test
     void inTheChatPromotionOffersStandingInstructionsFromTheUsersChats() {
         exists("System/Feeds/Acme");
         world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
