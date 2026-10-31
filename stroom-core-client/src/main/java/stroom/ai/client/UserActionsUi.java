@@ -63,10 +63,15 @@ final class UserActionsUi {
     /// A change to a document's Documentation tab the agent proposed, which the button opens a review of, from which
     /// the user can apply it to the tab's editor (unsaved).
     static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
+    /// Standing instructions (an AGENTS doc) the agent proposed for a folder with none, which the button opens a
+    /// review of, from which the user can create the doc, saved.
+    static final String CREATE_INSTRUCTIONS = "create_instructions";
     /// What an applied dashboard change's card says, as the server writes it.
     static final String APPLIED_DASHBOARD = "Applied, not saved. Save the dashboard to keep it, or use Undo apply.";
     /// What an applied code change's card says, as the server writes it.
     static final String APPLIED = "Applied, not saved";
+    /// What a created standing instructions doc's card says, as the server writes it.
+    static final String CREATED = "Created and saved";
     /// The text of the button that undoes an applied code change.
     static final String UNDO_APPLY = "Undo apply";
     /// What an applied code change's card says once its editor has been edited, so Undo apply would lose edits.
@@ -198,6 +203,8 @@ final class UserActionsUi {
             return "Change extraction pipeline…";
         } else if (APPLY_CODE_CHANGE.equals(action) || APPLY_DOCUMENTATION_CHANGE.equals(action)) {
             return "Review and apply…";
+        } else if (CREATE_INSTRUCTIONS.equals(action)) {
+            return "Review and create…";
         } else if (APPLY_QUERY_CHANGE.equals(action)) {
             return "Apply to query";
         } else if (APPLY_DASHBOARD_CHANGE.equals(action)) {

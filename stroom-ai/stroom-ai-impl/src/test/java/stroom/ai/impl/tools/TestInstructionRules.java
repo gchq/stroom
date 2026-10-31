@@ -92,6 +92,33 @@ class TestInstructionRules {
                 .hasValueSatisfying(layout -> assertThat(layout.layout()).isEqualTo(InstructionRules.COMPACT));
     }
 
+    @Test
+    void linesOfTheAppliedSectionsThatNameNothingKnownArePointedOut() {
+        assertThat(InstructionRules.problems("""
+                # Standing instructions
+                - anything: goes outside the sections
+                ## Required imports
+                - translation: Stream-Meta-V1
+                - indexng: Common-Index-V1
+                ## Component templates
+                - include: org-base
+                - sometimes: legacy
+                ## Documentation
+                - field mapping: sideways
+                ## Naming
+                - feeds: UPPER-CASE
+                """)).containsExactly(
+                "'## Required imports' line '- indexng: Common-Index-V1' names none the tools know (cef, events, "
+                + "forwarding, indexing, raw event to event, raw event to record, raw events to events, raw events "
+                + "to records, records, reference, reference data, translation, translations), so it would be left "
+                + "out",
+                "'## Component templates' line '- sometimes: legacy' names none the tools know (add, always, drop, "
+                + "exclude, include, never, omit, use), so it would be left out",
+                "'## Documentation' line '- field mapping: sideways' names no layout the tools know (by event type, "
+                + "by_event_type, compact, one table, per event type, single table)");
+        assertThat(InstructionRules.problems("## Required imports\n- `Translation`: Stream-Meta-V1\n")).isEmpty();
+    }
+
     private static InstructionDoc doc(final String folder, final String text) {
         return new InstructionDoc(null, folder, text, List.of());
     }

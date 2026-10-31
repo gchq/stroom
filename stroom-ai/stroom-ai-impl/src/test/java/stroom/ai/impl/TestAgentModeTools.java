@@ -161,6 +161,8 @@ class TestAgentModeTools {
             Map.entry("server_tasks", false),
             Map.entry("volumes", false),
             Map.entry("instruction_evidence", false),
+            // Only offers the user a button: the user applies the change to the editor (or creates the doc).
+            Map.entry("propose_instructions", false),
             Map.entry("document_links", false),
             Map.entry("find_in_content", false),
             Map.entry("xslt_lookups", false),

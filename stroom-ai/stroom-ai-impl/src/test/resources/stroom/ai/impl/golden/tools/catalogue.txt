@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 55
+Built-in tools: 56
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (46 tool(s))
+### AGENT (47 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -33,6 +33,7 @@ memory
 pipeline
 propose_code_change
 propose_documentation_change
+propose_instructions
 propose_query
 propose_query_change
 read_document
@@ -52,7 +53,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (42 tool(s))
+### ASK (43 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -79,6 +80,7 @@ ls
 pipeline
 propose_code_change
 propose_documentation_change
+propose_instructions
 propose_query
 propose_query_change
 read_document
@@ -96,7 +98,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (42 tool(s))
+### PLAN (43 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -123,6 +125,7 @@ ls
 pipeline
 propose_code_change
 propose_documentation_change
+propose_instructions
 propose_query
 propose_query_change
 read_document
@@ -1751,6 +1754,59 @@ Offers the user a button to make a search extraction for a dashboard table, to a
     }
   },
   "required" : [ "table", "fields", "name" ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_instructions
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates' and '## Documentation'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written).
+
+### Parameters
+
+{
+  "properties" : {
+    "edits" : {
+      "description" : "Replacements made to the folder's existing doc, in order. Give this or markdown, not both.",
+      "items" : {
+        "properties" : {
+          "newText" : {
+            "description" : "The text to replace it with.",
+            "type" : "string"
+          },
+          "oldText" : {
+            "description" : "Text to replace, exactly as it is in the doc, and appearing only once in it.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "oldText", "newText" ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "folder" : {
+      "description" : "The folder, by UUID or Explorer path (e.g. '/Feeds/Events/Acme'). The doc proposed is the one directly in it.",
+      "type" : "string"
+    },
+    "markdown" : {
+      "description" : "The doc's whole proposed text. Give this or edits, not both (a new doc needs this).",
+      "type" : "string"
+    },
+    "summary" : {
+      "description" : "A sentence saying what the change does and why, citing the chats it comes from; shown with the diff.",
+      "type" : "string"
+    }
+  },
+  "required" : [ "folder", "summary" ],
   "type" : "object"
 }
 

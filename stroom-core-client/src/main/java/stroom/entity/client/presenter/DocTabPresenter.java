@@ -361,7 +361,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     /// @return The Documentation tab's editor, or null if this document has no Documentation tab, or hasn't been
     /// read yet.
     public MarkdownEditPresenter showDocumentationEditor() {
-        final TabData documentationTab = commonTabsMap.get(CommonDocLinkTab.DOCUMENTATION);
+        final TabData documentationTab = documentationTab();
         if (documentationTab == null || !tabContentProvider.hasTab(documentationTab) || getEntity() == null) {
             return null;
         }
@@ -371,6 +371,12 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         }
         selectTab(documentationTab);
         return markdownEditPresenter;
+    }
+
+    /// @return The tab holding this document's documentation editor, or null if it has none: the common
+    /// Documentation tab, which edits its description, unless the type's own content is its documentation.
+    protected TabData documentationTab() {
+        return commonTabsMap.get(CommonDocLinkTab.DOCUMENTATION);
     }
 
     public void setDefaultTab(final TabData defaultTab) {

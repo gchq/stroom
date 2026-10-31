@@ -46,7 +46,7 @@ class TestToolCategories {
             AiToolCategory.CONTENT, List.of("list_visualisations", "preview_extraction", "propose_code_change",
                     "propose_dashboard",
                     "propose_dashboard_change", "propose_documentation_change", "propose_extraction_pipeline",
-                    "propose_query",
+                    "propose_instructions", "propose_query",
                     "propose_query_change", "propose_visualisation", "xslt_lookups"),
             AiToolCategory.INDEXING, List.of("elastic_index_templates"),
             AiToolCategory.PROCESSING, List.of("explain_processing", "explain_retention", "processor_tasks",

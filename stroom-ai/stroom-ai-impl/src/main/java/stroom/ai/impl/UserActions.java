@@ -19,9 +19,11 @@ package stroom.ai.impl;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
+import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -92,6 +94,10 @@ public class UserActions {
     /// Opens a review of a change to a document's Documentation tab that the agent proposed (only from Stroom's own
     /// propose_documentation_change tool), which the user can apply to the tab's editor (unsaved) and undo.
     public static final String APPLY_DOCUMENTATION_CHANGE = "apply_documentation_change";
+    /// Opens a review of a standing instructions doc (an AGENTS doc) the agent proposed for a folder that has none
+    /// (only from Stroom's own propose_instructions tool); applying it creates the doc in the folder and saves it,
+    /// as the user, who needs Create there.
+    public static final String CREATE_INSTRUCTIONS = "create_instructions";
     /// Opens Stroom's New Dashboard dialog with a suggested name; once created, the dashboard is given a query, a
     /// table and optionally a data preview, built from the StroomQL (only from Stroom's own propose_dashboard tool).
     public static final String CREATE_DASHBOARD = "create_dashboard";
@@ -135,6 +141,8 @@ public class UserActions {
     private static final Pattern ELEMENT_ID_PATTERN = Pattern.compile("[^\\p{Cntrl}]{1,200}");
     // A SHA-256, as hex.
     private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-fA-F]{64}");
+    // The SHA-256 of no text: what a new document's proposal is made against.
+    private static final String EMPTY_HASH = UserActionService.sha256("");
     // The hash of a dashboard's settings, as the browser and server work it out.
     private static final Pattern SNAPSHOT_HASH_PATTERN = Pattern.compile("[0-9a-fA-F]{1,16}");
     private static final Pattern DOC_TYPE_PATTERN = Pattern.compile("[A-Za-z][A-Za-z0-9]{0,63}");
@@ -239,6 +247,9 @@ public class UserActions {
                         : Optional.empty();
                 case CREATE_DASHBOARD -> builtIn.contains(map)
                         ? createDashboard(id, map, expiresMs)
+                        : Optional.empty();
+                case CREATE_INSTRUCTIONS -> builtIn.contains(map)
+                        ? createInstructions(id, map, expiresMs)
                         : Optional.empty();
                 case CREATE_VISUALISATIONS -> builtIn.contains(map)
                         ? createVisualisations(id, map, expiresMs)
@@ -684,6 +695,33 @@ public class UserActions {
                 new UserActionRecord.CodeChange(null, null, base, baseHash.toLowerCase(Locale.ROOT),
                         string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
                         Objects.requireNonNullElse(removed, 0))));
+    }
+
+    /// A button that opens a review of a standing instructions doc proposed for a folder the user may view that has
+    /// none. Applying it creates the doc and saves it, which needs Create in the folder, checked when the user
+    /// applies it. The code change it holds is from no text, with no pipeline or element.
+    private Optional<UserActionRecord> createInstructions(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String proposed = string(map.get("request"));
+        if (named == null || proposed == null || proposed.isBlank() || proposed.length() > MAX_CODE_CHARS) {
+            return Optional.empty();
+        }
+        final DocRef folder = lookup.find(named).orElse(null);
+        if (folder == null || !ExplorerConstants.FOLDER_TYPE.equals(folder.getType())
+            || lookup.instructionsIn(folder).isPresent()) {
+            return Optional.empty();
+        }
+        final Integer added = count(map.get("added"));
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        final String label = "Create standing instructions (" + AgentInstructions.DOC_NAME + ") in folder '"
+                             + folder.getName() + "': +" + Objects.requireNonNullElse(added, 0) + " lines";
+        return Optional.of(new UserActionRecord(id, CREATE_INSTRUCTIONS, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                null, null, folder, proposed, List.of(), expiresMs, Status.PENDING, null, null,
+                new UserActionRecord.CodeChange(null, null, "", EMPTY_HASH, null,
+                        Objects.requireNonNullElse(added, 0), 0)));
     }
 
     /// A button that applies a change to a table on a dashboard the user may view, while the dashboard still has the
