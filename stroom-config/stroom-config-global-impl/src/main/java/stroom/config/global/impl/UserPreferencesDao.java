@@ -41,4 +41,11 @@ public interface UserPreferencesDao {
     /// @param userRef The user doing it, recorded as the last to update each changed record.
     /// @return How many preference records were changed.
     int clearAskStroomAiConfigs(UserRef userRef);
+
+    /// Removes the choice of Ask Stroom AI model from every user's preferences, and from the default preferences,
+    /// keeping their other AI settings, so that everyone uses the configured default model.
+    ///
+    /// @param userRef The user doing it, recorded as the last to update each changed record.
+    /// @return How many preference records were changed.
+    int clearAskStroomAiModels(UserRef userRef);
 }

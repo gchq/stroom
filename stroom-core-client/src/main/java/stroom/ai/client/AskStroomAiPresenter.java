@@ -422,6 +422,8 @@ public class AskStroomAiPresenter
     private boolean fetchingPrompts;
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
+    // The model the open chat has been answered with, or null for a new chat (or not yet known).
+    private DocRef currentChatModel;
     private final DocumentTypeCache documentTypeCache;
     private final AiDocumentationChanges aiDocumentationChanges;
     // The document tab the user is on, which they can attach to the chat; while the chat's own tab is selected, the
@@ -851,6 +853,9 @@ public class AskStroomAiPresenter
                         if (currentChat == null) {
                             restoreLastChat();
                         }
+                        // An administrator may have changed the defaults, or this user's settings, since Stroom
+                        // was loaded. The model the open chat uses is left alone: it changes at a new chat.
+                        askStroomAiClient.refreshSettings(this::applyDisplayOptions, SILENT);
                     }
                 } else if (shownAs != null) {
                     hideShown();
@@ -3910,13 +3915,15 @@ public class AskStroomAiPresenter
     }
 
     private void onChangeConfig() {
-        askStroomAiClient.getConfig(config -> {
+        // Read again first: the dialog saves everything it shows, so it must not show settings an administrator has
+        // changed since they were loaded.
+        askStroomAiClient.refreshSettings(() -> askStroomAiClient.getDisplayConfig(config -> {
             getDockBehaviourFromPrefs(dockBehaviour -> {
                 final AskStroomAiConfigPresenter askStroomAiConfigPresenter = askStroomAiConfigPresenterProvider.get();
                 askStroomAiConfigPresenter.show(
                         config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
             });
-        }, this);
+        }, this), this);
     }
 
     private void updateConfig(final AskStroomAiConfig config) {
@@ -3925,21 +3932,38 @@ public class AskStroomAiPresenter
     }
 
     private void readModel() {
-        askStroomAiClient.getConfig(config -> {
-            docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
-            AiDisplayOptions.apply(getView().getMarkdownContainer().getElement(), config);
-        }, this);
+        askStroomAiClient.getDisplayConfig(config ->
+                AiDisplayOptions.apply(getView().getMarkdownContainer().getElement(), config), this);
+        showChatModel();
+    }
+
+    // The picker shows the model the open chat's next question is answered with, which, for a chat already
+    // answered, is the one it used unless the user picked or chose another.
+    private void showChatModel() {
+        askStroomAiClient.getChatDisplayModel(currentChatModel, model ->
+                docSelectionBoxPresenter.setSelectedEntityReference(model, true), this);
+    }
+
+    private void applyDisplayOptions() {
+        askStroomAiClient.getConfig(config ->
+                AiDisplayOptions.apply(getView().getMarkdownContainer().getElement(), config), SILENT);
+    }
+
+    // A new chat takes the default model as it is now, or the user's own, so the picker is read again.
+    private void refreshModelForNewChat() {
+        currentChatModel = null;
+        askStroomAiClient.forgetPickedModel();
+        askStroomAiClient.refreshSettings(this::readModel, SILENT);
     }
 
     private void writeModel() {
         // The new model may have other MCP servers, with other prompts.
         mcpPrompts = null;
-        askStroomAiClient.getConfig(config -> {
-            final AskStroomAiConfig newConfig = config.copy()
-                    .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
-                    .build();
-            askStroomAiClient.setConfig(newConfig, this);
-        }, this);
+        final DocRef picked = docSelectionBoxPresenter.getSelectedEntityReference();
+        // Only the model changes, on the settings the server holds now.
+        askStroomAiClient.updateConfig(config -> config.copy().modelRef(picked).build(), this);
+        // Used from the next question of the open chat, even if it is the default model.
+        askStroomAiClient.pickModelForThisChat(picked);
     }
 
     void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
@@ -6050,6 +6074,7 @@ public class AskStroomAiPresenter
     private void startNewChat(final Runnable then) {
         askStroomAiClient.createChat(chat -> {
             currentChat = chat;
+            refreshModelForNewChat();
             currentRunActive = false;
             refreshFollowUps();
             titleGenerated = false;
@@ -6224,6 +6249,18 @@ public class AskStroomAiPresenter
     }
 
     private void loadChat(final AiChat chat) {
+        if (currentChat == null || currentChat.getId() != chat.getId()) {
+            // A model picked for the chat that was open isn't this chat's.
+            askStroomAiClient.forgetPickedModel();
+            currentChatModel = null;
+            askStroomAiClient.getChatModel(chat.getId(), model -> {
+                // Unless another chat has been opened since.
+                if (currentChat != null && currentChat.getId() == chat.getId()) {
+                    currentChatModel = model;
+                    showChatModel();
+                }
+            }, SILENT);
+        }
         currentChat = chat;
         currentRunActive = false;
         // Whatever the last chat was doing, until this one is known.
@@ -6306,6 +6343,7 @@ public class AskStroomAiPresenter
         } else {
             askStroomAiClient.createChat(chat -> {
                 currentChat = chat;
+                refreshModelForNewChat();
                 titleGenerated = false;
                 lastSeenMessageId = 0;
                 setChatTitle(chat.getTitle());
@@ -6494,13 +6532,11 @@ public class AskStroomAiPresenter
     }
 
     private void saveDockBehaviourToPrefs(final DockBehaviour behaviour) {
-        askStroomAiClient.getConfig(currentConfig -> {
-            final AskStroomAiConfig newConfig = currentConfig.copy()
-                    .dockType(behaviour.getDockType())
-                    .dockLocation(behaviour.getDockLocation())
-                    .build();
-            askStroomAiClient.setConfig(newConfig, this);
-        }, this);
+        // Only the dock changes, on the settings the server holds now.
+        askStroomAiClient.updateConfig(config -> config.copy()
+                .dockType(behaviour.getDockType())
+                .dockLocation(behaviour.getDockLocation())
+                .build(), this);
     }
 
     private void getDockSize(final Consumer<Size> consumer) {

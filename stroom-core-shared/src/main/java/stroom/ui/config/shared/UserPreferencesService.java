@@ -33,4 +33,11 @@ public interface UserPreferencesService {
     ///
     /// @return How many preference records were changed.
     int clearAskStroomAiConfigs();
+
+    /// Removes the choice of Ask Stroom AI model from every user's preferences, and from the default preferences,
+    /// so that everyone uses the configured default model; their other AI settings are kept. Needs the Manage
+    /// Properties permission.
+    ///
+    /// @return How many preference records were changed.
+    int clearAskStroomAiModels();
 }

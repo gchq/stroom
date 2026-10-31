@@ -785,6 +785,22 @@ says so, but nothing enforces it.
 | Accepted errors | The pipeline's Documentation doc | Triage reads them for that pipeline. |
 | Turn summaries | Node memory (`TurnSummaries`, 1,000 chats) | Put back after a form; another node summarises again. |
 | Pending uploads | Database (`ai_sample_upload`) | Any node takes the file. |
+| Default AI settings (model, prompts, dock) | Global config properties (`AskStroomAiConfig`) | Every node; set from the settings dialog's "Set as defaults". |
+| A user's own AI settings | User preferences (`askStroomAiConfig`) | Only what they chose: no model means the default. |
+
+**A user's model follows the default unless they chose one.** The client saves a model only when it isn't the
+default (`AskStroomAiClient.setConfig`), and sends a question with the user's own model or none. The server answers
+one with none using the model its chat has already used, or, for a new chat, the default it has then
+(`AskStroomAIService.getModelDoc(config, chatId)`): a changed default reaches the next new chat and never switches a
+chat part-way through. A model the user picks in the chat panel is sent for that chat even when it is the default,
+so it replaces the chat's (`pickModelForThisChat`). Opening the panel reads the user's settings and the defaults
+again (`refreshSettings`), so changes an administrator made since Stroom was loaded apply without a reload; a new
+chat reads them too, for its picker. The model pickers show the default to a user who follows it
+(`getDisplayConfig`). This was fixed after testing found that moving the chat dock, or pressing OK in the settings
+dialog, saved the default model of the time as the user's own, so a new default never reached them
+(`TestAskStroomAiClientDefaults`). When the default model changes, "Set as defaults" offers to clear every user's
+own choice of model, keeping their other settings (`clearAllUsersModelChoice`); "Reset all users" still clears
+everything.
 
 **Stored formats keep reading.** What is kept in documents (the build record's `build-record` block, a kept mapping
 or plan, an XSLT's version history, an agreed index template, the survey and source notes blocks) is read back by
