@@ -1,696 +1,236 @@
-# Ask Stroom AI: operator guide
-
-Ask Stroom AI is a chat panel in the Stroom UI. Users ask questions about their data, and an AI model answers,
-using Stroom's own tools (to query Stroom, read streams, step pipelines, build feeds, translations and indexes,
-and work with files in a per-chat workspace) and the tools of any MCP servers the model is given.
-
-Stroom's own tools include everything the separate Stroom MCP server offered: its tools have been brought into
-Stroom ([TOOLS.md](TOOLS.md) lists them, and where each differs from the server's). The same tools are served to
-outside MCP clients (VS Code, Claude Code and others) through Stroom's MCP endpoint, `/mcp` (see _Stroom's tools
-over MCP_ below). Which of them a user is given, in the chat and over MCP alike, is set by MCP tool policies.
-
-This guide covers setting it up and running it safely. See GitHub issue
-[#5848](https://github.com/gchq/stroom/issues/5848) for the design.
-
-
-## Setting up a model
-
-1. Create an **OpenAI Model** document (any OpenAI-compatible API, including self-hosted ones such as vLLM).
-1. On its **Settings** tab, set the base URL, the API key (as a credential), the model ID and the model's
-   context window (_Maximum context window tokens_).
-   * _Tools enabled_: turn off for models that can't call tools.
-   * _Show reasoning_: whether users see the model's reasoning, when it returns any. On by default.
-   * _Maximum tools per request_: a limit on the tool definitions sent in one request, or 0 for none.
-   * _Set Http Client Config_ → **Headers**: headers sent with every request to the model, e.g.
-     `anthropic-version` for Anthropic's OpenAI-compatible endpoint. Don't put secrets here; the API key
-     belongs in the credential. MCP tool servers have the same setting, and their authentication headers
-     take precedence over it.
-1. Users choose the model in the chat panel's settings, or an administrator sets the default with
-   _Set As Default_.
-
-Users who have not changed a chat setting use the configured defaults, so a change to the defaults reaches
-them. A user whose settings have no model, or a model that no longer exists, gets the default model. To put
-everyone back on the defaults (model, prompts, dock position and so on), an administrator (Manage
-Properties) can use _Reset Everyone to Defaults…_ in the chat's **Settings**.
-
-Answers and reasoning stream into the chat as the model writes them. Everything a turn does is shown in the
-conversation in the order it happens, none of it folded away: the model's reasoning, what it writes to the user
-alongside its tool calls, each tool call (with its result, expandable) and its answer. While the agent works, a
-_Working…_ line at the bottom of the conversation says what it is doing now; it goes once the run ends. What the
-model writes alongside its tool calls is shown on that line while it is the current step, and in its place in the
-conversation once the line moves on, so it isn't shown twice.
-
-Each chat has a mode, chosen beside the model:
-
-* _Agent_: does what is asked, with all the tools it is given.
-* _Ask_: answers questions, with only the tools that cannot change anything.
-* _Plan_: works out a step-by-step plan, with only the tools that cannot change anything, without
-  carrying it out. The user can then switch to _Agent_ to do it.
-
-A run carried on later (after an approval, a form or a resume) keeps the chat's mode.
-
-For testing without a model, set the model ID to `__stub__`. The stub answers instantly, and a question can
-include `[[think]]` (to get some reasoning) or `[[tool:NAME {json arguments}]]` (to call a tool first).
-
-
-## MCP tool servers
-
-On the model's **MCP Tool Servers** tab, add each server's Streamable HTTP endpoint, for example
-`https://fastmcp.example.com/mcp`. Each chat keeps its own connection to each server, closed when idle.
-
-* **Authentication**
-  * _OAuth2 passthrough_ signs each user in to the server, so the server acts as them.
-    * With an **external identity provider**, the user's own sign-in token is passed through. The token's
-      audience must include both Stroom and the MCP server.
-    * With Stroom's **internal identity provider**, Stroom issues each user a short-lived token (5 minutes,
-      reused until it has a minute left) for the server's **Token audience**, e.g. `stroom-mcp`. It is only
-      sent to a trusted server, over https or on the same machine. The token belongs to the grant of the
-      user's sign-in, so it is revoked when they sign out or their session ends, and it shows in the
-      identity provider's token inventory (scope `openid stroom-delegated`). Configure the server (e.g.
-      FastMCP's JWT verifier) with Stroom's issuer and JWKS URL, both given by
-      `<stroom>/api/oauth2/v1/.well-known/openid-configuration` (`issuer`, `jwks_uri`), and the audience.
-      For the server to call Stroom's API back with the token, add the audience to
-      `appConfig.security.authentication.openId.allowedAudiences`.
-  * _None_, _Bearer token_, _Custom API key header_ and _Basic auth_ use one shared credential, so every
-    user's calls run as one account. Use them for development, or for servers that do their own checks.
-* **Test Connection** (General tab) connects with the settings as they are in the dialog and lists the
-  tools the server would offer. It needs EDIT permission on the model.
-* **Trusted server** (General tab): only trusted servers' tool annotations (read-only, destructive, open-world) are
-  believed, and only their instructions are given to the model. Mark a server trusted only if you control
-  it.
-* **Server instructions**: what a trusted server says, when connected, about how to use it (for FastMCP,
-  the order of work and its rules) is added to the system prompt while the model is offered any of its
-  tools, up to 20,000 characters per server. The context meter shows what it takes.
-* **Tool policies** (Tool Policies tab): a list of a regular expression and a policy, added with **+**. The pattern
-  must match the tool's whole name, ignoring case, e.g. `find_.*` or `(get|list)_feeds?`, and the first
-  policy to match applies: _Allow_ (runs without asking), _Ask every time_, or _Deny_ (never offered to the
-  model). Tools no policy matches run without asking if the server is trusted and the tool is read-only,
-  and otherwise ask.
-* **Tool groups**: when a model would be offered more MCP tools than `toolGroupThreshold`, they are offered
-  as groups, each with one `activate_<group>` tool, and a group's tools are only sent to the model once it
-  turns the group on. Groups come from the server (`_meta.group`), otherwise from shared name prefixes
-  (e.g. `pipeline_*`), otherwise one per server.
-
-## Approvals
-
-Before a tool runs, Stroom decides whether to ask the user:
-
-* Stroom's own tools (built-in and ported) run as the user, within their permissions and tool policies.
-  Calls that only read never ask. A call that changes something in Stroom runs without asking until the
-  chat has read untrusted content; from then on it asks on an approval card, which says why. Untrusted
-  content is anything that could hold instructions planted by someone other than the user: an attached
-  tab or table, dashboard or query data in the chat, the result (in this run or stored from an earlier
-  one) of any tool not marked as reading only trusted content (`StroomTool.readsUntrustedContent()`:
-  nearly all of Stroom's tools, as they read Stroom data, e.g. events, streams, documents or their names,
-  and every MCP tool), and workspace files put into an MCP tool's arguments. The results of the few tools
-  that return only Stroom's own fixed text, what the model gave them or the user's own answers (e.g.
-  `get_current_time`, `task_list`, `ask_user`, `memory`, the workspace file tools that only report what they
-  did) don't count. A stored result whose tool can't be told (an old row without the tool's name, or a tool
-  since removed) counts, as does a chat with no run on this node, as nothing is known of what it read. This
-  is the same signal that makes a change to the user's memory ask. A tool that confirms each change itself through its own forms (e.g.
-  `create_feed`, `create_pipeline`) isn't asked about twice, and the workspace file tools and memory (which
-  asks about a lasting change itself) don't ask, as their changes stay in the chat.
-* MCP tools on untrusted servers always ask. On trusted servers, read-only tools run without asking, and so
-  do tools that modify data but aren't destructive and don't reach outside Stroom, until the run has read
-  an untrusted MCP server's output, which could hold planted instructions (output from trusted servers,
-  built-in tools and attached tables doesn't count); destructive and open-world tools ask. A tool policy can
-  say otherwise.
-* Approval cards classify each tool (read-only, can modify, destructive, reaches outside Stroom, untrusted
-  server, after reading data); each chip's tooltip explains what it means.
-* A trusted server's tool marked `_meta.confirms` (it asks the user itself, through a form, as FastMCP's
-  changing tools do) runs without Stroom asking as well, so the user isn't asked twice. An _Ask every
-  time_ policy still asks.
-* The user can allow a tool for the rest of the chat, or all of a trusted server's read-only tools.
-  A change to a tool's name or description, or to the server's settings, asks again. Stroom's own tools are
-  listed in **Tool Approvals** as on `Stroom (built-in)`.
-* _Approve everything_ (per chat: the shield beside the model, or **Tool Approvals**) is off unless
-  `allowApproveEverything` is true. The shield is highlighted while it is on. It lets trusted servers'
-  tools that modify data keep running without asking after the run has read an untrusted server's output,
-  and Stroom's own tools that change something after the chat has read untrusted content; it never covers
-  MCP servers' destructive or open-world tools.
-* If no browser has polled the chat for `unattendedAfter`, the run is unattended: only read-only tools
-  run, and anything else waits for the user.
-* A read-only tool changes nothing, but its arguments still go to its server. Set
-  `askReadOnlyToolsAfterUntrustedContent` to make trusted servers' read-only tools ask too, once a run has
-  read data from tools or attached tables that could hold planted instructions. A tool the user has allowed
-  for the chat still runs.
-* Approval cards show each call's full arguments. Denying can give a reason, which the model is told.
-* A run waiting for an approval gives up its thread, and carries on when the user answers. Requests
-  expire after 24 hours.
-
-Every tool call and every decision is event-logged.
-
-
-## Questions for the user (`ask_user`)
-
-When the agent can't carry on without the user deciding something (e.g. which feed to use, or whether to replace
-an existing pipeline), it asks with its built-in `ask_user` tool rather than listing questions at the end of its
-answer and stopping. The run waits for the answers and then carries on with them, so a task with several steps,
-such as onboarding a feed, isn't broken up into separate questions the user has to piece back together.
-
-The chat shows the questions in a card, one at a time ("Question 1 of 4"). Each comes with the answers the agent
-thinks likely, as buttons to click, with the one it recommends marked and shown first, and, unless the agent says
-only those answers make sense, a box for the user's own answer (Enter to give it). _Back_ returns to the previous question; _Skip these questions_
-declines them. After the last answer, the answers are the tool's result, and the card shrinks to the questions and
-answers. The questions use the same machinery as forms from MCP tools (below): the run waits, Stop cancels them, and
-they expire after `elicitationTimeout`. An unattended run isn't asked; the agent is told to put the questions in its
-answer instead.
-
-## Forms from MCP tools (elicitation)
-
-An MCP tool can ask the user to fill in a form while it runs. The chat shows the form in a card, below what the
-model wrote before calling the tool, with _Submit_ (or Enter in a field) and _Decline_. Fields start with the
-values the server suggests (its schema's `default`, e.g. a proposed pipeline name). An answer that doesn't fit the
-form (e.g. a required field left empty) is refused, and the form stays to be put right. Once answered, the card
-shrinks to the question's first line and the answer given. Stopping the run cancels the form, and the card says so (in another tab too). The answer goes to the MCP server, never to the model. The tool call keeps its thread while it waits, so:
-
-* _Stop_ gives up on an MCP tool call at once (its client can't cancel it, so the server may still finish what it
-  started), rather than when it returns;
-
-* forms expire after `elicitationTimeout` (default 10 minutes);
-* at most `maxElicitationsPerNode` (default 5) wait on a node at once, and more are declined;
-* only flat forms are shown (text, numbers, true/false, a choice of one or several); others are refused.
-
-The server's message is shown as Markdown, sanitised as the chat's answers are. A form whose message is over 2,000
-characters, with more than 20 fields, or whose schema is over 16,000 characters is refused without being shown: a
-form is for a short question, and what the user reviews (e.g. an index template) belongs in the chat before it.
-The server is answered with an error (invalid params) saying why, not with a decline, as the user hasn't declined
-anything; a server may then ask in another way, e.g. the Stroom MCP server falls back to an id the user agrees to
-in the chat. The chat says it is a problem with the MCP server, and to ask an administrator to report it.
-
-
-## Steps for the user (user actions)
-
-Some steps are the user's to take, such as enabling a processor filter. A trusted MCP server's tool result
-can list them (`structuredContent.user_actions`, as FastMCP does), and the chat shows them as buttons in a
-_Steps for you_ card. The model can neither make nor click one.
-
-* From an MCP server, only four actions are shown: _Enable_ or _Disable_ a processor filter, _Open_ a
-  document, and an Elasticsearch request for the cluster admin. Anything else is dropped.
-* Stroom's own tools add buttons that create documents or change what the user has open: _Create query…_,
-  _Create dashboard…_, _Apply to query_, _Apply to dashboard_ and _Review and apply_ (see _Attaching a tab_, and
-  _Documentation_ below).
-  An MCP server can't offer these, even by naming them.
-* A proposed query is shown as a code block with a copy button. A proposed classic dashboard is shown as a
-  list of what its Query and Table will hold instead, as its StroomQL isn't what it will hold.
-* Stroom writes each button's text itself, from the filter as it is (pipeline, selection, task limit), and
-  warns if the pipeline isn't tagged `mcp-generated`. The server's own wording is only shown for "Do first"
-  conditions, as plain text.
-* When clicked, the step is checked again (the filter exists, is on that pipeline and still needs the
-  change), then done as the user, so their permissions apply. Each button works for 24 hours, only for the
-  chat's owner, and each click is audited (`AskStroomAi.userAction`). A button that changes something works
-  once, and a note goes into the chat, so the model knows on its next turn. _Open_ and the create buttons
-  change nothing themselves (the user creates the document in Stroom's dialog), so they can be used again,
-  e.g. after the dialog was cancelled.
-* An Elasticsearch request is shown read-only, with a copy button, only if it is `PUT _index_template/<name>`,
-  `DELETE _data_stream/<index>` or `DELETE <index>` (no wildcards, lists or `_all`), for an index of an
-  Elastic Index document used by a pipeline in the same result. Stroom never runs it.
-* A run carries on without waiting for buttons; nothing happens until the user clicks.
-
-
-## Commands, prompts and uploads
-
-* Typing `/` in the input box lists the commands. The chat's own are `/compact [focus]`,
-  `/mode agent|ask|plan`, `/plan <task>` (switches to Plan mode and asks), `/new [question]`, `/clear`
-  (asks first, stops anything the chat is doing, then deletes the chat's messages, attached data, workspace
-  files and the chat's own memory, keeping the chat, its mode, its tool approvals and the user's own memory)
-  and `/remember <fact>` (adds the fact to the user's memory, in `remembered.md`). A message starting with
-  `//` is sent as it is, starting with `/`.
-* The list of chats can be searched, as you type, by the chats' titles and the user's questions in them
-  (`POST /ai/v1/searchChats`; at least 2 characters, at most 50 chats). A search is only sent once the user
-  pauses typing for 300ms, so typing doesn't load the database with a query per key. Matches are highlighted,
-  and a chat found by a question shows up to 3 lines of the latest matching question. Escape clears the search.
-* A chat is named after its first question, then, after the answers to its 1st, 3rd, 6th and 10th questions
-  (and every 10th after), the chat's model is asked for a title of at most `stroom.ai.maxChatTitleWords`
-  words (12 by default; a longer reply is cut to that many). Titles are cut short with an ellipsis only where
-  they would not fit on one line. Only the user's questions
-  are sent. Once the user renames a chat, it is no longer named automatically; `/clear` lets it be again.
-* For work with several steps (e.g. onboarding a feed: create the feed, upload sample data, build and test a
-  pipeline, set up indexing), the agent writes a task list with its `task_list` tool before it starts, and keeps it
-  up to date as it works, so the user can see the plan, how far it has got and what is left. The list is shown
-  above the input, with how many steps are done, and each step marked as not started, in progress or completed;
-  it can be folded away. Each update is kept (as a `TASK_LIST` message, never sent to the model), so
-  it survives a refresh; a new question clears it.
-* After an answer, up to three things the user might ask next are offered as links floating over the bottom of
-  the conversation, just above the input (the conversation keeps room below its latest message, so they never
-  hide it); clicking one sends it. They come from one small call to the chat's model, given only the question and the
-  start of the answer, and are kept (as a `SUGGESTIONS` message, never shown in the conversation or sent to
-  the model) so they survive a refresh. None are offered while the chat is working, once the user asks
-  something else, or after a turn in which the agent asked the user for something (a form, an approval, or
-  steps to carry out). `stroom.ai.suggestFollowUps: false` turns them off.
-* When the user attaches something (a tab, a document from the Explorer, or a table), up to three questions about
-  it are offered at once, from what that kind of thing offers (e.g. a feed: what it has received, which pipelines
-  process it, processing errors; a query with no results: why), drawn from everything attached, the most
-  recently attached first. Removing something offers them again for what is left (or the follow-ups to the latest
-  answer, with nothing left). If the chat already has a conversation, or several things are attached, the chat's
-  model is then asked (`POST /ai/v1/suggestPrompts`) for suggestions that also fit what the user has been asking
-  and use the attached things together, given only the latest two questions, the start of the latest
-  answer and a two-line hint of each thing attached (what it is and what the agent can do with it, never its
-  content; documents the user can't view are left out). Follow-ups after an answer get the same hints for the
-  attached tab and documents, and lean towards acting on them. `suggestFollowUps: false` turns off the model's
-  suggestions of both kinds; the ones made at once, without the model, are still offered.
-* A message sent while the chat works steers the run. It is shown queued (a dashed outline, "Waiting for the
-  current step to finish") and the run picks it up once its current step finishes, before its next call to the
-  model; it is then shown as any other message. _Send now_ (the fast-forward button on it) has the run give up
-  waiting for a tool from an MCP server (within about 2 seconds; the server may still finish what it started,
-  and the model is told so) and skip the rest of the step's tool calls. Built-in tools, which limit their own
-  time, and a reply the model is writing, are not cut short. A message the run never picks up (e.g. it was
-  stopped) stays in the conversation, as sent, for the next run.
-* A message sent while the chat waits for the user to fill in a form or approve a tool call answers it instead:
-  the form is put aside, or the calls are denied with the message as the reason, and the run carries on.
-* A message sent just after an answer appears, while the run is still finishing (e.g. naming the chat), is
-  answered as the next question in the same run, rather than being taken as steering a run that has
-  already answered.
-* The prompts MCP servers offer are slash commands too, e.g. `/onboard_data_source feed=ACME`.
-  The filled-in prompt is put in the input box for the user to check and send.
-* A link in the chat to a Stroom document (`?action=open-doc&docType=…&docUuid=…`, as FastMCP returns) opens
-  the document in the current Stroom session, whatever host the link names, so set FastMCP's
-  `STROOM_MCP_STROOM_UI_URL` to Stroom's public address for links copied elsewhere. Other links open in a
-  new browser tab.
-* Sample data for a new feed is sent into the feed by the `upload_sample` tool: text in the chat goes through
-  Stroom's receipt checks and is stored as the feed's Data tab's Upload stores it, as the user; for files on the
-  user's machine, the agent gives a command to run in their terminal, which posts each file to `/mcp/upload` as the
-  user (see _Stroom's tools over MCP_).
-
-
-## Context, memory and compaction
-
-* The context meter beside the model shows how much of the model's context window the chat uses. While a question
-  is being answered, it shows what the model was sent for the latest call (as the model reported it) and what has
-  been added since, never more than the window; its tooltip says when the run has shortened earlier steps to fit,
-  so a breakdown larger than the figure (the parts as stored) is explained. Otherwise it is an estimate ("≈") of
-  what the next question would use.
-* When a chat reaches `compaction.thresholdPercent` of the window, earlier turns are replaced (for the
-  model only) by short digests, keeping the last `compaction.turnsKeptInFull` turns. Users can compact
-  with `/compact [focus]`, and undo the latest compaction.
-* A long run (e.g. onboarding a feed) fills the window with its own steps, which compaction doesn't cover.
-  Before each call to the model, if the run is getting too large, it is made smaller a step at a time, least
-  lossy first: earlier tool results, the arguments of earlier tool calls (e.g. whole code proposed), all but
-  the latest result, then earlier steps put as a line or two each in a note. The latest step is always kept,
-  and everything stays stored: the model can read it again with `read_turn`.
-* Token counts are estimated (characters / 4, corrected by what the model reported for the chat's last call;
-  25% more until a call has been measured, as XML and JSON take more tokens than that). Compaction and the
-  run's own shortening use the same estimate, so a chat is compacted when a question starts before the run would
-  have to shorten its steps. If the model says a
-  request is too large anyway, the estimate is corrected from the size it gave (e.g. vLLM's "135904 in the
-  messages"), the run is made smaller again and the call made again, up to 4 times, so the run carries on
-  where it was. Only if that fails is the chat compacted as far as it will go and the run started again, with
-  the model told to carry on from its steps. A reply cut off as the window filled up isn't taken as the
-  answer: room is made and the model is told to carry on.
-* A rate limit (HTTP 429) is never taken as the context being too large, even if it mentions tokens. The
-  _Request detail_ entry of an attempt that overflowed (with _Show request detail_ on) shows what the model
-  said.
-* The agent has memory: the user's own (`/memories/`, loaded into every chat) and the chat's
-  (`/memories/session/`). Changes to the user's memory from a chat that has read untrusted content (see
-  Approvals) need the user's approval. Users view, edit and undo changes in **Memory**.
-
-
-## Attaching a tab
-
-The chat only sees a tab the user has attached to it. Nothing is shared just because a tab is open or selected, so
-moving between tabs (e.g. from one dashboard to another while a question is being worked on) never changes what
-the agent is looking at without the user choosing it:
-
-* Above the input, a dashed _+_ chip names the document tab the user is on (or, when the chat is open as a tab of
-  its own, the one they were on before). Clicking it attaches that tab to the chat, in place of any attached
-  before; one tab is attached at a time.
-* The attached tab is shown as a chip, "Tab: _name_" with its icon, and "(unsaved)" while it has unsaved changes.
-  It stays attached whichever tab the user is on, until they remove it (× on the chip) or close the tab.
-  Attachments are kept per chat, in the browser, until the page is reloaded.
-* Each question is sent with the attached tab as the user sees it then: unsaved changes, the inner tab shown
-  (e.g. a pipeline's _Stepping_ view, with the selected element's input, output and code), and the tables of
-  results shown. A tab that hasn't changed since the last question is sent as its hash only. The agent is
-  given it as a snapshot in `/tabs/<n>/` with a note on the latest question; earlier questions keep a short
-  note of where theirs is. A message that steers a run is sent with the tab too, and its snapshot is used from
-  then on (e.g. after the user applied a change the run proposed), the agent being told the tab may have
-  changed.
-* Attaching a tab moves the cursor to the input box and offers questions about it (see _Commands, prompts and
-  uploads_). The tab's chip is set apart from the chips of attached documents and tables by a divider: the tab
-  stays attached for every question, while documents and tables go with the next one.
-* Editing a question, or _Ask again_, sends the attached tab as it is now.
-* Only documents the user can view are shared. `shareActiveTab: false` turns attaching tabs off.
-
-What the agent can offer for the attached tab, all as buttons the user clicks, never saved by the agent:
-
-* A StroomQL Query: _Apply to query_ (the revised query in the editor, unsaved, with _Undo apply_).
-* A dashboard: _Apply to dashboard_, with _Undo apply_. A proposal is for one of its tables, and can also
-  change the dashboard's other components. It can:
-  * add, edit (name, expression, format), move, hide or show columns; group, sort and filter them. Column
-    expressions are in Stroom's expression language, checked against the data source's fields, so the agent
-    can derive what the user means (e.g. `if()`, `match()`, `decode()`, `formatDate()`) rather than only show
-    raw fields;
-  * set the expression of the classic query that feeds the table. The agent writes the conditions as a
-    StroomQL `where` clause has them; Stroom turns them into the expression, checks them against the data
-    source, and the card shows them in words. The agent never shows StroomQL for a classic query;
-  * add tables beside it as tabs, fed by the same query, starting with its columns or none, which the
-    changes after them set up, e.g. a tab per event category, each with columns that suit it and a filter
-    on the category column;
-  * add and remove conditional formatting rules: rows matching conditions on the table's columns (all or
-    any of them) get a background or text colour from the rule editor's palette, bold or italic, or are
-    hidden. The dashboard file lists each table's rules, numbered, so the agent can remove one;
-  * add a Text widget in a pane below the table (or a table added before it), showing the event of the
-    selected row, which later changes can set up (e.g. the pipeline it shows the data through, or its
-    stepping button). A grouped row has no single event, so on a grouped table the Text widget shows nothing
-    and stepping can't start until the table's detail rows are on; the agent is told to say so and offer to
-    turn them on;
-  * rename any component (and so its tab), and change the settings of any table, query or text component,
-    as its Settings dialog has them:
-    * table: rows per page, row limits per group level, detail rows, value extraction and its pipeline, the
-      row of column filters, the query that feeds it, and the longest text a cell shows;
-    * query: data source, run when the dashboard opens, refresh on a timer and how often;
-    * text: the table it follows (or any), the pipeline it shows data through (or none), HTML, and the
-      stepping button.
-
-    Each value is checked first (a pipeline the user can view, a data source they can use, a component the
-    dashboard has), and the dashboard file the agent reads lists each component's settings as they are.
-
-  Changes are applied unsaved, on top of any unsaved changes the dashboard has (the agent proposed them
-  against the dashboard as the user has it), and all or none. They are made as each component's menus and
-  Settings dialog would make them: the dialog shows them, and saving the dashboard keeps them. _Undo apply_ puts back exactly what they
-  changed (the table, the query's expression, and each component's name and settings) and removes any tables
-  or Text widgets added, while the dashboard is open and hasn't been changed since; otherwise it is withdrawn,
-  saying why.
-
-  These are for classic dashboards (a Query and its Tables). On a StroomQL dashboard, the Embedded Query's
-  table follows its StroomQL, which the agent can propose as a new dashboard or query instead.
-* A pipeline being stepped: a change to the selected XSLT or text converter, as a diff with _Review and
-  apply_. The agent gives either the whole revised code or just the text to replace and its replacement, so a
-  small change (e.g. adding `normalize-space()`) doesn't mean copying the whole XSLT. Before it is offered, the
-  change is tried by stepping the record with it, and refused if it gives errors the current code doesn't.
-* `current_results` takes a snapshot of the rows of a table the tab shows.
-
-Each proposal is made against the tab as the user last sent it, and is applied only if the code, query or
-dashboard is still as it was then, or has since been changed only by proposals applied with the chat's buttons
-(e.g. two proposals in one answer can both be applied). A later code or query change is then merged line by
-line onto those changes, and refused if it touches lines they changed; the review dialog shows the current
-code against the merged result. A later dashboard change is applied to the dashboard as those changes left it,
-and fails as a whole, saying why, if one of its changes can't be made. Any other edit since the proposal (e.g.
-the user's own) means asking again for an up-to-date change.
-
-The agent can also propose documentation for any document, whichever tab is attached
-(`propose_documentation_change`): the Markdown on its Documentation tab, as a diff with _Review and apply_.
-The change is made to the tab's text as the user has it (unsaved edits included) if the attached tab is the
-document's, and otherwise to the documentation as saved. It needs View on the document to propose, and Edit to
-apply, checked when the user applies it (as is, for a change to the saved text, that it hasn't been saved with
-other text since). Applying opens the document if it isn't open, switches to its Documentation tab and puts
-the text in its editor, unsaved, for the user to save; _Undo apply_ puts back the text it held, while it still
-holds the applied text. Folders, Documentation documents (whose text is their content) and the Data Receipt
-Rules can't be given documentation this way.
-
-The agent can also offer new documents, whichever tab is attached, as buttons that open Stroom's own New
-Query or New Dashboard dialog with a suggested name. Nothing is created unless the user confirms the dialog,
-which checks their permission to create the document in the folder they choose and logs it as any new
-document is logged.
-
-Once created, the new document opens and is attached to the chat in place of any tab attached before, so
-the user can carry on with it there, e.g. asking the agent to refine it (with _Apply to query_ or _Apply to
-dashboard_).
-
-* _Create query…_: a StroomQL Query holding the agent's query.
-* _Create dashboard…_: a dashboard built from a StroomQL query the agent writes, with a query, a table and,
-  if the user wants one, a data preview (a Text widget showing the event of the selected row). Before
-  offering it, the agent asks, in one form:
-  * whether the query should be StroomQL or Expression Language (classic);
-  * which fields the table should show, unless the request says, offering sets of fields from the data
-    source to choose from;
-  * whether to add a data preview;
-  * which data source to use, if more than one could hold what was asked for.
-
-  A StroomQL dashboard holds the query in an Embedded Query, which shows its own table. For a classic
-  dashboard, Stroom turns the query's `where` into the Query's expression, and its `select` (with grouping,
-  sorting and `limit`) into the Table's columns, extracting values with the data source's default extraction
-  pipeline; the button's card then lists what the Query and Table will hold (the expression in words, the
-  columns, grouping, sorting and row limit) rather than the StroomQL they come from, while a StroomQL
-  dashboard's card shows its query. A classic dashboard can't hold StroomQL's `window`, `filter`, `having`
-  or `show` clauses, and a data preview needs ungrouped rows; the agent is told why when either doesn't fit.
-  The settings are built again from the query when the button is clicked, so they follow the data source as
-  it is then.
-
-
-## Attached tables
-
-Tables attached to a chat (from a dashboard, query or table) are downloaded into the chat's workspace, up
-to `tableAnalysis.maxTotalRows` rows (default 50,000).
-
-* A model with tools is given each table's profile and where it is, and works out figures with its tools.
-* A model without tools is given the first `tableAnalysis.maxRowsWithoutTools` rows (default 10,000), and
-  told when there are more. If they don't fit its context window, the tables are analysed in batches (no
-  more than `maxRowsPerBatch` rows, or half the context window, each), with the chat so far as compacted,
-  and the partial answers are merged into the answer.
-* These settings, and the batch and merge prompts, apply to everyone. Administrators change them on the
-  **Table Analysis** tab of the chat's **Settings**, which other users don't see.
-
-### The events behind the rows
-
-A dashboard or StroomQL table that isn't grouped is attached with each row's `StreamId` and `EventId` (from
-the hidden columns Stroom adds), as are the agent's own `run_stroomql` results. Where they are empty in every
-row (a data source without streams, such as reference data), they are left out. A table that already shows its
-own StreamId or EventId column isn't given a second. The agent can then look into
-the events themselves, e.g. for a value the table doesn't show:
-
-* `fetch_events` reads the event behind each row of a table (or of a CSV made from one with the `table`
-  tool, to pick rows) into one XML file in the workspace, each event in a
-  `<stroom-event streamId=".." eventId="..">` element. Events are read as the user, who needs the _View Data_
-  permission; streams of feeds they can't see are left out. An event that isn't well-formed XML (or has a
-  DOCTYPE) is kept as text. At most `workspace.maxEventsPerFetch` events (default 500) are fetched, each
-  up to `workspace.maxEventBytes` (default 1 MiB). Each stream is opened once and its events read in order;
-  on local disk 500 events take about a third of a second.
-* `search_events` evaluates an XPath against each event on its own and/or finds text in each, and writes a
-  CSV of `StreamId`, `EventId` and the result, or adds the result as a column of the original table (`join`),
-  for the `table` tool to count or group.
-
-
-## Processing tasks (`processor_tasks`)
-
-The `processor_tasks` tool answers questions about processing across the cluster, e.g. "what's failing in
-processing today, and why?", "which tasks for pipeline X failed, on which nodes, for which streams?" or "how many
-tasks are queued per node?". It takes the same filters in every mode: pipelines (or analytic rules), feeds,
-nodes, processor filters (id or UUID), streams, statuses and a time window on the tasks' status time (`since`
-and `until`, as ISO dates and times, periods such as `P7D` or `-7d`, or date expressions such as `now()-1d`).
-
-* `failures` (the default, over the last 24 hours unless given a window) gives, in one call:
-  * the tasks in the window by status, and by pipeline, feed and node with failure rates, calling out a node
-    with most of the failures;
-  * the Failed tasks grouped by pipeline, feed and node, with their first and last times and example tasks.
-    Stroom doesn't record why a task failed (its run threw, and the reason went only to that node's
-    application log), and the tool doesn't look: it says to look in that node's log, in your log system,
-    around those times;
-  * tasks that look stuck: Assigned or Processing with a status time older than `stuck_after` (default an
-    hour; a running task's status time is renewed by its node), by node;
-  * the errors inside processing that completed: the Error streams written in the window, by pipeline and
-    feed, and the failure modes in a sample of them (`sample`, default 30, at most 100, spread across the
-    pipelines and feeds, up to 256 KiB of each). Each stream is parsed into markers as the data viewer does
-    (`MarkerListCreator`), and the markers are grouped by severity, pipeline element and message pattern
-    (numbers, quoted values, UUIDs, times, IP addresses, paths and ids replaced with placeholders), ranked by
-    severity then count, with the pipelines, feeds and nodes each was met in, and examples linked to their
-    Error stream and the stream it was processing. A coverage line says what was read of what was found.
-* `list` lists tasks, newest first (default 50, at most 500, or all of them to a CSV with `out`): id,
-  status, node, stream, feed, pipeline, filter, times and duration, and each task's Error streams with their
-  error counts.
-* `summary` counts tasks grouped by any of pipeline, feed, node, status and filter.
-
-To stay cheap on a large cluster, counts come from the database's task summaries (one query, plus one per
-node when grouping by node) rather than reading every task; Error streams are looked for per pipeline (the
-scoped ones, or the 20 that had the most failures and tasks in the window) with at most 200 per pipeline;
-each page of tasks has its Error streams found in one query; and error counts are read only for the streams
-shown or sampled, as they are meta values that age off (when they have, the result says the counts are
-unavailable). Every cap reached is said in the result.
-
-Permissions: tasks need the _Manage Processors_ permission, as the Active Tasks tab does; without it the tool
-says so and gives nothing else. Only tasks whose pipeline (or analytic rule) and feed the user can view are
-counted or shown, and nothing hints at others. Error streams are found as the user (only of feeds they can
-view, and only of pipelines they can view); their content is read only with _View Data_, as the data viewer
-needs, and each stream read is logged as a View event.
-
-
-## Server tasks (`server_tasks`)
-
-The `server_tasks` tool is the live view of _Monitoring > Server Tasks_: the tasks running on the cluster right
-now, for questions such as "how many searches are users running?", "who is running the longest searches?",
-"what is node-2 busy with?" or "is anything stuck?". It is read only and never stops a task. (For stream
-processing, use `processor_tasks`.) Every mode takes the same filters: task name contains, user, node, minimum
-age (`min_age`, e.g. `10m` or `PT1H`), `top_level_only`, and `kind` `search`.
-
-* `summary` (the default) counts the tasks by task name, user and node, top-level tasks apart from sub-tasks,
-  how many have run for over an hour, and the oldest.
-* With `kind` `search`, users' searches are counted once each, by their top-level task (`FederatedSearchTask`
-  for Lucene index, analytic store and event searches, `Elasticsearch Cluster Search`, `SolrSearchTask`,
-  `Sql Statistic Search`, and the `<data source> Search` or `Search '<key>'` tasks of Plan B state stores and
-  Stroom's own data sources), not by the sub-tasks each runs on every node (`Search node: …`,
-  `Cluster Search`, `Search Index Shard` and so on), which are counted by node instead. A search that has
-  finished but is holding its results for the UI ("staying alive for UI requests") is said to be. A
-  `Dashboard Search` task is a poll for results, not a search.
-* `list` lists the tasks (id, name, shortened info, user, node, thread, age, parent and sub-task count),
-  oldest or newest first, 50 by default and at most 500, or all of them to a `.csv` or `.txt` file with `out`.
-* `tree` shows one task (`id`) with its sub-tasks, as the screen's tree does, and the tasks it is under.
-
-Each result is a snapshot as of a time, and says which nodes answered, which didn't (their tasks are missing)
-and which are disabled (not asked). The tasks are read through the same `TaskResource` calls as the screen,
-from every enabled node at once, waiting at most 15 seconds.
-
-Permissions: as the screen, the tool needs the _Manage Tasks_ permission, and each node checks it again; with
-it, every user's tasks and their info are given (shortened). Without it Stroom only shows a user the tasks of
-their own browser session (_User Tasks_), which the agent isn't in, so the tool says so and gives nothing.
-Each call is logged as a Search of the Task Manager.
-
-
-## System properties (`config_properties`)
-
-The `config_properties` tool reads Stroom's system properties, as _Administration > Properties_ shows them, so the
-agent can explain the configuration, e.g. "why are my users' search results capped at 1,000,000, and how do I
-change that?". It is read only and never changes a property.
-
-* `search` finds properties by words in their path and description (never their values), e.g. `max results`,
-  ranked with words in the property's own name first, optionally under a `prefix` (e.g. `stroom.search`), or only
-  those `overridden` (a database or YAML value) or `differs_from_default`. Each is given with its effective value,
-  its source (default, database or YAML) and the start of its description; 20 by default, at most 100.
-* `get` gives up to 10 properties in full: description, type and how its values are written (e.g. `PT30S` or
-  `30s` for a duration, `10MiB` for a size, lists and maps with their separator first), default, database value
-  with who set it and when, this node's YAML value, the effective value and where it comes from, whether it is
-  editable and whether a change needs a restart or a UI restart, and its siblings. With `nodes` or `all_nodes`
-  (enabled nodes), each node is asked for its YAML value, as the Properties screen does, as the user; at most 20
-  nodes and 60 lookups a call, all within 10 seconds, and a node that doesn't answer is named.
-* `list` lists the properties and branches directly under a path, e.g. `stroom.ui`.
-
-Every result says how a value is changed, as the code works it out (`ConfigMapper`: YAML, then database, then
-default): a database value is set on the Properties screen (editable properties only) and reaches every node
-within about a minute; a YAML value is set in that node's `config.yml` under `appConfig`, applies to that node
-only, and wins over the database value there (a YAML value equal to the default counts as not set). A property
-marked as needing a restart takes effect only once the node (or the UI nodes) restart. The agent is told that a
-limit often has layers, e.g. a dashboard table's _Max Results_ or a StroomQL `limit` replaces
-`stroom.ui.defaultMaxResults` rather than being capped by it, and sorted results are also cut at
-`stroom.search.resultStore.maxSortedItems`, so it checks the document the user means as well.
-
-Permissions: the tool needs the _Manage Properties_ permission, as the Properties screen does (a failed check
-counts as not having it); without it the tool says so and gives nothing else. Values are masked: every value of a
-password property (default, database, YAML, effective and each node's), every value of a property whose name
-suggests a secret (e.g. `clientSecret`) unless its type can't hold one, and credentials in any other value (a
-URL's `user:password@`, the value of a key named like a password, secret, token or API key in `key=value`,
-JSON, XML or a map value, and `Bearer`/`Basic` credentials). Each search or listing is logged as a Search event
-naming the properties given, each `get` as a View event of them, and a refusal as a failed Search event.
-
-
-## Elasticsearch index templates (`elastic_index_templates`)
-
-The `elastic_index_templates` tool helps an administrator review or reproduce the Elasticsearch templates behind an
-Elastic Index document, given its UUID. It reads, from the document's cluster with the document's own cluster
-connection (as a search does, and as `POST /elasticIndex/v1/templates` does), the index template that applies to
-the document's index and each component template it is composed of. It only reads and changes nothing in
-Elasticsearch.
-
-The result names the document (as a link), its index name and the newest index or data stream it resolves to (or
-why it couldn't be resolved), the index template that applies and any overlapping lower-priority templates (name,
-index patterns and priority, which don't apply), and then each template under a heading with its name, and its
-body indented, in a `json` code block, exactly as Elasticsearch returns it (nothing added or taken out). The model
-is told to show each template verbatim with its name just above its code block, and not to say whether or how it
-can be applied to Elasticsearch. A
-part Elasticsearch didn't give is shown with its status (`NOT_FOUND`, `FORBIDDEN` with Elasticsearch's own message
-naming the missing privilege, or `ERROR`), and a cluster that can't be reached is said so, with the reason.
-
-Permissions: the user needs View on the Elastic Index document, checked first; a document they can't view is
-refused with the same words as one that doesn't exist. Stroom then checks Read on it again as it reads the
-templates. The cluster's credentials need the Elasticsearch privileges to read templates. Each successful read is
-logged as a View event of the document. Its output is treated as untrusted, as it comes from Elasticsearch.
-
-
-## Stroom's tools over MCP (`/mcp`)
-
-Stroom serves its own tools to outside MCP clients at `/mcp` (MCP's Streamable HTTP transport), on the application
-port, behind the security filter like any other servlet: a client signs in with one of the user's API keys (or,
-with an external identity provider, through MCP's OAuth sign-in, which the endpoint's `401` and
-`/.well-known/oauth-protected-resource` point it to). Each request runs as that user.
-
-* The user needs the _Use MCP Tools_ permission, and is offered only the tools their MCP tool policies grant
-  (Security > MCP Tool Policies, which needs _Manage MCP Tool Policies_). The policies govern the chat too:
-  categories (Core, Search, Content, Indexing, Processing, Administration), each read-only or read and write, the union
-  of every enabled policy covering the user or a group they are in; none means no tools. The upgrade adds one
-  policy, _Default read-only tool policy_. When a policy changes, open sessions are told to list their tools again.
-* A call that changes something needs an MCP client that can show forms (MCP elicitation: one that declares the
-  `elicitation` capability when it connects), and asks the user in a form first. A tool that asks the user itself
-  before each change (`StroomTool.confirmsItself`) isn't also approved as a whole, so the user is asked once. What
-  the form shows leads with what the call acts on (a target's uuid or name, the build); arguments past 1,500
-  characters are cut, saying so. From a client that can't show forms, such a call is refused, saying why, and
-  nothing is changed; its read-only calls work. The model is never given an id to approve a call with (as the
-  Stroom MCP server gave one), since a model holding one could approve its own call. Such a client is still offered
-  the tools that change things: many have calls that only read, and a refusal tells the model why, where a tool
-  left out would leave it guessing at another way to make the change.
-* Each session has a workspace, as a chat has (a hidden chat record), deleted when the session ends (once its
-  running calls have stopped), or after `mcpEndpoint.sessionRetention` without requests (the _MCP Session
-  Maintenance_ job, every minute on each node, ends idle sessions and those whose clients have gone). Heavy calls
-  take one of the user's run slots, as chat runs do, given back while a call waits for the user.
-* A call is worked on by the thread serving its request, within the longer of `workspace.toolTimeLimit` and
-  `workspace.queryTimeLimit` (time waiting for the user doesn't count). It is cancelled when the client sends
-  `notifications/cancelled`, when its HTTP request ends, or when its session ends.
-* A user may have `mcpEndpoint.maxSessionsPerUser` sessions on a node: one more ends their least recently used
-  session that has no call running (clients often go away without ending theirs), or, if every one has a call
-  running, is refused. One user may have at most half of `mcpEndpoint.maxFormsPerNode` forms waiting.
-* Any request (a call, an answer to a form, a listening stream, a DELETE) for a session that isn't the user's is
-  answered `404`, as for a session the node doesn't have.
-* The tools' instructions (as the Stroom MCP server gave its clients) are sent when a client connects, and the
-  agent guides and field convention profiles are offered as MCP resources (`stroom://guide/<name>`,
-  `stroom://conventions/<name>`). The chat is given the same instructions when it is offered the build tools.
-* A session lives on the node that started it, so a load balancer must keep each client on one node: by client IP
-  (nginx `ip_hash`, a Service's `sessionAffinity: ClientIP`, or ingress-nginx's `upstream-hash-by: "$remote_addr"`).
-  A request for a session a node doesn't have is answered `404`, and the client starts a new session.
-* `upload_sample` gives commands that post a sample file to `/mcp/upload` as the user (`Authorization: Bearer
-  $STROOM_API_KEY`); the endpoint takes a file only for the user, feed, stream type and build `upload_sample` named,
-  once, within `sampleUploads.commandsLast`, up to `sampleUploads.maxUploadMb`. The commands single-quote the file's
-  path (nothing in it is expanded by bash or PowerShell; a path with a line break or control character is refused)
-  and send the body as `application/octet-stream`. A user may have `sampleUploads.maxPendingPerUser` sets of
-  commands waiting. The waiting files are held in the database, so a post may reach any node, and a restart
-  doesn't forget them. A file is claimed by one post at a time; a claim left by a node that stopped part way
-  through a post may be taken again after 10 minutes.
-* Every call, made, refused or not approved, is audited, with the client that made it.
-
-`/mcp` is a servlet, not part of the REST API, so it isn't in the Swagger documentation; the user guide (User
-Guide > AI > Agent Tools) describes it.
-
-
-## Retention and limits
-
-The _AI Chat Retention_ job (hourly) removes:
-
-* workspace files older than `workspaceFileRetention` (default 7 days);
-* chats not updated for `chatRetention` (default 90 days);
-* sample upload commands (`upload_sample files=`) that have run out (`sampleUploads.commandsLast`);
-* the chats, memory and sample upload commands of deleted users.
-
-Files made from Stroom data are checked against the user's permissions each time they are used, and removed if
-the user can no longer see the data.
-
-`workspace.*` limits file sizes and how much a tool can read or run for. `maxRunsPerUser`, `maxRunsPerNode` and
-`maxRunDuration` limit runs.
+# Stroom AI: maintainers' guide
+
+Stroom AI is Stroom's built-in agent. It has two front doors that share one set of tools:
+
+* **Ask Stroom AI**, a chat panel in the Stroom UI: a user asks questions and an AI model (any OpenAI-compatible
+  API) answers, using Stroom's own tools (to query Stroom, read streams, step pipelines, build feeds,
+  translations, indexes, dashboards and charts, and work with files in a per-chat workspace) and the tools of any
+  MCP servers the model is given.
+* **Stroom's MCP endpoint, `/mcp`**, which serves the same tools to outside MCP clients (VS Code, Claude Code and
+  others), as the signed-in user.
+
+Which tools a user is given, in the chat and over MCP alike, is set by MCP tool policies.
+
+This file is the entry point for people (and agents) who maintain and extend Stroom AI: what the module is, where
+things live, how to build, test and run it, and how it is configured. It is not the user or administrator guide:
+that is in the stroom-docs repository (see [Documentation](#documentation)). GitHub issue
+[#5848](https://github.com/gchq/stroom/issues/5848) is the original design issue.
+
+
+## Documentation
+
+In this directory:
+
+| File | What it holds |
+|---|---|
+| [DESIGN.md](DESIGN.md) | The design: how the chat, the agent loop, the tools, the build workflow and `/mcp` fit together, and the decisions behind them. |
+| [TOOLS.md](TOOLS.md) | The tool reference: every tool, its arguments and what it does. |
+| [FINDINGS.md](FINDINGS.md) | How Stroom actually behaves, as learned building and testing the tools: the facts the tools are designed around, each with where it is handled in code. Read it before changing how a tool reads, steps, processes or indexes. |
+| `stroom-mcp-impl/src/main/resources/stroom/mcp/impl/knowledge/` | What the model is given: `server-instructions.md` (the rules for every build), `guides/*.md` (the agent guides) and `conventions/` (field naming profiles and the ECS reference files). |
+
+User and administrator documentation is in the stroom-docs repository, under
+`content/en/docs/user-guide/ai/`:
+
+| Page | Covers |
+|---|---|
+| `ask-stroom-ai/setting-up.md` | Setting up a model, default chat settings, table analysis, tool policies, charting libraries, MCP tool servers, the main configuration properties, troubleshooting |
+| `ask-stroom-ai/chat-interface.md`, `using-the-chat.md` | The chat: modes, models, auto-approve, steering, attachments, suggestions, task list, approvals, questions and forms, steps for the user, links, workspace files, commands, context and memory |
+| `ask-stroom-ai/dashboards.md`, `charts.md`, `analytics.md`, `search-extraction.md` | Dashboards and queries, charts (visualisations), table and chart analysis, search extraction |
+| `ask-stroom-ai/prompt-guide.md` | What to ask |
+| `ask-stroom-ai/cluster-questions.md` | The administration tools: processing tasks, server tasks, system properties, volumes, data retention, Elasticsearch index templates |
+| `how-it-works/runs-and-context.md`, `memory.md`, `trust.md`, `workspaces.md` | Runs, compaction, token counting, memory, untrusted content, workspaces and their limits |
+| `agent-tools/_index.md`, `connecting-clients.md`, `deployment.md`, `tool-policies.md`, `tool-reference.md` | `/mcp`: clients (VS Code, Claude Code), sign-in, load balancers, tool policies, the tool list |
+| `pipeline-admin/onboarding.md`, `builds-and-promotion.md`, `editing-pipelines.md`, `configuration.md` | Onboarding feeds (builds, templates, discovery, reference data), what the agent changes, build folders, hand edits and promotion, changing, processing and verifying pipelines, and the build settings (workspace folder, pipeline stages, error triage, field conventions, sample uploads, AGENTS documents and their typed sections, guides) |
+
+When behaviour a user or administrator sees changes, update the stroom-docs page as well as this repository.
+[Behaviour internals](#behaviour-internals) below says how that behaviour is implemented.
+
+
+## Where things live
+
+| Module | What it holds |
+|---|---|
+| `stroom-ai/stroom-ai-api` | The interfaces other modules use (e.g. the `ai()` XSLT and StroomQL functions' service). |
+| `stroom-ai/stroom-ai-impl` | The chat, the agent loop and every tool (built-in and ported). |
+| `stroom-ai/stroom-ai-impl-db` | Persistence: jOOQ DAOs and the Flyway migrations (`src/main/resources/stroom/ai/impl/db/migration/`). The jOOQ code under `db/jooq/` is generated. |
+| `stroom-ai/stroom-ai-mock` | A mock module for tests of other modules. |
+| `stroom-ai/stroom-mcp-impl` | The `/mcp` endpoint (servlet, sessions, forms, approvals, uploads) and the bundled knowledge (guides, conventions, server instructions). |
+| `stroom-core-shared/src/main/java/stroom/ai/shared/` | Shared (GWT and server) types: chat messages, REST resources, settings. |
+| `stroom-core-client/src/main/java/stroom/ai/client/` | The GWT UI: the chat panel (`AskStroomAiPresenter`), settings, memory, tool approvals, tool policies, forms and cards. |
+| `stroom-app/src/main/resources/ui/vis.js` | The visualisation frame's `stroom.report` hook, which generated charts call with their render report. |
+| `stroom-app/src/test/java/stroom/ai/impl/`, `stroom/mcp/impl/` | Integration and end-to-end tests on a real Stroom (see [Testing](#testing)). |
+
+In `stroom-ai-impl` (`stroom.ai.impl`):
+
+* **The chat and runs**: `AiChatRunManager` starts and tracks runs (one per question, worked on in the
+  background as the user); `McpAgentChat` is the agent loop; `ContextAssembler` builds what the model is sent;
+  `ChatCompactor`, `ContextBudget`, `ContextUsageTracker`, `TurnSummaries` and `ReferenceResults` keep a chat
+  and a run within the context window; `ModelStreamer` streams the model's replies; `AskStroomAIService` and
+  `AskStroomAiResourceImpl` are the REST side.
+* **Models and MCP servers**: `OpenAIModelStoreImpl` (the OpenAI Model document), `McpToolset`,
+  `McpServerConnection`, `McpClientCache`, `McpToolAdapter`, `McpToolFilter` (an MCP server's tool policies),
+  `McpElicitations` (forms from MCP servers' tools), `McpJson` (the MCP SDK's mapper, with a mix-in Jackson 3.2
+  needs to write forms).
+* **Approvals and trust**: `ToolConsentGate` is the one place a call is approved; `ChatConsentGate` and
+  `ToolConsent` decide for a chat; `ToolApprovalService` records answers; `ToolGrants` and `CurrentToolGrants`
+  apply MCP tool policies (`AiToolPolicyService`, `AiToolPolicyResourceImpl`).
+* **Tool groups**: `ToolGroups` and `BuiltInToolGroups` (the built-in tools only some questions need, offered
+  behind `activate_<group>` tools).
+* **Answers**: `AnswerLinks` (documents and streams named in an answer made into links), `AnswerNotes`,
+  `FollowUpSuggester`, `ChatTitler`.
+* **Dashboards and charts**: `DashboardBuilder`, `DashboardChanges`, `DashboardComponents`,
+  `DashboardSettings`; `vis/` (`ChartLibraries` finds ECharts and D3 Script docs and puts Stroom's adapters
+  beside them, `AdapterScripts` serves this release's adapter for each, `EChartsTemplate`, `D3Visualisation`,
+  `ChartCheck`); the adapters are resources in `src/main/resources/stroom/ai/impl/vis/`
+  (`echarts-generic.js`, `d3-generic.js`).
+* **The workspace**: `workspace/` (files, tables, safe jq, XPath and regex, limits).
+* **Tools**: `tools/` holds every tool. The chat's own tools (`*Tool.java`, e.g. `RunStroomQlTool`,
+  `ProposeDashboardChangeTool`, `ProposeVisualisationTool`, `ProcessorTasksTool`, `ExplainProcessingTool`) are
+  registered in `BuiltInTools`; the build workflow's shared code is in `tools/draft` (drafting mappings),
+  `tools/generation` (mapping to XSLT and back: `XsltGenerator`, `XsltReader`, `HandEdits`), `tools/sample`
+  (profiling, surveying, the Data Splitter dry run), `tools/indexing` (field plans, index templates, ECS),
+  `tools/fielddoc` (documentation of fields) and `tools/cef`. `error_rules.yaml` holds Stroom's error triage rules.
+* **Memory**: `memory/`. **Search extraction**: `extraction/`.
+
+In `stroom-mcp-impl` (`stroom.mcp.impl`):
+
+* **The endpoint**: `McpServlet` (`/mcp`), `StroomMcpServer` (Streamable HTTP with per-user tool lists),
+  `McpSession`, `TransportSessions`, `RunningCalls`, `McpForms` and `McpApprovals` (forms and approvals for
+  outside clients), `McpUploadServlet` (`/mcp/upload`), `McpProtectedResourceServlet`, `McpWorkspaces`.
+* **The build tools** (onboarding, translation, indexing, processing, documentation, promotion): `tools/`,
+  registered in `PortedToolsModule`. `WriteGuard` keeps writes to the build folder; `BuildPlan` and
+  `BuildStatusTool` give the plan and its `next` call; `Consent` asks the user in forms.
+* **Bundled knowledge**: `BundledKnowledge` reads `knowledge/`. Its guides and conventions are listed by name in
+  the class (a folder can't be listed reliably inside a jar), so a new guide must be added to `GUIDES` too.
+
+
+## Building and running
+
+Stroom AI builds with the rest of Stroom (see the repository's `AGENTS.md`). The modules on their own:
+
+```bash
+./gradlew :stroom-ai:stroom-ai-impl:compileJava :stroom-ai:stroom-mcp-impl:compileJava
+./gradlew gwtCompile    # The chat UI
+```
+
+A Flyway migration added to `stroom-ai-impl-db` needs the jOOQ code regenerating:
+`./gradlew :stroom-ai:stroom-ai-impl-db:generateJooq`.
+
+To run it locally, start a Stroom dev node as usual and:
+
+* create an **OpenAI Model** document and set it as the default (see stroom-docs `ask-stroom-ai/setting-up.md`);
+* for work without a model, set its model ID to `__stub__` (`AiServiceImpl.STUB_MODEL_ID`): the stub answers at
+  once, and a question can include `[[think]]` (to get some reasoning) or `[[tool:NAME {json arguments}]]` (to
+  call a tool first);
+* give users a tool policy (Security > MCP Tool Policies): the upgrade adds only _Default read-only tool
+  policy_, so the write tools need a policy granting them;
+* for `/mcp`, the user needs the _Use MCP Tools_ permission and an API key; point a client at
+  `<stroom>/mcp` (see stroom-docs `agent-tools/connecting-clients.md`).
+
+Don't rebuild while a dev node or a long test run is using the jars.
+
+
+## Testing
+
+* **Unit tests** in each module: `./gradlew :stroom-ai:stroom-ai-impl:test :stroom-ai:stroom-mcp-impl:test`.
+* **Reference files.** Several tests compare what they produce with files under
+  `src/test/resources/stroom/ai/impl/golden/` (`GoldenFiles`): the tools and prompts the model is shown, the exact
+  output of the larger tools, scripted chat runs, how stored chats are read back, and the permission, audit,
+  consent and tool-name tables. They show that a change (e.g. a refactor) leaves what the agent does as it was. A
+  mismatch writes the actual text under `build/golden-actual/` and fails. When a change is meant to alter them,
+  accept it with `-DtestUpdateGoldenFiles=true` (e.g.
+  `./gradlew :stroom-ai:stroom-ai-impl:test -DtestUpdateGoldenFiles=true`) and review the reference files'
+  `git diff` with the change. The stored-chat fixture (`fixtures/stored-chats/`) is never regenerated: it is how
+  chats are stored today, so a change that can't read it breaks existing chats.
+* **Integration and end-to-end tests** in `stroom-app` run the real chat and `/mcp` tools on the integration test
+  database, stream store and the standard content packs (`AbstractAiIntegrationTest`):
+  * `stroom/mcp/impl/e2e/Test*` (`AbstractE2eTest`): each build workflow end to end through an administrator's MCP
+    client (`McpTestClient`) that agrees to every form unless told otherwise, with the processing and shard
+    flushes Stroom's jobs would do run by the test. `TestE2eEvalReference` builds every evaluation case from its
+    reference solution (`STROOM_EVAL_CASES=12,35` runs only those).
+  * `stroom/ai/impl/TestAskStroomAi*` and `stroom/mcp/impl/Test*`: the chat with real tools against a fake model
+    server, MCP sessions, policies and sample uploads across nodes.
+  * Elasticsearch tests need a test cluster: `STROOM_TEST_ELASTIC_URL` (and `STROOM_TEST_ELASTIC_TLS_URL`,
+    `STROOM_TEST_ELASTIC_TLS_PASSWORD` for the TLS cases); `STROOM_TEST_ELASTIC_REQUIRED=true` fails rather than
+    skips without one (`ElasticTestNode`).
+
+  Run them as any `stroom-app` test, e.g.
+  `./gradlew :stroom-app:test --tests 'stroom.mcp.impl.e2e.TestE2eTranslation'`.
+* **Model evaluation.** `TestModelEvaluation` (in `stroom-ai-impl`'s tests) runs a small set of real prompts
+  against a real model through the real agent loop, to compare the tools the agent chooses and what it answers
+  before and after a change. It is not part of the build: it needs a model, costs tokens, and a model's answers
+  vary from run to run, so compare reports rather than expecting every check to pass every time. It runs over a
+  small fixed Stroom held in memory (`ModelEvaluationWorld`: feeds, a pipeline and its processor filter, an index,
+  a dashboard, processor and server tasks, system properties, canned query results, and a fake MCP server whose
+  index template tool asks for review), so no database or Stroom instance is needed.
+
+  ```bash
+  export STROOM_AI_EVAL_API_KEY=...   # Not needed for a local server without one.
+  ./gradlew :stroom-ai:stroom-ai-impl:test --tests '*TestModelEvaluation*' \
+    -DrunModelEvaluation=true \
+    -DtestAiEvalBaseUrl=https://api.openai.com/v1/ \
+    -DtestAiEvalModel=gpt-4.1
+  ```
+
+  * `-DtestAiEvalScenarios=pipeline-feeds,stroomql-query` runs only the scenarios named.
+  * `-DtestAiEvalReportDir=...` writes the report elsewhere (the default is
+    `stroom-ai/stroom-ai-impl/build/ai-eval/`).
+
+  The scenarios are in `src/test/resources/stroom/ai/impl/eval/scenarios.json`: each has a prompt, the tab
+  attached (`pipeline` or `dashboard`, or none), the user's application permissions, the tools expected to be
+  called (`a|b` for either), and checks on what the user sees (the answer, and any `ask_user` questions) and on the
+  tools' arguments. Each run writes `report-<time>.md` and `.json`, with the tools called per scenario and whether
+  each check passed, and the test fails if any check failed.
 
 
 ## Configuration
 
-All under `appConfig.ai` unless stated.
+All under `appConfig.ai` (`stroom.ai` in the Properties screen) unless stated; the classes are
+`AiConfig`, `AiWorkspaceConfig`, `AiCompactionConfig`, `McpEndpointConfig`, `AiBuildsConfig`,
+`AiSampleUploadsConfig`, `ErrorTriageConfig`, `AiPipelineStagesConfig` and `AiInstructionSuggestionsConfig` in
+`stroom-ai-impl`. The generated
+`stroom-config/stroom-config-app/src/test/resources/stroom/config/app/expected.yaml` has them all with their
+defaults: regenerate it (`GenerateExpectedYaml`) when one changes.
 
 | Property | Default | What it does |
 |---|---|---|
-| `allowApproveEverything` | `false` | Lets users turn on _approve everything_ for a chat |
-| `askReadOnlyToolsAfterUntrustedContent` | `false` | Trusted servers' read-only tools ask once a run has read untrusted data |
+| `allowApproveEverything` | `false` | Lets users turn on _Auto-approve_ (approve everything) for a chat |
+| `askReadOnlyToolsAfterUntrustedContent` | `false` | Trusted MCP servers' read-only tools ask once a run has read untrusted data |
+| `chatResponseCache.*` | `maximumSize: 1000`, `expireAfterWrite: PT10M` | Caches the `ai()` XSLT and StroomQL functions' answers (`maximumSize: 0` asks the model every time) |
 | `chatRetention` | `P90D` | How long an unused chat is kept |
-| `compaction.thresholdPercent` | `80` | When a chat is compacted automatically |
+| `compaction.thresholdPercent` | `80` | How full the window (less the reply reserve) gets before a chat is compacted |
 | `compaction.turnsKeptInFull` | `2` | The latest turns never compacted |
-| `elicitationTimeout` | `PT10M` | How long a form from an MCP tool waits |
-| `maxElicitationsPerNode` | `5` | Forms that may wait on a node at once |
+| `compaction.digestMaxResultRows` | `20` | Tool results of up to this many lines are copied exactly into a compacted turn's digest |
+| `compaction.replyReserveTokens` | `4096` | Tokens of the window kept free for the model's reply |
+| `elicitationTimeout` | `PT10M` | How long a form from an MCP server's tool waits |
+| `maxChatTitleWords` | `12` | The most words in a chat title the model is asked for |
+| `maxElicitationsPerNode` | `5` | Forms from MCP servers' tools that may wait on a node at once |
 | `maxRunDuration` | `PT2H` | The longest a run may take |
 | `maxRunsPerNode` | `20` | Runs working at once on a node |
-| `maxRunsPerUser` | `3` | Runs working at once for a user |
+| `maxRunsPerUser` | `3` | Runs (and heavy `/mcp` calls) working at once for a user |
 | `maxTabSnapshotBytes` | `2097152` | The most bytes of an attached tab's content kept for one question |
+| `maxToolIterations` | `100` | The most calls to the model for one question; on the last it is offered no tools, so it sums up |
 | `shareActiveTab` | `true` | Lets users attach a document tab to a chat |
 | `suggestFollowUps` | `true` | The model suggests follow-ups after answers, and questions about what is attached |
-| `toolGroupThreshold` | `24` | More MCP tools than this are offered as groups (0 never groups) |
+| `toolGroupThreshold` | `24` | More MCP tools than this are offered as groups (0 never groups); the built-in tools are grouped by `BuiltInToolGroups` |
 | `unattendedAfter` | `PT10M` | When a run with no one watching becomes unattended |
-| `workspace.maxQueryLength` | `10000` | The longest StroomQL query `run_stroomql` may run, in characters |
-| `workspace.queryTimeLimit` | `PT2M` | The longest a `run_stroomql` query may take |
-| `workspace.maxEventsPerFetch` | `500` | The most source events `fetch_events` fetches in one call |
-| `workspace.maxEventBytes` | `1048576` | The largest source event `fetch_events` fetches, in bytes |
 | `workspaceFileRetention` | `P7D` | How long workspace files are kept |
-| `mcpEndpoint.enabled` | `true` | Whether Stroom's MCP endpoint, `/mcp`, serves MCP clients |
+| `workspace.maxFileBytes` | `20971520` | The largest workspace file |
+| `workspace.maxChatBytes` | `104857600` | The most a chat's workspace may hold |
+| `workspace.maxUserBytes` | `524288000` | The most all of a user's workspaces may hold |
+| `workspace.maxLinesPerRead` | `500` | The most lines of a file a tool returns in one call |
+| `workspace.maxCharsPerRead` | `20000` | The most characters a tool returns in one call |
+| `workspace.toolTimeLimit` | `PT30S` | The longest a workspace tool call may run |
+| `workspace.queryTimeLimit` | `PT2M` | The longest a `run_stroomql` query may take |
+| `workspace.maxQueryLength` | `10000` | The longest `run_stroomql` query, in characters |
+| `workspace.maxQueryRows` | `10000` | The most rows `run_stroomql` returns (a larger `limit` is lowered to it) |
+| `workspace.maxEventsPerFetch` | `500` | The most events `fetch_events` fetches in one call |
+| `workspace.maxEventBytes` | `1048576` | The largest event `fetch_events` fetches |
+| `workspace.maxStreamStoreReads` | `500` | The most streams `stream_meta` reads attributes for from the stream store in one call |
+| `workspace.maxToolArgumentBytes` | `1048576` | The largest MCP tool call's arguments once `{"$workspace": ...}` references are filled in |
+| `mcpEndpoint.enabled` | `true` | Whether `/mcp` serves MCP clients |
 | `mcpEndpoint.formTimeout` | `PT10M` | How long a form asked of an MCP client's user waits |
-| `mcpEndpoint.maxFormsPerNode` | `50` | Forms that may wait for MCP clients' users on a node at once |
+| `mcpEndpoint.maxFormsPerNode` | `50` | Forms that may wait for MCP clients' users on a node at once (a user at most half) |
 | `mcpEndpoint.keepAliveInterval` | `PT20S` | How often an MCP session's open stream is pinged |
 | `mcpEndpoint.sessionRetention` | `P1D` | How long an idle MCP session, and its workspace, is kept |
 | `mcpEndpoint.maxSessionsPerUser` | `20` | MCP sessions one user may have open on a node at once |
@@ -698,114 +238,125 @@ All under `appConfig.ai` unless stated.
 | `sampleUploads.maxUploadMb` | `100` | The largest sample file that may be posted to `/mcp/upload` |
 | `sampleUploads.commandsLast` | `PT15M` | How long `upload_sample`'s upload commands may be used |
 | `sampleUploads.maxPendingPerUser` | `20` | Sets of upload commands one user may have waiting at once |
-| `errorTriage.rules` | `[]` | The environment's own rules for triaging pipeline errors, before Stroom's |
-| `pipelineStages.*` | (see `expected.yaml`) | What marks a pipeline as each stage, and where each stage's templates are |
-| `appConfig.askStroomAi.browserNotifications` | `true` | Browser notifications when a chat finishes or needs the user |
-| `appConfig.askStroomAi.showToolCalls` | `true` | Shows tool calls in the conversation (only hides them when off) |
-| `appConfig.askStroomAi.showReasoning` | `true` | Shows the model's reasoning in the conversation |
-| `appConfig.askStroomAi.enableDebugDetail` | `true` | Keeps and shows each answer's request detail |
+| `instructionSuggestions.evidenceWindow` | `P90D` | How far back `instruction_evidence` reads the user's own chats |
+| `instructionSuggestions.minChats` | `2` | Chats that must make a choice the same way (and none another way) for `instruction_evidence` to call it repeated |
+| `errorTriage.rules` | `[]` | The environment's own rules for triaging pipeline errors, before Stroom's (`error_rules.yaml`) |
+| `pipelineStages.<stage>.*` | (see `expected.yaml`) | Per stage (translation, indexing, discovery, reference, records, forwarding): `templateFolders`, `templateNames`, and the `schemaGroups` and `streamTypes` that mark a pipeline as that stage |
+| `db.*` | | The AI tables' database connection |
 
-The `appConfig.askStroomAi` settings are the defaults for each user's own settings, which they change in the
-chat's settings (_Show tool calls_, _Show reasoning_, _Show request detail_, _Enable browser notifications_).
-Turning off tool calls or reasoning only hides them, in past turns too, and turning them on again shows them;
-the agent works the same either way. A model's own _Show reasoning_ setting decides whether its reasoning is
-kept at all. Turning off request detail stops it being kept for later answers, and hides what was kept.
-
-
-## Troubleshooting
-
-* **"The tools of MCP tool server ... are unavailable"**: the server could not be reached, or its
-  authentication isn't set up, e.g. OAuth2 passthrough with the internal identity provider needs a token
-  audience, a trusted server and https. The chat still works with the built-in tools.
-* **A chat shows "Interrupted because the Stroom node running it stopped"**: the node running it went
-  away. _Resume_ carries on from the last question.
-* **Nothing streams**: some OpenAI-compatible servers don't stream; the answer then arrives whole.
-* **A dashboard change applied from the chat seems to do nothing**: check the component's Settings dialog,
-  which shows the change once applied. Some settings only show their effect in the right conditions: a Text
-  widget shows, and steps through, the event of a selected row, so on a grouped table it stays empty until
-  the table's detail rows are on and one of them is selected; its stepping button also needs the Stepping
-  permission and data that isn't shown as HTML. If a change can't be applied, the reason is shown when
-  _Apply to dashboard_ is clicked.
+Under `appConfig.askStroomAi` (`AskStroomAiConfig`), the defaults for each user's own chat settings and the
+table analysis settings: `dockType`, `dockLocation`, `dockSize`, `chatSystemPrompt`, `historySummaryPrompt`,
+`maxHistorySafetyCapMessages` (200), `attachmentDownloadTimeoutMs` (60000), `enableDebugDetail`,
+`showToolCalls`, `showReasoning`, `browserNotifications` (all `true`), and `tableAnalysis.*` (`maxTotalRows`
+50000, `maxRowsPerBatch` 1000, `maxParallelBatches` 4, `maxRowsWithoutTools` 10000, and the batch and merge
+prompts). Users change their own in the chat's settings; administrators change the defaults and table analysis
+in the chat's **Settings** (see stroom-docs `ask-stroom-ai/setting-up.md`).
 
 
-## Developer notes
+## Behaviour internals
 
-### Reference files
+How the user-visible behaviour described in stroom-docs is implemented, for maintainers. The user and admin side of
+each is in stroom-docs: approvals, forms and steps for the user in `ask-stroom-ai/using-the-chat.md`; the
+administration tools in `ask-stroom-ai/cluster-questions.md`; builds, hand edits and promotion in
+`pipeline-admin/builds-and-promotion.md`; processing, reprocessing and verification in
+`pipeline-admin/editing-pipelines.md`; the typed AGENTS sections in `pipeline-admin/configuration.md`.
 
-Several tests in `stroom-ai-impl` compare what they produce with reference files under
-`src/test/resources/stroom/ai/impl/golden/` (`GoldenFiles`): the tools and prompts the model is shown, the exact
-output of the larger tools, scripted chat runs, how stored chats are read back, and the permission, audit, consent
-and tool-name tables. They are there to show that a change (e.g. a refactor) leaves what the agent does as it was. A
-mismatch writes the actual text under `build/golden-actual/` and fails. When a change is meant to alter them, accept
-it with `./gradlew :stroom-ai:stroom-ai-impl:test -DtestUpdateGoldenFiles=true` and review the reference files'
-`git diff` with the change. The stored-chat fixture (`fixtures/stored-chats/`) is never regenerated: it is how chats
-are stored today, so a change that can't read it breaks existing chats.
+### Approvals
 
-### Model evaluation
+* `ToolConsentGate` is the one place a call is approved; `ChatConsentGate` and `ToolConsent` decide for a chat,
+  `McpApprovals` for `/mcp`. Calls that only read never ask. A call that changes something runs without asking until
+  the chat has read untrusted content: an attached tab or table, the result (in this run or stored from an earlier
+  one) of any tool whose `StroomTool.readsUntrustedContent()` is true (nearly all of Stroom's tools, and every MCP
+  tool), and workspace files put into an MCP tool's arguments. A stored result whose tool can't be told (an old row
+  without the tool's name, or a tool since removed) counts, as does a chat with no run on this node. The same signal
+  makes a change to the user's memory ask.
+* A tool that confirms each change itself (`StroomTool.confirmsItself`), or a trusted MCP server's tool marked
+  `_meta.confirms`, isn't approved as a whole as well. An _Ask every time_ policy still asks.
+* Answers are recorded by `ToolApprovalService` with a compare-and-set (two tabs answering at once: one counts);
+  requests expire after 24 hours. Every tool call and decision is event-logged by `AiAuditLog`.
 
-`TestModelEvaluation` (in `stroom-ai-impl`'s tests) runs a small set of real prompts against a real model through
-the real agent loop, to compare the tools the agent chooses and what it answers before and after a change, e.g. each
-step of the tool groundwork. It is not part of the build: it needs a model, costs tokens, and a model's answers vary
-from run to run, so compare reports rather than expecting every check to pass every time. It runs over a small
-fixed Stroom held in memory (`ModelEvaluationWorld`: feeds, a pipeline and its processor filter, an index, a
-dashboard, processor and server tasks, system properties, canned query results, and a fake MCP server whose index
-template tool asks for review), so no database or Stroom instance is needed.
+### Forms and steps for the user
 
-```bash
-export STROOM_AI_EVAL_API_KEY=...   # Not needed for a local server without one.
-./gradlew :stroom-ai:stroom-ai-impl:test --tests '*TestModelEvaluation*' \
-  -DrunModelEvaluation=true \
-  -DtestAiEvalBaseUrl=https://api.openai.com/v1/ \
-  -DtestAiEvalModel=gpt-4.1
-```
+* `ElicitationSchema` holds the form limits (2,000-character message, 20 fields, 16,000-character schema). A form
+  from an MCP server over them is answered with an error (invalid params), not a decline. Stroom's own tools check
+  their forms first (`Consent`) and ask in the chat when one is too large.
+* Steps for the user (`structuredContent.user_actions`) are checked and run by `UserActions` and
+  `UserActionService`: the four kinds an MCP server may offer, the allowed Elasticsearch requests, re-checks on
+  click, 24-hour expiry, and auditing as `AskStroomAi.userAction`.
 
-* `-DtestAiEvalScenarios=pipeline-feeds,stroomql-query` runs only the scenarios named.
-* `-DtestAiEvalReportDir=...` writes the report elsewhere (the default is `stroom-ai/stroom-ai-impl/build/ai-eval/`).
+### The chat
 
-The scenarios are in `src/test/resources/stroom/ai/impl/eval/scenarios.json`: each has a prompt, the tab attached
-(`pipeline` or `dashboard`, or none), the user's application permissions, the tools expected to be called (`a|b` for
-either), and checks on what the user sees (the answer, and any `ask_user` questions) and on the tools' arguments.
-Each run writes `report-<time>.md` and `.json`, with the tools called per scenario and whether each check passed,
-and the test fails if any check failed.
+* The list of chats is searched with `POST /ai/v1/searchChats` (at least 2 characters, at most 50 chats, sent once
+  typing pauses for 300 ms).
+* Questions about what is attached come first from what each kind of thing offers; with a conversation or several
+  things attached, the model is asked (`POST /ai/v1/suggestPrompts`), given only the latest two questions, the start
+  of the latest answer and a two-line hint of each thing attached (never its content).
+* A dashboard proposal is applied unsaved, all or none; _Undo apply_ puts back exactly what it changed. A code or
+  query proposal made against an older tab is merged line by line onto changes applied with the chat's buttons, and
+  refused if it touches lines they changed.
+
+### Administration tools
+
+* `ProcessorTasksTool`: counts come from the database's task summaries; Error streams are looked for per pipeline
+  (the scoped ones, or the 20 with most failures), at most 200 each, and parsed into markers as the data viewer does
+  (`MarkerListCreator`). `ServerTasksTool` reads every enabled node through `TaskResource`, waiting 15 seconds.
+  `ConfigPropertiesTool` explains values as `ConfigMapper` resolves them and masks with `ConfigValueMasker`.
+  `ElasticIndexTemplatesTool`'s output is treated as untrusted. `VolumesTool` (`VolumeReport`) and
+  `ExplainRetentionTool` state Stroom's behaviour from fixed text checked against its code.
+* Searches are logged as Search events and reads as View events.
+
+### `/mcp`
+
+* The form shown for a call that changes something leads with what the call acts on; arguments past 1,500
+  characters are cut, saying so. A client that doesn't declare the `elicitation` capability is refused such calls
+  but still offered the tools. The model is never given an id to approve a call with, since a model holding one
+  could approve its own call.
+* A call is worked on by the thread serving its request, within the longer of `workspace.toolTimeLimit` and
+  `workspace.queryTimeLimit` (time waiting for the user doesn't count), and cancelled by `notifications/cancelled`,
+  the end of its HTTP request or of its session. Heavy calls take one of the user's run slots, given back while a
+  call waits for the user.
+* Any request for a session that isn't the user's is answered `404`, as for a session the node doesn't have.
+* `upload_sample`'s commands single-quote the file's path (a path with a line break or control character is
+  refused) and post the body as `application/octet-stream`. Waiting uploads are held in the database, so a post may
+  reach any node; a claim left by a node that stopped part way may be taken again after 10 minutes.
+* The server instructions are sent when a client connects, and the guides and convention profiles are offered as
+  resources (`stroom://guide/<name>`, `stroom://conventions/<name>`). The chat is given the same instructions once
+  it is offered the build tools.
+
+### Builds
+
+* `WriteGuard` creates only in the build folder and changes only documents tagged `mcp-managed`. The build record
+  (`BuildRecords`, a Documentation doc named `Build record`) holds working copies, the code digests that stepped
+  clean, were verified or validated, and sample-file feeds; earlier versions' `mcp-build-*`, `mcp-copy-of-*` and
+  `mcp-stepped-*` tags are folded into it on first read and removed.
+* Test feeds for builds on existing feeds: `OutputFeeds` (the StreamAppender's `feed` property, taken off at
+  promotion). Version history: `XsltVersionHistory`. Typed AGENTS sections: `InstructionRules`.
 
 
 ## Roadmap
 
-Planned, not yet built.
+Planned, not yet built. Decisions and status are in [DESIGN.md](DESIGN.md).
 
-* **The remaining dashboard widget types.** The agent can create a dashboard (a query, a table and a data
-  preview), change its tables, a classic query's expression, formatting and component settings, and add
-  tables as tabs and Text widgets below them. Still to come:
-  * Visualisations (proof of concept, built): `list_visualisations` and `propose_visualisation` chart a table on
-    the attached dashboard, or a StroomQL query, as a bar, line, pie, scatter or network graph. With ECharts
-    (installed by an administrator as a Script doc), Stroom generates the Visualisation from a fixed template,
-    drawn by its own adapter script (`stroom-ai-impl` resource `vis/echarts-generic.js`, created beside ECharts on
-    first use), so no code from the model ever runs in the visualisation frame; a "Create visualisation" button
-    opens Stroom's New Visualisation dialog in the dashboard's folder, then adds it below the table (or to the
-    query's `show` clause), unsaved. With the content pack's D3 Visualisations, the agent wires the existing one
-    to the table with `add_vis`. `set_vis_settings` tailors a chart's columns and style. Each chart sends a render
-    report (`stroom.report` in `vis.js`), shown in the chat and in the dashboard's description. See the
-    `visualisation` guide. Still to come: other libraries (Chart.js, Highcharts), and sandboxing the frame.
-  * The other widgets: the inputs (text, list, key-value), the table filter, the Embedded Query's settings,
-    and their links to tables and queries; and laying out widgets beyond a tab beside a table or a pane
-    below it.
-* **Models per task.** A default model, with an administrator able to set others for kinds of work (tool
-  calling, code such as XSLT, writing). Rather than swapping the model mid-answer, the likely shape is: a
-  small utility model for side calls (titles, follow-ups, summaries, digests); choosing the model for a
-  question when it starts, from what is attached and the prompt used, shown and overridable; and tools that
-  hand a piece of work (e.g. writing code) to a specialist model. Open questions: one server or separate
-  endpoints, and whether these override a user's own choice of model.
-* **Document settings in configuration answers.** `config_properties` covers system properties only, so an
-  answer about what affects behaviour (e.g. Elasticsearch query timeouts) can miss the settings of the
-  documents involved, such as an Elastic Cluster's connection and response timeouts. Planned: its search also
-  looks through the settings fields of every document type (found from each document class's serialised
-  fields, so new settings are picked up without a list to maintain), and gives the values of the documents
-  of that type the user can view, with secrets masked as properties are; `@JsonPropertyDescription` added to
-  the settings that matter (Elastic cluster and index, Solr, Lucene index, Stroom stats, Kafka config), as the
-  tool only sees field names otherwise; and the guidance saying behaviour can come from system properties or
-  document settings, to check both and say which applies.
-* **Elastic Cluster response timeout fix.** `ElasticClientFactory` sets both the response timeout and the
-  connection request timeout from `connectionTimeoutMillis` (since a943828b33), so `responseTimeoutMillis` is
-  ignored and every Elasticsearch request is limited to the connection timeout (3 seconds by default). The
-  connection timeout is also applied as the wait for a pooled connection, not the connect timeout. To be
-  fixed separately, with a regression test.
+* **The remaining dashboard widgets.** The agent can create a dashboard (a query, a table and a data preview),
+  change its tables, a classic query's expression, formatting, selection filters and component settings, add
+  tables as tabs, Text widgets and charts. Still to come: the inputs (text, list, key-value), the Embedded
+  Query's settings, removing and moving components, and laying out widgets beyond a tab beside a table or a pane
+  below it.
+* **Charts.** Built: `list_visualisations` and `propose_visualisation` chart a table or a StroomQL query (bar,
+  line, pie, scatter, network graph, heatmap, calendar, histogram, Sankey, chord, gauge and sunburst) with ECharts
+  or D3 installed as Script docs, drawn by Stroom's own adapter scripts so no code from the model runs in the
+  visualisation frame; the content pack's D3 Visualisations are wired as they are. Still to come: other libraries
+  (e.g. Chart.js, Highcharts), and sandboxing the visualisation frame.
+* **Models per task.** A default model, with an administrator able to set others for kinds of work (tool calling,
+  code such as XSLT, writing). The likely shape: a small utility model for side calls (titles, follow-ups,
+  summaries, digests); choosing the model for a question when it starts, shown and overridable; and tools that
+  hand a piece of work to a specialist model. Open: one server or separate endpoints, and whether these override
+  a user's own choice of model.
+* **Document settings in configuration answers.** `config_properties` covers system properties only, so an answer
+  about what affects behaviour (e.g. Elasticsearch query timeouts) can miss the settings of the documents
+  involved, such as an Elastic Cluster's timeouts. Planned: its search also looks through the settings fields of
+  every document type (found from each document class's serialised fields), giving the values of documents the
+  user can view, secrets masked; `@JsonPropertyDescription` on the settings that matter; and guidance to check both.
+* **Suggested standing instructions.** Built (`instruction_evidence`, `propose_instructions`, the nudge at
+  promotion; see DESIGN.md). Still to do: try the review and apply on an AGENTS doc, and creating one from the
+  button, in a browser.

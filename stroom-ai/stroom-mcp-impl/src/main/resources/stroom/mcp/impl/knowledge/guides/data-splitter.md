@@ -40,7 +40,8 @@ are what it writes.
 `build_data_splitter` also runs the converter through Stroom's own Data Splitter parser on the sample and returns
 `stroom_check`: the errors Stroom reports (with `error_hints`), and any record it writes differently from the dry
 run. Processing does what Stroom's parser does, so fix the spec until `stroom_check` says `matches`; a converter
-Stroom loses records with is not saved. Stroom's errors name the converter's part by its id: `header`, `record`,
+Stroom loses records with is not saved. The check covers only the sample text read: records further in (longer, or
+laid out differently) are checked by processing the whole feed. Stroom's errors name the converter's part by its id: `header`, `record`,
 `fields` (a record's expressions), `blankLine`, `body`, `unparsed`.
 
 What Stroom does that is easy to miss (each seen in Stroom):
@@ -60,8 +61,9 @@ What Stroom does that is easy to miss (each seen in Stroom):
 
 ## Long records: the read buffer
 
-A Data Splitter reads its input through a buffer of `bufferSize` characters, 20,000 by default: a record longer
-than that is lost, and processing reports that a top-level expression "matched too much content and exhausted the
+A Data Splitter reads its input through a buffer of `bufferSize` characters, 20,000 by default, refilled once half
+of it is read: only a record up to half the buffer is sure to fit (`bufferSize` at least twice the longest record). A
+longer one is lost, and processing reports that a top-level expression "matched too much content and exhausted the
 buffer". The buffer is an attribute of the converter's root element, `<dataSplitter ... version="3.0" bufferSize="100000">`
 (20,000 to 1,000,000,000), not a property of the DSParser element. `build_data_splitter` sets it from the sample's
 longest record (a record over several lines counts whole), at four times that, when the default leaves too little room. When records the sample didn't hold
