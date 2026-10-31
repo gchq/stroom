@@ -23,16 +23,12 @@
    "event-logging": "An identifier for the object, e.g a document ID in a document management system."
   }
  },
- "Data[@Name='Folder']": {
-  "field": "Data[@Name='Folder']",
-  "under": [
-   "EventDetail/(Authenticate|Process)",
-   "EventDetail/View"
-  ],
+ "EventDetail/*/Data[@Name='Folder']/@Value": {
+  "field": "EventDetail/*/Data[@Name='Folder']/@Value",
   "from": "`folder`",
   "values": [],
   "schemas_say": {
-   "event-logging": "The `Folder` value recorded in a Data element of Authenticate."
+   "event-logging": "The `Folder` value recorded in a Data element of the event's action element."
   }
  },
  "EventDetail/(Authenticate|Process)/Data[@Name='Result']/@Value": {

@@ -35,7 +35,7 @@
     "input": {}
    }
   ],
-  "message": "4 validation errors for FieldPlan\nbackend\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nindex_name\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ntime_field\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nfields\n  Field required [type=missing, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing"
+  "message": "4 validation errors for FieldPlan\nbackend\n  Field required [type=missing]\nindex_name\n  Field required [type=missing]\ntime_field\n  Field required [type=missing]\nfields\n  Field required [type=missing]"
  },
  {
   "input": [],
@@ -44,13 +44,10 @@
     "type": "model_type",
     "loc": [],
     "msg": "Input should be a valid dictionary or instance of FieldPlan",
-    "input": [],
-    "ctx": {
-     "class_name": "FieldPlan"
-    }
+    "input": []
    }
   ],
-  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type, input_value=[], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type]"
  },
  {
   "input": "x",
@@ -59,13 +56,10 @@
     "type": "model_type",
     "loc": [],
     "msg": "Input should be a valid dictionary or instance of FieldPlan",
-    "input": "x",
-    "ctx": {
-     "class_name": "FieldPlan"
-    }
+    "input": "x"
    }
   ],
-  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type, input_value='x', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+  "message": "1 validation error for FieldPlan\n  Input should be a valid dictionary or instance of FieldPlan [type=model_type]"
  },
  {
   "input": {
@@ -81,10 +75,7 @@
      "backend"
     ],
     "msg": "Input should be 'lucene' or 'elasticsearch'",
-    "input": "solr",
-    "ctx": {
-     "expected": "'lucene' or 'elasticsearch'"
-    }
+    "input": "solr"
    },
    {
     "type": "string_type",
@@ -111,7 +102,7 @@
     "input": {}
    }
   ],
-  "message": "4 validation errors for FieldPlan\nbackend\n  Input should be 'lucene' or 'elasticsearch' [type=literal_error, input_value='solr', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error\nindex_name\n  Input should be a valid string [type=string_type, input_value=1, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\ntime_field\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nfields\n  Input should be a valid list [type=list_type, input_value={}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/list_type"
+  "message": "4 validation errors for FieldPlan\nbackend\n  Input should be 'lucene' or 'elasticsearch' [type=literal_error]\nindex_name\n  Input should be a valid string [type=string_type]\ntime_field\n  Input should be a valid string [type=string_type]\nfields\n  Input should be a valid list [type=list_type]"
  },
  {
   "input": {
@@ -135,10 +126,7 @@
      "type"
     ],
     "msg": "Input should be 'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip'",
-    "input": "uuid",
-    "ctx": {
-     "expected": "'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip'"
-    }
+    "input": "uuid"
    },
    {
     "type": "string_type",
@@ -151,7 +139,7 @@
     "input": 2
    }
   ],
-  "message": "2 validation errors for FieldPlan\nfields.0.type\n  Input should be 'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip' [type=literal_error, input_value='uuid', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error\nfields.0.source\n  Input should be a valid string [type=string_type, input_value=2, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type"
+  "message": "2 validation errors for FieldPlan\nfields.0.type\n  Input should be 'id', 'keyword', 'text', 'date', 'long', 'double', 'boolean' or 'ip' [type=literal_error]\nfields.0.source\n  Input should be a valid string [type=string_type]"
  },
  {
   "input": {
@@ -210,10 +198,7 @@
      1
     ],
     "msg": "Input should be a valid dictionary or instance of PlannedField",
-    "input": "f",
-    "ctx": {
-     "class_name": "PlannedField"
-    }
+    "input": "f"
    },
    {
     "type": "list_type",
@@ -271,13 +256,10 @@
      "naming"
     ],
     "msg": "Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case'",
-    "input": "Shouty",
-    "ctx": {
-     "expected": "'snake_case', 'camelCase', 'PascalCase' or 'kebab-case'"
-    }
+    "input": "Shouty"
    }
   ],
-  "message": "9 validation errors for FieldPlan\nfields.0.name\n  Field required [type=missing, input_value={'type': 'id'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nfields.0.source\n  Field required [type=missing, input_value={'type': 'id'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nfields.1\n  Input should be a valid dictionary or instance of PlannedField [type=model_type, input_value='f', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type\ndrop_when\n  Input should be a valid list [type=list_type, input_value='x', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/list_type\nimports.0\n  Input should be a valid string [type=string_type, input_value=1, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nshared.0.template\n  Field required [type=missing, input_value={'href': 'h'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nshared.0.at\n  Field required [type=missing, input_value={'href': 'h'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\nsubobjects\n  Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='maybe', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/bool_parsing\nstyle.naming\n  Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case' [type=literal_error, input_value='Shouty', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error"
+  "message": "9 validation errors for FieldPlan\nfields.0.name\n  Field required [type=missing]\nfields.0.source\n  Field required [type=missing]\nfields.1\n  Input should be a valid dictionary or instance of PlannedField [type=model_type]\ndrop_when\n  Input should be a valid list [type=list_type]\nimports.0\n  Input should be a valid string [type=string_type]\nshared.0.template\n  Field required [type=missing]\nshared.0.at\n  Field required [type=missing]\nsubobjects\n  Input should be a valid boolean, unable to interpret input [type=bool_parsing]\nstyle.naming\n  Input should be 'snake_case', 'camelCase', 'PascalCase' or 'kebab-case' [type=literal_error]"
  },
  {
   "input": {
@@ -314,13 +296,10 @@
      "transform"
     ],
     "msg": "Input should be 'outcome'",
-    "input": "upper",
-    "ctx": {
-     "expected": "'outcome'"
-    }
+    "input": "upper"
    }
   ],
-  "message": "2 validation errors for FieldPlan\nfields.0.description\n  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nfields.0.transform\n  Input should be 'outcome' [type=literal_error, input_value='upper', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error"
+  "message": "2 validation errors for FieldPlan\nfields.0.description\n  Input should be a valid string [type=string_type]\nfields.0.transform\n  Input should be 'outcome' [type=literal_error]"
  },
  {
   "input": {
@@ -346,10 +325,7 @@
      "input"
     ],
     "msg": "Input should be 'json', 'delimited' or 'xml'",
-    "input": "csv",
-    "ctx": {
-     "expected": "'json', 'delimited' or 'xml'"
-    }
+    "input": "csv"
    },
    {
     "type": "missing",
@@ -394,10 +370,7 @@
      "ignore_above"
     ],
     "msg": "Input should be greater than or equal to 1",
-    "input": 0,
-    "ctx": {
-     "ge": 1
-    }
+    "input": 0
    },
    {
     "type": "greater_than_equal",
@@ -406,13 +379,10 @@
      "total_fields_limit"
     ],
     "msg": "Input should be greater than or equal to 100",
-    "input": "50",
-    "ctx": {
-     "ge": 100
-    }
+    "input": "50"
    }
   ],
-  "message": "6 validation errors for FieldPlan\ndiscovery.input\n  Input should be 'json', 'delimited' or 'xml' [type=literal_error, input_value='csv', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/literal_error\ndiscovery.timestamp_field\n  Field required [type=missing, input_value={'input': 'csv', 'ignore_...: {'a': 1}, 'drop': 'x'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing\ndiscovery.meta.a\n  Input should be a valid string [type=string_type, input_value=1, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\ndiscovery.drop\n  Input should be a valid list [type=list_type, input_value='x', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/list_type\ndiscovery.ignore_above\n  Input should be greater than or equal to 1 [type=greater_than_equal, input_value=0, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than_equal\ndiscovery.total_fields_limit\n  Input should be greater than or equal to 100 [type=greater_than_equal, input_value='50', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/greater_than_equal"
+  "message": "6 validation errors for FieldPlan\ndiscovery.input\n  Input should be 'json', 'delimited' or 'xml' [type=literal_error]\ndiscovery.timestamp_field\n  Field required [type=missing]\ndiscovery.meta.a\n  Input should be a valid string [type=string_type]\ndiscovery.drop\n  Input should be a valid list [type=list_type]\ndiscovery.ignore_above\n  Input should be greater than or equal to 1 [type=greater_than_equal]\ndiscovery.total_fields_limit\n  Input should be greater than or equal to 100 [type=greater_than_equal]"
  },
  {
   "input": {
@@ -518,6 +488,6 @@
     "input": null
    }
   ],
-  "message": "2 validation errors for FieldPlan\nconvention\n  Input should be a valid string [type=string_type, input_value=5, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\ncustom_namespaces\n  Input should be a valid list [type=list_type, input_value=None, input_type=NoneType]\n    For further information visit https://errors.pydantic.dev/2.13/v/list_type"
+  "message": "2 validation errors for FieldPlan\nconvention\n  Input should be a valid string [type=string_type]\ncustom_namespaces\n  Input should be a valid list [type=list_type]"
  }
 ]

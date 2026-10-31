@@ -6,21 +6,16 @@
       <xsl:map-entry key="'failure'" select="'false'"/>
     </xsl:map>
   </xsl:variable>
-  <xsl:function name="mcp:time-ms" as="xs:string?">
-    <xsl:param name="value" as="xs:string?"/>
-    <xsl:param name="pattern" as="xs:string"/>
-    <xsl:param name="zone" as="xs:string"/>
-    <xsl:variable name="time" select="if ($zone) then stroom:format-date($value, $pattern, $zone) else stroom:format-date($value, $pattern)"/>
-    <xsl:sequence select="if (matches($value, '^.*\d[.,]\d{3}(\d)\d*(\D.*)?$') and replace($value, '^.*\d[.,]\d{3}(\d)\d*(\D.*)?$', '$1') ge '5') then format-dateTime(xs:dateTime($time) + xs:dayTimeDuration('PT0.001S'), '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z') else $time"/>
-  </xsl:function>
   <xsl:template match="records">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="record" mode="event"/>
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
     <xsl:variable name="action" select="$user_parts/fn:match//fn:group[@nr=2][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$action = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
@@ -32,7 +27,7 @@
         <xsl:apply-templates select="." mode="event_type_export"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -98,7 +93,7 @@
     <xsl:if test="normalize-space(data[@name='time']/@value)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="mcp:time-ms(string(data[@name='time']/@value[1]), 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX', '')"/>
+          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

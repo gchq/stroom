@@ -11,7 +11,7 @@
   <!-- Rule 'logon': every record. Writes an Authenticate event (TypeId Logon) from user. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <!--stroom-mcp rule: logon-->
+      <xsl:processing-instruction name="stroom-mcp-rule">logon</xsl:processing-instruction>
       <xsl:if test="normalize-space(*[@key='ts'])">
         <EventTime>
           <TimeCreated>

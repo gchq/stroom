@@ -1,7 +1,3 @@
-### Extracted fields
-
-- `ts`, `user`, `action`, `desc`: parsed from `message` with `^(\S+) (\S+) (\S+) (.*)$`
-
 ### Common fields
 
 Every event type writes these, from the same source.

@@ -18,7 +18,7 @@
   <!-- Rule 'logon': records where action = login. Writes an Authenticate event (TypeId Logon) from user, result, sid. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <!--stroom-mcp rule: logon-->
+      <xsl:processing-instruction name="stroom-mcp-rule">logon</xsl:processing-instruction>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
@@ -47,7 +47,7 @@
   <!-- Rule 'other': records no other rule matches. Writes an Unknown event (TypeId from action) from action. -->
   <xsl:template match="node()" mode="event_type_other">
     <Event>
-      <!--stroom-mcp rule: other-->
+      <xsl:processing-instruction name="stroom-mcp-rule">other</xsl:processing-instruction>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>

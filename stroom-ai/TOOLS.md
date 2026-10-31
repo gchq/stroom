@@ -4781,8 +4781,9 @@ fragment wrapper (`FragmentWrappers`).
   (delimited, regex, key_value, syslog, cef, fields), run on the sample as the generated Data Splitter would, with
   Java regexes as Data Splitter runs them; and the same converter run by Stroom's own DSParser, as the dry run differs
   from Stroom where it hasn't followed it (seen: records over the read buffer lost in processing, cells Stroom trims).
-* **`DelimitedText`**, **`ToolJson`**, **`XmlTree`**: delimited text (a quote opens a quoted value only at its start, a doubled
-  quote is a quote, a value may run over lines, a sniffer guesses the delimiter and header; no field length limit),
+* **`DelimitedText`**, **`ToolJson`**, **`XmlTree`**: delimited text (cells split as the generated Data Splitter splits them: a quote
+  opens a quoted stretch wherever it is, a doubled quote stays doubled; a sniffer guesses the delimiter and header; no
+  field length limit),
   JSON (which texts parse, error messages with positions, writing back with non-ASCII escaped) and XML (StAX, no DTDs or
   external entities; a document, or the complete elements before a cut-off end). `ToolJson`'s messages for text that
   isn't JSON (`Expecting value: line 1 column 1 (char 0)`, `Invalid \escape`) are what agents are shown (a profile's
@@ -4854,7 +4855,7 @@ The checks `check_xslt`, `check_events`, the translation build and the stepping 
 * **`CloseMatches`**: "did you mean" suggestions (up to 3, similarity cutoff 0.6) for `stroom:` functions,
   event-logging elements and feed names. Scoring is gestalt pattern matching (twice the characters in matching
   blocks over the total length), as Python's `difflib` computes it, autojunk included, and is kept exactly: the
-  suggestions the parity fixtures pin depend on it.
+  suggestions the recorded cases hold depend on it.
 * **`XsltVersionHistory`** and **`TranslationDescriptions`**: an XSLT's version history kept in its description, and
   a plain account of what a translation XSLT writes from what; used by the save and documentation tools. A place in
   a template with neither a match nor a name is described as `[None]`, the descriptions' established wording, which
@@ -5053,11 +5054,11 @@ tools don't run or save it"), and an xpath Stroom's Saxon can't run (`StroomXPat
 functions that take a function (`fold-left`, `for-each`, `filter`, `sort` with a key) and string constructors fail to
 compile, Saxon saying they need Saxon-PE. This was checked case by case against Stroom's own Saxon (seen: `fold-left`
 with an inline function passed as valid XPath and was refused by Stroom). `XsltCompileCheck` says the same in
-Stroom's terms when the compile fails. An extraction's regex is read by `PythonRegex` for its group count, in the
-syntax of Python's `re` module, not Java's: one that doesn't compile in that syntax (or whose repetition count is too
-large) is a problem, with that syntax's reason (`missing ), unterminated subpattern at position 0`). So an XPath regex
-such as `\p{L}+`, which Stroom's Saxon would run, is refused (`bad escape \p at position 0`). The helper fixtures
-(`helper_cases.json`) pin the counts and the wording; the reader counts groups the same way.
+Stroom's terms when the compile fails. An extraction's regex is compiled by `XPathRegex` with Saxon's own regex
+engine, in XPath's dialect, as the generated XSLT's `analyze-string()` compiles it: one that doesn't compile is a
+problem, with Saxon's reason, so `\p{L}+` is accepted and lookahead, named groups and inline flags are refused. Its
+capture groups are counted from it (every `(` outside a character class that isn't escaped or `(?:`).
+`TestXPathRegex` pins both; the reader counts groups the same way.
 
 A rule no record can reach is a problem too: an earlier rule's conditions take every record it could (told from the
 conditions alone, so a sample with none of a kind doesn't hide it; seen in testing: a draft's `user_logon`, for Login

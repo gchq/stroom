@@ -6,14 +6,16 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="src_parts" select="analyze-string(string(*[@key='message'][1]), 'src=(\S+)')"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="normalize-space($src_parts/fn:match//fn:group[@nr=1])">
         <xsl:apply-templates select="." mode="event_type_connection"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', stroom:record-no(), ' (', string-join((concat('src=', string((normalize-space($src_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('src=', string((normalize-space($src_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
