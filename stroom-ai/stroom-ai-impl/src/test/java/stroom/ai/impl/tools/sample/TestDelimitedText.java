@@ -23,48 +23,50 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TestPyCsv {
+class TestDelimitedText {
 
     @Test
-    void rowsAreReadAsPythonsCsvReaderReadsThem() {
-        assertThat(PyCsv.read("a,\"b, c\",\"say \"\"hi\"\"\"\n\nx\"y,\"multi\nline\"", PyCsv.EXCEL))
+    void rowsAreReadWithQuotesAndEscapes() {
+        assertThat(DelimitedText.read("a,\"b, c\",\"say \"\"hi\"\"\"\n\nx\"y,\"multi\nline\"", DelimitedText.EXCEL))
                 .containsExactly(List.of("a", "b, c", "say \"hi\""), List.of(), List.of("x\"y", "multi\nline"));
         // A quote after a quoted value's close is kept, as Python's reader keeps it when not strict.
-        assertThat(PyCsv.read("\"ab\"c,d", PyCsv.EXCEL)).containsExactly(List.of("abc", "d"));
+        assertThat(DelimitedText.read("\"ab\"c,d", DelimitedText.EXCEL)).containsExactly(List.of("abc", "d"));
         // An unclosed quote runs to the end.
-        assertThat(PyCsv.read("a,\"open\nmore", PyCsv.EXCEL)).containsExactly(List.of("a", "open\nmore"));
-        assertThat(PyCsv.read("a\tb", PyCsv.Dialect.delimitedBy('\t'))).containsExactly(List.of("a", "b"));
+        assertThat(DelimitedText.read("a,\"open\nmore", DelimitedText.EXCEL))
+                .containsExactly(List.of("a", "open\nmore"));
+        assertThat(DelimitedText.read("a\tb", DelimitedText.Dialect.delimitedBy('\t')))
+                .containsExactly(List.of("a", "b"));
     }
 
     @Test
-    void aFieldLongerThanPythonsFieldSizeLimitIsRead() {
+    void aVeryLongFieldIsRead() {
         // Seen in testing: a 250,000-character URL query was refused ("field larger than field limit (131072)").
         final String query = "q=" + "a".repeat(250_000);
         final String quoted = "say \"\"" + "b".repeat(200_000) + "\"\"";
 
-        assertThat(PyCsv.read("1," + query + ",\"" + quoted + "\"\n2,short,x", PyCsv.EXCEL))
+        assertThat(DelimitedText.read("1," + query + ",\"" + quoted + "\"\n2,short,x", DelimitedText.EXCEL))
                 .containsExactly(List.of("1", query, "say \"" + "b".repeat(200_000) + "\""),
                         List.of("2", "short", "x"));
     }
 
     @Test
     void theSnifferFindsTheDelimiterAndTheHeader() {
-        assertThat(PyCsv.sniff("time,user,action\n2026-10-01T10:00:00Z,alice,login\n", ",\t|;").delimiter())
+        assertThat(DelimitedText.sniff("time,user,action\n2026-10-01T10:00:00Z,alice,login\n", ",\t|;").delimiter())
                 .isEqualTo(',');
-        assertThat(PyCsv.sniff("a|b|c\n1|2|3\n4|5|6", ",\t|;").delimiter()).isEqualTo('|');
-        assertThat(PyCsv.sniff("\"a\";\"b\"\n\"c\";\"d\"", ",\t|;").delimiter()).isEqualTo(';');
-        assertThatThrownBy(() -> PyCsv.sniff("one thing\nanother thing", ",\t|;"))
-                .isInstanceOf(PyCsv.CsvException.class)
+        assertThat(DelimitedText.sniff("a|b|c\n1|2|3\n4|5|6", ",\t|;").delimiter()).isEqualTo('|');
+        assertThat(DelimitedText.sniff("\"a\";\"b\"\n\"c\";\"d\"", ",\t|;").delimiter()).isEqualTo(';');
+        assertThatThrownBy(() -> DelimitedText.sniff("one thing\nanother thing", ",\t|;"))
+                .isInstanceOf(DelimitedText.CsvException.class)
                 .hasMessage("Could not determine delimiter");
-        assertThat(PyCsv.hasHeader("name,age\nalice,31\nbob,42\n")).isTrue();
-        assertThat(PyCsv.hasHeader("alice,31\nbob,42\ncarol,7\n")).isFalse();
+        assertThat(DelimitedText.hasHeader("name,age\nalice,31\nbob,42\n")).isTrue();
+        assertThat(DelimitedText.hasHeader("alice,31\nbob,42\ncarol,7\n")).isFalse();
     }
 
     @Test
-    void numbersAreWhatPythonsComplexReads() {
+    void numbersIncludeExponentsAndComplexForms() {
         assertThat(List.of("1", " -2.5e3 ", "1_000", "inf", "nan", "3j", "(1+2j)", ".5", "1.", "j", "-j"))
-                .allMatch(PyCsv::isComplex);
+                .allMatch(DelimitedText::isComplex);
         assertThat(List.of("", "abc", "1_", "_1", "1e", "1+", "(1", "10.0.0.1", "2026-10-01")).noneMatch(
-                PyCsv::isComplex);
+                DelimitedText::isComplex);
     }
 }

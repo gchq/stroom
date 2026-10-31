@@ -37,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// What a build's feed is translated by now, and what its XSLT looks up (the Stroom MCP server's
-/// `tests/test_new_version.py`: `plan.current_translation`, `lookups_note`, `lookups_kept` and `lookups_of`).
+/// What a build's feed is translated by now, and what its XSLT looks up: the current translation, the note on its
+/// lookups, and which of them a new mapping keeps.
 ///
 /// Seen in testing: V1.3 of a Fortigate feed drafted from the sample lost V1.2's IP lookups.
 class TestCurrentTranslations {
@@ -154,7 +154,7 @@ class TestCurrentTranslations {
         assertThat(CurrentTranslations.lookupMaps(null)).isEmpty();
     }
 
-    // The current translation as the Python test's CURRENT has it.
+    // The feed's current translation.
     private static Map<String, Object> current() {
         final Map<String, Object> current = new LinkedHashMap<>();
         current.put("pipeline", Map.of("uuid", "v12", "name", "FG-V1.2"));

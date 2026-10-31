@@ -19,7 +19,6 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -29,6 +28,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.ExampleTemplates;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
@@ -49,10 +49,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
 
-/// `check_index_template` - checks a user's Elasticsearch index template (with the component templates it is
-/// composed of) against the documents the candidate indexing pipeline writes, and has the user agree a compatible
-/// one, kept with the pipeline (the Stroom MCP server's `tools/indexing.py` `check_index_template`). Nothing is
-/// written to Elasticsearch.
+/// `check_index_template` - checks a user's Elasticsearch index template (with the component templates it is composed
+/// of) against the documents the candidate indexing pipeline writes, and has the user agree a compatible one, kept with
+/// the pipeline. Nothing is written to Elasticsearch.
 class CheckIndexTemplateTool extends AbstractBuiltInTool {
 
     static final String NAME = "check_index_template";
@@ -233,7 +232,7 @@ class CheckIndexTemplateTool extends AbstractBuiltInTool {
             // Seen in testing: asked to use ecs@mappings, the agent composed it and still mapped every ECS field
             // itself.
             ruled.add("mapped explicitly just as ecs@mappings (which this template composes) maps them, so mapped "
-                      + "twice: " + PyText.list(doubled.subList(0, Math.min(DOUBLED_SHOWN, doubled.size())))
+                      + "twice: " + ToolText.list(doubled.subList(0, Math.min(DOUBLED_SHOWN, doubled.size())))
                       + (doubled.size() > DOUBLED_SHOWN
                     ? " (+" + (doubled.size() - DOUBLED_SHOWN) + ")"
                     : "")

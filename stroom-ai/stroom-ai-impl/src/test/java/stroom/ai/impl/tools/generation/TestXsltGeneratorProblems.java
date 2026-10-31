@@ -49,9 +49,9 @@ import javax.xml.transform.stream.StreamSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Stroom MCP server's generator tests of mistakes (`tests/test_xsltgen.py`), case by case: what the schema
-/// and the generator catch come back as problems per mapping entry instead of as XSLT for the model to debug, and
-/// what may be wrong as warnings, worded as the server words them.
+/// The generator's mistakes, case by case: what the schema and the generator catch come back as problems per
+/// mapping entry instead of as XSLT for the model to debug, and what may be wrong as warnings, in the tools'
+/// established wording.
 class TestXsltGeneratorProblems extends XsltRuns {
 
     private static XsltGenerator.Generated generate(final TranslationMapping mapping) {
@@ -512,7 +512,7 @@ class TestXsltGeneratorProblems extends XsltRuns {
     @Test
     void theMappingErrorsSayWhereAsTheServerSaysIt() {
         // The agent is shown where each error is (events[0].fields[1].path, as mapping_problems writes it) and
-        // pydantic's message.
+        // the error's message.
         final MappingValidationException e = org.assertj.core.api.Assertions.catchThrowableOfType(
                 MappingValidationException.class, () -> TranslationMapping.parse(json("""
                         {"input": "json", "events": [{"name": "a", "fields": [{"path": "x", "field": "a"},

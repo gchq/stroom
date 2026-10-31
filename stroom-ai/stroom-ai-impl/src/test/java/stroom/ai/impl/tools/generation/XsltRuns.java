@@ -40,8 +40,8 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-/// Runs a generated XSLT over records with plain Saxon, as the Stroom MCP server's tests run it with SaxonC, and
-/// validates the events against an event-logging XSD; and finds elements in the trees, as the tests' lxml paths do.
+/// Runs a generated XSLT over records with plain Saxon, and validates the events against an event-logging XSD; and
+/// finds elements in the trees.
 class XsltRuns extends GenerationFixtures {
 
     /// Plain Saxon has no Stroom functions: the log calls (unmatched and kept-Unknown records) do nothing here.
@@ -151,7 +151,7 @@ class XsltRuns extends GenerationFixtures {
 
     /// @param root      A tree.
     /// @param localName An event-logging element's name.
-    /// @return The first element of that name anywhere below (lxml's `.//e:name`), or null.
+    /// @return The first element of that name anywhere below (`.//e:name`), or null.
     static XmlElement descendant(final XmlElement root, final String localName) {
         return root.iterElements(EVT, localName).stream().filter(el -> el != root).findFirst().orElse(null);
     }

@@ -62,24 +62,21 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// How the processing write tools make and read processor filters, as the user: a filter on a pipeline in a build,
-/// what a filter selects, the streams a pipeline already processed, and the bounds of a feed-wide filter. Ported
-/// from the Stroom MCP server's `tools/processing_writes.py` (`_term`, `_managed_pipeline`, `_create_filter`,
-/// `_selected_ids`, `_already_processed`, `_feed_term`, `_pipeline_term`, `feed_stream_type`, `filter_feeds`,
-/// `_pipeline_terms`, `_names_pipeline`, `_feed_bounds` and `_refuse_duplicate`), for `create_processor_filter`,
-/// `reprocess_streams` and promotion (`promote_build`) to share.
+/// How the processing write tools make and read processor filters, as the user: a filter on a pipeline in a build, what
+/// a filter selects, the streams a pipeline already processed, and the bounds of a feed-wide filter, for
+/// `create_processor_filter`, `reprocess_streams` and promotion (`promote_build`) to share.
 ///
 /// Filters are made through Stroom's [ProcessorFilterService], as the Processors tab and the data browser's
 /// Process action make them: the user needs the Manage Processors permission and View on the pipeline.
 class ProcessorFilterWrites {
 
-    /// The most streams reprocessed in one call (the Stroom MCP server's `max_reprocess_streams`).
+    /// The most streams reprocessed in one call.
     static final int MAX_REPROCESS_STREAMS = 10;
-    /// The task limit of a reprocessing filter (`reprocess_max_tasks`).
+    /// The task limit of a reprocessing filter.
     static final int REPROCESS_MAX_TASKS = 1;
-    /// The task limit of a filter over a build's sample streams (`sample_max_tasks`).
+    /// The task limit of a filter over a build's sample streams.
     static final int SAMPLE_MAX_TASKS = 1;
-    /// The task limit of a feed-wide filter (`max_feed_filter_tasks`).
+    /// The task limit of a feed-wide filter.
     static final int MAX_FEED_FILTER_TASKS = 2;
     /// The priority a filter is given unless the call says otherwise.
     static final int DEFAULT_PRIORITY = 10;
@@ -134,8 +131,7 @@ class ProcessorFilterWrites {
         this.guard = guard;
     }
 
-    /// A pipeline the tools created, in its build (`_managed_pipeline`): processing it may set its batch size,
-    /// and keeps its agreed template.
+    /// A pipeline the tools created, in its build: processing it may set its batch size, and keeps its agreed template.
     ///
     /// @param session The session the call is made in, for the audit log.
     /// @param uuid    The pipeline's UUID.
@@ -165,7 +161,7 @@ class ProcessorFilterWrites {
         return found.filters();
     }
 
-    /// Makes a processor filter on the pipeline (`_create_filter`), selecting from the stream store.
+    /// Makes a processor filter on the pipeline, selecting from the stream store.
     ///
     /// Stroom gives a pipeline's new processor its first filter's enabled flag, and a disabled processor runs none
     /// of its filters: the user enabling the filter alone saw nothing processed. A processor whose filters are all
@@ -230,8 +226,8 @@ class ProcessorFilterWrites {
                 .toList();
     }
 
-    /// The filter's condition on its feed, by reference (Feed IS_DOC_REF), not by name (`_feed_term`): Stroom then
-    /// keeps it as a dependency of the feed, and a renamed feed is still the one selected (asked for by the user).
+    /// The filter's condition on its feed, by reference (Feed IS_DOC_REF), not by name: Stroom then keeps it as a
+    /// dependency of the feed, and a renamed feed is still the one selected (asked for by the user).
     ///
     /// @param feed A feed's name.
     /// @return The condition.
@@ -262,7 +258,7 @@ class ProcessorFilterWrites {
         }
     }
 
-    /// A feed-wide filter's lower bound, kept to the feed's own streams (`_feed_bounds`).
+    /// A feed-wide filter's lower bound, kept to the feed's own streams.
     ///
     /// Seen (VS Code), the same day: Gemma guessed created_after at midnight after its sample arrived, so the filter
     /// selected nothing and the agent waited out ten minutes; Qwen chose a date before the feed was made, which also
@@ -347,8 +343,8 @@ class ProcessorFilterWrites {
         }
     }
 
-    /// Seen (Gemma, VS Code): the same feed-wide filter made twice, neither selecting anything
-    /// (`_refuse_duplicate`). A feed by name (filters made before) or by reference is the same feed.
+    /// Seen (Gemma, VS Code): the same feed-wide filter made twice, neither selecting anything. A feed by name (filters
+    /// made before) or by reference is the same feed.
     ///
     /// @param filters    The pipeline's filters.
     /// @param expression What the new filter selects.
@@ -396,7 +392,7 @@ class ProcessorFilterWrites {
 
     /// @param field A stream field, e.g. `Id`.
     /// @param value Its value.
-    /// @return The condition that the field equals the value (`_term`).
+    /// @return The condition that the field equals the value.
     static ExpressionTerm term(final String field, final Object value) {
         return ExpressionTerm.builder()
                 .field(field)
@@ -422,7 +418,7 @@ class ProcessorFilterWrites {
     }
 
     /// @param source The events pipeline whose Events are meant.
-    /// @return The condition selecting only its output (Pipeline IS_DOC_REF), as `_pipeline_term`.
+    /// @return The condition selecting only its output (Pipeline IS_DOC_REF).
     static ExpressionTerm pipelineTerm(final DocRef source) {
         return ExpressionTerm.builder()
                 .field(ProcessorFilters.PIPELINE)
@@ -432,7 +428,7 @@ class ProcessorFilterWrites {
     }
 
     /// @param expression A filter's expression, or null.
-    /// @return The streams it selects by id (Id EQUALS a number), at any depth (`_selected_ids`).
+    /// @return The streams it selects by id (Id EQUALS a number), at any depth.
     static Set<Long> selectedIds(final ExpressionItem expression) {
         final Set<Long> ids = new TreeSet<>();
         if (expression instanceof final ExpressionOperator operator) {
@@ -452,7 +448,7 @@ class ProcessorFilterWrites {
     }
 
     /// @param expression A filter's expression, or null.
-    /// @return Its Pipeline conditions, at any depth (`_pipeline_terms`).
+    /// @return Its Pipeline conditions, at any depth.
     static List<ExpressionTerm> pipelineTerms(final ExpressionItem expression) {
         return PipelineFeeds.filterTerms(expression).stream()
                 .filter(term -> ProcessorFilters.PIPELINE.equals(term.getField()))
@@ -469,7 +465,7 @@ class ProcessorFilterWrites {
     }
 
     /// @param expression A filter's expression, or null.
-    /// @return True if it has a Pipeline condition, at any depth (`_names_pipeline`).
+    /// @return True if it has a Pipeline condition, at any depth.
     static boolean namesPipeline(final ExpressionItem expression) {
         return !pipelineTerms(expression).isEmpty();
     }

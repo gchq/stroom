@@ -18,13 +18,13 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.ElicitationSchema;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.UserQuestions;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -47,15 +47,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
 
-/// Confirmations (key details) and approvals (risky actions) before a write tool acts, and choices the user makes
-/// in a form (ported from the Stroom MCP server's `utils/consent.py`).
+/// Confirmations (key details) and approvals (risky actions) before a write tool acts, and choices the user makes in a
+/// form.
 ///
-/// The user is always asked directly, as a form ([UserQuestions#canAsk()]), so the model never holds the answer:
-/// in the chat the run stops while the form waits, and the same call is made again with the answer (so a tool that
-/// asks must be safe to re-run up to its question); over `/mcp` the call waits on the client's elicitation. Where
-/// the user can't be asked (an MCP client that can't show forms, a chat the user is away from), nothing is done and
-/// the tool is refused, saying why (see [FormsRequired]). Unlike the Stroom MCP server, no pending id is ever handed
-/// to the model to pass back once the user agrees: a model holding one could approve its own call.
+/// The user is always asked directly, as a form ([UserQuestions#canAsk()]), so the model never holds the answer: in the
+/// chat the run stops while the form waits, and the same call is made again with the answer (so a tool that asks must
+/// be safe to re-run up to its question); over `/mcp` the call waits on the client's elicitation. Where the user can't
+/// be asked (an MCP client that can't show forms, a chat the user is away from), nothing is done and the tool is
+/// refused, saying why (see [FormsRequired]). No pending id is ever handed to the model to pass back once the user
+/// agrees: a model holding one could approve its own call.
 ///
 /// What the user settled on in the call's forms ([#edited], [#changes]) is kept for the call, for the tool and for
 /// [BuildPlan#withNext] to read.
@@ -466,7 +466,7 @@ public class Consent {
         final List<Object> request = new ArrayList<>();
         request.add(action);
         request.add(NullSafe.map(details));
-        return XsltCode.sha256(PyJson.dumpsSortedKeys(request));
+        return XsltCode.sha256(ToolJson.dumpsSortedKeys(request));
     }
 
     private void audit(final ToolSession session,
@@ -514,9 +514,9 @@ public class Consent {
     private static String shortDetail(final Object value) {
         final String raw;
         if (value instanceof final Collection<?> collection) {
-            raw = String.join(", ", collection.stream().map(PyText::str).toList());
+            raw = String.join(", ", collection.stream().map(ToolText::str).toList());
         } else {
-            raw = PyText.str(value);
+            raw = ToolText.str(value);
         }
         final String text = String.join(" ", raw.strip().split("\\s+"));
         return text.length() <= DETAIL_LIMIT

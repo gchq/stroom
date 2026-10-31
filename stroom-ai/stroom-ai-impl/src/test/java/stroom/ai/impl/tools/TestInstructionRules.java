@@ -29,7 +29,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The sections of AGENTS docs the tools apply themselves, as the Stroom MCP server's tests of them have it.
+/// The sections of AGENTS docs the tools apply themselves.
 class TestInstructionRules {
 
     private static final String AGENTS = """

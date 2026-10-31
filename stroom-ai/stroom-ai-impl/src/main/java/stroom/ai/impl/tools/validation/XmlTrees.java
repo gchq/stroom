@@ -50,9 +50,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-/// Reads XML text (XSLTs, Events, XML Schemas) as namespace-aware DOM trees for the validation checks, as the
-/// Stroom MCP server read them with lxml: a DOCTYPE is refused and nothing outside the text is ever loaded, as the
-/// text comes from the model or from logs.
+/// Reads XML text (XSLTs, Events, XML Schemas) as namespace-aware DOM trees for the validation checks: a DOCTYPE is
+/// refused and nothing outside the text is ever loaded, as the text comes from the model or from logs.
 public final class XmlTrees {
 
     /// The XSLT namespace.
@@ -169,7 +168,7 @@ public final class XmlTrees {
 
     /// @param element An element.
     /// @param name    An attribute's name (in no namespace).
-    /// @return Its value, or null if it has none (an empty value is kept, as lxml's `get` gives it).
+    /// @return Its value, or null if it has none (an empty value is kept, not taken as none).
     public static String attribute(final Element element, final String name) {
         return element.hasAttribute(name)
                 ? element.getAttribute(name)
@@ -192,8 +191,7 @@ public final class XmlTrees {
     }
 
     /// @param node A node, or null.
-    /// @return The prefixes in scope at it (the default namespace under the key ""), as lxml's `nsmap` gives
-    /// them; empty for null.
+    /// @return The prefixes in scope at it (the default namespace under the key ""); empty for null.
     public static Map<String, String> namespaces(final Node node) {
         final List<Element> chain = new ArrayList<>();
         Node current = node;
@@ -222,7 +220,7 @@ public final class XmlTrees {
     }
 
     /// @param node An element, or null.
-    /// @return Its own text before its first child element, stripped, as the Python checks read `node.text`; ""
+    /// @return Its own text before its first child element, comment or processing instruction, stripped; ""
     /// for null.
     public static String text(final Node node) {
         if (node == null) {
@@ -243,7 +241,7 @@ public final class XmlTrees {
     }
 
     /// @param node A node.
-    /// @return All the text below it, as lxml's `itertext()` joined gives it.
+    /// @return All the text below it, joined in document order.
     public static String allText(final Node node) {
         return Objects.requireNonNullElse(node.getTextContent(), "");
     }

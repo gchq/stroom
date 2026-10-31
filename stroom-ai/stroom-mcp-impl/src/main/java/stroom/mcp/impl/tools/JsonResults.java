@@ -22,8 +22,8 @@ import stroom.util.json.JsonUtil;
 
 import java.util.Map;
 
-/// How the ported tools give their results: as JSON, with the same field names and nesting as the Stroom MCP
-/// server's tools, both as the text the model reads and as the result's structured content.
+/// How the build tools give their results: as JSON, both as the text the model reads and as the result's structured
+/// content.
 final class JsonResults {
 
     private JsonResults() {

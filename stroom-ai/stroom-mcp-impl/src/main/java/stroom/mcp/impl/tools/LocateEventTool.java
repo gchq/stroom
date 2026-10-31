@@ -60,8 +60,8 @@ class LocateEventTool extends AbstractBuiltInTool {
     static final String STREAM_ID_ARG = "stream_id";
     static final String EVENT_ID_ARG = "event_id";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
-    /// The most characters of each of the record's input, the stored event and the event stepped now (the Stroom
-    /// MCP server's max_stream_chars, a quarter each).
+    /// The most characters of each of the record's input, the stored event and the event stepped now (a quarter each of
+    /// the 20,000 characters a stepping result gives in all).
     static final int BUDGET = 20_000 / 4;
 
     private final EventLocations eventLocations;
@@ -149,7 +149,7 @@ class LocateEventTool extends AbstractBuiltInTool {
         }
     }
 
-    /// @return Where the stream (and event) came from, as the Stroom MCP server gave it.
+    /// @return Where the stream (and event) came from.
     Map<String, Object> locate(final long streamId,
                                final Integer eventId,
                                final String pipelineUuid,
@@ -258,7 +258,7 @@ class LocateEventTool extends AbstractBuiltInTool {
         }
     }
 
-    /// @return A marker as the Stroom MCP server gave one: `severity`, `element`, `message`, `location`, `record`.
+    /// @return A marker: `severity`, `element`, `message`, `location`, `record`.
     static Map<String, Object> markerMap(final ErrorTriage.Marker marker) {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("severity", marker.severity());

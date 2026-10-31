@@ -27,8 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// Which streams a pipeline may process (the Stroom MCP server's `tests/test_processing.py`, its case for
-/// `_refuse_superseded`).
+/// Which streams a pipeline may process: not superseded Events streams.
 class TestProcessingSources {
 
     @Test

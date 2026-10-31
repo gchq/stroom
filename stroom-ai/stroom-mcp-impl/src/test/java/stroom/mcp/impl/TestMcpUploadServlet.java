@@ -53,9 +53,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// `POST /mcp/upload` (the Stroom MCP server's `utils/uploads.py` `handle_upload`, and its tests in
-/// `tests/test_uploads.py`), served by Jetty as Stroom serves it, the user signed in already, the waiting files
-/// held in the database (MySQL, the test database).
+/// `POST /mcp/upload`, served by Jetty as Stroom serves it, the user signed in already, the waiting files held in the
+/// database (MySQL, the test database).
 class TestMcpUploadServlet {
 
     private static final UserRef ALICE = UserRef.builder().uuid("alice").subjectId("alice").build();

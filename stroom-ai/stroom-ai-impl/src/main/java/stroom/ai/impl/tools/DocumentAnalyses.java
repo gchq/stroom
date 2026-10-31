@@ -21,9 +21,8 @@ import stroom.docref.DocRef;
 import java.util.Map;
 import java.util.Optional;
 
-/// What `read_document` says of a document beyond its content, where the analysis lives with the tools ported from
-/// the Stroom MCP server (`stroom-mcp-impl`), as its `describe_document` said it: a survey of what an index holds,
-/// and why an XSLT's kept mapping is gone.
+/// What `read_document` says of a document beyond its content, where the analysis lives with the build tools
+/// (`stroom-mcp-impl`): a survey of what an index holds, and why an XSLT's kept mapping is gone.
 ///
 /// It is bound by the module that has them (`stroom-mcp-impl`); without that module, `read_document` gives neither.
 /// Inject it as `Optional<DocumentAnalyses>` ([BuiltInToolsModule] declares it optional).
@@ -36,8 +35,8 @@ public interface DocumentAnalyses {
     ///
     /// @param context The call, told what the survey is doing.
     /// @param index   The index doc.
-    /// @return The survey, as the Stroom MCP server's `describe_document` gave it (without the sampled documents
-    /// themselves, and with whether each feeding pipeline keeps an index plan).
+    /// @return The survey (without the sampled documents themselves, and with whether each feeding pipeline keeps an
+    /// index plan).
     /// @throws RuntimeException saying why, if the index can't be surveyed (e.g. its cluster is unreachable).
     Map<String, Object> surveyIndex(ToolCallContext context, DocRef index);
 

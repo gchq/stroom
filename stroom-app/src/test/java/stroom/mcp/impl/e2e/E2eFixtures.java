@@ -21,9 +21,8 @@ import stroom.util.json.JsonUtil;
 import java.util.List;
 import java.util.Map;
 
-/// The samples, mappings and shared XSLTs the Stroom MCP server's e2e scripts share, as they have them:
-/// `dev/e2e_translation.py` (`CASES`), `dev/e2e_generator.py` (`FIREWALL`, `MAPPINGS`) and `dev/e2e_shared_xslt.py`
-/// (the shared XSLTs). Each mapping is a fresh copy, to change as a script does.
+/// The samples, mappings and shared XSLTs the end-to-end suites share: the translation cases, the generator's
+/// firewall sample and mappings, and the shared XSLTs. Each mapping is a fresh copy, for a test to change.
 @SuppressWarnings("unchecked")
 final class E2eFixtures {
 

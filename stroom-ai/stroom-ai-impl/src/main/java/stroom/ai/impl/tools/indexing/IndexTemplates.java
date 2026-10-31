@@ -17,9 +17,9 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
-import stroom.ai.impl.tools.sample.PyJson.JsonDecodeException;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.sample.ToolJson.JsonDecodeException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,11 +31,10 @@ import java.util.regex.Pattern;
 
 /// Elasticsearch index and component templates as the user pastes them (Kibana Dev Tools requests, GET output,
 /// Stroom's elastic_index_templates output, or an index's mapping), kept to what a PUT takes, and written back as a
-/// Dev Tools request laid out to read. Ported from the Stroom MCP server's `utils/templatecheck.py` (as_put,
-/// stroom_tool_templates, parse_template, dev_tools, parse_component_templates).
+/// Dev Tools request laid out to read.
 ///
-/// A text that can't be read is refused with an [IllegalArgumentException] saying why, as the server's ValueError
-/// did (its message is the agent's to act on).
+/// A text that can't be read is refused with an [IllegalArgumentException] saying why (its message is the agent's
+/// to act on).
 public final class IndexTemplates {
 
     /// What a PUT of an index template takes (checked on Elasticsearch 9.5). A GET also returns what Elasticsearch
@@ -150,10 +149,10 @@ public final class IndexTemplates {
     /// @return The template's name (null if the text doesn't say) and body.
     /// @throws IllegalArgumentException if it isn't one, saying why.
     public static NamedTemplate parseTemplate(final String given) {
-        String text = PyText.strip(given);
+        String text = ToolText.strip(given);
         String name = null;
         // The request line, then the body on the next line or the same one (seen in Ask Stroom AI: an agent gave
-        // the server's own dev_tools on one line, and it was refused as not JSON).
+        // the tools' own Dev Tools request on one line, and it was refused as not JSON).
         final Matcher request = INDEX_REQUEST.matcher(text);
         if (request.lookingAt()) {
             name = request.group(2);
@@ -228,7 +227,7 @@ public final class IndexTemplates {
     }
 
     private static String render(final Object node, final int depth) {
-        final String flat = PyJson.dumps(node);
+        final String flat = ToolJson.dumps(node);
         if (!(node instanceof Map<?, ?> || node instanceof List<?>) || flat.codePointCount(0, flat.length()) <= 90) {
             return flat;
         }
@@ -236,7 +235,7 @@ public final class IndexTemplates {
         final String inner = "  ".repeat(depth + 1);
         final List<String> items = new ArrayList<>();
         if (node instanceof final Map<?, ?> map) {
-            map.forEach((key, value) -> items.add(inner + PyJson.dumps(String.valueOf(key)) + ": "
+            map.forEach((key, value) -> items.add(inner + ToolJson.dumps(String.valueOf(key)) + ": "
                                                   + render(value, depth + 1)));
             return "{\n" + String.join(",\n", items) + "\n" + pad + "}";
         }
@@ -301,12 +300,12 @@ public final class IndexTemplates {
             }
             return;
         }
-        final String text = PyText.strip(given);
+        final String text = ToolText.strip(given);
         int at = 0;
         String name = null;
         while (at < text.length()) {
             final Matcher request = COMPONENT_REQUEST.matcher(text).region(at, text.length());
-            if (PyText.isSpace(text.charAt(at))) {
+            if (ToolText.isSpace(text.charAt(at))) {
                 at++;
             } else if (text.charAt(at) == '#') {
                 // Kibana's line before each response: '# GET ... 200 OK'.
@@ -320,9 +319,9 @@ public final class IndexTemplates {
                         : request.group(2);
                 at = request.end();
             } else {
-                final PyJson.Decoded decoded;
+                final ToolJson.Decoded decoded;
                 try {
-                    decoded = PyJson.rawDecode(text, at);
+                    decoded = ToolJson.rawDecode(text, at);
                 } catch (final JsonDecodeException e) {
                     throw new IllegalArgumentException("The component template is not valid JSON: "
                                                        + e.getMessage(), e);
@@ -337,7 +336,7 @@ public final class IndexTemplates {
     // A text as JSON, or why it isn't.
     private static Object json(final String text, final String what) {
         try {
-            return PyJson.loads(text);
+            return ToolJson.loads(text);
         } catch (final JsonDecodeException e) {
             throw new IllegalArgumentException("The " + what + " is not valid JSON: " + e.getMessage(), e);
         }

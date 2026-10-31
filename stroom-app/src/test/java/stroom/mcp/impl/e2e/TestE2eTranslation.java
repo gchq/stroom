@@ -33,24 +33,22 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_translation.py`, ported: onboarding translations end to end through the REAL
-/// tools on a real Stroom, with hand-written XSLTs, as the script writes them.
+/// Onboarding translations end to end through the REAL tools on a real Stroom, with hand-written XSLTs.
 ///
-/// Covered, as the script numbers them: 1 for the JSON, XML and syslog samples (and the CSV sample the promotion
-/// starts from): profile_sample, feed, upload, template, converter and XSLT, pipeline, stepping, processing
-/// (exactly one Events stream per raw stream), validation and documentation; and 3, promotion of the CSV build
-/// (layout, created folders, version history, the emptied build folder, the disabled filter with no minimum
-/// creation time, tags), the documentation written again after promotion through a working copy, and an in-place
-/// fix through a working copy written back on promotion, with a backup.
+/// Covered: 1 for the JSON, XML and syslog samples (and the CSV sample the promotion starts from): profile_sample,
+/// feed, upload, template, converter and XSLT, pipeline, stepping, processing (exactly one Events stream per raw
+/// stream), validation and documentation; and 3, promotion of the CSV build (layout, created folders, version history,
+/// the emptied build folder, the disabled filter with no minimum creation time, tags), the documentation written again
+/// after promotion through a working copy, and an in-place fix through a working copy written back on promotion, with a
+/// backup.
 ///
 /// Part 2 (the reported field fix, reprocessed once and superseded) and the CSV case's own steps are covered by
-/// `stroom.mcp.impl.TestOnboardingEndToEnd`. Left out: the script's check of the build's record entry and of the
-/// promoted doc's `documentation` field (internal: Stroom's Documentation doc has its text only), and the
-/// `E2E_TARGET=live` path (another Stroom).
+/// `stroom.mcp.impl.TestOnboardingEndToEnd`. Left out: the build's record entry, and the promoted doc's
+/// `documentation` field (Stroom's Documentation doc has its text only).
 @SuppressWarnings("unchecked")
 class TestE2eTranslation extends AbstractE2eTest {
 
-    /// The script's Data Splitter for its RFC 5424 syslog sample.
+    /// The Data Splitter for the RFC 5424 syslog sample.
     static final String SYSLOG_SPLITTER = textResource("syslog_splitter.xml");
     static final Case JSON = new Case("json", "Event Data (JSON)",
             "[{\"ts\": \"2026-09-28T11:00:00Z\", \"user\": \"dave\", \"host\": \"ws04\", \"src\": \"10.0.1.4\", "
@@ -193,9 +191,9 @@ class TestE2eTranslation extends AbstractE2eTest {
                 assertThat(tags(backup.getUuid())).contains("mcp-generated"));
     }
 
-    /// Not in the script: the Stroom MCP server's FINDINGS (`promote_build took three failed calls`, 0.18.x) and
-    /// design.md (promote_build: "Every document without a destination is named in one refusal ... and a
-    /// destination path works with or without `System/`"), pinned on a real Stroom.
+    /// promote_build names every document without a destination in one refusal (seen in testing: one failed call
+    /// per type), and a destination path works with or without `System/` (TOOLS.md, promote_build), pinned on a
+    /// real Stroom.
     @Test
     void everyDocumentWithoutADestinationIsNamedInOneRefusal() {
         final String build = "e2e-places";
@@ -235,7 +233,7 @@ class TestE2eTranslation extends AbstractE2eTest {
                 .toList());
     }
 
-    // The script's hand-written translation: one Event per record, Authenticate.
+    // The hand-written translation: one Event per record, Authenticate.
     private static String xslt(final String defaultNs,
                                final String rootMatch,
                                final String recordMatch,

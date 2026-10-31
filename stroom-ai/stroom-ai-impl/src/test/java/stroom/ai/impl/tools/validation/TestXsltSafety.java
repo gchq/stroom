@@ -31,8 +31,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The tools run and save nothing that reads the environment or a resource: ported from the Stroom MCP server's
-/// `tests/test_saxon.py` (the XPath and XSLT refusals).
+/// The tools run and save nothing that reads the environment or a resource: the XPath and XSLT refusals.
 class TestXsltSafety {
 
     private static final String GEO = "http://example.com/geo";

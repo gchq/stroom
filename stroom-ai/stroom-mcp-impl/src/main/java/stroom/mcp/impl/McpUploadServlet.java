@@ -49,8 +49,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// `POST /mcp/upload/<id>?file=<name>`: a sample file from the user's machine, posted by a command upload_sample
-/// gave (ported from the Stroom MCP server's `utils/uploads.py` `handle_upload`), stored in the feed the command was
-/// given for, as the user ([FeedUploads]).
+/// gave, stored in the feed the command was given for, as the user ([FeedUploads]).
 ///
 /// The request is signed in as any other is (the security filter: the user's API key or token, as the command's
 /// `Authorization` header gives it), so it needs no upload ticket: the post must match a file upload_sample gave

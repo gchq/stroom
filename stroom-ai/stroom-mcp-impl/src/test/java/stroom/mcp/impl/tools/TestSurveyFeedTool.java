@@ -56,7 +56,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// survey_feed (the Stroom MCP server's `tests/test_survey.py` tool cases, and `tests/test_progress.py`'s).
+/// survey_feed, the tool, and the progress it reports.
 class TestSurveyFeedTool {
 
     private static final String JSON_LINES = "{\"a\": 1}\n{\"a\": 2}\n";
@@ -86,11 +86,11 @@ class TestSurveyFeedTool {
         // that feed.
         feedHoldsMany();
         // Without a form, the user can't confirm it: nothing is read.
-        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", PortedToolCalls.context()).text())
+        assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", BuildToolCalls.context()).text())
                 .startsWith("Not done: Survey feed 'ACME-VPN' only 3 stream(s) a call (the default is 10).");
         Mockito.verify(streamReader, Mockito.never()).readHead(anyLong(), anyInt(), anyInt());
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final ToolResult agreed = call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", user.context());
         assertThat(agreed.text()).isEqualTo("No Raw Events streams in feed 'ACME-VPN'");
         assertThat(user.shown()).singleElement().asString()
@@ -174,14 +174,14 @@ class TestSurveyFeedTool {
 
     @Test
     void aFewOfAnExistingFeedsStreamsByIdAreTheUsersToConfirm() {
-        // Seen in testing on 0.18.13: an existing feed onboarded from 5 streams, given by id, so not asked about.
+        // Seen in testing: an existing feed onboarded from 5 streams, given by id, so not asked about.
         final DocRef existing = new DocRef(FeedDoc.TYPE, "feed-0", "ACME-VPN");
         Mockito.when(feedNames.feedsNamed("ACME-VPN")).thenReturn(List.of(existing));
         for (int id = 1; id <= 5; id++) {
             stream(id, "ACME-VPN", 0, "{\"a\": 1}\n", false);
         }
         feedHoldsMany();
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         call("{\"stream_ids\": [1, 2, 3, 4, 5]}", user.context());
         assertThat(user.shown()).singleElement().asString().contains("only 5 stream(s) a call");
 
@@ -200,7 +200,7 @@ class TestSurveyFeedTool {
         final Meta only = stream(1, "ACME-VPN", 0, "{\"a\": 1}\n", false);
         Mockito.when(streamReader.find(any(), anyInt(), anyBoolean()))
                 .thenReturn(new ResultPage<>(List.of(new MetaRow(only, null, Map.of()))));
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
 
         assertThat(json(call("{\"stream_ids\": [1]}", user.context())).get("streams_read")).isEqualTo(List.of(1));
         assertThat(user.shown()).isEmpty();
@@ -360,8 +360,8 @@ class TestSurveyFeedTool {
     @Test
     void itOnlyReadsWithoutABuildAndIsHeavy() {
         assertThat(tool.isReadOnly()).isFalse();
-        assertThat(tool.isReadOnly(PortedToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME\"}"))).isTrue();
-        assertThat(tool.isReadOnly(PortedToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME\", \"build\": "
+        assertThat(tool.isReadOnly(BuildToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME\"}"))).isTrue();
+        assertThat(tool.isReadOnly(BuildToolCalls.call(SurveyFeedTool.NAME, "{\"feed\": \"ACME\", \"build\": "
                                                                              + "\"b\"}"))).isFalse();
         assertThat(tool.hasReadOnlyCalls()).isTrue();
         assertThat(tool.confirmsItself()).isFalse();
@@ -408,11 +408,11 @@ class TestSurveyFeedTool {
     }
 
     private ToolResult call(final String arguments) {
-        return call(arguments, PortedToolCalls.context());
+        return call(arguments, BuildToolCalls.context());
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        final ToolCall call = PortedToolCalls.call(SurveyFeedTool.NAME, arguments);
+        final ToolCall call = BuildToolCalls.call(SurveyFeedTool.NAME, arguments);
         return tool.execute(call, context);
     }
 

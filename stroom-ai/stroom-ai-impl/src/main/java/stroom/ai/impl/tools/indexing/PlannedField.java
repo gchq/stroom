@@ -30,7 +30,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /// One field of an index plan: its name in the index, its logical type, and the XPath in the event it comes from.
-/// Ported from the Stroom MCP server's `PlannedField` model; its JSON is the server's, field for field.
+/// Its JSON is the form kept with a plan in an XSLT's description, field for field, so plans already kept still
+/// read.
 ///
 /// @param name        Field name in the index, e.g. `UserId` or `user.name`.
 /// @param type        Its logical type: one of [FieldPlans#LOGICAL_TYPES].
@@ -43,8 +44,8 @@ import java.util.Set;
 ///                    or each as a value (Lucene).
 /// @param items       Elasticsearch, with type `object`: the fields of each object of an array of them, one object
 ///                    per element the source selects (each item's source read from that element), e.g. `users` from
-///                    `EventSource/User | EventDetail//User` with `login` from `Id`. Not in the Stroom MCP server;
-///                    asked for by the user: one field of every user an event names. Empty for a field of values.
+///                    `EventSource/User | EventDetail//User` with `login` from `Id`. Asked for by the user: one
+///                    field of every user an event names. Empty for a field of values.
 /// @param distinctBy  `distinct_by`: with items, the XPath, from each element, of the key the objects are made
 ///                    distinct by: one object per key, the first element with it, in the order first met (an element
 ///                    without one is left out), e.g. `Id` for each user once by login name. Null for every element.
@@ -94,7 +95,7 @@ public record PlannedField(String name,
     }
 
     /// @param json A planned field as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with its own checks.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static PlannedField fromJson(final Map<String, Object> json) {
@@ -102,7 +103,7 @@ public record PlannedField(String name,
         return reader.orThrow("PlannedField", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values, validating it with lax types, defaults and its own checks.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -113,7 +114,8 @@ public record PlannedField(String name,
         if (fields == null) {
             return null;
         }
-        // object only as given: any other type is one of the logical types, refused in the Stroom MCP server's words.
+        // object only as given: any other type is one of the logical types, refused in the established words,
+        // which list the logical types alone.
         final List<String> types = OBJECT.equals(fields.input().get("type"))
                 ? List.of(OBJECT)
                 : FieldPlans.LOGICAL_TYPES;
@@ -157,7 +159,7 @@ public record PlannedField(String name,
         return null;
     }
 
-    /// @return It as JSON, as the Python model's `model_dump` writes it (and as Jackson writes it).
+    /// @return It as JSON, the form it is kept in (and as Jackson writes it).
     @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
@@ -167,7 +169,7 @@ public record PlannedField(String name,
         json.put("description", description);
         json.put("transform", transform);
         json.put("multiple", multiple);
-        // Only for a field of objects: a plan without any is written as the Stroom MCP server wrote it.
+        // Only for a field of objects: a plan without any is kept as it always has been.
         if (!items.isEmpty()) {
             json.put("items", items.stream().map(PlannedField::toJson).toList());
         }

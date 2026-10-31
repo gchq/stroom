@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -201,7 +201,7 @@ class SiblingSharedCalls {
             taken.add(at);
             notes.add(at + ": " + call.said() + ", so this mapping calls it too (shared)" + (replaced.isEmpty()
                     ? ""
-                    : ", in place of " + PyText.list(new ArrayList<>(new LinkedHashSet<>(replaced))))
+                    : ", in place of " + ToolText.list(new ArrayList<>(new LinkedHashSet<>(replaced))))
                       + ". Remove the shared entry only if the user says this one differs.");
         }
         if (!shared.isEmpty()) {
@@ -276,7 +276,7 @@ class SiblingSharedCalls {
             return usedBy.size() + " existing pipelines (" + String.join(", ", usedBy.subList(0,
                     Math.min(MAX_NAMED, usedBy.size()))) + (usedBy.size() > MAX_NAMED
                     ? ", ..."
-                    : "") + ") write it with " + template + " from " + PyText.repr(href);
+                    : "") + ") write it with " + template + " from " + ToolText.repr(href);
         }
     }
 }

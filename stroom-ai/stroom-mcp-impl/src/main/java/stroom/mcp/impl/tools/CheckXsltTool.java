@@ -50,11 +50,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `check_xslt` - checks an XSLT before it is saved or stepped: well-formed, an xsl:stylesheet with a version,
-/// only real stroom: functions, expressions that select nothing for want of the input's namespace, event-logging
-/// elements the schema has no place for, schema locations Stroom doesn't hold, imports that aren't XSLT documents,
-/// and anything that reads the environment, files or the network. Ported from the Stroom MCP server's
-/// `tools/validation.py`, on the checks of [XsltChecks] and [XsltSafety].
+/// `check_xslt` - checks an XSLT before it is saved or stepped: well-formed, an xsl:stylesheet with a version, only
+/// real stroom: functions, expressions that select nothing for want of the input's namespace, event-logging elements
+/// the schema has no place for, schema locations Stroom doesn't hold, imports that aren't XSLT documents, and anything
+/// that reads the environment, files or the network. Built on the checks of [XsltChecks] and [XsltSafety].
 ///
 /// Read as the user: the XML schemas and the imported XSLTs are looked for among those the user may view. It
 /// compiles the XSLT as Stroom compiles it ([XsltCompileCheck]), so code that would fail every record is caught
@@ -158,8 +157,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
     /// @param text           An XSLT's text, as sent.
     /// @param schemaVersion  The event-logging version its output must follow, or null.
     /// @param inputNamespace The namespace of its input when known ("" for none), or null.
-    /// @return `ok`, `errors` and `warnings`, and for a well-formed XSLT `imports` and `stroom_functions`, as the
-    /// Stroom MCP server gave them.
+    /// @return `ok`, `errors` and `warnings`, and for a well-formed XSLT `imports` and `stroom_functions`.
     Map<String, Object> check(final String text, final String schemaVersion, final String inputNamespace) {
         final XsltChecks.Unescaped unescaped = XsltChecks.unescaped(text);
         final String xslt = unescaped.text();

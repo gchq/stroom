@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /// `build_status` - where an onboarding stands: every step of the plan as done or to do, read from what the build
-/// holds, with the sample's format and what is next (the Stroom MCP server's `tools/plan.py` `build_status`).
+/// holds, with the sample's format and what is next.
 class BuildStatusTool extends AbstractBuiltInTool {
 
     static final String NAME = "build_status";
@@ -105,9 +105,9 @@ class BuildStatusTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The status, put briefly (not in the Stroom MCP server; seen: its 10 KB result saved to the workspace and
-    /// called for again and again, as the agent couldn't keep it in view): `next`, `before_promotion` and the steps
-    /// first, each step by its state, each document on one line, the rest as it is.
+    /// The status, put briefly (seen in testing: the full 10 KB result saved to the workspace and called for again and
+    /// again, as the agent couldn't keep it in view): `next`, `before_promotion` and the steps first, each step by its
+    /// state, each document on one line, the rest as it is.
     ///
     /// @param status The build's status, as [BuildPlan#status] gives it.
     /// @return It briefly.

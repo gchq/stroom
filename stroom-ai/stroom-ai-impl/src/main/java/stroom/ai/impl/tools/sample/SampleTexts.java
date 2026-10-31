@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,10 +27,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What counts as sample data (the Stroom MCP server's `utils/samples.py`).
+/// What counts as sample data.
 ///
 /// A client hands the model file attachments as references; a model that does not read them passes the paths on,
-/// and the server then profiles, uploads and plans around a Windows path. The server cannot read the client's
+/// and the tools then profile, upload and plan around a Windows path. Stroom cannot read the client's
 /// files, so a sample that is a path, a list of paths or an attachment reference is refused with the instruction a
 /// model can act on: pass the file's text.
 ///
@@ -50,15 +50,15 @@ public final class SampleTexts {
                                               + "then never passes through you";
 
     private static final int LONG = 20_000;
-    private static final Pattern PATH = PyText.re(
+    private static final Pattern PATH = ToolText.re(
             "^(?:[A-Za-z]:[\\\\/]|\\\\\\\\[^\\\\]+\\\\|/(?:[\\w.-]+/)+|~/|file://|#file:|#attachment:)[^\\n]*$");
-    private static final Pattern REFERENCE = PyText.re("^#(?:file|attachment):\\S+$");
+    private static final Pattern REFERENCE = ToolText.re("^#(?:file|attachment):\\S+$");
     // What a file reader leaves where it cut a file short: VS Code's read_file ends a long line with
     // '[... truncated at 2000 characters]'.
-    private static final Pattern CUT = PyText.re("truncated at \\d[\\d,]* (?:characters|chars|bytes|lines)|"
+    private static final Pattern CUT = ToolText.re("truncated at \\d[\\d,]* (?:characters|chars|bytes|lines)|"
                                                  + "\\[\\.\\.\\.\\s*(?:\\d[\\d,]* (?:more )?(?:characters|lines|bytes)"
                                                  + "|truncated)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern TOKEN_SEPARATORS = PyText.re("[,\\n;]+");
+    private static final Pattern TOKEN_SEPARATORS = ToolText.re("[,\\n;]+");
     private static final List<String> NAME_KEYS = List.of("name", "file", "filename", "file_name", "path");
     private static final List<String> TEXT_KEYS = List.of("text", "content", "contents", "data", "sample");
 
@@ -69,8 +69,8 @@ public final class SampleTexts {
     /// @param token A token of a sample.
     /// @return True if it is a file path or an attachment reference.
     public static boolean pathLike(final String token) {
-        final String text = PyText.strip(PyText.strip(token), "\"'");
-        return !text.isEmpty() && (PyText.match(PATH, text) || PyText.match(REFERENCE, text));
+        final String text = ToolText.strip(ToolText.strip(token), "\"'");
+        return !text.isEmpty() && (ToolText.match(PATH, text) || ToolText.match(REFERENCE, text));
     }
 
     /// @param sample A sample's text, or null.
@@ -78,7 +78,7 @@ public final class SampleTexts {
     /// @return Why the text is not sample data (empty, a file path or list of paths, an attachment reference, or a
     /// file a reader cut short), or null when it is.
     public static String whyNotData(final String sample, final String name) {
-        final String text = PyText.strip(sample == null
+        final String text = ToolText.strip(sample == null
                 ? ""
                 : sample);
         if (text.isEmpty()) {
@@ -86,7 +86,7 @@ public final class SampleTexts {
         }
         final Matcher cut = CUT.matcher(text);
         if (cut.find()) {
-            return name + " holds a file reader's cut (" + PyText.repr(cut.group()) + "): you didn't get the whole "
+            return name + " holds a file reader's cut (" + ToolText.repr(cut.group()) + "): you didn't get the whole "
                    + "file, so what was passed isn't its data. Don't trim, complete or repair it (an agent completed a "
                    + "cut record with values it made up). Send the files with upload_sample files=[their paths] (a "
                    + "command per file for the user's terminal: it goes from their disk to Stroom whole, not through "
@@ -94,13 +94,13 @@ public final class SampleTexts {
         }
         final List<String> tokens = new ArrayList<>();
         for (final String token : TOKEN_SEPARATORS.split(text, -1)) {
-            if (!PyText.isBlank(token)) {
+            if (!ToolText.isBlank(token)) {
                 tokens.add(token);
             }
         }
         if (!tokens.isEmpty() && tokens.size() <= 50 && tokens.stream().allMatch(SampleTexts::pathLike)) {
-            final String shown = PyText.head(PyText.strip(tokens.getFirst()), 80);
-            return name + " is a file path or attachment reference (" + PyText.repr(shown) + "), not the file's "
+            final String shown = ToolText.head(ToolText.strip(tokens.getFirst()), 80);
+            return name + " is a file path or attachment reference (" + ToolText.repr(shown) + "), not the file's "
                    + "content. This server cannot read the client's files: read the file and pass its text (every "
                    + "line of it) as the sample.";
         }
@@ -119,7 +119,7 @@ public final class SampleTexts {
 
     // A key no file name has: more than one line (or an escaped newline), quotes, or the length of a record.
     private static boolean notAName(final String key) {
-        return key.contains("\n") || key.contains("\\n") || key.contains("\"") || PyText.len(key) > 255;
+        return key.contains("\n") || key.contains("\\n") || key.contains("\"") || ToolText.len(key) > 255;
     }
 
     /// @param named Samples by name.
@@ -130,14 +130,14 @@ public final class SampleTexts {
             return null;
         }
         return "samples arrived broken: the tool call cut the file's text into the keys and values of an object (keys "
-               + "such as " + PyText.repr(PyText.head(odd, 60)) + "), most likely at the ':' and ',' in it. The data "
-               + "is fine; the arguments are not. Call again with samples as a list of strings, each one file's whole "
-               + "text as a single JSON string (newlines escaped as \\n, quotes as \\\"), not an object.";
+               + "such as " + ToolText.repr(ToolText.head(odd, 60)) + "), most likely at the ':' and ',' in it. "
+               + "The data is fine; the arguments are not. Call again with samples as a list of strings, each one "
+               + "file's whole text as a single JSON string (newlines escaped as \\n, quotes as \\\"), not an object.";
     }
 
     // A text sent with its newlines escaped twice (literal \n, no line breaks) has them restored.
     private static String unescape(final String text) {
-        if (!PyText.strip(text).contains("\n") && PyText.count(text, "\\n") >= 2) {
+        if (!ToolText.strip(text).contains("\n") && ToolText.count(text, "\\n") >= 2) {
             return text.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\\t", "\t").replace("\\\"", "\"");
         }
         return text;
@@ -158,7 +158,7 @@ public final class SampleTexts {
         }
         final Object nameKey = NAME_KEYS.stream().filter(keys::containsKey).findFirst().map(keys::get).orElse(null);
         return new OneFile(nameKey != null
-                ? PyText.str(item.get(nameKey))
+                ? ToolText.str(item.get(nameKey))
                 : "", item.get(textKey));
     }
 
@@ -210,7 +210,7 @@ public final class SampleTexts {
         return out;
     }
 
-    // The type's name as Python says it.
+    // The type's name as the message says it (`NoneType` for null).
     private static String typeName(final Object value) {
         return switch (value) {
             case null -> "NoneType";
@@ -228,8 +228,8 @@ public final class SampleTexts {
     public static String longSamplesNote(final Map<String, String> named) {
         final List<String> said = new ArrayList<>();
         named.forEach((name, text) -> {
-            if (PyText.len(text) > LONG) {
-                said.add(name + " (" + PyText.thousands(PyText.len(text)) + " characters)");
+            if (ToolText.len(text) > LONG) {
+                said.add(name + " (" + ToolText.thousands(ToolText.len(text)) + " characters)");
             }
         });
         if (said.isEmpty()) {

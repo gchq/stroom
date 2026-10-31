@@ -29,14 +29,14 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_generator.py`, ported: for each of the translation suite's samples (and a
-/// firewall's CSV), the translation is built the way a model would with build_translation_xslt, from a field mapping
-/// and no hand-written XSLT, through the REAL tools on a real Stroom. Then the pipeline is created in a build, every
-/// record stepped and each Event validated against the instance's event-logging schema and the quality checks. The
-/// XML sample carries a record no rule matches, which must come back as the generator's warning, not be dropped.
+/// For each of the translation suite's samples (and a firewall's CSV), the translation is built the way a model would
+/// with build_translation_xslt, from a field mapping and no hand-written XSLT, through the REAL tools on a real Stroom.
+/// Then the pipeline is created in a build, every record stepped and each Event validated against the instance's
+/// event-logging schema and the quality checks. The XML sample carries a record no rule matches, which must come back
+/// as the generator's warning, not be dropped.
 ///
-/// Every one of the script's five mappings (firewall, csv, json, xml, syslog) is covered, one test each; and Data
-/// grouped in Data (data_parent), which the script doesn't have.
+/// Each of the five mappings (firewall, csv, json, xml, syslog) is covered, one test each; and Data grouped in Data
+/// (data_parent).
 @SuppressWarnings("unchecked")
 class TestE2eGenerator extends AbstractE2eTest {
 
@@ -356,7 +356,7 @@ class TestE2eGenerator extends AbstractE2eTest {
         return withPath;
     }
 
-    // The script's MAPPINGS.
+    // The mappings.
     private static Map<String, Map<String, Object>> mappings() {
         final List<Map<String, Object>> admin = List.of(
                 Map.of("path", "EventSource/Client/IPAddress", "field", "src_ip"),

@@ -31,7 +31,7 @@ import stroom.ai.impl.tools.indexing.TemplateCheck.DocValue;
 import stroom.ai.impl.tools.indexing.TemplateMappings.Composed;
 import stroom.ai.impl.tools.indexing.TemplateMappings.Mapping;
 import stroom.ai.impl.tools.indexing.TemplateMappings.NotIndexed;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -49,15 +49,15 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The ported indexing core against the Stroom MCP server's own, call by call: `tools/indexing/recorded_calls.json`
-/// holds calls made to `utils/ecs.py`, `utils/fieldplan.py`, `utils/templatecheck.py` and the pure helpers of
-/// `tools/indexing.py` while the server's test suite ran (and from crafted inputs), each with its arguments and what
-/// it returned or raised (at most 150 of each function, from every test that reached it). Each is made again on
-/// the port, which must give the same result (or refuse with the same message).
+/// The indexing core against its recorded calls, call by call: `tools/indexing/recorded_calls.json` holds calls to
+/// the ECS schema, the field plan, the template check and the pure indexing helpers (from the tests' cases and from
+/// crafted inputs), each with its arguments and what it must return or refuse (at most 150 of each function). Each
+/// is made again, and must give the same result (or refuse with the same message). They pin the core's established
+/// behaviour.
 ///
-/// Python's tuples and sets are written `{"__tuple__": [...]}` and `{"__set__": [sorted]}`; a document value as read
-/// is a tuple of its kind and text.
-class TestIndexingParity {
+/// Tuples and sets are written `{"__tuple__": [...]}` and `{"__set__": [sorted]}`; a document value as read is a
+/// tuple of its kind and text.
+class TestIndexingRecordedCalls {
 
     private static final EcsSchema ECS = IndexingFixtures.ECS;
 
@@ -85,7 +85,7 @@ class TestIndexingParity {
     }
 
     private static List<Object> calls() {
-        return JsonValues.listOrEmpty(PyJson.loads(IndexingFixtures.resource(
+        return JsonValues.listOrEmpty(ToolJson.loads(IndexingFixtures.resource(
                 "/stroom/ai/impl/tools/indexing/recorded_calls.json")));
     }
 
@@ -99,7 +99,7 @@ class TestIndexingParity {
             return;
         }
         final Object result = run(fn, args, call);
-        assertThat(PyJson.dumps(canonical(encode(result)))).isEqualTo(PyJson.dumps(canonical(call.get("result"))));
+        assertThat(ToolJson.dumps(canonical(encode(result)))).isEqualTo(ToolJson.dumps(canonical(call.get("result"))));
     }
 
     private static Throwable catchThrown(final Runnable runnable) {
@@ -111,7 +111,7 @@ class TestIndexingParity {
         }
     }
 
-    // The port's function for the server's, given the server's arguments.
+    // The Java function for a recorded call, given its recorded arguments.
     @SuppressWarnings("unchecked")
     private static Object run(final String fn, final Args args, final Map<String, Object> call) {
         return switch (fn) {
@@ -208,7 +208,7 @@ class TestIndexingParity {
                     args.string(2, "index_name"), ECS);
             case "templatecheck.discovery_data_stream" -> ExampleTemplates.discoveryDataStream(args.map(0, "body"),
                     documents(args.get(1, "docs")), args.string(2, "field"));
-            default -> throw new IllegalStateException("No port of " + fn);
+            default -> throw new IllegalStateException("No call recorded as " + fn);
         };
     }
 
@@ -231,7 +231,7 @@ class TestIndexingParity {
                 : JsonValues.strings(decoded);
     }
 
-    // The server's writes_to, the Elasticsearch side being the port's.
+    // writes_to for a recorded call: the Lucene side here, the Elasticsearch side IndexingHelpers'.
     private static boolean writesTo(final Args args) {
         final String docType = args.string(1, "doc_type");
         final String uuid = args.string(2, "uuid");
@@ -284,7 +284,7 @@ class TestIndexingParity {
         return (Map<String, Object>) decode(doc);
     }
 
-    // A recorded value as the port takes it: a tuple of two (a document value) as a DocValue, a set as a set.
+    // A recorded value as Java takes it: a tuple of two (a document value) as a DocValue, a set as a set.
     private static Object decode(final Object value) {
         if (value instanceof final Map<?, ?> map) {
             if (map.size() == 1 && map.containsKey("__tuple__")) {
@@ -293,7 +293,7 @@ class TestIndexingParity {
                     && (items.get(1) == null || items.get(1) instanceof String)) {
                     return new DocValue(kind, (String) items.get(1));
                 }
-                return items.stream().map(TestIndexingParity::decode).toList();
+                return items.stream().map(TestIndexingRecordedCalls::decode).toList();
             }
             if (map.size() == 1 && map.containsKey("__set__")) {
                 return new LinkedHashSet<>(JsonValues.listOrEmpty(map.get("__set__")));
@@ -303,12 +303,12 @@ class TestIndexingParity {
             return out;
         }
         if (value instanceof final List<?> list) {
-            return list.stream().map(TestIndexingParity::decode).toList();
+            return list.stream().map(TestIndexingRecordedCalls::decode).toList();
         }
         return value;
     }
 
-    // A port's result as the recorder wrote the server's.
+    // A result written as the recorded results are.
     private static Object encode(final Object value) {
         return switch (value) {
             case null -> null;
@@ -337,7 +337,7 @@ class TestIndexingParity {
                 map.forEach((key, item) -> out.put(String.valueOf(key), encode(item)));
                 yield out;
             }
-            case final Collection<?> items -> items.stream().map(TestIndexingParity::encode).toList();
+            case final Collection<?> items -> items.stream().map(TestIndexingRecordedCalls::encode).toList();
             default -> value;
         };
     }
@@ -352,7 +352,7 @@ class TestIndexingParity {
         return out;
     }
 
-    // Numbers compared as numbers: Python's 70 and 70.0 are the same value.
+    // Numbers compared as numbers: 70 and 70.0 are the same value.
     private static Object canonical(final Object value) {
         if (value instanceof final Map<?, ?> map) {
             final Map<String, Object> out = new LinkedHashMap<>();
@@ -360,7 +360,7 @@ class TestIndexingParity {
             return out;
         }
         if (value instanceof final List<?> list) {
-            return list.stream().map(TestIndexingParity::canonical).toList();
+            return list.stream().map(TestIndexingRecordedCalls::canonical).toList();
         }
         if (value instanceof final Double number && number == Math.rint(number) && Math.abs(number) < 1e15) {
             return number.longValue();

@@ -20,7 +20,7 @@ import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
@@ -42,9 +42,8 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// build_translation_xslt (the Stroom MCP server's `tests/test_generation.py`, `tests/test_build_feedback.py`,
-/// `tests/test_changes_on_draft.py` and `tests/test_mapping_changes.py`, their tool cases, with the tool cases of
-/// `tests/test_authoring_guards.py` and `tests/test_draft.py` that call it).
+/// build_translation_xslt, the tool: generating and saving from a mapping, the feedback on a mapping that doesn't
+/// generate, changes= on a draft or a saved mapping, and the guards around them.
 class TestBuildTranslationXsltTool {
 
     private static final String SAMPLE = """
@@ -54,7 +53,7 @@ class TestBuildTranslationXsltTool {
             2026-09-28T10:02:00.000Z,status,,,,ws02,0
             2026-09-28T10:03:00.000Z,login,bob,fail,s2,ws03,22
             """;
-    // test_build_feedback.py's GOOD: a JSON mapping that generates.
+    // A JSON mapping that generates.
     private static final String GOOD = """
             {"input": "json", "common": [{"path": "EventTime/TimeCreated", "field": "ts"},
                                          {"path": "EventSource/System/Name", "value": "Acme"},
@@ -65,7 +64,7 @@ class TestBuildTranslationXsltTool {
                          "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
                                     {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
                                     {"path": "EventDetail/Authenticate/User/Id", "field": "user"}]}]}""";
-    // test_draft.py's FW_JSON and INVENTORY.
+    // A firewall's JSON lines, and the field inventory drafted from them.
     private static final String FW_JSON = "{\"timestamp\":\"2026-10-01T09:00:12+10:00\",\"device\":\"FW-EDGE-01\","
                                           + "\"event_type\":\"TRAFFIC\",\"severity\":\"INFO\","
                                           + "\"src_ip\":\"192.0.2.10\","
@@ -153,8 +152,8 @@ class TestBuildTranslationXsltTool {
 
     @Test
     void aSaveThatKeepsNoneOfTheCurrentTranslationsLookupsWarnsNamingThem() {
-        // The Stroom MCP server's FINDINGS (0.18.41): a next version written anew lost the lookups, and nothing said
-        // so. Unless the user chose to drop them, the save says what the current translation looks up.
+        // Seen in testing: a next version written anew lost the lookups, and nothing said so. Unless the user chose
+        // to drop them, the save says what the current translation looks up.
         Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
 
         final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
@@ -531,7 +530,7 @@ class TestBuildTranslationXsltTool {
                 .contains("events[1].name: Field required (Short name for this kind of event, e.g. 'logon'.)")
                 .contains("holds more than a path")
                 .contains("{\"path\": \"EventDetail/View/User/Id\", \"xpath\": \"<the xpath>\"}")
-                .contains(PyJson.dumps(MappingProblems.MAPPING_EXAMPLE));
+                .contains(ToolJson.dumps(MappingProblems.MAPPING_EXAMPLE));
         // A value problem alone gets no example: the shape is right.
         final Map<String, Object> value = new LinkedHashMap<>(MappingProblems.MAPPING_EXAMPLE);
         value.put("common", List.of(Map.of("path", "EventSource/System/Name", "field", "a", "any_of",
@@ -547,7 +546,7 @@ class TestBuildTranslationXsltTool {
                 TranslationWorld.SCHEMA, TranslationWorld.VERSION).problems()).isEmpty();
     }
 
-    // --- tests/test_build_feedback.py: what is wrong and where, before any slow work. ---
+    // --- What is wrong and where, before any slow work. ---
 
     @Test
     void textThatIsNotJsonSaysWhereAndHowBackslashesTravel() {
@@ -623,7 +622,7 @@ class TestBuildTranslationXsltTool {
                 .contains("mapping keys ignored, as a mapping has no such key: ['extracts']"));
     }
 
-    // --- tests/test_changes_on_draft.py: changes= on a first save, applied to the session's draft. ---
+    // --- changes= on a first save, applied to the session's draft. ---
 
     @Test
     void aFirstSaveAppliesChangesToTheDraft() {
@@ -683,7 +682,7 @@ class TestBuildTranslationXsltTool {
                 .contains("draft one, or give the whole mapping");
     }
 
-    // --- tests/test_mapping_changes.py: a fix sends only what changes. ---
+    // --- A fix sends only what changes. ---
 
     @Test
     void aFixSendsOnlyTheRuleItChanges() {
@@ -714,7 +713,7 @@ class TestBuildTranslationXsltTool {
 
     @Test
     void changesToASavedXsltStartFromTheMappingKeptWithIt() {
-        // Another replica, or a new session: nothing remembered, so the mapping saved with the XSLT is changed.
+        // Another node, or a new session: nothing remembered, so the mapping saved with the XSLT is changed.
         final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), null);
 
         final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("unmatched", "warn"),
@@ -758,7 +757,7 @@ class TestBuildTranslationXsltTool {
         assertThat(world.call(tool, Map.of()).get("error")).asString().contains("uuid= a saved XSLT alone");
     }
 
-    // --- tests/test_authoring_guards.py and tests/test_draft.py. ---
+    // --- The parser setting a mapping needs, and a field inventory sent as the mapping. ---
 
     @Test
     void buildTranslationXsltTellsTheParserSetting() {
@@ -791,7 +790,7 @@ class TestBuildTranslationXsltTool {
         assertThat(again.get("ok")).as(String.valueOf(again.get("problems"))).isEqualTo(true);
     }
 
-    // The mapping of test_generation.py's confirmation case: logons, status lines kept as Unknown, the rest.
+    // A mapping whose save is confirmed: logons, status lines kept as Unknown, the rest.
     private static Map<String, Object> keptAsUnknown() {
         final Map<String, Object> mapping = TranslationWorld.mapping();
         final List<Object> events = list(mapping.get("events"));
@@ -809,7 +808,7 @@ class TestBuildTranslationXsltTool {
         return mapping;
     }
 
-    // test_sample_check_speed.py's SAMPLE: a Fortigate key=value body in JSON lines.
+    // A Fortigate key=value body in JSON lines.
     private static String fortigate() {
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < 400; i++) {
@@ -832,7 +831,7 @@ class TestBuildTranslationXsltTool {
             record.put("time", "2026-10-01T10:00:00.000Z");
             record.put("host", "fw1");
             record.put("body", String.join(" ", body));
-            lines.add(PyJson.dumps(record));
+            lines.add(ToolJson.dumps(record));
         }
         return String.join("\n", lines);
     }

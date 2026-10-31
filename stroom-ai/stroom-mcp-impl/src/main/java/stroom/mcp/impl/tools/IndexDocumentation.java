@@ -49,10 +49,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// write_documentation for an existing index (the Stroom MCP server's `tools/builds.py` `_document_index` and
-/// `_own_indexing_pipeline`): its Field mapping section generated from a survey of the index through Stroom, the
-/// user confirming which index doc first. A doc already beside the index doc is changed through a working copy,
-/// written back (after a backup) on promotion.
+/// write_documentation for an existing index: its Field mapping section generated from a survey of the index through
+/// Stroom, the user confirming which index doc first. A doc already beside the index doc is changed through a working
+/// copy, written back (after a backup) on promotion.
 class IndexDocumentation {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexDocumentation.class);
@@ -103,7 +102,7 @@ class IndexDocumentation {
         this.guard = guard;
     }
 
-    /// `_document_index`: the documentation of an existing index.
+    /// The documentation of an existing index.
     ///
     /// @param call    The call, whose id tells its forms apart.
     /// @param context The call's context.
@@ -234,8 +233,7 @@ class IndexDocumentation {
         return result;
     }
 
-    /// `_own_indexing_pipeline`: the build's own pipeline that writes to the index, when the index doc is the
-    /// build's too.
+    /// The build's own pipeline that writes to the index, when the index doc is the build's too.
     ///
     /// @param build     The build.
     /// @param index     The index doc.

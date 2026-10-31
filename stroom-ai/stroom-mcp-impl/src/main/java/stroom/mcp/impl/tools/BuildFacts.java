@@ -23,13 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// What the plan ([BuildPlan]) reads from Stroom about a build: its documents, their streams, its pipelines and
-/// what its record says of them. Kept apart from the plan's own logic, which works only from these (as the Stroom
-/// MCP server's tests patched each of them), so that logic is tested on its own. [StroomBuildFacts] reads them
-/// from Stroom, as the user.
+/// What the plan ([BuildPlan]) reads from Stroom about a build: its documents, their streams, its pipelines and what
+/// its record says of them. Kept apart from the plan's own logic, which works only from these, so that logic is tested
+/// on its own. [StroomBuildFacts] reads them from Stroom, as the user.
 ///
-/// A build's documents are maps as the Stroom MCP server listed them: `type`, `uuid`, `name`, `path`,
-/// `working_copy_of`, `version_of` and `role`.
+/// A build's documents are maps: `type`, `uuid`, `name`, `path`, `working_copy_of`, `version_of` and `role`.
 interface BuildFacts {
 
     /// @param build A build's name.

@@ -26,9 +26,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/// The build each session is working on, so tools called without `build` fall back to it (the Stroom MCP server's
-/// `remember_build`, kept per user in its memory). A convenience only, kept in this node's memory per session (a
-/// chat, or an MCP session): a call it can't help is told to name the build, and the build itself is in Stroom.
+/// The build each session is working on, so tools called without `build` fall back to it. A convenience only, kept in
+/// this node's memory per session (a chat, or an MCP session): a call it can't help is told to name the build, and the
+/// build itself is in Stroom.
 @Singleton
 class BuildMemory {
 

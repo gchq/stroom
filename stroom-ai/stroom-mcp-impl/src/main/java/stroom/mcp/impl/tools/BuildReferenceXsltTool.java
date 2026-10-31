@@ -30,7 +30,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.ReferenceGenerator;
 import stroom.ai.impl.tools.generation.ReferenceMapping;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -49,8 +49,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /// `build_reference_xslt` - writes the XSLT of a reference-data pipeline from a mapping: for each record and map, a
-/// `<reference>` with the map name, key and value in reference-data:2 (the Stroom MCP server's
-/// `tools/generation.py` `build_reference_xslt`, on [ReferenceGenerator]). It saves nothing: save_xslt saves it.
+/// `<reference>` with the map name, key and value in reference-data:2 (on [ReferenceGenerator]). It saves nothing:
+/// save_xslt saves it.
 class BuildReferenceXsltTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildReferenceXsltTool.class);
@@ -181,9 +181,9 @@ class BuildReferenceXsltTool extends AbstractBuiltInTool {
         }
         try {
             return ReferenceMapping.parse(given instanceof final String text
-                    ? PyJson.loads(text)
+                    ? ToolJson.loads(text)
                     : given);
-        } catch (final MappingValidationException | PyJson.JsonDecodeException e) {
+        } catch (final MappingValidationException | ToolJson.JsonDecodeException e) {
             throw new ToolRefusal("mapping is not a reference mapping: " + e.getMessage());
         }
     }

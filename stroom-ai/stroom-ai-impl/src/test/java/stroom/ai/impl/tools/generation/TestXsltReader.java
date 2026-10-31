@@ -40,11 +40,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// Reading a generated XSLT back into a mapping (the Stroom MCP server's `tests/test_rebuild.py`, its reader's
-/// parts): the mapping lost, or out of step with an XSLT changed by hand. Asked for by the user, with test coverage
-/// of hand edits that add a field or stop writing one. Each XSLT is run with plain Saxon, as the server's tests run
-/// it with SaxonC; the cases (`rebuild_test_cases.json`) are the server's tests' own, written out by
-/// `make_rebuild_tests.py`.
+/// Reading a generated XSLT back into a mapping: the mapping lost, or out of step with an XSLT changed by hand.
+/// Asked for by the user, with test coverage of hand edits that add a field or stop writing one. Each XSLT is run
+/// with plain Saxon; the cases are in `rebuild_test_cases.json`.
 class TestXsltReader extends XsltRuns {
 
     // Plain Saxon has no Stroom functions: format-date stubbed alike in both XSLTs, so they compare.
@@ -315,9 +313,9 @@ class TestXsltReader extends XsltRuns {
 
     @Test
     void functionsTheXsltDefinesByHandAreItsOwnAndAnImportedPrefixCallsImportedFunctions() {
-        // From test_xpathtree.py. A hand edit adding local:shout(), defined in the XSLT: its own, read through (not an
-        // imported XSLT's prefix, so no functions entry for it). An imported prefix (geo:) is reported as calling an
-        // imported function.
+        // A hand edit adding local:shout(), defined in the XSLT: its own, read through (not an imported XSLT's
+        // prefix, so no functions entry for it). An imported prefix (geo:) is reported as calling an imported
+        // function.
         final String code = codeOf(mapping());
         final String edited = once(once(code, "<xsl:stylesheet ", "<xsl:stylesheet xmlns:local=\"urn:local\" ")
                 .replace("</xsl:stylesheet>", LOCAL + "</xsl:stylesheet>"), "<Action>Logon</Action>",
@@ -345,7 +343,7 @@ class TestXsltReader extends XsltRuns {
 
     @Test
     void aTranslationReadBackKeepsItsTimeFormats() {
-        // From test_times_and_meta.py. The reader takes generated XSLTs back to their mapping: the rounded forms,
+        // The reader takes generated XSLTs back to their mapping: the rounded forms,
         // and epoch_s as it was written before.
         assertThat(XPathTrees.unify(ReadShapes.SHAPES.get("epoch_s, truncated"), ReadShapes.shape(
                 "stroom:format-date(string(xs:integer(xs:decimal(data[@name='ts']/@value[1]) * 1000)))"))).isPresent();
@@ -453,7 +451,7 @@ class TestXsltReader extends XsltRuns {
         return out.append("</").append(element.tag()).append('>').toString();
     }
 
-    // utils/mappingstore.normalise_xslt: the XSLT without what isn't an edit (the declaration, space between tags).
+    // The XSLT without what isn't an edit (the declaration, space between tags).
     private static String normalise(final String text) {
         final String stripped = XsltVersionHistory.strip(text).replaceFirst("^\\s*<\\?xml[^>]*\\?>", "");
         return stripped.replaceAll(">\\s+<", "><").strip();

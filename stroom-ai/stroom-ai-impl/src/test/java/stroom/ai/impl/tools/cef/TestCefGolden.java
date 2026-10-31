@@ -21,7 +21,7 @@ import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltStyle;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,18 +34,17 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The CEF port against what the Stroom MCP server's `utils/cef.py` writes for the same plans and Events (golden
-/// files written by it): the drafted plans' JSON and notes, the XSLTs' text, the lines' review, the documentation,
-/// the extension of a plan and what standing instructions say.
+/// The CEF output against its golden files for the same plans and Events: the drafted plans' JSON and notes, the
+/// XSLTs' text, the lines' review, the documentation, the extension of a plan and what standing instructions say.
 class TestCefGolden {
 
     @Test
-    void theDraftIsThePythonDraftJsonAndNotes() {
+    void theDraftIsItsGoldenJsonAndNotes() {
         final CefDraft.Drafted drafted = CefFixtures.drafted();
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/drafted.json");
-        assertThat(PyJson.dumps(drafted.plan().toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(golden.get("plan")));
-        assertThat(PyJson.dumps(drafted.plan().toJson(DumpMode.COMPACT)))
-                .isEqualTo(PyJson.dumps(golden.get("compact")));
+        assertThat(ToolJson.dumps(drafted.plan().toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(golden.get("plan")));
+        assertThat(ToolJson.dumps(drafted.plan().toJson(DumpMode.COMPACT)))
+                .isEqualTo(ToolJson.dumps(golden.get("compact")));
         assertThat(drafted.notes()).isEqualTo(golden.get("notes"));
         assertThat(drafted.plan().problems()).isEqualTo(golden.get("problems"));
     }
@@ -56,23 +55,23 @@ class TestCefGolden {
         @SuppressWarnings("unchecked") final Map<String, Object> compact = (Map<String, Object>) golden.get("compact");
         final CefPlan plan = CefPlan.fromJson(compact);
         assertThat(plan).isEqualTo(CefFixtures.drafted().plan());
-        assertThat(PyJson.dumps(plan.toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(golden.get("plan")));
+        assertThat(ToolJson.dumps(plan.toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(golden.get("plan")));
     }
 
     @Test
-    void theKafkaXsltIsThePythonText() {
+    void theKafkaXsltIsItsGolden() {
         assertThat(CefFixtures.drafted().plan().xslt()).isEqualTo(FieldDocFixtures.golden("cef/drafted-kafka.xslt"));
     }
 
     @Test
-    void theTextXsltIsThePythonText() {
+    void theTextXsltIsItsGolden() {
         assertThat(CefFixtures.drafted(false, List.of(), CefPlan.TEXT).plan().xslt())
                 .isEqualTo(FieldDocFixtures.golden("cef/drafted-text.xslt"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"named", "inline", "top"})
-    void eachStylesXsltIsThePythonText(final String name) {
+    void eachStylesXsltIsItsGolden(final String name) {
         final Map<String, Object> style = switch (name) {
             case "named" -> Map.of("layout", "named", "naming", "camelCase");
             case "inline" -> Map.of("layout", "inline");
@@ -84,7 +83,7 @@ class TestCefGolden {
     }
 
     @Test
-    void aMappedSeveritysXsltIsThePythonText() {
+    void aMappedSeveritysXsltIsItsGolden() {
         final Map<String, String> severities = new LinkedHashMap<>();
         severities.put("low", "3");
         severities.put("medium", "6");
@@ -96,7 +95,7 @@ class TestCefGolden {
 
     @ParameterizedTest
     @ValueSource(strings = {CefPlan.KAFKA, CefPlan.TEXT})
-    void importsAndAnEscapedTopicAreThePythonText(final String output) {
+    void importsAndAnEscapedTopicAreTheGolden(final String output) {
         final Map<String, CefValue> header = new LinkedHashMap<>();
         header.put("vendor", CefValue.constant("Ac'me"));
         header.put("product", CefValue.constant("P"));
@@ -111,7 +110,7 @@ class TestCefGolden {
     }
 
     @Test
-    void theLinesTheirExamplesAndReviewAreThePythons() {
+    void theLinesTheirExamplesAndReviewAreTheGoldens() {
         final CefPlan plan = CefFixtures.drafted().plan();
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/drafted-lines.json");
         final List<String> lines = CefLines.linesIn(CefFixtures.run(plan.xslt(), CefFixtures.EVENTS));
@@ -120,12 +119,12 @@ class TestCefGolden {
         final List<List<String>> said = new ArrayList<>();
         examples.forEach((k, v) -> said.add(List.of(k.kind(), k.key(), v)));
         assertThat(said).isEqualTo(golden.get("examples"));
-        assertThat(PyJson.dumps(CefLines.review(lines, CefFixtures.events(), false)))
-                .isEqualTo(PyJson.dumps(golden.get("review")));
+        assertThat(ToolJson.dumps(CefLines.review(lines, CefFixtures.events(), false)))
+                .isEqualTo(ToolJson.dumps(golden.get("review")));
     }
 
     @Test
-    void theDocumentationIsThePythonText() {
+    void theDocumentationIsItsGolden() {
         final CefPlan plan = CefFixtures.drafted().plan();
         final Map<CefDocs.KindKey, String> examples = goldenExamples();
         assertThat(plan.markdown(examples, FieldDocs.BY_EVENT_TYPE, null))
@@ -135,18 +134,18 @@ class TestCefGolden {
     }
 
     @Test
-    void anOverriddenDraftIsThePythons() {
+    void anOverriddenDraftIsItsGolden() {
         final CefDraft.Drafted drafted = CefFixtures.drafted(false, FieldDocFixtures.json("""
                 [{"path": "EventDetail/Authenticate/User/Id", "key": "deviceCustomString6", "label": "Target user"},
                  {"path": "EventDetail/Authenticate/Data[@Name='note']/@Value", "drop": true},
                  {"path": "EventSource/Nothing", "key": "cs2"}]"""), CefPlan.KAFKA);
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/overridden.json");
-        assertThat(PyJson.dumps(drafted.plan().toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(golden.get("plan")));
+        assertThat(ToolJson.dumps(drafted.plan().toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(golden.get("plan")));
         assertThat(drafted.notes()).isEqualTo(golden.get("notes"));
     }
 
     @Test
-    void draftsPastTheSlotsAreThePythons() {
+    void draftsPastTheSlotsAreTheGoldens() {
         final StringBuilder many = new StringBuilder();
         for (int n = 0; n < 12; n++) {
             many.append("<Data Name=\"d").append(n).append("\" Value=\"value ").append(n).append("\"/>");
@@ -156,16 +155,16 @@ class TestCefGolden {
         final CefDraft.Drafted closed = CefDraft.draft(events, false, List.of(), null, CefPlan.KAFKA, "t", null);
         final CefDraft.Drafted opened = CefDraft.draft(events, true, List.of(), null, CefPlan.KAFKA, "t", null);
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/many.json");
-        assertThat(PyJson.dumps(closed.plan().toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(golden.get("closed")));
+        assertThat(ToolJson.dumps(closed.plan().toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(golden.get("closed")));
         assertThat(closed.notes()).isEqualTo(golden.get("closed_notes"));
-        assertThat(PyJson.dumps(opened.plan().toJson(DumpMode.ALL))).isEqualTo(PyJson.dumps(golden.get("opened")));
+        assertThat(ToolJson.dumps(opened.plan().toJson(DumpMode.ALL))).isEqualTo(ToolJson.dumps(golden.get("opened")));
         assertThat(opened.notes()).isEqualTo(golden.get("opened_notes"));
         assertThat(opened.plan().markdown(Map.of(), FieldDocs.BY_EVENT_TYPE, null))
                 .isEqualTo(FieldDocFixtures.golden("cef/many-open.md"));
     }
 
     @Test
-    void reviewsAndParsesAreThePythons() {
+    void reviewsAndParsesAreTheGoldens() {
         final List<String> lines = List.of(
                 "CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|src=not-an-ip cs1=Prod myField=x "
                 + "suser=priya.patel rt=1790552890000 cs2Label=x cn1=abc rt=12 end=yesterday",
@@ -174,16 +173,16 @@ class TestCefGolden {
                 "CEF:0|D|S|1|X|Y|99|act=" + "a".repeat(70) + " dmac=zz",
                 "CEF:0|D|S|1|X|Y|3|msg=first\nsecond");
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/review.json");
-        assertThat(PyJson.dumps(CefLines.review(lines, CefFixtures.events().subList(0, 1), false)))
-                .isEqualTo(PyJson.dumps(golden.get("review")));
-        assertThat(PyJson.dumps(CefLines.review(lines, List.of(), null)))
-                .isEqualTo(PyJson.dumps(golden.get("review_none")));
-        assertThat(PyJson.dumps(lines.stream().map(line -> CefLines.parse(line).toMap()).toList()))
-                .isEqualTo(PyJson.dumps(golden.get("parsed")));
+        assertThat(ToolJson.dumps(CefLines.review(lines, CefFixtures.events().subList(0, 1), false)))
+                .isEqualTo(ToolJson.dumps(golden.get("review")));
+        assertThat(ToolJson.dumps(CefLines.review(lines, List.of(), null)))
+                .isEqualTo(ToolJson.dumps(golden.get("review_none")));
+        assertThat(ToolJson.dumps(lines.stream().map(line -> CefLines.parse(line).toMap()).toList()))
+                .isEqualTo(ToolJson.dumps(golden.get("parsed")));
     }
 
     @Test
-    void anExtendedPlanIsThePythons() {
+    void anExtendedPlanIsItsGolden() {
         final Map<String, CefValue> header = new LinkedHashMap<>();
         header.put("vendor", CefValue.constant("Acme"));
         header.put("product", CefValue.constant("P"));
@@ -195,15 +194,15 @@ class TestCefGolden {
                 Map.of("View", List.of(new CefField("EventDetail/View/Document/Title", "cs1", "Title", null))));
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/extend.json");
         final CefDraft.Extended few = CefDraft.extend(plan, CefEvents.eventsOf(TestCefPlan.COVERAGE_EVENTS));
-        assertThat(PyJson.dumps(few.added())).isEqualTo(PyJson.dumps(golden.get("added")));
+        assertThat(ToolJson.dumps(few.added())).isEqualTo(ToolJson.dumps(golden.get("added")));
         assertThat(few.notes()).isEqualTo(golden.get("notes"));
         final CefDraft.Extended all = CefDraft.extend(plan, CefFixtures.events());
-        assertThat(PyJson.dumps(all.added())).isEqualTo(PyJson.dumps(golden.get("added_all")));
+        assertThat(ToolJson.dumps(all.added())).isEqualTo(ToolJson.dumps(golden.get("added_all")));
         assertThat(all.notes()).isEqualTo(golden.get("notes_all"));
     }
 
     @Test
-    void whatTheInstructionsSayIsThePythons() {
+    void whatTheInstructionsSayIsTheGolden() {
         final Map<String, Object> said = CefInstructions.fromInstructions(List.of(
                 "## CEF output\nCustom CEF keys are not allowed.\nKafka topic: arcsight-secretserver\n"
                 + "- EventDetail/Authorise/User/Name -> deviceCustomString6 (label: 'Authorised user')\n"
@@ -214,14 +213,14 @@ class TestCefGolden {
         @SuppressWarnings("unchecked") final List<CefOverride> overrides = (List<CefOverride>) out.remove(
                 CefInstructions.OVERRIDES);
         out.put(CefInstructions.OVERRIDES, overrides.stream().map(o -> o.toJson(DumpMode.ALL)).toList());
-        assertThat(PyJson.dumps(out)).isEqualTo(PyJson.dumps(FieldDocFixtures.goldenJson("cef/instructions.json")));
+        assertThat(ToolJson.dumps(out)).isEqualTo(ToolJson.dumps(FieldDocFixtures.goldenJson("cef/instructions.json")));
     }
 
     @Test
-    void sendAndReceiveDocumentedTogetherIsThePythonText() {
+    void sendAndReceiveDocumentedTogetherIsTheGolden() {
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("cef/send-receive.json");
         @SuppressWarnings("unchecked") final CefPlan plan = CefPlan.fromJson((Map<String, Object>) golden.get("plan"));
-        assertThat(PyJson.dumps(plan.toJson(DumpMode.COMPACT))).isEqualTo(PyJson.dumps(golden.get("compact")));
+        assertThat(ToolJson.dumps(plan.toJson(DumpMode.COMPACT))).isEqualTo(ToolJson.dumps(golden.get("compact")));
         final Map<CefDocs.KindKey, String> examples = new LinkedHashMap<>();
         examples.put(new CefDocs.KindKey("Send", "suser"), "alice");
         examples.put(new CefDocs.KindKey("Receive", "suser"), "bob");

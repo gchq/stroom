@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.generation.TranslationMapping;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
@@ -38,9 +38,8 @@ import java.util.List;
 import java.util.Map;
 import javax.xml.transform.stream.StreamSource;
 
-/// The Stroom MCP server's documentation test fixtures (`tests/test_xsltgen.py`'s schema, base mapping and records),
-/// the golden outputs written by the Python `utils/fielddoc.py` and `utils/cef.py`, and a plain Saxon run of an
-/// XSLT, as the Python tests run one with SaxonC.
+/// The documentation tests' fixtures (the generator tests' schema, base mapping and records), the golden outputs of
+/// the field documentation and CEF, and a plain Saxon run of an XSLT.
 public final class FieldDocFixtures {
 
     /// The event-logging 4.1.0 schema.
@@ -92,7 +91,7 @@ public final class FieldDocFixtures {
                 [{"name": "logon", "when": [{"field": "action", "equals": "login"}], "fields": %s},
                  {"name": "other", "fields": [{"path": "EventDetail/TypeId", "field": "action"},
                    {"path": "EventDetail/Unknown/Data", "data_name": "action", "field": "action"}]}]"""
-                .formatted(PyJson.dumps(LOGON))));
+                .formatted(ToolJson.dumps(LOGON))));
         mapping.putAll(overrides);
         return TranslationMapping.fromJson(mapping);
     }
@@ -104,10 +103,10 @@ public final class FieldDocFixtures {
 
     /// @param text JSON.
     /// @param <T>  What it is.
-    /// @return It read as Python reads it.
+    /// @return It read by [ToolJson].
     @SuppressWarnings("unchecked")
     public static <T> T json(final String text) {
-        return (T) PyJson.loads(text);
+        return (T) ToolJson.loads(text);
     }
 
     /// @param name A golden file's path below `stroom/ai/impl/golden/`, e.g. `cef/drafted.md`.

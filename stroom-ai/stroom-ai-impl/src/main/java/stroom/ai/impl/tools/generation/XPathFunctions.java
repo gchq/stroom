@@ -20,10 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/// The functions the XPath parser knows (the Stroom MCP server's parser, elementpath, knows them): the standard
-/// functions called without a prefix, with how many arguments each takes; the map, array and math functions; the
-/// XML Schema types that have constructor functions; and the kind tests. Taken from elementpath 5.1.4 by parsing a
-/// call of each with up to seven arguments.
+/// The functions the XPath parser knows: the standard functions called without a prefix, with how many arguments
+/// each takes; the map, array and math functions; the XML Schema types that have constructor functions; and the
+/// kind tests.
 final class XPathFunctions {
 
     /// Takes any number of arguments from its least.
@@ -34,7 +33,7 @@ final class XPathFunctions {
     /// The math functions namespace.
     static final String MATH_NS = "http://www.w3.org/2005/xpath-functions/math";
 
-    /// The prefixes the parser binds itself, as elementpath does.
+    /// The prefixes the parser binds itself.
     static final Map<String, String> DEFAULT_NAMESPACES = Map.of(
             "map", MappingFacts.MAP_NS,
             "array", ARRAY_NS,
@@ -112,7 +111,7 @@ final class XPathFunctions {
     }
 
     /// @param namespace A namespace.
-    /// @return Whether elementpath has functions in it of its own (the standard, map, array and math functions).
+    /// @return Whether the parser has functions in it of its own (the standard, map, array and math functions).
     static boolean isBuiltIn(final String namespace) {
         return MappingFacts.FN.equals(namespace) || BY_NAMESPACE.containsKey(namespace);
     }

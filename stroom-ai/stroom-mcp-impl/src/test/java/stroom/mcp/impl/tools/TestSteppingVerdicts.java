@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What the stepping tools make of a step's output (the Stroom MCP server's `tools/stepping.py` helpers).
+/// What the stepping tools make of a step's output.
 class TestSteppingVerdicts {
 
     @Test

@@ -19,9 +19,9 @@ package stroom.ai.impl.tools.generation;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/// What fills each slot of a pattern an expression was matched against ([XPathTrees#unify(XPathNode, XPathNode)]):
-/// the Stroom MCP server's `xpathtree.Match`. An expression slot ([XPathTrees#exprSlot(int)]) is bound to the node
-/// filling it, a string slot ([XPathTrees#stringSlot(int)]) to the string.
+/// What fills each slot of a pattern an expression was matched against ([XPathTrees#unify(XPathNode, XPathNode)]). An
+/// expression slot ([XPathTrees#exprSlot(int)]) is bound to the node filling it, a string slot
+/// ([XPathTrees#stringSlot(int)]) to the string.
 public final class XPathMatch {
 
     private final Map<String, XPathNode> nodes = new LinkedHashMap<>();

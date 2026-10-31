@@ -47,10 +47,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/// `rename_index` - another Elasticsearch index name wherever the build uses one, when the user asks for it (the
-/// Stroom MCP server's `tools/indexing.py` `rename_index`): the build's Elastic Index doc and each of the build's
-/// indexing pipelines writing to it, together, once the user confirms in a form. The reply gives what the cluster
-/// admin removes for the old name; nothing is written to Elasticsearch.
+/// `rename_index` - another Elasticsearch index name wherever the build uses one, when the user asks for it: the
+/// build's Elastic Index doc and each of the build's indexing pipelines writing to it, together, once the user confirms
+/// in a form. The reply gives what the cluster admin removes for the old name; nothing is written to Elasticsearch.
 class RenameIndexTool extends AbstractBuiltInTool {
 
     static final String NAME = "rename_index";

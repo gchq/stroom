@@ -114,6 +114,8 @@ Principles (invariants to keep):
 What the user has, and wants, decides the path before any tool is called.
 There are no workflow prompts: the server instructions (`server-instructions.md`, "Which work") map a request to a
 path, and the build plan (`BuildPlan`) leads each kind of build from its start (2026-10-27).
+Workflow prompts were dropped because a user had to know which one to pick: seen in testing, a discovery index was
+never offered, and a table to look values up in was onboarded as events.
 When a request fits more than one path, the agent asks which.
 
 ```mermaid
@@ -409,6 +411,12 @@ flowchart TD
   version's template, with its converter, settings and, if the user keeps them with `keep_references=`, its
   reference data). The agent asks the user which. The names are the agent's proposal, confirmed in the tool's form;
   nothing works out the next version number.
+* The translation a new version follows (`StroomBuildFacts.translating`) is the pipeline at the translation stage
+  that reads the feed's raw data. Every pipeline reading the raw data is offered only when none of them can be told
+  to translate. Another pipeline reading the same raw data, such as an archiver, has no translation to follow (seen
+  in testing: TWITTER's raw data was read by an archiving pipeline, Twitter-RollingFileAppender, and by
+  Twitter-Events; the archiver came first, so the plan offered it as the one a new version follows, and the drafts
+  read its XSLTs, of which it has none).
 * Templates are inherited, never copied: `copy_pipeline` refuses a template.
 * `summarise_fix` steps the given streams (the reported one plus recent production streams) and exact events with
   the saved code and the draft (or the copy against the original), and diffs each record. It is `ready` when the
@@ -547,7 +555,7 @@ flowchart LR
         CHAT["Chat runtime<br/>stroom-ai-impl<br/>(AskStroomAIService, AiChatRunManager,<br/>McpAgentChat, ContextAssembler,<br/>ChatCompactor, memory)"]
         MCP["/mcp servlet<br/>stroom-mcp-impl<br/>(StroomMcpServer, McpTools,<br/>McpForms, McpWorkspaces)"]
         POL["Tool policies<br/>(AiToolPolicyService, ToolGrants)<br/>+ consent (ToolConsent, Consent)"]
-        TOOLS["StroomTool implementations<br/>built-in (stroom-ai-impl)<br/>build layer and ported tools (stroom-mcp-impl)"]
+        TOOLS["StroomTool implementations<br/>built-in (stroom-ai-impl)<br/>build layer and build tools (stroom-mcp-impl)"]
         CORE["Cores: generation, validation,<br/>indexing, sample, draft, cef, fielddoc"]
         SVC["Stroom services<br/>(explorer, pipelines, streams,<br/>stepping, processing, indexes, search)"]
         DB[("stroom-ai-impl-db<br/>chats, runs, workspaces,<br/>memory, policies, approvals,<br/>uploads")]
@@ -584,8 +592,8 @@ calls, large arguments passed as workspace references, and results re-read from 
 
 ### The tool contract
 
-Every tool, built-in or ported, implements `StroomTool` and is bound in a Guice multibinder (`BuiltInToolsModule`
-in stroom-ai-impl, `PortedToolsModule` in stroom-mcp-impl); `BuiltInTools` picks it up.
+Every tool, whether built-in or a build tool, implements `StroomTool` and is bound in a Guice multibinder
+(`BuiltInToolsModule` in stroom-ai-impl, `BuildToolsModule` in stroom-mcp-impl); `BuiltInTools` picks it up.
 `LangChain4jTools` adapts it for the chat's model; `McpToolSchemas` for `/mcp`.
 The contract has nothing of the chat or of LangChain4j in it.
 
@@ -743,7 +751,7 @@ The building tools share a layer in `stroom.mcp.impl.tools`:
 | Class | Role |
 | --- | --- |
 | `WriteGuard` | Creates land in `System/<workspace>/<build>/` (`stroom.ai.builds.workspaceFolder`, default `MCP Workspace`), in role subfolders (Events, Records, Indexing, CEF, Reference). Updates only on documents tagged `mcp-managed`. Refusals are audited. A duplicate type and name in a build is refused (seen in testing: after a summarised conversation an indexing pipeline was made twice). Folder creation takes one of 64 locks, so parallel calls can't make twin folders. |
-| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`, and `copy_of_version`, the original's version when copied), versions (`version_of`), digests that stepped clean, verified or validated, sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. |
+| `BuildRecords` | The build record: a Documentation doc, `Build record`, in each build folder, holding a `build-record` JSON block: working copies (`copy_of`, and `copy_of_version`, the original's version when copied), versions (`version_of`), digests that stepped clean, verified or validated, sample files, source feeds, the event-logging version, the build's kind. Saves retry up to 5 times on a concurrent change, so two writers lose nothing. Its format and its code digests stay as they are: records already in Stroom read and are written back unchanged, and a clean step recorded earlier still matches the code it was taken on (see [Where state lives](#where-state-lives)). |
 | `BuildPlan` | The plan: steps, each one's state derived from what the build holds, and `next`. |
 | `BuildChecks`, `BuildStatusTool` | What the build still lacks before promotion. |
 | `Consent` | Confirmations and approvals as forms; `needs_review` rounds with a `review_id` digest. |
@@ -778,6 +786,23 @@ says so, but nothing enforces it.
 | Turn summaries | Node memory (`TurnSummaries`, 1,000 chats) | Put back after a form; another node summarises again. |
 | Pending uploads | Database (`ai_sample_upload`) | Any node takes the file. |
 
+**Stored formats keep reading.** What is kept in documents (the build record's `build-record` block, a kept mapping
+or plan, an XSLT's version history, an agreed index template, the survey and source notes blocks) is read back by
+later versions of the tools. So its format changes only in ways that still read, and write back alike, what earlier
+versions wrote:
+
+* Each keeps its layout: kept blocks are compact JSON in an HTML comment (`KeptMapping.withBlock`), and the older
+  layout between `--- stroom-mcp <name> ---` markers is still read; the build record is JSON with sorted keys, and
+  the source notes and the survey state are JSON indented by one space (`ToolJson`).
+* Entries added to a model later are written only when set: a field's `data_parent` and `join`, a plan's or
+  discovery's `stand_ins`, an index field's `items` and `distinct_by`, a Data Splitter spec's `escape`,
+  `spaced_values`, `catch_all` and `blank_line_records`, a version history entry's `hand`. A mapping, plan or spec
+  without them is written exactly as it was before they existed, so every kept one and every fixture still reads and
+  compares unchanged.
+* The build record was once written in its Documentation doc's Documentation tab rather than its body:
+  `BuildRecords` reads the body, else the tab, and moves it to the body on the next write.
+* Digests recorded with what is saved must come out the same (see [Hand edits](#hand-edits-built)).
+
 ### The generation and validation cores
 
 | Package | Holds |
@@ -788,6 +813,20 @@ says so, but nothing enforces it.
 | `tools.sample` | `SampleProfiler`, `RecordSplitter`, `Shapes`, `SurveyDoc`, `Placeholders`, `SplitterDryRun`, `StroomSplitterRun`. |
 | `tools.draft` | `DraftMapping`, `LocalCheck` (a mapping checked on the sample), `SourceNotes`, `SplitterXml`. |
 | `tools.cef`, `tools.fielddoc` | The CEF plan and its XSLT; field documentation. |
+
+Some small helpers follow Python's rules rather than Java's, because the cores' established results (pinned by the
+parity fixtures, see [Testing](#testing)) and the messages agents act on depend on them:
+
+* `ToolText`: lengths and slices in code points, values in messages in Python's notation (`repr`: `'a'`, `None`,
+  `True`), and regexes in which only `\n` ends a line (`$` doesn't match before a `\r`).
+* `ToolJson` and `JsonValues`: JSON read and written in Python's layout and messages, the truth of an empty value, and
+  numbers compared across types.
+* `DelimitedText`: text after a quoted value's closing quote kept, an unclosed quote running to the end, no field size limit.
+* `IpAddresses`: an IPv4 octet with a leading zero refused, an IPv4 tail after `::` taken.
+* `CloseMatches`: difflib's ratio, autojunk on, for "did you mean".
+* `PythonRegex`: an extraction's regex read in the syntax of Python's `re` for its group count.
+* `ToolArgs`: a list argument read whether a model sends it as JSON, as a Python literal (`True`, `None`, single
+  quotes) or as plain text, as models send all three.
 
 The cores are pure Java over text and parsed trees; the tools around them read and write Stroom.
 Golden files fix their larger outputs (see [Testing](#testing)).
@@ -812,7 +851,7 @@ The agent guides and conventions are resources of `stroom-mcp-impl`, not stroom-
   character. The tools read the raw bytes from the stream store and decode them as a pipeline does
   (`StreamCharsets`, `StreamReader`), and report `undecodable_bytes`: how many, how they read in Windows-1252, and
   what to do.
-* **Lengths and slices are in code points** (`PyText`), so a character outside the Basic Multilingual Plane counts as
+* **Lengths and slices are in code points** (`ToolText`), so a character outside the Basic Multilingual Plane counts as
   one wherever the tools cut text.
 * **A big XML document read only to its head** is cut to its root and the complete records before the cut
   (`SampleProfiler.cutDocument`; seen in production: a 54 MB `<tweets>` stream, read to its head, was profiled as CSV
@@ -1021,7 +1060,10 @@ A failed task's reason stays in the operator's own log system: the tools give it
 * **Run slots.** A heavy call (survey, StroomQL, stepping) takes one of the user's run slots (`McpCallSlot`), so
   `/mcp` calls and chat runs count together.
 * **Long calls** send progress notifications (when the client sent a progress token), and a client's cancellation,
-  or the end of the HTTP request, stops the work (`RunningCalls`).
+  or the end of the HTTP request, stops the work (`RunningCalls`). The tools say what they are doing as they go
+  (`CallProgress`: surveys, index checks, stepping, waits for processing), at most every 5 seconds in a loop; a
+  message that can't be sent is dropped, never failing the call. Asked for by the user: a survey of an index ran
+  for minutes with nothing to show what it was doing.
 * **Forms too large to show** are refused with a `ToolRefusal`, not treated as declined (2026-10-30). See
   [Forms](#forms-built).
 * **Choices kept as made.** Domain and stand-in choices are kept in the workspace (`/outputs/choices/`) as soon as
@@ -1126,6 +1168,10 @@ The steps, in order:
 * **Builds on data already in Stroom** (`start_build feeds=`) create no feed and upload nothing: `create_feed` is
   refused unless the user names sample files of their own (`user_samples`) or asks for a test feed. Records are
   stepped and processed where they are, with Events written to the build's test feed.
+* **A build on existing data does the Events stage once it has the work for it**: a translation pipeline, a survey,
+  or a translation XSLT saved from a mapping. So a next version whose translation is written anew needn't survey
+  first (seen in an end-to-end run: its XSLT was saved, the plan still said to choose the work, and it never reached
+  its pipeline).
 
 ### Promotion (built)
 
@@ -1326,12 +1372,35 @@ For each, it compares the element names written and read, the constants and the 
   `draft_cef_mapping`. The same gate guards indexing XSLTs.
 * An unchanged save by this version of the generator isn't taken for a hand edit (the difference may be the kept
   mapping's).
+* **Edited, or only written by an earlier generator?** Before promotion and for the Field mapping section, an XSLT
+  that differs from what its kept mapping generates is told apart by its version history (`GeneratedDrift`):
+  * Saved as written by hand (`save_xslt`) since the mapping was kept: a hand edit, to carry into the mapping and
+    never to regenerate (seen in testing: TWITTER's mentions and links, saved with `save_xslt`, were taken for an
+    earlier generator's code and offered for regenerating, which would have undone them, and the documentation was
+    generated from the mapping without them).
+  * Unchanged since the tools saved it: written by an earlier generator, and regenerated rather than reported as
+    edited (seen in production after a generator change: reported as edited by hand, and the agent went looking for
+    the edit).
+  * Otherwise it was edited in Stroom since.
+
+  An XSLT kept with an index or CEF plan and saved by hand counts as edited too.
+* **Code digests stay as they are.** Code is compared as `XsltCode` normalises it: the XML declaration, whitespace
+  between tags, and the version history comment earlier versions of the tools wrote into the code are not edits.
+  Digests are recorded with what is saved: the build record's clean, verified and validated digests (each element's
+  code, without that comment, as SHA-256; then the first 16 hex characters of the SHA-256 of those as JSON with
+  sorted keys) and the agreed index template's digest of the indexing XSLT (16 hex characters of the SHA-256 of the
+  normalised code). Changed, every recorded digest would go stale: every recorded pass would read as unproven and
+  every agreed template as agreed for other code.
 * **Documented as it runs.** `write_documentation` documents a hand-edited XSLT from its output when stepped, each
   event by the mapping's rule for that record. It no longer refuses an edited XSLT (2026-10-31).
 * **Version history.** Each XSLT's description holds a version table: Version, Date, Author, How (agent or by hand),
   Change, By (the Stroom version and the chat's model or client), Digest. A build's changes are pending (an
   Unreleased row) until promotion records them as one version. Hand edits are detected by digest. Each save's
-  `change=` is its entry (2026-10-25: the model, not "Stroom AI chat", is named).
+  `change=` is its entry (2026-10-25: the model, not "Stroom AI chat", is named). A save of code written by hand
+  (`save_xslt`'s code, not a mapping's or plan's) is marked as such in its pending entry (`"hand": true`), so the
+  code isn't taken for what the generator last wrote (seen in testing: without it, an agent's hand edit saved so was
+  taken for generated code, and regenerating it from the mapping, undoing the edit, was offered). The mark is
+  written only when set, so a generated save's entry is stored as it always has been.
 
 Planned, not started: repeated objects in a translation (an array of users in an Event), decided "not now" on
 2026-10-31.
@@ -1682,6 +1751,14 @@ judging them:
   events got. By event type (the default): a Common fields table, then a section per rule, rules sharing three
   quarters of their fields together; or compact. A digest marks the section; `build_status` reports documentation
   older than the mapping or XSLT.
+* **What the Field mapping leaves out.** Extractions (a text field's regexes) aren't listed: a long list of regexes
+  is more than documentation needs, and the XSLT holds them; the fields they give are still named where they are
+  read (asked for by the user). A Data entry every rule writes alike (Folder, say) is one row of the Common fields
+  table, not a row per event type, and its description is asked for once. Event types are grouped on what they
+  write besides their Data, as Data is what a kind of event carries, not what it is. `allow_unknown` on a rule that
+  writes an action element means nothing, so the rule isn't listed as kept Unknown (seen: a rule moved from Unknown
+  to Alert kept its `allow_unknown`, and the documentation listed it under Kept as Unknown). TOOLS.md
+  (`EventFieldDocs`, `IndexFieldDocs`) has the details.
 * **Descriptions** are the agent's, saying what each field means for this source (`needs_descriptions`), kept with the
   doc with where each field came from, so an update asks only for new fields or fields whose source changed (asked
   for by the user: the schema's generic words said nothing a reader couldn't see).
@@ -1863,7 +1940,7 @@ User's view: `agent-tools/connecting-clients.md`.
    only if `WriteGuard` confines it.
 3. Choose its `category()`; add a line to `ToolSummaries`; put it in a group in `BuiltInToolGroups` unless every
    question needs it.
-4. Bind it in `BuiltInToolsModule` (stroom-ai-impl) or `PortedToolsModule` (stroom-mcp-impl).
+4. Bind it in `BuiltInToolsModule` (stroom-ai-impl) or `BuildToolsModule` (stroom-mcp-impl).
 5. Check permissions in `execute`, as the user; log what it reads with `AiAuditLog` (a View or Process event).
 6. Refuse with a reason and the way forward (`ToolRefusal`, or a result saying so); never throw at the model.
 7. Ask the user through `Consent` (or `UserQuestions`), never by returning an id. Make it safe to re-run up to its
@@ -1913,11 +1990,23 @@ the README.
 | --- | --- | --- |
 | Unit | `stroom-ai-impl`, `stroom-mcp-impl` (`src/test`) | About 3,600 test methods (more cases, with parameterised and dynamic tests), each written around a case seen in testing. Mockito and AssertJ only. |
 | Golden | `stroom-ai-impl` test resources | The generators' larger outputs (XSLT, documentation text). Normalisers in `GenerationFixtures` cover deliberate changes (rule markers, record numbers, times). |
-| Parity | `TestXsltReaderParity`, `TestFieldPlanValidation` and others | Fixtures that pin each tool's established behaviour and error text. A change to them is a decision, not a fix. |
+| Parity | `TestXsltReaderCases`, `TestFieldPlanValidation`, `TestBuildRecords` and others | Fixtures that pin each tool's established behaviour and error text. A change to them is a decision, not a fix. |
+| Reference mappings, offline | `TestMappingSampleCheck` | Each evaluation case's reference mapping (cases whose samples are under 60 KB) passes the checks `build_translation_xslt` makes before it saves, with no Stroom: a reference that stops passing is a regression in the checks. |
 | End to end | `stroom-app`, `stroom.mcp.impl.e2e` | The real tools on a real Stroom, with MySQL and Elasticsearch, through an MCP test client that answers forms (about 35 classes, about 155 tests, about 26 minutes). |
 | Reference evaluation | `TestE2eEvalReference` | Each reference mapping checked through the real generator, without a model. |
 | Chat evaluation | `stroom-ai-impl` (`-DtestAiEval...`) | Scenarios run through the chat with a real model. See the README's developer notes. |
 | Chat end to end | `stroom-app` (`TestAskStroomAi*`) | The chat service with a fake model server: large tables, reports in batches, runs that tidy up, wide sample forms. |
+
+The parity fixtures hold each core's established results, call by call: `recorded_calls.json` and
+`model_cases.json` (indexing), `helper_cases.json` and `model_cases.json` (generation helpers and the mapping model),
+`reader_cases.json`, `xpath_cases.json`, `store_cases.json`, `changes_cases.json`, `reference_cases.json`,
+`draft_cases.json`, `localcheck_cases.json` and `stored_survey.json` (samples profiled, split and surveyed).
+`TestBuildRecords` holds a build record already in Stroom's format, which must read and be written back unchanged.
+Like the golden files, the fixtures are not regenerated from the code under test. Where Stroom now differs on purpose,
+the test applies the difference to the fixture in one place, with a comment saying why (times cut, not rounded; a
+`join` entry; a rule's Data from its own records; the draft's notes on where the message goes; a TypeId shared by
+kinds of event as a problem; a case transform named; the catalogue's order; a field written to an element and as
+Data warned of), so every difference is visible and deliberate.
 
 What the end-to-end classes prove:
 
@@ -1957,6 +2046,18 @@ Run the suites serially, since they share the database.
 STROOM_JDBC_DRIVER_PORT=3312 STROOM_TEST_ELASTIC_URL=http://localhost:9203 STROOM_TEST_ELASTIC_REQUIRED=true \
   ./gradlew :stroom-app:test --tests 'stroom.mcp.impl.e2e.*'
 ```
+
+The evaluation set is 53 cases, one YAML file each (`stroom-app` test resources, `stroom/mcp/impl/e2e/eval`): each
+case's sample, request, reference solution and what its Events must hold. Sample files too large to keep in a case
+are generated from a seed (`EvalSamples`, drawing with `SeededRandom`, the Mersenne Twister Python's `random` uses, and
+writing JSON as Python's `json.dumps` does), so that every run makes the same bytes. Each generated file's SHA-256 is
+pinned in `generated-sha256.json` (`TestEvalSamples`): the cases' expectations were written for those bytes, so a
+generator change that alters them is a change to the cases.
+
+`TestE2eEvalReference` runs each case's reference solution through the real tools without a model. A case passes
+when its Events hold what it expects, they are indexed and found, and nothing else was found wrong on the way (its
+documentation, stepping). Each case's score is written to `build/eval-reference/<case>.json`; all 53 take about 20
+minutes, and `STROOM_EVAL_CASES=12,35` runs only those.
 
 Known local failures in the full build, neither caused by this code:
 
@@ -2114,6 +2215,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | Data Splitter `blankLine` regex cost with large buffers; quote-container default | Open | Core, or unsafe to change (a stray quote would merge records silently). |
 | A disabled node still processes data | Open | Written up for the product owner's choice of fix; `explain_processing` doesn't claim it yet. |
 | Extraction: a table given a pipeline between proposal and confirmation is replaced without warning | Open | Known gap. |
+| XML fragments drafted from several streams have no record element | Open | Known gap. Several samples are profiled per file (`SampleProfiling.profileAll`), so the record element is kept per file only, and `DraftMapping` reads it from the top level. The draft's mapping has no `record`, its own schema check fails ("xml_fragments input needs record"), and the agent has to add it. Pinned as it is by `TestE2eExistingFeed`. |
 | Extracted Elasticsearch KEYWORD and IPV4 values come out blank | Open | Being fixed separately in core (`FieldValueExtractor`). |
 | The AI end-to-end suite runs in every `./gradlew build` | Open | Recommended: tag it out of the default build, and split the reference evaluation across forks. |
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |

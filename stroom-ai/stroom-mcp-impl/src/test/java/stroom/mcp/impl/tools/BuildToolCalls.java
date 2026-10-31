@@ -30,10 +30,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Calls of the ported tools for their tests, as an MCP client makes them.
-final class PortedToolCalls {
+/// Calls of the build tools for their tests, as an MCP client makes them.
+final class BuildToolCalls {
 
-    private PortedToolCalls() {
+    private BuildToolCalls() {
         // Static methods only.
     }
 
@@ -110,9 +110,9 @@ final class PortedToolCalls {
             return shown;
         }
 
-        /// Each form shown, as the round the Stroom MCP server returned instead of a form: its `status`
-        /// (`needs_confirmation` or `needs_approval`, as the form's id says), its `summary` and its `details` (as
-        /// the form shows them, each cut short: see [Consent#formMessage]).
+        /// Each form shown, as a map of its `status` (`needs_confirmation` or `needs_approval`, as the form's id
+        /// says), its `summary` and its `details` (as the form shows them, each cut short: see
+        /// [Consent#formMessage]).
         ///
         /// @return The forms shown, in order.
         List<Map<String, Object>> forms() {

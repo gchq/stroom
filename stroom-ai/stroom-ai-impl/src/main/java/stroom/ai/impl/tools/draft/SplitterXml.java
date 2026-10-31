@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.pipeline.xml.converter.ds3.RootFactory;
@@ -31,9 +31,9 @@ import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The Data Splitter XML a [SplitterSpec] is written as (the Stroom MCP server's `generate_splitter` in
-/// `utils/dsgen.py`): the converter Stroom runs, dividing the text as [SplitterDryRun] does on a sample. It writes
-/// the subset of Data Splitter the dry run follows, not the whole language.
+/// The Data Splitter XML a [SplitterSpec] is written as: the converter Stroom runs, dividing the text as
+/// [SplitterDryRun] does on a sample. It writes the subset of Data Splitter the dry run follows, not the whole
+/// language.
 public final class SplitterXml {
 
     /// The start of every Data Splitter written.
@@ -46,7 +46,7 @@ public final class SplitterXml {
     /// The end of every Data Splitter written.
     public static final String DS_TAIL = "</dataSplitter>\n";
     /// Example specs by the format they suit (`delimited`, `key=value`, `syslog rfc3164`, `syslog rfc5424`,
-    /// `unknown text`), as the server offers them.
+    /// `unknown text`), as the tools offer them.
     public static final Map<String, Map<String, Object>> EXAMPLES = examples();
 
     /// What the Data Splitter schema (data-splitter-v3.0.xsd, `IdSimpleType`) allows as an element's id. Seen: an
@@ -91,7 +91,7 @@ public final class SplitterXml {
     }
 
     /// The Data Splitter XML: one record per line, divided as the spec says (or per record start or end, for
-    /// records of several lines), as the Stroom MCP server wrote it.
+    /// records of several lines).
     ///
     /// @param spec The spec.
     /// @return The converter's XML.
@@ -384,7 +384,7 @@ public final class SplitterXml {
             }
         }
         if (spec.body() != null && bodyGroup != null) {
-            lines.add(PyText.rstrip(bodyXml(spec, bodyGroup, indent + "  ", ids), NEW_LINE));
+            lines.add(ToolText.rstrip(bodyXml(spec, bodyGroup, indent + "  ", ids), NEW_LINE));
         }
         lines.add(indent + "</regex>");
         return String.join(NEW_LINE, lines) + NEW_LINE;
@@ -394,7 +394,7 @@ public final class SplitterXml {
         final List<String> lines = new ArrayList<>();
         lines.add(indent + "<regex pattern=\"" + attr(SplitterDryRun.CEF_PATTERN) + "\">");
         if (spec.body() != null) {
-            lines.add(PyText.rstrip(bodyXml(spec, "$1", indent + "  ", ids), NEW_LINE));
+            lines.add(ToolText.rstrip(bodyXml(spec, "$1", indent + "  ", ids), NEW_LINE));
         }
         for (int n = 0; n < SplitterDryRun.CEF_NAMES.size(); n++) {
             lines.add(indent + "  <data name=\"" + SplitterDryRun.CEF_NAMES.get(n) + "\" value=\"$" + (n + 2)
@@ -447,12 +447,12 @@ public final class SplitterXml {
     private static String directivesXml(final SplitterSpec spec, final boolean ids) {
         final List<String> lines = new ArrayList<>();
         if (ids) {
-            lines.add(PyText.rstrip(blankLineXml("  ", true), NEW_LINE));
+            lines.add(ToolText.rstrip(blankLineXml("  ", true), NEW_LINE));
         }
         lines.add("  <split" + id(ids, "record") + " delimiter=\"\\n\">");
         lines.add("    <group" + id(ids, "fields") + ">");
         if (hasText(spec.headerDirective())) {
-            lines.add("      <regex pattern=\"^" + attr(PyText.escape(spec.headerDirective())) + "\\s*(.*)$\">");
+            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.headerDirective())) + "\\s*(.*)$\">");
             lines.add("        <group value=\"$1\">");
             lines.add("          <split delimiter=\"" + attr(spec.delimiter()) + "\"" + container(spec) + ">");
             lines.add("            <var id=\"heading\" />");
@@ -461,18 +461,18 @@ public final class SplitterXml {
             lines.add("      </regex>");
         }
         for (int n = 0; n < spec.directives().size(); n++) {
-            lines.add("      <regex pattern=\"^" + attr(PyText.escape(spec.directives().get(n))) + "\\s*(.*)$\">");
+            lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.directives().get(n))) + "\\s*(.*)$\">");
             lines.add("        <var id=\"directive" + n + "\" />");
             lines.add("      </regex>");
         }
-        lines.add("      <regex pattern=\"^" + attr(PyText.escape(spec.commentPrefix())) + ".*$\" />");
+        lines.add("      <regex pattern=\"^" + attr(ToolText.escape(spec.commentPrefix())) + ".*$\" />");
         lines.add("      <regex pattern=\"^(.+)$\">");
         for (int n = 0; n < spec.directives().size(); n++) {
             lines.add("        <data name=\"" + attr(SplitterDryRun.directiveField(spec.directives().get(n)))
                       + "\" value=\"$directive" + n + "$1\" />");
         }
         lines.add("        <group value=\"$1\">");
-        lines.add(PyText.rstrip(recordXml(spec, "          ", false), NEW_LINE));
+        lines.add(ToolText.rstrip(recordXml(spec, "          ", false), NEW_LINE));
         lines.add("        </group>");
         lines.add("      </regex>");
         lines.add("    </group>");

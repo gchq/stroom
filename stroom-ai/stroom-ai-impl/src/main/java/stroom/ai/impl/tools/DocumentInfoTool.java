@@ -47,9 +47,8 @@ import java.util.function.Predicate;
 /// document they can't view is refused without saying whether it exists, and each document at either end of a
 /// dependency is checked for View again, leaving out any that can't be checked.
 ///
-/// A document can be given by its Explorer path rather than its UUID (as the Stroom MCP server's `find_documents`
-/// gave paths, with or without the System root), and its type checked, so a client that found documents there can
-/// look them up here.
+/// A document can be given by its Explorer path (with or without the System root) rather than its UUID, and its
+/// type checked.
 class DocumentInfoTool extends AbstractBuiltInTool {
 
     static final String NAME = "document_info";

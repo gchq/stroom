@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
@@ -32,10 +32,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What a translation mapping says, as the Stroom MCP server's generator, checks and documentation work it out
-/// (from `utils/xsltgen.py`): the action element a rule writes, which rules are kept as Unknown, what the xpaths
-/// read and call, and a mapping's mistakes the schema can't catch (a function call given as a field, a time pattern
-/// Java would refuse).
+/// What a translation mapping says, as the generator, checks and documentation work it out: the action element a rule
+/// writes, which rules are kept as Unknown, what the xpaths read and call, and a mapping's mistakes the schema can't
+/// catch (a function call given as a field, a time pattern Java would refuse).
 public final class MappingFacts {
 
     /// The XML Schema instance namespace.
@@ -117,7 +116,7 @@ public final class MappingFacts {
     /// `EventDetail/Network/Permit` (Network's action is an element of its own); null if none.
     public static String actionHome(final List<String> paths) {
         for (final String path : paths) {
-            final List<String> parts = PyText.split(PyText.strip(path, "/"), "/");
+            final List<String> parts = ToolText.split(ToolText.strip(path, "/"), "/");
             if (parts.size() >= 3 && "EventDetail".equals(parts.get(0)) && !NOT_ACTION.contains(parts.get(1))) {
                 return String.join("/", "Network".equals(parts.get(1)) && parts.size() >= 4
                         ? parts.subList(0, 3)
@@ -244,7 +243,7 @@ public final class MappingFacts {
             if (at > 0 && code.charAt(at - 1) == '/') {
                 continue;       // the second slash of a //
             }
-            final String before = PyText.rstrip(code.substring(0, at));
+            final String before = ToolText.rstrip(code.substring(0, at));
             if (startsPath(before)) {
                 final Matcher end = ROOTED.matcher(code.substring(at));
                 if (end.lookingAt()) {
@@ -271,7 +270,7 @@ public final class MappingFacts {
     /// @return True if it is one function call, such as `concat(a, '-', b)`, which a predicate can follow without
     /// brackets; `a or b` or `x | y` would need them.
     public static boolean isCall(final String expression) {
-        final String text = PyText.strip(expression);
+        final String text = ToolText.strip(expression);
         final Matcher start = CALL_START.matcher(text);
         if (!start.lookingAt()) {
             return false;
@@ -325,7 +324,7 @@ public final class MappingFacts {
     /// @return It with its action element as `*` (Network's own action too): `EventDetail/Network/Deny/Source` is
     /// `EventDetail/Network/*/Source`, `EventDetail/Authenticate/Data` is `EventDetail/*/Data`.
     public static String actionFree(final String path) {
-        final List<String> steps = new ArrayList<>(PyText.split(PyText.strip(path, "/"), "/"));
+        final List<String> steps = new ArrayList<>(ToolText.split(ToolText.strip(path, "/"), "/"));
         final int at = steps.indexOf("EventDetail");
         if (at < 0 || steps.size() <= at + 1 || NOT_ACTION.contains(steps.get(at + 1))) {
             return path;
@@ -385,8 +384,8 @@ public final class MappingFacts {
         if (bad.isEmpty()) {
             return null;
         }
-        return "time_format " + PyText.repr(pattern) + " has unquoted letters " + PyText.list(bad)
-               + "; quote them, e.g. " + PyText.repr(fixed.toString());
+        return "time_format " + ToolText.repr(pattern) + " has unquoted letters " + ToolText.list(bad)
+               + "; quote them, e.g. " + ToolText.repr(fixed.toString());
     }
 
     /// @param mapping A mapping.

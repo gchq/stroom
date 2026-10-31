@@ -33,8 +33,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// copy_pipeline (the Stroom MCP server's `tools/pipeline_writes.py` `copy_pipeline`, and its tests in
-/// `tests/test_slots.py` and `tests/test_choices_and_unknown.py`).
+/// copy_pipeline, the tool.
 class TestCopyPipelineTool {
 
     private static final String BUILD = PipelineWorld.BUILD;
@@ -51,7 +50,7 @@ class TestCopyPipelineTool {
                 .thenReturn("it is one of the template pipelines");
 
         final ToolResult refused = call("{\"build\": \"acme-v2\", \"source_uuid\": \"" + TEMPLATE.getUuid()
-                                        + "\", \"new_name\": \"Copy of template\"}", PortedToolCalls.context());
+                                        + "\", \"new_name\": \"Copy of template\"}", BuildToolCalls.context());
 
         assertThat(refused.isError()).isTrue();
         assertThat(refused.text()).startsWith("'Event Data (Text)' is a template (it is one of the template "
@@ -66,7 +65,7 @@ class TestCopyPipelineTool {
         // refused.
         source();
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         call("{\"build\": \"acme-v2\", \"source_uuid\": "
                                                                   + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\", "
                                                                   + "\"rename\": {\"V1\": \"V2\"}, "
@@ -81,7 +80,7 @@ class TestCopyPipelineTool {
     @Test
     void aNewVersionIsTheOriginalWithItsOwnDocumentsCopiedAndRewired() {
         source();
-        final ToolCallContext context = PortedToolCalls.answering(Map.of("value", true));
+        final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
 
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
                                                                  + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\", "
@@ -121,7 +120,7 @@ class TestCopyPipelineTool {
         source();
 
         call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V1 - Indexing\", "
-             + "\"working_copy\": true}", PortedToolCalls.answering(Map.of("value", true)));
+             + "\"working_copy\": true}", BuildToolCalls.answering(Map.of("value", true)));
 
         final PipelineDoc copy = pipelines.world.docs.values().stream()
                 .filter(doc -> doc instanceof final PipelineDoc pipeline && !"p1".equals(pipeline.getUuid())
@@ -169,6 +168,6 @@ class TestCopyPipelineTool {
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        return tool.execute(PortedToolCalls.call(CopyPipelineTool.NAME, arguments), context);
+        return tool.execute(BuildToolCalls.call(CopyPipelineTool.NAME, arguments), context);
     }
 }

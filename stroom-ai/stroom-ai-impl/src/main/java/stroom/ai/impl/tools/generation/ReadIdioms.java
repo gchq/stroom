@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -28,11 +28,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/// An expression read for what the generator writes (its shapes, [ReadShapes]): which input it reads, and how. The
-/// Stroom MCP server's `xsltread._Idioms`.
+/// An expression read for what the generator writes (its shapes, [ReadShapes]): which input it reads, and how.
 ///
-/// Entries are built as JSON-like maps, in the order the Python reader builds its dicts, so the mapping read back
-/// is the one the server reads back.
+/// Entries are built as JSON-like maps, their keys in a fixed order, so the mapping read back is the one the reader
+/// fixtures pin.
 final class ReadIdioms {
 
     private static final Pattern WORD_KEY = Pattern.compile("\\w+", Pattern.UNICODE_CHARACTER_CLASS);
@@ -92,7 +91,7 @@ final class ReadIdioms {
     /// null if it is neither.
     String fieldOf(final XPathNode given) {
         final XPathNode normal = XPathTrees.normal(given);
-        // A first value's input, unless it is a node of no children (Python takes those for false).
+        // A first value's input, unless it is a node of no children (not counted as given).
         final XPathNode first = XPathTrees.firstOf(normal).orElse(null);
         final XPathNode node = XsltReader.truthy(first)
                 ? first
@@ -131,7 +130,7 @@ final class ReadIdioms {
                 // A key of several words ('Source IP') is named in snake case, as the generator reads it back.
                 final String name = WORD_KEY.matcher(key).matches()
                         ? key
-                        : PyText.strip(NOT_ALPHANUMERIC.matcher(key).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
+                        : ToolText.strip(NOT_ALPHANUMERIC.matcher(key).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
                 return extraction(source, keyed.before() + key + keyed.after(), keyed.flags(), List.of(name))
                         .getFirst();
             }
@@ -145,7 +144,7 @@ final class ReadIdioms {
                     final String flags = "group, flags".equals(shape)
                             ? match.string(2)
                             : null;
-                    String base = PyText.strip(NOT_WORD.matcher(source).replaceAll("_"), "_");
+                    String base = ToolText.strip(NOT_WORD.matcher(source).replaceAll("_"), "_");
                     if (base.isEmpty()) {
                         base = "text";
                     }
@@ -153,13 +152,13 @@ final class ReadIdioms {
                     for (int n = 1; n <= regexGroups(regex); n++) {
                         named.add(base + "_" + n);
                     }
-                    // The entry's own names: a group past them is named onto them, as the Python reader does.
+                    // The entry's own names: a group past them is named onto them.
                     final List<String> names = extraction(source, regex, flags, named);
                     final int nr = ((BigInteger) XPathTrees.normal(match.expr(2)).value()).intValue();
                     while (names.size() < nr) {
                         names.add(names.getFirst() + "_" + (names.size() + 1));
                     }
-                    // Python's names[nr - 1]: group 0 is the last name.
+                    // names[nr - 1], a negative position counted from the end: group 0 is the last name.
                     final int at = nr - 1 < 0
                             ? names.size() + nr - 1
                             : nr - 1;
@@ -175,11 +174,11 @@ final class ReadIdioms {
         return null;
     }
 
-    // How many groups a regular expression has (Stroom's are Java's; Python reads the ones the generator writes).
+    // How many groups a regular expression has, counted as the generator's check counts them ([XPathRegex]).
     private static int regexGroups(final String regex) {
         try {
-            return Math.max(1, PythonRegex.groups(regex));
-        } catch (final PythonRegex.PythonRegexException e) {
+            return Math.max(1, XPathRegex.groups(regex));
+        } catch (final XPathRegex.XPathRegexException e) {
             return 1;
         }
     }

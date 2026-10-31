@@ -42,9 +42,9 @@ import javax.xml.xpath.XPathFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_stream_types.py`: stream types beyond Raw Events and Events, and templates found
-/// by what they are, through the REAL tools on a real Stroom. Templates here are fixtures with names no standard
-/// template has, in a folder of their own (System/E2E Bases), with no children: found only by what they are.
+/// Stream types beyond Raw Events and Events, and templates found by what they are, through the REAL tools on a real
+/// Stroom. Templates here are fixtures with names no standard template has, in a folder of their own (System/E2E
+/// Bases), with no children: found only by what they are.
 ///
 /// 1. Templates: a JSON translation template ('json-in v3') and a records template ('csv records v1') are found for
 ///    their stage; start_onboarding names 'json-in v3' for a JSON sample; a source is onboarded through it.
@@ -78,7 +78,7 @@ class TestE2eStreamTypes extends AbstractE2eTest {
              "properties": {"add": [{"element": "streamAppender", "name": "streamType",
                                      "value": {"string": "Records"}}]}}
             """;
-    // The format suite's samples (dev/format_samples.py).
+    // The format suite's samples.
     private static final String JSON_LINES = """
             {"ts": "2026-10-01T08:00:00Z", "user": {"name": "alice"}, "src": "10.0.0.5", "event": "login"}
             {"ts": "2026-10-01T08:05:00Z", "user": {"name": "bob"}, "src": "10.0.0.6", "event": "logout"}

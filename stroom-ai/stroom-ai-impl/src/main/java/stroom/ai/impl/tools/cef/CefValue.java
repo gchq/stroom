@@ -23,8 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// A header field of a CEF plan: a constant, or an XPath on the Event (with an optional map of its values). Ported
-/// from the Stroom MCP server's `CefValue` model in `utils/cef.py`.
+/// A header field of a CEF plan: a constant, or an XPath on the Event (with an optional map of its values).
 ///
 /// @param value        A constant.
 /// @param source       Or an XPath from the Event, e.g. `EventSource/System/Name`.
@@ -58,7 +57,7 @@ public record CefValue(String value,
     }
 
     /// @param json A header field as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated (lax types, defaults and its own checks).
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     public static CefValue fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
@@ -90,7 +89,7 @@ public record CefValue(String value,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, keys in field order: the form a plan is kept in.
     public Map<String, Object> toJson(final DumpMode mode) {
         final Map<String, Object> out = new LinkedHashMap<>();
         put(out, mode, "value", value, null);

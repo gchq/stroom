@@ -22,9 +22,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// One element (or Data entry, or attribute) an XSLT's rule writes, as [XsltReader] reads it (the Stroom MCP
-/// server's `xsltread.Leaf`): where it goes, and its constant, the expression filling it (its variables replaced by
-/// what they select), or the xsl:for-each repeating it.
+/// One element (or Data entry, or attribute) an XSLT's rule writes, as [XsltReader] reads it: where it goes, and its
+/// constant, the expression filling it (its variables replaced by what they select), or the xsl:for-each repeating it.
 public final class LeafReading {
 
     /// The step [XsltReader] puts in a path for a Data element holding Data entries: `Data@<its Name>`.
@@ -145,7 +144,7 @@ public final class LeafReading {
         return Arrays.asList("expr", XsltReader.keyOf(expr, parser));
     }
 
-    /// @return It as the Python reading's fields: path, data_name, value, expr, repeat, guard.
+    /// @return It as a map, keys in the order the reader fixtures pin: path, data_name, value, expr, repeat, guard.
     public Map<String, Object> toMap() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("path", path);
@@ -155,7 +154,7 @@ public final class LeafReading {
         out.put("repeat", repeat);
         out.put("guard", guard);
         if (dataParent != null) {
-            // Not in the Python reading, which had no Data inside Data.
+            // Only for a Data inside Data, so other readings keep the keys the reader fixtures pin.
             out.put("data_parent", dataParent);
         }
         return out;

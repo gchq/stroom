@@ -119,8 +119,7 @@ class TestDocumentAccess {
 
     @Test
     void pathsFromTheSystemRootAreTakenAsTheToolsTakeThem() {
-        // Seen with the Stroom MCP server: Stroom's folder tool refused find_documents' 'System / Feeds / Events'
-        // and took '/Feeds/Events'.
+        // Seen in testing: Stroom's folder tool refused 'System / Feeds / Events' and took '/Feeds/Events'.
         assertThat(DocumentAccess.withoutSystemRoot("System / Feeds / Events")).isEqualTo("/Feeds / Events");
         assertThat(DocumentAccess.withoutSystemRoot("System/Feeds")).isEqualTo("/Feeds");
         assertThat(DocumentAccess.withoutSystemRoot(" system ")).isEqualTo("/");

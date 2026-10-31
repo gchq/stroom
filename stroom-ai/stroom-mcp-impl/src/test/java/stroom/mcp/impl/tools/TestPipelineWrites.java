@@ -48,10 +48,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The pipeline write tools' helpers (the Stroom MCP server's `tools/pipeline_writes.py`, and its tests in
-/// `tests/test_slots.py`, `tests/test_property_types.py`, `tests/test_xml_fragments.py`, `tests/test_stepping.py`,
-/// `tests/test_plan.py`, `tests/test_tolerance.py`, `tests/test_pipelines.py`, `tests/test_off_path.py`,
-/// `tests/test_surface.py` and `tests/test_index_rename.py`).
+/// The pipeline write tools' helpers: element ids, open slots and how they are filled, property values and types, and
+/// a next version's layout.
 class TestPipelineWrites {
 
     private static final String BUILD = PipelineWorld.BUILD;
@@ -421,7 +419,7 @@ class TestPipelineWrites {
         final PipelineDoc before = pipelines.buildPipeline("p", "ACME - Indexing", null,
                 PipelineLayers.layer("p").chain("xsltFilter", "XSLTFilter", "schemaFilter", "SchemaFilter"));
 
-        assertThatThrownBy(() -> writes.setPipelineProperty(PortedToolCalls.context(), "p",
+        assertThatThrownBy(() -> writes.setPipelineProperty(BuildToolCalls.context(), "p",
                 PropertyValue.plain("schemaFilter", "schemaValidation", "false")))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("Fix the output instead");
@@ -439,13 +437,13 @@ class TestPipelineWrites {
                 .chain("elasticIndexingFilter", "ElasticIndexingFilter")
                 .property("elasticIndexingFilter", "indexName", "acme-v1"));
 
-        assertThatThrownBy(() -> writes.setPipelineProperty(PortedToolCalls.context(), "ix",
+        assertThatThrownBy(() -> writes.setPipelineProperty(BuildToolCalls.context(), "ix",
                 PropertyValue.plain("elasticIndexingFilter", "indexName", "acme-other")))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("rename_index changes the index name in both");
         assertThat(pipelines.pipelineDoc("ix")).isSameAs(before);
 
-        final Map<String, Object> set = writes.setPipelineProperty(PortedToolCalls.context(), "ix",
+        final Map<String, Object> set = writes.setPipelineProperty(BuildToolCalls.context(), "ix",
                 PropertyValue.plain("elasticIndexingFilter", "indexName", "acme-v1"));
 
         assertThat(set).containsEntry("set", "elasticIndexingFilter.indexName").containsEntry("name",
@@ -460,15 +458,15 @@ class TestPipelineWrites {
         pipelines.productionPipeline("prod", "Acme-Prod", null, PipelineLayers.layer("prod").chain("jsonParser",
                 "JSONParser"));
 
-        assertThatThrownBy(() -> writes.setPipelineProperty(PortedToolCalls.context(), "p",
+        assertThatThrownBy(() -> writes.setPipelineProperty(BuildToolCalls.context(), "p",
                 PropertyValue.plain("xsltFilter", "xslt", "x")))
                 .hasMessage("No element 'xsltFilter' in this pipeline; elements are ['jsonParser', "
                             + "'translationFilter']");
-        assertThatThrownBy(() -> writes.setPipelineProperty(PortedToolCalls.context(), "prod",
+        assertThatThrownBy(() -> writes.setPipelineProperty(BuildToolCalls.context(), "prod",
                 PropertyValue.plain("jsonParser", "addRootObject", false)))
                 .isInstanceOf(ToolRefusal.class);
 
-        writes.setPipelineProperty(PortedToolCalls.context(), "p",
+        writes.setPipelineProperty(BuildToolCalls.context(), "p",
                 PropertyValue.plain("jsonParser", "addRootObject", "false"));
 
         assertThat(PipelineDocs.addedProperties(pipelines.pipelineDoc("p")))
@@ -489,8 +487,8 @@ class TestPipelineWrites {
         final List<PipelineWrites.ReferenceRequest> references = List.of(
                 new PipelineWrites.ReferenceRequest("ACME-USERS", null, null));
 
-        final Map<String, Object> first = writes.setPipelineReferences(PortedToolCalls.context(), "p", references);
-        final Map<String, Object> again = writes.setPipelineReferences(PortedToolCalls.context(), "p", references);
+        final Map<String, Object> first = writes.setPipelineReferences(BuildToolCalls.context(), "p", references);
+        final Map<String, Object> again = writes.setPipelineReferences(BuildToolCalls.context(), "p", references);
 
         assertThat(first).containsEntry("added", 1).containsEntry("reference_data",
                 List.of("ACME-USERS via Reference Loader on translationFilter"));
@@ -532,8 +530,8 @@ class TestPipelineWrites {
 
     @Test
     void thePreviousVersionsReferencesComeOnTheSameElementOnce() {
-        // The Stroom MCP server's tests/test_new_version.py: a next version, its translation written anew, loads the
-        // reference data the one it follows loads, when the user keeps them.
+        // A next version, its translation written anew, loads the reference data the one it follows loads, when the
+        // user keeps them.
         final Layout merged = Layout.of(List.of(textTemplate()));
         final PipelineReference reference = previousReference("translationFilter");
 
@@ -602,8 +600,8 @@ class TestPipelineWrites {
                 .hasMessageContaining("is not a document of build 'acme-v1'");
     }
 
-    // FG-V1.2, as the Python test's PREVIOUS: its converter and XSLT, a plain setting, a setting on an element the
-    // template lacks, reference data for its lookups, and an element of its own.
+    // FG-V1.2, the previous version: its converter and XSLT, a plain setting, a setting on an element the template
+    // lacks, reference data for its lookups, and an element of its own.
     private static PipelineDoc previousVersion() {
         final PipelineDataBuilder data = new PipelineDataBuilder()
                 .addProperty(new PipelineProperty("dsParser", "textConverter", new PipelinePropertyValue(

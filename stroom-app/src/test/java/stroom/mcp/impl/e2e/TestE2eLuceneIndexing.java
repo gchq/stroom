@@ -42,23 +42,20 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_lucene_indexing.py`: indexing on the Lucene backend end to end, driving the REAL
-/// tools on a real Stroom. Every part of the script is covered: stage 1 from the translation suite (the CSV build,
-/// `e2e_translation.py`'s `onboard`); then convention guidance, the field plan, the Lucene index doc and its fields,
+/// Indexing on the Lucene backend end to end, driving the REAL tools on a real Stroom: stage 1 from the translation
+/// suite (the CSV build); then convention guidance, the field plan, the Lucene index doc and its fields,
 /// the indexing XSLT and pipeline from the `Indexing` template, stepping the Events, processing, the verification
 /// dashboard and test searches (each hit traced to its event), reprocessing into the build's own index (emptied
 /// first), documentation; a v2 copy adding one field, a diff limited to that field, v2 verified beside v1; then
 /// promotion.
 ///
-/// Where the script called the server's internals, the tool that does the same is called: `save_xslt` with the code
-/// (its `create_xslt`) or with `index_plan` (the plan's XSLT), `verify_index` (its `create_verification_dashboard` and
-/// `run_test_searches`). Its second `set_index_fields` (which must add nothing) has no tool: `create_index_doc` adds
-/// the session's plan's fields, which is checked. Stroom's REST reads of the index's shards are read through its
-/// index shard service.
+/// The XSLT is saved with `save_xslt`, with the code or with `index_plan` (the plan's XSLT); `verify_index` makes the
+/// verification dashboard and runs the test searches. `create_index_doc` adds the session's plan's fields, which is
+/// checked. The index's shards are read through Stroom's index shard service.
 @SuppressWarnings("unchecked")
 class TestE2eLuceneIndexing extends AbstractE2eTest {
 
-    // The run stamp the scripts put in every name (`run_stamp()`); the test database is fresh for each run.
+    // The run stamp put in every name; the test database is fresh for each run.
     private static final String STAMP = "101";
     private static final String SOURCE_USER = "EventSource/User/Id";
 
@@ -77,12 +74,12 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
         promotion(csv);
     }
 
-    /// Beyond the script, which calls each tool itself: stage 2 on Lucene with the plan's `next` followed as an agent
-    /// would, each call made as `next` gives it (the agent filling in only what it names in angle brackets), from the
-    /// events stage's documentation to promotion. It pins what `dev/FINDINGS.md` says of the plan's indexing steps:
-    /// `next` after create_indexing_pipeline names step_sample first, not create_processor_filter, which would refuse
-    /// it ("A new indexing pipeline"); the template step isn't "to do" on Lucene ("Lucene"); `indexed` is done only
-    /// once verify_index passes ("The plan"). None of the calls is refused, and none leaves the agent waiting.
+    /// Stage 2 on Lucene with the plan's `next` followed as an agent would, each call made as `next` gives it (the
+    /// agent filling in only what it names in angle brackets), from the events stage's documentation to promotion.
+    /// It pins the plan's indexing steps: `next` after create_indexing_pipeline names step_sample first, not
+    /// create_processor_filter, which would refuse a pipeline not yet stepped clean; the template step isn't "to do"
+    /// on Lucene; `indexed` is done only once verify_index passes. None of the calls is refused, and none leaves the
+    /// agent waiting.
     @Test
     void followingNextThroughIndexingOnLuceneLeadsOnWithoutARefusal() {
         final String build = "onboard-acme-logons";
@@ -357,12 +354,9 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
                 .containsEntry("passed", true);
 
         final String markdown = "# " + pipeline.get("name") + "\n\n## Output\n\nLucene index " + indexName + ".\n";
-        // The script expects documentation without stream_ids to be refused ("Give stream_ids ... values the sample
-        // gave"). The server's own write_documentation has since taken the streams the build's record says the
-        // pipeline last stepped clean on (tools/builds.py _stepped_streams, "seen: prompts and agents left
-        // stream_ids out, and every documentation call was refused once first"), so the script's check is stale:
-        // what is asserted is the server's behaviour, the field mapping still going down to the field with the
-        // values the sample gave.
+        // Documentation without stream_ids takes the streams the build's record says the pipeline last stepped
+        // clean on (seen in testing: prompts and agents left stream_ids out, and every documentation call was
+        // refused once first), the field mapping still going down to the field with the values the sample gave.
         final Map<String, Object> unasked = client.json("write_documentation", Map.of("build", csv.build(),
                 "pipeline_uuid", pipelineUuid, "markdown", markdown, "change", "Created"));
         assertThat(unasked).as("without stream_ids, the streams last stepped clean: down to the field, with sample "

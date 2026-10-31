@@ -19,7 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolRefusal;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexResource;
 import stroom.pipeline.shared.PipelineDoc;
@@ -43,9 +43,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 
-/// The index's fields as verify_index and write_documentation check them, ported from the Stroom MCP server's
-/// `tests/test_fielddoc.py` (`fields_not_in_index`, `_fields_written_not_indexed`) and `tests/test_templatecheck.py`
-/// (`_unsearchable`).
+/// The index's fields as verify_index and write_documentation check them: fields not in the index, fields written but
+/// not indexed, and fields that can't be searched.
 class TestIndexFields {
 
     private static final DocRef WEB = new DocRef("ElasticIndex", "i", "web");
@@ -85,7 +84,7 @@ class TestIndexFields {
     @SuppressWarnings("unchecked")
     void verificationExpectsOnlyTheFieldsTheEventsGiveAValue() {
         // A field no event fills is never mapped where the mapping is dynamic: not a field the index lacks.
-        final Map<String, Object> plan = (Map<String, Object>) PyJson.loads("{\"backend\": \"elasticsearch\", "
+        final Map<String, Object> plan = (Map<String, Object>) ToolJson.loads("{\"backend\": \"elasticsearch\", "
                 + "\"index_name\": \"web\", \"time_field\": \"@timestamp\", \"fields\": ["
                 + "{\"name\": \"StreamId\", \"type\": \"id\", \"source\": \"@StreamId\"},"
                 + "{\"name\": \"user.name\", \"type\": \"keyword\", \"source\": \"EventSource/User/Id\"},"

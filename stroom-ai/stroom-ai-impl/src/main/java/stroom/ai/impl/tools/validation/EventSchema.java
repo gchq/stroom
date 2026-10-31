@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import org.w3c.dom.Element;
 
@@ -34,8 +34,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/// What the event-logging XSD allows below Event: element order, required elements, choices and values. Ported
-/// from the Stroom MCP server's `utils/eventschema.py`.
+/// What the event-logging XSD allows below Event: element order, required elements, choices and values.
 ///
 /// The checks use it to say which elements an XSLT writes where the schema has no place for them, and what an
 /// element takes; the translation generator uses it to put elements in schema order, to reject paths the schema
@@ -168,8 +167,7 @@ public final class EventSchema {
 
     /// A step that says which side of its parent what is below it is on: one of the parent's children that holds
     /// elements, where another of them holds the same type (a Move's Source and Destination, an Update's Before and
-    /// After, an Authorise's AddGroups and RemoveGroups, a Network's Connect and Close). Not in the Stroom MCP
-    /// server.
+    /// After, an Authorise's AddGroups and RemoveGroups, a Network's Connect and Close).
     ///
     /// @param parent The parent's declaration.
     /// @param child  One of its children.
@@ -286,14 +284,14 @@ public final class EventSchema {
         return "'" + walked + "' has no child '" + segment + "'."
                + (close.isEmpty()
                 ? ""
-                : " Did you mean " + PyText.list(close) + "?")
+                : " Did you mean " + ToolText.list(close) + "?")
                + (elsewhere.isEmpty()
                 ? ""
-                : " '" + segment + "' exists at: " + PyText.list(elsewhere) + ".")
+                : " '" + segment + "' exists at: " + ToolText.list(elsewhere) + ".")
                + (valueOf.isEmpty()
                 ? ""
-                : " '" + segment + "' is a value of: " + PyText.list(valueOf) + " (map a constant to it).")
-               + " Allowed here: " + PyText.list(names);
+                : " '" + segment + "' is a value of: " + ToolText.list(valueOf) + " (map a constant to it).")
+               + " Allowed here: " + ToolText.list(names);
     }
 
     // The paths below Event (six levels down) by their last element's name, and the leaf paths by the values

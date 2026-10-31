@@ -20,10 +20,10 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -57,11 +57,10 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What the pipeline write tools (`create_pipeline`, `copy_pipeline`, `update_pipeline`) share, and the indexing
-/// and build tools will reuse (the Stroom MCP server's `tools/pipeline_writes.py`): reading a pipeline's layers as
-/// the child is written over them, swapping a template's parser, the template's open slots and filling them from
-/// the build, reference data entries, property values as Stroom declares their types, and the refusals that keep a
-/// new pipeline to its build's own documents and its template's validation.
+/// What the pipeline write tools (`create_pipeline`, `copy_pipeline`, `update_pipeline`) share, and the indexing and
+/// build tools reuse: reading a pipeline's layers as the child is written over them, swapping a template's parser, the
+/// template's open slots and filling them from the build, reference data entries, property values as Stroom declares
+/// their types, and the refusals that keep a new pipeline to its build's own documents and its template's validation.
 ///
 /// Pipelines are read and saved as the user, through Stroom's pipeline service and store, as the pipeline editor
 /// reads and saves them.
@@ -157,7 +156,7 @@ class PipelineWrites {
     /// @throws ToolRefusal if the type is no parser, or the template has none.
     static Swap swapParser(final Layout template, final String newType) {
         if (!PARSERS.contains(newType)) {
-            throw new ToolRefusal("replace_parser must be one of " + PyText.list(sorted(PARSERS)));
+            throw new ToolRefusal("replace_parser must be one of " + ToolText.list(sorted(PARSERS)));
         }
         final Map<String, String> types = template.elements();
         final String old = template.chain().stream()
@@ -531,7 +530,7 @@ class PipelineWrites {
             if (kind == null) {
                 throw new ToolRefusal(property.element() + " (" + elementType + ") has no property '"
                                       + property.name() + "'; its properties are "
-                                      + PyText.list(sorted(ofType.keySet())));
+                                      + ToolText.list(sorted(ofType.keySet())));
             }
             if (!PLAIN.containsKey(kind)) {
                 // A document: doc_uuid and doc_type, refused by value() without them.
@@ -670,7 +669,7 @@ class PipelineWrites {
                 .filter(element -> types.get(element) != null && VALIDATION.contains(types.get(element)))
                 .toList());
         if (!touched.isEmpty()) {
-            throw new ToolRefusal(PyText.list(touched) + " validate the pipeline's output against "
+            throw new ToolRefusal(ToolText.list(touched) + " validate the pipeline's output against "
                                   + "its schema; their settings are not changed here. Fix the output instead: an "
                                   + "Elasticsearch indexing XSLT's root must say which JSON schema it follows "
                                   + "(<array xsi:schemaLocation=\"http://www.w3.org/2005/xpath-functions "
@@ -680,8 +679,7 @@ class PipelineWrites {
         }
     }
 
-    /// Sets one element property on a pipeline the tools created, in its build, e.g. `schemaFilter.schemaGroup`
-    /// (the MCP server's `set_pipeline_property`).
+    /// Sets one element property on a pipeline the tools created, in its build, e.g. `schemaFilter.schemaGroup`.
     ///
     /// @param context      The call's context.
     /// @param pipelineUuid The pipeline.
@@ -698,7 +696,7 @@ class PipelineWrites {
         final Map<String, String> types = layout(pipelineUuid).elements();
         if (!types.containsKey(property.element())) {
             throw new ToolRefusal("No element '" + property.element() + "' in this pipeline; elements are "
-                                  + PyText.list(sorted(types.keySet())));
+                                  + ToolText.list(sorted(types.keySet())));
         }
         keepValidation(types, List.of(property));
         if ("ElasticIndexingFilter".equals(types.get(property.element())) && "indexName".equals(property.name())
@@ -721,8 +719,8 @@ class PipelineWrites {
         return result;
     }
 
-    /// Attaches reference data to a pipeline the tools created, so its XSLT's stroom:lookup() calls find the maps
-    /// (the MCP server's `set_pipeline_references`): added to any it has already.
+    /// Attaches reference data to a pipeline the tools created, so its XSLT's stroom:lookup() calls find the maps:
+    /// added to any it has already.
     ///
     /// @param context      The call's context.
     /// @param pipelineUuid The pipeline.
@@ -900,7 +898,7 @@ class PipelineWrites {
                 }
                 if (!(value instanceof Boolean)) {
                     throw new ToolRefusal(property.dotted() + " is true or false, not "
-                                          + PyText.repr(property.value()));
+                                          + ToolText.repr(property.value()));
                 }
             }
             case "int", "long" -> {
@@ -913,7 +911,7 @@ class PipelineWrites {
                 }
                 if (!(value instanceof Long) && !(value instanceof Integer)) {
                     throw new ToolRefusal(property.dotted() + " is a whole number, not "
-                                          + PyText.repr(property.value()));
+                                          + ToolText.repr(property.value()));
                 }
                 value = ((Number) value).longValue();
             }
@@ -932,7 +930,7 @@ class PipelineWrites {
         try {
             return Math.toIntExact(((Number) property.value()).longValue());
         } catch (final ArithmeticException e) {
-            throw new ToolRefusal(property.dotted() + " is a whole number, not " + PyText.repr(property.value()));
+            throw new ToolRefusal(property.dotted() + " is a whole number, not " + ToolText.repr(property.value()));
         }
     }
 
@@ -945,9 +943,9 @@ class PipelineWrites {
     // --------------------------------------------------------------------------------
 
 
-    /// A pipeline's layers merged as a child is written over them (the MCP server's `merge_layers`): its elements
-    /// and links as the layers add and remove them, `Source` included where a layer adds it (Stroom adds one to a
-    /// template that doesn't, which a child mustn't write again), and its properties as Stroom merges them.
+    /// A pipeline's layers merged as a child is written over them: its elements and links as the layers add and remove
+    /// them, `Source` included where a layer adds it (Stroom adds one to a template that doesn't, which a child mustn't
+    /// write again), and its properties as Stroom merges them.
     ///
     /// @param elements   Each element's type by its id, in the order the layers add them.
     /// @param links      Its links, between elements it has.
@@ -1014,7 +1012,7 @@ class PipelineWrites {
         }
     }
 
-    /// A template's parser swapped for another (the MCP server's `swap_parser`).
+    /// A template's parser swapped for another.
     ///
     /// @param addedElements The elements the child adds: the new parser (after a `Source`, where the template has
     ///                      none).
@@ -1073,7 +1071,7 @@ class PipelineWrites {
     }
 
     /// Reference data an XSLT step reads with stroom:lookup(): a feed of Reference streams, loaded by a loader
-    /// pipeline (the MCP server's `PipelineReference`).
+    /// pipeline.
     ///
     /// @param feed           The reference feed's name.
     /// @param loaderPipeline The loader pipeline's name or UUID, or null for the one other pipelines load the feed

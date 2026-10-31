@@ -20,7 +20,6 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -29,6 +28,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.RebuiltMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -61,10 +61,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// `rebuild_mapping` - rebuilds the mapping kept with a translation XSLT from the XSLT itself, when it was lost (its
-/// Documentation tab cleared) or no longer matches the XSLT (changed by hand in Stroom) (the Stroom MCP server's
-/// `tools/rebuild.py`). The mapping is read back from the XSLT ([XsltReader]), the XSLT regenerated from it, and both
-/// stepped over the sample streams: it is saved only when every record's output is the same (or the user accepts
-/// the differences shown), after the user confirms, and the XSLT is then the one regenerated from it.
+/// Documentation tab cleared) or no longer matches the XSLT (changed by hand in Stroom). The mapping is read back from
+/// the XSLT ([XsltReader]), the XSLT regenerated from it, and both stepped over the sample streams: it is saved only
+/// when every record's output is the same (or the user accepts the differences shown), after the user confirms, and the
+/// XSLT is then the one regenerated from it.
 class RebuildMappingTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RebuildMappingTool.class);
@@ -245,8 +245,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         result.put("rebuilt", rebuilt.summary());
         if (rebuilt.mapping() == null || !rebuilt.problems().isEmpty()) {
             result.put("saved", null);
-            // Not in the Python server; seen: an XSLT rewritten by hand outside the generator's layout read back
-            // as nothing, and the agent took it for an empty mapping and the edit for one no mapping can express.
+            // Seen in testing: an XSLT rewritten by hand outside the generator's layout read back as nothing, and the
+            // agent took it for an empty mapping and the edit for one no mapping can express.
             final boolean unlaid = rebuilt.notes().stream().anyMatch(note -> note.startsWith("no record template"));
             result.put("hint", unlaid && base != null
                     ? "The XSLT isn't laid out as the generator writes one (a template per rule), so nothing in it "
@@ -260,8 +260,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             return result;
         }
         if (!rebuilt.lost().isEmpty() && !ToolArgs.flag(call, ACCEPT_UNREAD_ARG)) {
-            // Not in the Python server: a construct the reader doesn't know (an xsl:iterate making users distinct,
-            // say) was left out, and the proof by stepping showed nothing when no sample record reached it.
+            // Seen in testing: a construct the reader doesn't know (an xsl:iterate making users distinct, say) was left
+            // out, and the proof by stepping showed nothing when no sample record reached it.
             result.put("saved", null);
             result.put("unread", rebuilt.lost());
             result.put("hint", "Parts of the XSLT's events couldn't be read back (unread): a mapping rebuilt from "
@@ -431,7 +431,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                         .findFirst();
                 if (element.isPresent()) {
                     found.add(new Runs(entry.uuid(), element.get()));
-                    names.add(PyText.repr(entry.name()));
+                    names.add(ToolText.repr(entry.name()));
                 }
             } catch (final PipelineUnreadableException e) {
                 LOGGER.debug(() -> LogUtil.message("Pipeline {} can't be read: {}", entry.uuid(), e.getMessage()));

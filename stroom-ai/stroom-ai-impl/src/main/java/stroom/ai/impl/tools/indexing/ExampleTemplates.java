@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,8 +31,7 @@ import java.util.TreeSet;
 /// The final index template for a new index, built from the field plan's template and the user's example (an index
 /// template or an index's mapping, with the component templates it is composed of), or from the plan alone with the
 /// component templates the user (or their standing instructions) nominates; and the fields such a template leaves
-/// to Elastic's ecs@mappings. Ported from the Stroom MCP server's `utils/templatecheck.py` (from_example,
-/// with_components, leave_to_ecs_component, ecs_duplicates, components_used, composition, discovery_data_stream).
+/// to Elastic's ecs@mappings.
 ///
 /// Templates are JSON-like values: maps (in key order), lists, strings, numbers, booleans and nulls.
 public final class ExampleTemplates {
@@ -110,11 +109,11 @@ public final class ExampleTemplates {
         }
         if (!include.isEmpty()) {
             notes.add("component templates nominated (by the user or their standing instructions), referenced: "
-                      + PyText.list(new LinkedHashSet<>(include)));
+                      + ToolText.list(new LinkedHashSet<>(include)));
         }
         if (!left.isEmpty()) {
             notes.add("left to the component templates (they map them): "
-                      + PyText.list(left.stream().sorted().toList()));
+                      + ToolText.list(left.stream().sorted().toList()));
         }
         return new Built(out, notes);
     }
@@ -271,7 +270,7 @@ public final class ExampleTemplates {
         final long missing = docs.stream().filter(doc -> timeOf(doc).isEmpty()).count();
         if (missing > 0 || docs.isEmpty()) {
             return new DataStream(body, "a plain index, not a data stream: " + missing + " of " + docs.size()
-                                        + " sample records have no time in " + PyText.repr(field)
+                                        + " sample records have no time in " + ToolText.repr(field)
                                         + ", and a data stream rejects a document without @timestamp");
         }
         final Map<String, Object> out = new LinkedHashMap<>();
@@ -283,7 +282,7 @@ public final class ExampleTemplates {
         out.put("data_stream", new LinkedHashMap<>());
         out.put("template", JsonValues.mapOrEmpty(body.get("template")));
         return new DataStream(out, "a data stream: all " + docs.size() + " sample records have their time in "
-                                   + PyText.repr(field) + ", written as @timestamp");
+                                   + ToolText.repr(field) + ", written as @timestamp");
     }
 
     private static String timeOf(final Map<String, Object> doc) {
@@ -292,8 +291,8 @@ public final class ExampleTemplates {
         if (value instanceof final TemplateCheck.DocValue read) {
             value = read.text();
         }
-        return PyText.strip(JsonValues.truthy(value)
-                ? PyText.str(value)
+        return ToolText.strip(JsonValues.truthy(value)
+                ? ToolText.str(value)
                 : "");
     }
 

@@ -122,7 +122,7 @@ public class UserActions {
 
     /// How long a button works for, as for approvals and forms.
     static final Duration EXPIRY = Duration.ofHours(24);
-    /// Pipelines that the FastMCP server makes are tagged with this.
+    /// Pipelines that the build tools make are tagged with this.
     static final String MCP_GENERATED_TAG = "mcp-generated";
 
     static final int MAX_ACTIONS = 20;
@@ -352,7 +352,8 @@ public class UserActions {
                              + " processor filter " + filterId + " on pipeline '" + pipeline.getName() + "'";
         final String warning = lookup.tags(pipeline).contains(MCP_GENERATED_TAG)
                 ? null
-                : "This pipeline is not tagged '" + MCP_GENERATED_TAG + "', so it was not made by the MCP server.";
+                : "This pipeline is not tagged '" + MCP_GENERATED_TAG
+                  + "', so it was not made by Stroom AI's build tools.";
         return Optional.of(new UserActionRecord(id, enable
                 ? ENABLE_PROCESSOR_FILTER
                 : DISABLE_PROCESSOR_FILTER, label, describe(filter), warning, filterId, pipeline, null, List.of(),

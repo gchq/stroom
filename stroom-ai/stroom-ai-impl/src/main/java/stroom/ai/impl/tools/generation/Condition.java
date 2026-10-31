@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /// A test on the record (or, with `for_each`, the item): give field or xpath and one of equals, one_of, matches,
-/// present or in_dictionary. Ported from the Stroom MCP server's `Condition` model.
+/// present or in_dictionary.
 ///
 /// @param field        An input field, or a name from extract.
 /// @param xpath        Or an XPath expression.
@@ -50,14 +50,14 @@ public record Condition(String field,
     private static final List<String> TESTS = List.of("equals", "one_of", "matches", "in_dictionary");
 
     /// @param json A condition as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
     public static Condition fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("Condition", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -84,7 +84,7 @@ public record Condition(String field,
                 ? ""
                 : condition.field);
         if (called != null) {
-            reader.valueError(loc, "A condition's field " + PyText.repr(condition.field) + " " + called, input);
+            reader.valueError(loc, "A condition's field " + ToolText.repr(condition.field) + " " + called, input);
             return null;
         }
         final long tests = Stream.of(condition.equalTo, condition.oneOf, condition.matches, condition.present,
@@ -128,7 +128,7 @@ public record Condition(String field,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("field", field, null)

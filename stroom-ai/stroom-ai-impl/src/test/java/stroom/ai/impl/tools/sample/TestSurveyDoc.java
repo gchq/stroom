@@ -57,7 +57,7 @@ class TestSurveyDoc {
         assertThat(markdown).contains("| 1 | fields:action \\| action=login | 5 | 100.0% | 1 |")
                 .contains("Stream 4, part 0, record 0:").contains("{\"action\": \"login\", \"user\": \"a|b\"}");
         final Map<String, Object> again = SurveyDoc.readState(markdown);
-        assertThat(PyJson.dumps(again)).isEqualTo(PyJson.dumps(state));
+        assertThat(ToolJson.dumps(again)).isEqualTo(ToolJson.dumps(state));
         final Map<String, Map<String, Object>> more = new LinkedHashMap<>();
         more.put("fields:action | action=login", shape(2, 2, "{\"action\": \"login\", \"user\": \"c\"}", 1));
         more.put("fields:action | action=logout", shape(1, 2, "{\"action\": \"logout\"}", 2));
@@ -101,8 +101,8 @@ class TestSurveyDoc {
     }
 
     @Test
-    void aRecordThePythonServerWroteReadsAndRendersTheSame() {
-        // The Python server's json.dumps(state, indent=1): its record must read in Stroom, and be written back alike.
+    void aRecordInTheStoredFormatReadsAndRendersTheSame() {
+        // A record in the established layout (JSON indented by one): it must read, and be written back alike.
         final String python = """
                 # SRC - Survey
 
@@ -156,7 +156,7 @@ class TestSurveyDoc {
 
         final Map<String, Object> state = SurveyDoc.merge(null, result(List.of(1L), 1, false), shapes, 2, "now");
 
-        assertThat(PyJson.dumps(state)).contains("x".repeat(SurveyDoc.MAX_EXAMPLE_CHARS) + "\"")
+        assertThat(ToolJson.dumps(state)).contains("x".repeat(SurveyDoc.MAX_EXAMPLE_CHARS) + "\"")
                 .doesNotContain("x".repeat(SurveyDoc.MAX_EXAMPLE_CHARS + 1));
         assertThat(SurveyDoc.docName("ACME")).isEqualTo("ACME - Survey");
     }

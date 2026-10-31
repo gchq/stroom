@@ -81,8 +81,7 @@ public class StreamSummaries {
     /// use, not for summarise_events' reply.
     public static final String TYPE_IDS_BY_ACTION = "type_ids_by_action";
     /// The key of each path's values in the events read (a Data entry's as `<path>[@Name='<name>']/@Value`), up to
-    /// [#MAX_VALUES_PER_PATH] each: what the indexing tools look in for stand-ins for none (`-`). Not in the Stroom
-    /// MCP server.
+    /// [#MAX_VALUES_PER_PATH] each: what the indexing tools look in for stand-ins for none (`-`).
     public static final String VALUES_BY_PATH = "values_by_path";
     /// The most values kept of a path.
     static final int MAX_VALUES_PER_PATH = 500;
@@ -134,8 +133,7 @@ public class StreamSummaries {
     /// pipeline sets itself are distinguished from ones inherited from its template.
     ///
     /// @param streamId An Error stream, or a Raw Events/Events stream whose Error children to summarise.
-    /// @return `stream_id`, `error_streams`, the triage (`verdict`, `groups_by_class`, `groups`) and any `unread`,
-    /// as the Stroom MCP server gave them.
+    /// @return `stream_id`, `error_streams`, the triage (`verdict`, `groups_by_class`, `groups`) and any `unread`.
     /// @throws StreamReadException if there is no such stream.
     public Map<String, Object> summariseErrors(final long streamId) {
         final ErrorTriage triage = errorTriage();
@@ -241,8 +239,8 @@ public class StreamSummaries {
     ///
     /// @param streamIds The Events streams.
     /// @param maxEvents The most events to read.
-    /// @return `events`, `event_types`, `type_ids`, `actions`, `path_population`, `data_names` and `hint`, as the
-    /// Stroom MCP server gave them, and [#POPULATION_BY_ACTION] and [#TYPE_IDS_BY_ACTION].
+    /// @return `events`, `event_types`, `type_ids`, `actions`, `path_population`, `data_names` and `hint`, and
+    /// [#POPULATION_BY_ACTION] and [#TYPE_IDS_BY_ACTION].
     /// @throws StreamReadException if a stream can't be read.
     public Map<String, Object> summariseEvents(final List<Long> streamIds, final int maxEvents) {
         final Map<String, Integer> types = new LinkedHashMap<>();
@@ -338,8 +336,8 @@ public class StreamSummaries {
         }
         result.put("path_population", population);
         result.put("data_names", names);
-        // Not in the Stroom MCP server: for documenting a field only some kinds of event have under each of them
-        // (seen: source.ip, from EventSource, in 40% of the events, which could be put under no event type).
+        // For documenting a field only some kinds of event have under each of them (seen in testing: source.ip,
+        // from EventSource, in 40% of the events, which could be put under no event type).
         final Map<String, Map<String, Double>> actionShares = new LinkedHashMap<>();
         if (count > 0) {
             final int events = count;
@@ -461,7 +459,7 @@ public class StreamSummaries {
                 : node.getLocalName();
     }
 
-    // The text before an element's first child element, as lxml's text is.
+    // The text before an element's first child element.
     private static String leadingText(final Element element) {
         final StringBuilder sb = new StringBuilder();
         for (Node child = element.getFirstChild(); child != null; child = child.getNextSibling()) {

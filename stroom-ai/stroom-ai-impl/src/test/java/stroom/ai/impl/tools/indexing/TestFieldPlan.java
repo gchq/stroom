@@ -19,7 +19,7 @@ package stroom.ai.impl.tools.indexing;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// A field plan rendered for Lucene or Elasticsearch: its index doc fields or index template, and the indexing XSLT,
-/// run with Saxon. Ported from the Stroom MCP server's `tests/test_indexing.py` (its cases of the plan itself) and
-/// `tests/test_index_style.py`, case by case.
+/// run with Saxon.
 class TestFieldPlan {
 
     private static final EcsSchema ECS = IndexingFixtures.ECS;
@@ -153,12 +152,12 @@ class TestFieldPlan {
         final Map<String, Object> mappings = TemplateMappings.mappingsOf(body);
         assertThat(mappings.get("dynamic")).isEqualTo(true);
         assertThat(mappings.get("date_detection")).isEqualTo(false);
-        assertThat(PyJson.dumps(mappings.get("dynamic_templates"))).isEqualTo("[{\"strings_as_keywords\": "
+        assertThat(ToolJson.dumps(mappings.get("dynamic_templates"))).isEqualTo("[{\"strings_as_keywords\": "
                 + "{\"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\", \"ignore_above\": "
                 + "1024}}}]");
-        assertThat(PyJson.dumps(mappings.get("properties"))).isEqualTo("{\"StreamId\": {\"type\": \"long\"}, "
+        assertThat(ToolJson.dumps(mappings.get("properties"))).isEqualTo("{\"StreamId\": {\"type\": \"long\"}, "
                 + "\"EventId\": {\"type\": \"long\"}, \"@timestamp\": {\"type\": \"date\"}}");
-        assertThat(PyJson.dumps(JsonValues.map(JsonValues.mapAt(JsonValues.mapAt(body, "template"), "settings")
+        assertThat(ToolJson.dumps(JsonValues.map(JsonValues.mapAt(JsonValues.mapAt(body, "template"), "settings")
                 .get("index")).get("mapping")))
                 .isEqualTo("{\"total_fields\": {\"limit\": 2000}, \"ignore_malformed\": true}");
         final String output = IndexingFixtures.compact(runRaw(plan.xslt(), RAW));
@@ -201,9 +200,10 @@ class TestFieldPlan {
         assertThat(mappings.get("dynamic")).isEqualTo(true);
         assertThat(mappings).containsKey("dynamic_templates");
         // The example maps @timestamp itself: its definition is kept, as in any template built from an example.
-        assertThat(PyJson.dumps(mappings.get("properties"))).isEqualTo("{\"EventId\": {\"type\": \"long\"}, "
+        assertThat(ToolJson.dumps(mappings.get("properties"))).isEqualTo("{\"EventId\": {\"type\": \"long\"}, "
                 + "\"@timestamp\": {\"type\": \"date\", \"format\": \"epoch_millis\"}}");
-        assertThat(PyJson.dumps(JsonValues.mapAt(JsonValues.mapAt(built.body(), "template"), "settings").get("index")))
+        assertThat(ToolJson.dumps(JsonValues.mapAt(JsonValues.mapAt(built.body(), "template"), "settings")
+                .get("index")))
                 .isEqualTo("{\"number_of_shards\": 3, \"mapping\": {\"total_fields\": {\"limit\": 2000}, "
                            + "\"ignore_malformed\": true}}");
         assertThat(built.notes()).anyMatch(n -> n.startsWith("a discovery index"))
@@ -363,7 +363,7 @@ class TestFieldPlan {
 
         assertThat(discovery.toJson()).containsEntry("stand_ins", Map.of("-", "null"));
         assertThat(Discovery.fromJson(discovery.toJson())).isEqualTo(discovery);
-        // Without any, written as the Python model writes it.
+        // Without any, written without the entry.
         assertThat(Discovery.of("json", "ts").toJson()).doesNotContainKey("stand_ins");
         final Map<String, Object> bad = new LinkedHashMap<>(discovery.toJson());
         bad.put("stand_ins", Map.of("-", "zero"));
@@ -430,7 +430,7 @@ class TestFieldPlan {
                 .doesNotContain("match=\"*\" mode=\"alert\"");
         assertThat(xslt.replaceAll(">\\s+<", "><")).contains("<map key=\"Alert\"><string key=\"Severity\">");
         final String json = IndexingFixtures.xmlToJson(IndexingFixtures.transform(xslt, ACTIONS));
-        assertThat(PyJson.dumps(PyJson.loads(json))).isEqualTo(PyJson.dumps(PyJson.loads("""
+        assertThat(ToolJson.dumps(ToolJson.loads(json))).isEqualTo(ToolJson.dumps(ToolJson.loads("""
                 [{"Copy": {"Source": {"Resource": {"Id": "a.txt", "Type": "File"}},
                            "Destination": {"Resource": {"Id": "b.txt"}}, "Outcome": {"Success": true}}},
                  {"View": {"Resource": {"Id": "secret-1"}}},
@@ -453,7 +453,7 @@ class TestFieldPlan {
 
         assertThat(xslt).contains("<xsl:template match=\"*\" mode=\"resource\">");
         final String json = IndexingFixtures.xmlToJson(IndexingFixtures.transform(xslt, ACTIONS));
-        assertThat(PyJson.dumps(PyJson.loads(json))).isEqualTo(PyJson.dumps(PyJson.loads("""
+        assertThat(ToolJson.dumps(ToolJson.loads(json))).isEqualTo(ToolJson.dumps(ToolJson.loads("""
                 [{"Copy": {"Source": {"Resource": {"Id": "a.txt", "Type": null}}, "Outcome": {"Success": true}}},
                  {"View": {"Resource": {"Id": "secret-1"}}},
                  {"Move": {"Outcome": {"Success": false}}}]""")));

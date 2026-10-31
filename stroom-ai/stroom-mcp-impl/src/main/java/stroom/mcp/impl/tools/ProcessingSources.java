@@ -16,11 +16,11 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -47,10 +47,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-/// Which streams a pipeline in a build may process: an indexing pipeline only the Events of its source events
-/// pipeline (never Events Stroom has since superseded), and a translation pipeline only the build's own feeds, or
-/// the existing feeds the build works from, its Events then written to the build's test feed. Ported from the Stroom
-/// MCP server's `tools/processing_writes.py` (`_events_source`, `_refuse_superseded` and `_build_feeds_only`).
+/// Which streams a pipeline in a build may process: an indexing pipeline only the Events of its source events pipeline
+/// (never Events Stroom has since superseded), and a translation pipeline only the build's own feeds, or the existing
+/// feeds the build works from, its Events then written to the build's test feed.
 class ProcessingSources {
 
     /// The consent action for indexing Events from a pipeline the tools did not build.
@@ -98,8 +97,7 @@ class ProcessingSources {
         this.outputFeeds = outputFeeds;
     }
 
-    /// For an indexing pipeline reading Events: the events pipeline they must come from, checked
-    /// (`_events_source`).
+    /// For an indexing pipeline reading Events: the events pipeline they must come from, checked.
     ///
     /// Indexing filters over Events always carry `Pipeline IS_DOC_REF <source>`, so they never pick up Events
     /// streams from anywhere else. The source must be an events pipeline the tools built, and every given stream
@@ -140,7 +138,7 @@ class ProcessingSources {
             if (!types.equals(Set.of(ProcessorFilters.EVENTS))) {
                 final Set<String> sorted = new TreeSet<>();
                 types.forEach(type -> sorted.add(NullSafe.nonBlankStringElse(type, "?")));
-                throw new ToolRefusal("Mixed stream types " + PyText.list(sorted) + ": process Events streams "
+                throw new ToolRefusal("Mixed stream types " + ToolText.list(sorted) + ": process Events streams "
                                       + "on their own");
             }
         } else if (!ProcessorFilters.EVENTS.equals(streamType)) {
@@ -188,10 +186,10 @@ class ProcessingSources {
         return new EventsSource(sourceRef);
     }
 
-    /// Events streams Stroom marked deleted when their raw stream was processed again (an events pipeline updated
-    /// and reprocessed), named with the Events now in their place (`_refuse_superseded`). Seen in production:
-    /// after the parent events pipeline was updated, indexing was given the earlier Events streams' ids, and the
-    /// filter selected streams Stroom no longer processes.
+    /// Events streams Stroom marked deleted when their raw stream was processed again (an events pipeline updated and
+    /// reprocessed), named with the Events now in their place. Seen in production: after the parent events pipeline was
+    /// updated, indexing was given the earlier Events streams' ids, and the filter selected streams Stroom no longer
+    /// processes.
     ///
     /// @param metas Events streams.
     /// @throws ToolRefusal if any was superseded.
@@ -227,19 +225,18 @@ class ProcessingSources {
         final String told = String.join("; ", ids.stream()
                 .map(id -> id + " -> " + (NullSafe.isEmptyCollection(current.get(id))
                         ? "none yet"
-                        : PyText.repr(current.get(id))))
+                        : ToolText.repr(current.get(id))))
                 .toList());
-        throw new ToolRefusal("Events stream(s) " + PyText.repr(ids) + " were superseded: their raw streams "
+        throw new ToolRefusal("Events stream(s) " + ToolText.repr(ids) + " were superseded: their raw streams "
                               + "were processed again (the events pipeline was updated), and Stroom marked them "
                               + "deleted. The Events now in their place: " + told + ". Use those ids; 'none yet' "
                               + "means processing hasn't finished (wait_for_processing on the events pipeline "
                               + "first).");
     }
 
-    /// Translation pipelines write their Events into the input's feed, so they only process the build's feeds, or
-    /// the existing feeds the build works from: their Events then go to the build's test feed ([OutputFeeds]), and
-    /// the output feed is returned (`_build_feeds_only`). Indexing pipelines write to an index, not to a feed, so
-    /// they are not limited this way.
+    /// Translation pipelines write their Events into the input's feed, so they only process the build's feeds, or the
+    /// existing feeds the build works from: their Events then go to the build's test feed ([OutputFeeds]), and the
+    /// output feed is returned. Indexing pipelines write to an index, not to a feed, so they are not limited this way.
     ///
     /// @param pipeline  The pipeline.
     /// @param streamIds The streams to process, or none.
@@ -289,7 +286,7 @@ class ProcessingSources {
             }
         }
         if (!outside.isEmpty()) {
-            throw new ToolRefusal("Feed(s) " + PyText.list(outside) + " are not in this build. A translation "
+            throw new ToolRefusal("Feed(s) " + ToolText.list(outside) + " are not in this build. A translation "
                                   + "pipeline writes its Events into the input's feed, so it only processes the "
                                   + "build's own feeds, or the existing feeds the build works from: start_build "
                                   + "build=<this build> feeds=[the feed] makes it work from that feed, and its "
@@ -317,10 +314,10 @@ class ProcessingSources {
         }
         final List<Long> ids = new ArrayList<>(foreign.stream().map(Meta::getId).sorted().toList());
         ids.addAll(missing);
-        return "Stream(s) " + PyText.repr(ids) + " were not produced by '" + source.getName() + "'"
+        return "Stream(s) " + ToolText.repr(ids) + " were not produced by '" + source.getName() + "'"
                + (missing.isEmpty()
                 ? ""
-                : " (" + PyText.repr(missing) + " not found)")
+                : " (" + ToolText.repr(missing) + " not found)")
                + (names.isEmpty()
                 ? ""
                 : "; they were produced by " + String.join(", ", names) + ": if the events pipeline was updated as "

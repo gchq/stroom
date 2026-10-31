@@ -76,8 +76,8 @@ import java.util.TreeMap;
 /// `folder_contents` - what is in an Explorer folder, as the folder's own tabs show it: the documents in it (and
 /// optionally the folders below it), the streams of its feeds and pipelines (the Data tab), the processor filters
 /// of its pipelines and analytic rules (the Processors tab), and their tasks (the Active Tasks tab). Given a name,
-/// it finds documents by name and type in the folder and below instead, as the Stroom MCP server's
-/// `find_documents` did, through the Explorer's quick filter (`ExplorerService.find`).
+/// it finds documents by name and type in the folder and below instead, through the Explorer's quick filter
+/// (`ExplorerService.find`).
 ///
 /// Read as the user. A folder the user can't view is refused without saying whether it exists, and only the
 /// documents in it they can view are listed, without looking inside folders they can't view. Streams are found
@@ -293,11 +293,11 @@ class FolderContentsTool extends AbstractBuiltInTool {
         return ToolResult.text(sb.toString().stripTrailing());
     }
 
-    /// Finds documents by name (and types) in the folder and below, as the Stroom MCP server's `find_documents`
-    /// does, through the Explorer's quick filter, which only finds what the user can view. Each is checked for View
-    /// again, and those in folders an AGENTS doc says to ignore are left out unless asked for.
+    /// Finds documents by name (and types) in the folder and below, through the Explorer's quick filter, which only
+    /// finds what the user can view. Each is checked for View again, and those in folders an AGENTS doc says to
+    /// ignore are left out unless asked for.
     ///
-    /// @return The MCP server's JSON: `total`, `returned`, `documents` (each `type`, `uuid`, `name`, `path`), and a
+    /// @return JSON: `total`, `returned`, `documents` (each `type`, `uuid`, `name`, `path`), and a
     /// `hint` when more match than are returned.
     private ToolResult findDocuments(final ToolCall request,
                                      final ToolCallContext context,

@@ -24,8 +24,7 @@ import java.util.Map;
 
 /// One Event value a CEF plan sends: where it is in the Event, the CEF key it goes to, a custom slot's label, and
 /// how it is converted. The key is kept by its short name (`deviceCustomString6` is `cs6`), and a time key given as
-/// text is sent as milliseconds since 1970, as the Python model's validator has it. Ported from the Stroom MCP
-/// server's `CefField` model in `utils/cef.py`.
+/// text is sent as milliseconds since 1970.
 ///
 /// @param path      XPath from the Event, e.g. `EventDetail/Authorise/User/Name`; `*` for any one step.
 /// @param key       CEF key (short or full name: `cs6` or `deviceCustomString6`).
@@ -68,7 +67,7 @@ public record CefField(String path,
     }
 
     /// @param json A field as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated (lax types, defaults and its own checks).
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     public static CefField fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
@@ -95,7 +94,7 @@ public record CefField(String path,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, keys in field order: the form a plan is kept in.
     public Map<String, Object> toJson(final DumpMode mode) {
         final Map<String, Object> out = new LinkedHashMap<>();
         CefValue.put(out, mode, "path", path, null);

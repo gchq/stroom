@@ -18,8 +18,8 @@ package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.CloseMatches;
 
 import java.util.ArrayList;
@@ -39,8 +39,7 @@ import java.util.regex.Pattern;
 /// Elasticsearch's built-in `ecs@mappings` component template maps otherwise than ECS says (`ecs_component.json`,
 /// measured against a real Elasticsearch). An index plan that follows ECS is checked against it, field by field; a
 /// Data element whose name is an ECS field's (source_ip as source.ip) is drafted under that name; and an ECS plan's
-/// index template leaves to `ecs@mappings` the fields it maps as ECS says. Ported from the Stroom MCP server's
-/// `utils/ecs.py`.
+/// index template leaves to `ecs@mappings` the fields it maps as ECS says.
 ///
 /// The files are bundled with the agent knowledge ([AgentKnowledge#conventionsFile(String)]): read one with
 /// [#from(AgentKnowledge)], or [#parse(String, String)] given their text.
@@ -90,8 +89,8 @@ public final class EcsSchema {
     /// @return The schema they hold.
     @SuppressWarnings("unchecked")
     public static EcsSchema parse(final String fieldsJson, final String componentJson) {
-        final Map<String, Object> schema = (Map<String, Object>) PyJson.loads(fieldsJson);
-        final Map<String, Object> component = (Map<String, Object>) PyJson.loads(componentJson);
+        final Map<String, Object> schema = (Map<String, Object>) ToolJson.loads(fieldsJson);
+        final Map<String, Object> component = (Map<String, Object>) ToolJson.loads(componentJson);
         final Map<String, Map<String, Object>> fields = new LinkedHashMap<>();
         ((Map<String, Object>) schema.get("fields")).forEach((name, spec) ->
                 fields.put(name, (Map<String, Object>) spec));
@@ -197,7 +196,7 @@ public final class EcsSchema {
     /// @param limit  The most to give.
     /// @return The ECS fields under it, each with its type and short description.
     public Map<String, String> fieldsIn(final String prefix, final int limit) {
-        final String at = PyText.rstrip(PyText.strip(prefix), ".");
+        final String at = ToolText.rstrip(ToolText.strip(prefix), ".");
         final Map<String, String> found = new LinkedHashMap<>();
         for (final Map.Entry<String, Map<String, Object>> entry : fields.entrySet()) {
             final String name = entry.getKey();
@@ -307,7 +306,7 @@ public final class EcsSchema {
                 ? ", ..."
                 : "")
                 + "): " + head + " is neither an ECS " + version + " field set nor a custom namespace the plan "
-                + "declares (" + PyText.list(namespaces) + "). ECS puts a source's own fields under one namespace "
+                + "declares (" + ToolText.list(namespaces) + "). ECS puts a source's own fields under one namespace "
                 + "named after it: move them there"
                 + (namespaces.isEmpty()
                 ? ""
@@ -330,8 +329,8 @@ public final class EcsSchema {
         if (words.isEmpty()) {
             return null;
         }
-        final String snake = String.join("_", words.stream().map(PyText::lower).toList());
-        final List<String> candidates = new ArrayList<>(List.of(PyText.lower(dataName), snake));
+        final String snake = String.join("_", words.stream().map(ToolText::lower).toList());
+        final List<String> candidates = new ArrayList<>(List.of(ToolText.lower(dataName), snake));
         final int separators = (int) snake.chars().filter(c -> c == '_').count();
         for (int n = 1; n <= separators; n++) {
             candidates.add(replaceFirst(snake, n));

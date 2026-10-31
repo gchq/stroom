@@ -44,8 +44,8 @@ import javax.xml.transform.sax.SAXSource;
 /// Compiles an XSLT as Stroom compiles it before running it (as its XSLT pool does for an XSLT filter): with a
 /// Saxon processor of its own, Stroom's XSLT function library (stroom:lookup(), stroom:format-date() and the
 /// rest) registered, and xsl:import and xsl:include resolved by name against Stroom's XSLT documents. So an XSLT is
-/// checked with the real functions and the real imports, where the Stroom MCP server compiled it with stubs for
-/// them. Seen: an XSLT saved with "Variable kv has not been declared", which only stepping found.
+/// checked with the real functions and the real imports, not stand-ins for them. Seen: an XSLT saved with
+/// "Variable kv has not been declared", which only stepping found.
 ///
 /// As the imports are read, nothing is stood in for: an import that can't be read (one that doesn't exist, say)
 /// is the error, as it would be when the pipeline runs.

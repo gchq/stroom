@@ -219,7 +219,7 @@ public class ToolCallGuard {
         if (!(value instanceof final String text) || NullSafe.isEmptyCollection(choices) || choices.contains(text)) {
             return null;
         }
-        final String bare = PyText.strip(text, STRAY);
+        final String bare = ToolText.strip(text, STRAY);
         return choices.stream()
                 .filter(bare::equals)
                 .findFirst()

@@ -39,8 +39,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 /// The builds' tools' world (write_documentation, promote_build): the translation tools' world
 /// ([TranslationWorld]: the in-memory explorer, a build plan whose facts the test sets, the event-logging schema),
-/// with the Field mapping section, the pipelines' shapes and their kept mappings as the test gives them (as the
-/// Stroom MCP server's tests patched `field_mapping_section`, `_shape_stage` and `kept_mapping`).
+/// with the Field mapping section, the pipelines' shapes and their kept mappings as the test gives them.
 final class DocumentationWorld {
 
     final TranslationWorld translation = new TranslationWorld();
@@ -99,16 +98,16 @@ final class DocumentationWorld {
 
     /// @return The tool's result, as JSON, failing the test if it refused.
     Map<String, Object> call(final StroomTool tool, final ToolCallContext context, final String arguments) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(tool.definition().name(), arguments), context);
+        final ToolResult result = tool.execute(BuildToolCalls.call(tool.definition().name(), arguments), context);
         if (result.isError()) {
             throw new AssertionError(result.text());
         }
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     /// @return The refusal the tool gave, failing the test if it didn't refuse.
     String refusal(final StroomTool tool, final ToolCallContext context, final String arguments) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(tool.definition().name(), arguments), context);
+        final ToolResult result = tool.execute(BuildToolCalls.call(tool.definition().name(), arguments), context);
         if (!result.isError()) {
             throw new AssertionError("Not refused: " + result.text());
         }

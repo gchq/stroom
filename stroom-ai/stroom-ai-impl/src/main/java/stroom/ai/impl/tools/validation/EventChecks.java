@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.SchemaErrors.SchemaError;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 
@@ -35,8 +35,7 @@ import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /// Checks of event XML: against the event-logging XSD this Stroom holds, and against the quality rules beyond the
-/// schema. Ported from the Stroom MCP server's `tools/validation.py` (`validate_events`, `check_event_quality` and
-/// `_event_findings`), keeping the shape of their results, which `check_events` gives.
+/// schema. Their results are in the shape `check_events` gives.
 public class EventChecks {
 
     private static final Pattern ISO_TIME = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$");
@@ -150,7 +149,7 @@ public class EventChecks {
         if (!unknown.isEmpty()) {
             // Advice, not a failure: Unknown is right for records no action element describes.
             result.put("notes", List.of(unknown.size() + " of " + events.size() + " events (e.g. "
-                                        + PyText.repr(unknown.subList(0, Math.min(3, unknown.size())))
+                                        + ToolText.repr(unknown.subList(0, Math.min(3, unknown.size())))
                                         + ") have EventDetail/Unknown: what happened is not known. If those records "
                                         + "are an activity another action element describes (Alert, Authenticate, "
                                         + "Network, Process, Create, Update, Delete, View, ...), use it."));
@@ -164,7 +163,7 @@ public class EventChecks {
         final List<Finding> found = new ArrayList<>();
         final String created = XmlTrees.text(find(event, "EventTime", "TimeCreated"));
         if (!ISO_TIME.matcher(created).matches()) {
-            found.add(new Finding("time_created", "EventTime/TimeCreated is " + PyText.repr(created)
+            found.add(new Finding("time_created", "EventTime/TimeCreated is " + ToolText.repr(created)
                                                   + ", not yyyy-MM-ddTHH:mm:ss.SSSZ"));
         }
         final Map<String, String[]> required = new LinkedHashMap<>();
@@ -191,7 +190,7 @@ public class EventChecks {
             found.add(new Finding("action", "EventDetail should hold exactly one action element, found "
                                             + (actions.isEmpty()
                     ? "none"
-                    : PyText.list(actions))));
+                    : ToolText.list(actions))));
         }
         for (final Element node : XmlTrees.descendantsAndSelf(event)) {
             if (XmlTrees.isLeaf(node) && XmlTrees.text(node).isEmpty() && XmlTrees.attributes(node).isEmpty()) {

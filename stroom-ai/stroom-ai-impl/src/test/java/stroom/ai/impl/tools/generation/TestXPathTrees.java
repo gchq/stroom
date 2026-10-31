@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -34,12 +34,11 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// XPath parsed for reading an XSLT back (the Stroom MCP server's `tests/test_xpathtree.py`): asked for by the user
-/// in place of splitting expressions with regular expressions. Parsing only: Stroom evaluates the XSLT. And the
-/// parser against elementpath, the server's: `xpath_cases.json` holds every expression the server's tests parsed (and
-/// more forms a hand edit may write) with the tree elementpath gives, or that it refuses it; and, per golden XSLT of
-/// the generator, a digest of the trees of every select and test in it and of every part of them. Made by running
-/// the server's code (`make_xpath.py`).
+/// XPath parsed for reading an XSLT back: asked for by the user in place of splitting expressions with regular
+/// expressions. Parsing only: Stroom evaluates the XSLT. And the parser against its fixed results: `xpath_cases.json`
+/// holds every expression the tests parse (and more forms a hand edit may write) with the tree it must give, or that
+/// it is refused; and, per golden XSLT of the generator, a digest of the trees of every select and test in it and of
+/// every part of them.
 class TestXPathTrees {
 
     private static final Map<String, String> NS = Map.of("stroom", "stroom", "mcp", "urn:mcp", "local",
@@ -59,8 +58,8 @@ class TestXPathTrees {
                 if (c.containsKey("error")) {
                     assertThatThrownBy(() -> parser.parse(text)).isInstanceOf(XPathParseException.class);
                 } else {
-                    assertThat(PyJson.dumps(ReadingFixtures.tree(parser.parse(text))))
-                            .isEqualTo(PyJson.dumps(c.get("tree")));
+                    assertThat(ToolJson.dumps(ReadingFixtures.tree(parser.parse(text))))
+                            .isEqualTo(ToolJson.dumps(c.get("tree")));
                 }
             });
         });

@@ -20,14 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// [XmlNode] trees written as lxml's `etree.tostring` writes them (libxml2's serialiser), so the XSLT the ported
-/// generator writes is the Stroom MCP server's, to the byte: attribute values escape `<`, `>`, `&`, `"`, tab, new
-/// line and carriage return; text escapes `<`, `>`, `&` and carriage return; an element with nothing in it is
-/// `<x/>`; and pretty-printed, each element and comment is on a line of its own, indented two spaces a level, except
-/// inside an element holding text, which is written as it is.
+/// [XmlNode] trees written as text, stable to the byte (the golden XSLTs pin it): attribute values escape `<`, `>`,
+/// `&`, `"`, tab, new line and carriage return; text escapes `<`, `>`, `&` and carriage return; an element with nothing
+/// in it is `<x/>`; and pretty-printed, each element and comment is on a line of its own, indented two spaces a level,
+/// except inside an element holding text, which is written as it is.
 public final class XmlSerialiser {
 
-    /// The XML declaration lxml writes with `xml_declaration=True, encoding='UTF-8'`.
+    /// The XML declaration written before a document.
     public static final String DECLARATION = "<?xml version='1.0' encoding='UTF-8'?>\n";
 
     private static final int INDENT_SIZE = 2;
@@ -141,8 +140,8 @@ public final class XmlSerialiser {
     }
 
     // The element's own declarations; at the top of what is written, also those of its ancestors it is in the
-    // scope of (lxml copies them, so the text written stands on its own): as libxml2 copies the element, the
-    // namespace of its name and then its attributes' first, then each ancestor's declarations, nearest first.
+    // scope of (copied, so the text written stands on its own): the namespace of its name and then its attributes'
+    // first, then each ancestor's declarations, nearest first.
     private static List<XmlNamespace> declarationsWritten(final XmlElement element, final boolean top) {
         final List<XmlNamespace> out = new ArrayList<>(element.declarations());
         if (!top) {

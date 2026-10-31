@@ -16,11 +16,11 @@
 
 package stroom.ai.impl.tools.generation;
 
-/// A node of the small XML tree the translation generator builds its XSLT in, modelled on lxml's: elements,
-/// comments and processing instructions are an element's children, and text is held as an element's `text` (before
-/// its first child) and each child's `tail` (after it). The Stroom MCP server built its XSLT with lxml; the generated
-/// text must be the same to the byte, so the tree keeps what lxml's serialisation depends on (namespace declarations
-/// and where they are, attribute order, text and tails). See [XmlSerialiser] and [XmlParser].
+/// A node of the small XML tree the translation generator builds its XSLT in: elements, comments and processing
+/// instructions are an element's children, and text is held as an element's `text` (before its first child) and
+/// each child's `tail` (after it). The generated text is stable to the byte (the golden XSLTs pin it), so the tree
+/// keeps what the serialisation depends on (namespace declarations and where they are, attribute order, text and
+/// tails). See [XmlSerialiser] and [XmlParser].
 public abstract sealed class XmlNode permits XmlElement, XmlComment, XmlInstruction {
 
     private XmlElement parent;
@@ -41,7 +41,7 @@ public abstract sealed class XmlNode permits XmlElement, XmlComment, XmlInstruct
         this.parent = parent;
     }
 
-    /// @return The text after this node, before its next sibling (lxml's `tail`), or null.
+    /// @return The text after this node, before its next sibling (its `tail`), or null.
     public String tail() {
         return tail;
     }

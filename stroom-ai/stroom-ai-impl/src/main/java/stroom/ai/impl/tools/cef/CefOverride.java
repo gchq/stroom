@@ -22,8 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// A mapping the user (or a standing instruction) gives: where an Event value goes, or that it is not sent. Ported
-/// from the Stroom MCP server's `Override` model in `utils/cef.py`.
+/// A mapping the user (or a standing instruction) gives: where an Event value goes, or that it is not sent.
 ///
 /// @param path      The Event path (`*` for any one step).
 /// @param key       The CEF key it goes to, or null.
@@ -53,7 +52,7 @@ public record CefOverride(String path,
     }
 
     /// @param json An override as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated (lax types, defaults and its own checks).
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     public static CefOverride fromJson(final Map<String, Object> json) {
         final CefJsonReader reader = new CefJsonReader();
@@ -68,7 +67,7 @@ public record CefOverride(String path,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, keys in field order: the form a plan is kept in.
     public Map<String, Object> toJson(final DumpMode mode) {
         final Map<String, Object> out = new LinkedHashMap<>();
         CefValue.put(out, mode, "path", path, null);

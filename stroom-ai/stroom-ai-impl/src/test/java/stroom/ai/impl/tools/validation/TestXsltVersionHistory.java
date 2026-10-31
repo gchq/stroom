@@ -30,8 +30,7 @@ import java.util.regex.Pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// The version history of an XSLT: a table in its description, one row a build, written when the build is
-/// promoted and previewed as Unreleased until then; edits made by hand found and recorded as such. Ported from the
-/// Stroom MCP server's `tests/test_version_history.py` (the XSLT history cases).
+/// promoted and previewed as Unreleased until then; edits made by hand found and recorded as such.
 class TestXsltVersionHistory {
 
     private static final String CODE = "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<xsl:stylesheet version=\"3.0\">"
@@ -141,7 +140,7 @@ class TestXsltVersionHistory {
         assertThat(XsltVersionHistory.asGenerated(generated, CODE)).contains(true);
         assertThat(XsltVersionHistory.asGenerated(generated, CHANGED)).contains(false);
         assertThat(XsltVersionHistory.asGenerated("", CODE)).isEmpty();
-        // A generated save's entry is as the Python server writes it.
+        // A generated save's entry carries no hand flag: the established form of an entry.
         assertThat(generated).doesNotContain("\"hand\"");
         assertThat(hand).contains("\"hand\":true");
     }

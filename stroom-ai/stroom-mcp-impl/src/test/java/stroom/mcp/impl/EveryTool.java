@@ -18,7 +18,7 @@ package stroom.mcp.impl;
 
 import stroom.ai.impl.tools.BuiltInToolsModule;
 import stroom.ai.impl.tools.StroomTool;
-import stroom.mcp.impl.tools.PortedToolsModule;
+import stroom.mcp.impl.tools.BuildToolsModule;
 
 import com.google.inject.Binding;
 import com.google.inject.Module;
@@ -42,10 +42,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/// Every tool Stroom offers, built-in ([BuiltInToolsModule]) and ported from the Stroom MCP server
-/// ([PortedToolsModule]), each made with its injected constructor and only asked for its definition. What a tool
-/// needs from this module or `stroom-ai-impl` is made the same way; anything else (Stroom's services, interfaces)
-/// is a Mockito mock that is never used, and a provider, optional or collection is given empty or lazily.
+/// Every tool Stroom offers, bound in [BuiltInToolsModule] and [BuildToolsModule], each made with its injected
+/// constructor and only asked for its definition. What a tool needs from this module or `stroom-ai-impl` is made the
+/// same way; anything else (Stroom's services, interfaces) is a Mockito mock that is never used, and a provider,
+/// optional or collection is given empty or lazily.
 final class EveryTool {
 
     // The packages whose classes are made rather than mocked.
@@ -57,7 +57,7 @@ final class EveryTool {
     /// @return Every tool bound by the two modules.
     List<StroomTool> tools() {
         final List<StroomTool> tools = new ArrayList<>();
-        for (final Class<?> toolClass : toolClasses(new BuiltInToolsModule(), new PortedToolsModule())) {
+        for (final Class<?> toolClass : toolClasses(new BuiltInToolsModule(), new BuildToolsModule())) {
             tools.add((StroomTool) make(toolClass));
         }
         return tools;

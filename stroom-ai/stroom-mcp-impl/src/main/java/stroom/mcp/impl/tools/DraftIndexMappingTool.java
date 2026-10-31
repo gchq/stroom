@@ -22,7 +22,6 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolArgs;
@@ -34,6 +33,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.MappingChanges;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
@@ -47,8 +47,8 @@ import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.indexing.TemplateMappings;
 import stroom.ai.impl.tools.sample.Placeholders;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -75,11 +75,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-/// `draft_index_mapping` - drafts the index for a build (the Stroom MCP server's `tools/indexing.py`
-/// `draft_index_mapping`, with `_discovery_time`, `_records_rows`, `_draft_discovery`, `_amend_plan` and
-/// `_replaced`): a field plan from the chosen convention, limited to the paths the sample Events populate, named
-/// after the user's example index template where there is one, or a discovery index. Nothing is saved but the
-/// example the user gave, kept in the build so the index template follows it.
+/// `draft_index_mapping` - drafts the index for a build: a field plan from the chosen convention, limited to the paths
+/// the sample Events populate, named after the user's example index template where there is one, or a discovery index.
+/// Nothing is saved but the example the user gave, kept in the build so the index template follows it.
 class DraftIndexMappingTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DraftIndexMappingTool.class);
@@ -158,8 +156,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
 
     @Override
     public boolean isReadOnly() {
-        // It keeps the user's example index template in the build (a Documentation doc), as the Stroom MCP server's
-        // did; nothing else is saved.
+        // It keeps the user's example index template in the build (a Documentation doc); nothing else is saved.
         return false;
     }
 
@@ -452,7 +449,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             draft.likeNote = "followed Elastic Index doc '" + read.doc() + "': its index template " + read.name()
                              + (parts.isEmpty()
                     ? ""
-                    : " and component templates " + PyText.list(readParts)) + ", read through Stroom";
+                    : " and component templates " + ToolText.list(readParts)) + ", read through Stroom";
             draft.readDoc = read.doc();
         } else {
             final IndexExamples.FromFields read = examples.exampleFromIndex(draft.likeIndex);
@@ -623,11 +620,10 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         return result;
     }
 
-    /// Values the Events hold for none in the planned fields (`-`, `N/A`, ...; [Placeholders]), put to the user in
-    /// one form: each indexed as missing (left out), as null, or as written. Not in the Stroom MCP server; asked for
-    /// by the user (seen: W3C logs' `-` for a missing address kept in the Events, and refused by an Elasticsearch ip
-    /// field). Elasticsearch only: a Lucene field takes any text. The answers are kept for the session; without
-    /// forms the agent is told to ask.
+    /// Values the Events hold for none in the planned fields (`-`, `N/A`, ...; [Placeholders]), put to the user in one
+    /// form: each indexed as missing (left out), as null, or as written. Asked for by the user (seen: W3C logs' `-` for
+    /// a missing address kept in the Events, and refused by an Elasticsearch ip field). Elasticsearch only: a Lucene
+    /// field takes any text. The answers are kept for the session; without forms the agent is told to ask.
     ///
     /// @return The plan with what the user chose.
     @SuppressWarnings("unchecked")
@@ -694,7 +690,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         }
         final List<String> clash = namespaces.stream().filter(n -> ecs.topLevel().contains(n)).toList();
         if (!clash.isEmpty()) {
-            throw new ToolRefusal("custom_namespaces " + PyText.list(clash) + ": ECS's own top-level names, so "
+            throw new ToolRefusal("custom_namespaces " + ToolText.list(clash) + ": ECS's own top-level names, so "
                                   + "not a namespace of the source's: name it after the source or organisation (e.g. "
                                   + ecs.sourceNamespace(indexName) + ")");
         }
@@ -785,7 +781,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         if (wanted != null) {
             if (draft.followed != null && !draft.followed.unread().isEmpty()) {
                 wanted.put("hint", "Stroom read the index template of '" + draft.followed.doc() + "' but not the "
-                                   + "component templates " + PyText.list(new TreeSet<>(
+                                   + "component templates " + ToolText.list(new TreeSet<>(
                         draft.followed.unread().keySet())) + " (Elasticsearch: "
                                    + draft.followed.unread().values().iterator().next() + "). " + wanted.get("hint"));
             }
@@ -849,7 +845,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                                     : "keyword", "shared:" + use.template()));
                 }
             });
-            exampleNotes.add(PyText.list(new TreeSet<>(values.keySet())) + ": written by the shared template "
+            exampleNotes.add(ToolText.list(new TreeSet<>(values.keySet())) + ": written by the shared template "
                              + use.template() + " (" + use.href() + ")" + (found.isPresent()
                     ? ""
                     : "; not found as an XSLT document, so typed as a keyword"));
@@ -873,7 +869,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                     : draft.componentTemplates.stream()
                             .map(c -> c instanceof final String text
                                     ? text
-                                    : PyJson.dumps(c))
+                                    : ToolJson.dumps(c))
                             .toList();
             final String how;
             if (pasted != null) {
@@ -1002,10 +998,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
     }
 
     /// Values the raw records write for none (`-`, `N/A`, ...; [Placeholders]), put to the user in one form: each
-    /// indexed as missing (left out), null, an empty string, or as written. Not in the Stroom MCP server; asked for
-    /// by the user (seen: W3C logs' `-` for a missing address, refused by an Elasticsearch ip field). The answers
-    /// are kept for the session, so the user isn't asked again; without forms the agent is told to ask. Only JSON
-    /// and records:2 records are read for them.
+    /// indexed as missing (left out), null, an empty string, or as written. Asked for by the user (seen: W3C logs' `-`
+    /// for a missing address, refused by an Elasticsearch ip field). The answers are kept for the session, so the user
+    /// isn't asked again; without forms the agent is told to ask. Only JSON and records:2 records are read for them.
     ///
     /// @return The discovery with what the user chose.
     private Discovery discoveryStandIns(final ToolCall call,
@@ -1051,13 +1046,13 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final String stripped = text.strip();
         try {
             if (stripped.startsWith("[")) {
-                if (PyJson.loads(stripped) instanceof final List<?> items) {
+                if (ToolJson.loads(stripped) instanceof final List<?> items) {
                     records.addAll(items);
                 }
             } else {
                 for (final String line : stripped.split("\n")) {
                     if (line.strip().startsWith("{")) {
-                        records.add(PyJson.loads(line.strip()));
+                        records.add(ToolJson.loads(line.strip()));
                     }
                 }
             }
@@ -1104,7 +1099,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                         }
                     }
                     if (!row.isEmpty()) {
-                        rows.add(PyJson.dumps(row));
+                        rows.add(ToolJson.dumps(row));
                     }
                 }
             });
@@ -1167,7 +1162,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                     : " (give pipeline_uuid= the indexing pipeline whose saved XSLT keeps one)")
                                   + ". Drafted in this session: " + (names.isEmpty()
                     ? "none"
-                    : PyText.list(names)) + ". Else draft it whole.");
+                    : ToolText.list(names)) + ". Else draft it whole.");
         }
         final MappingChanges.Applied applied;
         applied = MappingChanges.applyPlanChanges(base.toJson(), changes);
@@ -1190,9 +1185,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         return result;
     }
 
-    /// What the index being replaced wrote that the draft doesn't. Seen in VS Code: asked to make an indexing
-    /// pipeline write ECS, the agent compared its draft with the old XSLT by reading describe_document's output
-    /// from a file its client spilled it to, and its model fell into a loop.
+    /// What the index being replaced wrote that the draft doesn't. Seen in VS Code: asked to make an indexing pipeline
+    /// write ECS, the agent compared its draft with the old XSLT by reading it from a file its client spilled it to,
+    /// and its model fell into a loop.
     ///
     /// @param replaces  The old indexing XSLT's uuid, or its pipeline's.
     /// @param plan      The draft.

@@ -20,8 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// A field plan's Elasticsearch index template ([FieldPlan#elasticTemplate]), as the Stroom MCP server's
-/// `FieldPlan.elastic_template` builds it.
+/// A field plan's Elasticsearch index template ([FieldPlan#elasticTemplate]).
 final class PlanTemplates {
 
     private PlanTemplates() {

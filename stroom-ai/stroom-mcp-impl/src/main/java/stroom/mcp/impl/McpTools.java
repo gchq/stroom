@@ -207,7 +207,7 @@ class McpTools {
             final CallToolResult.Builder builder = CallToolResult.builder()
                     .content(List.of(new TextContent(text)))
                     .isError(error);
-            // A tool's structured form (e.g. the Stroom MCP server's JSON shape of a result), beside its text.
+            // A tool's structured form (e.g. a build tool's result as JSON), beside its text.
             if (!result.structuredContent().isEmpty()) {
                 builder.structuredContent(result.structuredContent());
             }
