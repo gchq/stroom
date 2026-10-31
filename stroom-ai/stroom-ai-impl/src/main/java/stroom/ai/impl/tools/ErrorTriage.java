@@ -63,6 +63,12 @@ public final class ErrorTriage {
     // naming the document by its EventId: the record of the stream it was indexed from.
     private static final Pattern REJECTED_EVENT = Pattern.compile("^Elasticsearch rejected the document with "
                                                                   + "EventId (\\d+) \\(");
+    // Stroom's messages for one rejected document, by its EventId or its place in the stream.
+    private static final Pattern REJECTED_DOCUMENT = Pattern.compile("^Elasticsearch rejected (?:the document with "
+                                                                     + "EventId|document) \\d+ ");
+    // Stroom's message for a batch that rejected more documents than it lists one by one.
+    private static final Pattern UNLISTED = Pattern.compile("^Elasticsearch rejected (\\d+) documents in this "
+                                                            + "batch; only the first (\\d+) ");
     private static final int DEFAULT_EXAMPLES = 3;
 
     private final List<Rule> rules;
@@ -225,14 +231,22 @@ public final class ErrorTriage {
     /// @param recordCount How many records were stepped or processed, or null if not known.
     /// @param examples    The most different examples kept per group.
     /// @param accepted    The errors the user accepted as benign for the pipeline.
-    /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`.
+    /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`. A group of rejected
+    /// documents says, in `listed_only`, when its count leaves out documents Stroom rejected without listing them.
     public Map<String, Object> triage(final List<Marker> markers,
                                       final Set<String> ownElements,
                                       final Integer recordCount,
                                       final int examples,
                                       final List<AcceptedErrors.Entry> accepted) {
         final Map<List<String>, Group> groups = new LinkedHashMap<>();
+        long unlisted = 0;
+        String listedPerBatch = null;
         for (final Marker original : markers) {
+            final Matcher batch = UNLISTED.matcher(original.message());
+            if (batch.find()) {
+                unlisted += Long.parseLong(batch.group(1)) - Long.parseLong(batch.group(2));
+                listedPerBatch = batch.group(2);
+            }
             for (final Marker marker : splitBulk(original)) {
                 final List<String> key = List.of(marker.severity(), marker.element(), normalise(marker.message()));
                 final Group group = groups.computeIfAbsent(key, k -> new Group(marker.severity(), marker.element(),
@@ -276,6 +290,11 @@ public final class ErrorTriage {
             entry.put("own_element", group.own);
             entry.put("count", group.count);
             entry.put("records_affected", affected);
+            if (unlisted > 0 && REJECTED_DOCUMENT.matcher(firstMessage).find()) {
+                entry.put("listed_only", "Counts only the documents Stroom listed: it lists the first "
+                                         + listedPerBatch + " a batch rejects, and " + unlisted
+                                         + " more were rejected without being listed");
+            }
             entry.put("examples", group.examples);
             if (known != null) {
                 entry.put("accepted", true);

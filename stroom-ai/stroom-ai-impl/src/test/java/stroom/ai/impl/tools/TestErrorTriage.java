@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -298,6 +299,42 @@ class TestErrorTriage {
             assertThat((String) group.get("reason")).startsWith("More of the batch's documents were rejected than "
                                                                 + "are listed one by one");
         });
+    }
+
+    @Test
+    void theDocumentsStroomListedSayTheirCountLeavesOutTheRestOfTheBatch() {
+        // Stroom lists only the first 100 documents a batch rejects: the group of those listed says how many more
+        // there were, so its count isn't taken for all of them.
+        final String reason = " (document_parsing_exception): [1:117] object mapping for [user] tried to parse "
+                              + "field [user] as object, but found a concrete value";
+        final List<Marker> markers = new ArrayList<>();
+        for (int eventId = 2; eventId < 102; eventId++) {
+            markers.add(ErrorTriage.marker("ERROR", "elasticIndexingFilter",
+                    "Elasticsearch rejected the document with EventId " + eventId + reason, null));
+        }
+        markers.add(ErrorTriage.marker("ERROR", "elasticIndexingFilter", "Elasticsearch rejected 150 documents in "
+                                                                         + "this batch; only the first 100 are "
+                                                                         + "reported individually", null));
+
+        final List<Map<String, Object>> groups = groups(RULES.triage(markers, Set.of("elasticIndexingFilter")));
+
+        final Map<String, Object> listed = byMessage(groups,
+                "Elasticsearch rejected the document with EventId 2" + reason);
+        assertThat(listed.get("records_affected")).isEqualTo(100);
+        assertThat((String) listed.get("listed_only")).isEqualTo(
+                "Counts only the documents Stroom listed: it lists the first 100 a batch rejects, and 50 more were "
+                + "rejected without being listed");
+        assertThat(byMessage(groups, "Elasticsearch rejected 150 documents in this batch; only the first 100 are "
+                                     + "reported individually")).doesNotContainKey("listed_only");
+    }
+
+    @Test
+    void documentsStroomListedInFullSayNothingOfOthers() {
+        final List<Map<String, Object>> groups = groups(RULES.triage(List.of(ErrorTriage.marker("ERROR",
+                "elasticIndexingFilter", "Elasticsearch rejected the document with EventId 5 (document_parsing_"
+                                         + "exception): failed to parse", null)), Set.of("elasticIndexingFilter")));
+
+        assertThat(groups).singleElement().satisfies(group -> assertThat(group).doesNotContainKey("listed_only"));
     }
 
     @Test

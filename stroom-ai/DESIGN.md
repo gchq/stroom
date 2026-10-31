@@ -1538,7 +1538,9 @@ its time field, and each field's name, type and source in the Event.
 * Since #5958 Stroom logs each document Elasticsearch rejects itself, naming it by its EventId, then a fatal summary
   of the batch: triage gives such an entry its event's record, and the summary its own reason (the causes are in the
   entries above it). So an indexing pipeline keeps its template's batch size while it is developed (the tools used to
-  set 10, so that a rejected document came back whole).
+  set 10, so that a rejected document came back whole). Stroom lists only the first 100 documents a batch rejects,
+  then says how many there were: the group of listed documents says, in `listed_only`, how many more were rejected
+  without being listed, so its count isn't taken for all of them (`evaluate_pipeline` keeps it).
 * Older Stroom reported a bulk request with failures as one message, cut to 4,096 characters; triage splits it into
   one entry per rejected document (`ErrorTriage.splitBulk`), with what to do, as Error streams from it remain.
 * Indexing again doesn't remove documents already in the index. So an index the pipeline wrote to before starts fresh:
