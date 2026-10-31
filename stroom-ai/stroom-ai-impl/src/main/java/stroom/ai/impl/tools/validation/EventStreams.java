@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /// The Events of processed streams as one `<Events>` document, read by the tool itself, for `check_events` to
-/// check: seen, an agent reading 50 events back 23 at a time, 47 s a read, to check them. Ported from the Stroom
-/// MCP server's `_stream_events`.
+/// check: seen, an agent reading 50 events back 23 at a time, 47 s a read, to check them.
 public class EventStreams {
 
     private final StreamReader streamReader;
@@ -44,7 +43,7 @@ public class EventStreams {
     }
 
     /// @param streamIds Events streams.
-    /// @param cap       The most records read in all (the Stroom MCP server's `max_sample_records`).
+    /// @param cap       The most records read in all.
     /// @return Their events as one document, and how many records of each were read.
     /// @throws ToolRefusal             if a stream can't be read or is not Events, or there are none.
     /// @throws StreamReader.StreamReadException if the user may not read a stream.

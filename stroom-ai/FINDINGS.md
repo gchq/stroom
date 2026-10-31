@@ -27,7 +27,7 @@ The classes named are in `stroom-ai/stroom-ai-impl` (`stroom.ai.impl...`) or `st
 | Stroom matches feed names in stream data whatever their case: a stream's headers can spell a feed differently from its meta. Stroom keeps one feed per name, whatever its case. | `create_feed` refuses a name differing from an existing feed's only in case; the build's feed is found whatever case the data spells it in. | `BuildFeeds`, `OutputFeeds`, `StreamProcessing` |
 | A one-line JSON array of hundreds of KB, read in part, isn't JSON; a sample's head cut part-way through a record can look like key=value (e.g. `User: x` inside messages). | A JSON array read in part is profiled from its complete first records; a head cut part-way is profiled by its whole lines. | `SampleProfiler` |
 | A CSV header over columns of plain text (`user,name,department`) is missed by a sniffer; one whose other columns are times or numbers is not. | A column whose every value is typed (a time, a number, an address) under a plain name makes the first row a header. | `SampleProfiler` |
-| Very long fields are real (a 250,000-character URL query in a proxy log). | The survey's CSV reader has no field length limit; windows are read to the end of a part cut at its head. | `PyCsv`, `FeedSampling` |
+| Very long fields are real (a 250,000-character URL query in a proxy log). | The survey's CSV reader has no field length limit; windows are read to the end of a part cut at its head. | `DelimitedText`, `FeedSampling` |
 
 
 ## Stepping

@@ -29,10 +29,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What the stepping tools make of what a step wrote (the Stroom MCP server's `tools/stepping.py` helpers
-/// `sends_on`, `_empty_output`, `_writes_unknown`, `_what_unknown_holds`, `_no_reference`, `_no_events`, `_block`
-/// and `_nothing_stepped`): output that holds nothing, Events with no Event, referenceData with no reference, and
-/// EventDetail/Unknown, each as a marker or a blocking group added to a triaged verdict.
+/// What the stepping tools make of what a step wrote: output that holds nothing, Events with no Event, referenceData
+/// with no reference, and EventDetail/Unknown, each as a marker or a blocking group added to a triaged verdict.
 final class SteppingVerdicts {
 
     /// What the marker for output with no elements says first.

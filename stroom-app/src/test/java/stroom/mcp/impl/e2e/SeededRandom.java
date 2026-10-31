@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// Python's `random.Random(seed)` for a small non-negative int seed: the same Mersenne Twister, seeded and drawn
-/// from as CPython draws, so the evaluation set's generated samples ([EvalSamples]) are the bytes the Stroom MCP
-/// server's `dev/eval/generated.py` makes.
-final class PyRandom {
+/// from as CPython draws, so the evaluation set's generated samples ([EvalSamples]) are the same bytes every run and
+/// match the SHA-256 the set pins for each (`generated-sha256.json`).
+final class SeededRandom {
 
     private static final int N = 624;
     private static final int M = 397;
@@ -34,7 +34,7 @@ final class PyRandom {
     private int mti;
 
     /// @param seed The seed, as `random.Random(seed)` takes it (0 to 2^32 - 1).
-    PyRandom(final long seed) {
+    SeededRandom(final long seed) {
         // CPython's random_seed: the seed's 32-bit words, least significant first (one word for these seeds).
         initByArray(new int[]{(int) seed});
     }

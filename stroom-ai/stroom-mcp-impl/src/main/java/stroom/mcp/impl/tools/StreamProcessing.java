@@ -18,8 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.FeedAccess;
 import stroom.ai.impl.tools.ProcessorTaskFinder;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
@@ -53,11 +53,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// What processing a pipeline's filters has done, or will do, with given input streams: the outputs each has, the
-/// tasks that have ended or are still to, and why nothing will process one (no filter selects it, or the filters
-/// that would are disabled). Ported from the helpers of the Stroom MCP server's `tools/processing_writes.py` that
-/// `wait_for_processing` is made of (`_outputs`, `_tasks_ended`, `_selects`, `_will_process`, `_waiting_on`,
-/// `_unselected` and `_iso`), for its write tools (`reprocess_streams`, `create_processor_filter`) to share.
+/// What processing a pipeline's filters has done, or will do, with given input streams: the outputs each has, the tasks
+/// that have ended or are still to, and why nothing will process one (no filter selects it, or the filters that would
+/// are disabled). `wait_for_processing` is made of it, and the write tools (`reprocess_streams`,
+/// `create_processor_filter`) share it.
 ///
 /// Read as the user: streams only of feeds the user may view, and tasks only of those feeds (processing tasks need
 /// the Manage Processors permission, which the caller has checked by listing the pipeline's filters).
@@ -296,7 +295,7 @@ class StreamProcessing {
         return NullSafe.get(filter.getQueryData(), QueryData::getExpression);
     }
 
-    // As Python reads a time limit: zero or none is no limit.
+    // A time limit of zero or none is no limit.
     private static boolean isSet(final Long ms) {
         return ms != null && ms != 0;
     }
@@ -319,10 +318,10 @@ class StreamProcessing {
         String what() {
             final List<String> parts = new ArrayList<>();
             if (!disabled.isEmpty()) {
-                parts.add("filter(s) " + PyText.repr(disabled));
+                parts.add("filter(s) " + ToolText.repr(disabled));
             }
             if (!stopped.isEmpty()) {
-                parts.add("the processor of filter(s) " + PyText.repr(stopped) + " (the pipeline's "
+                parts.add("the processor of filter(s) " + ToolText.repr(stopped) + " (the pipeline's "
                           + "processor row, above its filters)");
             }
             return String.join(" and ", parts);

@@ -29,9 +29,8 @@ import jakarta.inject.Inject;
 
 import java.util.Optional;
 
-/// A build's survey documents (the Stroom MCP server's `tools/sampling.py` `_load_record`, and its writes of the
-/// survey doc): a Documentation doc per surveyed feed, named [SurveyDoc#docName(String)], in the build folder. They
-/// are made through [WriteGuard], and changed only when the tools made them and they are in the build.
+/// A build's survey documents: a Documentation doc per surveyed feed, named [SurveyDoc#docName(String)], in the build
+/// folder. They are made through [WriteGuard], and changed only when the tools made them and they are in the build.
 class SurveyDocuments {
 
     private final WriteGuard guard;

@@ -18,9 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
@@ -64,12 +64,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// The fields Stroom has for an index doc, as the indexing tools check them (the Stroom MCP server's
-/// `tools/indexing.py` `_index_fields`, `_unsearchable`, `fields_not_in_index`, `_fields_written_not_indexed`,
-/// `_columns_not_in_index`, `_unlisted` and `set_index_fields`): which fields no search finds, which fields a
-/// pipeline writes that the index doesn't have, and a Lucene index doc given its plan's fields.
-/// create_indexing_pipeline's port adds a plan's fields with [#addLuceneFields]; write_documentation's checks the
-/// fields its pipelines write with [#notInIndex] and [#missingFieldsSaid].
+/// The fields Stroom has for an index doc, as the indexing tools check them: which fields no search finds, which fields
+/// a pipeline writes that the index doesn't have, and a Lucene index doc given its plan's fields.
+/// create_indexing_pipeline adds a plan's fields with [#addLuceneFields]; write_documentation checks the fields its
+/// pipelines write with [#notInIndex] and [#missingFieldsSaid].
 class IndexFields {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexFields.class);
@@ -352,9 +350,9 @@ class IndexFields {
         final EcsSchema ecs = plans.ecs();
         final List<String> said = new ArrayList<>();
         for (final String name : missing) {
-            final String path = PyText.strip(name.replace('.', '/'), "/");
+            final String path = ToolText.strip(name.replace('.', '/'), "/");
             final String became = planned.stream()
-                    .filter(field -> FieldPlans.sourceMatches(PyText.strip(field.source(), "/"), path))
+                    .filter(field -> FieldPlans.sourceMatches(ToolText.strip(field.source(), "/"), path))
                     .map(PlannedField::name)
                     .findFirst()
                     .orElse(null);

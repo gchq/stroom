@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_field_types.py`, its Lucene half: every field type the index plans support,
-/// single and multi-valued, indexed into Lucene and verified through Stroom, driving the REAL tools on a real Stroom.
+/// Every field type the index plans support, single and multi-valued, indexed into Lucene and verified through Stroom,
+/// driving the REAL tools on a real Stroom.
 ///
 /// Covered: part 1 (a JSON source whose Events hold, per record, a keyword, a text, a long, a double, a boolean, an
 /// ip and a date, repeated Data elements for tags, ports, peer addresses and times, and a secret) and part 2
@@ -51,13 +51,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// check per type, multi-valued ones by one of their values, each hit traced; a check on the secret refused).
 ///
 /// Left out: part 3 (Elasticsearch: the template applied to a live cluster, the stored documents read back from
-/// Elasticsearch, Stroom's search of it), which needs an Elasticsearch server; and the script's fixtures for it
-/// (`e2e_elastic_handover.fixtures`), which only part 3 uses. The secret is set not to be indexed through Stroom's
-/// index field service, as the user would on the index doc's Fields tab (the script did it through the REST API).
+/// Elasticsearch, Stroom's search of it), which needs an Elasticsearch server. The secret is set not to be indexed
+/// through Stroom's index field service, as the user would on the index doc's Fields tab.
 @SuppressWarnings("unchecked")
 class TestE2eFieldTypes extends AbstractE2eTest {
 
-    // The run stamp the scripts put in every name (`run_stamp()`); the test database is fresh for each run.
+    // The run stamp put in every name; the test database is fresh for each run.
     private static final String STAMP = "101";
     /// `RECORDS`, as `json.dumps` writes them.
     private static final String SAMPLE = textResource("e2e_field_types-records.json").strip();
@@ -111,8 +110,8 @@ class TestE2eFieldTypes extends AbstractE2eTest {
         final Map<String, Object> index = agreed("create_index_doc", Map.of("build", src.build(), "backend", "lucene",
                 "name", indexName, "time_field", plan.get("time_field")));
         final DocRef ref = new DocRef(LuceneIndexDoc.TYPE, uuidOf(index), indexName);
-        // Beyond the script, dev/FINDINGS.md's "Lucene field types": a KEYWORD field indexed and stored nothing, so a
-        // keyword is a TEXT field with the KEYWORD analyser, as the content pack's Example Index has it.
+        // FINDINGS (Indexing: Lucene): a KEYWORD field indexed and stored nothing, so a keyword is a TEXT field with
+        // the KEYWORD analyser, as the content pack's Example Index has it.
         assertThat(field(ref, "Tag")).as("a keyword field").satisfies(tag -> {
             assertThat(tag.getFldType()).isEqualTo(FieldType.TEXT);
             assertThat(tag.getAnalyzerType()).isEqualTo(AnalyzerType.KEYWORD);
@@ -240,7 +239,7 @@ class TestE2eFieldTypes extends AbstractE2eTest {
         return found;
     }
 
-    // Python's str.capitalize(), for these lower case names.
+    // The name with its first letter in upper case (these names are all lower case).
     private static String capitalised(final String name) {
         return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }

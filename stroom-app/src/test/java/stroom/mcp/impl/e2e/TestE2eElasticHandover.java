@@ -51,32 +51,29 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_elastic_handover.py` in its default mode: the Elasticsearch template hand-over
-/// on a real Stroom without Elasticsearch, driving the REAL tools. As the script does, a fixture indexing template
-/// (the content pack's `Indexing` with an ElasticIndexingFilter in place of the Lucene one, and a JSON schema filter
-/// before it, as the live one has) and an Elastic Cluster doc pointing nowhere are added; the documents come from
-/// stepping the indexing XSLT, so no Elasticsearch server is needed.
+/// The Elasticsearch template hand-over on a real Stroom without Elasticsearch, driving the REAL tools. A fixture
+/// indexing template (the content pack's `Indexing` with an ElasticIndexingFilter in place of the Lucene one, and a
+/// JSON schema filter before it, as the live one has) and an Elastic Cluster doc pointing nowhere are added; the
+/// documents come from stepping the indexing XSLT, so no Elasticsearch server is needed.
 ///
-/// Covered: part 1 (stage 1 on the CSV sample, `e2e_translation.py`'s `onboard`), part 2 (an ES indexing pipeline
+/// Covered: part 1 (stage 1 on the CSV sample, the translation suite's onboarding), part 2 (an ES indexing pipeline
 /// from the fixture template, the template proposal self-checked against the documents the pipeline writes; with
-/// the script's index field documentation), part 3 (the user's changed template: not compatible, with the pipeline
+/// the index field documentation), part 3 (the user's changed template: not compatible, with the pipeline
 /// changes it needs), part 4 (indexing refused until a template is agreed; the plan waits for it; a standalone
 /// example; the components of the example, the user's and their standing instructions'; the user's example with a
 /// component template, confirmed; their correction, confirmed instead), part 5 (the approval of the sample's filter
-/// says the template must be committed; declined here, as there is no Elasticsearch, so nothing runs), and what the
-/// script does after it: an ECS field added by hand kept through the agent's next change, a field edited by hand
+/// says the template must be committed; declined here, as there is no Elasticsearch, so nothing runs), and after
+/// it: an ECS field added by hand kept through the agent's next change, a field edited by hand
 /// that the change changes too (the user decides), a key renamed by hand, and a draft replacing the index saying what
 /// the old one wrote.
 ///
-/// Left out: `--live` (`live` and `live_structure`), which applies templates to Elasticsearch 9, indexes into it and
-/// searches it; and the script's direct call of the server's internal `indexing._replaced` (no tool), whose case
-/// `draft_index_mapping replaces=` covers. Where the script was told `needs_confirmation` or `needs_approval` (its
-/// consent store had no forms), Stroom's tools ask in a form, which the user here answers as the script's user
-/// does: agreeing, or, for the approval of a filter that would write to an Elasticsearch that isn't there, declining.
+/// Left out: applying templates to Elasticsearch 9, indexing into it and searching it. The draft replacing the index
+/// is covered through `draft_index_mapping replaces=`. Stroom's tools ask in forms, which the user here answers:
+/// agreeing, or, for the approval of a filter that would write to an Elasticsearch that isn't there, declining.
 @SuppressWarnings("unchecked")
 class TestE2eElasticHandover extends AbstractE2eTest {
 
-    // The run stamp the scripts put in every name (`run_stamp()`); the test database is fresh for each run.
+    // The run stamp put in every name; the test database is fresh for each run.
     private static final String STAMP = "101";
     private static final String FIXTURE_TEMPLATE = "E2E Events to Elasticsearch";
     private static final String FIXTURE_CLUSTER = "E2E_LOCAL_ES";
@@ -115,8 +112,8 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         assertThat(esTemplate).as("fixture template reads as an Elasticsearch template")
                 .containsEntry("backend", "elasticsearch");
         final String index = "e2e-acme-" + STAMP + "-v1";
-        // The user is offered their example first, in a form (the script's client had none: it was given the
-        // options); the user takes the first, an index template, and nothing is drafted until they paste it.
+        // The user is offered their example first, in a form; the user takes the first, an index template, and
+        // nothing is drafted until they paste it.
         int before = client.forms().size();
         final Map<String, Object> offered = client.json("draft_index_mapping", Map.of("backend", "elasticsearch",
                 "index_name", index, "convention", "ecs", "events_stream_ids", events));
@@ -351,7 +348,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         handEdits(csv, index, xsltUuid, pipelineUuid, plan, events);
     }
 
-    // What the script does after part 5: hand edits of the indexing XSLT, and a draft replacing the index.
+    // After part 5: hand edits of the indexing XSLT, and a draft replacing the index.
     private void handEdits(final Onboarded csv,
                            final String index,
                            final String xsltUuid,
@@ -406,8 +403,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
                 "event.created".equals(field.get("name"))
                         ? withEntry(field, "source", "EventDetail/*/Outcome/Success")
                         : field));
-        // The script's client had no forms: it was told needs_guidance, the question first, then per field, and
-        // called again with hand_edit_choices {'*': 'overwrite'}. Here the user is asked in forms, and overwrites.
+        // The user is asked in forms, the question first, then per field, and overwrites.
         client.answeringWith(choosing("Overwrite the XSLT with the change"));
         int before = client.forms().size();
         client.json("save_xslt", Map.of("build", csv.build(), "name", index + "-XSLT", "index_plan", outcome,
@@ -466,7 +462,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
                 .contains("event.created_at");
     }
 
-    // The script's change_template: what a user might send back.
+    // A changed template: what a user might send back.
     private static Map<String, Object> changeTemplate(final Map<String, Object> body) {
         final Map<String, Object> changed = JsonUtil.readValue(JsonUtil.writeValueAsString(body, false), Map.class);
         final Map<String, Object> mappings = map(map(changed, "template"), "mappings");
@@ -481,7 +477,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         return changed;
     }
 
-    // The script's component_choices: components of the user's choosing, and their AGENTS doc's rules for them.
+    // Components of the user's choosing, and their AGENTS doc's rules for them.
     private void componentChoices(final Onboarded csv,
                                   final String pipelineUuid,
                                   final Map<String, Object> plan,
@@ -543,8 +539,8 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         }
     }
 
-    // The script's fixtures: the fixture ES indexing template (beside 'Indexing') and a cluster doc, with the JSON
-    // schema filter the live template has (with_json_schema_filter).
+    // The fixtures: the fixture ES indexing template (beside 'Indexing') and a cluster doc, with the JSON schema
+    // filter the live template has.
     private DocRef fixtures() {
         final Map<String, Object> lucene = templates("indexing").stream()
                 .filter(candidate -> "Indexing".equals(candidate.get("name")))
@@ -622,7 +618,7 @@ class TestE2eElasticHandover extends AbstractE2eTest {
         return JsonUtil.readValue(devTools.split("\n", 2)[1], Map.class);
     }
 
-    // The script's read_mapping_fields: the fields a template maps, dotted.
+    // The fields a template maps, dotted.
     private static Set<String> mappedFields(final Map<String, Object> template) {
         final Set<String> names = new TreeSet<>();
         final Object properties = ((Map<String, Object>) ((Map<String, Object>) template.getOrDefault("template",

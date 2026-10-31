@@ -19,7 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
@@ -32,8 +32,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// rename_index, as the Stroom MCP server's tests/test_index_rename.py tests it: one index name for the build's
-/// Elastic Index doc and its indexing pipelines, changed only in a build.
+/// rename_index: one index name for the build's Elastic Index doc and its indexing pipelines, changed only in a
+/// build.
 class TestRenameIndexTool {
 
     private final IndexingWorld world = new IndexingWorld();
@@ -66,8 +66,8 @@ class TestRenameIndexTool {
         assertThat(refused("acme-prod-v1")).startsWith("Not done: Use index name 'acme-prod-v1' instead of "
                                                        + "'acme-v1'.");
         assertThat(((ElasticIndexDoc) world.world.docs.get("i")).getIndexName()).isEqualTo("acme-v1");
-        final ToolResult declined = world.renameTool().execute(PortedToolCalls.call(RenameIndexTool.NAME,
-                PyJson.dumps(Map.of("index_uuid", "i", "index_name", "acme-prod-v1"))),
+        final ToolResult declined = world.renameTool().execute(BuildToolCalls.call(RenameIndexTool.NAME,
+                ToolJson.dumps(Map.of("index_uuid", "i", "index_name", "acme-prod-v1"))),
                 world.forms(question -> Map.of("value", false)));
         assertThat(declined.text()).startsWith("The user did not agree to:");
         assertThat(world.asked).singleElement().asString()
@@ -109,10 +109,10 @@ class TestRenameIndexTool {
 
     private Map<String, Object> rename(final String indexName,
                                        final ToolCallContext context) {
-        final ToolResult result = world.renameTool().execute(PortedToolCalls.call(RenameIndexTool.NAME,
-                PyJson.dumps(Map.of("index_uuid", "i", "index_name", indexName))), context);
+        final ToolResult result = world.renameTool().execute(BuildToolCalls.call(RenameIndexTool.NAME,
+                ToolJson.dumps(Map.of("index_uuid", "i", "index_name", indexName))), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final String indexName) {
@@ -120,8 +120,8 @@ class TestRenameIndexTool {
     }
 
     private String refused(final String indexName, final String uuid) {
-        final ToolResult result = world.renameTool().execute(PortedToolCalls.call(RenameIndexTool.NAME,
-                PyJson.dumps(Map.of("index_uuid", uuid, "index_name", indexName))), IndexingWorld.noForms());
+        final ToolResult result = world.renameTool().execute(BuildToolCalls.call(RenameIndexTool.NAME,
+                ToolJson.dumps(Map.of("index_uuid", uuid, "index_name", indexName))), IndexingWorld.noForms());
         assertThat(result.isError()).as(result.text()).isTrue();
         return result.text();
     }

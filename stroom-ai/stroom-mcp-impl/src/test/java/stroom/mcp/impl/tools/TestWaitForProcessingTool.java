@@ -70,8 +70,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// wait_for_processing (the Stroom MCP server's `tests/test_processing.py`, its wait cases): each case was seen in
-/// testing, as its comment says.
+/// wait_for_processing: each case was seen in testing, as its comment says.
 class TestWaitForProcessingTool {
 
     private static final long FEED_MADE = 1791580000000L;   // 2026-10-09T21:06:40Z
@@ -406,9 +405,9 @@ class TestWaitForProcessingTool {
         // Filters are created disabled: nothing runs until the user enables one, so there is nothing to wait out.
         waitingOn(idFilter(false, true));
 
-        final ToolResult toolResult = tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME,
+        final ToolResult toolResult = tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME,
                 "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [6], \"timeout_seconds\": 60}"), context());
-        final Map<String, Object> result = PortedToolCalls.json(toolResult.text());
+        final Map<String, Object> result = BuildToolCalls.json(toolResult.text());
 
         assertThat(pauses.get()).isZero();
         assertThat(result.get("gate")).isEqualTo("waiting");
@@ -464,15 +463,15 @@ class TestWaitForProcessingTool {
 
     @Test
     void waitingStopsBeforeTheSessionsTimeLimitRunsOut() {
-        // As the Stroom MCP server stopped before the caller's token ran out (seen with Stroom's internal identity
-        // provider: a wait of three minutes failed part way): it stops in time and says to call again.
+        // Seen with Stroom's internal identity provider: a wait of three minutes failed part way as the caller's
+        // token ran out. It stops in time and says to call again.
         inBuildSteppedClean();
         waitingOn(feedFilter(true, "acme", FEED_MADE));
         final AiWorkspaceConfig limits = Mockito.mock(AiWorkspaceConfig.class);
         Mockito.when(limits.getQueryTimeLimit()).thenReturn(StroomDuration.ofSeconds(15));
         final long started = clock.get();
 
-        final Map<String, Object> result = PortedToolCalls.json(tool().execute(PortedToolCalls.call(
+        final Map<String, Object> result = BuildToolCalls.json(tool().execute(BuildToolCalls.call(
                         WaitForProcessingTool.NAME, "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [6], "
                                                     + "\"timeout_seconds\": 180}"),
                 contextBuilder().limits(SessionLimits.of(limits)).build()).text());
@@ -506,7 +505,7 @@ class TestWaitForProcessingTool {
             throw new InterruptedException();
         };
 
-        final ToolResult result = tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME,
+        final ToolResult result = tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME,
                 "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [6], \"timeout_seconds\": 900}"), context());
 
         // Cleared, as the thread is the test's.
@@ -523,7 +522,7 @@ class TestWaitForProcessingTool {
         final ToolRunContext run = Mockito.mock(ToolRunContext.class);
         Mockito.when(run.getCancelled()).thenReturn(() -> true);
 
-        final ToolResult result = tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME,
+        final ToolResult result = tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME,
                         "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [6], \"timeout_seconds\": 900}"),
                 contextBuilder().runContext(run).build());
 
@@ -533,11 +532,11 @@ class TestWaitForProcessingTool {
 
     @Test
     void callsWithoutAPipelineOrStreamsAreRefused() {
-        assertThat(tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME, "{\"stream_ids\": [5]}"),
+        assertThat(tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME, "{\"stream_ids\": [5]}"),
                 context()).text()).startsWith("Give pipeline_uuid");
-        assertThat(tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME, "{\"pipeline_uuid\": \"p1\"}"),
+        assertThat(tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME, "{\"pipeline_uuid\": \"p1\"}"),
                 context()).text()).startsWith("Give stream_ids");
-        assertThat(tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME,
+        assertThat(tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME,
                 "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [\"x\"]}"), context()).text())
                 .isEqualTo("stream_ids are stream ids (numbers): 'x' is not one");
     }
@@ -547,7 +546,7 @@ class TestWaitForProcessingTool {
         Mockito.when(processorFilterAccess.filtersOf(any())).thenReturn(new ProcessorFilterAccess.Filters(List.of(),
                 "You need the Manage Processors permission to list them"));
 
-        final ToolResult result = tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME,
+        final ToolResult result = tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME,
                 "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [5]}"), context());
 
         assertThat(result.isError()).isTrue();
@@ -556,7 +555,7 @@ class TestWaitForProcessingTool {
     }
 
     private Map<String, Object> call(final String arguments) {
-        return PortedToolCalls.json(tool().execute(PortedToolCalls.call(WaitForProcessingTool.NAME, arguments),
+        return BuildToolCalls.json(tool().execute(BuildToolCalls.call(WaitForProcessingTool.NAME, arguments),
                 context()).text());
     }
 

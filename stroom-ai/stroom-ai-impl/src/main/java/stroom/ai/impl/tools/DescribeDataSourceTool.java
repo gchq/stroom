@@ -161,7 +161,7 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     }
 
     /// What a search of a Lucene or Elastic index through Stroom gets wrong without an error (found against Stroom
-    /// 7.13, and refused by the Stroom MCP server's find_events), so a query or search on it avoids it.
+    /// 7.13), so a query or search on it avoids it.
     ///
     /// @param backend [MisleadingSearches#ELASTICSEARCH] or [MisleadingSearches#LUCENE].
     /// @param fields  The index's fields.

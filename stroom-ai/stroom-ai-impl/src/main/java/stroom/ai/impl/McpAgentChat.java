@@ -374,8 +374,7 @@ class McpAgentChat {
                 .flatMap(Optional::stream)
                 .collect(Collectors.toSet())));
         withServerInstructions(conversation, serverInstructions);
-        // With the build tools' instructions (as the Stroom MCP server gave them to its clients), once they are
-        // offered.
+        // With the build tools' instructions, once they are offered.
         final BuildInstructions buildInstructions = new BuildInstructions(chatId, serverInstructions);
         buildInstructions.addIfOffered(conversation, tools);
         if (tools.isEmpty()) {
@@ -654,9 +653,8 @@ class McpAgentChat {
         final long startMs = System.currentTimeMillis();
         // A tool's arguments may name workspace files, whose content is put in before the call is made, so the
         // model need not write a large argument out. What the model wrote is what is stored and audited. Stroom's
-        // own tools too: seen in Ask Stroom AI, build_translation_xslt (an MCP server's tool before it was ported)
-        // was given a 186 KB mapping saved to the workspace as {"$workspace": ...}, refused it, and the build
-        // stopped.
+        // own tools too: seen in Ask Stroom AI, build_translation_xslt was given a 186 KB mapping saved to the
+        // workspace as {"$workspace": ...}, refused it, and the build stopped.
         final WorkspaceArguments.Expansion expansion = workspaceArguments.expand(chatId, toolRequest.arguments());
         if (expansion.isExpanded()) {
             // As for any other read of the files.

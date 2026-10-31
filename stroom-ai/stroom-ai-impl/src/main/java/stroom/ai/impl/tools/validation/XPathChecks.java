@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.impl.workspace.SafePattern;
 import stroom.ai.impl.workspace.ToolDeadline;
@@ -49,8 +49,8 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 /// Evaluates a mapping's xpath inputs and extraction regexes against the sample, before anything is created or
-/// stepped. Ported from the Stroom MCP server's `utils/xpathcheck.py`, without its mapping model: the caller (the
-/// translation build) gives the xpaths and extractions, and the sample records as documents.
+/// stepped. It holds no mapping model: the caller (the translation build) gives the xpaths and extractions, and the
+/// sample records as documents.
 ///
 /// An xpath that selects nothing in any sample record (json-to-xml(event)/timestamp where the JSON parser gives
 /// string[@key='event'], say) generates valid XSLT that steps clean and writes empty elements or matches no rule.
@@ -265,7 +265,7 @@ public final class XPathChecks {
     }
 
     /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record: the
-    /// element is written once, with them joined. Not in the Python server; seen: an agent dropped `repeat: true`
+    /// element is written once, with them joined. Seen in testing: an agent dropped `repeat: true`
     /// from a mentions entry, the mentions came out joined in one Data ("pataz1 Lancegooden"), and it took that
     /// for something the generator can't do and wrote the XSLT by hand.
     ///
@@ -303,7 +303,7 @@ public final class XPathChecks {
                 if (values.size() > 1) {
                     warnings.add("xpath " + shown(xpath, 200) + " (used for " + usedFor(inputs.get(xpath))
                                  + ") gives " + values.size() + " values in sample record " + (record + 1) + " ("
-                                 + PyText.repr(values.subList(0, Math.min(3, values.size()))) + "): without "
+                                 + ToolText.repr(values.subList(0, Math.min(3, values.size()))) + "): without "
                                  + "repeat they are written joined in one element. repeat: true writes one "
                                  + "element per value (one Data per value, for a Data entry).");
                     break;
@@ -395,7 +395,7 @@ public final class XPathChecks {
 
     /// Where a regex stops matching the texts: the longest start of it that matches the start of a text, and what
     /// the text has there instead of what the regex goes on with. Read with Java's regular expressions, close to
-    /// XPath's, as the Stroom MCP server read it with Python's.
+    /// XPath's.
     ///
     /// @param regex A regex.
     /// @param flags Its XPath flags (i, m, s, x).
@@ -538,7 +538,7 @@ public final class XPathChecks {
                 missed = text;
             }
         }
-        final String names = PyText.list(ex.names().stream().filter(n -> n != null && !n.isEmpty()).toList());
+        final String names = ToolText.list(ex.names().stream().filter(n -> n != null && !n.isEmpty()).toList());
         if (matched == 0) {
             problems.add(where + ": the regex matches none of the " + texts.size() + " sample texts, so " + names
                          + " would be empty in every event. " + whereItStops(ex.regex(), flags, texts));
@@ -738,7 +738,7 @@ public final class XPathChecks {
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    // As Python's xml.sax.saxutils.quoteattr: the value escaped and quoted.
+    // The value escaped and quoted: in double quotes, unless it holds a double quote and no single one.
     private static String quoteAttr(final String value) {
         String escaped = escape(value).replace("\n", "&#10;").replace("\r", "&#13;").replace("\t", "&#9;");
         if (escaped.contains("\"")) {

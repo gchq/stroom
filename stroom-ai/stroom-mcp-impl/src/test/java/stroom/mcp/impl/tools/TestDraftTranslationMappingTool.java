@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.documentation.shared.DocumentationDoc;
 
 import org.junit.jupiter.api.Test;
@@ -29,14 +29,13 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// draft_translation_mapping, the tool (the Stroom MCP server's `tools/generation.py` `draft_translation_mapping`,
-/// and the tool parts of `tests/test_generation.py`, `test_draft_reply.py` and `test_xml_fragments.py`; the draft
-/// itself is [stroom.ai.impl.tools.draft.DraftMapping]'s, tested with it).
+/// draft_translation_mapping, the tool (the draft itself is [stroom.ai.impl.tools.draft.DraftMapping]'s, tested with
+/// it).
 class TestDraftTranslationMappingTool {
 
     private static final String CSV = "time,user,action\n2026-10-01T10:00:00Z,alice,login\n"
                                        + "2026-10-01T10:05:00Z,bob,logout\n";
-    // test_draft_reply.py's firewall sample.
+    // A firewall's sample.
     private static final String FIREWALL = """
             timestamp,device,event_type,severity,src_ip,src_port,dst_ip,dst_port,protocol,action,rule_id,bytes_sent,\
             bytes_received,username,message
@@ -78,8 +77,8 @@ class TestDraftTranslationMappingTool {
         assertThat(((Map<?, ?>) draft.get("schema_check")).containsKey("problems")).isTrue();
         assertThat(world.files()).containsKeys("/outputs/mappings/draft-acme-v1.json",
                 "/outputs/mappings/draft.json");
-        assertThat(PyJson.loads(world.files().get("/outputs/mappings/draft-acme-v1.json")))
-                .isEqualTo(PyJson.loads(PyJson.dumps(draft.get("mapping"))));
+        assertThat(ToolJson.loads(world.files().get("/outputs/mappings/draft-acme-v1.json")))
+                .isEqualTo(ToolJson.loads(ToolJson.dumps(draft.get("mapping"))));
         // The one version this Stroom holds was settled without the agent: the hint says so first.
         assertThat((String) draft.get("hint")).startsWith(TranslationWorld.VERSION + " is the only event-logging "
                                                           + "version this Stroom holds")
@@ -92,8 +91,8 @@ class TestDraftTranslationMappingTool {
 
     @Test
     void aNextVersionsDraftNamesWhatTheCurrentTranslationLooksUp() {
-        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 drafted for a feed V1.2
-        // translates, and its IP lookups were gone, though the user meant to keep them.
+        // Seen in testing: V1.3 drafted for a feed V1.2 translates, and its IP lookups were gone, though the user
+        // meant to keep them.
         Mockito.when(world.currentTranslations.current("acme-v1")).thenReturn(Optional.of(currentTranslation()));
 
         final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
@@ -123,7 +122,7 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> reply = new LinkedHashMap<>();
         reply.put("mapping", draft.get("mapping"));
         reply.put("schema_check", draft.get("schema_check"));
-        assertThat(PyJson.dumpsCompact(reply).length()).isLessThan(8000);
+        assertThat(ToolJson.dumpsCompact(reply).length()).isLessThan(8000);
     }
 
     @Test
@@ -140,7 +139,7 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
                 "build", "acme-v1"));
 
-        assertThat(PyJson.dumps(draft.get("mapping"))).contains("EventDetail/Authenticate");
+        assertThat(ToolJson.dumps(draft.get("mapping"))).contains("EventDetail/Authenticate");
     }
 
     @Test

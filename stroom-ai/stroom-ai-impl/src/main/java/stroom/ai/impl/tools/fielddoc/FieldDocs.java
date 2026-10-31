@@ -18,14 +18,14 @@ package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.Lookup;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 
 import java.util.ArrayList;
@@ -42,8 +42,7 @@ import java.util.stream.Collectors;
 /// What the Field mapping section of a pipeline's documentation is made of, whatever the pipeline: the layouts, a
 /// field's source and conditions in words, the event-logging schema's words for a path, the field descriptions kept
 /// with the documentation, and the grouping of event types (or action elements, or CEF kinds) with roughly the same
-/// fields. Ported from the Stroom MCP server's `utils/fielddoc.py`; the translation's tables are [EventFieldDocs],
-/// an index's [IndexFieldDocs].
+/// fields. The translation's tables are [EventFieldDocs], an index's [IndexFieldDocs].
 public final class FieldDocs {
 
     /// The event-logging namespace.
@@ -64,7 +63,7 @@ public final class FieldDocs {
     /// A field nothing describes, whose sampled values share no kind.
     public static final String NOT_DESCRIBED = "Not described: no plan or schema covers it.";
 
-    /// What the server says of the event ids an index document carries.
+    /// What the tools say of the event ids an index document carries.
     static final Map<String, String> IDS = Map.of(
             "@StreamId", "The id of the Events stream the event came from.",
             "@EventId", "The event's number in its stream; with StreamId, it identifies the event.");
@@ -75,19 +74,19 @@ public final class FieldDocs {
             Pattern.DOTALL);
     private static final Pattern DESCRIPTION_SOURCES = Pattern.compile(
             "<!-- stroom-mcp field description sources\\n(.*?)\\n-->", Pattern.DOTALL);
-    private static final Pattern IP = PyText.re("^(\\d{1,3}\\.){3}\\d{1,3}$|^[0-9a-fA-F:]+:[0-9a-fA-F:]*$");
-    private static final Pattern EMAIL = PyText.re("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-    private static final Pattern TIME = PyText.re("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}");
-    private static final Pattern NUMBER = PyText.re("^-?\\d+(\\.\\d+)?$");
+    private static final Pattern IP = ToolText.re("^(\\d{1,3}\\.){3}\\d{1,3}$|^[0-9a-fA-F:]+:[0-9a-fA-F:]*$");
+    private static final Pattern EMAIL = ToolText.re("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern TIME = ToolText.re("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}");
+    private static final Pattern NUMBER = ToolText.re("^-?\\d+(\\.\\d+)?$");
     private static final Pattern DATA = Pattern.compile("Data\\[@Name='([^']+)'\\]/@Value$");
     private static final Pattern PREDICATE = Pattern.compile("\\[[^\\]]*\\]");
     // The schema's descriptive openings, which say nothing about the field itself.
-    private static final Pattern BOILERPLATE = PyText.re("^This element (?:contains (?:information about|data "
+    private static final Pattern BOILERPLATE = ToolText.re("^This element (?:contains (?:information about|data "
                                                                 + "relating to)|provides details of|describes|details)"
                                                                 + "\\s+(?:the details of\\s+)?(?:the\\s+)?");
     private static final Pattern CAMEL_GAP = Pattern.compile("(?<=[a-z])(?=[A-Z])");
-    private static final Pattern GENERIC = PyText.re("\\bthe (object|device)\\b");
-    private static final Pattern EXAMPLE_TAIL = PyText.re(",?\\s+e\\.?g\\.?\\s.*$");
+    private static final Pattern GENERIC = ToolText.re("\\bthe (object|device)\\b");
+    private static final Pattern EXAMPLE_TAIL = ToolText.re(",?\\s+e\\.?g\\.?\\s.*$");
     private static final List<String> NETWORK_ACTIONS = List.of("Permit", "Deny", "Connect", "Open", "Close", "Bind",
             "Send", "Receive", "Listen");
 
@@ -194,11 +193,10 @@ public final class FieldDocs {
     /// to an object that only says which side of its parent the rest is on ([EventSchema#isSide]: Source and
     /// Destination, Before and After, AddGroups and RemoveGroups, a Network's Connect and Close...) left out, so the
     /// same kind of object counts as the same field whichever side it is on. An object's own fields (an Email's From
-    /// and To) are kept: an event holds them together. Not in the Python server, which compared
-    /// [#anyActionPath(String)]; seen: a SecretServer folder's create (`Create/Folder/Id`) and move
-    /// (`Move/Source/Folder/Id`) shared nothing, and its permission grant and revoke (`Authorise/AddGroups/...`,
-    /// `Authorise/RemoveGroups/...`) and session start and end (`Network/Connect/...`, `Network/Close/...`) too
-    /// little, each in a section of its own.
+    /// and To) are kept: an event holds them together. Seen in testing, comparing by [#anyActionPath(String)]
+    /// alone: a SecretServer folder's create (`Create/Folder/Id`) and move (`Move/Source/Folder/Id`) shared
+    /// nothing, and its permission grant and revoke (`Authorise/AddGroups/...`, `Authorise/RemoveGroups/...`) and
+    /// session start and end (`Network/Connect/...`, `Network/Close/...`) too little, each in a section of its own.
     ///
     /// @param path   An event path, e.g. `EventDetail/Move/Source/Folder/Id`; null is taken as "".
     /// @param schema The event-logging schema, or null to compare by [#anyActionPath(String)] alone.
@@ -283,7 +281,7 @@ public final class FieldDocs {
             for (final String path : distinct) {
                 final Matcher matcher = ACTION_STEP.matcher(path);
                 if (!matcher.find()) {
-                    // Python's match() would be None here, and fail.
+                    // A path with no action element can't be grouped by it: fail.
                     throw new IllegalArgumentException("No action element in " + path);
                 }
                 actions.add(matcher.group(2));
@@ -314,8 +312,8 @@ public final class FieldDocs {
         return readBlock(DESCRIPTIONS, markdown);
     }
 
-    /// Where each kept field description's field came from when it was described (not in the Python server: a
-    /// description is asked for again once its field comes from elsewhere).
+    /// Where each kept field description's field came from when it was described (a description is asked for
+    /// again once its field comes from elsewhere).
     ///
     /// @param markdown The doc's text, or null.
     /// @return Field to source; none if there is no block (one written before they were kept) or it doesn't read.
@@ -331,7 +329,7 @@ public final class FieldDocs {
         if (sources.isEmpty()) {
             return "";
         }
-        final String body = PyJson.dumps(sources, 1, false).replace("--", "-\\u002d");
+        final String body = ToolJson.dumps(sources, 1, false).replace("--", "-\\u002d");
         return "<!-- stroom-mcp field description sources\n" + body + "\n-->";
     }
 
@@ -343,7 +341,7 @@ public final class FieldDocs {
         final Object found;
         try {
             found = matcher.find()
-                    ? PyJson.loads(matcher.group(1))
+                    ? ToolJson.loads(matcher.group(1))
                     : Map.of();
         } catch (final RuntimeException e) {
             return Map.of();
@@ -368,7 +366,7 @@ public final class FieldDocs {
         if (descriptions.isEmpty()) {
             return "";
         }
-        final String body = PyJson.dumps(descriptions, 1, false).replace("--", "-\\u002d");
+        final String body = ToolJson.dumps(descriptions, 1, false).replace("--", "-\\u002d");
         return "<!-- stroom-mcp field descriptions\n" + body + "\n-->";
     }
 
@@ -385,7 +383,7 @@ public final class FieldDocs {
         final Matcher data = DATA.matcher(source);
         final boolean isData = data.find();
         String path = PREDICATE.matcher(isData
-                ? PyText.split(source, "/Data[").getFirst()
+                ? ToolText.split(source, "/Data[").getFirst()
                 : source).replaceAll("");
         String attribute = null;
         if (path.contains("/@")) {
@@ -420,7 +418,7 @@ public final class FieldDocs {
                        + trimmed.substring(trimmed.offsetByCodePoints(0, 1));
             }
         }
-        final List<String> parts = PyText.split(PyText.strip(path, "/"), "/");
+        final List<String> parts = ToolText.split(ToolText.strip(path, "/"), "/");
         if (!said.isEmpty() && parts.size() > 1) {
             // Ids and names inherit a base type's words ('the object', 'the device'): name the element they
             // belong to.
@@ -436,16 +434,16 @@ public final class FieldDocs {
         if (isData) {
             // The element the Data is under, not its description (seen in testing: every Data under Send was
             // described as 'Used for send events that are at a higher level than a network/send event').
-            final String stripped = PyText.strip(path, "/");
+            final String stripped = ToolText.strip(path, "/");
             final String under = stripped.isEmpty()
                     ? ""
-                    : PyText.split(stripped, "/").getLast();
+                    : ToolText.split(stripped, "/").getLast();
             return "The `" + data.group(1) + "` value recorded in a Data element" + (under.isEmpty()
                     ? "."
                     : " of " + under + ".");
         }
         if (attribute != null) {
-            return "The `" + attribute + "` attribute of " + PyText.split(path, "/").getLast() + (said.isEmpty()
+            return "The `" + attribute + "` attribute of " + ToolText.split(path, "/").getLast() + (said.isEmpty()
                     ? "."
                     : ": " + said);
         }
@@ -462,8 +460,8 @@ public final class FieldDocs {
     /// @return The description, each part ending with a full stop.
     public static String fieldDescription(final String what, final List<List<String>> perDocument) {
         final List<String> parts = new ArrayList<>();
-        if (what != null && !PyText.strip(what).isEmpty()) {
-            parts.add(PyText.strip(what));
+        if (what != null && !ToolText.strip(what).isEmpty()) {
+            parts.add(ToolText.strip(what));
         }
         if (perDocument != null) {
             final List<List<String>> holding = perDocument.stream()
@@ -492,7 +490,7 @@ public final class FieldDocs {
     /// @return Its action (`Authenticate`), or null for what any kind of event has (EventTime, EventSource, TypeId,
     /// Description, the ids) or no path at all.
     public static String actionOf(final String source) {
-        final List<String> parts = PyText.split(PyText.strip(PREDICATE.matcher(source == null
+        final List<String> parts = ToolText.split(ToolText.strip(PREDICATE.matcher(source == null
                 ? ""
                 : source).replaceAll(""), "/"), "/");
         return parts.size() > 1 && "EventDetail".equals(parts.get(0)) && !CefKeys.NOT_ACTION.contains(parts.get(1))
@@ -553,7 +551,7 @@ public final class FieldDocs {
             return "(none in the sample)";
         }
         return distinct.subList(0, Math.min(3, distinct.size())).stream()
-                       .map(v -> "`" + PyText.head(v, 40) + "`")
+                       .map(v -> "`" + ToolText.head(v, 40) + "`")
                        .collect(Collectors.joining(", ")) + (distinct.size() > 3
                 ? " (+" + (distinct.size() - 3) + ")"
                 : "");

@@ -25,14 +25,14 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_instructions.py`: standing instructions (AGENTS docs), driving the real tools.
-/// Covered whole: three AGENTS Documentation docs, one directly under System (applies everywhere), one in a build's
-/// folder (applies to the feed in it) and one in another build's folder (does not); get_instructions for the feed
-/// returns the first two, general first, and lists the third, as start_build hands them back; and the required
-/// imports the build's doc names: the generated translation imports the shared XSLT, the reply names what it
-/// offers, it steps clean, and a hand-written translation without the import is refused.
+/// Standing instructions (AGENTS docs), driving the real tools. Covered whole: three AGENTS Documentation docs, one
+/// directly under System (applies everywhere), one in a build's folder (applies to the feed in it) and one in another
+/// build's folder (does not); get_instructions for the feed returns the first two, general first, and lists the third,
+/// as start_build hands them back; and the required imports the build's doc names: the generated translation imports
+/// the shared XSLT, the reply names what it offers, it steps clean, and a hand-written translation without the import
+/// is refused.
 ///
-/// The script deletes its docs afterwards; here the database is cleared after each test.
+/// The database is cleared after each test.
 @SuppressWarnings("unchecked")
 class TestE2eInstructions extends AbstractE2eTest {
 

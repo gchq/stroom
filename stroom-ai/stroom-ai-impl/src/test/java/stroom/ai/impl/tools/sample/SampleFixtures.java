@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,14 +26,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// The Stroom MCP server's test fixtures: the samples of the formats sources send (its `dev/format_samples.py`)
-/// and the samples of its evaluation cases (`dev/eval/cases/*.yaml`), copied as JSON.
+/// The sample test fixtures: the samples of the formats sources send and the samples of the evaluation cases,
+/// copied as JSON.
 final class SampleFixtures {
 
     private static final Map<String, Object> FORMAT_SAMPLES = read("format_samples.json");
     private static final Map<String, Object> EVAL_SAMPLES = read("eval_samples.json");
-    // What the Python server's profile and survey made of each sample, run on the server's own code.
-    private static final Map<String, Object> PYTHON_SURVEY = read("python_survey.json");
+    // What the profile and survey must make of each sample, recorded.
+    private static final Map<String, Object> PYTHON_SURVEY = read("stored_survey.json");
 
     private SampleFixtures() {
         // Static methods only.
@@ -42,7 +42,7 @@ final class SampleFixtures {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> read(final String name) {
         try (final InputStream in = SampleFixtures.class.getResourceAsStream(name)) {
-            return (Map<String, Object>) PyJson.loads(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+            return (Map<String, Object>) ToolJson.loads(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -71,7 +71,8 @@ final class SampleFixtures {
         return List.copyOf(EVAL_SAMPLES.keySet());
     }
 
-    /// @return What the Python server made of each sample (its name as [#corpusText(String)] takes it): the
+    /// @return What the profile and survey must make of each sample, recorded (its name as [#corpusText(String)]
+    /// takes it): the
     /// profile's `profile_format` and `profile_records`, the split's `split_format` and `split_records`, and the
     /// survey's `shapes` (signature to count).
     @SuppressWarnings("unchecked")
@@ -92,15 +93,15 @@ final class SampleFixtures {
                     ? (String) entry.get("text")
                     : null;
         };
-        final int length = PyText.len(base);
+        final int length = ToolText.len(base);
         if (name.endsWith(":third:head")) {
-            return PyText.head(base, length / 3);
+            return ToolText.head(base, length / 3);
         }
         if (name.endsWith(":most:head")) {
-            return PyText.head(base, length * 9 / 10);
+            return ToolText.head(base, length * 9 / 10);
         }
         if (name.endsWith(":head")) {
-            return PyText.head(base, length * 2 / 3);
+            return ToolText.head(base, length * 2 / 3);
         }
         return base;
     }

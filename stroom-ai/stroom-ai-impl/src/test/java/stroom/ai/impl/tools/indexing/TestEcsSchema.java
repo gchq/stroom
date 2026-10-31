@@ -39,8 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The Elastic Common Schema as the tools know it ([EcsSchema], the bundled `ecs_fields.json` and
-/// `ecs_component.json`): asked for by the user, as the Stroom MCP server had known ECS only through the few names
-/// its convention profile mapped. Ported from the server's `tests/test_ecs.py`, case by case.
+/// `ecs_component.json`): asked for by the user, as the tools had known ECS only through the few names the
+/// convention profile mapped.
 class TestEcsSchema {
 
     private static final EcsSchema ECS = IndexingFixtures.ECS;
@@ -247,8 +247,7 @@ class TestEcsSchema {
 
     @Test
     void theComponentIsMeasuredAndMapsEcsFieldsAsEcsSays() {
-        // dev/ecs_component.py measured it against Elasticsearch: the few it maps otherwise are mapped by the
-        // template.
+        // Measured against Elasticsearch: the few it maps otherwise are mapped by the template.
         assertThat(ECS.componentType("source.ip")).isEqualTo("ip");
         assertThat(ECS.componentType("message")).isEqualTo("match_only_text");
         assertThat(ECS.componentType("gen_ai.usage.input_tokens")).isEqualTo("integer");

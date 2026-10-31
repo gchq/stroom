@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// The lines of an Elasticsearch indexing XSLT's document: its top-level fields and objects, and the templates for
-/// the objects it repeats. Ported from the Stroom MCP server's `FieldPlan._elastic_lines`.
+/// the objects it repeats.
 ///
 /// Dotted names are nested as objects (user.id -> `<map key="user"><string key="id">`), each object written only
 /// when one of its fields is present. A name below another field's name (time.min beside time) cannot be nested, so
@@ -357,8 +357,8 @@ final class ElasticDocument {
 
     // A field of objects: an array of one object per element the source selects, made distinct by the key (the first
     // element with each, in the order first met: xsl:for-each-group, which leaves out an element without one), each
-    // object written from its element as a field of the document is from the Event. Not in the Stroom MCP server;
-    // asked for by the user: every user an event names, once each by login name.
+    // object written from its element as a field of the document is from the Event. Asked for by the user: every
+    // user an event names, once each by login name.
     private static String objects(final PlannedField field,
                                   final String key,
                                   final String indent,

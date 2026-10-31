@@ -18,9 +18,9 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -48,7 +48,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// The onboarding plan, with its state read from the build (ported from the Stroom MCP server's `tools/plan.py`).
+/// The onboarding plan, with its state read from the build.
 ///
 /// A model that treats each request as one tool call stops when the tool returns. So the plan is not only in the
 /// prompts: start_onboarding returns it, build_status derives each step's state from what the build holds (feed,
@@ -562,9 +562,8 @@ public class BuildPlan {
         // CEF output build does neither, whatever it works from.
         final boolean cefOnly = cefBuild && translation.isEmpty() && indexing.isEmpty() && !surveyed;
         final boolean newSource = !existing && !cefOnly;
-        // A translation XSLT saved from a mapping starts it too: a next version written anew needn't survey first
-        // (seen in the Stroom MCP server's e2e: its XSLT saved, the plan still said to choose the work, and never
-        // reached its pipeline).
+        // A translation XSLT saved from a mapping starts it too: a next version written anew needn't survey first (seen
+        // in testing: its XSLT saved, the plan still said to choose the work, and never reached its pipeline).
         final boolean stage1 = newSource || !translation.isEmpty() || surveyed || hasMapping(xslts, "translation");
         // Indexing too when the build onboards an existing feed (surveyed for its events pipeline), as for a new
         // source, or holds any indexing work (an indexing XSLT saved from its plan comes before the index doc and
@@ -900,7 +899,7 @@ public class BuildPlan {
             // The feed's next version (V1.3 for V1.2): a child of the template the pipeline translating it now has.
             case "pipeline:version" -> {
                 final Map<String, Object> version = NullSafe.map(args.version());
-                final String name = PyText.str(version.get("name"));
+                final String name = ToolText.str(version.get("name"));
                 yield call("create_pipeline", args("build", build, "version_of", version.get("uuid"), "name",
                                 "<the new version's name ('" + name + "' with its new version)>"),
                         "a child of the template '" + name + "' has, with the build's XSLT; whether it loads that "
@@ -962,7 +961,7 @@ public class BuildPlan {
                             referencePipeline(args), "stream_ids", referenceRaw(args), "markdown", DOCUMENTATION),
                     "what each map holds, its key and its values");
             case "stepped:no_reference" -> call("find_reference_data", args(),
-                    "the events pipeline looks values up in " + PyText.list(JsonValues.strings(
+                    "the events pipeline looks values up in " + ToolText.list(JsonValues.strings(
                             NullSafe.map(args.reference()).get("unloaded"))) + ", which holds no Reference stream "
                     + "yet: every lookup would find nothing, and Stroom remembers that for 10 minutes. Have it "
                     + "processed first by the pipeline that loads it (its filter, enabled by the user), then "
@@ -1422,7 +1421,7 @@ public class BuildPlan {
     // Arguments in the order given, as name, value, name, value, ...
     // The build's reference-data pipeline's UUID, or a placeholder.
     private static String referencePipeline(final CallArgs args) {
-        return NullSafe.nonBlankStringElse(PyText.str(NullSafe.map(args.reference()).get("pipeline")),
+        return NullSafe.nonBlankStringElse(ToolText.str(NullSafe.map(args.reference()).get("pipeline")),
                 "<the reference-data pipeline uuid>");
     }
 
@@ -1439,14 +1438,14 @@ public class BuildPlan {
         return arguments;
     }
 
-    // Python's `value or other`: an empty (or absent) list, string or map gives other.
+    // The value, unless it is empty or absent (an empty list, string or map, null, false or zero): then other.
     private static Object orElse(final Object value, final Object other) {
         return JsonValues.truthy(value)
                 ? value
                 : other;
     }
 
-    // A value as Python writes it into text: a list as [1, 2], anything else as it is.
+    // A value as the plan's text writes it: a list as [1, 2], anything else as it is.
     private static String pythonText(final Object value) {
         return value instanceof final Collection<?> collection
                 ? collection.stream().map(String::valueOf).collect(Collectors.joining(", ", "[", "]"))

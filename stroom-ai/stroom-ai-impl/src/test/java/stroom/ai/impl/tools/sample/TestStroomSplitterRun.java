@@ -106,7 +106,7 @@ class TestStroomSplitterRun {
 
     @Test
     void blankLinesAreRecordsOfEmptyFieldsUnlessPassedOver() {
-        // The converter as the Stroom MCP server wrote it writes them, with no error.
+        // generateSplitter's plain converter writes them, with no error.
         final String sample = "a,b\n1,2\n\n3,4\n";
         assertThat(StroomSplitterRun.run(SplitterXml.generateSplitter(CSV), sample).records())
                 .contains(Map.of("a", ""));

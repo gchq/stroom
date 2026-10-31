@@ -28,12 +28,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// The Stroom MCP server's evaluation set (`dev/eval/cases/*.yaml`, copied unchanged into the `eval` resources):
-/// each case's sample, request, reference solution and what its Events must hold.
+/// The evaluation set (the `eval` resources, a YAML file a case): each case's sample, request, reference solution
+/// and what its Events must hold.
 ///
-/// They read as PyYAML reads them but for one value: case 48's drop rule `{..., reason: damaged lines (not JSON),
-/// shown to the user}`, whose reason PyYAML ends at the comma (the rest an extra key, which the server's model
-/// ignores). Only the reason's text differs, which no check reads.
+/// One value may read differently from one YAML reader to another: case 48's drop rule `{..., reason: damaged lines
+/// (not JSON), shown to the user}`, whose reason holds a comma. Only the reason's text can differ, which no check
+/// reads.
 @SuppressWarnings("unchecked")
 final class EvalCases {
 
@@ -79,8 +79,8 @@ final class EvalCases {
         }
     }
 
-    /// `run_eval.py`'s `samples_of`: the case's sample texts (`samples`, else its one `sample`), or for a case
-    /// whose samples are files on the user's disk, what the user shows of each: its first lines.
+    /// The case's sample texts (`samples`, else its one `sample`), or for a case whose samples are files on the user's
+    /// disk, what the user shows of each: its first lines.
     ///
     /// @param evalCase The case.
     /// @return Its samples.
@@ -98,8 +98,8 @@ final class EvalCases {
         return shown;
     }
 
-    /// `run_eval.py`'s `case_files`: a case's sample files on the user's disk, as bytes: each `text` in its
-    /// `encoding` (UTF-8 unless given), or made by its generator ([EvalSamples]).
+    /// A case's sample files on the user's disk, as bytes: each `text` in its `encoding` (UTF-8 unless given), or made
+    /// by its generator ([EvalSamples]).
     ///
     /// @param evalCase The case.
     /// @return Its files, none if its samples are texts.

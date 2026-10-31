@@ -30,9 +30,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.LongSupplier;
 
-/// The users' agreements to survey a feed fewer streams a call than the default (the Stroom MCP server's
-/// `tools/sampling.py` `_fewer_streams` store): an agreement holds for that user, feed and count for four hours,
-/// so later calls go on unasked. Kept in this node's memory, as the Stroom MCP server kept it in its own.
+/// The users' agreements to survey a feed fewer streams a call than the default: an agreement holds for that user, feed
+/// and count for four hours, so later calls go on unasked. Kept in this node's memory.
 @Singleton
 class FewerStreams {
 

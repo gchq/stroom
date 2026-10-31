@@ -39,16 +39,15 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_restyle.py`: an events pipeline in a build brought up to the generator's
-/// current style, as asked of an agent in production, driving the real tools. A FortiGate-like source: JSON
-/// records whose body is key="value" pairs, in three streams, the VPN records only in the last. Every numbered
-/// part is covered:
+/// An events pipeline in a build brought up to the generator's current style, as asked of an agent in production,
+/// driving the real tools. A FortiGate-like source: JSON records whose body is key="value" pairs, in three streams, the
+/// VPN records only in the last. Every numbered part is covered:
 ///
 /// 1. The mapping saved over all three streams finds the VPN rule's keys; over the first alone, a key it lacks is
 ///    named as such.
 /// 2. An earlier generator simulated: build_status says it was written by an earlier generator and is unchanged,
 ///    not edited by hand, and names the call that regenerates it.
-/// 3. The XSLT's kept mapping summarised (read_document, which describe_document is part of now), whole on asking.
+/// 3. The XSLT's kept mapping summarised (read_document), whole on asking.
 /// 4. Regenerated with uuid alone: the current style, smaller, clean, the same Events. 4b. A hand edit named by
 ///    build_status and carried into the mapping by rebuild_mapping. 4c. The Documentation tab cleared: the loss
 ///    named, and the mapping rebuilt from the XSLT alone. 4d. An edit no mapping can express: refused with the

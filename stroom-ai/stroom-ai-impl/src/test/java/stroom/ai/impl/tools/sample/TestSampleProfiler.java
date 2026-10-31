@@ -69,9 +69,9 @@ class TestSampleProfiler {
 
     @Test
     void jsonLinesFlattenAndFlagEmbeddedJson() {
-        final String lines = PyJson.dumps(SampleProfiler.map("ts", 1790600000L, "user", SampleProfiler.map("name",
+        final String lines = ToolJson.dumps(SampleProfiler.map("ts", 1790600000L, "user", SampleProfiler.map("name",
                 "a"), "body", "INFO x {\"type\":\"LOGIN\"}")) + "\n"
-                             + PyJson.dumps(SampleProfiler.map("ts", 1790600001L, "user",
+                             + ToolJson.dumps(SampleProfiler.map("ts", 1790600001L, "user",
                 SampleProfiler.map("name", "b")));
 
         final Map<String, Object> result = SampleProfiler.profile(lines);
@@ -123,7 +123,7 @@ class TestSampleProfiler {
                     "hostname", "gs-fw01", "body", "eventtime=" + i + " type=\"traffic\" action=\"deny\" srcip=10.0.0."
                                                    + (i % 250) + " dstport=443"));
         }
-        final String text = PyJson.dumps(records);
+        final String text = ToolJson.dumps(records);
 
         final Map<String, Object> cut = SampleProfiler.profile(text.substring(0, 20_000));
 
@@ -132,7 +132,7 @@ class TestSampleProfiler {
         assertThat((String) cut.get("note")).contains("cut short");
         assertThat((String) cut.get("suggested_parser")).contains("JSONParser");
         assertThat(SampleProfiler.profile(text)).containsEntry("records", 400).doesNotContainKey("note");
-        final String lines = records.subList(0, 5).stream().map(PyJson::dumps).collect(Collectors.joining("\n"));
+        final String lines = records.subList(0, 5).stream().map(ToolJson::dumps).collect(Collectors.joining("\n"));
         // The last line cut short.
         assertThat(SampleProfiler.profile(lines.substring(0, lines.length() - 10)))
                 .containsEntry("format", "json lines");

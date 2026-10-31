@@ -21,9 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// A translation XSLT read the way the generator writes it, by [XsltReader#read(String)] (the Stroom MCP server's
-/// `xsltread.Reading`): its rules, what it reads (input namespace, root, records), its nil values, and the
-/// stylesheet's own functions, maps and variables.
+/// A translation XSLT read the way the generator writes it, by [XsltReader#read(String)]: its rules, what it reads
+/// (input namespace, root, records), its nil values, and the stylesheet's own functions, maps and variables.
 public final class XsltReading {
 
     private final List<RuleReading> rules = new ArrayList<>();
@@ -151,8 +150,8 @@ public final class XsltReading {
         return keyed;
     }
 
-    /// @return It as the Python reading's fields (rules, namespace, root, records, nil_values, unmatched_warn,
-    /// functions, maps, globals, notes, imports, prefixes, keyed).
+    /// @return It as a map, keys in the order the reader fixtures pin (rules, namespace, root, records, nil_values,
+    /// unmatched_warn, functions, maps, globals, notes, imports, prefixes, keyed).
     public Map<String, Object> toMap() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("rules", rules.stream().map(RuleReading::toMap).toList());

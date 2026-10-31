@@ -33,8 +33,8 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_xslt_style.py`: how generated XSLTs are written, and the gates around them,
-/// driving the real tools as the agent would. Every numbered part is covered:
+/// How generated XSLTs are written, and the gates around them, driving the real tools as the agent would. Every
+/// numbered part is covered:
 ///
 /// 1. Layouts: one mapping saved in each layout (modes, the default; named; inline). Each steps clean in Stroom,
 ///    and all three give exactly the same Events. Conversions used by several elements are the XSLT's own

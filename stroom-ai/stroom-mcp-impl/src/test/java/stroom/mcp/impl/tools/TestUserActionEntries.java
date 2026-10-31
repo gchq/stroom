@@ -32,8 +32,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Steps that are the user's, as buttons (the Stroom MCP server's `tests/test_useractions.py`, its cases for
-/// `enable_filter` and `es_request`).
+/// Steps that are the user's, as buttons: enabling a filter, and a request to Elasticsearch.
 class TestUserActionEntries {
 
     @Test

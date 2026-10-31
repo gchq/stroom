@@ -125,9 +125,8 @@ public class BuiltInTools {
         this.knowledge = Objects.requireNonNullElse(knowledge, Optional.empty());
     }
 
-    /// The instructions for the tools that build Stroom content, for a chat offered them: the Stroom MCP server
-    /// gave them to every client when it connected, and the build tools' replies assume them (the order of work,
-    /// `next`, how to ask the user).
+    /// The instructions for the tools that build Stroom content, for a chat offered them: the build tools' replies
+    /// assume them (the order of work, `next`, how to ask the user).
     ///
     /// @param offered The names of the tools the chat is offered.
     /// @return The instructions under a heading, or empty if the chat isn't offered the build tools (their entry

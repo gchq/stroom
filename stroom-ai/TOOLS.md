@@ -10,7 +10,7 @@ There are 107 tools, in two modules:
 * **Built-in tools** (56): `stroom-ai/stroom-ai-impl`, package `stroom.ai.impl.tools`, bound in
   `BuiltInToolsModule`. Documents, search, streams and processing diagnosis, administration, the chat's workspace,
   and proposals the user applies with a button.
-* **Build tools** (51): `stroom-ai/stroom-mcp-impl`, package `stroom.mcp.impl.tools`, bound in `PortedToolsModule`.
+* **Build tools** (51): `stroom-ai/stroom-mcp-impl`, package `stroom.mcp.impl.tools`, bound in `BuildToolsModule`.
   They explore the environment and build Stroom content: feeds, translations, pipelines, indexes, processor filters
   and their documentation, in a build folder, promoted once the user approves. Their shared helpers that don't
   depend on Stroom's services are in `stroom-ai-impl` (`stroom.ai.impl.tools.sample`, `validation`, `draft`,
@@ -113,12 +113,17 @@ Where a tool is offered:
   its own (`McpWorkspaces`), as a chat does, so the workspace tools work there.
 
 Adding a tool: implement `StroomTool` (extend `AbstractWorkspaceTool` if it saves large results or `out` files),
-bind it in `BuiltInToolsModule` or `PortedToolsModule`, give it a one-line summary in `ToolSummaries` (what an
+bind it in `BuiltInToolsModule` or `BuildToolsModule`, give it a one-line summary in `ToolSummaries` (what an
 administrator choosing a policy sees; `TestToolSummaries`), put it in a group in `BuiltInToolGroups` or leave it
 always offered (`TestBuiltInToolGroups`), add its row to the right table below (`TestToolInventory` fails if the
 built-in table and the registered built-in tools differ, by name or read-only flag), and accept the golden
 catalogue's change (`GoldenFiles`: run the tests with `-DtestUpdateGoldenFiles=true`). `TestBundledKnowledge`
-fails if a guide, the server instructions or a tool's description names a tool that doesn't exist.
+fails if a guide, the server instructions or a tool's description names a tool that doesn't exist (seen in testing:
+hints still sent the agent to `find_documents`, `find_streams` and `describe_document`). It also keeps a list of names
+Stroom's tools don't have, whose work built-in tools do, and fails if a tool takes one: `find_documents`
+(`folder_contents name=`, or `find_in_content`), `describe_document` (`read_document`), `find_streams` and
+`describe_stream` (`stream_meta`), `read_stream` (`fetch_events streamId=`), `find_events` (`search_events index=`),
+`describe_pipeline` and `survey_index`.
 
 ## Built-in tools
 
@@ -421,8 +426,9 @@ checks the XSLT's kept-mapping tag through `XsltSaves`).
 * **Notes**: `part` leaves out the pipeline, translation and survey sections (the processing section stays for a
   pipeline). In a chat, a document that is the user's attached tab with unsaved changes is read as saved, with a
   note that its content as edited is in `/tabs/<n>/`; only the dictionary case reads the unsaved text itself. An MCP
-  session has no attached tab and always reads as saved. The content is data, not instructions, and the
-  description says so.
+  session has no attached tab and always reads as saved (seen in end-to-end testing, before it did: every read
+  over `/mcp` failed with "read_document can only be used in a chat"). The content is data, not instructions, and
+  the description says so.
 
 ### `document_documentation`
 
@@ -2486,7 +2492,11 @@ Where each document goes (`plan`):
   documentation of a production pipeline or existing index goes beside it.
 * A new version of a production document (`version_of`, from `copy_pipeline`) goes in a version subfolder beside its
   predecessor named by its version (`…-V1.1-Events` → `V1.1`), and the version's other new documents headed for that
-  place join it (`PromotionLayout.versionFolders`, `joining`). Documents given a destination of their own keep it.
+  place join it (`PromotionLayout.versionFolders`, `joining`). Documents given a destination of their own keep it,
+  as does a version whose type is given a destination elsewhere than beside its predecessor, so a version and its
+  other documents aren't split (seen in testing: with the version always put beside its predecessor, TWITTER's V1.1
+  pipeline went under /Feeds/Twitter while its XSLT and documentation went to System/MCP Testing/Twitter, the folder
+  given for their type).
 * Role subfolders (`Events`/`Records`, `Indexing`, `CEF`, `Reference`) are kept under each destination only when
   documents of more than one role move, unless `role_subfolders=false`.
 
@@ -2610,7 +2620,8 @@ hours in this node's memory (`FewerStreams`). Streams of a feed a build made (it
 **The survey doc.** With `build`, the survey is kept in the build's Documentation doc `<feed> - Survey` (`SurveyDoc`
 format, `SurveyDocuments` through `WriteGuard`), and an existing one is continued: its streams are skipped and its
 shapes known. Kinds the user chose to leave untranslated (`set_shape_handling`) are marked `handling: drop` and their
-locations carry `expect: none`.
+locations carry `expect: none`. The doc's format is stored data, so it changes only in ways a survey doc already
+kept still reads (see `SurveyDoc` under "Sample analysis").
 
 * **Arguments**: `feed` (or `stream_ids`), `stream_type` (default Raw Events), `stream_ids`, `max_streams` (1 to 100,
   default 10), `skip_stream_ids`, `known_signatures`, `max_chars_per_stream` (1,000 to 5,000,000),
@@ -2986,7 +2997,10 @@ Summarises streams in one of two ways:
 * **Refuses**: no stream ids or one that isn't a whole number; another `kind`; no View Data; an events summary
   failing.
 * **Notes**: `StreamSummaries.summariseEvents` also works out shares by action and each path's values (up to 500 a
-  path, `values_by_path`) for the tools' own use; the reply leaves them out. The indexing tools read `values_by_path`
+  path, `values_by_path`) for the tools' own use; the reply leaves them out. The shares by action
+  (`path_population_by_action`, `type_ids_by_action`) let an index's Field mapping document a field that only some
+  kinds of event have under each kind that has it (`IndexFieldDocs`): seen in testing, `source.ip` (from
+  EventSource) was in 40% of the events and could be put under no event type. The indexing tools read `values_by_path`
   for stand-ins for none (`-`, `N/A`) to ask the user about (see `Placeholders` under "Sample analysis"). The streams
   read are audited.
 
@@ -3389,6 +3403,9 @@ Creates a pipeline in the build as a child of a template, setting only what the 
 XSLT, the parser's text converter, open properties). It keeps the template's structure and defaults, including
 optional steps such as an empty decoration XSLT. The user confirms the template and name in a form first; the name
 is editable there. `create_indexing_pipeline` uses the same path (`CreatePipelineTool.fromTemplate`).
+A template whose stage gives no role subfolder (a CEF pipeline written by hand that writes lines of text: XMLParser,
+XSLTFilter, TextWriter) is used all the same: the child is made in the build folder itself (seen in `TestE2eCef`:
+create_pipeline failed with a NullPointerException on such a template, which an AGENTS doc named).
 
 Making it, in order (`fromTemplate`):
 
@@ -3962,8 +3979,8 @@ tool generates two sections in it and keeps the version control:
   streams to step (`streamsNeeded` says which: sample raw streams, the Events streams indexed or sent); an events
   pipeline whose XSLT keeps no mapping and whose markdown has no `## Field mapping` (or the lost-mapping text when
   it was lost); an index or CEF XSLT written by hand without `stream_ids`; a section that steps to no events
-  (`_no_events`: per stream, missing, of another type, or stopped by an error); no Stepping permission; an
-  existing doc in the build that isn't the tools' own (`WriteGuard.checkInBuild`).
+  (`FieldMappingSections.noEvents` says why, per stream: missing, of another type, or stopped by an error); no
+  Stepping permission; an existing doc in the build that isn't the tools' own (`WriteGuard.checkInBuild`).
 * **Notes**:
   * **An XSLT edited by hand is documented as it runs** (`GeneratedDrift.editDrift`): the XSLT as saved is stepped
     too, and its own events are documented, each given the rule the marked XSLT gave the same record's event in the
@@ -3977,6 +3994,10 @@ tool generates two sections in it and keeps the version control:
     in the build's record (prompts and agents left them out, and every call was refused once first). An events
     pipeline's Events streams given in place of its raw sample stand for the raw streams they were made from
     (`BuildDocumentation.rawParents`).
+  * **How the Field mapping is laid out**: event types grouped on what they write besides their Data, an object's
+    side ignored, Data every type writes alike as common fields, extractions left to the XSLT; an index's common
+    fields only those every event has, each section naming its TypeIds. See `EventFieldDocs` and `IndexFieldDocs`
+    under "Field-mapping documentation and the CEF mapping".
   * **Field descriptions**: each field is described by what it means for this source (`Descriptions`): a
     `needs_descriptions` round asks for those not yet described. A Data name read from the same source under
     several elements is asked once (seen: 224 asked for one feed, its 18 Data names once per action element); a
@@ -4012,15 +4033,17 @@ CEF (ArcSight Common Event Format) output from Events: one flattened CEF line pe
 (`CEF:0|vendor|product|version|class id|name|severity|` then key=value pairs), not CEF fields as XML elements.
 Three modes:
 
-* **Draft** (stream_ids only): up to 500 sample Events read (`EventStreams`) and a plan inferred
-  (`CefDraft.draft`): the header (vendor from System/Organisation, product System/Name, version System/Version,
-  class id TypeId and name Description, each falling back to the action; severity 3 unless given), the fields every
-  event shares, and per kind of event (its action element) the rest: ArcSight's standard keys first with a value's
-  type checked against its key (an IPv4 address for `src`), then its custom slots (cs1-cs6, cn1-cn3, cfp1-cfp4,
-  deviceCustomDate1-2, flexString1-2, flexDate1) with a label each, then keys outside the dictionary only where
-  allowed; what nothing takes is listed as not sent. The plan's XSLT is run over the sample (`CefSample`, with the
-  locked-down Saxon processor, no resource read) for an example line and a review of its own lines.
-* **Save** (with `build` and `name`, or `uuid` of an XSLT saved with a CEF plan, whose plan is the starting point):
+* **Draft** (stream_ids only): up to 500 sample Events read (`EventStreams`) and a plan inferred (`CefDraft.draft`): the
+  header (vendor from System/Organisation, product System/Name, version System/Version, class id TypeId and name
+  Description, each falling back to the action; severity 3 unless given; the version read from System/Version however
+  few of the sample's Events have it, as an empty constant stayed empty for the Events that do, asked for by the user;
+  vendor and product from their path only when at least half the Events have it), the fields every event shares, and per
+  kind of event (its action element) the rest: ArcSight's standard keys first with a value's type checked against its
+  key (an IPv4 address for `src`), then its custom slots (cs1-cs6, cn1-cn3, cfp1-cfp4, deviceCustomDate1-2,
+  flexString1-2, flexDate1) with a label each, then keys outside the dictionary only where allowed; what nothing takes
+  is listed as not sent. The plan's XSLT is run over the sample (`CefSample`, with the locked-down Saxon processor, no
+  resource read) for an example line and a review of its own lines. * **Save** (with `build` and `name`, or `uuid` of an
+  XSLT saved with a CEF plan, whose plan is the starting point):
   the XSLT is saved with its plan kept in its description, so the plan never passes through the model again: a
   kafka-records:1 record per Event, its value the CEF line (`kafka`), or lines of text (`text`).
 * **Review** (`pipeline_uuid`): an existing CEF pipeline is stepped over the Events streams (records spread over
@@ -4039,7 +4062,10 @@ precedence, as do a topic, vendor and pipeline template the instructions name (`
   `folders` (for standing instructions and templates); `style`; `discard_hand_edit`, `hand_edit_choices`.
 * **Returns**: `custom_keys`, `applied`, `plan` (compact, without its not-sent list), `problems`, `not_sent`
   (grouped by why, then by event type: seen, 125 entries each repeating the same reason, in results over 100 KB),
-  `documentation` (the Field mapping tables), `example_line`, `sample_check` / `sample_check_error`, `notes`,
+  `documentation` (the Field mapping tables; for a pipeline's administrators, asked for by the user, they also give
+  an example for each field the sampled lines gave none of, from the sample Events of its kind, the TypeIds each
+  event type's Events have, and below each event type the Event values not sent, with a sample of each:
+  `CefDocs`), `example_line`, `sample_check` / `sample_check_error`, `notes`,
   `templates` (forwarding templates, existing CEF pipelines with the templates they inherit from, a template the
   instructions name), `kafka_configs`, `from_standing_instructions`, `standing_instructions`, `review` and
   `plan_from` (review), `stopped_early`, `required_imports`, `saved`, `next`, `hint`. Or `needs_guidance` with the
@@ -4279,6 +4305,9 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   (with `replaces=`: `{xslt, fields, not_in_draft, hint}`, the fields the old index wrote that the draft doesn't
   cover by source, each with its source and how often the sample populates it), `warnings`, `hint`. A discovery
   draft returns `plan`, `xslt`, `rendered`, `warnings`, `hint`. An amendment returns `changed` plus the plan reply.
+  An amendment is checked against the sample the plan was drafted from, kept for the session, as a draft is:
+  `fields_not_in_sample` and `populated_paths_not_mapped` (seen: a field added by `changes=` from a path no event
+  has, and nothing said).
   Other rounds: `needs_components` (the example's components not given: `composed_of`, `given`, `missing`,
   `request`), `needs_guidance` (discovery time field), or the naming options with `drafted: false`.
 * **Refuses**: a bad `backend`; no `events_stream_ids` for an Events draft; a stream that isn't Events (a Records
@@ -4586,7 +4615,7 @@ with no searches; nothing is marked verified.
 
 ## The build layer
 
-Every tool that builds something stands on a shared layer in `stroom.mcp.impl.tools`, bound in `PortedToolsModule`.
+Every tool that builds something stands on a shared layer in `stroom.mcp.impl.tools`, bound in `BuildToolsModule`.
 A write tool makes documents with `WriteGuard`, remembers what it learned in `BuildRecords`, asks the user through
 `Consent`, and ends its result with `BuildPlan.withNext` (or `nextFor`).
 
@@ -4615,16 +4644,20 @@ with its mapping also carries `mcp-kept-mapping`.
 **`BuildRecords`**: the build's record, the Documentation doc `Build record` in its folder: a readable table, then
 fenced JSON (```` ```json build-record ````). It is `{"docs": {uuid: entry}}` with build-level `source_feeds`,
 `event_logging_version` (`version`, `how`) and `kind` (`events`, `discovery`, `reference`). An entry may hold `type`,
-`name`, `copy_of`, `version_of`, `copy_of_version` (a working copy's original's version when copied:
-`COPY_OF_VERSION`), `stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`, `sample_files` and
-`user_samples`. `recordPassed(pipeline, kind, draftCode, extra)` records a clean step (`STEPPED`), a
-passed verification (`VERIFIED`) or Events that passed `check_events` (`VALIDATED`), only for pipelines in a build. The
-digest is per element the pipeline sets its own code for: the draft stepped, else the saved XSLT or converter, never
-the version history, so a draft stepped clean is still clean once saved. `steppedClean`, `verified` and `validated`
-say whether the saved code has passed. Earlier versions kept these as explorer tags (`mcp-build-<build>`,
-`mcp-copy-of-<uuid>`, `mcp-stepped-<digest>` ...), which grew Stroom's tag list with every build and change; a build's
-old tags are folded into its record the first time it is read, then removed. Stroom refuses a save of a doc changed
-since it was read, so two writers lose nothing: the change is made again on the newer doc.
+`name`, `copy_of`, `version_of`, `copy_of_version` (a working copy's original's version when copied: `COPY_OF_VERSION`),
+`stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`, `sample_files` and `user_samples`.
+`recordPassed(pipeline, kind, draftCode, extra)` records a clean step (`STEPPED`), a passed verification (`VERIFIED`) or
+Events that passed `check_events` (`VALIDATED`), only for pipelines in a build. The digest is per element the pipeline
+sets its own code for: the draft stepped, else the saved XSLT or converter, never the version history, so a draft
+stepped clean is still clean once saved: each element's code as SHA-256, then the first 16 hex characters of the SHA-256
+of those as JSON with sorted keys (`fingerprintDigest`). The digest and the record's format stay as they are, so records
+already in Stroom read and are written back unchanged, and a clean step recorded earlier still matches its code
+(`TestBuildRecords` holds a record in that format). The record is read from the doc's body, else its Documentation tab,
+where earlier versions wrote it (`bodyText`). `steppedClean`, `verified` and `validated` say whether the saved code has
+passed. Earlier versions kept these as explorer tags (`mcp-build-<build>`, `mcp-copy-of-<uuid>`, `mcp-stepped-<digest>`
+...), which grew Stroom's tag list with every build and change; a build's old tags are folded into its record the first
+time it is read, then removed. Stroom refuses a save of a doc changed since it was read, so two writers lose nothing:
+the change is made again on the newer doc.
 
 **`Consent`**: before a change, `consent.require(call, context, Request.confirmation(action, summary, details))` (or
 `Request.approval(...)`, with `.withEditable(key, title, proposed)` for a value the user may correct in the form, and
@@ -4659,6 +4692,10 @@ the user is away from (nothing needing agreement is done unattended).
   a discovery, reference-only or CEF build, its survey, its sample's format (from the newest raw sample's head, else
   the survey; a converter isn't needed once the events pipeline reads the data with a JSON or XML parser).
   `plannedSteps(build)` leaves out what the build's kind doesn't need; `next.progress` doesn't count those.
+* A build on existing data does the events stage once it has the work for it: a translation pipeline, a survey, or a
+  translation XSLT saved from its mapping. So with such an XSLT saved, with or without a survey first, the
+  translation step is `done` and `next` is the pipeline (seen in an end-to-end run: the XSLT was saved, the plan still
+  said to choose the work, `stream_meta`, and never reached the pipeline).
 * `next` is the first step to do and **one** call that does it (`nextCall`), with the arguments the build already
   gives and `<...>` placeholders for the rest, plus `then`. One call rather than a list, because a small model given
   several options deliberated until its context ran out. The call depends on how processing stands (a filter disabled
@@ -4678,7 +4715,10 @@ the user is away from (nothing needing agreement is done unattended).
   help is told to name the build.
 
 **`CallProgress`** (`stroom-ai-impl`): `CallProgress.of(context).say(message)` for each stage of a long call, and
-`nowAndThen(message)` in its loops. A client that asked for progress shows each message; it never fails the call.
+`nowAndThen(message)` in its loops (at most every 5 seconds). There is one for the whole call, so `nowAndThen`
+counts from whatever was said last in it. Only `/mcp` sends the messages, to a client that asked for progress; it
+never fails the call. Asked for by the user: a survey of an index ran for minutes with nothing to show what it was
+doing.
 
 **Over `/mcp`** (`McpTools`, `McpApprovals`): a call that changes something is refused at once for a client that
 can't show forms. It is approved as a whole in a yes/no form (the arguments that say what it acts on first, then all of
@@ -4728,7 +4768,9 @@ fragment wrapper (`FragmentWrappers`).
   fenced JSON state block: `feed`, `format`, `time_range`, `streams_read`, `saturated`, `surveys`, `shapes`,
   `handling`) and the sampling helpers (`pickSpread`, `keep`, `hint`, `charsetEntry`, and the limits `SURVEY_STREAMS`
   10, `FEED_CHARS` 250,000, `SAMPLE_CHARS` 2,000,000, `FEED_RECORDS` 1,000, `SAMPLE_RECORDS` 10,000). Example records
-  are stored as they are; who can read them is down to the build folder's permissions, as for the feed's data.
+  are stored as they are; who can read them is down to the build folder's permissions, as for the feed's data. The
+  survey doc's format, state block included (JSON indented by one space), is stored data: a later survey carries on
+  from it, so the format changes only in ways a survey doc already kept still reads.
 * **`SampleTexts`**: what counts as sample data. A sample that is a file path, a list of paths, an attachment
   reference or a file a reader cut short (e.g. `[... truncated at 2000 characters]`) is refused with what to do
   instead, because a model that doesn't read attachments passes the path on. `samples` also takes the shapes small
@@ -4739,10 +4781,17 @@ fragment wrapper (`FragmentWrappers`).
   (delimited, regex, key_value, syslog, cef, fields), run on the sample as the generated Data Splitter would, with
   Java regexes as Data Splitter runs them; and the same converter run by Stroom's own DSParser, as the dry run differs
   from Stroom where it hasn't followed it (seen: records over the read buffer lost in processing, cells Stroom trims).
-* **`PyCsv`**, **`PyJson`**, **`XmlTree`**: delimited text (a quote opens a quoted value only at its start, a doubled
+* **`DelimitedText`**, **`ToolJson`**, **`XmlTree`**: delimited text (a quote opens a quoted value only at its start, a doubled
   quote is a quote, a value may run over lines, a sniffer guesses the delimiter and header; no field length limit),
   JSON (which texts parse, error messages with positions, writing back with non-ASCII escaped) and XML (StAX, no DTDs or
-  external entities; a document, or the complete elements before a cut-off end).
+  external entities; a document, or the complete elements before a cut-off end). `ToolJson`'s messages for text that
+  isn't JSON (`Expecting value: line 1 column 1 (char 0)`, `Invalid \escape`) are what agents are shown (a profile's
+  malformed lines, a tool argument that doesn't parse), and tests pin them. Its written forms are fixed too: the
+  compact form (`dumpsCompact`, no spaces after `,` and `:`, characters past ASCII as they are) is the JSON kept in a
+  document's description, and the sorted-keys form (`dumpsSortedKeys`) is the text of a build record's JSON and of
+  every JSON digest (build record code digests, the mapping digest of a documented Field mapping, consent
+  `review_id`s, index template reviews). A digest kept in a build record is compared with one made later, so a change
+  to that form would make clean steps and verifications look stale.
 * **`Placeholders`**: stand-ins for none (`-`, `N/A` and the like) in sample or Events values: a value that recurs in a
   field (two records or more) and is one of the usual stand-ins, or a short value of another kind in a field nearly all
   addresses, numbers, times or booleans. Seen: W3C logs' `-` for a missing address went into an Elasticsearch ip field,
@@ -4796,14 +4845,20 @@ The checks `check_xslt`, `check_events`, the translation build and the stepping 
   parser gives `string[@key='event']`) generates valid XSLT that steps clean and writes empty elements. Each record
   is rebuilt as the pipeline's parser presents it (JSONParser map/string elements, Data Splitter `records:2`, or the
   XML record) and evaluated with `LockedSaxon`. Expressions needing Stroom (`stroom:` functions) or variables are not
-  evaluated.
+  evaluated. An xpath without `repeat` that gives several values in a sample record is warned of, as the element is
+  written once with the values joined (seen: an agent dropped `repeat: true` from a mentions entry, the mentions came
+  out joined in one Data, and it took that for something the generator can't do and wrote the XSLT by hand).
 * **`LockedSaxon`**: the locked-down Saxon processor used for XPath on samples. See the safety rules below.
 * **`XmlTrees`**: reads XML text as namespace-aware DOM trees; a DOCTYPE is refused and nothing outside the text is
   loaded. `XmlTrees.XSL` is the one XSLT namespace constant.
 * **`CloseMatches`**: "did you mean" suggestions (up to 3, similarity cutoff 0.6) for `stroom:` functions,
-  event-logging elements and feed names.
+  event-logging elements and feed names. Scoring is gestalt pattern matching (twice the characters in matching
+  blocks over the total length), as Python's `difflib` computes it, autojunk included, and is kept exactly: the
+  suggestions the parity fixtures pin depend on it.
 * **`XsltVersionHistory`** and **`TranslationDescriptions`**: an XSLT's version history kept in its description, and
-  a plain account of what a translation XSLT writes from what; used by the save and documentation tools.
+  a plain account of what a translation XSLT writes from what; used by the save and documentation tools. A place in
+  a template with neither a match nor a name is described as `[None]`, the descriptions' established wording, which
+  the tests pin.
 
 ## Safety rules for XSLT, regexes and streams
 
@@ -4893,7 +4948,12 @@ pipeline would, in `stroom-ai-impl`:
   `records`, `kinds`, `notes`, `unmapped_fields` and `fields_seen`. `records` refuses an empty sample
   (`IllegalArgumentException`); `pairExtracts` and `withPairs` turn a text field's key/value pairs (found by the
   values' shape, never by names) into one extract entry a key, named in snake case. The field homes are the
-  generator's `FieldHomes`.
+  generator's `FieldHomes`. Each rule's Data carries only the remaining fields its own records hold (`held`; seen:
+  every rule given the whole rest, 23 SecretServer rules each with the same 63 Data entries, kept by the agent beside
+  the elements it then mapped them to). The notes say which field reads as each event's message, so it goes to the
+  event's Description, or, if there is none, which free-text field may be it (`descriptionNote`; seen in eval cases
+  22, 23 and 42, with neither said: the message, a CEF msg or a ticket's comment, went into a Document's Description
+  or a Data entry).
 * **`LocalCheck`**: reads the sample into records as the pipeline's parser would (`sampleRecords`: JSON keys with
   dots, Data Splitter names through the spec's dry run, XML paths by local name; a record is a map, or an
   `XmlTree.Element`) and checks a mapping against them: `checkMapping` (fields no record has, with the nearest
@@ -4902,7 +4962,24 @@ pipeline would, in `stroom-ai-impl`:
   usual stand-in such as `-`, `N/A` or `null`, or in a field of addresses, numbers, times or booleans a short
   value not of that kind), `dataNotHeld`, `requiredLeftEmpty`, `traits`, `valueOf`. A condition's `matches` and an
   extraction's regex run with Java's regex engine, as Stroom's XSLT runs them. A JSON value that isn't text (a
-  number) is read as its text.
+  number) is read as its text. Every record of the sample is read, not the first 200 (seen in production: a VPN
+  rule's keys first appeared at the 557th of 3,933 records, and the check said they matched nothing). It also
+  reports:
+  * a TypeId the same for events of different kinds (`sharedTypeIds`), as a problem, not a warning (seen as a
+    warning: two runs left TypeId the category alone, 'User' for logons, logoffs and lockouts, the warning one among
+    many);
+  * required elements a rule writes only when their inputs have a value, whose inputs are empty in its records
+    (`requiredLeftEmpty`; seen: the schema's error named the element after the one left out, read as Data in the
+    wrong place, two rounds of stepping before the Command entry got a default);
+  * Data entries reading fields none of the rule's records hold, as a warning (`dataNotHeld`; seen: a SecretServer
+    launch rule's rpc_account, target and duration_ms, in none of its records);
+  * fields mapped as they are into a user's Id whose sample values are domain-qualified, pointing to `strip_domain`
+    (`domainQualifiedIds`; seen in eval cases 35, 36 and 43: the domain kept in every Id).
+
+  Schema values (`checkSchemaValues`) are checked on what the mapping's extractions give as well as the record's own
+  fields (seen: SecretServer's fields, read from its message's key/value pairs, were never checked). Where a field's
+  values fit the schema's once lower- or upper-cased, it names the entry transform to give (`transform: lower` or
+  `upper`) rather than only saying to map the values that fit.
 * **`ActionRules`**: the action elements a sample's own values show, as rules (`actionRules`, `described`, `read`,
   `severityFields`, `networkFields`). An agent left with Unknown placeholders kept marking firewall traffic and
   administrator logons Unknown; for kinds plain from their values, the draft writes the rule, and a rule that keeps
@@ -4932,6 +5009,20 @@ xpath reading it, Data Names the style's `data_names`. `toJson(DumpMode)` writes
 (no nulls, no defaults: the form kept in a document's description), keys in the models' field order. Style numbers
 (`variable_min_reads` and the like) are longs, and a number past that is refused.
 
+A `MappingError`'s type and message come from a fixed vocabulary (`missing` / `Field required`, `string_type`,
+`literal_error`, `value_error` / `Value error, ...`), located with dots in a message (`events.0.name`) and with
+brackets in the problems the agent reads (`events[2].fields[0].path`); an exception's message starts with the count
+and the model (`1 validation error for TranslationMapping`). The agent acts on this wording, and the model fixtures
+(`model_cases.json`) pin it, so a change to it is a decision, not a fix. Reading is lax: a boolean may be `0`, `1` or
+a word such as `yes` or `off`, an integer a whole number, or a string or float holding one, and unknown keys are
+ignored. A field added to a model after mappings were first kept (`data_parent`, `join`) is written only when set,
+whatever the dump mode, so a mapping that doesn't use it is written exactly as before and every kept mapping and
+fixture still reads and compares unchanged; the reader likewise gives `data_parent` in a leaf's reading only for a
+Data inside Data. `mapping-descriptions.json` (a resource of stroom-mcp-impl, beside `MappingProblems`) holds a
+description of every key of the mapping's models (`TranslationMapping`, `EventRule`, `FieldMapping` and the rest),
+from which `MappingProblems` says what a key left out is. Nothing generates it: a key added to a model, or changed,
+needs its description added or changed there by hand.
+
 **The generator** (`XsltGenerator.generate`, with `EventTrees` and `EventNode` for each rule's element tree and the
 checks): an XSLT with the right input namespace, a template per record that picks the event kind, elements in
 schema order, times converted with `stroom:format-date`, value maps, and guards so empty inputs leave elements out.
@@ -4946,6 +5037,13 @@ would be written twice) and functions (`functions`: the prefix bound). It is bui
 `XmlComment`, `XmlInstruction`, `XmlNamespace`) and written by `XmlSerialiser`; `XmlParser` reads XML back.
 `Generated` holds `ok`, `xslt`, `problems`, `warnings`, the events summary and `requiredOnInput`.
 
+The XSLT text is stable to the byte, and the golden XSLTs pin it. The XML tree and its serialiser fix where namespace
+declarations go and which prefixes they take (`xsl`, `xs`, `xsi`, else `ns0`, `ns1`, ... per document), attribute
+order, what is escaped in attributes and text, and the two-space pretty printing; comments are wrapped at spaces,
+never breaking a word or at a hyphen (`XsltComments`); the XSLT's own functions are written in the order of their
+conversion's key (`Conversion.repr`). A change to any of these shows in every golden XSLT. The reference generator's
+XSLT is held to the same by its fixtures.
+
 What the generator checks (problems, per mapping entry, before any XSLT is returned): unknown paths with
 suggestions, disallowed constants, alternatives of a choice used together, missing required elements, unquoted
 pattern letters, an xpath reading `$name` for an extract's name (it wouldn't compile), a path from the document root
@@ -4955,8 +5053,19 @@ tools don't run or save it"), and an xpath Stroom's Saxon can't run (`StroomXPat
 functions that take a function (`fold-left`, `for-each`, `filter`, `sort` with a key) and string constructors fail to
 compile, Saxon saying they need Saxon-PE. This was checked case by case against Stroom's own Saxon (seen: `fold-left`
 with an inline function passed as valid XPath and was refused by Stroom). `XsltCompileCheck` says the same in
-Stroom's terms when the compile fails. An extraction's regex is read by `PythonRegex` for its group count, and one
-that doesn't compile (or whose repetition count is too large) is a problem.
+Stroom's terms when the compile fails. An extraction's regex is read by `PythonRegex` for its group count, in the
+syntax of Python's `re` module, not Java's: one that doesn't compile in that syntax (or whose repetition count is too
+large) is a problem, with that syntax's reason (`missing ), unterminated subpattern at position 0`). So an XPath regex
+such as `\p{L}+`, which Stroom's Saxon would run, is refused (`bad escape \p at position 0`). The helper fixtures
+(`helper_cases.json`) pin the counts and the wording; the reader counts groups the same way.
+
+A rule no record can reach is a problem too: an earlier rule's conditions take every record it could (told from the
+conditions alone, so a sample with none of a kind doesn't hide it; seen in testing: a draft's `user_logon`, for Login
+or Login Failed, kept above the agent's own `user_login` and `user_login_failed`, which then never wrote an event,
+and the documentation said "none in the sample" of them). A field a rule writes as it is both to an element and as
+Data is a warning, as a copy may be kept on purpose (seen in testing: `item_id` as View/Object/Id and as Data in 13
+SecretServer rules, the drafted Data kept beside the elements the agent mapped); a TypeId joining fields is left out
+(`EventTrees.writtenTwice`, `checkReachable`).
 
 What the generated XSLT does at run time that other tools rely on:
 
@@ -4973,13 +5082,16 @@ What the generated XSLT does at run time that other tools rely on:
 
 **Its helpers**: `XPathText` (the expression writers the reader reuses), `MappingFacts` (action homes, kept-Unknown
 rules, rooted paths, variable reads, the input namespace), `MappingCompaction` (`compactRules`, `compactPairs`,
-`grouped`), `XsltNames`, `XsltComments`, `Pairs`, `FieldHomes`, `StyledXslt` (the indexing and CEF XSLTs written in
-the translation's style, with the same helpers, so the three can't drift apart), `HandEdits` (`undone`,
-`collisions`, outline, plan fields) and `CodeDiff` (with `LineDiff`). The kept blocks are in
-`stroom.ai.impl.tools.KeptMapping` (`withMapping`, `readMapping`, `replaceSection`, `docDigest`, `withBlock`):
-compact JSON in an HTML comment after a note asking people to leave it be, because shown as it was (1,400 lines of
-JSON for one translation) it buried the Documentation tab's own text. The blocks' markers keep the name
-`stroom-mcp`, as they are part of what is stored. `XsltCode` (stroom-mcp-impl) normalises code for comparison.
+`grouped`), `XsltNames`, `XsltComments`, `Pairs`, `FieldHomes`, `StyledXslt` (the indexing and CEF XSLTs written in the
+translation's style, with the same helpers, so the three can't drift apart), `HandEdits` (`undone`, `collisions`,
+outline, plan fields) and `CodeDiff` (with `LineDiff`). The kept blocks are in `stroom.ai.impl.tools.KeptMapping`
+(`withMapping`, `readMapping`, `replaceSection`, `docDigest`, `withBlock`): compact JSON in an HTML comment after a note
+asking people to leave it be, because shown as it was (1,400 lines of JSON for one translation) it buried the
+Documentation tab's own text. A block is written as `ToolJson.dumpsCompact` writes it (no spaces after `,` or `:`,
+characters beyond ASCII as they are), the form blocks already in documents hold; `--`, which an HTML comment can't hold,
+is written `-\u002d`, which JSON reads back as `--` (it only occurs inside a string). Blocks written before as shown
+text, between `--- stroom-mcp <name> ---` markers, are still read. The blocks' markers keep the name `stroom-mcp`, as
+they are part of what is stored. `XsltCode` (stroom-mcp-impl) normalises code for comparison.
 
 **The reference generator**: `ReferenceMapping`, `ReferenceMap` and `ReferenceValue`, read and written like the
 translation mapping, and `ReferenceGenerator.generate`, writing one `<reference>` per record and map in
@@ -4998,7 +5110,12 @@ gives `mapping` (null if it doesn't validate), `reused`, `added`, `removed`, `ra
 `notes` and `lost`: what inside an event wasn't read (an `xsl:iterate`, or a variable built from its content rather
 than a `select`), which rebuild_mapping and the hand-edit gate act on. The record-number read and `stroom:log`
 calls are known and not reported as unread. An XSLT with no template matching its input is refused ("there is
-nothing to read").
+nothing to read"). The reader also knows the time conversions earlier generators wrote (a seconds' fraction
+truncated; before 2026-10-24, digits finer than a millisecond rounded rather than cut), so an XSLT saved then still
+reads as its format. A reading's maps (`XsltReading`, `RuleReading`, `LeafReading`, `SharedCall`) and the entries
+`ReadIdioms` builds have their keys in a fixed order, which the reader fixtures digest (`TestXsltReaderCases`).
+`RebuiltMapping.summary` is what rebuild_mapping reports: `entries_kept`, then `entries_new`, `entries_removed`,
+`kept_as_xpath`, `calls_imported_functions`, `not_read` and `problems` where not empty.
 
 **XPath parsing** (`XPathTreeParser`, `XPathNode`, `XPathTrees`, `XPathMatch`, `XPathFunctions`): expressions are
 parsed into trees, not split with regular expressions; a pattern and an expression are compared as trees, slots
@@ -5038,10 +5155,34 @@ translation generator (its mapping records, `XsltComments`, `StyledXslt`, `Mappi
     instruction (`ruleOf`); events no rule wrote are reported rather than dropped. `sampledEvents` reads Events
     from stepped output; `runningEvents` takes a hand-edited XSLT's own events and marks each with the rule the
     marked XSLT gave the same record's event in the same place, leaving a record unmarked where the two give
-    different numbers of events.
+    different numbers of events. How event types are grouped into sections:
+    * On what they write besides TypeId, Description and their Data, as Data is what a kind of event carries, not
+      what it is (seen with Data counted: SecretServer rules with the same Data entries, an Alert's and Process
+      ones, in one section). A rule that writes only Data (an Unknown one) is judged on its Data.
+    * Paths are compared without the side an object is on (`FieldDocs.comparedPath`: Source/Destination,
+      Before/After, AddGroups/RemoveGroups, a Network's Connect/Close; seen: a folder's create and move shared
+      nothing, each in a section of its own).
+    * Data every event type writes alike (same Name, same source) is one row of the Common fields table, and its
+      description is asked for once (seen: a Windows event's System/EventID in each of 23 SecretServer rules,
+      repeated in every table and putting them all in one section).
+
+    Extractions (each field a regex parses) are left to the XSLT, not listed, as a long list of regexes is more
+    than documentation needs; the fields they give are still named where they are read (asked for by the user). A
+    Data holding Data (`data_parent`) has its own keyed under it, as the mapping keys them. A rule kept as Unknown
+    is only one that writes Unknown: `allow_unknown` on a rule that writes an action element means nothing, so it
+    isn't listed. The events no rule wrote are counted by action element, written `{'Kind': n}`.
   * `IndexFieldDocs`: an indexing pipeline's tables (from its plan or the documents it wrote, including object
     arrays), an existing index's (from its survey), a discovery pipeline's; each field with a description, its
-    type, the path it comes from, and how often the sample populated it.
+    type, the path it comes from, and how often the sample populated it. By event type, common fields are only
+    those every event of the sample has, shown without the In sample column; a field only some events have (or read
+    from whichever action element the event has) is shown under each event type whose events have it, from
+    `summarise_streams`' shares by action (seen: `source.ip`, in 40% of the events, and the object's and folder's
+    fields shown as common to all). Each section names its events' TypeIds, most first, with each one's share of
+    all events (up to 15; seen: nothing said which kinds of event a section's fields came from). Fields the
+    sample's documents have none of are given example values from the index, shown as from the index (asked for by
+    the user). Percentages are whole numbers, a half rounded to the even number. `TestIndexFieldDocs` pins the text
+    against golden files of what is written for the same plans, documents and surveys; a change to them is a
+    decision, not a fix.
   * `DocumentationText`: the doc's shape (`titled`, `sectionLevels`, text added below an agent's section).
 * **`stroom.ai.impl.tools.cef`**:
   * `CefKeys`: ArcSight's dictionary (each key's full name, type, length, meaning), the custom slots with their
@@ -5072,15 +5213,19 @@ them in.
 
 * **`FieldPlan`**, **`PlannedField`**, **`Discovery`**: the plan. A `FieldPlan` has `backend`, `index_name`,
   `time_field`, `fields`, `drop_when`, `discovery`, `imports`, `shared`, `subobjects`, `convention`,
-  `custom_namespaces`, `style` (the XSLT style from an AGENTS doc's style section, else defaults) and `stand_ins`.
-  A `PlannedField` has `name`, `type` (`id`, `keyword`, `text`, `date`, `long`, `double`, `boolean`, `ip`, or
-  `object`), `source`, `description`, `transform` (`outcome`), `multiple`, and for a field of objects `items` and
-  `distinct_by` (written to JSON only when set, so a plan without objects is unchanged). `FieldPlan.toJson()` is
-  what Jackson writes and what is kept in an XSLT doc's description; `FieldPlan.fromJson` validates and refuses with
-  a message the agent can act on. `required()` gives the plan's problems: StreamId, EventId, the time field,
-  `@timestamp` for Elasticsearch, objects on Lucene, names starting `_` (Stroom's Elasticsearch filter drops them
-  silently), and a name that is both a value and an object while `subobjects` is true. `leafFields()` gives a field
-  of objects as its items (`users.login`), as templates and searches see them. Example plans are in
+  `custom_namespaces`, `style` (the XSLT style from an AGENTS doc's style section, else defaults) and `stand_ins`. A
+  `PlannedField` has `name`, `type` (`id`, `keyword`, `text`, `date`, `long`, `double`, `boolean`, `ip`, or `object`),
+  `source`, `description`, `transform` (`outcome`), `multiple`, and for a field of objects `items` and `distinct_by`
+  (written to JSON only when set, so a plan without objects is unchanged). `FieldPlan.toJson()` is what Jackson writes
+  and what is kept in an XSLT doc's description, field for field, so plans already kept still read: a plan's and a
+  discovery's `stand_ins` are written only when there are any, as a field's `items` and `distinct_by` are.
+  `FieldPlan.fromJson` validates with `ModelReader`, as the translation mapping does, and refuses with every error's
+  location, type and message in the same fixed wording (`Input should be a valid string`, `Field required` and the like;
+  a bad `type` lists the logical types alone, `object` only when that is what was given), which
+  `TestFieldPlanValidation` pins: an agent acts on these messages. `required()` gives the plan's problems: StreamId,
+  EventId, the time field, `@timestamp` for Elasticsearch, objects on Lucene, names starting `_` (Stroom's Elasticsearch
+  filter drops them silently), and a name that is both a value and an object while `subobjects` is true. `leafFields()`
+  gives a field of objects as its items (`users.login`), as templates and searches see them. Example plans are in
   `stroom-mcp-impl` test resources `golden/index/` (`plan.json`, `discovery-plan.json`).
 * **`FieldPlans`**: what a source means (`*` one element, `//` any between, `|` a union, split by `branches`
   outside predicates and quotes), how often a source is populated, the logical types and each backend's rendering
@@ -5092,7 +5237,9 @@ them in.
   under one element in several places (an action's Outcome, a Resource) is written by one template applied wherever
   it occurs; a field of objects by `xsl:for-each` or `xsl:for-each-group`. Stand-ins left out are passed over in each
   field's (and each item's) source. A discovery plan's XSLT copies each raw record as it is, adding `StreamId`
-  (`stroom:stream-id()`), `EventId` (`stroom:record-no()`), `@timestamp` and stream meta. 103 golden plan/XSLT pairs
+  (`stroom:stream-id()`), `EventId` (`stroom:record-no()`), `@timestamp` and stream meta; it is written from texts
+  kept as resources beside `DiscoveryXslt` (`discovery-json.xslt` and the rest), placeholders replaced in turn, and
+  the golden discovery plans pin it to the byte. 103 golden plan/XSLT pairs
   (`stroom-ai-impl` test resources `golden/indexing`) must be written to the byte (`TestFieldPlanGolden`).
 * **`PlanTemplates`**: a plan's Elasticsearch index template (`FieldPlan.elasticTemplate`), mapping a field of
   objects as its items.
@@ -5134,7 +5281,7 @@ Small classes every tool uses, so behaviour is the same everywhere. Most are in 
   way.
 * **`JsonValues`**: helpers for JSON-like maps and lists (truthiness, the maps or strings a list holds, numbers
   compared across types, deep copies, counting).
-* **`PyText`**: text handling the sample analysis depends on: Unicode `\w`, `\d`, `\s` in its regexes, only `\n`
+* **`ToolText`**: text handling the sample analysis depends on: Unicode `\w`, `\d`, `\s` in its regexes, only `\n`
   ending a line (so `$` doesn't match before a `\r`), lengths and slices in code points, and how values are written
   in messages (`repr`, `list`, float formatting). Changing it changes field documentation, CEF regexes and many
   messages.

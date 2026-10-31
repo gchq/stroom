@@ -23,7 +23,7 @@ import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSummaries;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiToolSummary;
-import stroom.mcp.impl.tools.PortedToolsModule;
+import stroom.mcp.impl.tools.BuildToolsModule;
 import stroom.test.AbstractAiIntegrationTest;
 import stroom.util.shared.UserRef;
 
@@ -157,10 +157,10 @@ class TestRealAiToolInjection extends AbstractAiIntegrationTest {
         }
     }
 
-    // The classes BuiltInToolsModule and PortedToolsModule add to the StroomTool multibinder.
+    // The classes BuiltInToolsModule and BuildToolsModule add to the StroomTool multibinder.
     private static List<String> boundToolClasses() {
         final List<String> classes = new ArrayList<>();
-        for (final Element element : Elements.getElements(new BuiltInToolsModule(), new PortedToolsModule())) {
+        for (final Element element : Elements.getElements(new BuiltInToolsModule(), new BuildToolsModule())) {
             if (element instanceof final LinkedKeyBinding<?> binding
                 && StroomTool.class.equals(binding.getKey().getTypeLiteral().getRawType())) {
                 classes.add(binding.getLinkedKey().getTypeLiteral().getRawType().getName());

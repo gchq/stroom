@@ -104,9 +104,9 @@ class StroomMcpServer {
     static final Duration DROPPED_AFTER = Duration.ofMinutes(1);
     /// How long telling one session that its tools have changed may take.
     static final Duration NOTIFY_TIMEOUT = Duration.ofSeconds(10);
-    /// What a client is told about Stroom's tools when it connects: how they run here, then the Stroom MCP
-    /// server's instructions (sent to every client at connection, so the rules hold whichever client runs the
-    /// model and whether or not it uses the prompts), as they apply to Stroom.
+    /// What a client is told about Stroom's tools when it connects: how they run here, then the server instructions
+    /// (sent to every client at connection, so the rules hold whichever client runs the model and whether or not it
+    /// uses the prompts).
     static final String INSTRUCTIONS = """
             These are Stroom's own tools. Each runs as the signed-in user, with their permissions, and only those \
             their tool policies allow are listed. A call that changes something in Stroom asks the user first. A \

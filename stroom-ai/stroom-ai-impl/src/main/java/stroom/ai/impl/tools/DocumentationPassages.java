@@ -26,9 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/// A long Documentation doc (a vendor manual, say) read where it matters rather than all at once, as the Stroom
-/// MCP server's `describe_document` reads one: its outline, or the passages that mention something, e.g. an event
-/// id.
+/// A long Documentation doc (a vendor manual, say) read where it matters rather than all at once: its outline, or
+/// the passages that mention something, e.g. an event id.
 final class DocumentationPassages {
 
     /// The most characters of passages given in one result.

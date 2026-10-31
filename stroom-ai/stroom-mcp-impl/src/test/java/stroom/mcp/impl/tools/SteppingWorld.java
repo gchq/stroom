@@ -70,9 +70,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// The stepping tools' tests' Stroom (as the Stroom MCP server's `tests/test_stepping.py` mocks it): the pipeline
-/// ACME, `p-1`, whose template `t` adds a Data Splitter, a translation XSLT and a schema filter and which sets the
-/// XSLT itself; streams stepped by a function of the stream and the step; and the build layer as mocks.
+/// The stepping tools' tests' Stroom: the pipeline ACME, `p-1`, whose template `t` adds a Data Splitter, a
+/// translation XSLT and a schema filter and which sets the XSLT itself; streams stepped by a function of the stream
+/// and the step; and the build layer as mocks.
 final class SteppingWorld {
 
     static final String UUID = "p-1";

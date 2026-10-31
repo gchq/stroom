@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.validation;
 
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
 
 import org.w3c.dom.Attr;
@@ -35,10 +35,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/// The checks of an XSLT that need no Stroom: ported from the pure helpers of the Stroom MCP server's
-/// `tools/validation.py` that `check_xslt` is made of. Each says what a model gets wrong writing pipeline content
-/// by hand: XML sent HTML-escaped, stroom: functions that don't exist, element names that select nothing for want
-/// of the input's namespace, event-logging elements the schema has no place for, and json-to-xml() unguarded.
+/// The checks of an XSLT that need no Stroom, which `check_xslt` is made of. Each says what a model gets wrong
+/// writing pipeline content by hand: XML sent HTML-escaped, stroom: functions that don't exist, element names that
+/// select nothing for want of the input's namespace, event-logging elements the schema has no place for, and
+/// json-to-xml() unguarded.
 public final class XsltChecks {
 
     /// The event-logging namespace.
@@ -321,7 +321,7 @@ public final class XsltChecks {
                         ? options.getFirst() + "/" + name + " is not in the event-logging schema" + (reason != null
                         ? ": " + reason
                         : "")
-                        : name + " is not allowed below any of " + PyText.list(options.subList(0,
+                        : name + " is not allowed below any of " + ToolText.list(options.subList(0,
                                 Math.min(4, options.size()))) + " in the event-logging schema";
                 if (!problems.contains(message)) {
                     problems.add(message);

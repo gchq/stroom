@@ -26,7 +26,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.generation.CodeDiff;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.ai.shared.AiToolCategory;
 import stroom.dashboard.shared.DashboardDoc;
@@ -65,11 +65,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// `promote_build` - promotes a build out of the workspace once the user has seen where everything goes and
-/// approved it (the Stroom MCP server's `tools/builds.py` `promote_build`, with `consolidate_versions`). New
-/// documents are moved to their destination folders, working copies written back over their originals after a
-/// backup, and feed-wide processor filters made, disabled, for the promoted pipelines: all through Stroom's
-/// explorer and stores as the user, once they approve the layout in a short form bound to it.
+/// `promote_build` - promotes a build out of the workspace once the user has seen where everything goes and approved
+/// it. New documents are moved to their destination folders, working copies written back over their originals after a
+/// backup, and feed-wide processor filters made, disabled, for the promoted pipelines: all through Stroom's explorer
+/// and stores as the user, once they approve the layout in a short form bound to it.
 class PromoteBuildTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PromoteBuildTool.class);
@@ -516,8 +515,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return found;
     }
 
-    // `_stage_or_none`: a pipeline's stage, or null for one Stroom can't load (a choice then made without it, not a
-    // failure).
+    // A pipeline's stage, or null for one Stroom can't load (a choice then made without it, not a failure).
     private String stageOrNone(final String pipelineUuid) {
         try {
             return facts.pipelineShape(pipelineUuid).stage();
@@ -821,8 +819,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                + "' (backup kept)";
     }
 
-    /// `consolidate_versions`: a build's pending changes, as one new line of each XSLT's version history and one
-    /// new row of each doc's version control: called when the build is promoted.
+    /// A build's pending changes, as one new line of each XSLT's version history and one new row of each doc's version
+    /// control: called when the build is promoted.
     ///
     /// @param docs The build's documents.
     /// @return What was recorded.
@@ -976,7 +974,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         Object value = argsMap(call).get(DESTINATIONS_ARG);
         if (value instanceof final String text && !text.isBlank()) {
             try {
-                value = PyJson.loads(text.strip());
+                value = ToolJson.loads(text.strip());
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("destinations is an object, {type or document uuid: folder}");
             }

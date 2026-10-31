@@ -35,11 +35,9 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The guides, the server instructions and every tool's description name only tools that exist, as the Stroom MCP
-/// server's test_knowledge.py checked its guides and instructions: knowledge lives in several places, and this keeps
-/// it from drifting apart from the tools. Seen when the Stroom MCP server's tools were merged into Stroom's
-/// built-in ones: hints still sent the agent to find_documents, find_streams and describe_document, which Stroom
-/// doesn't have.
+/// The guides, the server instructions and every tool's description name only tools that exist: knowledge lives in
+/// several places, and this keeps it from drifting apart from the tools. Seen in testing: hints still sent the agent
+/// to find_documents, find_streams and describe_document, which Stroom doesn't have.
 class TestBundledKnowledge {
 
     // A word that looks like a tool's name: snake_case, a known verb first.
@@ -69,7 +67,7 @@ class TestBundledKnowledge {
             "reuse_existing_docs", "accept_parser_mismatch", "build_status", "index_dropped",
             // Named in Stroom's own tools' descriptions: an argument, a state and kinds of dashboard change.
             "test_feed", "index_template", "set_expression", "set_setting", "set_vis_settings");
-    // Tools that came from the Stroom MCP server and were merged into Stroom's built-in tools.
+    // Tool names Stroom doesn't have, though hints once named them: Stroom's built-in tools do their work.
     private static final List<String> MERGED = List.of("find_documents", "describe_document", "find_streams",
             "describe_stream", "read_stream", "find_events", "describe_pipeline", "survey_index");
 
@@ -105,10 +103,10 @@ class TestBundledKnowledge {
 
     @Test
     void theBuildInstructionsKeepTheAgentWorkingWithoutAskingFirst() {
-        // The Stroom MCP server's design ("The plan lives in the server, with state"): every write's result carries
-        // next, and done false until promotion, and the instructions tell the agent to keep going; the user is asked
-        // in the server's forms, or for what only they can give, not in the chat first. The chat is given the same
-        // text as an MCP client, so the rules hold whichever runs the model.
+        // The design's "The plan lives in the tools": every write's result carries next, and done false until
+        // promotion, and the instructions tell the agent to keep going; the user is asked in the server's forms, or
+        // for what only they can give, not in the chat first. The chat is given the same text as an MCP client, so
+        // the rules hold whichever runs the model.
         final String text = String.join(" ", BundledKnowledge.serverInstructions().split("\\s+"));
         assertThat(text)
                 .contains("One tool call is never the whole job: every write tool's result carries `next`, the "

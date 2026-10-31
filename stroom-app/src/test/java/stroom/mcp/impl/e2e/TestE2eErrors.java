@@ -29,11 +29,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_errors.py`: invalid data, and how errors are resolved, accepted and documented,
-/// driving the real tools as the agent would. Covered: its parts 1 (invalid data the agent's own mapping
-/// mishandles, resolved before anything goes to the user), 2 (an inherited error the agent can't resolve, accepted
-/// as benign by the user, then reported as such by stepping, the Error streams and the documentation) and 4 (raw
-/// data that is not well-formed XML, blocking in the template's parser).
+/// Invalid data, and how errors are resolved, accepted and documented, driving the real tools as the agent would.
+/// Covered: parts 1 (invalid data the agent's own mapping mishandles, resolved before anything goes to the user), 2 (an
+/// inherited error the agent can't resolve, accepted as benign by the user, then reported as such by stepping, the
+/// Error streams and the documentation) and 4 (raw data that is not well-formed XML, blocking in the template's
+/// parser).
 ///
 /// Part 3 (invalid data for Elasticsearch: a document Elasticsearch rejects, small batches, the batch size
 /// restored) is left out: it needs an Elasticsearch cluster, which this environment hasn't got.
@@ -172,7 +172,7 @@ class TestE2eErrors extends AbstractE2eTest {
 
     @Disabled("Stroom's stepping engine on this branch (SteppingResultMapper) reports the XMLParser's fatal "
               + "SAXParseException only as the step's general error, not in the parser element's indicators, so "
-              + "both the Python server's _markers and the port's SteppingWalks.markers give it element 'pipeline' "
+              + "SteppingWalks.markers gives it element 'pipeline' "
               + "and class review ('Error in an inherited element; check whether our output causes it'). The "
               + "script ran against gchq/stroom:v7.13-beta.17, whose stepping put it on the parser element.")
     @Test

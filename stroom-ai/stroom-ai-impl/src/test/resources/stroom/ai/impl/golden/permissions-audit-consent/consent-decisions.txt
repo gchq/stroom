@@ -61,7 +61,7 @@
 - xslt_lookups (read-only, reads untrusted content): RUN in every situation
 
 ## Stand-ins for Stroom's own tools that change Stroom (e.g. the build tools)
-The built-in tools above only change the chat's own things (its workspace files, and memory, which asks about a lasting change itself), so these stand in for the ported tools.
+The built-in tools above only change the chat's own things (its workspace files, and memory, which asks about a lasting change itself), so these stand in for the build tools.
 
 ### save_xslt (changes things, doesn't confirm itself)
 - normal: RUN

@@ -36,8 +36,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
-/// build_data_splitter (the Stroom MCP server's `tools/generation.py` `build_data_splitter`, and the tool parts of
-/// `tests/test_generation.py` and `test_xml_fragments.py`; the spec, its inference and dry run are
+/// build_data_splitter, the tool (the spec, its inference and dry run are
 /// [stroom.ai.impl.tools.sample.SplitterDryRun]'s, tested with it).
 @SuppressWarnings("unchecked")
 class TestBuildDataSplitterTool {

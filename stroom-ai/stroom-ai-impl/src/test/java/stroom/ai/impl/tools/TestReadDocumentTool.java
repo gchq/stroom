@@ -145,9 +145,8 @@ class TestReadDocumentTool {
 
     @Test
     void anMcpSessionReadsDocumentsAsSaved() {
-        // Seen porting the Stroom MCP server's e2e_source_docs.py and e2e_restyle.py: over /mcp every read but a
-        // find failed, "read_document can only be used in a chat", where describe_document read the document. An
-        // MCP session has a workspace, but no tabs.
+        // Seen in end-to-end testing: over /mcp every read but a find failed, "read_document can only be used in a
+        // chat". An MCP session has a workspace, but no tabs.
         viewable.addAll(Set.of(XSLT.getUuid(), TOP.getUuid()));
         xsltContent("<xsl:stylesheet/>");
         dictionary(TOP, "1.1.1.1");
@@ -447,7 +446,7 @@ class TestReadDocumentTool {
 
     @Test
     void aClustersCredentialsAreRedacted() {
-        // As the Stroom MCP server redacted them: credentials in cluster documents are never given to the model.
+        // Credentials in cluster documents are never given to the model.
         final DocRef cluster = new DocRef("ElasticCluster", "cluster-uuid", "ES_PROD");
         node(cluster);
         viewable.add(cluster.getUuid());
@@ -467,7 +466,7 @@ class TestReadDocumentTool {
 
     @Test
     void anXsltsKeptMappingIsSummarisedAndTakenOutOfItsDescription() {
-        // Seen with the Stroom MCP server: the whole kept mapping (1,400 lines) was spilled by the client to a
+        // Seen in testing: the whole kept mapping (1,400 lines) was spilled by the client to a
         // file, which the agent read in parts and then sent back whole to regenerate the XSLT.
         viewable.add(XSLT.getUuid());
         final String description = TestKeptMapping.described("Acme VPN events");
@@ -520,8 +519,8 @@ class TestReadDocumentTool {
 
     @Test
     void anEventLoggingSchemasElementIsDescribedRatherThanTheWholeXsd() {
-        // Seen with the Stroom MCP server: the whole XSD (over 100 KB) was put in a file by the agent's client, and
-        // the agent spent twelve minutes reading it with PowerShell.
+        // Seen in testing: the whole XSD (over 100 KB) was put in a file by the agent's client, and the agent spent
+        // twelve minutes reading it with PowerShell.
         final DocRef schema = new DocRef(XmlSchemaDoc.TYPE, "schema-uuid", "event-logging v4.1.0");
         node(schema);
         viewable.add(schema.getUuid());
@@ -643,8 +642,8 @@ class TestReadDocumentTool {
 
     @Test
     void aPipelineIsGivenWithWhatItProcesses() {
-        // Seen with the Stroom MCP server: asked which feeds a pipeline acts on, an agent found its filters
-        // unreadable and searched by keyword.
+        // Seen in testing: asked which feeds a pipeline acts on, an agent found its filters unreadable and searched
+        // by keyword.
         node(PIPELINE);
         viewable.add(PIPELINE.getUuid());
         indexable(PIPELINE, Map.of("json", "{\"elements\": {}}"), null);
@@ -672,8 +671,8 @@ class TestReadDocumentTool {
 
     @Test
     void thePartsOfDescribeDocumentAreGivenForEachTypeOfDocument() {
-        // As the Stroom MCP server's describe_document combined them: a pipeline as Stroom runs it and an index's
-        // survey, neither for another type (an XSLT's translation is tested above).
+        // A pipeline as Stroom runs it and an index's survey, neither for another type (an XSLT's translation is
+        // tested above).
         final DocumentAnalyses analyses = Mockito.mock(DocumentAnalyses.class);
         Mockito.when(analyses.surveyIndex(Mockito.any(), Mockito.eq(INDEX)))
                 .thenReturn(Map.of("fields", List.of(Map.of("name", "StreamId"))));
@@ -748,7 +747,7 @@ class TestReadDocumentTool {
 
     @Test
     void anXsltWhoseKeptMappingIsGoneSaysWhy() {
-        // As the Stroom MCP server's describe_document gave it: saved with a mapping, none reads now.
+        // Saved with a mapping, none reads now.
         final DocumentAnalyses analyses = Mockito.mock(DocumentAnalyses.class);
         Mockito.when(analyses.lostMapping(Mockito.eq(XSLT), Mockito.any()))
                 .thenReturn(Optional.of("Its mapping is gone. To recover: rebuild_mapping"));

@@ -39,10 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Example values an index holds for fields the documentation's sample doesn't show, so a reader sees what kind of
-/// data each holds (asked for by the user; not in the Stroom MCP server). One search of the index the pipeline
-/// writes to, through Stroom's dashboard search as the user, bounded in time and rows; anything it can't do gives
-/// no values, as they are a nicety.
+/// Example values an index holds for fields the documentation's sample doesn't show, so a reader sees what kind of data
+/// each holds (asked for by the user). One search of the index the pipeline writes to, through Stroom's dashboard
+/// search as the user, bounded in time and rows; anything it can't do gives no values, as they are a nicety.
 class IndexValues {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexValues.class);

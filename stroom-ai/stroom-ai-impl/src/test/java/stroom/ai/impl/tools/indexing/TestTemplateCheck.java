@@ -24,7 +24,7 @@ import stroom.ai.impl.tools.indexing.ExampleTemplates.DataStream;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
 import stroom.ai.impl.tools.indexing.TemplateCheck.DocValue;
 import stroom.ai.impl.tools.indexing.TemplateMappings.NotIndexed;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,8 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// An Elasticsearch index template checked against the documents an indexing pipeline writes, read as the user
-/// pastes it, and built from the user's example: ported from the Stroom MCP server's `tests/test_templatecheck.py`,
-/// case by case (its pure cases; those of the tools come with the tools).
+/// pastes it, and built from the user's example (the pure cases; those of the tools come with the tools).
 class TestTemplateCheck {
 
     private static final EcsSchema ECS = IndexingFixtures.ECS;
@@ -212,11 +211,11 @@ class TestTemplateCheck {
     @Test
     void templatesAreReadAsUsersPasteThem() {
         final Map<String, Object> body = template(GOOD, "false", "ecs-acme-v2*");
-        assertThat(IndexTemplates.parseTemplate("PUT _index_template/ecs-acme\n" + PyJson.dumps(body)))
+        assertThat(IndexTemplates.parseTemplate("PUT _index_template/ecs-acme\n" + ToolJson.dumps(body)))
                 .isEqualTo(new NamedTemplate("ecs-acme", body));
         final Map<String, Object> got = Map.of("index_templates", List.of(Map.of("name", "x", "index_template",
                 body)));
-        assertThat(IndexTemplates.parseTemplate(PyJson.dumps(got))).isEqualTo(new NamedTemplate("x", body));
+        assertThat(IndexTemplates.parseTemplate(ToolJson.dumps(got))).isEqualTo(new NamedTemplate("x", body));
         assertThatThrownBy(() -> IndexTemplates.parseTemplate("PUT _index_template/x\n{oops"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not valid JSON");
@@ -272,7 +271,7 @@ class TestTemplateCheck {
         final NamedTemplate read = IndexTemplates.parseTemplate(
                 "{\"ecs-keyfob-v1-000001\": {\"mappings\": {\"properties\": {\"a\": {\"type\": \"keyword\"}}}}}");
         assertThat(read.name()).isEqualTo("ecs-keyfob-v1-000001");
-        assertThat(PyJson.dumps(read.body()))
+        assertThat(ToolJson.dumps(read.body()))
                 .isEqualTo("{\"template\": {\"mappings\": {\"properties\": {\"a\": {\"type\": \"keyword\"}}}}}");
         assertThat(strings(TemplateCheck.compare(read.body(), List.of(), "ecs-acme-v2", ECS), "notes").getFirst())
                 .startsWith("a mapping, not an index template");
@@ -301,7 +300,7 @@ class TestTemplateCheck {
         assertThat(fields.get("user.name")).isEqualTo(Map.of("type", "keyword", "ignore_above", 1024L));
         assertThat(fields.get("event.created")).isEqualTo(Map.of("type", "date", "format",
                 "strict_date_optional_time"));
-        assertThat(PyJson.dumps(fields.get("message")))
+        assertThat(ToolJson.dumps(fields.get("message")))
                 .isEqualTo("{\"type\": \"text\", \"fields\": {\"keyword\": {\"type\": \"keyword\"}}}");
         assertThat(built.notes()).anyMatch(n -> n.contains("mapped in the example's style for their type")
                                                 && n.contains("user.name"));
@@ -367,14 +366,14 @@ class TestTemplateCheck {
         final Built built = fromExample(planTemplate(named.fields()), IndexingFixtures.json(KEYFOB), base);
         final Map<String, Object> properties = JsonValues.map(TemplateMappings.mappingsOf(built.body())
                 .get("properties"));
-        assertThat(PyJson.dumps(properties.get("User"))).isEqualTo(
+        assertThat(ToolJson.dumps(properties.get("User"))).isEqualTo(
                 "{\"type\": \"object\", \"properties\": {\"Id\": {\"type\": \"keyword\", \"ignore_above\": 512}}}");
         assertThat(properties.get("TypeId")).isEqualTo(Map.of("type", "keyword", "ignore_above", 512L));
-        assertThat(PyJson.dumps(properties.get("Outcome"))).isEqualTo(
+        assertThat(ToolJson.dumps(properties.get("Outcome"))).isEqualTo(
                 "{\"type\": \"object\", \"dynamic\": false, \"properties\": {\"Success\": {\"type\": \"boolean\"}}}");
         // A new object, declared as the example declares its objects; a new keyword in the example's keyword
         // style.
-        assertThat(PyJson.dumps(properties.get("Client")))
+        assertThat(ToolJson.dumps(properties.get("Client")))
                 .isEqualTo("{\"type\": \"object\", \"properties\": {\"IPAddress\": {\"type\": \"ip\"}}}");
         assertThat(properties.get("Description")).isEqualTo(Map.of("type", "text"));
         assertThat(properties).doesNotContainKeys("Keyfob", "StreamId");
@@ -499,7 +498,7 @@ class TestTemplateCheck {
                 .get("body"));
         final Built built = fromExample(planned, example, Map.of());
         // The target's type, not an alias.
-        assertThat(PyJson.dumps(TemplateMappings.readMappingFields(built.body()).get("User.Id")))
+        assertThat(ToolJson.dumps(TemplateMappings.readMappingFields(built.body()).get("User.Id")))
                 .isEqualTo("{\"type\": \"text\", \"fields\": {\"keyword\": {\"type\": \"keyword\"}}}");
         assertThat(built.notes()).anyMatch(n -> n.contains("aliases in the example, but written by this pipeline")
                                                 && n.contains("User.Id"));
@@ -703,7 +702,7 @@ class TestTemplateCheck {
 
     @Test
     void aDevToolsRequestOnOneLineIsRead() {
-        // Seen in Ask Stroom AI: the server's own dev_tools given on one line, refused as not JSON.
+        // Seen in Ask Stroom AI: the template tool's own dev_tools given on one line, refused as not JSON.
         final String body = "{\"index_patterns\": [\"stroom-twitter-onboard-test*\"], \"template\": {\"mappings\": "
                             + "{}}}";
         for (final String text : List.of("PUT _index_template/stroom-twitter-onboard-test " + body,
@@ -711,7 +710,7 @@ class TestTemplateCheck {
                 "PUT /_index_template/stroom-twitter-onboard-test?pretty\n" + body)) {
             final NamedTemplate read = IndexTemplates.parseTemplate(text);
             assertThat(read.name()).isEqualTo("stroom-twitter-onboard-test");
-            assertThat(PyJson.dumps(read.body())).isEqualTo(body);
+            assertThat(ToolJson.dumps(read.body())).isEqualTo(body);
         }
         assertThat(IndexTemplates.parseComponentTemplates(List.of("PUT _component_template/acme {\"template\": {}}")))
                 .isEqualTo(Map.of("acme", Map.of("template", Map.of())));
@@ -729,13 +728,13 @@ class TestTemplateCheck {
                               + "\n# GET _component_template/org-ilm 200 OK\n{\"component_templates\": [{\"name\": "
                               + "\"org-ilm\", \"component_template\": {\"template\": {\"settings\": {}}}}]}";
         assertThat(IndexTemplates.parseComponentTemplates(List.of(kibana))).containsOnlyKeys("ecs-base", "org-ilm");
-        assertThat(PyJson.dumps(IndexTemplates.parseComponentTemplates(List.of(Map.of("component_templates",
-                List.of(PyJson.loads(got)))))))
+        assertThat(ToolJson.dumps(IndexTemplates.parseComponentTemplates(List.of(Map.of("component_templates",
+                List.of(ToolJson.loads(got)))))))
                 .isEqualTo("{\"ecs-base\": " + base + "}");
-        assertThat(PyJson.dumps(IndexTemplates.parseComponentTemplates(List.of(PyJson.dumps(
+        assertThat(ToolJson.dumps(IndexTemplates.parseComponentTemplates(List.of(ToolJson.dumps(
                 "PUT _component_template/ecs-base\n" + base)))))
                 .isEqualTo("{\"ecs-base\": " + base + "}");
-        assertThat(PyJson.dumps(IndexTemplates.parseComponentTemplates(List.of(PyJson.loads(got),
+        assertThat(ToolJson.dumps(IndexTemplates.parseComponentTemplates(List.of(ToolJson.loads(got),
                 "PUT _component_template/b {}\nPUT _component_template/c {}"))))
                 .isEqualTo("{\"ecs-base\": " + base + ", \"b\": {}, \"c\": {}}");
     }

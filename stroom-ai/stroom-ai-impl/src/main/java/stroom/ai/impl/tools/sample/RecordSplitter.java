@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,9 +27,9 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /// Splits the start of one stream part into records, using the same detection as the profile of a sample
-/// ([SampleProfiler]): the Stroom MCP server's `survey.split_records`. Each record comes with its structured view
-/// where the format has one (a JSON record's flattened fields, an XML record's leaf texts and attributes, a
-/// delimited row's columns, a key=value line's pairs), which [Shapes] signs it by.
+/// ([SampleProfiler]). Each record comes with its structured view where the format has one (a JSON record's flattened
+/// fields, an XML record's leaf texts and attributes, a delimited row's columns, a key=value line's pairs), which
+/// [Shapes] signs it by.
 ///
 /// The records are the items of a JSON array (or of the array one JSON object wraps them in), XML fragments
 /// (several root elements, one `<Event>` a line, each keeping its namespace), the children of an XML document's
@@ -58,7 +58,7 @@ public final class RecordSplitter {
     /// Text of no format known, a line a record.
     public static final String UNKNOWN_TEXT = SampleProfiler.UNKNOWN_TEXT;
 
-    private static final Pattern NAMESPACE_DECLARATION = PyText.re("\\s+xmlns(:\\w+)?=\"[^\"]*\"");
+    private static final Pattern NAMESPACE_DECLARATION = ToolText.re("\\s+xmlns(:\\w+)?=\"[^\"]*\"");
 
     private RecordSplitter() {
         // Static methods only.
@@ -78,10 +78,10 @@ public final class RecordSplitter {
     /// @param maxRecords The most records to return.
     /// @param truncated  True if only the start of the part was read: a cut-off last record is dropped.
     /// @return Its records.
-    /// @throws RuntimeException where the Python splitter raised (a JSON line that doesn't parse among JSON lines,
-    /// say): the caller says it couldn't split the part.
+    /// @throws RuntimeException if the part can't be split (a JSON line that doesn't parse among JSON lines, say):
+    /// the caller says it couldn't split the part.
     public static Chunk split(final String text, final int maxRecords, final boolean truncated) {
-        final String trimmed = PyText.lstrip(text, "﻿\r\n ");
+        final String trimmed = ToolText.lstrip(text, "﻿\r\n ");
         final String head = trimmed.isEmpty()
                 ? ""
                 : trimmed.substring(0, 1);
@@ -89,7 +89,7 @@ public final class RecordSplitter {
             return jsonArray(trimmed, maxRecords);
         }
         if ("{".equals(head)) {
-            final Map.Entry<String, List<Object>> wrapped = SampleProfiler.wrappedRecords(PyText.rstrip(trimmed));
+            final Map.Entry<String, List<Object>> wrapped = SampleProfiler.wrappedRecords(ToolText.rstrip(trimmed));
             if (wrapped != null) {
                 // One object wrapping the records (CloudTrail's Records): its items are the records.
                 final List<Object> items = wrapped.getValue().subList(0, Math.min(maxRecords,
@@ -97,20 +97,20 @@ public final class RecordSplitter {
                 final List<String> records = new ArrayList<>();
                 final List<Map<String, Object>> parsed = new ArrayList<>();
                 items.forEach(item -> {
-                    records.add(PyJson.dumps(item));
+                    records.add(ToolJson.dumps(item));
                     parsed.add(SampleProfiler.flatten(item));
                 });
                 return new Chunk(JSON_OBJECT, records, parsed, null, null, List.of());
             }
         }
-        if ("<".equals(head) && !PyText.match(SampleProfiler.SYSLOG_5424, trimmed)
-            && !PyText.match(SampleProfiler.SYSLOG_3164, trimmed)) {
+        if ("<".equals(head) && !ToolText.match(SampleProfiler.SYSLOG_5424, trimmed)
+            && !ToolText.match(SampleProfiler.SYSLOG_3164, trimmed)) {
             final Chunk chunk = xmlRecords(trimmed, maxRecords);
             if (chunk != null) {
                 return chunk;
             }
         }
-        List<String> lines = PyText.nonBlankLines(trimmed);
+        List<String> lines = ToolText.nonBlankLines(trimmed);
         if (truncated && !lines.isEmpty() && !trimmed.endsWith("\n") && !trimmed.endsWith("\r")) {
             lines = lines.subList(0, lines.size() - 1);
         }
@@ -152,7 +152,7 @@ public final class RecordSplitter {
         }
         if (JSON_LINES.equals(format)) {
             final List<Map<String, Object>> parsed = new ArrayList<>();
-            first.forEach(line -> parsed.add(SampleProfiler.flatten(PyJson.loads(line))));
+            first.forEach(line -> parsed.add(SampleProfiler.flatten(ToolJson.loads(line))));
             return new Chunk(format, first, parsed, null, null, List.of());
         }
         if (SampleProfiler.SYSLOG_3164_FORMAT.equals(format) || SampleProfiler.SYSLOG_5424_FORMAT.equals(format)) {
@@ -217,9 +217,10 @@ public final class RecordSplitter {
         final String delimiter = (String) info.getOrDefault("delimiter", ",");
         final List<List<String>> rows = new ArrayList<>();
         if (delimiter.length() > 1) {
-            records.forEach(line -> rows.add(PyText.split(line, delimiter)));
+            records.forEach(line -> rows.add(ToolText.split(line, delimiter)));
         } else {
-            rows.addAll(PyCsv.read(String.join("\n", records), PyCsv.Dialect.delimitedBy(delimiter.charAt(0))));
+            rows.addAll(DelimitedText.read(String.join("\n", records),
+                    DelimitedText.Dialect.delimitedBy(delimiter.charAt(0))));
         }
         final List<String> columns = JsonValues.strings(info.get("columns"));
         final List<Map<String, Object>> parsed = new ArrayList<>();
@@ -249,15 +250,15 @@ public final class RecordSplitter {
             if (i >= text.length() || text.charAt(i) == ']') {
                 break;
             }
-            final PyJson.Decoded decoded;
+            final ToolJson.Decoded decoded;
             try {
-                decoded = PyJson.rawDecode(text, i);
-            } catch (final PyJson.JsonDecodeException e) {
+                decoded = ToolJson.rawDecode(text, i);
+            } catch (final ToolJson.JsonDecodeException e) {
                 break;
             }
             i = decoded.end();
             if (decoded.value() instanceof Map) {
-                records.add(PyJson.dumps(decoded.value()));
+                records.add(ToolJson.dumps(decoded.value()));
                 parsed.add(SampleProfiler.flatten(decoded.value()));
             }
         }
@@ -268,7 +269,7 @@ public final class RecordSplitter {
     // (several root elements, one <Event> per line), the complete fragments themselves.
     private static Chunk xmlRecords(final String text, final int maxRecords) {
         final List<XmlTree.Element> fragments = XmlTree.pull("<fragments>"
-                                                             + PyText.subFirst(SampleProfiler.XML_DECL, "", text)
+                                                             + ToolText.subFirst(SampleProfiler.XML_DECL, "", text)
                                                              + "</fragments>", maxRecords).records();
         if (fragments.size() > 1) {
             // A fragment's own namespace is kept in its text: seen in Ask Stroom AI, Windows events shown without
@@ -301,7 +302,7 @@ public final class RecordSplitter {
     private static String xmlText(final XmlTree.Element node) {
         final String text = XmlTree.toText(node);
         return node.hasNamespaces()
-                ? PyText.subFirst(NAMESPACE_DECLARATION, "", text)
+                ? ToolText.subFirst(NAMESPACE_DECLARATION, "", text)
                 : text;
     }
 
@@ -311,8 +312,8 @@ public final class RecordSplitter {
             for (final XmlTree.Attribute attribute : element.attributes) {
                 out.put(element.localName + "@" + attribute.clarkName(), attribute.value());
             }
-            if (element.isLeaf() && !PyText.isBlank(element.text())) {
-                out.put(element.localName, PyText.strip(element.text()));
+            if (element.isLeaf() && !ToolText.isBlank(element.text())) {
+                out.put(element.localName, ToolText.strip(element.text()));
             }
         }
         return out;
@@ -323,7 +324,7 @@ public final class RecordSplitter {
     /// @return The columns that name the kind of event: those named so (action, event_type...), or else those of few
     /// values that each come up often and hold no digits.
     static List<String> namingColumns(final List<String> columns, final List<Map<String, Object>> rows) {
-        final List<String> named = columns.stream().filter(column -> PyText.search(Shapes.NAMING, column)).toList();
+        final List<String> named = columns.stream().filter(column -> ToolText.search(Shapes.NAMING, column)).toList();
         if (!named.isEmpty() || rows.isEmpty()) {
             return named;
         }
@@ -338,7 +339,7 @@ public final class RecordSplitter {
             });
             final List<Object> distinct = values.stream().distinct().toList();
             if (distinct.size() >= 2 && distinct.size() <= 8 && values.size() >= 4 * distinct.size()
-                && distinct.stream().noneMatch(v -> PyText.fullmatch(Shapes.TOKEN_WITH_DIGIT, PyText.str(v)))) {
+                && distinct.stream().noneMatch(v -> ToolText.fullmatch(Shapes.TOKEN_WITH_DIGIT, ToolText.str(v)))) {
                 out.add(column);
             }
         }
@@ -348,7 +349,7 @@ public final class RecordSplitter {
     /// @param text A text.
     /// @return The non-blank lines of a text.
     public static List<String> lines(final String text) {
-        return PyText.nonBlankLines(text);
+        return ToolText.nonBlankLines(text);
     }
 
 

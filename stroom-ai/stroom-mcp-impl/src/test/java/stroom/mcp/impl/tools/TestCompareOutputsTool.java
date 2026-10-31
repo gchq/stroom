@@ -36,8 +36,7 @@ import java.util.function.BiFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
-/// compare_outputs, and the stepping of records spread over streams it is made of (the Stroom MCP server's
-/// `tests/test_stepping.py` and `tests/test_progress.py`, their step_spread cases).
+/// compare_outputs, and the stepping of records spread over streams it is made of.
 class TestCompareOutputsTool {
 
     private final SteppingWorld world = new SteppingWorld();
@@ -220,14 +219,14 @@ class TestCompareOutputsTool {
     }
 
     private Map<String, Object> compare(final String arguments) {
-        final ToolResult result = tool().execute(PortedToolCalls.call(CompareOutputsTool.NAME, arguments),
+        final ToolResult result = tool().execute(BuildToolCalls.call(CompareOutputsTool.NAME, arguments),
                 world.context());
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final String arguments) {
-        final ToolResult result = tool().execute(PortedToolCalls.call(CompareOutputsTool.NAME, arguments),
+        final ToolResult result = tool().execute(BuildToolCalls.call(CompareOutputsTool.NAME, arguments),
                 world.context());
         assertThat(result.isError()).isTrue();
         return result.text();

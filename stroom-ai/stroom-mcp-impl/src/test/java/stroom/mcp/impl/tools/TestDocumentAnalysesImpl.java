@@ -34,8 +34,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// What read_document gives of an index doc and an XSLT from the ported helpers, as the Stroom MCP server's
-/// describe_document gave them.
+/// What read_document gives of an index doc and an XSLT from the analysis helpers.
 class TestDocumentAnalysesImpl {
 
     private static final DocRef INDEX = new DocRef(ElasticIndexDoc.TYPE, "i", "Acme index");

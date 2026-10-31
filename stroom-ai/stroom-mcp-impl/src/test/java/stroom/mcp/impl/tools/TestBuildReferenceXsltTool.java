@@ -18,7 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -30,9 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// build_reference_xslt (the Stroom MCP server's `tools/generation.py` `build_reference_xslt`, its case in
-/// `tests/test_required_imports.py`; the XSLT itself is [stroom.ai.impl.tools.generation.ReferenceGenerator]'s,
-/// tested with it).
+/// build_reference_xslt, the tool (the XSLT itself is [stroom.ai.impl.tools.generation.ReferenceGenerator]'s, tested
+/// with it).
 class TestBuildReferenceXsltTool {
 
     private static final Map<String, Object> MAPPING = Map.of("input", "json", "maps", List.of(Map.of(
@@ -52,7 +51,7 @@ class TestBuildReferenceXsltTool {
 
         assertThat((String) built.get("xslt")).contains("<xsl:import href=\"Ref-Common-V1\"/>");
         assertThat((List<?>) built.get("required_imports")).singleElement().satisfies(note ->
-                assertThat(PyJson.dumps(note)).contains("\"import\": \"Ref-Common-V1\"")
+                assertThat(ToolJson.dumps(note)).contains("\"import\": \"Ref-Common-V1\"")
                         .contains("\"required_by\": \"the AGENTS doc in (root)\""));
         // Asked for the reference stage of the build's folder.
         Mockito.verify(world.agentInstructions).importsRequired(any(), eq(InstructionRules.REFERENCE),

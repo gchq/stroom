@@ -57,9 +57,8 @@ import javax.xml.validation.Schema;
 
 /// The XML Schemas this Stroom holds (its XMLSchema documents), as the user may read them, and validation against
 /// them, as Stroom's schema filter validates: each schema is found by its system id (e.g.
-/// `file://event-logging-v4.1.0.xsd`) and compiled and cached by Stroom's schema pool. Ported from the Stroom MCP
-/// server's `utils/schemas.py` (`SchemaCache`), with what the checks need of `tools/generation.py`: the
-/// event-logging versions held, and the schema model of a version ([EventSchema]).
+/// `file://event-logging-v4.1.0.xsd`) and compiled and cached by Stroom's schema pool. It also gives what the
+/// checks need: the event-logging versions held, and the schema model of a version ([EventSchema]).
 ///
 /// Stroom resolves an XML document's xsi:schemaLocation against its XMLSchema documents by system id, so doing the
 /// same here validates against exactly what the instance has installed. Only schemas the user can view are held
@@ -156,7 +155,7 @@ public class HeldSchemas {
                 .toList());
     }
 
-    /// As `tools/generation.py`'s `event_versions`.
+    /// The event-logging versions this Stroom holds.
     ///
     /// @return The event-logging versions this Stroom holds, newest first.
     /// @throws ToolRefusal if it holds none.
@@ -168,8 +167,7 @@ public class HeldSchemas {
         return versions;
     }
 
-    /// The event-logging version to read the schema of where nothing names one, as `tools/generation.py`'s
-    /// `chosen_or_latest`.
+    /// The event-logging version to read the schema of where nothing names one.
     ///
     /// @param chosen The version the user chose for the build, or null if none was chosen.
     /// @return It, else the newest this Stroom holds.
@@ -180,8 +178,7 @@ public class HeldSchemas {
                 : eventVersions().getFirst();
     }
 
-    /// The event-logging version an existing translation targets, as `tools/generation.py`'s
-    /// `translation_version`.
+    /// The event-logging version an existing translation targets.
     ///
     /// @param keptVersion The `schema_version` kept with its mapping, or null.
     /// @param code        Its code, or null.
@@ -261,7 +258,7 @@ public class HeldSchemas {
         return NullSafe.string(document(systemId).getData());
     }
 
-    /// As `tools/generation.py`'s `event_schema`.
+    /// The model of an event-logging version's schema.
     ///
     /// @param version An event-logging version, e.g. `4.1.0`.
     /// @return The model of what its schema allows.
@@ -391,7 +388,7 @@ public class HeldSchemas {
         return found;
     }
 
-    // As Python compares tuples (and lists) of numbers.
+    // Number by number; where one runs out first, the shorter is the lesser.
     private static int compareNumbers(final List<Integer> a, final List<Integer> b) {
         for (int i = 0; i < Math.min(a.size(), b.size()); i++) {
             final int compared = Integer.compare(a.get(i), b.get(i));

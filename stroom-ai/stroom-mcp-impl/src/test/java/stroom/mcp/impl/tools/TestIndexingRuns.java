@@ -34,8 +34,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What indexing a build's sample needs of its index (the Stroom MCP server's `tests/test_processing.py`, its
-/// cases for `_fresh_index`, `drop_request` and `development_batch`).
+/// What indexing a build's sample needs of its index: when it is dropped first, and the batch size while the
+/// pipeline is developed.
 class TestIndexingRuns {
 
     private ProcessingWorld w;

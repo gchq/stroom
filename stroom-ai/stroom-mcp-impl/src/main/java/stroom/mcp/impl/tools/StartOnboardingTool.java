@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -30,6 +29,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSchema.StringSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.shared.AiToolCategory;
 import stroom.security.shared.DocumentPermission;
@@ -44,10 +44,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-/// `start_onboarding` - starts onboarding a source: profiles every sample file, creates the build, and returns
-/// the plan with its first step and the standing instructions that apply (the Stroom MCP server's
-/// `tools/plan.py` `start_onboarding`). It creates only the build's folder (and the workspace folder, the first
-/// time), as the user, through [WriteGuard].
+/// `start_onboarding` - starts onboarding a source: profiles every sample file, creates the build, and returns the plan
+/// with its first step and the standing instructions that apply. It creates only the build's folder (and the workspace
+/// folder, the first time), as the user, through [WriteGuard].
 class StartOnboardingTool extends AbstractBuiltInTool {
 
     static final String NAME = "start_onboarding";
@@ -175,7 +174,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
             final String build = buildName(sourceName, stringArg(call, BUILD_ARG));
             final String kind = stringArg(call, KIND_ARG);
             if (kind != null && !BuildRecords.BUILD_KINDS.contains(kind)) {
-                return JsonResults.refused("kind is one of " + PyText.list(BuildRecords.BUILD_KINDS) + ", not '"
+                return JsonResults.refused("kind is one of " + ToolText.list(BuildRecords.BUILD_KINDS) + ", not '"
                                            + kind + "'");
             }
             if (!files.isEmpty() && samples == null && streamIds.isEmpty()) {
@@ -287,7 +286,7 @@ class StartOnboardingTool extends AbstractBuiltInTool {
                 ? firstStep(build, steps)
                 : plan.nextStep(build, null).orElseGet(() -> firstStep(build, steps)));
         result.put("then", List.of(
-                "upload_sample feed=<the feed> files=" + PyText.list(files) + ": run each command it "
+                "upload_sample feed=<the feed> files=" + ToolText.list(files) + ": run each command it "
                 + "gives in the user's terminal; each prints the stream_id",
                 "start_onboarding source_name='" + sourceName + "' build='" + build + "' stream_ids=<those stream "
                 + "ids>: it profiles the uploaded files (format, fields, parser, template, converter) and says what "

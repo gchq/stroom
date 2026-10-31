@@ -24,13 +24,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /// A translation mapping: which input field (or constant) goes to which event-logging path, per kind of event,
-/// from which [XsltGenerator] writes the translation XSLT. Ported from the Stroom MCP server's `TranslationMapping`
-/// model; its JSON is the server's, field for field (it is kept in the XSLT doc's description), so a mapping saved by
-/// either reads in the other.
+/// from which [XsltGenerator] writes the translation XSLT. Its JSON is kept in the XSLT doc's description, so its
+/// form must stay readable: a mapping saved by any earlier save still reads.
 ///
-/// Read with [#fromJson(Map)], which validates it as pydantic does (with pydantic's messages, which the agent is
-/// shown), and turns its pairs into extract entries, each rule's data list into Data entries, a meta entry into the
-/// xpath reading it, and Data Names into the style's `data_names`. Written with [#toJson(DumpMode)].
+/// Read with [#fromJson(Map)], which validates it (with the [MappingError] wording the agent is shown and the model
+/// fixtures pin), and turns its pairs into extract entries, each rule's data list into Data entries, a meta entry into
+/// the xpath reading it, and Data Names into the style's `data_names`. Written with [#toJson(DumpMode)].
 ///
 /// @param input        What the XSLT reads: `data_splitter`, `json`, `xml` or `xml_fragments`.
 /// @param root         Root element to match, or null for the input's default.
@@ -96,21 +95,21 @@ public record TranslationMapping(String input,
 
     /// @param json A mapping as JSON-like values (maps, lists, strings, numbers, booleans and nulls), e.g. as
     ///             kept in an XSLT doc's description.
-    /// @return It validated, as the Python model validates it.
-    /// @throws MappingValidationException if it doesn't validate, with every error pydantic would give.
+    /// @return It validated, with the model's own checks.
+    /// @throws MappingValidationException if it doesn't validate, with every error found.
     public static TranslationMapping fromJson(final Map<String, Object> json) {
         return parse(json);
     }
 
     /// @param json A mapping as JSON-like values, which may be anything (an error says what it should be).
-    /// @return It validated, as the Python model validates it.
-    /// @throws MappingValidationException if it doesn't validate, with every error pydantic would give.
+    /// @return It validated, with the model's own checks.
+    /// @throws MappingValidationException if it doesn't validate, with every error found.
     public static TranslationMapping parse(final Object json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("TranslationMapping", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -205,7 +204,7 @@ public record TranslationMapping(String input,
                 .toList();
     }
 
-    // The Data an entry is written in (data_parent, not in the Python model) named in the style too, as its own.
+    // The Data an entry is written in (data_parent) named in the style too, as its own.
     private FieldMapping parentInStyle(final FieldMapping entry) {
         if (entry.dataParent() == null) {
             return entry;
@@ -231,8 +230,8 @@ public record TranslationMapping(String input,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it; [DumpMode#COMPACT] is the form kept in a
-    /// document's description.
+    /// @return It as JSON, as the mode says, keys in the model's field order; [DumpMode#COMPACT] is the form kept in
+    /// a document's description.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("input", input, null)

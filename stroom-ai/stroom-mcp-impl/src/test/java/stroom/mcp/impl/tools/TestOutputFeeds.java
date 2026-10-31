@@ -31,8 +31,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The build's test feed (the Stroom MCP server's `tests/test_processing.py`, its cases for `output_feed` and
-/// `restore_output_feed`).
+/// The build's test feed: made and set on the stream appender, and taken off it at promotion.
 class TestOutputFeeds {
 
     private static final DocRef P1 = ProcessingWorld.P1;

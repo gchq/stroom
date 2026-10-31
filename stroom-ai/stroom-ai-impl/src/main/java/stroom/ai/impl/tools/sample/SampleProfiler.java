@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.IpAddresses;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,10 +33,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Profiles a raw data sample: its format, structure, fields, value types and timestamp patterns, and how Stroom
-/// reads it (the parser, any text converter, what the XSLT then reads). The Stroom MCP server's
-/// `utils/profile.py`.
+/// reads it (the parser, any text converter, what the XSLT then reads).
 ///
-/// A profile is JSON, as the Python server gave it: `characters`, `lines`, `format` (`xml`, `xml fragments`,
+/// A profile is JSON: `characters`, `lines`, `format` (`xml`, `xml fragments`,
 /// `json array`, `json object`, `json lines`, `delimited`, `cef`, `syslog rfc5424`, `syslog rfc3164`, `cri`,
 /// `multi-line text`, `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate`, `type` and
 /// `examples`), `suggested_parser`, and what the format needs (`text_converter`, `parser_properties`,
@@ -71,14 +70,14 @@ public final class SampleProfiler {
     public static final String UNKNOWN_TEXT = "unknown text";
 
     /// The start of an RFC 5424 syslog line.
-    public static final Pattern SYSLOG_5424 = PyText.re("^<\\d{1,3}>1 \\S+ \\S+ \\S+ \\S+ \\S+");
+    public static final Pattern SYSLOG_5424 = ToolText.re("^<\\d{1,3}>1 \\S+ \\S+ \\S+ \\S+ \\S+");
     /// The start of an RFC 3164 syslog line.
-    public static final Pattern SYSLOG_3164 = PyText.re(
+    public static final Pattern SYSLOG_3164 = ToolText.re(
             "^(<\\d{1,3}>)?[A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} \\S+ ");
     /// A key=value pair.
-    public static final Pattern KEY_VALUE = PyText.re("(\\w[\\w.-]*)=(\"[^\"]*\"|\\S*)");
+    public static final Pattern KEY_VALUE = ToolText.re("(\\w[\\w.-]*)=(\"[^\"]*\"|\\S*)");
     /// The start of a CEF record.
-    public static final Pattern CEF = PyText.re("CEF:\\d+\\|");
+    public static final Pattern CEF = ToolText.re("CEF:\\d+\\|");
     /// Lines read when looking for those that aren't what the rest are (a JSON line cut short, a row short of a
     /// column).
     public static final int MALFORMED_SCAN = 5000;
@@ -121,28 +120,28 @@ public final class SampleProfiler {
             "\\[\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}", "[A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}",
             "\\d{2}/[A-Z][a-z]{2}/\\d{4}:\\d{2}:\\d{2}:\\d{2}", "\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}:\\d{2}");
 
-    static final Pattern XML_DECL = PyText.re("^\\s*<\\?xml[^>]*\\?>");
+    static final Pattern XML_DECL = ToolText.re("^\\s*<\\?xml[^>]*\\?>");
 
     private static final String XML_PARSER = "XMLParser (a translation template with one: find_pipeline_templates)";
     private static final String XML_TEXT_CONVERTER = "none: the XMLParser reads the document";
     private static final String JSON_PARSER = "JSONParser (a translation template with one: find_pipeline_templates)";
-    private static final Pattern COMMENT = PyText.re("<!--.*?-->", Pattern.DOTALL);
-    private static final Pattern WRAPPER_ROOT = PyText.re("<([A-Za-z_][\\w.-]*)(\\s[^>]*)?>\\s*&fragment;");
-    private static final Pattern WRAPPER_NS = PyText.re("\\sxmlns\\s*=\\s*[\"']([^\"']*)[\"']");
-    private static final Pattern DOCTYPE = PyText.re("<!DOCTYPE\\s+[\\w.:-]+");
-    private static final Pattern INTEGER = PyText.re("-?\\d+");
-    private static final Pattern DECIMAL = PyText.re("-?\\d+\\.\\d+");
-    private static final Pattern NUMBER = PyText.re("-?\\d+(\\.\\d+)?");
-    private static final Pattern JSON_AFTER_PREFIX = PyText.re("\\{.+\\}$");
-    private static final Pattern NAME_CELL = PyText.re("^[A-Za-z_][A-Za-z0-9_.-]{0,40}$");
-    private static final Pattern JSON_START = PyText.re("(\\[\\s*)?\\{\\s*\"");
-    private static final Pattern SEPARATOR = PyText.re(" *[^\\w\\s\"'.:/@()\\[\\]{}<>=+-]{1,3} *| +:: +| +- +");
-    private static final Pattern WRAPPER_HEAD = PyText.re(
+    private static final Pattern COMMENT = ToolText.re("<!--.*?-->", Pattern.DOTALL);
+    private static final Pattern WRAPPER_ROOT = ToolText.re("<([A-Za-z_][\\w.-]*)(\\s[^>]*)?>\\s*&fragment;");
+    private static final Pattern WRAPPER_NS = ToolText.re("\\sxmlns\\s*=\\s*[\"']([^\"']*)[\"']");
+    private static final Pattern DOCTYPE = ToolText.re("<!DOCTYPE\\s+[\\w.:-]+");
+    private static final Pattern INTEGER = ToolText.re("-?\\d+");
+    private static final Pattern DECIMAL = ToolText.re("-?\\d+\\.\\d+");
+    private static final Pattern NUMBER = ToolText.re("-?\\d+(\\.\\d+)?");
+    private static final Pattern JSON_AFTER_PREFIX = ToolText.re("\\{.+\\}$");
+    private static final Pattern NAME_CELL = ToolText.re("^[A-Za-z_][A-Za-z0-9_.-]{0,40}$");
+    private static final Pattern JSON_START = ToolText.re("(\\[\\s*)?\\{\\s*\"");
+    private static final Pattern SEPARATOR = ToolText.re(" *[^\\w\\s\"'.:/@()\\[\\]{}<>=+-]{1,3} *| +:: +| +- +");
+    private static final Pattern WRAPPER_HEAD = ToolText.re(
             "^\\{\\s*(?:\"[^\"]*\"\\s*:\\s*(?:\"(?:\\\\.|[^\"\\\\])*\"|-?[\\d.eE+-]+|true|false|null)\\s*,\\s*)*"
             + "\"([^\"]+)\"\\s*:\\s*\\[\\s*(?=\\{)");
-    private static final Pattern DIRECTIVE = PyText.re("^(#[A-Za-z][\\w-]*:?)(?:[ \\t]+(.*))?$");
-    private static final Pattern COLUMN_NAME = PyText.re("^[A-Za-z_][\\w.()\\-/:]*$");
-    private static final Pattern CRI_LINE = PyText.re(SplitterDryRun.CRI_LINE);
+    private static final Pattern DIRECTIVE = ToolText.re("^(#[A-Za-z][\\w-]*:?)(?:[ \\t]+(.*))?$");
+    private static final Pattern COLUMN_NAME = ToolText.re("^[A-Za-z_][\\w.()\\-/:]*$");
+    private static final Pattern CRI_LINE = ToolText.re(SplitterDryRun.CRI_LINE);
     private static final Map<String, Map<String, Object>> JSON_SETUP = jsonSetup();
 
     private SampleProfiler() {
@@ -215,7 +214,7 @@ public final class SampleProfiler {
     /// @return The wrapper's root element (null if it has none round `&fragment;`), and its default namespace (""
     /// for none): the namespace fragments that declare none are read in.
     public static String[] wrapperRoot(final String code) {
-        final Matcher m = WRAPPER_ROOT.matcher(PyText.sub(COMMENT, "", code));
+        final Matcher m = WRAPPER_ROOT.matcher(ToolText.sub(COMMENT, "", code));
         if (!m.find()) {
             return new String[]{null, ""};
         }
@@ -235,15 +234,15 @@ public final class SampleProfiler {
     /// @param code The wrapper's code.
     /// @return It cleaned.
     public static String cleanWrapper(final String code) {
-        String text = PyText.sub(COMMENT, "", code);
+        String text = ToolText.sub(COMMENT, "", code);
         final String root = wrapperRoot(text)[0];
         if (root != null) {
-            text = PyText.subFirst(DOCTYPE, "<!DOCTYPE " + root, text);
+            text = ToolText.subFirst(DOCTYPE, "<!DOCTYPE " + root, text);
         }
         final List<String> lines = new ArrayList<>();
-        for (final String line : PyText.splitlines(text)) {
-            if (!PyText.isBlank(line)) {
-                lines.add(PyText.rstrip(line));
+        for (final String line : ToolText.splitlines(text)) {
+            if (!ToolText.isBlank(line)) {
+                lines.add(ToolText.rstrip(line));
             }
         }
         return String.join("\n", lines) + "\n";
@@ -270,7 +269,7 @@ public final class SampleProfiler {
     /// one document (fragments, a syntax error, not XML, or a whole document, which the XML parser reads or
     /// rejects).
     public static XmlTree.Pull cutDocument(final String text) {
-        final XmlTree.Pull pull = XmlTree.pull(PyText.subFirst(XML_DECL, "", PyText.strip(text, "\uFEFF\r\n ")),
+        final XmlTree.Pull pull = XmlTree.pull(ToolText.subFirst(XML_DECL, "", ToolText.strip(text, "\uFEFF\r\n ")),
                 Integer.MAX_VALUE);
         if (pull.syntaxError() || pull.closed() || pull.root() == null || pull.records().isEmpty()) {
             return null;
@@ -282,7 +281,7 @@ public final class SampleProfiler {
     /// @return The top-level elements of text that is XML fragments (several root elements, e.g. one `<Event>` a
     /// line); null for a single document or anything that isn't XML.
     public static List<XmlTree.Element> xmlFragments(final String text) {
-        final String body = PyText.subFirst(XML_DECL, "", text);
+        final String body = ToolText.subFirst(XML_DECL, "", text);
         final XmlTree.Element root;
         try {
             root = XmlTree.parse("<fragments>" + body + "</fragments>");
@@ -328,7 +327,7 @@ public final class SampleProfiler {
                 }
             }
             converter.put("environment", environment);
-            converter.put("note", "The environment's own wrapper (" + PyText.str(wrapper.get("name")) + "): save "
+            converter.put("note", "The environment's own wrapper (" + ToolText.str(wrapper.get("name")) + "): save "
                                   + "this code in the build (build_data_splitter save_as=<name>), as sibling sources "
                                   + "do, so the fragments are read the way the environment's other pipelines read "
                                   + "theirs.");
@@ -373,8 +372,8 @@ public final class SampleProfiler {
             for (final XmlTree.Attribute attribute : node.attributes) {
                 out.put(node.localName + "@" + attribute.localName(), attribute.value());
             }
-            if (node.isLeaf() && !PyText.isBlank(node.text())) {
-                out.put(node.localName, PyText.strip(node.text()));
+            if (node.isLeaf() && !ToolText.isBlank(node.text())) {
+                out.put(node.localName, ToolText.strip(node.text()));
             }
         }
         return out;
@@ -388,7 +387,7 @@ public final class SampleProfiler {
 
     /// @param counts Counts by key, in the order the keys were first seen.
     /// @param <K>    The keys' type.
-    /// @return The most common key, the first seen of those as common (Python's `Counter.most_common(1)`).
+    /// @return The most common key, the first seen of those as common.
     static <K> K mostCommon(final Map<K, Integer> counts) {
         K best = null;
         int most = Integer.MIN_VALUE;
@@ -425,7 +424,7 @@ public final class SampleProfiler {
         if (value instanceof Number) {
             // A number can be a time too (epoch seconds, with or without a fraction, or milliseconds): read as its
             // text.
-            final String pattern = TimePatterns.inferTimePattern(PyText.str(value));
+            final String pattern = TimePatterns.inferTimePattern(ToolText.str(value));
             return pattern != null && TimePatterns.EPOCH_NAMES.containsKey(pattern)
                     ? "timestamp (" + pattern + ")"
                     : "number";
@@ -436,11 +435,11 @@ public final class SampleProfiler {
         if (value instanceof Collection) {
             return "array";
         }
-        final String text = PyText.strip(PyText.str(value));
+        final String text = ToolText.strip(ToolText.str(value));
         if (text.isEmpty()) {
             return "empty";
         }
-        final int length = PyText.len(text);
+        final int length = ToolText.len(text);
         if (length >= 6 && length <= 40 && text.chars().anyMatch(Character::isDigit)) {
             final String pattern = TimePatterns.inferTimePattern(text);
             if (pattern != null && TimePatterns.checkTimeFormat(pattern, List.of(text)) == null) {
@@ -450,10 +449,10 @@ public final class SampleProfiler {
         if (IpAddresses.isAddress(text)) {
             return "ip";
         }
-        if (PyText.fullmatch(INTEGER, text)) {
+        if (ToolText.fullmatch(INTEGER, text)) {
             return "integer";
         }
-        if (PyText.fullmatch(DECIMAL, text)) {
+        if (ToolText.fullmatch(DECIMAL, text)) {
             return "decimal";
         }
         if ("true".equalsIgnoreCase(text) || "false".equalsIgnoreCase(text)) {
@@ -464,7 +463,7 @@ public final class SampleProfiler {
                 return "embedded json";
             }
         }
-        if (PyText.search(JSON_AFTER_PREFIX, text) && parses(text.substring(text.indexOf('{')))) {
+        if (ToolText.search(JSON_AFTER_PREFIX, text) && parses(text.substring(text.indexOf('{')))) {
             return "embedded json after prefix";
         }
         return "string";
@@ -472,9 +471,9 @@ public final class SampleProfiler {
 
     private static boolean parses(final String json) {
         try {
-            PyJson.loads(json);
+            ToolJson.loads(json);
             return true;
-        } catch (final PyJson.JsonDecodeException e) {
+        } catch (final ToolJson.JsonDecodeException e) {
             return false;
         }
     }
@@ -503,8 +502,7 @@ public final class SampleProfiler {
                 : prefix, value);
     }
 
-    /// Each field of the records: how often it is there, its commonest type, and up to three examples (the Stroom
-    /// MCP server's `_inventory`).
+    /// Each field of the records: how often it is there, its commonest type, and up to three examples.
     ///
     /// @param records Records, as field name to value.
     /// @return Each field's inventory.
@@ -521,9 +519,9 @@ public final class SampleProfiler {
                 final List<String> kept = examples.computeIfAbsent(name, k -> new ArrayList<>());
                 final String text = field.getValue() instanceof final String string
                         ? string
-                        : PyJson.dumps(field.getValue());
+                        : ToolJson.dumps(field.getValue());
                 if (!kept.contains(text) && kept.size() < 3) {
-                    kept.add(PyText.head(text, 120));
+                    kept.add(ToolText.head(text, 120));
                 }
             }
         }
@@ -531,7 +529,7 @@ public final class SampleProfiler {
         final List<Map<String, Object>> fields = new ArrayList<>();
         for (final Map.Entry<String, Integer> entry : present.entrySet()) {
             fields.add(map("field", entry.getKey(),
-                    "fill_rate", PyText.round(100.0 * entry.getValue() / total),
+                    "fill_rate", ToolText.round(100.0 * entry.getValue() / total),
                     "type", mostCommon(types.get(entry.getKey())),
                     "examples", examples.get(entry.getKey())));
         }
@@ -593,7 +591,7 @@ public final class SampleProfiler {
             final Map<String, Object> field = map("field", entry.get("field"), "fill_rate_by_file", files(entry),
                     "type", types.getFirst(), "examples", exampleList(entry));
             final List<String> onlyIn = new ArrayList<>(new TreeSet<>(files(entry).keySet()));
-            onlyIn.sort(PyText::compare);
+            onlyIn.sort(ToolText::compare);
             if (!missing.isEmpty()) {
                 field.put("only_in", onlyIn);
             }
@@ -602,17 +600,17 @@ public final class SampleProfiler {
             }
             fields.add(field);
             if (!missing.isEmpty()) {
-                differences.add("field '" + entry.get("field") + "' is only in " + PyText.repr(onlyIn));
+                differences.add("field '" + entry.get("field") + "' is only in " + ToolText.repr(onlyIn));
             }
             if (types.size() > 1 && types.stream().anyMatch(t -> t.startsWith("timestamp"))) {
                 differences.add("field '" + entry.get("field") + "' has different timestamp shapes across files: "
-                                + PyText.repr(types));
+                                + ToolText.repr(types));
             }
         }
         if (formats.size() > 1) {
             final Map<String, Object> byFile = new LinkedHashMap<>();
             profiles.forEach((n, p) -> byFile.put(n, p.get("format")));
-            differences.addFirst("the files are not one format: " + PyText.repr(byFile));
+            differences.addFirst("the files are not one format: " + ToolText.repr(byFile));
         }
         final Map<String, Object> first = profiles.values().iterator().next();
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -694,10 +692,10 @@ public final class SampleProfiler {
                 break;
             }
             try {
-                final PyJson.Decoded decoded = PyJson.rawDecode(text, at);
+                final ToolJson.Decoded decoded = ToolJson.rawDecode(text, at);
                 items.add(decoded.value());
                 at = decoded.end();
-            } catch (final PyJson.JsonDecodeException e) {
+            } catch (final ToolJson.JsonDecodeException e) {
                 // The cut, or not JSON at all: what was read so far decides.
                 break;
             }
@@ -713,15 +711,15 @@ public final class SampleProfiler {
     private static ToolRefusal notJson(final String text) {
         final String first = text.stripLeading().startsWith("[")
                 ? text
-                : PyText.splitlines(text).getFirst();
+                : ToolText.splitlines(text).getFirst();
         try {
-            PyJson.loads(first);
+            ToolJson.loads(first);
             // Not reached: called only when it fails.
             return new ToolRefusal("not JSON");
-        } catch (final PyJson.JsonDecodeException e) {
+        } catch (final ToolJson.JsonDecodeException e) {
             final String near = first.substring(Math.max(0, e.pos() - 40), Math.min(first.length(), e.pos() + 40));
             return new ToolRefusal("This starts as JSON but isn't valid JSON: " + e.msg() + " at character "
-                                   + e.pos() + ", near " + PyText.repr(near) + ". Pass the source's text exactly as "
+                                   + e.pos() + ", near " + ToolText.repr(near) + ". Pass the source's text exactly as "
                                    + "it is, not retyped (an escape such as \\+ isn't JSON). A file on the user's "
                                    + "disk isn't passed through you: upload_sample files= sends it whole, and the "
                                    + "server reads it from the stream.");
@@ -741,8 +739,8 @@ public final class SampleProfiler {
         }
         final Object value;
         try {
-            value = PyJson.loads(text);
-        } catch (final PyJson.JsonDecodeException e) {
+            value = ToolJson.loads(text);
+        } catch (final ToolJson.JsonDecodeException e) {
             return wrappedHead(text);
         }
         if (!(value instanceof final Map<?, ?> object)) {
@@ -762,7 +760,7 @@ public final class SampleProfiler {
 
     // Cut off (a stream's head): the array key among the object's first keys, and the items whole before the cut.
     private static Map.Entry<String, List<Object>> wrappedHead(final String text) {
-        final Matcher m = PyText.matchAt(WRAPPER_HEAD, text);
+        final Matcher m = ToolText.matchAt(WRAPPER_HEAD, text);
         if (m == null) {
             return null;
         }
@@ -776,10 +774,10 @@ public final class SampleProfiler {
                 break;
             }
             try {
-                final PyJson.Decoded decoded = PyJson.rawDecode(text, at);
+                final ToolJson.Decoded decoded = ToolJson.rawDecode(text, at);
                 items.add(decoded.value());
                 at = decoded.end();
-            } catch (final PyJson.JsonDecodeException e) {
+            } catch (final ToolJson.JsonDecodeException e) {
                 break;
             }
         }
@@ -807,7 +805,7 @@ public final class SampleProfiler {
 
     // A value of a type a column name never is: a time, a number, an IP address.
     private static boolean typed(final String value) {
-        return PyText.fullmatch(NUMBER, value) || IpAddresses.isAddress(value)
+        return ToolText.fullmatch(NUMBER, value) || IpAddresses.isAddress(value)
                || TimePatterns.inferTimePattern(value) != null;
     }
 
@@ -826,7 +824,7 @@ public final class SampleProfiler {
             }
         });
         if (new LinkedHashSet<>(first).size() != first.size()
-            || !first.stream().allMatch(cell -> PyText.match(NAME_CELL, PyText.strip(cell)))) {
+            || !first.stream().allMatch(cell -> ToolText.match(NAME_CELL, ToolText.strip(cell)))) {
             return false;
         }
         // A column whose every value is typed (a time, a number, an IP address) under a first cell that is a plain
@@ -835,12 +833,12 @@ public final class SampleProfiler {
         for (int n = 0; n < first.size(); n++) {
             final List<String> values = new ArrayList<>();
             for (final List<String> row : body) {
-                if (n < row.size() && !PyText.isBlank(row.get(n))) {
-                    values.add(PyText.strip(row.get(n)));
+                if (n < row.size() && !ToolText.isBlank(row.get(n))) {
+                    values.add(ToolText.strip(row.get(n)));
                 }
             }
             if (values.size() >= 2 && values.stream().allMatch(SampleProfiler::typed)
-                && !typed(PyText.strip(first.get(n)))) {
+                && !typed(ToolText.strip(first.get(n)))) {
                 return true;
             }
         }
@@ -850,12 +848,12 @@ public final class SampleProfiler {
             final List<String> values = new ArrayList<>();
             for (final List<String> row : body) {
                 if (n < row.size()) {
-                    values.add(PyText.strip(row.get(n)));
+                    values.add(ToolText.strip(row.get(n)));
                 }
             }
             if (!values.isEmpty() && !values.contains(name)
-                && !values.stream().allMatch(v -> PyText.match(NAME_CELL, v)
-                                                  && PyText.isLower(v) == PyText.isLower(name))) {
+                && !values.stream().allMatch(v -> ToolText.match(NAME_CELL, v)
+                                                  && ToolText.isLower(v) == ToolText.isLower(name))) {
                 differing++;
             }
         }
@@ -870,9 +868,9 @@ public final class SampleProfiler {
     /// @return The regex a record's first line starts with, and the records, or null.
     public static Map.Entry<String, List<String>> multilineRecords(final List<String> lines) {
         for (final String start : RECORD_STARTS) {
-            final Pattern pattern = PyText.re(start);
-            final long begins = lines.stream().filter(line -> PyText.match(pattern, line)).count();
-            if (begins >= 2 && begins < lines.size() && PyText.match(pattern, lines.getFirst())
+            final Pattern pattern = ToolText.re(start);
+            final long begins = lines.stream().filter(line -> ToolText.match(pattern, line)).count();
+            if (begins >= 2 && begins < lines.size() && ToolText.match(pattern, lines.getFirst())
                 && begins >= 0.2 * lines.size()) {
                 return Map.entry(start, SplitterDryRun.groupLines(lines, start));
             }
@@ -894,11 +892,11 @@ public final class SampleProfiler {
         for (final char delimiter : List.of(',', '\t', '|', ';')) {
             List<List<String>> rows;
             try {
-                rows = PyCsv.read(text, PyCsv.Dialect.delimitedBy(delimiter));
-            } catch (final PyCsv.CsvException e) {
+                rows = DelimitedText.read(text, DelimitedText.Dialect.delimitedBy(delimiter));
+            } catch (final DelimitedText.CsvException e) {
                 continue;
             }
-            rows = rows.stream().filter(row -> row.stream().anyMatch(cell -> !PyText.isBlank(cell))).toList();
+            rows = rows.stream().filter(row -> row.stream().anyMatch(cell -> !ToolText.isBlank(cell))).toList();
             if (rows.size() < 3 || rows.stream().noneMatch(row -> row.stream().anyMatch(c -> c.contains("\n")))) {
                 continue;
             }
@@ -910,7 +908,7 @@ public final class SampleProfiler {
             }
             final List<String> joined = new ArrayList<>();
             rows.subList(0, Math.min(20, rows.size())).forEach(row -> joined.add(String.join(",", row)));
-            final boolean hasHeader = namesAHeader(rows) || PyCsv.hasHeader(String.join("\n", joined));
+            final boolean hasHeader = namesAHeader(rows) || DelimitedText.hasHeader(String.join("\n", joined));
             final List<String> header = hasHeader
                     ? rows.getFirst()
                     : columnNames(width);
@@ -937,8 +935,7 @@ public final class SampleProfiler {
 
     /// @param names  Column names.
     /// @param values A row's values.
-    /// @return The row by column, as Python's `dict(zip(names, values))`: as many as the shorter has, a name given
-    /// twice keeping its last value.
+    /// @return The row by column: as many as the shorter has, a name given twice keeping its last value.
     static Map<String, Object> zip(final List<String> names, final List<String> values) {
         final Map<String, Object> record = new LinkedHashMap<>();
         for (int i = 0; i < Math.min(names.size(), values.size()); i++) {
@@ -958,14 +955,14 @@ public final class SampleProfiler {
             return null;
         }
         final Map<String, Integer> counts = new LinkedHashMap<>();
-        for (final String token : new LinkedHashSet<>(PyText.findall(SEPARATOR, lines.getFirst()))) {
-            final String stripped = PyText.strip(token);
+        for (final String token : new LinkedHashSet<>(ToolText.findall(SEPARATOR, lines.getFirst()))) {
+            final String stripped = ToolText.strip(token);
             if (List.of(",", ";", "|", "").contains(stripped) && token.equals(stripped)) {
                 // The sniffer's own, unpadded.
                 continue;
             }
             final List<Integer> found = new ArrayList<>();
-            lines.forEach(line -> found.add(PyText.count(line, token)));
+            lines.forEach(line -> found.add(ToolText.count(line, token)));
             if (found.stream().mapToInt(Integer::intValue).min().orElse(0) >= 2
                 && new LinkedHashSet<>(found).size() == 1) {
                 counts.put(token, found.getFirst());
@@ -973,8 +970,8 @@ public final class SampleProfiler {
         }
         String best = null;
         for (final Map.Entry<String, Integer> entry : counts.entrySet()) {
-            if (best == null || PyText.len(entry.getKey()) > PyText.len(best)
-                || (PyText.len(entry.getKey()) == PyText.len(best) && entry.getValue() > counts.get(best))) {
+            if (best == null || ToolText.len(entry.getKey()) > ToolText.len(best)
+                || (ToolText.len(entry.getKey()) == ToolText.len(best) && entry.getValue() > counts.get(best))) {
                 best = entry.getKey();
             }
         }
@@ -1012,15 +1009,15 @@ public final class SampleProfiler {
         for (int i = first; i < lines.size(); i++) {
             final String line = lines.get(i);
             final int number = i + 1;
-            if (PyText.count(line, "\"") % 2 == 1) {
+            if (ToolText.count(line, "\"") % 2 == 1) {
                 out.add(map("line", number, "reason", "a quote opened and not closed", "text",
-                        PyText.head(line, 160)));
+                        ToolText.head(line, 160)));
                 continue;
             }
             final int cells = SplitterDryRun.splitQuoted(line, delimiter, "\"").size();
             if (cells != width) {
                 out.add(map("line", number, "reason", cells + " columns where the rest have " + width, "text",
-                        PyText.head(line, 160)));
+                        ToolText.head(line, 160)));
             }
         }
         return out;
@@ -1055,7 +1052,7 @@ public final class SampleProfiler {
                 : null;
         final List<String> read = lines.subList(0, Math.min(2000, lines.size()));
         final List<Matcher> parsed = new ArrayList<>();
-        read.forEach(line -> parsed.add(PyText.matchAt(DIRECTIVE, line)));
+        read.forEach(line -> parsed.add(ToolText.matchAt(DIRECTIVE, line)));
         final long dataRead = read.stream().filter(line -> !line.startsWith("#")).count();
         final Set<String> prefixes = new LinkedHashSet<>();
         parsed.forEach(m -> {
@@ -1074,7 +1071,7 @@ public final class SampleProfiler {
                     final Matcher m = parsed.get(i);
                     if (m != null && prefix.equals(m.group(1))) {
                         final List<String> names = namesOf(m, delimiter, quote);
-                        heading = names.size() >= 3 && names.stream().allMatch(n -> PyText.match(COLUMN_NAME, n))
+                        heading = names.size() >= 3 && names.stream().allMatch(n -> ToolText.match(COLUMN_NAME, n))
                                 ? names
                                 : null;
                     } else if (!read.get(i).startsWith("#") && heading != null) {
@@ -1115,7 +1112,7 @@ public final class SampleProfiler {
         final String value = m.group(2) == null
                 ? ""
                 : m.group(2);
-        SplitterDryRun.splitQuoted(PyText.strip(value), delimiter, quote).forEach(n -> names.add(PyText.strip(n)));
+        SplitterDryRun.splitQuoted(ToolText.strip(value), delimiter, quote).forEach(n -> names.add(ToolText.strip(n)));
         return names;
     }
 
@@ -1139,10 +1136,10 @@ public final class SampleProfiler {
     /// @return Its profile.
     /// @throws ToolRefusal if it starts as JSON and isn't JSON.
     public static Map<String, Object> profile(final String sample, final int maxRecords) {
-        final String text = PyText.strip(sample, "\uFEFF\r\n ");
-        final List<String> lines = PyText.nonBlankLines(text);
-        final Map<String, Object> result = map("characters", PyText.len(sample), "lines", lines.size());
-        if (text.startsWith("<") && !PyText.match(SYSLOG_5424, text) && !PyText.match(SYSLOG_3164, text)) {
+        final String text = ToolText.strip(sample, "\uFEFF\r\n ");
+        final List<String> lines = ToolText.nonBlankLines(text);
+        final Map<String, Object> result = map("characters", ToolText.len(sample), "lines", lines.size());
+        if (text.startsWith("<") && !ToolText.match(SYSLOG_5424, text) && !ToolText.match(SYSLOG_3164, text)) {
             final Map<String, Object> xml = profileXml(text, result, maxRecords);
             if (xml != null) {
                 return xml;
@@ -1262,20 +1259,20 @@ public final class SampleProfiler {
             final String line = lines.get(n - 1);
             final Object value;
             try {
-                value = PyJson.loads(line);
-            } catch (final PyJson.JsonDecodeException e) {
+                value = ToolJson.loads(line);
+            } catch (final ToolJson.JsonDecodeException e) {
                 if (jsonLines.isEmpty() && n == 1) {
                     // Not JSON lines at all (or not JSON): the other formats are tried.
                     break;
                 }
                 bad.add(map("line", n, "reason", "isn't JSON: " + e.getMessage().split(":", -1)[0], "text",
-                        PyText.head(line, 160)));
+                        ToolText.head(line, 160)));
                 continue;
             }
             if (value instanceof Map) {
                 jsonLines.add(value);
             } else {
-                bad.add(map("line", n, "reason", "isn't a JSON object", "text", PyText.head(line, 160)));
+                bad.add(map("line", n, "reason", "isn't a JSON object", "text", ToolText.head(line, 160)));
             }
         }
         int read = Math.min(lines.size(), scan);
@@ -1307,7 +1304,7 @@ public final class SampleProfiler {
             }
             return found;
         }
-        if (jsonLines.isEmpty() && PyText.match(JSON_START, text)) {
+        if (jsonLines.isEmpty() && ToolText.match(JSON_START, text)) {
             throw notJson(text);
         }
         return null;
@@ -1316,7 +1313,7 @@ public final class SampleProfiler {
     private static Map<String, Object> profileArray(final String text, final Map<String, Object> result,
                                                     final int maxRecords) {
         try {
-            final List<?> data = (List<?>) PyJson.loads(text);
+            final List<?> data = (List<?>) ToolJson.loads(text);
             final List<Map<String, Object>> records = new ArrayList<>();
             for (final Object item : data.subList(0, Math.min(maxRecords, data.size()))) {
                 if (item instanceof Map) {
@@ -1327,7 +1324,7 @@ public final class SampleProfiler {
                     "fields", inventory(records), "suggested_parser", JSON_PARSER);
             found.putAll(jsonSetup("array"));
             return found;
-        } catch (final PyJson.JsonDecodeException e) {
+        } catch (final ToolJson.JsonDecodeException e) {
             final List<Object> head = arrayHead(text, maxRecords);
             if (head != null && head.stream().allMatch(Map.class::isInstance)) {
                 final Map<String, Object> found = with(result, "format", JSON_ARRAY, "records", head.size(),
@@ -1347,7 +1344,7 @@ public final class SampleProfiler {
                                                     final Map<String, Object> result,
                                                     final int maxRecords) {
         final List<String> examples = lines.subList(0, Math.min(3, lines.size()));
-        if (count(lines, line -> PyText.search(CEF, line)) >= 0.8 * lines.size()) {
+        if (count(lines, line -> ToolText.search(CEF, line)) >= 0.8 * lines.size()) {
             // CEF, alone or after a syslog header: seen read as key=value, its header fields taken for keys and its
             // values cut at their first space.
             return with(result, "format", CEF_FORMAT, "records", lines.size(), "examples", examples,
@@ -1355,16 +1352,16 @@ public final class SampleProfiler {
                                         + "pairs, whose values may hold spaces (build_data_splitter infers it; a "
                                         + "translation template with a DSParser)");
         }
-        if (count(lines, line -> PyText.match(SYSLOG_5424, line)) >= 0.8 * lines.size()) {
+        if (count(lines, line -> ToolText.match(SYSLOG_5424, line)) >= 0.8 * lines.size()) {
             return with(result, "format", SYSLOG_5424_FORMAT, "records", lines.size(), "examples", examples,
                     "suggested_parser", "Data Splitter with a regex per RFC 5424 part (a translation template with a "
                                         + "DSParser: find_pipeline_templates)");
         }
-        if (count(lines, line -> PyText.match(SYSLOG_3164, line)) >= 0.8 * lines.size()) {
+        if (count(lines, line -> ToolText.match(SYSLOG_3164, line)) >= 0.8 * lines.size()) {
             return with(result, "format", SYSLOG_3164_FORMAT, "records", lines.size(), "examples", examples,
                     "suggested_parser", "Data Splitter with a regex for PRI, timestamp, host, tag and message");
         }
-        if (!lines.isEmpty() && count(lines, line -> PyText.match(CRI_LINE, line)) >= 0.9 * lines.size()) {
+        if (!lines.isEmpty() && count(lines, line -> ToolText.match(CRI_LINE, line)) >= 0.9 * lines.size()) {
             final List<String> records = SplitterDryRun.groupLinesToEnd(lines, SplitterDryRun.CRI_END);
             return with(result, "format", CRI, "record_end", SplitterDryRun.CRI_END, "records", records.size(),
                     "examples", records.subList(0, Math.min(3, records.size())),
@@ -1393,9 +1390,9 @@ public final class SampleProfiler {
             final List<Map<String, Object>> bad = new ArrayList<>();
             final List<String> scanned = lines.subList(0, Math.min(MALFORMED_SCAN, lines.size()));
             for (int n = 0; n < scanned.size(); n++) {
-                if (!PyText.search(KEY_VALUE, scanned.get(n))) {
+                if (!ToolText.search(KEY_VALUE, scanned.get(n))) {
                     bad.add(map("line", n + 1, "reason", "holds no key=value pairs", "text",
-                            PyText.head(scanned.get(n), 160)));
+                            ToolText.head(scanned.get(n), 160)));
                 }
             }
             found.putAll(malformed(bad, "Stroom's Data Splitter writes no record for such a line and reports it as "
@@ -1409,8 +1406,8 @@ public final class SampleProfiler {
     /// @return Its key=value pairs (quotes taken off the values), as the profile reads them.
     public static Map<String, Object> keyValues(final String line) {
         final Map<String, Object> pairs = new LinkedHashMap<>();
-        for (final String[] pair : PyText.findallGroups(KEY_VALUE, line)) {
-            pairs.put(pair[0], PyText.strip(pair[1], "\""));
+        for (final String[] pair : ToolText.findallGroups(KEY_VALUE, line)) {
+            pairs.put(pair[0], ToolText.strip(pair[1], "\""));
         }
         return pairs;
     }
@@ -1440,9 +1437,9 @@ public final class SampleProfiler {
         }
         String delimiter;
         try {
-            delimiter = String.valueOf(PyCsv.sniff(String.join("\n", lines.subList(0, Math.min(20, lines.size()))),
-                    ",\t|;").delimiter());
-        } catch (final PyCsv.CsvException e) {
+            final String firstLines = String.join("\n", lines.subList(0, Math.min(20, lines.size())));
+            delimiter = String.valueOf(DelimitedText.sniff(firstLines, ",\t|;").delimiter());
+        } catch (final DelimitedText.CsvException e) {
             // The sniffer gives up on a few bad rows (an unbalanced quote, a row short of a column): the separator
             // that splits most lines into the same number of columns.
             delimiter = head.isEmpty()
@@ -1455,12 +1452,12 @@ public final class SampleProfiler {
         }
         boolean hasHeader;
         try {
-            hasHeader = PyCsv.hasHeader(String.join("\n", lines.subList(0, Math.min(20, lines.size()))));
-        } catch (final PyCsv.CsvException e) {
+            hasHeader = DelimitedText.hasHeader(String.join("\n", lines.subList(0, Math.min(20, lines.size()))));
+        } catch (final DelimitedText.CsvException e) {
             hasHeader = false;
         }
-        final List<List<String>> rows = PyCsv.read(String.join("\n", lines.subList(0,
-                Math.min(maxRecords + 1, lines.size()))), PyCsv.Dialect.delimitedBy(delimiter.charAt(0)));
+        final List<List<String>> rows = DelimitedText.read(String.join("\n", lines.subList(0,
+                Math.min(maxRecords + 1, lines.size()))), DelimitedText.Dialect.delimitedBy(delimiter.charAt(0)));
         if (!hasHeader && rows.size() > 1) {
             hasHeader = namesAHeader(rows);
         }
@@ -1492,9 +1489,9 @@ public final class SampleProfiler {
                                                      final String custom,
                                                      final Map<String, Object> result) {
         final List<List<String>> rows = new ArrayList<>();
-        head.forEach(line -> rows.add(PyText.split(line, custom)));
+        head.forEach(line -> rows.add(ToolText.split(line, custom)));
         final List<String> firstStripped = new ArrayList<>();
-        rows.getFirst().forEach(cell -> firstStripped.add(PyText.strip(cell)));
+        rows.getFirst().forEach(cell -> firstStripped.add(ToolText.strip(cell)));
         final List<String> header = namesAHeader(rows)
                 ? firstStripped
                 : columnNames(rows.getFirst().size());
@@ -1506,6 +1503,6 @@ public final class SampleProfiler {
         body.forEach(row -> records.add(zip(header, row)));
         return with(result, "format", DELIMITED, "delimiter", custom, "has_header", hasHeader, "columns", header,
                 "records", lines.size() - (rows.size() - body.size()), "fields", inventory(records),
-                "suggested_parser", "Data Splitter for delimited data, columns separated by " + PyText.repr(custom));
+                "suggested_parser", "Data Splitter for delimited data, columns separated by " + ToolText.repr(custom));
     }
 }

@@ -32,23 +32,19 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_existing_feed.py`, ported: building a pipeline from a feed that already holds
-/// data, through the REAL tools on a real Stroom. A source feed gets four streams in which the kinds of event are
-/// spread out (every stream has logins, the oldest a file read and a logout, the second oldest a password change),
-/// and the test plays the agent and the user as the script does.
+/// Building a pipeline from a feed that already holds data, through the REAL tools on a real Stroom. A source feed gets
+/// four streams in which the kinds of event are spread out (every stream has logins, the oldest a file read and a
+/// logout, the second oldest a password change), and the test plays the agent and the user.
 ///
-/// Covered, as the script numbers them: 1 (a survey of two streams, the newest and the oldest, confirmed as fewer
-/// than the default, kept in the build's survey doc), 2 (the translation generated from a mapping steps clean at
-/// the survey's locations, each the record it names), 3 (the next survey finds the password change, flagged as
-/// unmatched), 4 (a rule for it, every location clean), 5 (the feed covered, the survey doc complete), 6 (the broad
-/// check of each stream's head), 6b (a kind left untranslated on purpose), 7 (a ~2.6 MB single-line stream surveyed
-/// from its head only), "stepping copied nothing; generated docs are tagged", 8 (the feed's streams processed where
-/// they are, into a test feed the user names) and 9 (promotion takes the test feed off, and its filter leaves none of
-/// the sample out), and the script's `text_locations` (survey locations in a CSV feed with a header and an RFC 5424
-/// syslog feed are the lines they name).
-///
-/// Left out: the script's check of `_free_feed_name` (an internal helper, not a tool: the next free name for the
-/// server's own test feed); the user naming the test feed instead, which the script goes on to, is covered.
+/// Covered: 1 (a survey of two streams, the newest and the oldest, confirmed as fewer than the default, kept in the
+/// build's survey doc), 2 (the translation generated from a mapping steps clean at the survey's locations, each the
+/// record it names), 3 (the next survey finds the password change, flagged as unmatched), 4 (a rule for it, every
+/// location clean), 5 (the feed covered, the survey doc complete), 6 (the broad check of each stream's head), 6b (a
+/// kind left untranslated on purpose), 7 (a ~2.6 MB single-line stream surveyed from its head only), "stepping copied
+/// nothing; generated docs are tagged", 8 (the feed's streams processed where they are, into a test feed the user
+/// names) and 9 (promotion takes the test feed off, and its filter leaves none of the sample out), and survey locations
+/// in a CSV feed with a header and an RFC 5424 syslog feed are the lines they name. The user naming the test feed is
+/// covered; the next free name the tools would give it is not.
 @SuppressWarnings("unchecked")
 class TestE2eExistingFeed extends AbstractE2eTest {
 
@@ -213,7 +209,8 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         // for raw samples, and nothing uploaded.
         final String samplesFeed = refusal("create_feed", args("build", BUILD, "name", SOURCE + "-SAMPLES"));
         assertThat(samplesFeed).contains("works from the existing feed", "user_samples=", "test_feed=true");
-        // Seen in Ask Stroom AI: an earlier build's test feed held the server's name; the user names it instead.
+        // Seen in Ask Stroom AI: an earlier build's test feed held the tools' name for it; the user names it
+        // instead.
         createFeed(SOURCE_BUILD, SOURCE + "-MCP-TEST");
         final Map<String, Object> named = json("create_feed", args("build", BUILD, "name", TEST_FEED,
                 "test_feed", true));
@@ -269,10 +266,10 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         });
     }
 
-    /// Beyond the script, the user's stalled session as a test: an existing feed of XML fragments, onboarded by
-    /// following each result's `next` (and build_status's when a tool gives none), as an agent would, with the
-    /// decisions the plan leaves to it made the way its `then` says. Every call `next` names must go through, and
-    /// the plan must reach documentation without the same step coming back again and again.
+    /// The user's stalled session as a test: an existing feed of XML fragments, onboarded by following each result's
+    /// `next` (and build_status's when a tool gives none), as an agent would, with the decisions the plan leaves to it
+    /// made the way its `then` says. Every call `next` names must go through, and the plan must reach documentation
+    /// without the same step coming back again and again.
     @Test
     void anExistingFeedOfXmlFragmentsIsBuiltByFollowingNext() {
         final String source = "FRAG-SRC";
@@ -315,10 +312,10 @@ class TestE2eExistingFeed extends AbstractE2eTest {
                 case "draft_translation_mapping" -> {
                     final Map<String, Object> draft = json(tool, arguments);
                     dump("draft_translation_mapping", draft);
-                    // As the Stroom MCP server drafts it from more than one stream, an XML fragments mapping has no
-                    // record element (utils/profile.py profile_many keeps record_element per file only, and
-                    // draftmap.py reads it from the top level), so its own schema check fails ("xml_fragments
-                    // input needs record"): the agent must add it. Reported, not changed.
+                    // Drafted from more than one stream, an XML fragments mapping has no record element
+                    // (SampleProfiling.profileAll keeps the record element per stream only, and DraftMapping reads
+                    // it from the top level), so its own schema check fails ("xml_fragments input needs record"):
+                    // the agent must add it. A known gap, pinned as it is (DESIGN, Parked and open items).
                     assertThat(map(draft, "mapping").get("record")).isNull();
                     assertThat(map(draft, "schema_check")).containsEntry("ok", false);
                     // As its notes and schema problems ask: the system's name and environment, the record, the
@@ -382,10 +379,10 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         return saved;
     }
 
-    /// A template whose parser can't read an existing feed is refused, as for a new source's sample: the feed's
-    /// format is the one its survey found. Seen in testing (and as the Stroom MCP server behaved): create_pipeline
-    /// checked a build's own sample streams only, so a build on an existing feed, which has none, took the XMLParser
-    /// template for XML fragments without a word, and no rule matched what it read. The user may still insist.
+    /// A template whose parser can't read an existing feed is refused, as for a new source's sample: the feed's format
+    /// is the one its survey found. Seen in testing: create_pipeline checked a build's own sample streams only, so a
+    /// build on an existing feed, which has none, took the XMLParser template for XML fragments without a word, and no
+    /// rule matched what it read. The user may still insist.
     @Test
     void aTemplateThatCannotReadAnExistingFeedIsRefused() {
         final String source = "FRAG-SRC";
@@ -485,7 +482,7 @@ class TestE2eExistingFeed extends AbstractE2eTest {
 
     @Test
     void surveyLocationsPointAtTheRightRecordInTextFormats() {
-        // The script's text_locations: a CSV feed with a header, and an RFC 5424 syslog feed.
+        // Survey locations in a CSV feed with a header, and in an RFC 5424 syslog feed.
         final Map<String, Object> cases = jsonResource("eval_cases.json");
         for (final String caseName : List.of("01_csv_vpn", "06_syslog5424_ssh")) {
             final Map<String, Object> evalCase = (Map<String, Object>) cases.get(caseName);
@@ -586,7 +583,7 @@ class TestE2eExistingFeed extends AbstractE2eTest {
                 .toList();
     }
 
-    // A stream's text, as the script's json.dumps writes it: a JSON array of events a minute apart.
+    // A stream's text: a JSON array of events a minute apart.
     private static String events(final int minute, final List<List<String>> rows) {
         final List<String> records = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {

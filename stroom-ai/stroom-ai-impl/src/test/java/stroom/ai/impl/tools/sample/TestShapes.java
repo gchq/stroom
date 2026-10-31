@@ -63,7 +63,7 @@ class TestShapes {
     }
 
     private static String json(final Object... records) {
-        return PyJson.dumps(List.of(records));
+        return ToolJson.dumps(List.of(records));
     }
 
     @Test
@@ -103,7 +103,7 @@ class TestShapes {
         final Map<String, Object> record = SampleProfiler.map("timestamp", "t", "loggerName", logger, "level",
                 "INFO", "message", message);
         return SampleProfiler.map("timestamp", "t", "hostname", host, "facility", 1L, "severity", 6L, "priority",
-                14L, "version", 1L, "body", "keycloak 1234 " + logger + " - ﻿" + PyJson.dumps(record));
+                14L, "version", 1L, "body", "keycloak 1234 " + logger + " - ﻿" + ToolJson.dumps(record));
     }
 
     @Test
@@ -248,9 +248,9 @@ class TestShapes {
 
     @ParameterizedTest
     @MethodSource("pythonSurveyed")
-    void everySampleIsProfiledSplitAndSurveyedAsThePythonServerDidIt(final String name) {
-        // The Python server's own code, run over the formats sources send, the evaluation cases' samples and the
-        // heads of each a survey of a big stream reads: the same formats, records and kinds of event.
+    void everySampleIsProfiledSplitAndSurveyedAsRecorded(final String name) {
+        // The recorded results, over the formats sources send, the evaluation cases' samples and the heads of
+        // each a survey of a big stream reads: the same formats, records and kinds of event.
         final Map<String, Object> python = SampleFixtures.pythonSurvey().get(name);
         final String text = SampleFixtures.corpusText(name);
         final boolean truncated = name.endsWith(":head");
@@ -261,12 +261,12 @@ class TestShapes {
             assertThat(String.valueOf(profile.get("records"))).as(name)
                     .isEqualTo(String.valueOf(python.get("profile_records")));
         } else {
-            // Text that starts as JSON and isn't: refused, as the Python server refused it.
+            // Text that starts as JSON and isn't: refused, as recorded.
             assertThatThrownBy(() -> SampleProfiler.profile(text)).as(name).isInstanceOf(ToolRefusal.class);
         }
         if (!python.containsKey("split_format")) {
-            // A JSON line among JSON lines that doesn't parse: the Python splitter raised, and the survey said it
-            // couldn't split the part.
+            // A JSON line among JSON lines that doesn't parse: the split fails, and the survey says it couldn't
+            // split the part.
             assertThatThrownBy(() -> RecordSplitter.split(text, RecordSplitter.MAX_RECORDS, truncated)).as(name)
                     .isInstanceOf(RuntimeException.class);
             return;

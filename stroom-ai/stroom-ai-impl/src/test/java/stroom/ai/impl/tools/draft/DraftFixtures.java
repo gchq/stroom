@@ -18,8 +18,8 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
@@ -34,8 +34,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What the draft mapping's tests share: the event-logging schemas, JSON written as the Python tests write it, and
-/// the Stroom MCP server's own results kept as fixtures.
+/// What the draft mapping's tests share: the event-logging schemas, JSON reading, and the established results kept
+/// as fixtures.
 class DraftFixtures {
 
     /// The event-logging 4.1.0 schema.
@@ -51,28 +51,28 @@ class DraftFixtures {
         // Static only, and the base of the draft tests, which use its fixtures unqualified.
     }
 
-    /// @param name A draft parity case's name (`draft_parity.json`), e.g. `format cef` or
+    /// @param name A draft case's name (`draft_cases.json`), e.g. `format cef` or
     ///             `21_csv_connections_odd_fields (excerpt)`.
-    /// @return The samples it drafts from, as the Python server was given them.
+    /// @return The samples it drafts from, as the draft is given them.
     static synchronized Object samples(final String name) {
         if (drafts == null) {
-            drafts = cases("draft_parity.json");
+            drafts = cases("draft_cases.json");
         }
         return drafts.stream().filter(entry -> name.equals(entry.get("name"))).findFirst()
                 .map(entry -> entry.get("samples")).orElseThrow();
     }
 
-    /// @param name A sample check parity case's name (`localcheck_parity.json`), e.g.
+    /// @param name A sample check case's name (`localcheck_cases.json`), e.g.
     ///             `12_xml_fragments_events reference`.
     /// @return The case: its `mapping`, `texts` and `splitter`.
     static synchronized Map<String, Object> check(final String name) {
         if (checks == null) {
-            checks = cases("localcheck_parity.json");
+            checks = cases("localcheck_cases.json");
         }
         return checks.stream().filter(entry -> name.equals(entry.get("name"))).findFirst().orElseThrow();
     }
 
-    /// @param name A format sample's name in `dev/format_samples.py`, e.g. `cef`.
+    /// @param name A format sample's name, e.g. `cef`.
     /// @return Its text.
     @SuppressWarnings("unchecked")
     static String format(final String name) {
@@ -94,10 +94,10 @@ class DraftFixtures {
 
     /// @param text JSON.
     /// @param <T>  What it is read as.
-    /// @return It read as Python reads it.
+    /// @return It read by [ToolJson].
     @SuppressWarnings("unchecked")
     static <T> T json(final String text) {
-        return (T) PyJson.loads(text);
+        return (T) ToolJson.loads(text);
     }
 
     /// @param name A resource next to this class holding a JSON list of objects.
@@ -181,33 +181,35 @@ class DraftFixtures {
         return new ArrayList<>(List.of(texts));
     }
 
-    /// Each rule's Data as the port drafts it, from what the rule's own records hold, where the Python server gave
-    /// every rule the whole rest (see DraftMapping's held): checks the port's is a subset of the Python server's,
-    /// then cuts the Python server's to it, so the rest of the draft compares as it was.
+    /// Each rule's Data as it is drafted now, from what the rule's own records hold, where the fixtures give every
+    /// rule the whole rest (see DraftMapping's held): checks the draft's is a subset of the fixture's, then cuts the
+    /// fixture's to it, so the rest of the draft compares as it was.
     ///
-    /// @param port   The port's mapping.
-    /// @param python The Python server's mapping, cut.
+    /// @param drafted  The mapping drafted now.
+    /// @param recorded The fixture's mapping, cut.
     @SuppressWarnings("unchecked")
-    static void asTheRulesRecordsHold(final Object port, final Object python) {
-        if (!(port instanceof final Map<?, ?> portMapping)
-            || !(python instanceof final Map<?, ?> pythonMapping)
-            || !(portMapping.get("events") instanceof final List<?> portRules)
-            || !(pythonMapping.get("events") instanceof final List<?> pythonRules)
-            || portRules.size() != pythonRules.size()) {
+    static void asTheRulesRecordsHold(final Object drafted, final Object recorded) {
+        if (!(drafted instanceof final Map<?, ?> draftedMapping)
+            || !(recorded instanceof final Map<?, ?> recordedMapping)
+            || !(draftedMapping.get("events") instanceof final List<?> draftedRules)
+            || !(recordedMapping.get("events") instanceof final List<?> recordedRules)
+            || draftedRules.size() != recordedRules.size()) {
             return;
         }
-        for (int i = 0; i < portRules.size(); i++) {
-            final List<Object> portFields = (List<Object>) ((Map<String, Object>) portRules.get(i)).get("fields");
-            final List<Object> pythonFields = (List<Object>) ((Map<String, Object>) pythonRules.get(i)).get("fields");
-            if (portFields == null || pythonFields == null) {
+        for (int i = 0; i < draftedRules.size(); i++) {
+            final List<Object> draftedFields = (List<Object>) ((Map<String, Object>) draftedRules.get(i))
+                    .get("fields");
+            final List<Object> recordedFields = (List<Object>) ((Map<String, Object>) recordedRules.get(i))
+                    .get("fields");
+            if (draftedFields == null || recordedFields == null) {
                 continue;
             }
-            final List<Object> portData = portFields.stream()
+            final List<Object> draftedData = draftedFields.stream()
                     .filter(f -> ((Map<?, ?>) f).containsKey("data_name"))
                     .toList();
-            assertThat(pythonFields).as("rule %s's Data, as the Python server drafted it", i)
-                    .containsAll(portData);
-            pythonFields.removeIf(f -> ((Map<?, ?>) f).containsKey("data_name") && !portData.contains(f));
+            assertThat(recordedFields).as("rule %s's Data, as recorded", i)
+                    .containsAll(draftedData);
+            recordedFields.removeIf(f -> ((Map<?, ?>) f).containsKey("data_name") && !draftedData.contains(f));
         }
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.cef;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.XmlComment;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlInstruction;
@@ -38,16 +38,15 @@ import java.util.regex.Pattern;
 
 /// CEF lines another pipeline writes (or the plan's XSLT wrote): read from a pipeline element's output, parsed
 /// (the header and the key=value pairs, unescaped), and reviewed against ArcSight's dictionary and the Events they
-/// were made from. Ported from the Stroom MCP server's `lines_in`, `parse`, `review` and `examples_from` in
-/// `utils/cef.py`.
+/// were made from.
 public final class CefLines {
 
     private static final Pattern DECLARATION = Pattern.compile("<\\?xml[^>]*\\?>");
-    private static final Pattern CEF_START = PyText.re("CEF:\\d+\\|");
+    private static final Pattern CEF_START = ToolText.re("CEF:\\d+\\|");
     private static final Pattern ESCAPE = Pattern.compile("\\\\(.)");
-    private static final Pattern SHIFTED = PyText.re("(\\d{1,2}|Low|Medium|High|Very-High)\\|");
-    private static final Pattern MILLIS = PyText.re("\\d{10,13}");
-    private static final Pattern CEF_DATE = PyText.re("[A-Z][a-z]{2} \\d{2} \\d{4} .*");
+    private static final Pattern SHIFTED = ToolText.re("(\\d{1,2}|Low|Medium|High|Very-High)\\|");
+    private static final Pattern MILLIS = ToolText.re("\\d{10,13}");
+    private static final Pattern CEF_DATE = ToolText.re("[A-Z][a-z]{2} \\d{2} \\d{4} .*");
     private static final Set<String> KAFKA_RECORDS = Set.of("kafka-records:1", "kafka-records:2");
     private static final Set<String> NUMERIC = Set.of("ip", "int", "long", "float", "mac");
 
@@ -55,7 +54,7 @@ public final class CefLines {
         // Static only.
     }
 
-    /// `lines_in`: CEF lines in a pipeline element's output: Kafka records' values, or lines of text.
+    /// CEF lines in a pipeline element's output: Kafka records' values, or lines of text.
     ///
     /// @param output The output, or null.
     /// @return The CEF lines.
@@ -81,9 +80,9 @@ public final class CefLines {
         // Stroom's stepping puts an XML declaration before a text XSLT's output (seen: '<?xml version="1.1"
         // encoding="UTF-8"?>CEF:0|...'): not part of the line. A syslog prefix is, and stays.
         text = DECLARATION.matcher(text).replaceAll("");
-        return PyText.splitlines(text).stream()
-                .filter(line -> PyText.strip(line).startsWith("CEF:") || CEF_START.matcher(line).find())
-                .map(PyText::strip)
+        return ToolText.splitlines(text).stream()
+                .filter(line -> ToolText.strip(line).startsWith("CEF:") || CEF_START.matcher(line).find())
+                .map(ToolText::strip)
                 .toList();
     }
 
@@ -131,7 +130,7 @@ public final class CefLines {
         return review.result(lines.size());
     }
 
-    /// `examples_from`: an example value of each key, from sampled lines.
+    /// An example value of each key, from sampled lines.
     ///
     /// @param plan   The plan the lines were written by.
     /// @param lines  The lines.
@@ -160,7 +159,7 @@ public final class CefLines {
         return out;
     }
 
-    // _split_header: the header's seven fields, unescaped, and the extension after them ("" if there aren't seven).
+    // The header's seven fields, unescaped, and the extension after them ("" if there aren't seven).
     private static Header splitHeader(final String line) {
         final int[] cps = line.codePoints().toArray();
         if (cps.length == 0) {
@@ -168,7 +167,7 @@ public final class CefLines {
         }
         final String prefix = "CEF:";
         final int found = line.indexOf(prefix);
-        // Python starts at -1 (its last character) when there is no CEF: in the line.
+        // With no CEF: in the line, the scan starts at -1, read as the line's last character.
         int i = found < 0
                 ? -1
                 : line.codePointCount(0, found);
@@ -246,7 +245,7 @@ public final class CefLines {
 
     private static boolean nextKeyAt(final String text, final int at) {
         int i = at;
-        while (i < text.length() && PyText.isSpace(text.charAt(i))) {
+        while (i < text.length() && ToolText.isSpace(text.charAt(i))) {
             i++;
         }
         if (i == at) {
@@ -258,7 +257,7 @@ public final class CefLines {
 
     private static boolean blankFrom(final String text, final int at) {
         for (int i = at; i < text.length(); i++) {
-            if (!PyText.isSpace(text.charAt(i))) {
+            if (!ToolText.isSpace(text.charAt(i))) {
                 return false;
             }
         }
@@ -277,7 +276,7 @@ public final class CefLines {
         return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.';
     }
 
-    // lxml's itertext(): the text of an element and every element below it, and their tails, in order.
+    // The text of an element and every element below it, and their tails, in order.
     private static String itertext(final XmlElement element) {
         final StringBuilder sb = new StringBuilder(Objects.requireNonNullElse(element.text(), ""));
         for (final XmlNode child : element.children()) {
@@ -302,7 +301,7 @@ public final class CefLines {
     /// @param extension The key=value pairs, in order, unescaped.
     public record Parsed(List<String> header, List<Map.Entry<String, String>> extension) {
 
-        /// @return It as the Python dict: `header` and `extension` (pairs as two-item lists).
+        /// @return It as JSON: `header` and `extension` (pairs as two-item lists).
         public Map<String, Object> toMap() {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("header", header);
@@ -327,11 +326,11 @@ public final class CefLines {
 
         private void flag(final String what, final String example) {
             problems.merge(what, 1, Integer::sum);
-            examples.putIfAbsent(what, PyText.head(example, 300));
+            examples.putIfAbsent(what, ToolText.head(example, 300));
         }
 
         private void line(final String line, final XmlElement event, final Boolean customKeys) {
-            if (PyText.strip(line).contains("\n")) {
+            if (ToolText.strip(line).contains("\n")) {
                 flag("a raw line break inside a CEF line (escape it as \\n)", line);
             }
             final Parsed parsed = parse(line);
@@ -385,16 +384,16 @@ public final class CefLines {
                 flag(k + " has no " + k + "Label: ArcSight shows it with no name", line);
             }
             final CefKeys.KeyInfo info = CefKeys.KEYS.get(k);
-            if (info.maxLength() != null && PyText.len(v) > info.maxLength()) {
+            if (info.maxLength() != null && ToolText.len(v) > info.maxLength()) {
                 flag(k + " longer than its " + info.maxLength() + " characters (ArcSight cuts it)", line);
             }
             if (NUMERIC.contains(info.type()) && !CefEvents.fits(k, List.of(v))) {
-                flag(k + " holds '" + PyText.head(v, 40) + "', not a" + ("ip".equals(info.type())
+                flag(k + " holds '" + ToolText.head(v, 40) + "', not a" + ("ip".equals(info.type())
                         ? "n IPv4 address"
                         : " " + info.type()), line);
             }
             if ("time".equals(info.type()) && !MILLIS.matcher(v).matches() && !CEF_DATE.matcher(v).matches()) {
-                flag(k + " holds '" + PyText.head(v, 40) + "': CEF times are milliseconds since 1970 or 'MMM "
+                flag(k + " holds '" + ToolText.head(v, 40) + "': CEF times are milliseconds since 1970 or 'MMM "
                      + "dd yyyy HH:mm:ss'", line);
             }
         }
@@ -447,8 +446,8 @@ public final class CefLines {
                 Map.Entry<String, Integer> best = null;
                 for (final Map.Entry<String, Integer> entry : paths.entrySet()) {
                     if (best == null || entry.getValue() > best.getValue()
-                        || (entry.getValue().equals(best.getValue()) && PyText.len(entry.getKey())
-                                                                        < PyText.len(best.getKey()))) {
+                        || (entry.getValue().equals(best.getValue()) && ToolText.len(entry.getKey())
+                                                                        < ToolText.len(best.getKey()))) {
                         best = entry;
                     }
                 }

@@ -28,9 +28,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/// What a user chose in draft_cef_mapping's form, by build, so a later call for the same build isn't asked again
-/// (not in the Stroom MCP server; seen: asked whether keys outside ArcSight's dictionary may be used on every call
-/// of one CEF pipeline's building). Kept per user, in this server's memory only.
+/// What a user chose in draft_cef_mapping's form, by build, so a later call for the same build isn't asked again (seen
+/// in testing: asked whether keys outside ArcSight's dictionary may be used on every call of one CEF pipeline's
+/// building). Kept per user, in this server's memory only.
 @Singleton
 class CefChoices {
 

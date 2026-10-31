@@ -43,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The Saxon the tools evaluate XPath with reads nothing of the server's: no file, no URL, no external entity, no
-/// environment variable. Ported from the Stroom MCP server's `tests/test_saxon.py`.
+/// environment variable.
 class TestLockedSaxon {
 
     @TempDir

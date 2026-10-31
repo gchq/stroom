@@ -17,7 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DropRule;
@@ -44,14 +44,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// A translation mapping checked against the sample's records before anything is generated or stepped (the Stroom
-/// MCP server's `tools/generation.py` `_sample_check`, with `utils/xpathcheck.py` `check_xpaths`,
-/// `check_extractions`, `record_documents` and `xpath_inputs`, on [LocalCheck] and [XPathChecks]): fields no record
-/// has, time formats the values don't fit, schema values a constant or map gives, xpaths that select nothing and
-/// extraction regexes that match nothing.
+/// A translation mapping checked against the sample's records before anything is generated or stepped (on [LocalCheck]
+/// and [XPathChecks]): fields no record has, time formats the values don't fit, schema values a constant or map gives,
+/// xpaths that select nothing and extraction regexes that match nothing.
 final class MappingSampleCheck {
 
-    /// How long the check may take, as the Stroom MCP server's `sample_check_seconds` default.
+    /// How long the check may take.
     static final Duration CHECK_TIME = Duration.ofSeconds(60);
     /// The key of the fields whose values going into users' Ids carry a domain, for the caller to take out (not
     /// for the result: they are [LocalCheck.QualifiedIds], not JSON).
@@ -74,8 +72,8 @@ final class MappingSampleCheck {
     /// @param schema   The event-logging schema.
     /// @param inferred True if the spec was inferred from the sample rather than given.
     /// @param clock    The clock the check's time is read against.
-    /// @return `records`, `problems`, `warnings`, `fields_seen`, `not_checked`, `kept_unknown` and `note`, as the
-    /// Stroom MCP server gave them, [#DOMAIN_QUALIFIED] and [#PLACEHOLDERS].
+    /// @return `records`, `problems`, `warnings`, `fields_seen`, `not_checked`, `kept_unknown` and `note`,
+    /// [#DOMAIN_QUALIFIED] and [#PLACEHOLDERS].
     static Map<String, Object> check(final TranslationMapping mapping,
                                      final List<String> samples,
                                      final SplitterSpec splitter,
@@ -91,12 +89,12 @@ final class MappingSampleCheck {
         final List<LocalCheck.QualifiedIds> qualified = LocalCheck.domainQualifiedIds(mapping, found.records(),
                 schema);
         warnings.addAll(LocalCheck.domainQualifiedWarnings(qualified));
-        // Not in the Python server: values that look like stand-ins for none, for the user to decide on.
+        // Values that look like stand-ins for none, for the user to decide on.
         final List<Placeholders.Found> placeholders = LocalCheck.placeholders(mapping, found.records());
         warnings.addAll(PlaceholderChoices.warnings(placeholders));
-        // Not in the Python server: Data a rule's own records never hold.
+        // Data a rule's own records never hold.
         warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
-        // Not in the Python server: the required elements the sample's records leave out, counted.
+        // The required elements the sample's records leave out, counted.
         warnings.addAll(LocalCheck.requiredLeftEmpty(mapping, found.records(),
                 XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))
                         .requiredOnInput()));
@@ -147,8 +145,8 @@ final class MappingSampleCheck {
                 recordDocuments(mapping, samples, splitter), MappingFacts.inputNamespace(mapping));
     }
 
-    /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record (written
-    /// joined in one element): not in the Python server.
+    /// Warnings for the xpaths of entries without `repeat` that give several values in a sample record (written joined
+    /// in one element).
     ///
     /// @param mapping  The mapping.
     /// @param samples  The sample's texts.
@@ -235,7 +233,7 @@ final class MappingSampleCheck {
                 return documents;
             }
             for (final String text : samples) {
-                SplitterDryRun.dryRun(splitter, PyText.strip(text, "﻿\r\n ")).records().forEach(record ->
+                SplitterDryRun.dryRun(splitter, ToolText.strip(text, "﻿\r\n ")).records().forEach(record ->
                         documents.add(XPathChecks.splitterRecordDocument(record, namespace)));
             }
             return documents;

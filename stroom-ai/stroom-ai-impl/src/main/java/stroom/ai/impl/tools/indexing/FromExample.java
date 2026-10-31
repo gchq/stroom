@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.Built;
 import stroom.ai.impl.tools.indexing.ExampleTemplates.ComponentsUsed;
 
@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// One template built from the user's example ([ExampleTemplates#fromExample]), step by step as the Stroom MCP
-/// server's `from_example` builds it.
+/// One template built from the user's example ([ExampleTemplates#fromExample]), step by step.
 final class FromExample {
 
     private static final List<String> MAPPING_PARAMS = List.of("dynamic", "dynamic_templates", "date_detection",
@@ -127,7 +126,7 @@ final class FromExample {
                                  > objects.size();
         // The example composes Elastic's ECS component, mapping as documents bring them: the ECS fields it maps as
         // ECS says are left to it, as an ECS plan's own template leaves them (asked for by the user).
-        final boolean dynamicOn = "true".equals(PyText.lower(PyText.str(own.getOrDefault("dynamic", true))));
+        final boolean dynamicOn = "true".equals(ToolText.lower(ToolText.str(own.getOrDefault("dynamic", true))));
         // Nominated too (seen in testing: asked to use ecs@mappings, the template composed it, kept the example's
         // dynamic false and mapped every field explicitly, so the component mapped nothing).
         final boolean byComponent = composedOf.contains(EcsSchema.COMPONENT)
@@ -202,7 +201,7 @@ final class FromExample {
             // alias's target.
             final Object targetPath = given.get("path");
             final Map<String, Object> target = JsonValues.mapOrEmpty(inExample.get(JsonValues.truthy(targetPath)
-                    ? PyText.str(targetPath)
+                    ? ToolText.str(targetPath)
                     : ""));
             final Object targetType = target.get("type");
             fields.put(path, targetType != null && !"alias".equals(targetType) && !"object".equals(targetType)
@@ -218,10 +217,10 @@ final class FromExample {
         } else if (given != null) {
             fields.put(path, given);
             kept.add(path);
-        } else if (styles.containsKey(PyText.str(spec.get("type")))
-                   && !styles.get(PyText.str(spec.get("type"))).equals(Map.of("type", spec.get("type")))) {
+        } else if (styles.containsKey(ToolText.str(spec.get("type")))
+                   && !styles.get(ToolText.str(spec.get("type"))).equals(Map.of("type", spec.get("type")))) {
             // A field new to the examples, mapped the way they map its type.
-            fields.put(path, JsonValues.deepCopy(styles.get(PyText.str(spec.get("type")))));
+            fields.put(path, JsonValues.deepCopy(styles.get(ToolText.str(spec.get("type")))));
             styled.add(path);
         } else {
             fields.put(path, spec);
@@ -247,7 +246,7 @@ final class FromExample {
             final Object keys = settings instanceof final Map<?, ?> map && map.containsKey("index")
                     ? map.get("index")
                     : settings;
-            notes.add("settings from the example: " + PyText.list(sortedKeys(keys)));
+            notes.add("settings from the example: " + ToolText.list(sortedKeys(keys)));
         }
         if (!JsonValues.truthy(settings) && !JsonValues.truthy(plannedSettings)) {
             return null;
@@ -302,7 +301,7 @@ final class FromExample {
             if (byComponent && !dynamicOn) {
                 // ecs@mappings is dynamic templates: with dynamic false or strict it maps nothing.
                 mappings.put("dynamic", true);
-                notes.add("dynamic mapping on, though the example's is " + PyText.str(own.get("dynamic")) + ": "
+                notes.add("dynamic mapping on, though the example's is " + ToolText.str(own.get("dynamic")) + ": "
                           + EcsSchema.COMPONENT + " maps a field only as a document brings it");
             }
         }
@@ -322,7 +321,7 @@ final class FromExample {
         if (example.containsKey("data_stream")) {
             body.put("data_stream", JsonValues.deepCopy(example.get("data_stream")));
             notes.add("a data stream, as the example is");
-        } else if ("true".equals(PyText.lower(PyText.str(JsonValues.mapAt(own, "_data_stream_timestamp")
+        } else if ("true".equals(ToolText.lower(ToolText.str(JsonValues.mapAt(own, "_data_stream_timestamp")
                 .getOrDefault("enabled", "")))) && !discovery) {
             // The example is a data stream's backing index (GET <data stream>/_mapping): its mapping says so.
             body.put("data_stream", new LinkedHashMap<>());
@@ -338,22 +337,22 @@ final class FromExample {
                        final String style,
                        final boolean typed) {
         if (!left.isEmpty()) {
-            notes.add("left to the component templates (they map them): " + PyText.list(left));
+            notes.add("left to the component templates (they map them): " + ToolText.list(left));
         }
         if (!used.unused().isEmpty()) {
             notes.add("component templates of the example not referenced: none of the fields they map is written "
-                      + "by this pipeline: " + PyText.list(used.unused()));
+                      + "by this pipeline: " + ToolText.list(used.unused()));
         }
         if (!include.isEmpty()) {
             notes.add("component templates nominated (by the user or their standing instructions), referenced: "
-                      + PyText.list(new LinkedHashSet<>(include)));
+                      + ToolText.list(new LinkedHashSet<>(include)));
         }
         final List<String> dropped = JsonValues.strings(example.get("composed_of")).stream()
                 .filter(exclude::contains)
                 .toList();
         if (!dropped.isEmpty()) {
             notes.add("component templates of the example excluded by standing instructions: "
-                      + PyText.list(dropped));
+                      + ToolText.list(dropped));
         }
         if (!used.unsure().isEmpty()) {
             final List<String> said = new ArrayList<>();
@@ -362,17 +361,17 @@ final class FromExample {
                       + String.join("; ", said));
         }
         if (!kept.isEmpty()) {
-            notes.add("typed as in the example: " + PyText.list(kept));
+            notes.add("typed as in the example: " + ToolText.list(kept));
         }
         if (!aliased.isEmpty()) {
             notes.add("aliases in the example, but written by this pipeline, so fields here (typed as each alias's "
-                      + "target): " + PyText.list(aliased));
+                      + "target): " + ToolText.list(aliased));
         }
         if (!styled.isEmpty()) {
-            notes.add("new to this index, mapped in the example's style for their type: " + PyText.list(styled));
+            notes.add("new to this index, mapped in the example's style for their type: " + ToolText.list(styled));
         }
         if (!added.isEmpty()) {
-            notes.add("new to this index, typed from the field plan: " + PyText.list(added));
+            notes.add("new to this index, typed from the field plan: " + ToolText.list(added));
         }
         if (typed) {
             notes.add("objects declared \"type\": \"object\", as the example declares them");
@@ -388,19 +387,19 @@ final class FromExample {
                       + "as keywords); the example's own fields and mapping rules are not copied");
         } else if (!leftOut.isEmpty()) {
             notes.add("in the example but not written by this pipeline, so not in this template: "
-                      + PyText.list(leftOut.subList(0, Math.min(15, leftOut.size())))
+                      + ToolText.list(leftOut.subList(0, Math.min(15, leftOut.size())))
                       + (leftOut.size() > 15
                     ? " (+" + (leftOut.size() - 15) + ")"
                     : ""));
         }
         if (!unlike.isEmpty()) {
             notes.add("named unlike the example (" + ExampleNames.STYLE_NAMES.get(style) + "): "
-                      + PyText.list(unlike) + ". The indexing XSLT writes the plan's names: draft_index_mapping "
+                      + ToolText.list(unlike) + ". The indexing XSLT writes the plan's names: draft_index_mapping "
                       + "again with example_template (and the component templates), so the plan takes the "
                       + "example's names, save the XSLT from it, step, and build this again");
         }
         if (!missing.isEmpty()) {
-            notes.add("composed_of " + PyText.list(missing) + " not given: fields they map may be repeated here "
+            notes.add("composed_of " + ToolText.list(missing) + " not given: fields they map may be repeated here "
                       + "with the plan's types; ask the user for them (GET _component_template/<name>) and build "
                       + "again");
         }

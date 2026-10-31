@@ -30,13 +30,12 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_shared_xslt.py`: shared XSLTs (xsl:import), as an environment keeps its common
-/// steps, driving the real tools as the agent would. Covered: its parts 1 (describe_template finds the sibling's
-/// imports, reads each shared XSLT by name and reports each named template called), 2 (a translation mapping
-/// using the shared templates: refused while it still maps Device; without it, imported and called, stepped clean,
-/// valid, one Device and one Meta), 2b (its mapping lost: rebuild_mapping reads it back from the XSLT and the
-/// shared XSLT it imports) and 2c (a shared XSLT of functions, called from an xpath entry, and read back when the
-/// mapping is lost).
+/// Shared XSLTs (xsl:import), as an environment keeps its common steps, driving the real tools as the agent would.
+/// Covered: parts 1 (describe_template finds the sibling's imports, reads each shared XSLT by name and reports each
+/// named template called), 2 (a translation mapping using the shared templates: refused while it still maps Device;
+/// without it, imported and called, stepped clean, valid, one Device and one Meta), 2b (its mapping lost:
+/// rebuild_mapping reads it back from the XSLT and the shared XSLT it imports) and 2c (a shared XSLT of functions,
+/// called from an xpath entry, and read back when the mapping is lost).
 ///
 /// Part 3 (the index plan taking stroom.feed from a shared indexing XSLT, and an Elasticsearch indexing pipeline
 /// stepped) is left out: it needs an Elasticsearch cluster doc and indexes into Elasticsearch.
@@ -261,7 +260,7 @@ class TestE2eSharedXslt extends AbstractE2eTest {
                 return (Element) node;
             }
             if (node.getNodeType() == Node.COMMENT_NODE) {
-                // lxml's sheet[0] counts a comment as a child too.
+                // A comment counts as the stylesheet's first child too.
                 throw new AssertionError("The XSLT starts with a comment, not its import: " + node.getTextContent());
             }
         }

@@ -51,9 +51,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// A discovery index, as `dev/e2e_discovery.py` runs it against Elasticsearch 9: raw data (JSON, delimited text,
-/// XML) indexed as it is, for exploration, with no event-logging translation and nothing surveyed up front.
-/// Elasticsearch maps the source's fields dynamically; only StreamId, EventId and @timestamp are mapped explicitly.
+/// A discovery index, run against Elasticsearch 9: raw data (JSON, delimited text, XML) indexed as it is, for
+/// exploration, with no event-logging translation and nothing surveyed up front. Elasticsearch maps the source's fields
+/// dynamically; only StreamId, EventId and @timestamp are mapped explicitly.
 ///
 /// Each scenario is a test: the raw JSON sample (plan, pipeline, the agreed template the cluster admin applies,
 /// indexing, the same searches through Stroom and in Elasticsearch, documentation); an existing raw feed whose data
@@ -719,7 +719,7 @@ class TestE2eDiscovery extends AbstractE2eTest {
                 .isEqualTo(1);
     }
 
-    // Delimited text or XML, indexed as it is (the script's text_formats).
+    // Delimited text or XML, indexed as it is.
     private void textFormat(final String kind,
                             final String sample,
                             final String templateName,
@@ -803,8 +803,8 @@ class TestE2eDiscovery extends AbstractE2eTest {
                 "time_field", "@timestamp", "index_name", index, "cluster_uuid", cluster.getUuid())));
     }
 
-    // The same searches through Stroom (verify_index, each hit traced to its record) and directly in Elasticsearch
-    // (the script's searching.paired), and the verification dashboard as Stroom kept it.
+    // The same searches through Stroom (verify_index, each hit traced to its record) and directly in Elasticsearch,
+    // and the verification dashboard as Stroom kept it.
     private void paired(final String build,
                         final String index,
                         final String indexDoc,
@@ -839,8 +839,8 @@ class TestE2eDiscovery extends AbstractE2eTest {
         }
     }
 
-    // The verification dashboard as Stroom kept it (the script's dashboard_designed): the user's columns, with
-    // StreamId and EventId hidden; newest first; a text pane on the selected row's record, with stepping.
+    // The verification dashboard as Stroom kept it: the user's columns, with StreamId and EventId hidden; newest first;
+    // a text pane on the selected row's record, with stepping.
     private void dashboardDesigned(final Map<String, Object> dashboard, final List<String> fields, final int total) {
         if (!Boolean.TRUE.equals(dashboard.get("saved"))) {
             return;
@@ -864,9 +864,8 @@ class TestE2eDiscovery extends AbstractE2eTest {
         assertThat(total).isPositive();
     }
 
-    // A discovery template (the script's fixture_template, with_json_schema_filter): a parser (JSON, a Data Splitter
-    // for delimited text, or XML), one record a split, then an XSLT, a schema filter of group JSON (as the live one
-    // validates), and the Elasticsearch indexing filter.
+    // A discovery template: a parser (JSON, a Data Splitter for delimited text, or XML), one record a split, then an
+    // XSLT, a schema filter of group JSON (as the live one validates), and the Elasticsearch indexing filter.
     private String discoveryTemplate(final String name) {
         final ExplorerNode created = create(PipelineDoc.TYPE, name, templateFolder());
         final List<String> parser = PARSERS.get(name);
@@ -890,12 +889,12 @@ class TestE2eDiscovery extends AbstractE2eTest {
         data.addProperties(properties);
         asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(created.getDocRef()).copy()
                 .pipelineData(data.build())
-                .description("Fixture for the ported dev/e2e_discovery.py")
+                .description("Fixture for the discovery e2e tests")
                 .build()));
         return created.getUuid();
     }
 
-    // The Elastic Cluster doc for the test node (the script's live_cluster).
+    // The Elastic Cluster doc for the test node.
     private DocRef liveCluster() {
         final ExplorerNode created = create(ElasticClusterDoc.TYPE, FIXTURE_CLUSTER, templateFolder());
         final ElasticConnectionConfig connection = new ElasticConnectionConfig();
@@ -937,8 +936,8 @@ class TestE2eDiscovery extends AbstractE2eTest {
         return map(map(found, "mappings"), "properties");
     }
 
-    // The documents the pipeline writes for the stream's first records, read from its XSLT's output when stepped
-    // (the script's indexing._documents): each value as its kind and text, e.g. string("alice").
+    // The documents the pipeline writes for the stream's first records, read from its XSLT's output when stepped:
+    // each value as its kind and text, e.g. string("alice").
     private List<Map<String, Object>> documents(final String pipeline, final long stream, final int count) {
         final List<Map<String, Object>> documents = new ArrayList<>();
         for (int record = 0; record < count; record++) {

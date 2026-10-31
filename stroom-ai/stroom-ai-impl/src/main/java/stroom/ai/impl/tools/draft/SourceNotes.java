@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
 import stroom.util.shared.NullSafe;
@@ -37,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Source notes: what the user's vendor or event reference documentation says about a source, kept so the tools use
-/// it (ported from the Stroom MCP server's `utils/sourcenotes.py`).
+/// it.
 ///
 /// record_source_notes keeps the documents themselves verbatim (Documentation docs `<source> reference - <title>`,
 /// to read and search later) and the notes condensed from them: a field dictionary (each source field's meaning, its
@@ -82,7 +82,7 @@ public final class SourceNotes {
     /// @return The block a notes doc carries them in, for the tools to read back: an HTML comment holding them as
     /// JSON, indented by one.
     public static String block(final Map<String, Object> notes) {
-        return "<!-- stroom-mcp source notes\n" + PyJson.dumps(notes, 1) + "\n-->";
+        return "<!-- stroom-mcp source notes\n" + ToolJson.dumps(notes, 1) + "\n-->";
     }
 
     /// @param text A notes doc's text, or null.
@@ -94,7 +94,7 @@ public final class SourceNotes {
             return null;
         }
         try {
-            return PyJson.loads(found.group(1)) instanceof final Map<?, ?> notes
+            return ToolJson.loads(found.group(1)) instanceof final Map<?, ?> notes
                     ? (Map<String, Object>) notes
                     : null;
         } catch (final RuntimeException e) {
@@ -126,7 +126,7 @@ public final class SourceNotes {
     /// @param detail The event's `event_detail`, e.g. `Authenticate` or `Network/Permit`, or null.
     /// @return Why it can't be, or null when it can (or none is given).
     public static String detailProblem(final EventSchema schema, final String detail) {
-        final String given = PyText.strip(NullSafe.string(detail).strip(), "/");
+        final String given = ToolText.strip(NullSafe.string(detail).strip(), "/");
         if (given.isEmpty()) {
             return null;
         }
@@ -239,7 +239,7 @@ public final class SourceNotes {
         }
         final List<Map<String, Object>> detailFields = new ArrayList<>();
         byField.forEach((name, note) -> {
-            final String path = PyText.strip(text(note.get("event_logging_path")).strip(), "/");
+            final String path = ToolText.strip(text(note.get("event_logging_path")).strip(), "/");
             if (path.isEmpty()) {
                 return;
             }
@@ -287,7 +287,7 @@ public final class SourceNotes {
 
         final List<Map<String, Object>> rules = new ArrayList<>();
         for (final Map<String, Object> event : events) {
-            String detail = PyText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
+            String detail = ToolText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
                     .strip(), "/");
             if (detail.isEmpty()) {
                 detail = UNKNOWN;
@@ -393,11 +393,11 @@ public final class SourceNotes {
             if (!JsonValues.truthy(event.get("field")) || !hasValue(event.get("value"))) {
                 continue;
             }
-            final String value = PyText.str(event.get("value"));
-            final String label = firstTruthy(event.get("event"), value, value) + " (" + PyText.str(event.get("field"))
+            final String value = ToolText.str(event.get("value"));
+            final String label = firstTruthy(event.get("event"), value, value) + " (" + ToolText.str(event.get("field"))
                                  + "=" + value + ")";
             final Map<String, Object> rule = ruleFor(JsonValues.maps(mapping.get("events")),
-                    PyText.str(event.get("field")), value);
+                    ToolText.str(event.get("field")), value);
             if (rule == null) {
                 problems.add(label + ": no rule takes it");
                 continue;
@@ -409,7 +409,7 @@ public final class SourceNotes {
                     details.add(path.split("/")[1]);
                 }
             }
-            final String want = PyText.strip(text(event.get("event_detail")).strip(), "/").split("/")[0];
+            final String want = ToolText.strip(text(event.get("event_detail")).strip(), "/").split("/")[0];
             if (!want.isEmpty() && !UNKNOWN.equals(want) && !details.contains(want)) {
                 problems.add(label + ": the documentation says " + want + "; rule '" + text(rule.get("name"))
                              + "' writes " + (details.isEmpty()
@@ -422,10 +422,10 @@ public final class SourceNotes {
                         .findFirst()
                         .orElse(common.get("EventDetail/TypeId"));
                 if (typeId != null && typeId.get("value") != null
-                    && !PyText.str(typeId.get("value")).equals(PyText.str(event.get("type_id")))) {
-                    problems.add(label + ": the documentation's TypeId is '" + PyText.str(event.get("type_id"))
+                    && !ToolText.str(typeId.get("value")).equals(ToolText.str(event.get("type_id")))) {
+                    problems.add(label + ": the documentation's TypeId is '" + ToolText.str(event.get("type_id"))
                                  + "'; rule '" + text(rule.get("name")) + "' writes '"
-                                 + PyText.str(typeId.get("value")) + "'");
+                                 + ToolText.str(typeId.get("value")) + "'");
                 }
             }
         }
@@ -448,10 +448,10 @@ public final class SourceNotes {
                     ok = false;
                     break;
                 }
-                if (condition.get("equals") != null && !PyText.str(condition.get("equals")).equals(value)) {
+                if (condition.get("equals") != null && !ToolText.str(condition.get("equals")).equals(value)) {
                     ok = false;
                 } else if (condition.get("one_of") != null && (!(condition.get("one_of") instanceof final List<?> one)
-                                                               || one.stream().map(PyText::str)
+                                                               || one.stream().map(ToolText::str)
                                                                        .noneMatch(value::equals))) {
                     ok = false;
                 } else if (condition.get("equals") == null && condition.get("one_of") == null) {
@@ -534,7 +534,7 @@ public final class SourceNotes {
         for (final String name : rest) {
             fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
         }
-        final String name = PyText.strip(NOT_NAME.matcher(firstTruthy(event.get("event"), key.get(1), ""))
+        final String name = ToolText.strip(NOT_NAME.matcher(firstTruthy(event.get("event"), key.get(1), ""))
                 .replaceAll("_"), "_").toLowerCase(Locale.ROOT);
         final Map<String, Object> rule = new LinkedHashMap<>();
         rule.put("name", name.isEmpty()
@@ -570,10 +570,10 @@ public final class SourceNotes {
                 continue;
             }
             final boolean matches = condition.get("equals") != null
-                    ? PyText.str(condition.get("equals")).equals(key.get(1))
+                    ? ToolText.str(condition.get("equals")).equals(key.get(1))
                     : NullSafe.list(condition.get("one_of") instanceof final List<?> list
                             ? list
-                            : null).stream().map(PyText::str).toList().contains(key.get(1));
+                            : null).stream().map(ToolText::str).toList().contains(key.get(1));
             if (matches) {
                 return true;
             }
@@ -586,7 +586,7 @@ public final class SourceNotes {
     }
 
     private static List<String> key(final Map<String, Object> event) {
-        return List.of(text(event.get("field")), PyText.str(event.get("value")));
+        return List.of(text(event.get("field")), ToolText.str(event.get("value")));
     }
 
     private static Map<String, Object> entry(final Object... keysAndValues) {
@@ -599,16 +599,16 @@ public final class SourceNotes {
 
     private static Map<String, String> strings(final Map<?, ?> map) {
         final Map<String, String> out = new LinkedHashMap<>();
-        map.forEach((key, value) -> out.put(String.valueOf(key), PyText.str(value)));
+        map.forEach((key, value) -> out.put(String.valueOf(key), ToolText.str(value)));
         return out;
     }
 
     private static String firstTruthy(final Object first, final Object second, final String otherwise) {
         if (JsonValues.truthy(first)) {
-            return PyText.str(first);
+            return ToolText.str(first);
         }
         return JsonValues.truthy(second)
-                ? PyText.str(second)
+                ? ToolText.str(second)
                 : otherwise;
     }
 
@@ -620,6 +620,6 @@ public final class SourceNotes {
     private static String text(final Object value) {
         return value == null
                 ? ""
-                : PyText.str(value);
+                : ToolText.str(value);
     }
 }

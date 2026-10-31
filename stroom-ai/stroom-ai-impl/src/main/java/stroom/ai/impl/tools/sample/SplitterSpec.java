@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// How one record of text divides into named fields: the Stroom MCP server's Data Splitter spec (`SplitterSpec` in
-/// `utils/dsgen.py`), which [SplitterDryRun] applies to a sample as the generated Data Splitter would.
+/// How one record of text divides into named fields: a Data Splitter spec, which [SplitterDryRun] applies to a
+/// sample as the generated Data Splitter would.
 ///
 /// @param kind            `delimited`: columns separated by delimiter; `regex`: pattern with one capture group per
 ///                        name; `key_value`: pairs such as `a=1 b="two words"`; `syslog`: an RFC 5424 or 3164 header
@@ -91,9 +91,9 @@ public record SplitterSpec(String kind,
     /// The field catch_all keeps what the spec didn't parse in.
     public static final String UNPARSED = "unparsed";
 
-    /// Checks the spec is consistent, as the Python model's validator does.
+    /// Checks the spec is consistent.
     ///
-    /// @throws IllegalArgumentException with the Python validator's message if it isn't.
+    /// @throws IllegalArgumentException with what is inconsistent if it isn't.
     public SplitterSpec {
         Objects.requireNonNull(kind, "kind");
         if (!KINDS.contains(kind)) {
@@ -142,8 +142,7 @@ public record SplitterSpec(String kind,
         }
     }
 
-    // The checks of what the Java port adds to the Python model: escape, spaced_values, catch_all,
-    // blank_line_records and the fields kind.
+    // The checks of escape, spaced_values, catch_all, blank_line_records and the fields kind.
     private static void checkAdditions(final String kind,
                                        final String escape,
                                        final boolean spacedValues,
@@ -186,12 +185,12 @@ public record SplitterSpec(String kind,
     }
 
     /// @param kind The kind of spec: one of [#KINDS].
-    /// @return A builder of a spec of that kind, with the Python model's defaults.
+    /// @return A builder of a spec of that kind, with the defaults.
     public static Builder builder(final String kind) {
         return new Builder(kind);
     }
 
-    /// Reads a spec from its JSON, as the Python model's `model_validate` does (the form [#toMap()] writes).
+    /// Reads a spec from its JSON (the form [#toMap()] writes).
     ///
     /// @param json The spec as JSON: `kind`, and any of `delimiter`, `header` (true or false, or the column
     ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `body` (a spec), `body_field`,
@@ -268,16 +267,14 @@ public record SplitterSpec(String kind,
         return builder;
     }
 
-    /// @return The spec's `header` as the Python model holds it: true or false for a header line, or the column
-    /// names.
+    /// @return The spec's `header` as its JSON holds it: true or false for a header line, or the column names.
     public Object header() {
         return columns.isEmpty()
                 ? (Object) headerLine
                 : columns;
     }
 
-    /// @return The spec as JSON (the Python model's `model_dump(exclude_defaults=True)`): its kind, and the values
-    /// that aren't the defaults.
+    /// @return The spec as JSON: its kind, and the values that aren't the defaults.
     public Map<String, Object> toMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("kind", kind);
@@ -317,7 +314,7 @@ public record SplitterSpec(String kind,
     // --------------------------------------------------------------------------------
 
 
-    /// Builds a [SplitterSpec], with the Python model's defaults.
+    /// Builds a [SplitterSpec], with the defaults.
     public static final class Builder {
 
         private final String kind;

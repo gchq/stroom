@@ -31,9 +31,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-/// XML read into a small tree, as the sample analysis ported from the Stroom MCP server read it with lxml: a whole
-/// document (which must be well-formed), or the start of one (the complete elements before a cut-off end or an
-/// error), and an element written back as lxml's `etree.tostring` writes it (with the namespaces it inherits).
+/// XML read into a small tree for the sample analysis: a whole document (which must be well-formed), or the start of
+/// one (the complete elements before a cut-off end or an error), and an element written back as text (with the
+/// namespaces it inherits).
 ///
 /// DTDs and external entities are not read.
 public final class XmlTree {
@@ -57,7 +57,7 @@ public final class XmlTree {
         return pull.root();
     }
 
-    /// Reads as much of a text as is XML, as lxml's pull parser does when fed the text whole.
+    /// Reads as much of a text as is XML.
     ///
     /// @param text       The text.
     /// @param maxRecords The most complete children of the root to read.
@@ -106,8 +106,8 @@ public final class XmlTree {
                 }
             }
         } catch (final XMLStreamException | RuntimeException e) {
-            // An end that is only cut off (the reader had read to the end of the text) is no syntax error: lxml's
-            // pull parser waits for more.
+            // An end that is only cut off (the reader had read to the end of the text) is no syntax error: more
+            // text may follow.
             error = String.valueOf(e.getMessage());
             cut = in.ended;
         }
@@ -166,9 +166,8 @@ public final class XmlTree {
                 : text;
     }
 
-    /// Writes an element as lxml's `etree.tostring(element, encoding='unicode', with_tail=False)` does: with the
-    /// namespace declarations of its ancestors it doesn't redeclare after its own, an element without children as
-    /// `<a/>`.
+    /// Writes an element (without the text after it): with the namespace declarations of its ancestors it doesn't
+    /// redeclare after its own, an element without children as `<a/>`.
     ///
     /// @param element An element.
     /// @return Its text.
@@ -278,7 +277,7 @@ public final class XmlTree {
     /// @param value     Its value.
     record Attribute(String prefix, String localName, String namespace, String value) {
 
-        /// @return Its name as lxml gives it in an element's `attrib`: `{namespace}name` when it has a namespace.
+        /// @return Its name as an element's attributes are keyed: `{namespace}name` when it has a namespace.
         String clarkName() {
             return namespace == null
                     ? localName
@@ -300,8 +299,7 @@ public final class XmlTree {
             return error != null;
         }
 
-        /// @return True if the text isn't well-formed before its end (lxml's feed would raise), as opposed to
-        /// only being cut off.
+        /// @return True if the text isn't well-formed before its end, as opposed to only being cut off.
         boolean syntaxError() {
             return error != null && !cut;
         }
@@ -329,7 +327,7 @@ public final class XmlTree {
             this.parent = parent;
         }
 
-        /// @return Its local name (lxml's `etree.QName(element).localname`).
+        /// @return Its local name.
         public String localName() {
             return localName;
         }
@@ -339,13 +337,12 @@ public final class XmlTree {
             return namespace;
         }
 
-        /// @return The element it is in, or null for the root (lxml's `getparent()`).
+        /// @return The element it is in, or null for the root.
         public Element parent() {
             return parent;
         }
 
-        /// @return Its attributes in document order, each by its name as lxml's `attrib` gives it (`{namespace}name`
-        /// when it has a namespace).
+        /// @return Its attributes in document order, each by its name (`{namespace}name` when it has a namespace).
         public Map<String, String> attrib() {
             final Map<String, String> out = new LinkedHashMap<>();
             attributes.forEach(attribute -> out.put(attribute.clarkName(), attribute.value()));
@@ -353,13 +350,13 @@ public final class XmlTree {
         }
 
         /// @param name An attribute's name, as [#attrib()] gives it.
-        /// @return Its value, or null if it has no such attribute (lxml's `get(name)`).
+        /// @return Its value, or null if it has no such attribute.
         public String get(final String name) {
             return attrib().get(name);
         }
 
-        /// @return The text inside it, its own and its descendants' (comments and processing instructions left
-        /// out), in document order, as lxml's `itertext()` gives it.
+        /// @return The text inside it, its own and its descendants' (comments and processing instructions left out), in
+        /// document order.
         public List<String> itertext() {
             final List<String> out = new ArrayList<>();
             collectText(this, out);
@@ -394,7 +391,7 @@ public final class XmlTree {
             return elements;
         }
 
-        /// @return True if it has no child nodes but text (lxml's `len(element) == 0`).
+        /// @return True if it has no child nodes but text.
         public boolean isLeaf() {
             for (final Node child : children) {
                 if (!(child instanceof Text)) {
@@ -404,14 +401,14 @@ public final class XmlTree {
             return true;
         }
 
-        /// @return Its text before its first child node, as lxml's `element.text`, or "" for none.
+        /// @return Its text before its first child node, or "" for none.
         public String text() {
             return !children.isEmpty() && children.getFirst() instanceof final Text text
                     ? text.text()
                     : "";
         }
 
-        /// @return It and every element inside it, in document order, as lxml's `element.iter()`.
+        /// @return It and every element inside it, in document order.
         public List<Element> iter() {
             final List<Element> all = new ArrayList<>();
             collect(this, all);
@@ -425,8 +422,7 @@ public final class XmlTree {
             }
         }
 
-        /// @return True if any namespace is declared on it or an element above it (lxml's `element.nsmap`), the
-        /// xml namespace aside.
+        /// @return True if any namespace is declared on it or an element above it, the xml namespace aside.
         boolean hasNamespaces() {
             for (Element element = this; element != null; element = element.parent) {
                 for (final Namespace ns : element.namespaces) {
@@ -439,7 +435,7 @@ public final class XmlTree {
         }
     }
 
-    /// What lxml's `XMLSyntaxError` says.
+    /// XML that isn't well-formed: what is wrong with it.
     public static final class XmlException extends RuntimeException {
 
         /// @param message What is wrong with the XML.

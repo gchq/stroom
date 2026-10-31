@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -32,23 +32,22 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The ported helpers and mapping models against the Stroom MCP server's own code: each case in
-/// `helper_cases.json` is a call of one of its functions (`style_name`, `rooted_path`, `compact_rules`,
-/// `textwrap`-wrapped comments, Python's `re` compiling a regex, ...) and what it gave; each in `model_cases.json`
-/// a mapping (or part of one) and what pydantic made of it: its dumps, or its errors, worded as the agent is shown
-/// them. Made by running the server's code (`make_parity.py`).
-class TestPythonParity {
+/// The generation helpers and mapping models against their fixed results: each case in `helper_cases.json` is a
+/// call of a helper (`style_name`, `rooted_path`, `compact_rules`, wrapped comments, ...) and what
+/// it must give; each in `model_cases.json` a mapping (or part of one) and what reading it must give: its dumps, or
+/// its errors, worded as the agent is shown them. They pin the helpers' and models' established behaviour.
+class TestGenerationHelperCases {
 
     @TestFactory
-    Stream<DynamicTest> theHelpersGiveWhatThePythonOnesGive() {
+    Stream<DynamicTest> theHelpersGiveTheRecordedResults() {
         final List<Map<String, Object>> cases = GenerationFixtures.json(GenerationFixtures.resource(
                 "helper_cases.json"));
-        assertThat(cases).hasSizeGreaterThan(300);
+        assertThat(cases).hasSizeGreaterThan(250);
         return IntStream.range(0, cases.size()).mapToObj(n -> {
             final Map<String, Object> c = cases.get(n);
-            return DynamicTest.dynamicTest(n + " " + c.get("call") + " " + PyJson.dumps(c.get("args")), () -> {
+            return DynamicTest.dynamicTest(n + " " + c.get("call") + " " + ToolJson.dumps(c.get("args")), () -> {
                 final Object actual = call((String) c.get("call"), list(c.get("args")));
-                assertThat(PyJson.dumps(actual)).isEqualTo(PyJson.dumps(asThePortMeansIt((String) c.get("call"),
+                assertThat(ToolJson.dumps(actual)).isEqualTo(ToolJson.dumps(asThePortMeansIt((String) c.get("call"),
                         list(c.get("args")), c.get("result"))));
             });
         });
@@ -61,7 +60,7 @@ class TestPythonParity {
         assertThat(cases).hasSizeGreaterThan(80);
         return IntStream.range(0, cases.size()).mapToObj(n -> {
             final Map<String, Object> c = cases.get(n);
-            return DynamicTest.dynamicTest(n + " " + c.get("model") + " " + PyJson.dumps(c.get("input")), () -> {
+            return DynamicTest.dynamicTest(n + " " + c.get("model") + " " + ToolJson.dumps(c.get("input")), () -> {
                 final Function<DumpMode, Object> dump;
                 try {
                     dump = read((String) c.get("model"), c.get("input"));
@@ -75,22 +74,22 @@ class TestPythonParity {
                         map.put("input", error.input());
                         return (Object) map;
                     }).toList();
-                    // The port's entries may join fields too (FieldMapping's join), which the message names.
-                    assertThat(PyJson.dumps(errors, 1)).isEqualTo(PyJson.dumps(c.get("errors"), 1).replace(
+                    // Entries may join fields too (FieldMapping's join), which the message names.
+                    assertThat(ToolJson.dumps(errors, 1)).isEqualTo(ToolJson.dumps(c.get("errors"), 1).replace(
                             "give exactly one of field, any_of, value, xpath or lookup",
                             "give exactly one of field, any_of, join, value, xpath or lookup"));
                     return;
                 }
                 assertThat(c).doesNotContainKey("errors");
-                assertThat(PyJson.dumps(dump.apply(DumpMode.COMPACT))).isEqualTo(PyJson.dumps(c.get("compact")));
-                assertThat(PyJson.dumps(dump.apply(DumpMode.WITHOUT_NONE)))
-                        .isEqualTo(PyJson.dumps(c.get("without_none")));
-                assertThat(PyJson.dumps(dump.apply(DumpMode.ALL))).isEqualTo(PyJson.dumps(c.get("all")));
+                assertThat(ToolJson.dumps(dump.apply(DumpMode.COMPACT))).isEqualTo(ToolJson.dumps(c.get("compact")));
+                assertThat(ToolJson.dumps(dump.apply(DumpMode.WITHOUT_NONE)))
+                        .isEqualTo(ToolJson.dumps(c.get("without_none")));
+                assertThat(ToolJson.dumps(dump.apply(DumpMode.ALL))).isEqualTo(ToolJson.dumps(c.get("all")));
             });
         });
     }
 
-    // The Python server's result, but where the port differs on purpose: times finer than a millisecond are cut,
+    // The fixed result, but where the generator now differs on purpose: times finer than a millisecond are cut,
     // not rounded (see XPathText's timeExpression), an epoch time with floor, and a pattern's digits by Stroom's
     // format-date alone, not the XSLT's own mcp:time-ms.
     private static Object asThePortMeansIt(final String call, final List<Object> args, final Object result) {
@@ -157,17 +156,8 @@ class TestPythonParity {
                     .findFirst()
                     .orElseThrow()
                     .regex(), text(args, 1));
-            case "regex_groups" -> regexGroups(text(args, 0));
             default -> throw new IllegalArgumentException(name);
         };
-    }
-
-    private static Object regexGroups(final String pattern) {
-        try {
-            return PythonRegex.groups(pattern);
-        } catch (final PythonRegex.PythonRegexException e) {
-            return e.getMessage();
-        }
     }
 
     private static String text(final List<Object> args, final int n) {

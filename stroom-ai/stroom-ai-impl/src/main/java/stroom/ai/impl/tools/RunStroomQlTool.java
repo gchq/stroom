@@ -225,9 +225,9 @@ class RunStroomQlTool extends AbstractWorkspaceTool {
         }
     }
 
-    /// The refusal for a query on a Lucene or Elastic index whose answer through Stroom would mislead, as the Stroom
-    /// MCP server's find_events refused such a search (e.g. IS_NULL on Elasticsearch matches every document, and a
-    /// wildcard on an ip field finds nothing): it says what to query instead.
+    /// The refusal for a query on a Lucene or Elastic index whose answer through Stroom would mislead (e.g. IS_NULL
+    /// on Elasticsearch matches every document, and a wildcard on an ip field finds nothing): it says what to query
+    /// instead.
     ///
     /// @param queryService Parses the query and lists the index's fields.
     /// @param query        The query.

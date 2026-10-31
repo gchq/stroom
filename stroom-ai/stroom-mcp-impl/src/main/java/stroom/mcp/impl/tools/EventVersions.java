@@ -37,9 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// The event-logging versions this Stroom holds, and the one a build's translation writes (the Stroom MCP server's
-/// `tools/generation.py` `event_schema`, `event_versions`, `_remember_version`, `version_settled`,
-/// `_version_chosen`, `chosen_or_latest`, `translation_version`, `_ask_version` and `target_version`).
+/// The event-logging versions this Stroom holds, and the one a build's translation writes.
 ///
 /// The version the user chose for a build is kept in the build's record ([BuildRecords]), where the build has a
 /// folder, so a later call (in this session or another) doesn't ask again what draft_translation_mapping asked; and

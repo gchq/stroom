@@ -98,7 +98,7 @@ In `stroom-mcp-impl` (`stroom.mcp.impl`):
   `McpSession`, `TransportSessions`, `RunningCalls`, `McpForms` and `McpApprovals` (forms and approvals for
   outside clients), `McpUploadServlet` (`/mcp/upload`), `McpProtectedResourceServlet`, `McpWorkspaces`.
 * **The build tools** (onboarding, translation, indexing, processing, documentation, promotion): `tools/`,
-  registered in `PortedToolsModule`. `WriteGuard` keeps writes to the build folder; `BuildPlan` and
+  registered in `BuildToolsModule`. `WriteGuard` keeps writes to the build folder; `BuildPlan` and
   `BuildStatusTool` give the plan and its `next` call; `Consent` asks the user in forms.
 * **Bundled knowledge**: `BundledKnowledge` reads `knowledge/`. Its guides and conventions are listed by name in
   the class (a folder can't be listed reliably inside a jar), so a new guide must be added to `GUIDES` too.

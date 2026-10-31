@@ -40,9 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `profile_sample` - profiles raw data: its format, record structure and fields, which parser and template to use,
-/// and whether a text converter is needed (the Stroom MCP server's `tools/feeds.py` `profile_sample`). It only
-/// reads: the samples given as text, or sample streams read as the user.
+/// `profile_sample` - profiles raw data: its format, record structure and fields, which parser and template to use, and
+/// whether a text converter is needed. It only reads: the samples given as text, or sample streams read as the user.
 class ProfileSampleTool extends AbstractBuiltInTool {
 
     static final String NAME = "profile_sample";

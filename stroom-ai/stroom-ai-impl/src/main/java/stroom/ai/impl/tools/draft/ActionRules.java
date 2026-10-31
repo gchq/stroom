@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-/// Action elements the sample's own values show, as mapping rules (the Stroom MCP server's `utils/actions.py`).
+/// Action elements the sample's own values show, as mapping rules.
 ///
 /// An agent left with EventDetail/Unknown placeholders and a schema it found awkward kept giving up: it marked
 /// firewall traffic and administrator logons Unknown and asked the user to agree. Some kinds are plain from their
@@ -89,7 +89,7 @@ public final class ActionRules {
     }
 
     private static Pattern ignoringCase(final String regex) {
-        return PyText.ignoringCase(regex);
+        return ToolText.ignoringCase(regex);
     }
 
     private static Map<String, Pattern> severities() {
@@ -170,7 +170,7 @@ public final class ActionRules {
     public static List<Map<String, Object>> severityFields(final List<Map<String, Object>> records,
                                                            final List<String> names) {
         final String field = names.stream()
-                .filter(n -> PyText.match(SEVERITY, PyText.lastPart(n, '.')))
+                .filter(n -> ToolText.match(SEVERITY, ToolText.lastPart(n, '.')))
                 .findFirst()
                 .orElse(null);
         if (field == null) {
@@ -188,9 +188,9 @@ public final class ActionRules {
         // The other usual words too, written as the sample writes them, so a CRITICAL the sample lacks still
         // validates.
         final Function<String, String> casing;
-        if (seen.stream().allMatch(PyText::isUpper)) {
+        if (seen.stream().allMatch(ToolText::isUpper)) {
             casing = word -> word.toUpperCase(Locale.ROOT);
-        } else if (seen.stream().allMatch(PyText::isLower)) {
+        } else if (seen.stream().allMatch(ToolText::isLower)) {
             casing = word -> word.toLowerCase(Locale.ROOT);
         } else {
             casing = null;
@@ -207,7 +207,7 @@ public final class ActionRules {
 
     private static String severityWord(final String value) {
         return SEVERITIES.entrySet().stream()
-                .filter(entry -> PyText.match(entry.getValue(), value))
+                .filter(entry -> ToolText.match(entry.getValue(), value))
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
@@ -291,7 +291,7 @@ public final class ActionRules {
     private static Map<String, String> networkRoles(final List<String> names) {
         final Map<String, String> out = new LinkedHashMap<>();
         FIELDS.forEach((role, pattern) -> names.stream()
-                .filter(n -> PyText.match(pattern, PyText.lastPart(n, '.')))
+                .filter(n -> ToolText.match(pattern, ToolText.lastPart(n, '.')))
                 .findFirst()
                 .ifPresent(found -> out.put(role, found)));
         return out;
@@ -301,7 +301,7 @@ public final class ActionRules {
     private static List<String> values(final List<Map<String, Object>> records, final String field) {
         final List<String> seen = new ArrayList<>();
         for (final Map<String, Object> record : records) {
-            final String value = PyText.strip(JsonValues.text(record.get(field)));
+            final String value = ToolText.strip(JsonValues.text(record.get(field)));
             if (!value.isEmpty() && !seen.contains(value)) {
                 seen.add(value);
             }
@@ -315,7 +315,7 @@ public final class ActionRules {
                                    final List<String> names,
                                    final Set<String> skip) {
         for (final String name : names) {
-            if (skip.contains(name) || !PyText.match(SPLITTER, PyText.lastPart(name, '.'))) {
+            if (skip.contains(name) || !ToolText.match(SPLITTER, ToolText.lastPart(name, '.'))) {
                 continue;
             }
             final List<String> values = values(records, name);
@@ -327,9 +327,9 @@ public final class ActionRules {
     }
 
     private static boolean recognised(final String value) {
-        return PyText.match(PERMIT, value) || PyText.match(DENY, value) || PyText.match(CONNECT, value)
-               || PyText.match(CLOSE, value) || PyText.search(AUTH, value) || PyText.search(CONFIG, value)
-               || PyText.match(PROCESS, value) || PyText.search(ALERT, value);
+        return ToolText.match(PERMIT, value) || ToolText.match(DENY, value) || ToolText.match(CONNECT, value)
+               || ToolText.match(CLOSE, value) || ToolText.search(AUTH, value) || ToolText.search(CONFIG, value)
+               || ToolText.match(PROCESS, value) || ToolText.search(ALERT, value);
     }
 
 
@@ -388,14 +388,14 @@ public final class ActionRules {
                 network("Close", "closed", CLOSE, net);
             }
             logons(user);
-            final List<String> logoffs = unused(v -> PyText.search(LOGOFF, v));
+            final List<String> logoffs = unused(v -> ToolText.search(LOGOFF, v));
             final List<Map<String, Object>> logoffFields = new ArrayList<>();
             logoffFields.add(dict(PATH, "EventDetail/Authenticate/Action", VALUE, "Logoff"));
             if (JsonValues.truthy(user)) {
                 logoffFields.add(withRead("EventDetail/Authenticate/User/Id", user));
             }
             rule("logoff", logoffs, logoffFields);
-            final List<String> changes = unused(v -> PyText.search(CONFIG, v));
+            final List<String> changes = unused(v -> ToolText.search(CONFIG, v));
             final List<Map<String, Object>> changeFields = new ArrayList<>();
             changeFields.add(dict(PATH, "EventDetail/Update/After/Configuration/Type", FIELD, split));
             if (JsonValues.truthy(description)) {
@@ -410,7 +410,7 @@ public final class ActionRules {
 
         private void network(final String side, final String name, final Pattern pattern,
                              final Map<String, String> net) {
-            final List<String> chosen = unused(v -> PyText.match(pattern, v) && addressed(v, net));
+            final List<String> chosen = unused(v -> ToolText.match(pattern, v) && addressed(v, net));
             // The kind's protocols, seen in any of them.
             rule(name, chosen, networkFields(side, net, records));
         }
@@ -421,16 +421,16 @@ public final class ActionRules {
                     .filter(r -> value.equals(r.get(split)))
                     .toList();
             return !held.isEmpty() && held.stream().allMatch(r ->
-                    !PyText.strip(JsonValues.text(r.get(net.get(SRC_IP)))).isEmpty()
-                    && !PyText.strip(JsonValues.text(r.get(net.get(DST_IP)))).isEmpty());
+                    !ToolText.strip(JsonValues.text(r.get(net.get(SRC_IP)))).isEmpty()
+                    && !ToolText.strip(JsonValues.text(r.get(net.get(DST_IP)))).isEmpty());
         }
 
         private void logons(final Object user) {
-            final List<String> logons = unused(v -> PyText.search(AUTH, v) && !PyText.search(LOGOFF, v));
+            final List<String> logons = unused(v -> ToolText.search(AUTH, v) && !ToolText.search(LOGOFF, v));
             final Map<String, Object> outcome = new LinkedHashMap<>();
             for (final String value : logons) {
-                if (PyText.search(FAILED, value) || PyText.search(SUCCEEDED, value)) {
-                    outcome.put(value, PyText.search(FAILED, value)
+                if (ToolText.search(FAILED, value) || ToolText.search(SUCCEEDED, value)) {
+                    outcome.put(value, ToolText.search(FAILED, value)
                             ? "false"
                             : "true");
                 }
@@ -447,9 +447,9 @@ public final class ActionRules {
         }
 
         private void service(final Object description) {
-            final List<String> processes = unused(v -> PyText.match(PROCESS, v));
+            final List<String> processes = unused(v -> ToolText.match(PROCESS, v));
             final Map<String, Object> actions = new LinkedHashMap<>();
-            processes.forEach(v -> actions.put(v, PyText.search(STOPPED, v)
+            processes.forEach(v -> actions.put(v, ToolText.search(STOPPED, v)
                     ? "Shutdown"
                     : "Startup"));
             final List<Map<String, Object>> fields = new ArrayList<>();
@@ -462,13 +462,13 @@ public final class ActionRules {
         }
 
         private void alert() {
-            final List<String> alerts = unused(v -> PyText.search(ALERT, v));
+            final List<String> alerts = unused(v -> ToolText.search(ALERT, v));
             final Map<String, Object> types = new LinkedHashMap<>();
             for (final String value : alerts) {
                 final String type;
-                if (PyText.search(NETWORK_ALERT, value)) {
+                if (ToolText.search(NETWORK_ALERT, value)) {
                     type = "Network";
-                } else if (PyText.search(ERROR_ALERT, value)) {
+                } else if (ToolText.search(ERROR_ALERT, value)) {
                     type = "Error";
                 } else {
                     type = "Other";

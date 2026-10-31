@@ -19,8 +19,8 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.SharedTemplate;
@@ -50,10 +50,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What a build's feed is translated by now, and what its XSLT looks up (the Stroom MCP server's `tools/plan.py`
-/// `current_translation`, `lookups_of`, `lookups_kept`, `lookups_note`, `own_references` and `reference_text`):
-/// what a next version whose translation is written anew loses unless its mapping keeps them (seen in testing:
-/// V1.3 drafted from the sample, and V1.2's IP lookups were gone).
+/// What a build's feed is translated by now, and what its XSLT looks up: what a next version whose translation is
+/// written anew loses unless its mapping keeps them (seen in testing: V1.3 drafted from the sample, and V1.2's IP
+/// lookups were gone).
 class CurrentTranslations {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CurrentTranslations.class);
@@ -177,33 +176,33 @@ class CurrentTranslations {
         final Map<?, ?> pipeline = (Map<?, ?>) current.get("pipeline");
         final List<String> parts = new ArrayList<>();
         if (JsonValues.truthy(current.get("lookup_maps"))) {
-            parts.add("looks up reference map(s) " + PyText.list(JsonValues.strings(current.get("lookup_maps")))
+            parts.add("looks up reference map(s) " + ToolText.list(JsonValues.strings(current.get("lookup_maps")))
                       + " with stroom:lookup()");
         }
         for (final Map<?, ?> function : first(maps(current.get("functions_called")))) {
-            parts.add("calls " + PyText.str(function.get("function")) + "() from '"
-                      + PyText.str(function.get("href")) + "'" + (JsonValues.truthy(function.get("example"))
-                    ? " (as " + PyText.str(function.get("example")) + ")"
+            parts.add("calls " + ToolText.str(function.get("function")) + "() from '"
+                      + ToolText.str(function.get("href")) + "'" + (JsonValues.truthy(function.get("example"))
+                    ? " (as " + ToolText.str(function.get("example")) + ")"
                     : ""));
         }
         for (final Map<?, ?> template : first(maps(current.get("templates_called")))) {
-            parts.add("calls template " + PyText.str(template.get("template")) + " from '"
-                      + PyText.str(template.get("href")) + "'" + (JsonValues.truthy(template.get("at"))
-                    ? " at " + PyText.str(template.get("at"))
+            parts.add("calls template " + ToolText.str(template.get("template")) + " from '"
+                      + ToolText.str(template.get("href")) + "'" + (JsonValues.truthy(template.get("at"))
+                    ? " at " + ToolText.str(template.get("at"))
                     : ""));
         }
         if (JsonValues.truthy(current.get("reference_data"))) {
-            parts.add("loads reference data " + PyText.list(JsonValues.strings(current.get("reference_data"))));
+            parts.add("loads reference data " + ToolText.list(JsonValues.strings(current.get("reference_data"))));
         }
         final Object entries = current.get("functions_entries");
-        return "The feed is translated now by '" + PyText.str(pipeline.get("name")) + "' ("
-               + PyText.str(pipeline.get("uuid"))
+        return "The feed is translated now by '" + ToolText.str(pipeline.get("name")) + "' ("
+               + ToolText.str(pipeline.get("uuid"))
                + "), whose XSLT " + String.join("; ", parts) + ". Ask the user whether the new version keeps these "
                + "lookups. To keep them: functions entries " + (JsonValues.truthy(entries)
-                ? PyText.repr(entries)
+                ? ToolText.repr(entries)
                 : "(href, prefix, namespace)") + " and the fields' xpaths calling the functions as it does, shared "
                + "entries for its templates, lookup entries for its maps; then create_pipeline version_of='"
-               + PyText.str(pipeline.get("uuid")) + "' keep_references=true, so the new version loads the same "
+               + ToolText.str(pipeline.get("uuid")) + "' keep_references=true, so the new version loads the same "
                + "reference data.";
     }
 
@@ -301,7 +300,7 @@ class CurrentTranslations {
         return result;
     }
 
-    // The use's values of those keys that are set (Python's truthy), in that order.
+    // The use's values of those keys that are set (not null, false, zero or empty), in that order.
     private static Map<String, Object> truthy(final Map<String, Object> use, final String... keys) {
         final Map<String, Object> out = new LinkedHashMap<>();
         for (final String key : keys) {

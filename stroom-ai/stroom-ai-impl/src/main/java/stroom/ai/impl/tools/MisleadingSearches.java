@@ -37,11 +37,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// Searches through Stroom whose answer would mislead (ported from the Stroom MCP server's `_searchable`, with
-/// `_cidr`): on Elasticsearch, Stroom (7.13) finds nothing for STARTS_WITH and CONTAINS, nor for a wildcard on an ip
-/// field, and matches every document for IS_NULL and IS_NOT_NULL, without an error; on Lucene it finds nothing for
-/// STARTS_WITH and ENDS_WITH, for CONTAINS on a keyword field, nor for a range on a text field; IN takes values
-/// separated by commas. A field no search finds (not indexed) is refused too.
+/// Searches through Stroom whose answer would mislead: on Elasticsearch, Stroom (7.13) finds nothing for
+/// STARTS_WITH and CONTAINS, nor for a wildcard on an ip field, and matches every document for IS_NULL and
+/// IS_NOT_NULL, without an error; on Lucene it finds nothing for STARTS_WITH and ENDS_WITH, for CONTAINS on a
+/// keyword field, nor for a range on a text field; IN takes values separated by commas. A field no search finds
+/// (not indexed) is refused too.
 ///
 /// search_events refuses such a search of an index, and run_stroomql such a StroomQL query, each saying what to
 /// use instead.
@@ -300,7 +300,7 @@ public final class MisleadingSearches {
         return false;
     }
 
-    // The value without the wildcards at either end, as Python's str.strip('*').
+    // The value without the wildcards (`*`) at either end.
     private static String stripWildcards(final String value) {
         int start = 0;
         int end = value.length();

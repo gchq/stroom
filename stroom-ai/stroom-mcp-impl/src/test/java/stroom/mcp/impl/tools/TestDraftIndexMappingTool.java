@@ -25,7 +25,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -50,12 +50,12 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// draft_index_mapping, as the Stroom MCP server's tests/test_indexing.py, test_index_names.py and
-/// test_replaced_index.py test it.
+/// draft_index_mapping: the names a plan's fields are given, the indexing plan and what it asks the user, and a draft
+/// that replaces an existing index.
 class TestDraftIndexMappingTool {
 
     // The user's example in a VS Code run: a Twitter index's template, nesting some names (User.Id) and not others.
-    private static final String EXAMPLE = "PUT _index_template/stroom_twitter\n" + PyJson.dumps(Map.of(
+    private static final String EXAMPLE = "PUT _index_template/stroom_twitter\n" + ToolJson.dumps(Map.of(
             "index_patterns", List.of("stroom-twitter*"), "priority", 1L, "template", Map.of("mappings", Map.of(
                     "properties", ordered(
                             "StreamId", Map.of("type", "long"), "EventId", Map.of("type", "long"),
@@ -92,7 +92,7 @@ class TestDraftIndexMappingTool {
     }
 
     // --------------------------------------------------------------------------------
-    // test_index_names.py
+    // Field names
     // --------------------------------------------------------------------------------
 
     @Test
@@ -190,8 +190,8 @@ class TestDraftIndexMappingTool {
                         "EventDetail/Alert/Data[@Name='Ticket']/@Value")));
         final Map<String, Object> amended = call(Map.of("backend", "elasticsearch", "index_name", "ecs-firewall-v1",
                 "changes", changes), IndexingWorld.noForms());
-        final ToolResult other = world.draftTool().execute(PortedToolCalls.call(DraftIndexMappingTool.NAME,
-                PyJson.dumps(Map.of("backend", "elasticsearch", "index_name", "ecs-other-v1", "changes",
+        final ToolResult other = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(Map.of("backend", "elasticsearch", "index_name", "ecs-other-v1", "changes",
                         Map.of("drop_when", List.of())))), IndexingWorld.noForms());
         assertThat(other.text()).contains("No plan for 'ecs-other-v1'")
                 .contains("Drafted in this session: ['ecs-firewall-v1']");
@@ -199,8 +199,8 @@ class TestDraftIndexMappingTool {
                 "field 'firewall.configuration' replaced", "field 'acme.ticket' added"));
         // No streams given: not read.
         Mockito.verify(world.summaries, Mockito.never()).summariseEvents(anyList(), anyInt());
-        // Not in the Stroom MCP server, which said nothing of the sample here: checked against what the plan was
-        // drafted from, kept for the session (seen: a field added by changes= from a path no event has).
+        // Checked against what the plan was drafted from, kept for the session (seen: a field added by changes= from
+        // a path no event has).
         assertThat(amended).containsKey("populated_paths_not_mapped");
         assertThat((List<String>) amended.get("fields_not_in_sample"))
                 .contains("acme.ticket <- EventDetail/Alert/Data[@Name='Ticket']/@Value");
@@ -217,7 +217,7 @@ class TestDraftIndexMappingTool {
     }
 
     // --------------------------------------------------------------------------------
-    // test_indexing.py
+    // Indexing plans
     // --------------------------------------------------------------------------------
 
     @Test
@@ -264,8 +264,8 @@ class TestDraftIndexMappingTool {
                 "fortinet-firewall-v1", "events_stream_ids", List.of(1), "like_index", "a96e");
         assertThat(refused(arguments)).startsWith("Not done: Name the fields of index 'fortinet-firewall-v1' after "
                                                   + "an existing index in Stroom.");
-        final ToolResult declined = world.draftTool().execute(PortedToolCalls.call(DraftIndexMappingTool.NAME,
-                PyJson.dumps(arguments)), world.forms(question -> Map.of("value", false)));
+        final ToolResult declined = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(arguments)), world.forms(question -> Map.of("value", false)));
         // The fields are read first, so the user sees what they'd get; nothing is drafted before they agree.
         assertThat(declined.text()).startsWith("The user did not agree to: Name the fields of index "
                                                + "'fortinet-firewall-v1' after an existing index in Stroom");
@@ -429,7 +429,7 @@ class TestDraftIndexMappingTool {
     }
 
     // --------------------------------------------------------------------------------
-    // test_replaced_index.py
+    // A replaced index
     // --------------------------------------------------------------------------------
 
     @Test
@@ -506,15 +506,15 @@ class TestDraftIndexMappingTool {
     }
 
     private Map<String, Object> call(final Map<String, Object> arguments, final ToolCallContext context) {
-        final ToolResult result = world.draftTool().execute(PortedToolCalls.call(DraftIndexMappingTool.NAME,
-                PyJson.dumps(arguments)), context);
+        final ToolResult result = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(arguments)), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final Map<String, Object> arguments) {
-        final ToolResult result = world.draftTool().execute(PortedToolCalls.call(DraftIndexMappingTool.NAME,
-                PyJson.dumps(arguments)), IndexingWorld.noForms());
+        final ToolResult result = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(arguments)), IndexingWorld.noForms());
         assertThat(result.isError()).as(result.text()).isTrue();
         return result.text();
     }

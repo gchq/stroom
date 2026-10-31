@@ -94,40 +94,37 @@ import javax.xml.transform.stream.StreamResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What the ported end-to-end suites of the Stroom MCP server (its `dev/e2e_*.py` scripts) share: an
-/// administrator's client of the REAL tools ([McpTestClient], by way of [McpTestClients]) granted every tool, on a
-/// real Stroom (the integration test database and stream store, the standard content packs' template pipelines and
-/// event-logging schemas).
+/// What the end-to-end suites share: an administrator's client of the REAL tools ([McpTestClient], by way of
+/// [McpTestClients]) granted every tool, on a real Stroom (the integration test database and stream store, the
+/// standard content packs' template pipelines and event-logging schemas).
 ///
-/// The user's part is played by the test, as the scripts' `e2e.agreed` plays it: the client agrees to every form
-/// unless told otherwise, a review (`needs_review`) is confirmed and each field described (`needs_descriptions`)
-/// by [#agreed], and the processor tasks and index shard flushes Stroom's jobs would run are run with
-/// [#processAll()] and [#flushIndexShards()]. The scripts' own helpers are here too: their onboarding of a sample
-/// ([#onboard]), the reads they made of Stroom to check what the tools did (streams, documents, folders, tags), and
-/// the fixtures they made directly in Stroom (shared XSLTs and template pipelines outside any build, documents
-/// edited by hand).
+/// The user's part is played by the test: the client agrees to every form unless told otherwise, a review
+/// (`needs_review`) is confirmed and each field described (`needs_descriptions`) by [#agreed], and the processor
+/// tasks and index shard flushes Stroom's jobs would run are run with [#processAll()] and [#flushIndexShards()]. The
+/// suites' shared helpers are here too: the onboarding of a sample ([#onboard]), the reads of Stroom that check what
+/// the tools did (streams, documents, folders, tags), and the fixtures made directly in Stroom (shared XSLTs and
+/// template pipelines outside any build, documents edited by hand).
 @SuppressWarnings("unchecked")
 abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractE2eTest.class);
 
-    /// The event-logging version the content pack holds, as the scripts' `VERSION`.
+    /// The event-logging version the content pack holds.
     static final String VERSION = "4.1.0";
     /// The event-logging namespace.
     static final String EVENT_NS = "event-logging:3";
-    /// `e2e_translation.py`'s `CASES['csv']['sample']`.
+    /// The CSV case's sample.
     static final String CSV_SAMPLE = """
             time,user,host,ip,result
             2026-09-28T10:00:00,alice,ws01,10.0.0.1,ok
             2026-09-28T10:05:00,bob,ws02,10.0.0.2,fail
             2026-09-28T10:07:30,carol,ws03,10.0.0.3,ok
             """;
-    /// The Data Splitter for a CSV with a header line, as the scripts write it (`CSV_SPLITTER`).
+    /// The Data Splitter for a CSV with a header line.
     static final String CSV_SPLITTER = textResource("csv_splitter.xml");
-    /// `e2e_translation.py`'s `CASES['csv']['xslt']`: its hand-written translation for the CSV case, at
-    /// [#VERSION].
+    /// The hand-written translation for the CSV case, at [#VERSION].
     static final String CSV_XSLT = textResource("e2e_translation-csv.xsl");
-    /// `e2e_translation.py`'s CSV case.
+    /// The CSV case.
     static final Case CSV_CASE = new Case("csv", "Event Data (Text)", CSV_SAMPLE, CSV_SPLITTER, CSV_XSLT);
 
     // The next calls [#leadsOn] makes: those that only read or step, so following them leaves the suite's state
@@ -162,8 +159,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
 
     /// The administrator's client, which shows forms: the user answers them (see [McpTestClient#agree]).
     McpTestClient client;
-    /// The same user's client with no forms, as the scripts' `ConsentStore(use_elicitation=False)`: gates come
-    /// back as a `status` (`needs_confirmation`, `needs_approval`, `needs_guidance`) for the agent to act on.
+    /// The same user's client with no forms: gates come back as a `status` (`needs_confirmation`, `needs_approval`,
+    /// `needs_guidance`) for the agent to act on.
     McpTestClient plainClient;
     /// The administrator the suite works as.
     UserRef admin;
@@ -210,12 +207,11 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return client.json(tool, arguments);
     }
 
-    /// A gated call made as a user agreeing would (`e2e.agreed`): the forms are agreed by the client; a
-    /// `needs_review` reply (what to show the user in the chat) is called again with its review id, and a
-    /// `needs_descriptions` one with a description of each field ([#described]), as the agent would. The answer
-    /// must not be left waiting on anything else. A disabled filter is then enabled if the suite
-    /// [enables them][#enablesDisabledFilters], and the answer's next call followed if the suite
-    /// [follows them][#followsNext].
+    /// A gated call made as a user agreeing would: the forms are agreed by the client; a `needs_review` reply (what to
+    /// show the user in the chat) is called again with its review id, and a `needs_descriptions` one with a description
+    /// of each field ([#described]), as the agent would. The answer must not be left waiting on anything else. A
+    /// disabled filter is then enabled if the suite [enables them][#enablesDisabledFilters], and the answer's next call
+    /// followed if the suite [follows them][#followsNext].
     ///
     /// @param tool      The tool.
     /// @param arguments Its arguments.
@@ -266,8 +262,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         }
     }
 
-    /// What an agent answers a `needs_descriptions` round with (`e2e_translation.py`'s `described`): a stand-in
-    /// description of each field, from its values.
+    /// What an agent answers a `needs_descriptions` round with: a stand-in description of each field, from its
+    /// values.
     ///
     /// @param fields The fields asked about.
     /// @return A description of each.
@@ -295,7 +291,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return text;
     }
 
-    /// Calls a tool whose answer may or may not be a refusal (the scripts' `refused`), for its text either way.
+    /// Calls a tool whose answer may or may not be a refusal, for its text either way.
     ///
     /// @param tool      The tool.
     /// @param arguments Its arguments.
@@ -495,7 +491,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return stepOutput(pipeline, stream, record, part, "translationFilter");
     }
 
-    /// Each record's Events, as Stroom writes them, canonical (the scripts' `events_of` and `canonical`).
+    /// Each record's Events, as Stroom writes them, canonical.
     ///
     /// @param pipeline The pipeline's UUID.
     /// @param stream   The raw stream.
@@ -525,8 +521,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                 "timeout_seconds", 10));
     }
 
-    /// `e2e_translation.py`'s `onboard`: a source from its sample to valid, documented Events (feed, upload,
-    /// template, converter and XSLT written by hand, pipeline, stepping, processing, validation, documentation).
+    /// Onboards a source from its sample to valid, documented Events (feed, upload, template, converter and XSLT
+    /// written by hand, pipeline, stepping, processing, validation, documentation).
     ///
     /// @param sample The case: its format names the build (`e2e-<format>`) and feed (`E2E-<FORMAT>`).
     /// @return What was made.
@@ -558,8 +554,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         final String pipelineUuid = uuidOf(pipeline);
         final Map<String, Object> stepped = stepSample(pipelineUuid, List.of(raw));
         assertThat(stepped).as("stepped clean: %s", stepped.get("groups")).containsEntry("verdict", "clean");
-        // As the Stroom MCP server's plan has it: a hand-written XSLT keeps no mapping, so the plan's translation
-        // step (an XSLT saved from a mapping) stays to do, and next names draft_translation_mapping whatever follows.
+        // A hand-written XSLT keeps no mapping, so the plan's translation step (an XSLT saved from a mapping) stays
+        // to do, and next names draft_translation_mapping whatever follows.
         assertThat(nextTool(stepped)).isEqualTo("draft_translation_mapping");
         final Map<String, Object> filter = agreed("create_processor_filter", args("pipeline_uuid", pipelineUuid,
                 "stream_ids", List.of(raw)));
@@ -590,7 +586,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return new Onboarded(build, feed, raw, pipelineUuid, pipelineName, uuidOf(xslt), docUuid, eventsId);
     }
 
-    /// `e2e_translation.py`'s `documented_to_the_field`: the documentation as Stroom keeps it goes down to the field.
+    /// The documentation as Stroom keeps it goes down to the field.
     ///
     /// @param docUuid The Documentation doc.
     /// @param fields  The fields that must each have a row.
@@ -638,7 +634,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         }
     }
 
-    /// `e2e_translation.py`'s `field_rows`: the Field mapping tables' rows, by field (the cells after its name).
+    /// The Field mapping tables' rows, by field (the cells after its name).
     ///
     /// @param section The Field mapping section.
     /// @return Each field's cells.
@@ -752,7 +748,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                 new DocRef(XsltDoc.TYPE, uuid)))));
     }
 
-    /// @return The folder the standard template pipelines are in (the scripts' Template Pipelines), where the
+    /// @return The folder the standard template pipelines are in (Template Pipelines), where the
     /// suites' own fixtures go (found from the template: the content pack's folder isn't found by name).
     ExplorerNode templateFolder() {
         final String uuid = templateUuid("translation", "Event Data (Text)");
@@ -787,7 +783,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
             pipelineStore.writeDocument(fixture.copy()
                     .parentPipeline(original.getParentPipeline())
                     .pipelineData(original.getPipelineData())
-                    .description("Fixture for the ported e2e suite")
+                    .description("Fixture for the e2e suite")
                     .build());
         });
         return node.getUuid();
@@ -1089,8 +1085,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         LOGGER.info(() -> LogUtil.message("{}: {}", step, JsonUtil.writeValueAsString(result, true)));
     }
 
-    /// @param name The name of a text resource next to this class (a fixture of the Stroom MCP server's, written
-    ///             out from its scripts so they don't drift).
+    /// @param name The name of a text resource next to this class (a fixture shared by the suites).
     /// @return Its text.
     static String textResource(final String name) {
         try (final InputStream in = AbstractE2eTest.class.getResourceAsStream(name)) {
@@ -1175,8 +1170,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return found;
     }
 
-    /// An element as text with whitespace-only text left out (as the scripts' `canonical`), to compare two
-    /// XSLTs' output.
+    /// An element as text with whitespace-only text left out, to compare two XSLTs' output.
     ///
     /// @param element The element.
     /// @return Its text.
@@ -1208,7 +1202,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return String.valueOf(map(map(step, "elements"), element).get("output"));
     }
 
-    // Filters made disabled are the user's to enable in Stroom, as e2e.agreed does through Stroom's API, as them.
+    // Filters made disabled are the user's to enable in Stroom: enabled through Stroom's API, as them.
     private void enableIfDisabled(final Map<String, Object> result) {
         if (result.get("filter_id") != null && Boolean.FALSE.equals(result.get("enabled"))) {
             final int filterId = (int) number(result.get("filter_id"));
@@ -1266,7 +1260,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     // --------------------------------------------------------------------------------
 
 
-    /// A sample to onboard, as `e2e_translation.py`'s `CASES` give it.
+    /// A sample to onboard.
     ///
     /// @param format    The case's name (`csv`, `json`, ...), in the build's and feed's names; `json` tells the
     ///                  parser not to add a root object.
@@ -1278,7 +1272,7 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
 
     }
 
-    /// What [#onboard] made: `e2e_translation.py`'s dict of build, feed, raw stream, pipeline, XSLT and doc.
+    /// What [#onboard] made: build, feed, raw stream, pipeline, XSLT and doc.
     ///
     /// @param build        The build.
     /// @param feed         The feed's name.

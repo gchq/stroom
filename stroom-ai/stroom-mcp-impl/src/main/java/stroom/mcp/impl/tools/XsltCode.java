@@ -24,11 +24,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.regex.Pattern;
 
-/// XSLT code as the tools compare and digest it, as the Stroom MCP server did (its `utils/xsltversion.strip`,
-/// `utils/mappingstore.normalise_xslt` and `digest`), so a digest either server recorded matches the other's.
+/// XSLT code as the tools compare and digest it. The normalisation and the digest must stay as they are: digests are
+/// recorded with what is saved (the build record, an agreed index template), and a change would make every recorded one
+/// stale.
 final class XsltCode {
 
-    // The version history comment XSLTs carried before (stroom-mcp 0.16.43 to 0.16.45): not code.
+    // The version history comment XSLTs saved by earlier versions of the tools carry in their code: not code.
     private static final Pattern HISTORY_BLOCK = Pattern.compile(
             "[ \\t]*<!-- stroom-mcp version history\\n(.*?)\\nend of version history -->[ \\t]*\\n?", Pattern.DOTALL);
     private static final Pattern DECLARATION = Pattern.compile("^\\s*<\\?xml[^>]*\\?>",
@@ -40,7 +41,7 @@ final class XsltCode {
     }
 
     /// @param code XSLT code, or null.
-    /// @return It without the version history comment an earlier version of the Stroom MCP server put in it.
+    /// @return It without the version history comment earlier versions of the tools put in it.
     static String strip(final String code) {
         return HISTORY_BLOCK.matcher(NullSafe.string(code)).replaceFirst("");
     }
@@ -54,7 +55,7 @@ final class XsltCode {
     }
 
     /// @param parts Texts, e.g. a mapping's JSON and an XSLT's normalised code.
-    /// @return A short digest of them (16 hex characters), as the Stroom MCP server's `mappingstore.digest`.
+    /// @return A short digest of them (16 hex characters).
     static String digest(final String... parts) {
         return sha256(String.join("\n", parts)).substring(0, 16);
     }

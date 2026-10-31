@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /// A discovery index: raw records (JSON, delimited text or XML) indexed as they are, mapped dynamically by
-/// Elasticsearch. Ported from the Stroom MCP server's `Discovery` model; its JSON is the server's, field for field.
+/// Elasticsearch. Its JSON is the form kept with a plan in an XSLT's description, field for field, so discoveries
+/// already kept still read.
 ///
 /// @param input                 What the raw data is, as the discovery pipeline template parses it: `json`
 ///                              (JSONParser, the default), `delimited` (a Data Splitter on a DSParser: each column a
@@ -53,7 +54,7 @@ import java.util.Objects;
 /// @param totalFieldsLimit      `total_fields_limit`: Elasticsearch's limit on mapped fields (2000 by default).
 /// @param standIns              `stand_ins`: values the source writes for none (e.g. `-`), each with what the user
 ///                              chose to index it as ([#STAND_IN_TREATMENTS]): left out, null, an empty string, or
-///                              kept as written. Not in the Stroom MCP server; asked for by the user.
+///                              kept as written. Asked for by the user.
 public record Discovery(String input,
                         String record,
                         String timestampField,
@@ -105,7 +106,7 @@ public record Discovery(String input,
     }
 
     /// @param json A discovery as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with its own checks.
     /// @throws stroom.ai.impl.tools.generation.MappingValidationException if it doesn't validate.
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static Discovery fromJson(final Map<String, Object> json) {
@@ -113,7 +114,7 @@ public record Discovery(String input,
         return reader.orThrow("Discovery", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values, validating it with lax types, defaults and its own checks.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -155,7 +156,7 @@ public record Discovery(String input,
         return given;
     }
 
-    /// @return It as JSON, as the Python model's `model_dump` writes it (and as Jackson writes it).
+    /// @return It as JSON, the form it is kept in (and as Jackson writes it).
     @JsonValue
     public Map<String, Object> toJson() {
         final Map<String, Object> json = new LinkedHashMap<>();
@@ -169,7 +170,7 @@ public record Discovery(String input,
         json.put("unpack_json", unpackJson);
         json.put("ignore_above", ignoreAbove);
         json.put("total_fields_limit", totalFieldsLimit);
-        // Only when there are any, so a discovery without them is written as the Python model writes it.
+        // Only when there are any, so a discovery without them is kept as it always has been.
         if (!standIns.isEmpty()) {
             json.put("stand_ins", new LinkedHashMap<>(standIns));
         }

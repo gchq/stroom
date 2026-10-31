@@ -43,10 +43,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.isNull;
 
-/// summarise_fix (the Stroom MCP server's `tests/test_diagnosis.py`, its summarise_fix and `_changed_outside`
-/// cases), on [SteppingWorld]'s pipeline ACME (`p-1`), whose own XSLT `x` is on `translationFilter`. The
-/// comparison and the verdicts it is made of are mocked, as the MCP server's tests mocked `compare` and
-/// `step_sample`.
+/// summarise_fix, and code changed outside the fix, on [SteppingWorld]'s pipeline ACME (`p-1`), whose own XSLT `x` is
+/// on `translationFilter`. The comparison and the verdicts it is made of are mocked.
 class TestSummariseFixTool {
 
     private static final Map<String, Object> SCHEMA = group("blocking", "schemaFilter", "ERROR",
@@ -340,14 +338,14 @@ class TestSummariseFixTool {
     }
 
     private Map<String, Object> summarise(final String arguments) {
-        final ToolResult result = tool().execute(PortedToolCalls.call(SummariseFixTool.NAME, arguments),
+        final ToolResult result = tool().execute(BuildToolCalls.call(SummariseFixTool.NAME, arguments),
                 world.context());
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final String arguments) {
-        final ToolResult result = tool().execute(PortedToolCalls.call(SummariseFixTool.NAME, arguments),
+        final ToolResult result = tool().execute(BuildToolCalls.call(SummariseFixTool.NAME, arguments),
                 world.context());
         assertThat(result.isError()).as(result.text()).isTrue();
         return result.text();

@@ -26,7 +26,7 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.IndexTemplates.NamedTemplate;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -53,10 +53,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The user's example index template (the Stroom MCP server's `tools/indexing.py` `_index_doc`,
-/// `_template_from_index`, `_example_from_index`, `_keep_example`, `_kept_example`, `_given_components` and
-/// `_is_template`): pasted by the user, or read through Stroom from an existing Elastic Index doc they chose to
-/// follow (its index template and component templates, read with Stroom's own template code as
+/// The user's example index template: pasted by the user, or read through Stroom from an existing Elastic Index doc
+/// they chose to follow (its index template and component templates, read with Stroom's own template code as
 /// elastic_index_templates reads them, else its fields and their types); kept in the build, verbatim, so the index
 /// template follows it even once the conversation no longer holds it. Nothing is ever written to Elasticsearch.
 class IndexExamples {
@@ -183,7 +181,7 @@ class IndexExamples {
             }
             if (component.status() == Status.OK && component.body() != null) {
                 components.add("PUT _component_template/" + component.name() + "\n"
-                               + PyJson.dumps(PyJson.loads(component.body())));
+                               + ToolJson.dumps(ToolJson.loads(component.body())));
             } else if (component.status() == Status.NOT_FOUND) {
                 missing.add(component.name());
             } else {
@@ -191,13 +189,13 @@ class IndexExamples {
                         component.status().name())));
             }
         }
-        final Object body = PyJson.loads(template.body());
+        final Object body = ToolJson.loads(template.body());
         final List<String> composedOf = body instanceof final Map<?, ?> map && map.get("composed_of") instanceof
                 final List<?> list
                 ? list.stream().map(String::valueOf).toList()
                 : List.of();
         return Optional.of(new FromIndex(doc.getName(), doc.getIndexName(), template.name(),
-                "PUT _index_template/" + template.name() + "\n" + PyJson.dumps(body), components, composedOf,
+                "PUT _index_template/" + template.name() + "\n" + ToolJson.dumps(body), components, composedOf,
                 missing, unread, null));
     }
 
@@ -256,7 +254,7 @@ class IndexExamples {
         final String note = "followed the fields of Elastic Index doc '" + doc.getName() + "' (" + kept.size()
                             + " fields, read from " + source + "); its index template itself (settings, component "
                             + "templates) is not visible through Stroom";
-        return new FromFields("PUT _index_template/" + name + "\n" + PyJson.dumps(body), note, doc.getName(),
+        return new FromFields("PUT _index_template/" + name + "\n" + ToolJson.dumps(body), note, doc.getName(),
                 doc.getIndexName(), kept.size(), source, examples);
     }
 
@@ -283,7 +281,7 @@ class IndexExamples {
         kept.put("example", example);
         kept.put("components", components);
         kept.put("how", how);
-        text.append("\n<!-- stroom-mcp example\n").append(PyJson.dumps(kept)).append("\n-->\n");
+        text.append("\n<!-- stroom-mcp example\n").append(ToolJson.dumps(kept)).append("\n-->\n");
         final String name = indexName + EXAMPLE_SUFFIX;
         final Optional<WriteGuard.BuildDoc> there = guard.folderContents(build).stream()
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()))
@@ -320,7 +318,7 @@ class IndexExamples {
             if (!found.find()) {
                 return Optional.empty();
             }
-            final Map<?, ?> kept = (Map<?, ?>) PyJson.loads(found.group(1));
+            final Map<?, ?> kept = (Map<?, ?>) ToolJson.loads(found.group(1));
             final List<String> components = kept.get("components") instanceof final List<?> list
                     ? list.stream().map(String::valueOf).toList()
                     : List.of();
@@ -490,7 +488,7 @@ class IndexExamples {
                       String source,
                       List<String> examples) {
 
-        /// @return What was read, for the user's confirmation, as the Stroom MCP server gave it.
+        /// @return What was read, for the user's confirmation.
         Map<String, Object> read() {
             final Map<String, Object> read = new LinkedHashMap<>();
             read.put("doc", doc);

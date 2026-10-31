@@ -19,12 +19,12 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefField;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.cef.CefLines;
@@ -61,11 +61,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// The Field mapping section of a pipeline's documentation (the Stroom MCP server's `tools/builds.py`
-/// `field_mapping_section`, `written_fields_section`, `cef_written_section`, `_agreed_line` and `_no_events`):
-/// generated from the mapping (or index or CEF plan) kept with the pipeline's XSLT, stepped over the sample streams,
-/// or for an XSLT written by hand from what it writes. The pipeline is stepped as the user, who needs the Stepping
-/// permission, within the session's time limit for a long call.
+/// The Field mapping section of a pipeline's documentation: generated from the mapping (or index or CEF plan) kept with
+/// the pipeline's XSLT, stepped over the sample streams, or for an XSLT written by hand from what it writes. The
+/// pipeline is stepped as the user, who needs the Stepping permission, within the session's time limit for a long call.
 class FieldMappingSections {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FieldMappingSections.class);
@@ -109,9 +107,9 @@ class FieldMappingSections {
         this.indexValues = indexValues;
     }
 
-    /// `field_mapping_section`: the Field mapping section generated from the kept mapping (stepped over the sample
-    /// streams, with each Event marked by its rule), CEF plan (with the values the pipeline writes for the sample
-    /// Events) or index plan (with the Events' path population).
+    /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
+    /// marked by its rule), CEF plan (with the values the pipeline writes for the sample Events) or index plan (with
+    /// the Events' path population).
     ///
     /// @param context   The call's context.
     /// @param build     The build, for the event-logging version chosen for it.
@@ -145,8 +143,8 @@ class FieldMappingSections {
         return section.stripTrailing() + "\n\n" + docMark(kept);
     }
 
-    /// `written_fields_section`: the Field mapping section of an indexing pipeline whose XSLT keeps no plan: from
-    /// the documents its own XSLT writes, stepped over the sample streams.
+    /// The Field mapping section of an indexing pipeline whose XSLT keeps no plan: from the documents its own XSLT
+    /// writes, stepped over the sample streams.
     ///
     /// @param context      The call's context.
     /// @param pipelineUuid The pipeline.
@@ -173,8 +171,8 @@ class FieldMappingSections {
         return IndexFieldDocs.writtenFieldsMarkdown(documents);
     }
 
-    /// `cef_written_section`: the Field mapping section of a CEF pipeline whose XSLT keeps no plan: what its lines
-    /// carry, from the Events they were made from, and what is wrong with them.
+    /// The Field mapping section of a CEF pipeline whose XSLT keeps no plan: what its lines carry, from the Events they
+    /// were made from, and what is wrong with them.
     ///
     /// @param context      The call's context.
     /// @param pipelineUuid The pipeline.
@@ -230,7 +228,7 @@ class FieldMappingSections {
         return section.toString();
     }
 
-    /// `_agreed_line`: the agreed Elasticsearch index template, for the Field mapping section.
+    /// The agreed Elasticsearch index template, for the Field mapping section.
     ///
     /// @param pipeline The pipeline, whose description keeps the agreement.
     /// @return The line, or "" when none was agreed.
@@ -256,8 +254,8 @@ class FieldMappingSections {
                 : ", composed of " + String.join(", ", parts)) + ".\n";
     }
 
-    /// `_no_events`: why stepping an events pipeline over the streams gave no events, stream by stream: missing, of
-    /// another type (an Events stream where the raw input belongs), or stopped by an error before the first record.
+    /// Why stepping an events pipeline over the streams gave no events, stream by stream: missing, of another type (an
+    /// Events stream where the raw input belongs), or stopped by an error before the first record.
     ///
     /// Each stream is stepped within the session's time limit for a long call, as the records were: once it is up,
     /// the streams left are named, not stepped.
@@ -346,7 +344,7 @@ class FieldMappingSections {
         final EventSchema schema = eventVersions.eventSchema(version);
         final XsltGenerator.Generated marked = XsltGenerator.generate(mapping, schema, version, true);
         if (!marked.ok()) {
-            throw new ToolRefusal("The mapping kept with the XSLT no longer generates: " + PyText.list(
+            throw new ToolRefusal("The mapping kept with the XSLT no longer generates: " + ToolText.list(
                     marked.problems().subList(0, Math.min(3, marked.problems().size()))));
         }
         final SteppedPipeline loaded = load(pipeline.getUuid());
@@ -448,7 +446,7 @@ class FieldMappingSections {
                             .map(meta -> id + " (" + meta.getFeedName() + ", " + meta.getTypeName() + ")")
                             .orElse(id + " (None, None)"))
                     .toList();
-            throw new ToolRefusal("Field mapping not written: streams " + PyText.list(kinds) + " hold "
+            throw new ToolRefusal("Field mapping not written: streams " + ToolText.list(kinds) + " hold "
                                   + "no events to document. An indexing pipeline's stream_ids are the Events streams "
                                   + "it indexes (wait_for_processing on the events pipeline lists them).");
         }

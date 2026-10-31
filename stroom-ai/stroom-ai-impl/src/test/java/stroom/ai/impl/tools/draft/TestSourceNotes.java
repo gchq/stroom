@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.draft;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
@@ -32,8 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Source notes from the user's documentation, kept readable by the tools and followed by the draft (the Stroom MCP
-/// server's `utils/sourcenotes.py`, and its tests in `tests/test_sourcenotes.py`).
+/// Source notes from the user's documentation, kept readable by the tools and followed by the draft.
 class TestSourceNotes {
 
     private static final EventSchema SCHEMA = schema();
@@ -88,7 +87,7 @@ class TestSourceNotes {
         assertThat(SourceNotes.readNotes("no notes here")).isNull();
         assertThat(SourceNotes.readNotes(null)).isNull();
         assertThat(SourceNotes.readNotes("<!-- stroom-mcp source notes\n[1, 2]\n-->")).isNull();
-        // Indented by one, as the Stroom MCP server writes it.
+        // Indented by one, the form the notes are kept in.
         assertThat(SourceNotes.block(Map.of("source", "A"))).isEqualTo("<!-- stroom-mcp source notes\n{\n "
                                                                        + "\"source\": \"A\"\n}\n-->");
     }
@@ -298,12 +297,12 @@ class TestSourceNotes {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> notes() {
-        return (Map<String, Object>) PyJson.loads(NOTES);
+        return (Map<String, Object>) ToolJson.loads(NOTES);
     }
 
     @SuppressWarnings("unchecked")
     private static List<Map<String, Object>> guessed() {
-        return (List<Map<String, Object>>) PyJson.loads(GUESSED);
+        return (List<Map<String, Object>>) ToolJson.loads(GUESSED);
     }
 
     @SuppressWarnings("unchecked")

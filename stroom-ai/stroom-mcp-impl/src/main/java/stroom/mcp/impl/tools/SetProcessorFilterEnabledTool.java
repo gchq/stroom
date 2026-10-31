@@ -41,9 +41,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/// `set_processor_filter_enabled` - disables a processor filter on a pipeline in a build. Enabling one is the
-/// user's, in Stroom: this refuses it (asked for by the user: the tools enable no filter, bar processing in a build
-/// that the user approves). Ported from the Stroom MCP server's `tools/processing_writes.py`.
+/// `set_processor_filter_enabled` - disables a processor filter on a pipeline in a build. Enabling one is the user's,
+/// in Stroom: this refuses it (asked for by the user: the tools enable no filter, bar processing in a build that the
+/// user approves).
 ///
 /// The filter is changed through Stroom's processor filter service as the user (Manage Processors, as the
 /// Processors tab needs).

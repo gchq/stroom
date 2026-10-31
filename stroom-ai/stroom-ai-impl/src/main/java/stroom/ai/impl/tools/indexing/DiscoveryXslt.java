@@ -19,7 +19,7 @@ package stroom.ai.impl.tools.indexing;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.XPathText;
 import stroom.ai.impl.tools.generation.XmlSerialiser;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,9 +35,8 @@ import java.util.regex.Pattern;
 /// A discovery plan's indexing XSLT: each raw record copied into the xpath-functions JSON the Elasticsearch filter
 /// reads, with its own field names, adding StreamId, EventId (the record number), @timestamp and any stream meta.
 /// JSONParser records are copied as they are; a Data Splitter record's columns become fields named by the header;
-/// an XML record becomes nested objects (repeated elements as arrays, attributes as fields). Ported from the Stroom
-/// MCP server's `FieldPlan._discovery_xslt` and `_discovery_text_xslt`; the texts are its own (resources beside
-/// this class), and it writes the same XSLT.
+/// an XML record becomes nested objects (repeated elements as arrays, attributes as fields). The XSLT texts are
+/// resources beside this class, and the golden discovery plans pin what it writes to the byte.
 final class DiscoveryXslt {
 
     private static final String JSON_XSLT = resource("discovery-json.xslt");
@@ -121,7 +120,7 @@ final class DiscoveryXslt {
         }
         final List<String> ours = new ArrayList<>(plan.fields().stream().map(PlannedField::name).toList());
         ours.addAll(discovery.meta().keySet());
-        // In turn, as the server replaces them.
+        // In turn, each placeholder replaced in the template's text.
         String out = TEXT_XSLT;
         out = out.replace("@@DEFAULT_NS@@", defaultNamespace);
         out = out.replace("@@VERSION@@", version);
@@ -167,7 +166,7 @@ final class DiscoveryXslt {
         return String.join("/", steps);
     }
 
-    // A name as a JSON string in single quotes, as the server writes it.
+    // A name as a JSON string in single quotes.
     // A JSON record's string values that stand for none, as the user chose to index them: a template for each
     // treatment, ahead of the one that copies (but behind the one renaming a top-level key that clashes).
     private static String jsonStandIns(final Discovery discovery) {
@@ -231,7 +230,7 @@ final class DiscoveryXslt {
     }
 
     private static String single(final String name) {
-        return PyJson.dumps(name).replace('"', '\'');
+        return ToolJson.dumps(name).replace('"', '\'');
     }
 
     private static String quoted(final List<String> names) {

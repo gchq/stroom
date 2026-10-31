@@ -16,15 +16,14 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/// A shared XSLT whose xsl:functions the mapping's xpaths call, as the environment's other XSLTs call them. Ported
-/// from the Stroom MCP server's `SharedFunctions` model.
+/// A shared XSLT whose xsl:functions the mapping's xpaths call, as the environment's other XSLTs call them.
 ///
 /// @param href      The shared XSLT document, as the other pipelines import it, e.g. `IP Lookup`.
 /// @param prefix    The prefix its functions are called with, e.g. `gs` for `gs:isLocalIpAddress()`.
@@ -35,7 +34,7 @@ public record SharedFunctions(String href,
 
     private static final Pattern NCNAME = Pattern.compile("[A-Za-z_][\\w.-]*", Pattern.UNICODE_CHARACTER_CLASS);
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -50,7 +49,7 @@ public record SharedFunctions(String href,
         final String prefix = fields.requiredString("prefix");
         if (prefix != null && (!NCNAME.matcher(prefix).matches()
                                || prefix.toLowerCase(Locale.ROOT).startsWith("xml"))) {
-            reader.valueError(ModelReader.at(loc, "prefix"), "prefix " + PyText.repr(prefix) + " is not a "
+            reader.valueError(ModelReader.at(loc, "prefix"), "prefix " + ToolText.repr(prefix) + " is not a "
                                                              + "namespace prefix (letters, digits, _ . -; not "
                                                              + "xml...)", prefix);
         }
@@ -61,7 +60,7 @@ public record SharedFunctions(String href,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("href", href, null)

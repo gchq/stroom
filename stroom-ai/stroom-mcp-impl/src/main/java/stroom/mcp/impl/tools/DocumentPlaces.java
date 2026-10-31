@@ -27,9 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-/// Where documents are in the explorer, as the builds' tools need it (the Stroom MCP server's `tools/builds.py`
-/// `_folder_of`, `_path` and `_documentation_beside`), read as the user: only what they can view is found. A
-/// folder is given by its path from System, e.g. `System/Feeds/Acme`, as promotion's destinations are written.
+/// Where documents are in the explorer, as the builds' tools need it, read as the user: only what they can view is
+/// found. A folder is given by its path from System, e.g. `System/Feeds/Acme`, as promotion's destinations are written.
 class DocumentPlaces {
 
     private final DocumentAccess documentAccess;
@@ -59,7 +58,7 @@ class DocumentPlaces {
         return documentAccess.findDocRef(uuid);
     }
 
-    /// `_documentation_beside`: the Documentation doc of a name in a document's own folder.
+    /// The Documentation doc of a name in a document's own folder.
     ///
     /// @param doc  A document, e.g. a pipeline or an index doc.
     /// @param name The Documentation doc's name, e.g. the pipeline's.

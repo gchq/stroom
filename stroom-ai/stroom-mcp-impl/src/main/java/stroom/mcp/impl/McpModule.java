@@ -18,7 +18,7 @@ package stroom.mcp.impl;
 
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.mcp.impl.tools.PortedToolsModule;
+import stroom.mcp.impl.tools.BuildToolsModule;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.ServletBinder;
 
@@ -34,7 +34,7 @@ public class McpModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new PortedToolsModule());
+        install(new BuildToolsModule());
         // The guides and conventions bundled for agents: MCP resources here, and get_instructions' guides in the
         // chat (stroom-ai-impl declares it optional).
         bind(AgentKnowledge.class).to(BundledKnowledge.class);

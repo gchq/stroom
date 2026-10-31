@@ -37,7 +37,7 @@ class TestEvalSamples {
 
     @Test
     void everyCaseFileIsTheBytesTheStroomMcpServerMakes() {
-        // generated-sha256.json: each file's SHA-256 as the Stroom MCP server's dev/eval (0.18.43) makes it.
+        // generated-sha256.json: each file's SHA-256, pinned: the bytes the cases' expectations were written for.
         final Map<String, String> expected = expectedHashes();
         final Map<String, String> made = new LinkedHashMap<>();
         for (final String id : EvalCases.IDS) {
@@ -71,10 +71,10 @@ class TestEvalSamples {
     }
 
     @Test
-    void pythonsRandomIsDrawnFromAsCPythonDraws() {
+    void theSeededRandomDrawsThePinnedSequence() {
         // random.Random(1): [r.randint(0, 9) for _ in range(5)], r.random(), r.choice('abcdef'), and
         // r.sample(range(4), 3), as CPython 3.12 gives them.
-        final PyRandom rng = new PyRandom(1);
+        final SeededRandom rng = new SeededRandom(1);
         assertThat(List.of(rng.randint(0, 9), rng.randint(0, 9), rng.randint(0, 9), rng.randint(0, 9),
                 rng.randint(0, 9))).containsExactly(2, 9, 1, 4, 1);
         assertThat(rng.random()).isEqualTo(0.49543508709194095);
@@ -85,7 +85,7 @@ class TestEvalSamples {
     }
 
     @Test
-    void jsonIsWrittenAsPythonsJsonDumpsWritesIt() {
+    void jsonIsWrittenInTheStoredForm() {
         final Map<String, Object> value = new LinkedHashMap<>();
         value.put("a", List.of(1, 2.5, 1791676803.7, 1791676800.0));
         value.put("b", "say \"hi\"\né\u001b");

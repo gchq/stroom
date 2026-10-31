@@ -18,10 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -56,10 +56,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What review_coverage reads of Stroom (the Stroom MCP server's `tools/coverage.py` `_error_batch`, `_logged`,
-/// `_example`, `_sampled_unknown`, `_old_events` and `_newest_raw`): a pipeline's Error streams in bounded batches
-/// by Id, the records they log as missed, a raw record for an example, Unknown events sampled from its newest Events
-/// streams, and the streams it wrote. Everything is read as the user: only streams of feeds they may view are found.
+/// What review_coverage reads of Stroom: a pipeline's Error streams in bounded batches by Id, the records they log as
+/// missed, a raw record for an example, Unknown events sampled from its newest Events streams, and the streams it
+/// wrote. Everything is read as the user: only streams of feeds they may view are found.
 class CoverageReads {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoverageReads.class);
@@ -90,7 +89,7 @@ class CoverageReads {
         this.sampleStreamTexts = sampleStreamTexts;
     }
 
-    /// `parse_logged`: what a log line of the generated translation says.
+    /// What a log line of the generated translation says.
     ///
     /// @param message A marker's message.
     /// @return The record, the rule that kept it as Unknown (null for no rule matched) and the values the rules
@@ -110,7 +109,7 @@ class CoverageReads {
         return new Logged(0, null, Integer.parseInt(matcher.group(2)), matcher.group(1), values);
     }
 
-    /// `_error_batch`: up to `budget` of the pipeline's Error streams with an Id above `after`, oldest first.
+    /// Up to `budget` of the pipeline's Error streams with an Id above `after`, oldest first.
     ///
     /// @param pipeline The pipeline.
     /// @param after    The Id to read after.
@@ -145,8 +144,8 @@ class CoverageReads {
         return new ErrorBatch(out, from);
     }
 
-    /// `_logged`: each record no rule matched or a rule kept as Unknown, from these Error streams. A stream Stroom
-    /// counts as clean is not read, nor one that is not a raw stream's.
+    /// Each record no rule matched or a rule kept as Unknown, from these Error streams. A stream Stroom counts as clean
+    /// is not read, nor one that is not a raw stream's.
     ///
     /// @param progress Where the call is, said now and then.
     /// @param errors   Error streams.
@@ -194,7 +193,7 @@ class CoverageReads {
         return new LoggedRecords(found, read);
     }
 
-    /// `_example`: one raw record, as the mapping reads it, for an example.
+    /// One raw record, as the mapping reads it, for an example.
     ///
     /// @param mapping The pipeline's mapping.
     /// @param raw     A raw stream.
@@ -222,7 +221,7 @@ class CoverageReads {
                 : null;
     }
 
-    /// `_shown`: a record, briefly.
+    /// A record, briefly.
     ///
     /// @param record A record: a map, an XML element or other text.
     /// @return Its first 12 fields as `name=value`, its XML, or its text; at most 400 characters.
@@ -230,17 +229,17 @@ class CoverageReads {
         if (record instanceof final Map<?, ?> map) {
             final List<String> fields = new ArrayList<>();
             map.entrySet().stream().limit(12).forEach(e -> fields.add(e.getKey() + "="
-                                                                      + PyText.str(e.getValue())));
-            return PyText.head(String.join(", ", fields), 400);
+                                                                      + ToolText.str(e.getValue())));
+            return ToolText.head(String.join(", ", fields), 400);
         }
         if (record instanceof final XmlTree.Element element) {
-            return PyText.head(XmlTree.toText(element), 400);
+            return ToolText.head(XmlTree.toText(element), 400);
         }
-        return PyText.head(PyText.str(record), 400);
+        return ToolText.head(ToolText.str(record), 400);
     }
 
-    /// `_sampled_unknown`: for an XSLT that logs no Unknown records (saved before they were logged, or by hand):
-    /// events kept as Unknown in its newest Events streams, grouped by TypeId and the Data they carry.
+    /// For an XSLT that logs no Unknown records (saved before they were logged, or by hand): events kept as Unknown in
+    /// its newest Events streams, grouped by TypeId and the Data they carry.
     ///
     /// @param pipeline  The pipeline.
     /// @param streams   The most Events streams to read.
@@ -333,8 +332,7 @@ class CoverageReads {
         return rows(streamReader.find(expression, 1, true));
     }
 
-    /// `_old_events`: the Events streams the pipeline wrote from these raw streams (their documents are in the
-    /// index).
+    /// The Events streams the pipeline wrote from these raw streams (their documents are in the index).
     ///
     /// @param pipeline The pipeline.
     /// @param raws     Raw streams.
@@ -358,7 +356,7 @@ class CoverageReads {
         return List.copyOf(out);
     }
 
-    /// `_newest_raw`: a few of the newest raw streams on the feed the pipeline's Events are in.
+    /// A few of the newest raw streams on the feed the pipeline's Events are in.
     ///
     /// @param anyEvents Events streams the pipeline wrote ([#anyEvents]).
     /// @return Up to 3 raw streams, newest first; none if the feed isn't known.

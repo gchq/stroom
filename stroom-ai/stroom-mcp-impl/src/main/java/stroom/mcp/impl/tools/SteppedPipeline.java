@@ -18,8 +18,8 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -30,10 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-/// What stepping needs to know about a pipeline, read once per tool call (the Stroom MCP server's
-/// `tools/stepping.py` `_Pipeline`): the pipeline merged with its templates, the elements it sets itself, where its
-/// output is, whether a JSON parser wraps everything in one root map, and any property Stroom can't take as
-/// written.
+/// What stepping needs to know about a pipeline, read once per tool call: the pipeline merged with its templates, the
+/// elements it sets itself, where its output is, whether a JSON parser wraps everything in one root map, and any
+/// property Stroom can't take as written.
 final class SteppedPipeline {
 
     static final String JSON_PARSER = "JSONParser";
@@ -64,7 +63,7 @@ final class SteppedPipeline {
                                   || (("int".equals(kind) || "long".equals(kind))
                                       && !(value instanceof Integer || value instanceof Long));
             if (wrong) {
-                mistyped.add(key.element() + "." + key.name() + " is " + PyText.repr(value) + ", where Stroom takes "
+                mistyped.add(key.element() + "." + key.name() + " is " + ToolText.repr(value) + ", where Stroom takes "
                              + ("boolean".equals(kind)
                         ? "true or false"
                         : "a whole number"));

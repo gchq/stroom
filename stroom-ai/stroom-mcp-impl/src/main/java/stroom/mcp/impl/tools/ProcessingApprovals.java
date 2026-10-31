@@ -41,11 +41,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-/// What `create_processor_filter` and `reprocess_streams` share between them: whether processing runs on the
-/// user's approval, the Elasticsearch index template the user agreed (or confirmed as their own), and what the user
-/// does before a filter is enabled or an index is written to again, as text and as buttons. Ported from the Stroom
-/// MCP server's `tools/processing_writes.py` (`_reprocess_runs`, `_committed`, `_for_the_user`, `_before_actions`,
-/// `_drop_first` and `_output_note`).
+/// What `create_processor_filter` and `reprocess_streams` share between them: whether processing runs on the user's
+/// approval, the Elasticsearch index template the user agreed (or confirmed as their own), and what the user does
+/// before a filter is enabled or an index is written to again, as text and as buttons.
 class ProcessingApprovals {
 
     /// The pipelines whose processing in a build runs on the user's approval (asked for by the user): events (or
@@ -85,7 +83,7 @@ class ProcessingApprovals {
 
     /// @param pipelineUuid A pipeline.
     /// @return Whether processing it in a build runs on the user's approval: an events (or records) or indexing
-    /// pipeline (`_reprocess_runs`).
+    /// pipeline.
     boolean reprocessRuns(final String pipelineUuid) {
         try {
             return REPROCESS_STAGES.contains(pipelineShapes.shape(pipelineUuid).stage());
@@ -94,14 +92,13 @@ class ProcessingApprovals {
         }
     }
 
-    /// Elasticsearch: the index template has to be on the cluster before documents arrive, or the index is created
-    /// with dynamic mappings that the template can no longer change (`_committed`). Only a template the user agreed
-    /// (kept with the pipeline by propose_index_template or check_index_template) is asked about, and the user
-    /// confirms it is committed to the cluster in the approval: the approval's detail, as text. With ownTemplate,
-    /// the user says one of their own is committed: they confirm going on without agreeing one here, in a form
-    /// before it goes on, and it is kept with the pipeline in place of an agreed one.
-    /// Seen in testing: the user had committed their template, and the agreement still stopped indexing, however
-    /// they said so.
+    /// Elasticsearch: the index template has to be on the cluster before documents arrive, or the index is created with
+    /// dynamic mappings that the template can no longer change. Only a template the user agreed (kept with the pipeline
+    /// by propose_index_template or check_index_template) is asked about, and the user confirms it is committed to the
+    /// cluster in the approval: the approval's detail, as text. With ownTemplate, the user says one of their own is
+    /// committed: they confirm going on without agreeing one here, in a form before it goes on, and it is kept with the
+    /// pipeline in place of an agreed one. Seen in testing: the user had committed their template, and the agreement
+    /// still stopped indexing, however they said so.
     ///
     /// @param call           The call, whose id tells its forms apart.
     /// @param context        The call's context.
@@ -159,7 +156,7 @@ class ProcessingApprovals {
     }
 
     /// What the user needs to enable a disabled filter: where, what it will do, and what must be done first; with
-    /// user_actions, the same as buttons (before: the actions that come first) (`_for_the_user`).
+    /// user_actions, the same as buttons (before: the actions that come first).
     ///
     /// @param links    How the caller links to Stroom.
     /// @param pipeline The pipeline.
@@ -210,8 +207,8 @@ class ProcessingApprovals {
     }
 
     /// Buttons for what comes before enabling a filter: the agreed index template committed, an index this pipeline
-    /// wrote to before dropped (Elasticsearch: copied for the cluster admin), a Lucene index's shards deleted (its
-    /// doc opened) (`_before_actions`).
+    /// wrote to before dropped (Elasticsearch: copied for the cluster admin), a Lucene index's shards deleted (its doc
+    /// opened).
     ///
     /// @param links       How the caller links to Stroom.
     /// @param pipeline    The pipeline, with its agreed template.
@@ -247,10 +244,9 @@ class ProcessingApprovals {
         return out;
     }
 
-    /// The step before processing into an index this pipeline wrote to: the user drops it, from a button
-    /// (`_drop_first`). Asked for by the user: the drop was only a line in the approval form, which carries no
-    /// button, and an updated indexing pipeline went on into the index it had written to, with that index's
-    /// earlier documents and mapping.
+    /// The step before processing into an index this pipeline wrote to: the user drops it, from a button. Asked for by
+    /// the user: the drop was only a line in the approval form, which carries no button, and an updated indexing
+    /// pipeline went on into the index it had written to, with that index's earlier documents and mapping.
     ///
     /// @param links       How the caller links to Stroom.
     /// @param pipeline    The pipeline.
@@ -283,7 +279,7 @@ class ProcessingApprovals {
     }
 
     /// @param output The build's test feed the pipeline writes to.
-    /// @return What the result says of it (`_output_note`).
+    /// @return What the result says of it.
     static String outputNote(final OutputFeeds.OutputFeed output) {
         return "The streams are processed where they are, in " + String.join(", ", output.worksFrom()) + "; their "
                + "Events go to the build's test feed " + output.name() + (output.made()

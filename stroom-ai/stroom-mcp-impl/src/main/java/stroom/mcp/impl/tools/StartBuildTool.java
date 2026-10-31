@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.AgentInstructions;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -26,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
@@ -38,9 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `start_build` - creates (or finds) a build's workspace folder, where every write tool creates documents, and
-/// returns the standing instructions (AGENTS docs) that apply (the Stroom MCP server's `tools/builds.py`
-/// `start_build`). The existing feeds it is given that are outside the build are recorded as what it works from.
+/// `start_build` - creates (or finds) a build's workspace folder, where every write tool creates documents, and returns
+/// the standing instructions (AGENTS docs) that apply. The existing feeds it is given that are outside the build are
+/// recorded as what it works from.
 class StartBuildTool extends AbstractBuiltInTool {
 
     static final String NAME = "start_build";
@@ -129,7 +129,7 @@ class StartBuildTool extends AbstractBuiltInTool {
         try {
             final String kind = stringArg(call, KIND_ARG);
             if (kind != null && !BuildRecords.BUILD_KINDS.contains(kind)) {
-                return JsonResults.refused("kind is one of " + PyText.list(BuildRecords.BUILD_KINDS) + ", not '"
+                return JsonResults.refused("kind is one of " + ToolText.list(BuildRecords.BUILD_KINDS) + ", not '"
                                            + kind + "'");
             }
             return JsonResults.of(start(context, build, stringListArg(call, FEEDS_ARG),
@@ -180,7 +180,7 @@ class StartBuildTool extends AbstractBuiltInTool {
         }
         if (!missing.isEmpty()) {
             result.put("not_found", FeedNames.notFound("No feed named " + String.join(", ", missing.stream()
-                    .map(PyText::repr)
+                    .map(ToolText::repr)
                     .toList())) + " (A feed this build is to create is fine: it doesn't exist yet.)");
         }
         result.put("standing_instructions", agentInstructions.applicableInstructions(context.session(),

@@ -79,7 +79,7 @@ import java.util.TreeMap;
 /// user needs the Manage Processors permission and View on the pipeline it runs. Without them, it is refused as a
 /// document the user can't view is.
 ///
-/// It also does what the Stroom MCP server's `describe_document` did for these documents: credentials (e.g. an
+/// It also does more for these documents: credentials (e.g. an
 /// Elastic cluster's API key secret) are redacted ([SecretRedactor]); an XSLT's kept mapping is summarised, and its
 /// pending changes listed, rather than given whole ([KeptMapping]); a long Documentation doc is read a passage at a
 /// time with `find` ([DocumentationPassages]), and its outline given when it is too long to show; and a pipeline
@@ -284,9 +284,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                                + savedVersionNote(context, docRef));
     }
 
-    // What an event-logging element takes, from the XMLSchema document given: the whole XSD is over 100 KB (seen
-    // with the Stroom MCP server: an agent's client put it in a file, and the agent spent twelve minutes reading
-    // it with PowerShell).
+    // What an event-logging element takes, from the XMLSchema document given: the whole XSD is over 100 KB (seen in
+    // testing: an agent's client put it in a file, and the agent spent twelve minutes reading it with PowerShell).
     private ToolResult readElement(final DocRef docRef, final String element) {
         if (!XmlSchemaDoc.TYPE.equals(docRef.getType())) {
             return ToolResult.text("Error: " + ELEMENT_ARG + " is for the event-logging XMLSchema only; "
@@ -325,9 +324,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         return ToolResult.text(JsonUtil.writeValueAsString(json, false)).withStructuredContent(json);
     }
 
-    // What an XSLT's translation does, as the Stroom MCP server's describe_document said it: each output's
-    // source, the input fields it reads, its imports, dictionaries and lookups. Saved to the workspace when it is
-    // too large to show.
+    // What an XSLT's translation does: each output's source, the input fields it reads, its imports, dictionaries
+    // and lookups. Saved to the workspace when it is too large to show.
     private String translation(final ToolCallContext context, final DocRef docRef) {
         final String code = documentAccess.read(docRef, XsltDoc.class)
                 .map(XsltDoc::getData)
@@ -346,8 +344,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                 described, "translation.json");
     }
 
-    // How Stroom runs a pipeline, as the Stroom MCP server's describe_pipeline said it (reached through its
-    // describe_document): its template chain, element chain, every property and the layer that set it, its
+    // How Stroom runs a pipeline: its template chain, element chain, every property and the layer that set it, its
     // reference loaders, and what it removes from its template.
     private String pipeline(final ToolCallContext context, final DocRef docRef) {
         return MergedPipeline.load(documentAccess, docRef.getUuid())
@@ -361,9 +358,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                         + "from, can't be read, or Stroom can't merge them.");
     }
 
-    // What an index holds, as the Stroom MCP server's describe_document surveyed it, without the index's totals:
-    // counting them reads every document through Stroom, minutes on a large index (seen: three minutes before the
-    // agent could go on). write_documentation counts them.
+    // What an index holds, without the index's totals: counting them reads every document through Stroom, minutes
+    // on a large index (seen: three minutes before the agent could go on). write_documentation counts them.
     private String survey(final ToolCallContext context, final DocRef docRef) {
         if (analyses.isEmpty()) {
             return "";
@@ -399,7 +395,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                + "has been saved to " + path + ".";
     }
 
-    // A Documentation doc's passages that mention something, as the Stroom MCP server's describe_document gave them.
+    // A Documentation doc's passages that mention something.
     private ToolResult readPassages(final DocRef docRef, final String find, final Integer contextLines) {
         final DocumentationDoc doc = documentAccess.read(docRef, DocumentationDoc.class).orElse(null);
         if (doc == null) {
@@ -418,7 +414,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     }
 
     // What a pipeline processes: its processor filters, as its Processors tab lists them. Asked of a pipeline, an
-    // agent found its filters unreadable and searched by keyword (seen with the Stroom MCP server).
+    // agent found its filters unreadable and searched by keyword (seen in testing).
     private String processing(final DocRef pipeline) {
         final StringBuilder sb = new StringBuilder("\n\n## Processing\n");
         if (!processorFilterAccess.canManageProcessors()) {
@@ -478,7 +474,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     // and where the tab's content as edited is.
     private String savedVersionNote(final ToolCallContext context, final DocRef docRef) {
         // Only a chat has tabs the user attached: an MCP session (which has a workspace, but is no chat) reads
-        // documents as saved, as the Stroom MCP server's describe_document did.
+        // documents as saved.
         final OptionalInt chatId = context.session().chatId();
         if (tabSnapshots == null || chatId.isEmpty()) {
             return "";
@@ -570,9 +566,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     }
 
     // An XSLT's kept mapping and pending changes, taken out of its description (where they are kept hidden) and
-    // given as a summary, or whole if asked for. Seen with the Stroom MCP server: the whole mapping (1,400 lines)
-    // was spilled by the client to a file, which the agent read in parts and then sent back whole to regenerate
-    // the XSLT.
+    // given as a summary, or whole if asked for. Seen in testing: the whole mapping (1,400 lines) was spilled by
+    // the client to a file, which the agent read in parts and then sent back whole to regenerate the XSLT.
     private String keptMapping(final DocRef docRef,
                                final Map<String, String> parts,
                                final boolean whole,
@@ -614,8 +609,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         return sb.toString().stripTrailing() + lost;
     }
 
-    // Why an XSLT saved with a mapping has none now (e.g. it was deleted from its Documentation tab), as the Stroom
-    // MCP server's describe_document gave it: `{"lost": ...}` as its kept mapping.
+    // Why an XSLT saved with a mapping has none now (e.g. it was deleted from its Documentation tab):
+    // `{"lost": ...}` as its kept mapping.
     private String lostMapping(final DocRef docRef, final String description) {
         return analyses.flatMap(analysis -> analysis.lostMapping(docRef, description))
                 .map(why -> "\n\n## Kept mapping\n" + JsonUtil.writeValueAsString(Map.of("lost", why), true))

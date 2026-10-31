@@ -26,8 +26,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Action elements the sample's own values show, as mapping rules (the Stroom MCP server's `utils/actions.py`,
-/// which its tests reach through the draft and the sample check: see [TestDraftMapping] and [TestLocalCheck]).
+/// Action elements the sample's own values show, as mapping rules (reached through the draft and the sample check
+/// too: see [TestDraftMapping] and [TestLocalCheck]).
 class TestActionRules extends DraftFixtures {
 
     private static final List<Map<String, Object>> TRAFFIC = json("""

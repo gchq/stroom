@@ -43,16 +43,14 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_large_sample.py`, ported: onboarding a sample far larger than any model's
-/// context (200,000 CSV records, about 15 MB) through the REAL tools on a real Stroom. The file reaches Stroom as
-/// the source would send it, never through the model, and the agent works from its stream id. Every reply is
-/// measured: none may exceed the script's budget (64,000 characters of JSON), whatever the file's size. The tools
-/// read a bounded part of the stream to profile, draft and check; stepping takes a bounded number of records;
-/// Stroom processes the whole stream itself, and every record has to come out as an event.
+/// Onboarding a sample far larger than any model's context (200,000 CSV records, about 15 MB) through the REAL tools on
+/// a real Stroom. The file reaches Stroom as the source would send it, never through the model, and the agent works
+/// from its stream id. Every reply is measured: none may exceed a budget of 64,000 characters of JSON, whatever the
+/// file's size. The tools read a bounded part of the stream to profile, draft and check; stepping takes a bounded
+/// number of records; Stroom processes the whole stream itself, and every record has to come out as an event.
 ///
-/// Covered: the whole script. The file is written to the stream store as Stroom's receiver stores data posted to
-/// its datafeed (the script posts it with HTTP, which an in-process Stroom has no listener for), and the records'
-/// random values come from Java's generator, not Python's (the same columns, kinds and shares).
+/// The file is written to the stream store as Stroom's receiver stores data posted to its datafeed (an in-process
+/// Stroom has no HTTP listener for it).
 @SuppressWarnings("unchecked")
 class TestE2eLargeSample extends AbstractE2eTest {
 

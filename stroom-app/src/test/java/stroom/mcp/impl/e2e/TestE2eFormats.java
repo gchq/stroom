@@ -35,16 +35,15 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_formats.py`, ported: each format sources send (the samples of its
-/// `dev/format_samples.py`, copied to `format_samples.json`) onboarded end to end through the REAL tools on a real
-/// Stroom, with what the agent relies on the server for: profile_sample names the format and parser;
+/// Each format sources send (the samples in `format_samples.json`) onboarded end to end through the REAL tools on
+/// a real Stroom, with what the agent relies on the tools for: profile_sample names the format and parser;
 /// build_data_splitter infers the Data Splitter from the uploaded sample and saves it; draft_translation_mapping
 /// drafts the mapping; the agent's own decisions are made (a host when none is recognised, a regex for a free-form
 /// message, names for headerless columns); build_translation_xslt checks it against the sample and saves it; the
 /// pipeline is a child of the template the profile names; Stroom steps every record clean, each Event valid, with
-/// the record's user and time (and, where the script checks them, other values as the source wrote them).
+/// the record's user and time (and, where a case checks them, other values as the source wrote them).
 ///
-/// Every one of the script's 22 cases is covered, one test each.
+/// There are 22 cases, one test each.
 @SuppressWarnings("unchecked")
 class TestE2eFormats extends AbstractE2eTest {
 
@@ -57,8 +56,8 @@ class TestE2eFormats extends AbstractE2eTest {
             "names", List.of("outcome", "method", "user", "ip", "port"));
     private static final List<String> UTC_MS = List.of("2026-10-01T08:00:00.123Z", "2026-10-01T08:05:00.456Z",
             "2026-10-01T08:07:00.789Z");
-    // Digits below the millisecond cut, not rounded as the Stroom MCP server's generator did (it made 08:07:00.9996
-    // 08:07:01.000): an event's time is never moved on.
+    // Digits below the millisecond cut, not rounded (rounding made 08:07:00.9996 08:07:01.000): an event's time is
+    // never moved on.
     private static final List<String> UTC_CUT = List.of("2026-10-01T08:00:00.123Z", "2026-10-01T08:05:00.456Z",
             "2026-10-01T08:07:00.999Z");
     private static final List<String> QUOTED_USERS = List.of("alice", "o'brien, pat", "carol");
@@ -168,8 +167,8 @@ class TestE2eFormats extends AbstractE2eTest {
     }
 
     // A TypeId the draft reads from one field that its rules tell apart by another (kv_quoted's type, 'traffic' for
-    // permits and denies alike): joined with the fields the rules test, as the agent is told to, once the port
-    // refuses a TypeId the same for different kinds (not in the Python server, which warned).
+    // permits and denies alike): joined with the fields the rules test, as the agent is told to, once a TypeId the
+    // same for different kinds is refused.
     @SuppressWarnings("unchecked")
     private static void typeIdOfEachKind(final Map<String, Object> mapping, final List<Map<String, Object>> common) {
         for (int i = 0; i < common.size(); i++) {
@@ -277,7 +276,7 @@ class TestE2eFormats extends AbstractE2eTest {
     // --------------------------------------------------------------------------------
 
 
-    /// A case of the script's CASES.
+    /// A format case.
     private record Case(String format,
                         String template,
                         String user,

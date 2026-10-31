@@ -22,10 +22,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-/// How a mapping model is written as JSON, as pydantic's `model_dump` writes it in the Stroom MCP server: every
-/// field (`model_dump(mode='json')`), without the null ones (`exclude_none=True`), or without those either null or
-/// at their default (`exclude_none=True, exclude_defaults=True`: the form a mapping is kept in, in a document's
-/// description). Keys are in the models' field order.
+/// How a mapping model is written as JSON: every field, without the null ones, or without those either null or at
+/// their default (the form a mapping is kept in, in a document's description). Keys are in the models' field order.
 public enum DumpMode {
     /// Every field, null ones too.
     ALL,
@@ -68,8 +66,8 @@ public enum DumpMode {
             return this;
         }
 
-        /// A field the port adds to the Stroom MCP server's model: written only when set, whatever the mode, so a
-        /// model without it dumps as the Python server's does.
+        /// A field added to a model after mappings were first kept: written only when set, whatever the mode, so a
+        /// model without it is written as it was before the field existed (kept mappings and fixtures unchanged).
         ///
         /// @param key   The field's name.
         /// @param value Its value, or null.

@@ -35,16 +35,16 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_fragments.py`, ported: an XML fragments source end to end through the REAL
-/// tools on a real Stroom, as seen in a test environment. The source sends `<Event>` elements, one per line with no
-/// root, whose `EventData/Data` holds a message with en dashes between its parts ("Sep 27 2026 23:48:10 – User:
-/// domain.com\Bloggs, Joe – [[AppServer]] Event: [User] Action: [Login] ...").
+/// An XML fragments source end to end through the REAL tools on a real Stroom, as seen in a test environment. The
+/// source sends `<Event>` elements, one per line with no root, whose `EventData/Data` holds a message with en dashes
+/// between its parts ("Sep 27 2026 23:48:10 – User: domain.com\Bloggs, Joe – [[AppServer]] Event: [User] Action:
+/// [Login] ...").
 ///
-/// Covered, as the script numbers them: 1 (profile_sample names XML fragments and the XMLFragmentParser's wrapper
-/// converter), 2 (a child of Event Data (XML) with its parser replaced: Source stored, feeding the
-/// XMLFragmentParser, which has the build's wrapper), 3 (a regex with '-' where the text has an en dash refused at
-/// once, saying where and which character; fixed, it saves, and every record steps clean, valid, with its user and
-/// kind) and 4 (build_translation_xslt steps the pipeline only when the field mapping preview is asked for).
+/// Covered: 1 (profile_sample names XML fragments and the XMLFragmentParser's wrapper converter), 2 (a child of Event
+/// Data (XML) with its parser replaced: Source stored, feeding the XMLFragmentParser, which has the build's wrapper), 3
+/// (a regex with '-' where the text has an en dash refused at once, saying where and which character; fixed, it saves,
+/// and every record steps clean, valid, with its user and kind) and 4 (build_translation_xslt steps the pipeline only
+/// when the field mapping preview is asked for).
 @SuppressWarnings("unchecked")
 class TestE2eFragments extends AbstractE2eTest {
 
@@ -174,7 +174,7 @@ class TestE2eFragments extends AbstractE2eTest {
         assertThat(number(map(preview, "field_mapping_sample").get("records"))).isEqualTo(4);
     }
 
-    // The script's mapping: the message's parts extracted with the regex, a rule per action.
+    // The mapping: the message's parts extracted with the regex, a rule per action.
     private static Map<String, Object> mapping(final String regex, final String namespace) {
         final Map<String, Object> mapping = new LinkedHashMap<>();
         mapping.put("input", "xml_fragments");

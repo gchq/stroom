@@ -58,8 +58,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// Finds events in an index through Stroom, as the user would on a dashboard (with their permissions; nothing is
-/// saved): for an event the user describes but can't point at (ported from the Stroom MCP server's find_events and
-/// `_affected`, asked for by the user: one rare event among many indexed streams, which sampling would miss). Each
+/// saved): for an event the user describes but can't point at (asked for by the user: one rare event among many
+/// indexed streams, which sampling would miss). Each
 /// hit has its Events stream's StreamId and its EventId; with how many events match in all, and in which streams;
 /// and, for every stream, what a translation change to them reaches. Searches only fields the index has, and
 /// refuses searches whose answer would mislead ([MisleadingSearches]). search_events does this when given an index.
@@ -131,7 +131,7 @@ public class IndexEvents {
     ///
     /// @param context The call, told what each search is doing as it runs.
     /// @param find    What to find.
-    /// @return find_events' result: `{index, searched, total, hits, by_stream, affected?, errors?, next}`.
+    /// @return The result: `{index, searched, total, hits, by_stream, affected?, errors?, next}`.
     /// @throws WorkspaceException saying why, for an index that isn't one the user can use, a field it doesn't
     ///                            have, a search whose answer would mislead, or nothing to search for.
     public Map<String, Object> find(final ToolCallContext context, final Find find) {
@@ -465,7 +465,7 @@ public class IndexEvents {
             value = NullSafe.string(value);
         }
 
-        /// @return The term as find_events says it, e.g. `user.name EQUALS alice`.
+        /// @return The term as the result says it, e.g. `user.name EQUALS alice`.
         String said() {
             return field + " " + condition.name() + " " + value;
         }

@@ -642,8 +642,8 @@ public class StreamReader {
     /// @param first    The zero-based index of the first record.
     /// @param count    The most records.
     /// @param budget   The most characters of record data.
-    /// @return `records`, `total_records`, any `header`, `records_are` and any `hint`, as the Stroom MCP server gave
-    /// them; or null when it holds only one record after all, or its text can't be split.
+    /// @return `records`, `total_records`, any `header`, `records_are` and any `hint`; or null when it holds only one
+    /// record after all, or its text can't be split.
     public Map<String, Object> splitRaw(final long streamId, final int first, final int count, final int budget) {
         final RawText raw = cachedRawText(streamId, MAX_SAMPLE_CHARS);
         final String text = raw.text();
@@ -723,8 +723,7 @@ public class StreamReader {
     /// such as MyHost) with values, usable in XSLT as `stroom:meta('Name')`, and the stream's own details.
     ///
     /// @param streamId The stream.
-    /// @return `stream_id`, `attributes` (the headers) and `stream` (its details), as the Stroom MCP server gave
-    /// them.
+    /// @return `stream_id`, `attributes` (the headers) and `stream` (its details).
     public Map<String, Object> streamAttributes(final long streamId) {
         final Map<String, String> headers = new LinkedHashMap<>();
         final Fetched fetched = fetch(streamId, 0, StreamTypeNames.META);

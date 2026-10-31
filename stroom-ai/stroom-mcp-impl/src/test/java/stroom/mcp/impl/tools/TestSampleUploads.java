@@ -29,9 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The files upload_sample gave commands for, waiting to be posted (in place of the Stroom MCP server's upload
-/// tickets, `utils/uploads.py` `UploadTickets`, and its tests in `tests/test_uploads.py`), held in the database
-/// (MySQL, the test database).
+/// The files upload_sample gave commands for, waiting to be posted, held in the database (MySQL, the test
+/// database).
 class TestSampleUploads {
 
     private final AtomicLong now = new AtomicLong(1_000_000L);

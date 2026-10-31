@@ -49,7 +49,7 @@ import java.util.TreeSet;
 
 /// `compare_outputs` - steps the same records through the current pipeline and a candidate (draft code, or another
 /// pipeline such as a new version) and diffs each record's output field by field: per field path, how many records
-/// gained, lost or changed a value, with examples. Ported from the Stroom MCP server's `tools/stepping.py`.
+/// gained, lost or changed a value, with examples.
 ///
 /// Stepped as the user, who needs the Stepping permission, on this node. It changes nothing, takes a run slot over
 /// `/mcp`, says where it is now and then, stops at once when its thread is interrupted, and before the session's
@@ -163,9 +163,9 @@ class CompareOutputsTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The comparison, as the Stroom MCP server gave it: `records_compared`, `records_changed`, `element`,
-    /// `fields_changed` (per path `added`, `removed`, `changed` and an `example`, most changed first) and
-    /// `unchanged`; and `stopped_early` and `hint` when the call's time ran out first.
+    /// The comparison: `records_compared`, `records_changed`, `element`, `fields_changed` (per path `added`, `removed`,
+    /// `changed` and an `example`, most changed first) and `unchanged`; and `stopped_early` and `hint` when the call's
+    /// time ran out first.
     ///
     /// @throws ToolTimeoutException if the call is cancelled.
     Map<String, Object> compareOutputs(final ToolCall call, final ToolCallContext context, final Request request) {
@@ -176,8 +176,8 @@ class CompareOutputsTool extends AbstractBuiltInTool {
         return compare(context, request, sides, locations);
     }
 
-    /// The comparison over the request's streams and records already located (the Stroom MCP server's `compare`
-    /// with `locations`, as summarise_fix calls it); the request's `events` are not read.
+    /// The comparison over the request's streams and records already located (as summarise_fix calls it); the request's
+    /// `events` are not read.
     ///
     /// @param call      The call, whose id tells its forms apart.
     /// @param context   The call's context.
@@ -317,7 +317,7 @@ class CompareOutputsTool extends AbstractBuiltInTool {
     /// @param before   Each record's output from the current pipeline, by record key.
     /// @param after    Each record's output from the candidate, by record key.
     /// @param element  The element compared.
-    /// @return The field-by-field diff, as the Stroom MCP server gave it.
+    /// @return The field-by-field diff.
     static Map<String, Object> diff(final Map<String, String> before,
                                     final Map<String, String> after,
                                     final String element) {

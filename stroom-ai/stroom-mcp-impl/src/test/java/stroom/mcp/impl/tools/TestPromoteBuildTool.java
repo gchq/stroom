@@ -38,9 +38,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// promote_build (the Stroom MCP server's `tools/builds.py` `promote_build` and `consolidate_versions`, and their
-/// tests in `tests/test_promotion_layout.py` and `tests/test_surface.py`, with what `dev/e2e_plan_walk.py` and
-/// `dev/e2e_source_docs.py` expect of it).
+/// promote_build: the layout, the documents moved, the versions consolidated, and what `TestE2ePlanWalk` and
+/// `TestE2eSourceDocs` (stroom-app) expect of it.
 class TestPromoteBuildTool {
 
     private static final String BUILD = "bb";
@@ -142,7 +141,7 @@ class TestPromoteBuildTool {
 
     @Test
     void aBuildWithNoDocumentsIsRefused() {
-        assertThat(docs.refusal(tool, PortedToolCalls.context(), "{\"build\": \"bb\"}"))
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), "{\"build\": \"bb\"}"))
                 .isEqualTo("Build 'bb' has no documents");
     }
 
@@ -161,7 +160,7 @@ class TestPromoteBuildTool {
 
     @Test
     void theSourcesNotesAndReferenceDocsGoBesideTheFeed() {
-        // dev/e2e_source_docs.py: promoted beside the feed, where later work on it looks.
+        // As TestE2eSourceDocs has it: promoted beside the feed, where later work on it looks.
         exists("System/Feeds/Acme");
         listed(doc(FeedDoc.TYPE, "f", "ACME-DIR", null), doc(DocumentationDoc.TYPE, "n",
                 "Acme directory source notes", null), doc(DocumentationDoc.TYPE, "r",
@@ -225,7 +224,7 @@ class TestPromoteBuildTool {
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DashboardDoc.TYPE, "d", "ACME-VERIFY", null),
                 doc(TextConverterDoc.TYPE, "t", "ACME wrapper", null));
 
-        final String said = docs.refusal(tool, PortedToolCalls.context(), DocumentationWorld.args(Map.of("build",
+        final String said = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build",
                 BUILD, "destinations", Map.of("XSLT", "Feeds/Acme"))));
 
         assertThat(said).contains("Pipeline 'ACME-Events' (p); Dashboard 'ACME-VERIFY' (d); TextConverter 'ACME "
@@ -237,8 +236,8 @@ class TestPromoteBuildTool {
 
     @Test
     void documentationTheBuildsOwnChangeLeftBehindHoldsPromotionUpAndAHandEditOnlyWarns() {
-        // dev/e2e_plan_walk.py: written before the build's change, the documentation holds promotion up, naming
-        // the call; after a hand edit of the XSLT, it is a warning in the approval.
+        // As TestE2ePlanWalk has it: written before the build's change, the documentation holds promotion up,
+        // naming the call; after a hand edit of the XSLT, it is a warning in the approval.
         exists("System/Feeds/Acme");
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
         final String stale = "Pipeline 'ACME-Events': the documentation's Field mapping predates the current mapping "
@@ -246,7 +245,7 @@ class TestPromoteBuildTool {
                              + "stream_ids=<its sample streams> change=<what changed>)";
         docs.facts.checks = List.of(stale + BuildChecks.BLOCKS);
 
-        assertThat(docs.refusal(tool, PortedToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
                 "destinations", Map.of("Pipeline", "/Feeds/Acme")))))
                 .startsWith("Not promoted: " + stale)
                 .contains("once promoted, the pipeline's documentation can only change through a working copy");
@@ -288,11 +287,11 @@ class TestPromoteBuildTool {
                                                   + "first)");
         assertThat(approvalForm(destinations, shown.get("review_id"))).containsEntry("status", "needs_approval");
         // Nothing changed until the user approves, which they can't without a form.
-        assertThat(docs.refusal(tool, PortedToolCalls.context(), DocumentationWorld.args(args(destinations,
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(destinations,
                 shown.get("review_id"))))).startsWith("Not done: Promote build '" + BUILD + "' as shown in the chat.");
         assertThat(world.guard().buildOf(pipeline)).contains(BUILD);
 
-        final Map<String, Object> promoted = docs.call(tool, PortedToolCalls.answering(Map.of("value", true)),
+        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
                 DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
         assertThat(promoted).containsEntry("layout", shown.get("layout"));
@@ -330,7 +329,7 @@ class TestPromoteBuildTool {
         // Found reviewing the tools: an XSLT edited by hand in production after its working copy was taken lost
         // the edit when the copy was promoted (kept only in the backup). The user is asked, told the difference.
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
                 PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
@@ -350,7 +349,7 @@ class TestPromoteBuildTool {
     @Test
     void aWorkingCopyOverAChangedOriginalTheUserKeepsStaysInTheBuild() {
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
                 PromoteBuildTool.KEEP_ORIGINAL, "value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
@@ -366,7 +365,7 @@ class TestPromoteBuildTool {
         assertThat(promoted.get("promoted")).asList().contains("left XSLT 'ACME-XSLT' in the workspace");
 
         // Promoted again, it is asked again: the choice held for that promotion only.
-        final PortedToolCalls.FormUser later = PortedToolCalls.user(Map.of("choice",
+        final BuildToolCalls.FormUser later = BuildToolCalls.user(Map.of("choice",
                 PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
         final Map<String, Object> again = docs.call(tool, later.context(), DocumentationWorld.args(args(
                 destinations, null)));
@@ -380,7 +379,7 @@ class TestPromoteBuildTool {
         final Map<String, Object> destinations = workingCopyOfAChangedOriginal();
         // As it was when copied.
         world.docs.put("x-prod", ((XsltDoc) world.docs.get("x-prod")).copy().version("v0").build());
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
                 null)));
@@ -426,7 +425,7 @@ class TestPromoteBuildTool {
                         "", Instant.parse("2026-10-20T00:00:00Z"))).build());
         listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null), doc(DocumentationDoc.TYPE, "d", "ACME-Events", null));
         final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
 
         final Map<String, Object> shown = docs.call(tool, user.chatContext(),
                 DocumentationWorld.args(args(destinations, null)));
@@ -441,8 +440,8 @@ class TestPromoteBuildTool {
 
     @Test
     void itAsksTheUserItselfBeforeEveryChange() {
-        // The Stroom MCP server's tools/toolmeta.py: promote_build is no read-only tool, and confirms itself, so
-        // /mcp doesn't approve the call as a whole as well.
+        // promote_build is no read-only tool, and confirms itself, so /mcp doesn't approve the call as a whole as
+        // well.
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isTrue();
         assertThat(tool.definition().description()).startsWith("Onboarding step 15 of 15 (promoted): ");
@@ -455,20 +454,20 @@ class TestPromoteBuildTool {
         if (roleSubfolders != null) {
             args.put("role_subfolders", roleSubfolders);
         }
-        final Map<String, Object> shown = docs.call(tool, PortedToolCalls.context(), DocumentationWorld.args(args));
+        final Map<String, Object> shown = docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args));
         assertThat(shown).containsEntry("status", "needs_review");
         return shown;
     }
 
     // A call from a client without forms: the layout to review, or the refusal to promote without a form.
     private Map<String, Object> call(final Map<String, Object> destinations, final Object reviewed) {
-        return docs.call(tool, PortedToolCalls.context(), DocumentationWorld.args(args(destinations, reviewed)));
+        return docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args(destinations, reviewed)));
     }
 
     // The approval form a reviewed call shows, as the round it once was; the user declines it, so nothing is
     // promoted.
     private Map<String, Object> approvalForm(final Map<String, Object> destinations, final Object reviewed) {
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         assertThat(docs.refusal(tool, user.context(), DocumentationWorld.args(args(destinations, reviewed))))
                 .startsWith("The user did not agree to: Promote build");
         assertThat(user.forms()).hasSize(1);

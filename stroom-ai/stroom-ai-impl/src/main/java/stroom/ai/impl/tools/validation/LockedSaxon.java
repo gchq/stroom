@@ -50,8 +50,7 @@ import javax.xml.transform.sax.SAXSource;
 /// variable or system property (Saxon's external functions are off: system-property() of a name in no namespace
 /// would otherwise read the JVM's; integrated functions, as Stroom's are, still work), and its documents load no
 /// external entity or DTD. [XsltSafety#refused(String, java.util.Map)] stops
-/// such expressions before they reach it too. Unlike the Stroom MCP server's Saxon (saxonche, which crashed when
-/// started on a worker thread), it may be made and used on any thread.
+/// such expressions before they reach it too. It may be made and used on any thread.
 public final class LockedSaxon {
 
     /// What a refused URI is said to be.

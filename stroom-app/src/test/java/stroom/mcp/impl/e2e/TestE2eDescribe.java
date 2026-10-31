@@ -42,10 +42,9 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_describe.py`: describe_feed through the REAL tools on a real Stroom, a feed
-/// onboarded and indexed, its pipelines and documentation promoted, then asked about as a chat client would. The CSV
-/// feed from the translation suite (`e2e_translation.onboard`: its hand-written converter and XSLT), indexed on
-/// Lucene (`e2e_lucene_indexing.index_stage`), promoted. Then, as the script checks:
+/// describe_feed through the REAL tools on a real Stroom, a feed onboarded and indexed, its pipelines and
+/// documentation promoted, then asked about as a chat client would. The CSV feed from the translation suite (its
+/// hand-written converter and XSLT), indexed on Lucene as the Lucene indexing suite does, promoted. Then it checks:
 ///
 /// - the feed's overview, asked in another case: its events and indexing pipelines, each with its generated
 ///   documentation found by tag, and the index;
@@ -55,9 +54,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// - a second events pipeline (a v2 being tried) whose processor filter names the feed only by its doc reference
 ///   (Feed IS_DOC_REF, no value): found all the same.
 ///
-/// Of `index_stage`, only what this script needs is run (the index, its indexing pipeline, processing, a
+/// Of the indexing stage, only what this test needs is run (the index, its indexing pipeline, processing, a
 /// verification and the documentation); its reprocessing, shard and search-by-search checks are
-/// `e2e_lucene_indexing.py`'s own, as is `set_index_fields` (folded into create_index_doc's plan in the port).
+/// `TestE2eLuceneIndexing`'s.
 @SuppressWarnings("unchecked")
 class TestE2eDescribe extends AbstractE2eTest {
 

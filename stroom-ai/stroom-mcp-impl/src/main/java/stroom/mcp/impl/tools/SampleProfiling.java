@@ -28,24 +28,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// Profiles sample text: its format, fields, timestamp patterns, what differs between files, which parser reads it
-/// and whether a text converter is needed (the Stroom MCP server's `utils/profile.py` `profile` and
-/// `profile_many`, and `tools/translation.py` `with_fragment_setup`).
+/// Profiles sample text: its format, fields, timestamp patterns, what differs between files, which parser reads it and
+/// whether a text converter is needed.
 ///
-/// The plan ([BuildPlan]) and start_onboarding read samples through it. It is bound to [Profiled], the ported
-/// profiler ([stroom.ai.impl.tools.sample.SampleProfiler]).
+/// The plan ([BuildPlan]) and start_onboarding read samples through it. It is bound to [Profiled], the sample profiler
+/// ([stroom.ai.impl.tools.sample.SampleProfiler]).
 public interface SampleProfiling {
 
     /// @param sample One sample's text.
-    /// @return Its profile, as the Stroom MCP server's `profile` gave it: at least `format` (e.g. `json lines`,
-    /// `key=value`, `xml fragments`), `suggested_parser`, and where they apply `malformed_lines`, `namespace`,
-    /// `root` and `record_element`.
+    /// @return Its profile: at least `format` (e.g. `json lines`, `key=value`, `xml fragments`), `suggested_parser`,
+    /// and where they apply `malformed_lines`, `namespace`, `root` and `record_element`.
     /// @throws ToolRefusal if it can't be profiled, saying why.
     Map<String, Object> profile(String sample);
 
     /// @param samples Samples' text, by name.
-    /// @return Their profile together, as the Stroom MCP server's `profile_many` gave it (with `files`, each
-    /// file's own profile).
+    /// @return Their profile together (with `files`, each file's own profile).
     /// @throws ToolRefusal if they can't be profiled, saying why.
     Map<String, Object> profileMany(Map<String, String> samples);
 
@@ -152,9 +149,9 @@ public interface SampleProfiling {
     // --------------------------------------------------------------------------------
 
 
-    /// Profiles with the ported profiler ([stroom.ai.impl.tools.sample.SampleProfiler]), as the Stroom MCP server
-    /// profiled samples: up to [stroom.ai.impl.tools.sample.SampleProfiler#MAX_RECORDS] records each. XML fragments
-    /// are given the environment's own wrapper ([FragmentWrappers]).
+    /// Profiles with the sample profiler ([stroom.ai.impl.tools.sample.SampleProfiler]): up to
+    /// [stroom.ai.impl.tools.sample.SampleProfiler#MAX_RECORDS] records each. XML fragments are given the environment's
+    /// own wrapper ([FragmentWrappers]).
     final class Profiled implements SampleProfiling {
 
         private final FragmentWrappers wrappers;

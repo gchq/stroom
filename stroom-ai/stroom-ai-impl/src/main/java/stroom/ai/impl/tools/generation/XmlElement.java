@@ -26,16 +26,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// An XML element of the generator's tree (see [XmlNode]), with lxml's behaviour where the serialised text depends
-/// on it:
+/// An XML element of the generator's tree (see [XmlNode]), with these rules where the serialised text depends on it:
 ///
 /// - an element made on its own ([#create(String, String)]) starts a document of its own, and declares its
-///   namespace itself, with lxml's prefix for it (`xsl` for XSLT, `xs`, `xsi`) or the next `ns0`, `ns1`, ... of
+///   namespace itself, with the usual prefix for it (`xsl` for XSLT, `xs`, `xsi`) or the next `ns0`, `ns1`, ... of
 ///   that document;
 /// - an element added below another ([#addElement(String, String)]) uses a declaration in scope there, or declares
 ///   one on itself;
 /// - an element moved into another ([#append(XmlNode)], [#insert(int, XmlNode)]) drops the declarations its new
-///   place already has, and takes their prefixes (lxml's `moveNodeToDocument`);
+///   place already has, and takes their prefixes;
 /// - attributes keep the order they were set in, and setting one again keeps its place.
 public final class XmlElement extends XmlNode {
 
@@ -165,7 +164,7 @@ public final class XmlElement extends XmlNode {
         return localName;
     }
 
-    /// @return Its name as lxml's `tag` gives it: `{namespace}localName`, or the local name alone.
+    /// @return Its tag: `{namespace}localName`, or the local name alone.
     public String tag() {
         return namespace == null
                 ? localName
@@ -189,8 +188,8 @@ public final class XmlElement extends XmlNode {
         return Collections.unmodifiableList(declarations);
     }
 
-    /// @return Each namespace in scope here, by prefix (null for the default), as lxml's `nsmap` gives them: the
-    /// outermost declarations first, a nearer one of the same prefix replacing its URI.
+    /// @return Each namespace in scope here, by prefix (null for the default): the outermost declarations first, a
+    /// nearer one of the same prefix replacing its URI.
     public Map<String, String> namespaces() {
         final Map<String, String> found = new LinkedHashMap<>();
         final List<XmlElement> chain = new ArrayList<>();
@@ -322,14 +321,14 @@ public final class XmlElement extends XmlNode {
 
     /// @param namespace A namespace URI, or null.
     /// @param localName A local name.
-    /// @return The child elements of that name, in order (lxml's `findall` of a name).
+    /// @return The child elements of that name, in order.
     public List<XmlElement> childElements(final String namespace, final String localName) {
         return childElements().stream()
                 .filter(child -> child.is(namespace, localName))
                 .toList();
     }
 
-    /// @return This element and every node below it, in document order (lxml's `iter()`).
+    /// @return This element and every node below it, in document order.
     public List<XmlNode> iter() {
         final List<XmlNode> out = new ArrayList<>();
         collect(this, out);
@@ -349,7 +348,7 @@ public final class XmlElement extends XmlNode {
 
     /// @param namespace A namespace URI, or null.
     /// @param localName A local name.
-    /// @return This element and every element below it of that name, in document order (lxml's `iter(tag)`).
+    /// @return This element and every element below it of that name, in document order.
     public List<XmlElement> iterElements(final String namespace, final String localName) {
         return iterElements().stream()
                 .filter(element -> element.is(namespace, localName))
@@ -387,7 +386,7 @@ public final class XmlElement extends XmlNode {
     }
 
     /// Puts a node before the child at a position (or last, if there is none there), moving it (and its tail) from
-    /// wherever it was, as lxml's `insert` does.
+    /// wherever it was.
     ///
     /// @param index The position.
     /// @param node  The node.
@@ -438,8 +437,8 @@ public final class XmlElement extends XmlNode {
         }
     }
 
-    // lxml's moveNodeToDocument: each element moved drops the namespace declarations its new ancestors make
-    // already, using theirs, and any namespace not declared in its new place is declared on the moved element.
+    // Each element moved drops the namespace declarations its new ancestors make already, using theirs, and any
+    // namespace not declared in its new place is declared on the moved element.
     private void adopt(final XmlNode node) {
         if (!(node instanceof final XmlElement start)) {
             return;
@@ -482,7 +481,7 @@ public final class XmlElement extends XmlNode {
         return found;
     }
 
-    // lxml's _Document._findOrBuildNodeNs: a declaration in scope of this element, or a new one on it.
+    // A declaration in scope of this element, or a new one on it.
     private XmlNamespace findOrBuild(final String uri, final String wantedPrefix, final boolean isAttribute) {
         final XmlNamespace found = searchByUri(uri, isAttribute, true, this);
         if (found != null && !(isAttribute && found.prefix() == null)) {
@@ -504,8 +503,8 @@ public final class XmlElement extends XmlNode {
     }
 
     // A declaration of the URI in scope at origin, searched from this element up, whose prefix isn't redeclared
-    // between. lxml's own search (lxmlSearch) keeps looking past a default namespace for an attribute, falling back
-    // to it; libxml2's skips it.
+    // between. The search for a declaration to use (lxmlSearch) keeps looking past a default namespace for an
+    // attribute, falling back to it; the other skips it.
     private XmlNamespace searchByUri(final String uri,
                                      final boolean isAttribute,
                                      final boolean lxmlSearch,
@@ -580,7 +579,7 @@ public final class XmlElement extends XmlNode {
             return name;
         }
 
-        /// @return Its name as lxml's `attrib` keys give it: `{namespace}name`, or the name alone.
+        /// @return Its key: `{namespace}name`, or the name alone.
         public String key() {
             return namespace == null
                     ? name
@@ -602,7 +601,7 @@ public final class XmlElement extends XmlNode {
     // --------------------------------------------------------------------------------
 
 
-    /// The document an element belongs to: lxml numbers the prefixes it makes up (`ns0`, `ns1`, ...) per document.
+    /// The document an element belongs to: the prefixes made up (`ns0`, `ns1`, ...) are numbered per document.
     static final class Owner {
 
         private int counter;

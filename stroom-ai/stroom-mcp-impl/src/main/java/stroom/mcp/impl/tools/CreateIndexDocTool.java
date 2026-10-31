@@ -20,7 +20,6 @@ import stroom.ai.api.ElasticClusterTests;
 import stroom.ai.api.ElasticClusterTests.TestResult;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -28,6 +27,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.FieldPlans;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
@@ -56,10 +56,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `create_index_doc` - creates the build's index doc (the Stroom MCP server's `tools/indexing.py`
-/// `create_index_doc`, with `set_index_fields` and `test_elastic_index`): a Lucene Index in a volume group with the
-/// plan's fields, or an Elastic Index doc on an existing Elastic Cluster doc pointing at the index or data stream,
-/// tested against the cluster. The user confirms the backend, name and target, and may correct the names.
+/// `create_index_doc` - creates the build's index doc: a Lucene Index in a volume group with the plan's fields, or an
+/// Elastic Index doc on an existing Elastic Cluster doc pointing at the index or data stream, tested against the
+/// cluster. The user confirms the backend, name and target, and may correct the names.
 class CreateIndexDocTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CreateIndexDocTool.class);
@@ -279,7 +278,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                 buildIndexes.setIndexName(context.session(), pipeline, indexName);
             }
             if (!follow.isEmpty()) {
-                result.put("pipelines_renamed", PyText.list(follow.stream().map(Destination::name).toList())
+                result.put("pipelines_renamed", ToolText.list(follow.stream().map(Destination::name).toList())
                                                 + " now write to '" + indexName + "' too (they wrote to '" + proposed
                                                 + "'): its index template is agreed for '" + indexName + "'");
             }
@@ -305,10 +304,9 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
-    // The build's Lucene index has the name already: the plan's fields it lacks are added, once the user confirms
-    // (the Stroom MCP server's set_index_fields, which the port folded into create_index_doc's first call only; seen
-    // in eval cases 02 and 13: a field wanted after indexing couldn't be added, and the agent asked the user to add
-    // it in Stroom, or made a second index).
+    // The build's Lucene index has the name already: the plan's fields it lacks are added, once the user confirms, on
+    // any call, not only the first (seen in testing, eval cases 02 and 13: a field wanted after indexing couldn't be
+    // added, and the agent asked the user to add it in Stroom, or made a second index).
     private Map<String, Object> addFields(final ToolCall call,
                                           final ToolCallContext context,
                                           final String build,
@@ -322,7 +320,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
         details.put("index doc", index.getName());
-        details.put("fields in the plan", PyText.list(fieldPlan.fields().stream().map(PlannedField::name)
+        details.put("fields in the plan", ToolText.list(fieldPlan.fields().stream().map(PlannedField::name)
                 .toList()));
         consent.require(call, context, Consent.Request.confirmation(NAME, "Add the plan's fields to Lucene index "
                                                                           + "doc '" + index.getName() + "'", details));

@@ -16,8 +16,8 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
 import stroom.ai.impl.tools.validation.StroomXPath;
@@ -40,10 +40,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/// The checks [XsltGenerator] makes of a mapping, and the tree of elements each rule's events are written with, as
-/// the Stroom MCP server's generator makes them (`utils/xsltgen.py`): mistakes the schema can catch (unknown paths,
-/// invalid constants, two alternatives of a choice, required elements left out) come back as problems per mapping
-/// entry, and what may be wrong as warnings, worded as the server words them.
+/// The checks [XsltGenerator] makes of a mapping, and the tree of elements each rule's events are written with:
+/// mistakes the schema can catch (unknown paths, invalid constants, two alternatives of a choice, required elements
+/// left out) come back as problems per mapping entry, and what may be wrong as warnings, in the wording the golden
+/// files and the agent depend on.
 final class EventTrees {
 
     /// Example child paths for elements agents found hard to fill: (parent, element) -> paths below the element.
@@ -116,10 +116,10 @@ final class EventTrees {
         if (allowed != null && !allowed.isEmpty()) {
             final List<String> bad = outputs.stream().filter(value -> !allowed.contains(value)).toList();
             if (!bad.isEmpty()) {
-                note(problems, where + ": " + PyText.list(bad) + " not allowed; " + child.name()
-                               + " takes one of " + PyText.list(allowed));
+                note(problems, where + ": " + ToolText.list(bad) + " not allowed; " + child.name()
+                               + " takes one of " + ToolText.list(allowed));
             } else if (entry.value() == null && !entry.hasMap()) {
-                note(warnings, where + ": " + child.name() + " only takes " + PyText.list(allowed)
+                note(warnings, where + ": " + child.name() + " only takes " + ToolText.list(allowed)
                                + "; the input value is written as it is, so add a map unless it already uses these "
                                + "values");
             }
@@ -129,7 +129,7 @@ final class EventTrees {
                     .filter(value -> !"true".equals(value) && !"false".equals(value))
                     .toList();
             if (!bad.isEmpty()) {
-                note(problems, where + ": " + child.name() + " is true or false, not " + PyText.list(bad));
+                note(problems, where + ": " + child.name() + " is true or false, not " + ToolText.list(bad));
             } else if (entry.value() == null && !entry.hasMap() && generator.sourceOf(entry).xpath() == null) {
                 note(warnings, where + ": " + child.name() + " is true/false; map the input values, e.g. {'ok': "
                                + "'true', 'fail': 'false'}, unless they already are");
@@ -156,7 +156,7 @@ final class EventTrees {
     // For a value given an element the schema hasn't got (Network/Protocol, Alert/AlertSeverity): it can be carried
     // as a Data entry of the action element, Name and Value, rather than invented or left Unknown.
     private String asData(final String path, final String dataName, final FieldMapping entry, final EventRule rule) {
-        final List<String> steps = PyText.split(PyText.strip(path, "/"), "/");
+        final List<String> steps = ToolText.split(ToolText.strip(path, "/"), "/");
         if (dataName != null || steps.size() < 3 || !"EventDetail".equals(steps.get(0))
             || "Unknown".equals(steps.get(1))) {
             return "";
@@ -164,7 +164,7 @@ final class EventTrees {
         // The action the rule already maps below the element (Network/Permit), where its Data goes.
         final List<String> siblings = new ArrayList<>();
         for (final FieldMapping field : rule.fields()) {
-            final List<String> mapped = PyText.split(field.strippedPath(), "/");
+            final List<String> mapped = ToolText.split(field.strippedPath(), "/");
             if (mapped.subList(0, Math.min(2, mapped.size())).equals(steps.subList(0, 2)) && mapped.size() > 3) {
                 siblings.add(String.join("/", mapped.subList(0, 3)) + "/Data");
             }
@@ -214,7 +214,7 @@ final class EventTrees {
             suggested.put("value", entry.value());
         }
         return " If no element means this value, carry it as Data of the action element instead: "
-               + PyJson.dumps(suggested) + " (Name and Value in the event, searchable as they are). A value with no "
+               + ToolJson.dumps(suggested) + " (Name and Value in the event, searchable as they are). A value with no "
                + "element of its own is no reason to leave the event Unknown.";
     }
 
@@ -316,7 +316,7 @@ final class EventTrees {
                     example = SHAPES.get(List.of("", last.name()));
                 }
                 note(problems, where + ": " + last.name() + " holds other elements; map one of "
-                               + PyText.list(options) + (example != null
+                               + ToolText.list(options) + (example != null
                         ? ", e.g. " + example.stream().map(e -> path + "/" + e).collect(Collectors.joining(", "))
                         : ""));
                 continue;
@@ -340,7 +340,7 @@ final class EventTrees {
                 }
                 if (anchor < 0) {
                     note(problems, where + ": repeat needs an element on the path the schema lets repeat; none of "
-                                   + PyText.list(chain.stream().map(Child::name).toList())
+                                   + ToolText.list(chain.stream().map(Child::name).toList())
                                    + " may occur more than once");
                 } else {
                     walk(tree, chain.subList(0, anchor + 1), where).repeat = entry;
@@ -359,8 +359,8 @@ final class EventTrees {
                 note(problems, "[" + rule.name() + "] " + anchor.path + " is written once per value of "
                                + (input instanceof String
                         ? input
-                        : PyText.repr(input)) + "; map nothing else below it (found "
-                               + PyText.list(leaves.stream().map(n -> n.path).toList()) + ")");
+                        : ToolText.repr(input)) + "; map nothing else below it (found "
+                               + ToolText.list(leaves.stream().map(n -> n.path).toList()) + ")");
             }
         }
         for (final SharedTemplate use : m.shared()) {
@@ -368,7 +368,7 @@ final class EventTrees {
             // which would write it twice (or a second element the schema allows once).
             final List<Child> chain;
             try {
-                chain = schema.resolve(PyText.strip(use.at(), "/"));
+                chain = schema.resolve(ToolText.strip(use.at(), "/"));
             } catch (final IllegalArgumentException e) {
                 note(problems, "shared " + use.template() + " (" + use.href() + "): at " + use.at() + ": "
                                + e.getMessage());
@@ -391,7 +391,7 @@ final class EventTrees {
                 note(problems, "[" + rule.name() + "] " + use.at() + " is written by the shared template "
                                + use.template() + " (" + use.href() + "), so it must not be mapped as well: it would "
                                + "be written twice, which fails schema validation. Remove "
-                               + PyText.list(mapped.isEmpty()
+                               + ToolText.list(mapped.isEmpty()
                         ? List.of("the other shared template for it")
                         : mapped) + " from the mapping, or drop the shared template.");
                 continue;
@@ -417,7 +417,7 @@ final class EventTrees {
                                    .collect(Collectors.joining(", ")) + ", not Unknown. Remove it.");
         }
         if (detail != null && detail.kids.containsKey("Unknown") && rule.allowUnknown() != null
-            && PyText.isBlank(rule.allowUnknown())) {
+            && ToolText.isBlank(rule.allowUnknown())) {
             note(problems, "[" + rule.name() + "] allow_unknown takes the reason no action element describes these "
                            + "records, as text (in the user's words), not true.");
         }
@@ -455,15 +455,15 @@ final class EventTrees {
         conditionalByRule.put(rule.name(), List.copyOf(conditional));
         writtenTwice(rule);
         if (!conditional.isEmpty()) {
-            note(warnings, "[" + rule.name() + "] required " + PyText.list(conditional) + " are left out when "
+            note(warnings, "[" + rule.name() + "] required " + ToolText.list(conditional) + " are left out when "
                            + "their input fields are empty, which makes the event invalid. Fine if those fields are "
                            + "always filled; otherwise give the mapping a default.");
         }
     }
 
     // A field a rule writes as it is to an element and as Data as well: the Data copy says it again. A warning, not a
-    // problem, as a copy may be kept on purpose, alike across event types whose structures differ. Not in the
-    // Python server; seen: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept
+    // problem, as a copy may be kept on purpose, alike across event types whose structures differ. Seen in
+    // testing: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept
     // beside the elements the agent mapped. TypeId is left out: a TypeId joining a field doesn't hold it alone.
     private void writtenTwice(final EventRule rule) {
         final List<FieldMapping> entries = new ArrayList<>(m.common());
@@ -508,7 +508,7 @@ final class EventTrees {
             if (leaf.path.startsWith(node.path + "/")) {
                 continue;
             }
-            final List<String> steps = PyText.split(leaf.path, "/");
+            final List<String> steps = ToolText.split(leaf.path, "/");
             int member = -1;
             for (int i = steps.size() - 2; i > 0; i--) {
                 if (members.contains(steps.get(i))) {
@@ -531,13 +531,13 @@ final class EventTrees {
             if (isSet(entry.field())) {
                 source = "field '" + entry.field() + "'";
             } else if (hasAnyOf(entry)) {
-                source = "any_of " + PyText.list(entry.anyOf());
+                source = "any_of " + ToolText.list(entry.anyOf());
             } else if (entry.join() != null) {
-                source = "join " + PyText.list(entry.join());
+                source = "join " + ToolText.list(entry.join());
             } else if (isSet(entry.xpath())) {
                 source = "xpath `" + entry.xpath() + "`";
             } else if (entry.value() != null) {
-                source = "value " + PyText.repr(entry.value());
+                source = "value " + ToolText.repr(entry.value());
             } else {
                 source = "a lookup";
             }
@@ -614,7 +614,7 @@ final class EventTrees {
                                + "placeholder for the action), and carry their values as " + into + "/Data, "
                                + "data_name kept, or map them where they belong");
             } else if (alternatives.size() > 1) {
-                note(problems, "[" + rule + "] " + node.path + ": " + PyText.list(alternatives) + " are "
+                note(problems, "[" + rule + "] " + node.path + ": " + ToolText.list(alternatives) + " are "
                                + "alternatives; an event has only one of them (use separate event rules)");
             }
         }
@@ -643,7 +643,7 @@ final class EventTrees {
         for (final Map.Entry<Integer, List<String>> choice : schema.requiredChoices().entrySet()) {
             if (allowed.stream().anyMatch(c -> choice.getKey().equals(c.choice()))
                 && choice.getValue().stream().noneMatch(present::contains)) {
-                note(problems, "[" + rule + "] " + node.path + " needs one of " + PyText.list(choice.getValue())
+                note(problems, "[" + rule + "] " + node.path + " needs one of " + ToolText.list(choice.getValue())
                                + mappedElsewhere(node, choice.getValue()));
             }
         }
@@ -660,13 +660,13 @@ final class EventTrees {
         for (final String x : new LinkedHashSet<>(MappingFacts.mappingXpaths(m))) {
             final String refused = XsltSafety.refused(x, bound);
             if (refused != null) {
-                note(problems, "xpath " + PyText.repr(x) + ": " + refused);
+                note(problems, "xpath " + ToolText.repr(x) + ": " + refused);
             }
             // Seen: fold-left with an inline function checked as valid XPath, then refused by Stroom's Saxon.
-            StroomXPath.unsupported(x).ifPresent(why -> note(problems, "xpath " + PyText.repr(x) + ": " + why));
+            StroomXPath.unsupported(x).ifPresent(why -> note(problems, "xpath " + ToolText.repr(x) + ": " + why));
             final List<String> read = MappingFacts.variableReads(x, derivedNames);
             if (!read.isEmpty()) {
-                note(problems, "xpath " + PyText.repr(x) + " reads " + read.stream().map(n -> "$" + n)
+                note(problems, "xpath " + ToolText.repr(x) + " reads " + read.stream().map(n -> "$" + n)
                         .collect(Collectors.joining(", ")) + ": an extract's names are fields, not variables, and "
                                + "the XSLT declares none by that name, so it wouldn't compile. Read one with field: '"
                                + read.getFirst() + "' (an extraction takes an earlier extraction's name as its field "
@@ -677,11 +677,11 @@ final class EventTrees {
             if (rooted != null) {
                 // Seen: .//*:EventData/*:Data written //*:EventData/*:Data, clean at stepping, then processing
                 // stopped: "A sequence of more than one item is not allowed as the first argument of fn:replace()".
-                final List<String> steps = PyText.split(PyText.rstrip(rooted, "/"), "/");
+                final List<String> steps = ToolText.split(ToolText.rstrip(rooted, "/"), "/");
                 final String relative = rooted.startsWith("//")
                         ? "." + rooted
                         : ".//" + or(steps.getLast(), "*");
-                final String said = "xpath " + PyText.repr(x) + " starts at the document root (" + rooted + "), "
+                final String said = "xpath " + ToolText.repr(x) + " starts at the document root (" + rooted + "), "
                                     + "not at the record. Stepping hands the XSLT one record at a time, so there it "
                                     + "finds that record's value; processing reads a stream's records as one "
                                     + "document, where " + rooted + " finds every record's: a function taking one "
@@ -699,11 +699,11 @@ final class EventTrees {
         }
     }
 
-    /// Each event rule can take a record: none whose conditions an earlier rule's take every record of, as the
-    /// first rule a record matches is the one that writes it. Told from the conditions alone, so a sample with
-    /// none of a kind doesn't hide it. Not in the Python server; seen: a draft's user_logon (action Login or Login
-    /// Failed) kept above the agent's own user_login and user_login_failed, which never wrote an event, and the
-    /// documentation said of them "none in the sample".
+    /// Each event rule can take a record: none whose conditions an earlier rule's take every record of, as the first
+    /// rule a record matches is the one that writes it. Told from the conditions alone, so a sample with none of a kind
+    /// doesn't hide it. Seen in testing: a draft's user_logon (action Login or Login Failed) kept above the agent's own
+    /// user_login and user_login_failed, which never wrote an event, and the documentation said of them "none in the
+    /// sample".
     void checkReachable() {
         final List<EventRule> rules = m.events();
         for (int later = 1; later < rules.size(); later++) {
@@ -742,7 +742,7 @@ final class EventTrees {
         }
         if (Boolean.TRUE.equals(test.present())) {
             return Boolean.TRUE.equals(given.present())
-                   || (held != null && held.stream().noneMatch(PyText::isBlank));
+                   || (held != null && held.stream().noneMatch(ToolText::isBlank));
         }
         return test.equals(given);
     }
@@ -814,7 +814,8 @@ final class EventTrees {
         }
     }
 
-    /// An extraction's regex compiles (as Python's `re` compiles it), has a group per name, and has XPath's flags.
+    /// An extraction's regex compiles as XPath compiles it ([XPathRegex]), has a group per name, and has XPath's
+    /// flags.
     ///
     /// @param n  Its position in extract.
     /// @param ex The extraction.
@@ -831,8 +832,8 @@ final class EventTrees {
         }
         final int groups;
         try {
-            groups = PythonRegex.groups(ex.regex());
-        } catch (final PythonRegex.PythonRegexException e) {
+            groups = XPathRegex.groups(ex.regex());
+        } catch (final XPathRegex.XPathRegexException e) {
             note(problems, where + ": the regex does not compile: " + e.getMessage());
             return;
         }
@@ -847,7 +848,7 @@ final class EventTrees {
             note(problems, where + ": names every group '', so nothing is extracted");
         }
         if (ex.flags().chars().anyMatch(ch -> "imsxq".indexOf(ch) < 0)) {
-            note(problems, where + ": flags are any of i, m, s, x, q; not " + PyText.repr(ex.flags()));
+            note(problems, where + ": flags are any of i, m, s, x, q; not " + ToolText.repr(ex.flags()));
         }
     }
 

@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,9 +31,7 @@ import java.util.TreeSet;
 
 /// An Elasticsearch mapping read as the fields it maps (dotted paths), and put together again: the objects it
 /// declares, the fields it doesn't index, an index template composed with its component templates as
-/// Elasticsearch composes them, and how a set of examples maps each type. Ported from the Stroom MCP server's
-/// `utils/templatecheck.py` (read_mapping, read_mapping_fields, object_nodes, not_indexed, unsearchable, compose,
-/// type_styles and their helpers).
+/// Elasticsearch composes them, and how a set of examples maps each type.
 ///
 /// Mappings are JSON-like values: maps (in key order), lists, strings, numbers, booleans and nulls.
 public final class TemplateMappings {
@@ -151,9 +149,9 @@ public final class TemplateMappings {
             final String path = prefix.isEmpty()
                     ? entry.getKey()
                     : prefix + "." + entry.getKey();
-            if ("false".equals(PyText.lower(PyText.str(spec.getOrDefault("enabled", true))))) {
+            if ("false".equals(ToolText.lower(ToolText.str(spec.getOrDefault("enabled", true))))) {
                 objects.add(path);
-            } else if ("false".equals(PyText.lower(PyText.str(spec.getOrDefault("index", true))))) {
+            } else if ("false".equals(ToolText.lower(ToolText.str(spec.getOrDefault("index", true))))) {
                 fields.add(path);
             }
             if (spec.containsKey("properties")) {
@@ -310,12 +308,12 @@ public final class TemplateMappings {
                     style.put(param, spec.get(param));
                 }
             }
-            final String key = PyJson.dumpsSortedKeys(style);
+            final String key = ToolJson.dumpsSortedKeys(style);
             byType.computeIfAbsent(spec.get("type"), type -> new LinkedHashMap<>()).merge(key, 1, Integer::sum);
             specs.put(key, style);
         }
         final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
-        byType.forEach((type, counted) -> out.put(PyText.str(type), specs.get(mostCommon(counted))));
+        byType.forEach((type, counted) -> out.put(ToolText.str(type), specs.get(mostCommon(counted))));
         return out;
     }
 
@@ -361,7 +359,7 @@ public final class TemplateMappings {
             for (int n = parts.length - 1; n >= 0; n--) {
                 final String at = String.join(".", List.of(parts).subList(0, n));
                 if (dynamic.containsKey(at) && dynamic.get(at) != null) {
-                    return PyText.lower(PyText.str(dynamic.get(at)));
+                    return ToolText.lower(ToolText.str(dynamic.get(at)));
                 }
             }
             return "true";

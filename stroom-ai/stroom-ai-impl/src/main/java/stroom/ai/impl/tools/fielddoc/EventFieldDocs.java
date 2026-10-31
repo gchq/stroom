@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.Extraction;
@@ -50,8 +50,7 @@ import java.util.stream.Collectors;
 /// each field mapping, where a value comes from (a field, a constant, a lookup, a transform) and what the sample's
 /// events got. Events are matched to the rule that wrote them by a marker the generator puts in each Event for the
 /// documentation run (never in saved XSLT), so the per-rule rows and counts are exact; events no rule of the
-/// mapping wrote are reported rather than dropped. Ported from the Stroom MCP server's `field_mapping_markdown` in
-/// `utils/fielddoc.py`.
+/// mapping wrote are reported rather than dropped.
 public final class EventFieldDocs {
 
     private static final List<String> ALL_SECTIONS = List.of("EventTime", "EventSource", "EventDetail");
@@ -93,12 +92,12 @@ public final class EventFieldDocs {
         for (final XmlNode node : event.children()) {
             if (node instanceof final XmlInstruction instruction
                 && XsltGenerator.RULE_INSTRUCTION.equals(instruction.target())) {
-                return PyText.strip(instruction.data());
+                return ToolText.strip(instruction.data());
             }
             if (node instanceof final XmlComment comment) {
-                final String text = PyText.strip(comment.text());
+                final String text = ToolText.strip(comment.text());
                 if (text.startsWith(XsltGenerator.RULE_MARK)) {
-                    return PyText.strip(text.substring(XsltGenerator.RULE_MARK.length()));
+                    return ToolText.strip(text.substring(XsltGenerator.RULE_MARK.length()));
                 }
             }
         }
@@ -269,8 +268,7 @@ public final class EventFieldDocs {
             lines.add("");
         }
         // The extractions (each field a regex parses, from what) are left to the XSLT, not listed: asked for by the
-        // user, as a long list of them is more than documentation needs. Not in the Python server, which lists
-        // them.
+        // user, as a long list of them is more than documentation needs.
         return lines;
     }
 
@@ -287,7 +285,7 @@ public final class EventFieldDocs {
         if (!c.rules().isEmpty()) {
             final Map<FieldKey, FieldMapping> first = c.effective().get(c.rules().getFirst().name());
             first.forEach((k, entry) -> {
-                if (!"EventDetail".equals(PyText.split(k.path(), "/").getFirst()) && c.rules().stream()
+                if (!"EventDetail".equals(ToolText.split(k.path(), "/").getFirst()) && c.rules().stream()
                         .allMatch(r -> {
                             final FieldMapping theirs = c.effective().get(r.name()).get(k);
                             return theirs != null && FieldDocs.sourceText(theirs).equals(FieldDocs.sourceText(
@@ -344,9 +342,9 @@ public final class EventFieldDocs {
             own.put(rule.name(), keys);
         }
         // Judged on what they write besides TypeId and Description, which every event type has, and besides their
-        // Data: what a kind of event is, not what it carries (not in the Python server, which counted Data too;
-        // seen: SecretServer rules with the same Data entries and few elements of their own, an Alert's and
-        // Process ones in one section). A rule that writes only Data (an Unknown one) is judged on its Data, so such
+        // Data: what a kind of event is, not what it carries (seen in testing, with Data counted: SecretServer
+        // rules with the same Data entries and few elements of their own, an Alert's and Process ones in one
+        // section). A rule that writes only Data (an Unknown one) is judged on its Data, so such
         // rules still go together, apart from the rest. Each path is compared without the side an object is on
         // (FieldDocs.comparedPath), so a folder created and a folder moved write the same fields.
         final Map<String, Set<String>> signatures = new LinkedHashMap<>();
@@ -436,9 +434,9 @@ public final class EventFieldDocs {
 
     // A field's row: its path, description, source, and with a sample the values written.
     // The Data every event type writes alike, each under its own action element: the same Name, from the same
-    // source. Not in the Python server, whose common fields were EventTime's and EventSource's alone; seen: a
-    // Windows event's System/EventID and the like in each of 23 SecretServer rules, repeated in every event
-    // type's table and, outweighing what told the kinds apart, putting them all in one section.
+    // source. Seen in testing, with EventTime's and EventSource's alone as common fields: a Windows event's
+    // System/EventID and the like in each of 23 SecretServer rules, repeated in every event type's table and,
+    // outweighing what told the kinds apart, putting them all in one section.
     private static List<Map<String, FieldKey>> commonData(final Context c) {
         final List<Map<String, FieldKey>> out = new ArrayList<>();
         if (c.rules().size() < 2) {
@@ -446,7 +444,7 @@ public final class EventFieldDocs {
         }
         final Map<FieldKey, FieldMapping> first = c.effective().get(c.rules().getFirst().name());
         first.forEach((k, entry) -> {
-            if (!JsonValues.truthy(k.name()) || !"EventDetail".equals(PyText.split(k.path(), "/").getFirst())) {
+            if (!JsonValues.truthy(k.name()) || !"EventDetail".equals(ToolText.split(k.path(), "/").getFirst())) {
                 return;
             }
             final String anyAction = FieldDocs.anyActionPath(k.xpath());
@@ -558,7 +556,7 @@ public final class EventFieldDocs {
         final Map<FieldKey, FieldMapping> entries = new LinkedHashMap<>();
         for (final EventRule rule : c.rules()) {
             c.effective().get(rule.name()).forEach((k, entry) -> {
-                final String section = PyText.split(k.path(), "/").getFirst();
+                final String section = ToolText.split(k.path(), "/").getFirst();
                 if ("EventSource".equals(section) || "EventTime".equals(section)) {
                     sources.computeIfAbsent(k, x -> new LinkedHashMap<>())
                             .computeIfAbsent(FieldDocs.sourceText(entry), x -> new ArrayList<>())
@@ -639,7 +637,7 @@ public final class EventFieldDocs {
         seen.keySet().stream().filter(k -> !sources.containsKey(k)).forEach(unmapped::add);
         for (final FieldKey k : unmapped) {
             lines.add(FieldDocs.row("`" + k.path() + (k.name() != null && !k.name().isEmpty()
-                            ? "[@Name=" + PyText.repr(k.name()) + "]/@Value"
+                            ? "[@Name=" + ToolText.repr(k.name()) + "]/@Value"
                             : "") + "`", "", NOT_MAPPED,
                     FieldDocs.shown(new ArrayList<>(seen.get(k).keySet()), true)));
         }
@@ -778,7 +776,7 @@ public final class EventFieldDocs {
         return new Values(new ArrayList<>(new LinkedHashSet<>(found)), several);
     }
 
-    // The source fields a mapping entry reads (nulls kept, as Python's list has them).
+    // The source fields a mapping entry reads (a null field kept).
     private static List<String> readFrom(final FieldMapping entry) {
         if (entry == null) {
             return List.of();
@@ -811,13 +809,14 @@ public final class EventFieldDocs {
                 : shown;
     }
 
-    // What the events no rule wrote are, by their action element: Python's dict of a Counter.
+    // What the events no rule wrote are, by their action element, counted in first-seen order and written
+    // `{'Kind': n, ...}`, the documentation's established form.
     private static String unknownKinds(final List<XmlElement> events) {
         final Map<String, Integer> kinds = new LinkedHashMap<>();
         for (final XmlElement event : events) {
             kinds.merge(unknownKind(event), 1, Integer::sum);
         }
-        return PyText.repr(kinds);
+        return ToolText.repr(kinds);
     }
 
     private static String unknownKind(final XmlElement event) {
@@ -867,7 +866,7 @@ public final class EventFieldDocs {
         final List<XmlElement> children = node.childElements();
         if ("Data".equals(name) && node.get("Name") != null && node.get("Value") == null
             && children.stream().anyMatch(child -> "Data".equals(child.localName()))) {
-            // A Data holding Data (data_parent; not in the Python server, whose Data held none): its own are keyed
+            // A Data holding Data (data_parent): its own are keyed
             // under it, e.g. Data[@Name='mentions']/Data and mention, as the mapping keys them.
             for (final XmlElement child : children) {
                 walk(child, here + "[@Name='" + node.get("Name") + "']", found);
@@ -879,7 +878,7 @@ public final class EventFieldDocs {
                     .add(Objects.requireNonNullElse(node.get("Value"), ""));
         } else if (children.isEmpty()) {
             found.computeIfAbsent(new FieldKey(here, null), k -> new ArrayList<>())
-                    .add(PyText.strip(NullSafe.string(node.text())));
+                    .add(ToolText.strip(NullSafe.string(node.text())));
         }
         for (final XmlElement child : children) {
             walk(child, here, found);

@@ -45,8 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 
-/// What an existing index holds, surveyed through Stroom, ported from the Stroom MCP server's
-/// `tests/test_fielddoc.py` (`survey_index`, `index_profile`, `writes_to`).
+/// What an existing index holds, surveyed through Stroom, and which pipelines write to it.
 class TestIndexSurveys {
 
     private static final DocRef WIDE = new DocRef(ElasticIndexDoc.TYPE, "i", "wide");
@@ -106,7 +105,7 @@ class TestIndexSurveys {
             return new Found(rows, List.of(), true);
         });
 
-        final Map<String, Object> survey = surveys.surveyIndex(PortedToolCalls.context(), WIDE, 100, false);
+        final Map<String, Object> survey = surveys.surveyIndex(BuildToolCalls.context(), WIDE, 100, false);
 
         assertThat(searched).allSatisfy(probe -> {
             assertThat(probe.columns()).hasSizeLessThanOrEqualTo(100);
@@ -131,7 +130,7 @@ class TestIndexSurveys {
 
         // A recent window that fills the sample is the sample, and the survey asks for no more.
         searched.clear();
-        final Map<String, Object> recent = surveys.surveyIndex(PortedToolCalls.context(), WIDE, 1, false);
+        final Map<String, Object> recent = surveys.surveyIndex(BuildToolCalls.context(), WIDE, 1, false);
         assertThat(recent.get("sampled_from")).isEqualTo("the last 30 days");
         assertThat(recent).doesNotContainKey("profile");
         // The first group, then two by id.
@@ -143,7 +142,7 @@ class TestIndexSurveys {
     void aCountCutShortSaysSo() {
         answer(probe -> new Found(List.of(Map.of("documents", "1200")), List.of(), false));
 
-        final Map<String, Object> profile = surveys.indexProfile(PortedToolCalls.context(), new DocRef(
+        final Map<String, Object> profile = surveys.indexProfile(BuildToolCalls.context(), new DocRef(
                 ElasticIndexDoc.TYPE, "i", "x"), null, List.of("f"), 20, null);
 
         assertThat(profile.get("documents")).isEqualTo(1200L);
@@ -158,7 +157,7 @@ class TestIndexSurveys {
         answer(probe -> new Found(List.of(Map.of("StreamId", "7", "EventId", "1", "@timestamp",
                 "2026-10-01T00:00:00.000Z")), List.of(), false));
 
-        final Map<String, Object> survey = surveys.surveyIndex(PortedToolCalls.context(), WIDE, 100, false);
+        final Map<String, Object> survey = surveys.surveyIndex(BuildToolCalls.context(), WIDE, 100, false);
 
         assertThat(waits).hasSize(2).allSatisfy(wait -> assertThat(wait).isLessThanOrEqualTo(
                 IndexSurveys.SAMPLE_WAIT));
@@ -169,7 +168,7 @@ class TestIndexSurveys {
         // short.
         waits.clear();
         answer(probe -> new Found(List.of(), List.of(), probe.expression().toString().contains("day()-30d")));
-        final Map<String, Object> none = surveys.surveyIndex(PortedToolCalls.context(), WIDE, 100, false);
+        final Map<String, Object> none = surveys.surveyIndex(BuildToolCalls.context(), WIDE, 100, false);
         assertThat(waits).hasSize(2);
         assertThat(none.get("documents_sampled")).isEqualTo(0);
         assertThat((String) none.get("note")).startsWith("Stroom found no document it could show within 10 s");
@@ -185,7 +184,7 @@ class TestIndexSurveys {
         fields(List.of("StreamId", "EventId"));
         answer(probe -> new Found(List.of(), List.of(), true));
 
-        final Map<String, Object> survey = surveys.surveyIndex(PortedToolCalls.context(), lucene, 100, false);
+        final Map<String, Object> survey = surveys.surveyIndex(BuildToolCalls.context(), lucene, 100, false);
 
         assertThat(survey.get("documents_sampled")).isEqualTo(0);
         assertThat((String) survey.get("note")).contains("or that have been deleted");

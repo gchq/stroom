@@ -43,8 +43,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// create_processor_filter (the Stroom MCP server's `tests/test_processing.py`, its filter cases, and
-/// `tests/test_off_path.py`'s wrong moves for it): each case was seen in testing, as its comment says.
+/// create_processor_filter, its filters and the wrong moves refused: each case was seen in testing, as its comment
+/// says.
 class TestCreateProcessorFilterTool {
 
     private static final DocRef P1 = ProcessingWorld.P1;
@@ -465,7 +465,7 @@ class TestCreateProcessorFilterTool {
         w.stream(6, "ACME", "Raw Events", null, null);
 
         final ToolResult created = call(Map.of("stream_ids", List.of(6)));
-        final ToolResult reprocessed = w.reprocessTool().execute(PortedToolCalls.call(ReprocessStreamsTool.NAME,
+        final ToolResult reprocessed = w.reprocessTool().execute(BuildToolCalls.call(ReprocessStreamsTool.NAME,
                 "{\"pipeline_uuid\": \"p1\", \"stream_ids\": [6]}"), ProcessingWorld.context());
 
         assertThat(created.text()).contains("was not created by this server");
@@ -480,8 +480,8 @@ class TestCreateProcessorFilterTool {
                                                    final boolean stepped,
                                                    final boolean elastic,
                                                    final List<String> says) {
-        // The Stroom MCP server's tests/test_off_path.py: each is refused, and the message names the call that puts
-        // it right, so an agent that reads it gets back on the path.
+        // Each is refused, and the message names the call that puts it right, so an agent that reads it gets back on
+        // the path.
         inBuild();
         if (stepped) {
             w.steppedClean(P1);
@@ -595,7 +595,7 @@ class TestCreateProcessorFilterTool {
     private ToolResult call(final Map<String, Object> arguments, final ToolCallContext context) {
         final Map<String, Object> all = new LinkedHashMap<>(arguments);
         all.put("pipeline_uuid", "p1");
-        return w.createTool().execute(PortedToolCalls.call(CreateProcessorFilterTool.NAME,
+        return w.createTool().execute(BuildToolCalls.call(CreateProcessorFilterTool.NAME,
                 JsonUtil.writeValueAsString(all)), context);
     }
 
@@ -605,7 +605,7 @@ class TestCreateProcessorFilterTool {
         final Map<String, Object> given = new LinkedHashMap<>(arguments);
         final List<Map<String, Object>> gates = new ArrayList<>();
         // The user agrees in every form the call shows.
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         while (true) {
             final int asked = user.forms().size();
             final ToolResult called = call(given, user.context());

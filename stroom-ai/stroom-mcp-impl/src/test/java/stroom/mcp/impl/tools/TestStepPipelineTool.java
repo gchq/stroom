@@ -39,8 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// step_pipeline (the Stroom MCP server's `tests/test_stepping.py` and `tests/test_authoring_guards.py`, its
-/// step_pipeline cases).
+/// step_pipeline, the tool.
 class TestStepPipelineTool {
 
     // A draft that looks up the host name of each record's text in DNS.
@@ -99,7 +98,7 @@ class TestStepPipelineTool {
 
     @Test
     void noRecordFoundIsRefused() {
-        final ToolResult result = new StepPipelineTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepPipelineTool(world.stepping()).execute(BuildToolCalls.call(
                 StepPipelineTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"stream_id\": 7, \"record\": 3}"),
                 world.context());
 
@@ -109,7 +108,7 @@ class TestStepPipelineTool {
 
     @Test
     void anUnreadablePipelineIsRefused() {
-        final ToolResult result = new StepPipelineTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepPipelineTool(world.stepping()).execute(BuildToolCalls.call(
                 StepPipelineTool.NAME, "{\"pipeline_uuid\": \"nope\", \"stream_id\": 7}"), world.context());
 
         assertThat(result.text()).startsWith("Pipeline nope can't be read");
@@ -184,7 +183,7 @@ class TestStepPipelineTool {
             }
         }).build();
 
-        assertThatThrownBy(() -> new StepPipelineTool(world.stepping()).execute(PortedToolCalls.call(
+        assertThatThrownBy(() -> new StepPipelineTool(world.stepping()).execute(BuildToolCalls.call(
                 StepPipelineTool.NAME, LOOKUP_STEP), chat))
                 .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
         assertThat(world.opened).isEmpty();
@@ -218,14 +217,14 @@ class TestStepPipelineTool {
     }
 
     private Map<String, Object> step(final String arguments, final ToolCallContext context) {
-        final ToolResult result = new StepPipelineTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepPipelineTool(world.stepping()).execute(BuildToolCalls.call(
                 StepPipelineTool.NAME, arguments), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private String refused(final String arguments, final ToolCallContext context) {
-        final ToolResult result = new StepPipelineTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepPipelineTool(world.stepping()).execute(BuildToolCalls.call(
                 StepPipelineTool.NAME, arguments), context);
         assertThat(result.isError()).as(result.text()).isTrue();
         return result.text();

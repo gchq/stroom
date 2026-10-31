@@ -21,8 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-/// One part of a reference map's value: text, or an element named `element` under `<value>`. Ported from the Stroom
-/// MCP server's `ReferenceValue` model (`utils/refgen.py`).
+/// One part of a reference map's value: text, or an element named `element` under `<value>`.
 ///
 /// @param element Element name under the value, e.g. `department`; empty for a plain text value (a map has at most
 ///                one of those).
@@ -40,14 +39,14 @@ public record ReferenceValue(String element,
     }
 
     /// @param json A value part as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
     public static ReferenceValue fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("ReferenceValue", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -73,7 +72,7 @@ public record ReferenceValue(String element,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("element", element, "")

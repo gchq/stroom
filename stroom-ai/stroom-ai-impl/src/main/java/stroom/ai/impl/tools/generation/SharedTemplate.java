@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// A named template from a shared XSLT, called where the environment's other XSLTs call it. Ported from the Stroom
-/// MCP server's `SharedTemplate` model.
+/// A named template from a shared XSLT, called where the environment's other XSLTs call it.
 ///
 /// @param href       The shared XSLT document, as the other pipelines import it, e.g. `Common-Event-V1`.
 /// @param template   The named template to call, e.g. `eventSourceDevice`.
@@ -39,7 +38,7 @@ public record SharedTemplate(String href,
         withParams = Objects.requireNonNullElse(withParams, Map.of());
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -58,7 +57,7 @@ public record SharedTemplate(String href,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("href", href, null)

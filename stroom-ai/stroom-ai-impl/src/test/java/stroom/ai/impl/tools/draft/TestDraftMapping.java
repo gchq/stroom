@@ -22,8 +22,8 @@ import stroom.ai.impl.tools.generation.MappingCompaction;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 
 import org.junit.jupiter.api.Test;
@@ -38,9 +38,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// A starting mapping drafted from the sample (the Stroom MCP server's `tests/test_draft.py`, and the draft parts
-/// of `test_draft_reply.py`, `test_formats.py`, `test_record_shapes.py`, `test_profile.py`,
-/// `test_times_and_meta.py`, `test_sourcenotes.py` and `test_pairs.py`).
+/// A starting mapping drafted from the sample.
 class TestDraftMapping extends DraftFixtures {
 
     /// A firewall's JSON lines: a TRAFFIC record and a LOGIN.
@@ -457,24 +455,24 @@ class TestDraftMapping extends DraftFixtures {
 
     @Test
     void aRulesDataListReadsBackAsItsDataEntriesFromTheDraftKeptAsAFixture() {
-        // The generator's tests of what it does with a draft (TestMappingDrafts) start from the Python server's
-        // drafts, kept as fixtures: the port drafts the same.
+        // The generator's tests of what it does with a draft (TestMappingDrafts) start from drafts kept as
+        // fixtures: the draft now gives the same.
         final Map<String, Object> kept = json(resource(
                 "/stroom/ai/impl/tools/generation/drafts.json"));
-        // Each rule's Data cut to what its records hold, as the port drafts it.
+        // Each rule's Data cut to what its records hold, as it is drafted now.
         final Map<String, Object> fw = mappingOf(draft(Map.of("fw.csv", REPLY_SAMPLE), "FW", "FW", "Prod"));
         asTheRulesRecordsHold(fw, kept.get("fw"));
-        assertThat(PyJson.dumps(fw)).isEqualTo(PyJson.dumps(kept.get("fw")));
+        assertThat(ToolJson.dumps(fw)).isEqualTo(ToolJson.dumps(kept.get("fw")));
         final Map<String, Object> logs = mappingOf(draft(samples("test firewall logs 20"), "Firewall Logs"));
         asTheRulesRecordsHold(logs, kept.get("firewall_logs_20"));
-        assertThat(PyJson.dumps(logs)).isEqualTo(PyJson.dumps(kept.get("firewall_logs_20")));
+        assertThat(ToolJson.dumps(logs)).isEqualTo(ToolJson.dumps(kept.get("firewall_logs_20")));
         final Map<String, Object> fortigate = mappingOf(draft(samples("test fortigate"), "Fortigate"));
         asTheRulesRecordsHold(fortigate, kept.get("fortigate"));
-        assertThat(PyJson.dumps(fortigate)).isEqualTo(PyJson.dumps(kept.get("fortigate")));
+        assertThat(ToolJson.dumps(fortigate)).isEqualTo(ToolJson.dumps(kept.get("fortigate")));
         final Map<String, Object> shapes = mappingOf(DraftMapping.draft(samples("test shapes"), "App", "App",
                 "Prod", null, null, null));
         asTheRulesRecordsHold(shapes, kept.get("shapes"));
-        assertThat(PyJson.dumps(shapes)).isEqualTo(PyJson.dumps(kept.get("shapes")));
+        assertThat(ToolJson.dumps(shapes)).isEqualTo(ToolJson.dumps(kept.get("shapes")));
     }
 
     @Test
@@ -486,7 +484,7 @@ class TestDraftMapping extends DraftFixtures {
         final List<String> warnings = MappingCompaction.grouped(checked.warnings());
         draft.put("schema_check", map("ok", checked.ok(), "problems", MappingCompaction.grouped(checked.problems()),
                 "warnings", warnings.subList(0, Math.min(6, warnings.size()))));
-        assertThat(PyJson.dumpsCompact(draft).length()).isLessThan(8000);
+        assertThat(ToolJson.dumpsCompact(draft).length()).isLessThan(8000);
     }
 
     @Test
@@ -505,8 +503,8 @@ class TestDraftMapping extends DraftFixtures {
                 .sorted()
                 .toList();
         assertThat(keys.stream().sorted().toList()).isEqualTo(extractKeys);
-        assertThat(PyJson.dumps(folded.get("pairs")).length())
-                .isLessThan(PyJson.dumps(drafted.get("extract")).length() / 3);
+        assertThat(ToolJson.dumps(folded.get("pairs")).length())
+                .isLessThan(ToolJson.dumps(drafted.get("extract")).length() / 3);
         assertThat(TranslationMapping.fromJson(folded).extract().stream().map(e -> e.toString()).sorted().toList())
                 .isEqualTo(TranslationMapping.fromJson(drafted).extract().stream().map(e -> e.toString()).sorted()
                         .toList());
@@ -523,7 +521,7 @@ class TestDraftMapping extends DraftFixtures {
                 .hasMessageContaining("a sample is the file's text, not int");
     }
 
-    // test_formats.py's draft parts.
+    // Drafts of the formats sources send.
 
     private static Map<String, Map<String, Object>> formatRules(final String name) {
         return rules(draft(List.of(format(name)), ""));
@@ -588,7 +586,7 @@ class TestDraftMapping extends DraftFixtures {
         }
     }
 
-    // test_record_shapes.py, test_profile.py and test_times_and_meta.py's drafts.
+    // Drafts of record shapes, sample profiles, times and stream meta.
 
     @Test
     void everyShapeIsReadAndJsonHeldInAFieldIsReadInside() {
@@ -688,7 +686,7 @@ class TestDraftMapping extends DraftFixtures {
                 .contains(map("path", "EventSource/Device/Location/TimeZoneName", "field", "tz"));
     }
 
-    // test_sourcenotes.py's drafts.
+    // Drafts that follow source notes.
 
     private static final String NOTES = """
             {"source": "Acme directory",
@@ -747,7 +745,7 @@ class TestDraftMapping extends DraftFixtures {
     @Test
     @SuppressWarnings("unchecked")
     void whereTheCatalogueCantBeFollowedTheSamplesOwnRulesAreKept() {
-        final Map<String, Object> entry = cases("draft_parity.json").stream()
+        final Map<String, Object> entry = cases("draft_cases.json").stream()
                 .filter(e -> "test guessed catalogue".equals(e.get("name")))
                 .findFirst()
                 .orElseThrow();

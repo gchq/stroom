@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,9 +32,7 @@ import java.util.regex.Pattern;
 
 /// A field plan's fields named as the user's example index names its fields: the example's own name for an
 /// event-logging path, else a name in the example's naming style (PascalCase, camelCase or ECS-style), nested where
-/// the example nests fields that belong together. Ported from the Stroom MCP server's `utils/templatecheck.py`
-/// (naming_style, fits_style, example_naming, example_dotted, field_group, nested_name, names_from_example and
-/// their helpers).
+/// the example nests fields that belong together.
 public final class ExampleNames {
 
     /// The naming styles an example may follow, each as said to the user.
@@ -136,7 +134,7 @@ public final class ExampleNames {
     }
 
     private static String squash(final String text) {
-        return NOT_ALNUM.matcher(PyText.lower(text)).replaceAll("");
+        return NOT_ALNUM.matcher(ToolText.lower(text)).replaceAll("");
     }
 
     // An event-logging path's element names below the root, e.g. EventSource/User/Id -> [User, Id].
@@ -199,7 +197,7 @@ public final class ExampleNames {
     }
 
     private static String camel(final List<String> words) {
-        final StringBuilder sb = new StringBuilder(PyText.lower(words.getFirst()));
+        final StringBuilder sb = new StringBuilder(ToolText.lower(words.getFirst()));
         for (final String word : words.subList(1, words.size())) {
             sb.append(capitalised(word));
         }
@@ -213,7 +211,7 @@ public final class ExampleNames {
         }
         final int first = word.offsetByCodePoints(0, 1);
         return word.substring(0, first).toUpperCase(java.util.Locale.ROOT)
-               + PyText.lower(word.substring(first));
+               + ToolText.lower(word.substring(first));
     }
 
     // p[:1].upper() + p[1:]
@@ -226,13 +224,12 @@ public final class ExampleNames {
     }
 
     private static String snakeWords(final String part) {
-        return String.join("_", words(part).stream().map(PyText::lower).toList());
+        return String.join("_", words(part).stream().map(ToolText::lower).toList());
     }
 
     /// A name in the example's style for a path it has no field for, from the path's last elements:
     /// Client.IPAddress or ClientIPAddress (PascalCase), client.ipAddress or clientIpAddress (camelCase),
-    /// client.ip_address or client_ip_address (ECS-style) (the Stroom MCP server's `_derive`, which
-    /// draft_index_mapping also names fields with).
+    /// client.ip_address or client_ip_address (ECS-style), as draft_index_mapping also names fields.
     ///
     /// @param source An event-logging path.
     /// @param style  The naming style, one of [#STYLE_NAMES].
@@ -287,7 +284,7 @@ public final class ExampleNames {
     /// @return Its group and the rest, or null if it has none.
     public static FieldGroup fieldGroup(final String source) {
         final List<String> parts = segments(source);
-        if (parts.isEmpty() || !PyText.strip(source, "/").startsWith("EventDetail/") || parts.size() < 2) {
+        if (parts.isEmpty() || !ToolText.strip(source, "/").startsWith("EventDetail/") || parts.size() < 2) {
             return null;
         }
         final String group;
@@ -311,7 +308,7 @@ public final class ExampleNames {
         if (grouped == null) {
             return null;
         }
-        return PyText.strip(source, "/").startsWith("EventDetail/Network/")
+        return ToolText.strip(source, "/").startsWith("EventDetail/Network/")
                 ? "Network"
                 : grouped.group();
     }
@@ -441,7 +438,7 @@ public final class ExampleNames {
             if (JsonValues.truthy(hit)) {
                 final Map<String, Object> field = new LinkedHashMap<>();
                 field.put("name", hit);
-                field.put("type", PLAN_TYPE.getOrDefault(PyText.str(example.get(hit).get("type")), "keyword"));
+                field.put("type", PLAN_TYPE.getOrDefault(ToolText.str(example.get(hit).get("type")), "keyword"));
                 field.put("source", path);
                 out.add(field);
                 used.add(hit);
@@ -449,18 +446,18 @@ public final class ExampleNames {
             }
         }
         if (!renamed.isEmpty()) {
-            notes.add("named as the example names them: " + PyText.list(renamed));
+            notes.add("named as the example names them: " + ToolText.list(renamed));
         }
         if (!derived.isEmpty()) {
             notes.add("not in the example, named in its style (" + STYLE_NAMES.get(style) + "): "
-                      + PyText.list(derived));
+                      + ToolText.list(derived));
         }
         if (!added.isEmpty()) {
-            notes.add("in the sample and mapped by the example, so added: " + PyText.list(added));
+            notes.add("in the sample and mapped by the example, so added: " + ToolText.list(added));
         }
         if (!unlike.isEmpty()) {
             notes.add("named unlike the example (" + STYLE_NAMES.getOrDefault(style, style) + "), with no name "
-                      + "derived: " + PyText.list(unlike) + "; agree names with the user and give them as "
+                      + "derived: " + ToolText.list(unlike) + "; agree names with the user and give them as "
                       + "extra_fields");
         }
         final List<String> left = example.entrySet().stream()
@@ -471,7 +468,7 @@ public final class ExampleNames {
                 .toList();
         if (!left.isEmpty()) {
             notes.add("in the example but not in this source's sample, so not in this plan: "
-                      + PyText.list(left.subList(0, Math.min(15, left.size())))
+                      + ToolText.list(left.subList(0, Math.min(15, left.size())))
                       + (left.size() > 15
                     ? " (+" + (left.size() - 15) + ")"
                     : ""));

@@ -44,11 +44,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.LongSupplier;
 
-/// The sample files upload_sample has given commands for, waiting to be posted to `/mcp/upload` (in place of the
-/// Stroom MCP server's signed upload tickets, `utils/uploads.py` `UploadTickets`). The post is made as the user,
-/// signed in as for any other request, so it needs no ticket; what the ticket bound is kept here instead, so a post
-/// lands only where upload_sample said: for the user it was given to, the feed, its stream type and receipt
-/// headers, the build, each file named once, until it runs out (`stroom.ai.sampleUploads.commandsLast`).
+/// The sample files upload_sample has given commands for, waiting to be posted to `/mcp/upload`. The post is made as
+/// the user, signed in as for any other request, so it needs no signed upload ticket; what such a ticket would bind is
+/// kept here instead, so a post lands only where upload_sample said: for the user it was given to, the feed, its stream
+/// type and receipt headers, the build, each file named once, until it runs out
+/// (`stroom.ai.sampleUploads.commandsLast`).
 ///
 /// Held in the database ([AiSampleUploadDao]), so a post may reach any node, not only the one that gave the
 /// commands, and a restart doesn't forget them. A post claims its file first, so two posts of one file (on one

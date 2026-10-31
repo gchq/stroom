@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 
@@ -28,8 +28,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
-/// What is said of a mapping that doesn't validate (the Stroom MCP server's `tools/generation.py`
-/// `mapping_problems` and `_described`, as `tests/test_generation.py` and `tests/test_build_feedback.py` expect).
+/// What is said of a mapping that doesn't validate, and how each problem is described.
 class TestMappingProblems {
 
     @Test
@@ -52,7 +51,7 @@ class TestMappingProblems {
         assertThat(MappingProblems.problems(e, List.of("rules")))
                 .contains("events[0].fields: Input should be a valid list (given \"all of them\")")
                 .contains("keys that are not part of a mapping: ['rules'] (it has "
-                          + PyText.list(MappingProblems.mappingKeys()) + ")");
+                          + ToolText.list(MappingProblems.mappingKeys()) + ")");
         assertThat(MappingProblems.structural(e)).isTrue();
     }
 

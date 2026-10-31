@@ -56,8 +56,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Sample data sent into a feed as the user, through Stroom's own receipt path (ported from the Stroom MCP server's
-/// `utils/uploads.py` `send_to_feed` and `commands`).
+/// Sample data sent into a feed as the user, through Stroom's own receipt path.
 ///
 /// The data is checked against Stroom's receipt checks for the feed as data posted to the datafeed is (the feed's
 /// status, or the data receipt policy, whichever Stroom is configured with), then stored as Stroom's own Upload on
@@ -312,7 +311,7 @@ public class FeedUploads {
     /// @param bytes     The bytes sent.
     public record Sent(String receiptId, Long streamId, long bytes) {
 
-        /// @return It as the Stroom MCP server gave it: `receipt_id`, `stream_id` and `bytes`.
+        /// @return It: `receipt_id`, `stream_id` and `bytes`.
         public Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("receipt_id", receiptId);

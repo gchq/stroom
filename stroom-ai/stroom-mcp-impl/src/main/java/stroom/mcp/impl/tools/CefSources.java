@@ -36,11 +36,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Where a CEF pipeline should come from, for draft_cef_mapping (the Stroom MCP server's `tools/cef.py`
-/// `_templates`): a template the standing instructions name (they decide), the environment's forwarding
-/// templates, the CEF pipelines there are already with the templates they inherit from, and the XSLTs that write
-/// CEF lines; and the KafkaConfig documents the user may pick from. Everything is read as the user: only what they
-/// may view is found.
+/// Where a CEF pipeline should come from, for draft_cef_mapping: a template the standing instructions name (they
+/// decide), the environment's forwarding templates, the CEF pipelines there are already with the templates they inherit
+/// from, and the XSLTs that write CEF lines; and the KafkaConfig documents the user may pick from. Everything is read
+/// as the user: only what they may view is found.
 class CefSources {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CefSources.class);

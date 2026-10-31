@@ -40,9 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `set_shape_handling` - records, in a build's survey doc, that some kinds of event are left untranslated on
-/// purpose, or no longer are (the Stroom MCP server's `tools/sampling.py` `set_shape_handling`). The user confirms
-/// the change ([Consent]) before the doc is written.
+/// `set_shape_handling` - records, in a build's survey doc, that some kinds of event are left untranslated on purpose,
+/// or no longer are. The user confirms the change ([Consent]) before the doc is written.
 class SetShapeHandlingTool extends AbstractBuiltInTool {
 
     static final String NAME = "set_shape_handling";

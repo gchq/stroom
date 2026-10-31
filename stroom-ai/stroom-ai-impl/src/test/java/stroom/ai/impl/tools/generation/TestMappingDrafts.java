@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,10 +27,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Stroom MCP server's tests of what the generator does with a draft (`tests/test_draft_reply.py`, and
-/// `tests/test_record_shapes.py`'s generated XSLT): the draft as the agent receives it, small enough for the client
-/// to show it whole, and read back the same. The drafts are the server's `draft_mapping`'s, kept as fixtures
-/// (`drafts.json`) until it is ported.
+/// What the generator does with a draft: the draft as the agent receives it, small enough for the client to show it
+/// whole, and read back the same. The drafts are kept as fixtures (`drafts.json`).
 class TestMappingDrafts extends GenerationFixtures {
 
     private static final Map<String, Object> DRAFTS = json(resource("drafts.json"));
@@ -64,7 +62,7 @@ class TestMappingDrafts extends GenerationFixtures {
         assertThat(same.ok()).isTrue();
         assertThat(same.xslt()).isEqualTo(XsltGenerator.generate(TranslationMapping.fromJson(draft), SCHEMA_352,
                 "3.5.2").xslt());
-        assertThat(PyJson.dumps(compact).length()).isLessThan((int) (0.75 * PyJson.dumps(draft).length()));
+        assertThat(ToolJson.dumps(compact).length()).isLessThan((int) (0.75 * ToolJson.dumps(draft).length()));
         final EventRule rule = TranslationMapping.fromJson(compact).events().getFirst();
         assertThat(rule.data()).isEmpty();
         assertThat(rule.fields()).anySatisfy(field -> {
@@ -106,7 +104,7 @@ class TestMappingDrafts extends GenerationFixtures {
         reply.put("mapping", mapping);
         reply.put("schema_check", check);
         // The draft's notes aren't part of the fixture: the mapping and its check are most of the reply.
-        assertThat(PyJson.dumpsCompact(reply).length()).isLessThan(8000);
+        assertThat(ToolJson.dumpsCompact(reply).length()).isLessThan(8000);
     }
 
     @Test
@@ -150,7 +148,7 @@ class TestMappingDrafts extends GenerationFixtures {
 
     @Test
     void everyShapeIsReadAndJsonHeldInAFieldIsReadInside() {
-        // test_record_shapes.py: two JSON structures in one sample, a whole JSON line written into TypeId, and the
+        // Two JSON structures in one sample, a whole JSON line written into TypeId, and the
         // second shape's events without time or kind. The draft reads the held keys; the XSLT reads them too.
         final TranslationMapping model = TranslationMapping.fromJson(draft("shapes"));
         final XsltGenerator.Generated generated = XsltGenerator.generate(model, SCHEMA_352, "3.5.2");

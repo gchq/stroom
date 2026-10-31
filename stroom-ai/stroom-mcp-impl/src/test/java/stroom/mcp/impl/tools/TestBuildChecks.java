@@ -33,8 +33,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What promotion checks (the Stroom MCP server's `tests/test_build_checks.py`): a clean step of the pipeline's
-/// current code (recorded in the build's record by stepping), and docs.
+/// What promotion checks: a clean step of the pipeline's current code (recorded in the build's record by stepping),
+/// and docs.
 class TestBuildChecks {
 
     private static final String BUILD = "acme-v1";

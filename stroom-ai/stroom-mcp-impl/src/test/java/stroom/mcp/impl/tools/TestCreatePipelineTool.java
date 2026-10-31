@@ -37,7 +37,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// create_pipeline (the Stroom MCP server's `tools/pipeline_writes.py` `create_pipeline` and `_standalone_kafka`).
+/// create_pipeline: pipelines made from a template in a build, a production pipeline's next version, and standalone
+/// pipelines.
 class TestCreatePipelineTool {
 
     private static final String BUILD = PipelineWorld.BUILD;
@@ -55,11 +56,11 @@ class TestCreatePipelineTool {
                                  + "\"Event Data (Text)\", \"description\": \"Acme's events\"}";
 
         // Nothing made until the user agrees, which they can't without a form.
-        assertThat(call(arguments, PortedToolCalls.context()).text())
+        assertThat(call(arguments, BuildToolCalls.context()).text())
                 .startsWith("Not done: Create pipeline 'Acme-V1-Events' from template 'Event Data (Text)'.");
         assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
         final Map<String, Object> made = PipelineWorld.json(call(arguments, user.context()));
 
         assertThat(user.forms()).singleElement().satisfies(form -> {
@@ -102,7 +103,7 @@ class TestCreatePipelineTool {
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
                                                                  + "\"Acme-Events\", \"template_uuid\": \""
                                                                  + TEMPLATE + "\"}",
-                PortedToolCalls.answering(Map.of("name", "ACME-V1-Events"))));
+                BuildToolCalls.answering(Map.of("name", "ACME-V1-Events"))));
 
         assertThat(made).containsEntry("name", "ACME-V1-Events")
                 .containsEntry("changed_by_user", Map.of("name", "ACME-V1-Events"));
@@ -118,11 +119,11 @@ class TestCreatePipelineTool {
         textTemplate();
 
         final ToolResult unknown = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \"" + TEMPLATE
-                                        + "\", \"set_properties\": \"xsltFilter.xslt=x\"}", PortedToolCalls.context());
+                                        + "\", \"set_properties\": \"xsltFilter.xslt=x\"}", BuildToolCalls.context());
         final ToolResult validation = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \""
                                            + TEMPLATE + "\", \"set_properties\": [{\"element\": \"schemaFilter\", "
                                            + "\"name\": \"schemaGroup\", \"value\": \"OTHER\"}]}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(unknown.isError()).isTrue();
         assertThat(unknown.text()).isEqualTo("The pipeline has no element(s) ['xsltFilter']; its elements are "
@@ -141,7 +142,7 @@ class TestCreatePipelineTool {
         final ToolResult refused = call("{\"build\": \"acme-v1\", \"name\": \"P\", \"template_uuid\": \"" + TEMPLATE
                                         + "\", \"set_properties\": [{\"element\": \"translationFilter\", \"name\": "
                                         + "\"xslt\", \"doc_uuid\": \"other\", \"doc_type\": \"XSLT\"}]}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(refused.text()).startsWith("translationFilter.xslt: XSLT other is not a document of build "
                                               + "'acme-v1'.")
@@ -159,7 +160,7 @@ class TestCreatePipelineTool {
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
                                                                  + "\"template_uuid\": \"" + TEMPLATE + "\", "
                                                                  + "\"replace_parser\": \"XMLFragmentParser\"}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         final PipelineDoc doc = pipelines.pipelineNamed("P");
         assertThat(doc.getPipelineData().getAddedElements()).containsExactly(
@@ -184,7 +185,7 @@ class TestCreatePipelineTool {
 
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
                                                                  + "\"template_uuid\": \"" + TEMPLATE + "\"}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat(made.get("filled_from_build")).isEqualTo(List.of(
                 "translationFilter.xslt = Acme-Events (the build's only XSLT)",
@@ -206,7 +207,7 @@ class TestCreatePipelineTool {
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"P\", "
                                                                  + "\"template_uuid\": \"" + TEMPLATE + "\", "
                                                                  + "\"references\": [{\"feed\": \"ACME-USERS\"}]}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat(made.get("reference_data")).isEqualTo(List.of("ACME-USERS via Reference Loader"));
         assertThat(pipelines.pipelineNamed("P").getPipelineData().getAddedPipelineReferences()).singleElement()
@@ -221,9 +222,9 @@ class TestCreatePipelineTool {
 
         final ToolResult missing = call("{\"build\": \"acme-v1\", \"name\": \"Acme-CEF\", \"standalone\": "
                                         + "\"kafka\", \"set_properties\": \"xsltFilter.xslt=cef\"}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
         final ToolResult both = call("{\"build\": \"acme-v1\", \"name\": \"Acme-CEF\", \"standalone\": \"kafka\", "
-                                     + "\"template\": \"T\"}", PortedToolCalls.context());
+                                     + "\"template\": \"T\"}", BuildToolCalls.context());
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": \"Acme-CEF\", "
                                                                  + "\"standalone\": \"kafka\", \"set_properties\": "
                                                                  + "[{\"element\": \"xsltFilter\", \"name\": \"xslt\", "
@@ -231,7 +232,7 @@ class TestCreatePipelineTool {
                                                                  + "{\"element\": \"standardKafkaProducer\", "
                                                                  + "\"name\": \"kafkaConfig\", \"doc_uuid\": \"k1\", "
                                                                  + "\"doc_type\": \"KafkaConfig\"}]}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat(missing.text()).isEqualTo("set_properties needs ['standardKafkaProducer.kafkaConfig']: the CEF "
                                              + "XSLT draft_cef_mapping saved, and the KafkaConfig the user picks "
@@ -257,9 +258,9 @@ class TestCreatePipelineTool {
 
     @Test
     void aTemplateOfNoRoleSubfolderIsAChildAllTheSame() {
-        // Seen in e2e_cef: a CEF pipeline written by hand, writing lines of text (XMLParser, XSLTFilter, TextWriter),
-        // used as the template the AGENTS doc named. Its stage gives no role subfolder, and create_pipeline failed
-        // with a NullPointerException where the Stroom MCP server (`role in SOURCE_ROLES`) went on.
+        // Seen in TestE2eCef: a CEF pipeline written by hand, writing lines of text (XMLParser, XSLTFilter,
+        // TextWriter), used as the template the AGENTS doc named. Its stage gives no role subfolder, and
+        // create_pipeline failed with a NullPointerException.
         pipelines.template(TEMPLATE, "CEF to file", PipelineLayers.layer(TEMPLATE).chain("Source", "Source",
                 "xmlParser", "XMLParser", "xsltFilter", "XSLTFilter", "textWriter", "TextWriter", "streamAppender",
                 "StreamAppender"));
@@ -268,7 +269,7 @@ class TestCreatePipelineTool {
         final ToolResult made = call("{\"build\": \"acme-v1\", \"name\": \"Acme-CEF-Text\", \"template_uuid\": \""
                                      + TEMPLATE + "\", \"set_properties\": [{\"element\": \"xsltFilter\", "
                                      + "\"name\": \"xslt\", \"doc_uuid\": \"cef\", \"doc_type\": \"XSLT\"}]}",
-                PortedToolCalls.answering(Map.of()));
+                BuildToolCalls.answering(Map.of()));
 
         assertThat(made.isError()).as(made.text()).isFalse();
         assertThat(pipelines.pipelineNamed("Acme-CEF-Text").getParentPipeline())
@@ -278,7 +279,7 @@ class TestCreatePipelineTool {
     @Test
     void theBuildIsTheSessionsWhenTheCallNamesNone() {
         final ToolResult refused = call("{\"name\": \"P\", \"template_uuid\": \"" + TEMPLATE + "\"}",
-                PortedToolCalls.context());
+                BuildToolCalls.context());
 
         assertThat(refused.text()).startsWith("create_pipeline needs build: the build this work belongs to");
     }
@@ -301,15 +302,15 @@ class TestCreatePipelineTool {
 
     @Test
     void aVersionOfAPipelineWithReferenceDataAsksWhetherToKeepThem() {
-        // The Stroom MCP server's tests/test_new_version.py. Seen in testing: V1.3 of a Fortigate feed drafted from
-        // the sample lost V1.2's IP lookups, and nothing said so.
+        // Seen in testing: V1.3 of a Fortigate feed drafted from the sample lost V1.2's IP lookups, and nothing said
+        // so.
         textTemplate();
         previousVersion(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
 
         final ToolResult asked = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"version_of\": "
-                                      + "\"v12\"}", PortedToolCalls.context());
+                                      + "\"v12\"}", BuildToolCalls.context());
         final ToolResult stray = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"template\": \""
-                                      + TEMPLATE + "\", \"keep_references\": true}", PortedToolCalls.context());
+                                      + TEMPLATE + "\", \"keep_references\": true}", BuildToolCalls.context());
 
         assertThat(asked.isError()).isTrue();
         assertThat(asked.text()).isEqualTo("'FG-V1.2' loads reference data for its lookups: ['GEO-IP via Reference "
@@ -326,7 +327,7 @@ class TestCreatePipelineTool {
         previousVersion(null);
 
         final ToolResult refused = call("{\"build\": \"acme-v1\", \"name\": \"FG-V1.3\", \"version_of\": "
-                                        + "\"v12\", \"keep_references\": false}", PortedToolCalls.context());
+                                        + "\"v12\", \"keep_references\": false}", BuildToolCalls.context());
 
         assertThat(refused.text()).isEqualTo("'FG-V1.2' inherits from no template, so a new version can't be its "
                                              + "template's child: copy_pipeline source_uuid='v12' copies it as it is "
@@ -339,7 +340,7 @@ class TestCreatePipelineTool {
         previousVersion(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"));
         pipelines.xslt("x13", "FG-Events-V1.3", Map.of());
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of());
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
                                                                  + "\"FG-V1.3\", \"version_of\": \"v12\", "
                                                                  + "\"keep_references\": true}", user.context()));
@@ -381,7 +382,7 @@ class TestCreatePipelineTool {
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
                                                                  + "\"FG-V1.3\", \"version_of\": \"v12\", "
                                                                  + "\"keep_references\": false}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat(made).doesNotContainKey("reference_data").containsEntry("version_of", "FG-V1.2");
         assertThat(pipelines.pipelineNamed("FG-V1.3").getPipelineData().getAddedPipelineReferences()).isEmpty();
@@ -420,7 +421,7 @@ class TestCreatePipelineTool {
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        return tool.execute(PortedToolCalls.call(CreatePipelineTool.NAME, arguments), context);
+        return tool.execute(BuildToolCalls.call(CreatePipelineTool.NAME, arguments), context);
     }
 
     @Test
@@ -436,7 +437,7 @@ class TestCreatePipelineTool {
                                  + "{\"element\": \"dsParser\", \"name\": \"textConverter\", \"doc_uuid\": "
                                  + "\"tc\", \"doc_type\": \"TextConverter\"}]}";
 
-        final Map<String, Object> made = PipelineWorld.json(call(arguments, PortedToolCalls.answering(Map.of())));
+        final Map<String, Object> made = PipelineWorld.json(call(arguments, BuildToolCalls.answering(Map.of())));
 
         assertThat(made).containsEntry("chain", "Source -> dsParser -> readRecordCountFilter -> splitFilter -> "
                                                 + "translationFilter -> schemaFilter -> recordOutputFilter -> "
@@ -467,7 +468,7 @@ class TestCreatePipelineTool {
         final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
                                                                  + "\"Acme-V1-Events\", \"standalone\": \"events\", "
                                                                  + "\"set_properties\": \"translationFilter.xslt=x1\"}",
-                PortedToolCalls.answering(Map.of())));
+                BuildToolCalls.answering(Map.of())));
 
         assertThat((String) made.get("chain")).startsWith("Source -> jsonParser -> ");
     }
@@ -481,17 +482,17 @@ class TestCreatePipelineTool {
         Mockito.when(pipelines.templates.find("translation")).thenReturn(Map.of("candidates", List.of(
                 Map.of("name", "json-in v3", "parser", "JSONParser"))));
 
-        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+        assertThat(call(arguments, BuildToolCalls.answering(Map.of())).text())
                 .contains("only for a Stroom with no translation template, and this one has ['json-in v3']")
                 .contains("replace_parser=");
 
         Mockito.when(pipelines.templates.find("translation")).thenReturn(Map.of("candidates", List.of()));
         // The converter the Data Splitter needs is given too.
-        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+        assertThat(call(arguments, BuildToolCalls.answering(Map.of())).text())
                 .startsWith("set_properties needs ['dsParser.textConverter']");
         // No sample: no parser to choose.
         pipelines.feeds.facts.ownRaw = List.of();
-        assertThat(call(arguments, PortedToolCalls.answering(Map.of())).text())
+        assertThat(call(arguments, BuildToolCalls.answering(Map.of())).text())
                 .contains("reads its parser from the build's sample");
         assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
     }

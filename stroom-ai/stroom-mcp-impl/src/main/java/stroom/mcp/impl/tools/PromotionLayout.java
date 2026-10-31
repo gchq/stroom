@@ -30,10 +30,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Where promotion puts a build's documents (the Stroom MCP server's `tools/builds.py` `_version_folders`,
-/// `_joining` and `promotion_tree`): a new version of a production document in a version subfolder beside its
-/// predecessor, the version's other documents with it, and the layout shown to the user as a tree of the
-/// destination folders. Folders are paths from System, e.g. `System/Feeds/Acme`.
+/// Where promotion puts a build's documents: a new version of a production document in a version subfolder beside its
+/// predecessor, the version's other documents with it, and the layout shown to the user as a tree of the destination
+/// folders. Folders are paths from System, e.g. `System/Feeds/Acme`.
 class PromotionLayout {
 
     /// A step: a document moved into a folder.
@@ -55,13 +54,13 @@ class PromotionLayout {
         this.places = places;
     }
 
-    /// `_version_folders`: for each new version of a production document (copy_pipeline: `version_of`), a version
-    /// subfolder beside its predecessor, named by the version in its own name (…-V1.1-Events: V1.1), so old and
-    /// new are told apart at a glance (asked for by the user). Beside the predecessor, in its folder's parent,
-    /// when that folder is itself a version's. Documents given a destination of their own keep it, as do those
-    /// whose type is given one elsewhere than beside the predecessor: not in the Python server, where the version
-    /// went beside its predecessor anyway and the build's other documents to the folder given (seen: TWITTER's
-    /// V1.1 pipeline under /Feeds/Twitter, its XSLT and documentation under System/MCP Testing/Twitter).
+    /// For each new version of a production document (copy_pipeline: `version_of`), a version subfolder beside its
+    /// predecessor, named by the version in its own name (…-V1.1-Events: V1.1), so old and new are told apart at a
+    /// glance (asked for by the user). Beside the predecessor, in its folder's parent, when that folder is itself a
+    /// version's. Documents given a destination of their own keep it, as do those whose type is given one elsewhere
+    /// than beside the predecessor (seen in testing, when the version went beside its predecessor anyway and the
+    /// build's other documents to the folder given: TWITTER's V1.1 pipeline under /Feeds/Twitter, its XSLT and
+    /// documentation under System/MCP Testing/Twitter).
     ///
     /// @param docs         The build's documents.
     /// @param destinations The destinations given, by type or document UUID.
@@ -102,10 +101,9 @@ class PromotionLayout {
         return new VersionFolders(out, beside);
     }
 
-    /// `_joining`: where a version's other new documents go: those headed for its predecessor's folder, or the
-    /// version folder's parent, go in the version folder with it (its index, documentation and dashboard: seen in
-    /// e2e, the new pipeline in v2/ and its index beside v1). Only where one version folder is meant for that
-    /// place.
+    /// Where a version's other new documents go: those headed for its predecessor's folder, or the version folder's
+    /// parent, go in the version folder with it (its index, documentation and dashboard: seen in e2e, the new pipeline
+    /// in v2/ and its index beside v1). Only where one version folder is meant for that place.
     ///
     /// @param beside The version folders by predecessor's folder.
     /// @return The version folder by place.
@@ -127,8 +125,8 @@ class PromotionLayout {
         return out;
     }
 
-    /// `promotion_tree`: where a promotion puts each document, as a tree of the destination folders (new folders
-    /// marked), with the documents written back over production ones and those left in the workspace after it.
+    /// Where a promotion puts each document, as a tree of the destination folders (new folders marked), with the
+    /// documents written back over production ones and those left in the workspace after it.
     ///
     /// @param plan     The promotion's steps.
     /// @param creating The folders to create.
@@ -253,7 +251,7 @@ class PromotionLayout {
         return node.values().iterator().next();
     }
 
-    // Python's str.rstrip('/').
+    // The path without its trailing slashes.
     private static String stripSlashes(final String path) {
         int end = path.length();
         while (end > 0 && path.charAt(end - 1) == '/') {

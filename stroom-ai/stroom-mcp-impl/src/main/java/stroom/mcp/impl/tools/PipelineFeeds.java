@@ -85,9 +85,9 @@ class PipelineFeeds {
     /// @param pipelineUuid The pipeline.
     /// @param depth        How far up this pipeline is from the one asked about.
     /// @param filters      Its filters, if already listed; else null to list them.
-    /// @return `filters` (each `id`, `enabled`, `selects`, `feeds`, and any `stream_types`,
-    /// `feeds_from_dictionaries` and `output_of`), `feeds`, and any `reads_output_of` and `note`; or
-    /// `filters_unreadable` saying why they couldn't be listed. As the Stroom MCP server gave them.
+    /// @return `filters` (each `id`, `enabled`, `selects`, `feeds`, and any `stream_types`, `feeds_from_dictionaries`
+    /// and `output_of`), `feeds`, and any `reads_output_of` and `note`; or `filters_unreadable` saying why they
+    /// couldn't be listed.
     Map<String, Object> pipelineFeeds(final String pipelineUuid,
                                       final int depth,
                                       final List<ProcessorFilter> filters) {

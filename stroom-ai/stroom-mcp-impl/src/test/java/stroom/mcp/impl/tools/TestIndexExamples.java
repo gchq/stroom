@@ -21,7 +21,7 @@ import stroom.ai.api.ElasticIndexTemplates.IndexTemplate;
 import stroom.ai.api.ElasticIndexTemplates.IndexTemplates;
 import stroom.ai.api.ElasticIndexTemplates.Status;
 import stroom.ai.impl.tools.ToolRefusal;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -38,8 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 
-/// The user's example index template, read through Stroom from an existing index (the Stroom MCP server's
-/// tests/test_indexing.py `_example_from_index` case, and `_template_from_index`).
+/// The user's example index template, read through Stroom from an existing index.
 class TestIndexExamples {
 
     private final IndexingWorld world = new IndexingWorld();
@@ -55,7 +54,7 @@ class TestIndexExamples {
         IndexExamples.FromFields read = world.examples.exampleFromIndex("k");
         final String[] parts = read.template().split("\n", 2);
         assertThat(parts[0]).isEqualTo("PUT _index_template/ecs-keycloak-v1");
-        final Map<String, Object> template = (Map<String, Object>) PyJson.loads(parts[1]);
+        final Map<String, Object> template = (Map<String, Object>) ToolJson.loads(parts[1]);
         assertThat(template.get("index_patterns")).isEqualTo(List.of("ecs-keycloak-v1*"));
         final Map<String, Object> props = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>)
                 template.get("template")).get("mappings")).get("properties");

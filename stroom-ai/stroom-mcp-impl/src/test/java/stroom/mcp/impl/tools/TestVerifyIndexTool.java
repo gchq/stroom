@@ -40,8 +40,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 
-/// verify_index: the build's verification dashboard, confirmed by the user, and the test searches through it,
-/// ported from the Stroom MCP server's `verify_index` (the checks themselves are [TestIndexChecks]').
+/// verify_index: the build's verification dashboard, confirmed by the user, and the test searches through it (the
+/// checks themselves are [TestIndexChecks]').
 class TestVerifyIndexTool {
 
     private final IndexingWorld world = new IndexingWorld();
@@ -88,9 +88,9 @@ class TestVerifyIndexTool {
     }
 
     private Map<String, Object> call(final String arguments, final ToolCallContext context) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, arguments), context);
+        final ToolResult result = tool.execute(BuildToolCalls.call(VerifyIndexTool.NAME, arguments), context);
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     // A user who agrees in every form.
@@ -103,7 +103,7 @@ class TestVerifyIndexTool {
         index(true);
 
         // Without a form the user can't confirm it: nothing is made.
-        final ToolResult refused = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, args("")),
+        final ToolResult refused = tool.execute(BuildToolCalls.call(VerifyIndexTool.NAME, args("")),
                 IndexingWorld.noForms());
         assertThat(refused.text()).startsWith("Not done: Create the verification dashboard 'ACME-ES-VERIFY' on "
                                               + "index 'ACME-ES'.");
@@ -153,7 +153,7 @@ class TestVerifyIndexTool {
         world.world.docs.remove("i");
         final TestVerifyIndexTool other = new TestVerifyIndexTool();
         other.index(false);
-        final ToolResult refused = other.tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME,
+        final ToolResult refused = other.tool.execute(BuildToolCalls.call(VerifyIndexTool.NAME,
                 args(", \"checks\": false")), IndexingWorld.noForms());
         assertThat(refused.isError()).isTrue();
         assertThat(refused.text()).contains("so no dashboard is saved for it");
@@ -163,7 +163,7 @@ class TestVerifyIndexTool {
     void columnsNotInTheIndexAreRefused() {
         index(true);
 
-        final ToolResult refused = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, args("").replace(
+        final ToolResult refused = tool.execute(BuildToolCalls.call(VerifyIndexTool.NAME, args("").replace(
                 "\"user.name\"]", "\"EventSource.User.Id\"]")), IndexingWorld.noForms());
 
         assertThat(refused.isError()).isTrue();
@@ -175,7 +175,7 @@ class TestVerifyIndexTool {
     void aSearchThatWouldMisleadIsRefusedBeforeAnythingIsMade() {
         index(true);
 
-        final ToolResult refused = tool.execute(PortedToolCalls.call(VerifyIndexTool.NAME, args(
+        final ToolResult refused = tool.execute(BuildToolCalls.call(VerifyIndexTool.NAME, args(
                 ", \"searches\": [{\"field\": \"user.name\", \"condition\": \"STARTS_WITH\", \"value\": \"al\"}]")),
                 IndexingWorld.noForms());
 

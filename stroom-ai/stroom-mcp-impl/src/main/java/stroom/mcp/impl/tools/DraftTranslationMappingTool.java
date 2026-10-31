@@ -53,10 +53,9 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-/// `draft_translation_mapping` - a starting translation mapping drafted from the sample, to edit rather than write
-/// from nothing (the Stroom MCP server's `tools/generation.py` `draft_translation_mapping`, on [DraftMapping]). The
-/// user chooses the event-logging version it writes ([EventVersions]), and the draft is kept in the session's
-/// workspace ([SentMappings]) so the first save sends only what changes.
+/// `draft_translation_mapping` - a starting translation mapping drafted from the sample, to edit rather than write from
+/// nothing (on [DraftMapping]). The user chooses the event-logging version it writes ([EventVersions]), and the draft
+/// is kept in the session's workspace ([SentMappings]) so the first save sends only what changes.
 class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DraftTranslationMappingTool.class);

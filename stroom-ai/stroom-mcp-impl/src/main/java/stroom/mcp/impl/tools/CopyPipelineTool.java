@@ -51,8 +51,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// `copy_pipeline` - copies an existing source's pipeline into the build with exactly the original's structure and
-/// settings, its XSLTs and text converters copied with it (the Stroom MCP server's `tools/pipeline_writes.py`
-/// `copy_pipeline`). A template is refused: templates are inherited (create_pipeline), never copied.
+/// settings, its XSLTs and text converters copied with it. A template is refused: templates are inherited
+/// (create_pipeline), never copied.
 class CopyPipelineTool extends AbstractBuiltInTool {
 
     static final String NAME = "copy_pipeline";

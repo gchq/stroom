@@ -270,7 +270,7 @@ public final class AiChatTexts {
                 : "");
     }
 
-    /// @param progress What the Working line says, e.g. "Let me check the schema (describe_document)".
+    /// @param progress What the Working line says, e.g. "Let me check the schema (read_document)".
     /// @param text     What the model said alongside its tool calls, as Markdown.
     /// @return True if the Working line is showing that text: it starts the same way, ignoring Markdown marks,
     /// link targets, spaces and punctuation.

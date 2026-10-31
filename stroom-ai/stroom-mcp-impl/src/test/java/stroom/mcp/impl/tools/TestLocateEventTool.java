@@ -106,7 +106,7 @@ class TestLocateEventTool {
 
     @Test
     void theResultIsJsonAndTheStreamsReadAreLogged() {
-        final Map<String, Object> result = PortedToolCalls.json(text("{\"stream_id\": 9}"));
+        final Map<String, Object> result = BuildToolCalls.json(text("{\"stream_id\": 9}"));
 
         assertThat(result.get("raw_stream")).isEqualTo(6);
         Mockito.verify(auditLog).streamsViewed(Mockito.any(), Mockito.eq(List.of(6L)), Mockito.anyString());
@@ -119,6 +119,6 @@ class TestLocateEventTool {
     }
 
     private String text(final String arguments) {
-        return tool.execute(PortedToolCalls.call(LocateEventTool.NAME, arguments), PortedToolCalls.context()).text();
+        return tool.execute(BuildToolCalls.call(LocateEventTool.NAME, arguments), BuildToolCalls.context()).text();
     }
 }

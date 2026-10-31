@@ -27,10 +27,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-/// What processing a stream with a pipeline writes, read from its elements and properties as Stroom runs it: an
-/// output stream (and of which type), Kafka messages, or an index. Ported from the Stroom MCP server's
-/// `tools/processing_writes.py` (`output_stream_type`, `_writes_output`, `_sends_to_kafka` and `_is_indexing`),
-/// for its write tools to share.
+/// What processing a stream with a pipeline writes, read from its elements and properties as Stroom runs it: an output
+/// stream (and of which type), Kafka messages, or an index, for the processing write tools to share.
 class PipelineOutputs {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineOutputs.class);

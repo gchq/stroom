@@ -35,8 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// What propose_index_template and check_index_template read of the candidate indexing pipeline (the Stroom MCP
-/// server's `tools/indexing.py` `_destination`, `_documents` and `_component_choices`): where it writes, the
+/// What propose_index_template and check_index_template read of the candidate indexing pipeline: where it writes, the
 /// documents it writes for the sample (by stepping it, as the user), and the component templates the user and their
 /// standing instructions (AGENTS docs) include or exclude.
 class TemplatePipelines {

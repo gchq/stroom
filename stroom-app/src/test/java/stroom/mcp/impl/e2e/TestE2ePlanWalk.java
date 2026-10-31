@@ -44,25 +44,23 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_plan_walk.py`, on the Lucene path: the onboarding plan followed as an agent
-/// would, through the REAL tools on a real Stroom. It starts with start_onboarding and from then on does what `next`
-/// says: at every step it takes the call the server names, fills in only its `<placeholders>` (the decisions an agent
-/// makes with the user: names, the mapping, the dashboard's columns), and calls exactly that tool. It checks what the
-/// script checks:
+/// On the Lucene path, the onboarding plan followed as an agent would, through the REAL tools on a real Stroom. It
+/// starts with start_onboarding and from then on does what `next` says: at every step it takes the call the server
+/// names, fills in only its `<placeholders>` (the decisions an agent makes with the user: names, the mapping, the
+/// dashboard's columns), and calls exactly that tool. It checks:
 ///
 /// - the steps come in the expected order for the Lucene path;
 /// - following `next` never leads into a refusal;
 /// - each write's own `next` agrees with build_status, and the work is not `done` before promotion;
 /// - wrong moves along the way are refused with the right call named, and leave `next` where it was: processing
-///   before a clean step, and stepping a deleted namesake feed's stream (the script's `deleted_feed_before`, run
-///   before the Lucene walk);
+///   before a clean step, and stepping a deleted namesake feed's stream (run before the Lucene walk);
 /// - before promotion, documentation the build's own change left behind holds promotion up, naming the call, while a
-///   hand edit of the XSLT only warns (`_promotion_and_stale_documentation`).
+///   hand edit of the XSLT only warns.
 ///
-/// The samples step plays the user's terminal as the script does: the file goes, by the command upload_sample gave,
+/// The samples step plays the user's terminal: the file goes, by the command upload_sample gave,
 /// to the REAL upload servlet.
 ///
-/// Left out: the script's `elasticsearch` path (index template agreed, a live cluster, following another index),
+/// Left out: the Elasticsearch path (index template agreed, a live cluster, following another index),
 /// which needs an Elasticsearch cluster.
 @SuppressWarnings("unchecked")
 class TestE2ePlanWalk extends AbstractE2eTest {

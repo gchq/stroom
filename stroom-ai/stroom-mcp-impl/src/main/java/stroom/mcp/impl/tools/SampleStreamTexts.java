@@ -45,8 +45,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /// Sample streams' raw text, read in place of text sent by the client, so a sample passes through the model once
-/// (upload_sample) however many tools then read it (the Stroom MCP server's `tools/streams.py`
-/// `read_sample_streams` and `refuse_older_than_feed`).
+/// (upload_sample) however many tools then read it.
 class SampleStreamTexts {
 
     /// What is said to a user without the View Data permission.

@@ -65,8 +65,8 @@ import java.util.Set;
 
 /// Fetches the source events behind the rows of a table, e.g. an attached dashboard table, into one XML file in the
 /// workspace (see [EventsFile]), for search_events to search by XPath or text; or reads records from one stream
-/// (raw input, Events XML, or a child part such as the receipt headers), as the Stroom MCP server's read_stream
-/// did, whole records within a limit of characters, with where to read on.
+/// (raw input, Events XML, or a child part such as the receipt headers), whole records within a limit of
+/// characters, with where to read on.
 ///
 /// Events are read as the user: only streams of feeds they may see are read, and they need permission to view data.
 /// What is read is data from anywhere, so the run counts as having read untrusted content.
@@ -238,7 +238,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     // Reading one stream.
     // --------------------------------------------------------------------------------
 
-    /// Reads records from one stream, as the Stroom MCP server's read_stream did.
+    /// Reads records from one stream.
     private ToolResult readStream(final ToolCall request, final ToolCallContext context) {
         final long streamId = longArg(request, STREAM_ID_ARG);
         if (!canViewData()) {
@@ -296,7 +296,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                            + "search_events on it.");
     }
 
-    /// @return The records, with where to read on, as read_stream gave them.
+    /// @return The records, with where to read on.
     Map<String, Object> readRecords(final long streamId,
                                     final int firstRecord,
                                     final int recordCount,

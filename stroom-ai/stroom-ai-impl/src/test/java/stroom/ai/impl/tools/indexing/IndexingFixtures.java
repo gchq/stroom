@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 import javax.xml.transform.stream.StreamSource;
 
 /// What the indexing tests share: the Elastic Common Schema as Stroom bundles it, a plain Saxon to run the
-/// indexing XSLTs with (as the Stroom MCP server's tests ran them with SaxonC), and the test resources.
+/// indexing XSLTs with, and the test resources.
 final class IndexingFixtures {
 
     /// Where the ECS files are bundled (stroom-mcp-impl's resources), from the stroom-ai folder.
@@ -116,7 +116,7 @@ final class IndexingFixtures {
     /// @return It as JSON-like values.
     @SuppressWarnings("unchecked")
     static Map<String, Object> json(final String json) {
-        return (Map<String, Object>) PyJson.loads(json);
+        return (Map<String, Object>) ToolJson.loads(json);
     }
 
     /// @param xslt An XSLT.
@@ -139,7 +139,7 @@ final class IndexingFixtures {
     }
 
     /// @param output What an XSLT wrote.
-    /// @return It without the declaration, namespaces and space between elements, as the Python tests compared it.
+    /// @return It without the declaration, namespaces and space between elements, as the tests compare it.
     static String compact(final String output) {
         return SPACE_BETWEEN.matcher(NOISE.matcher(output).replaceAll("")).replaceAll("><").strip();
     }

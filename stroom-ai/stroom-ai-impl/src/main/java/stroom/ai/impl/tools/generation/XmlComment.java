@@ -18,7 +18,7 @@ package stroom.ai.impl.tools.generation;
 
 import java.util.Objects;
 
-/// An XML comment in an [XmlElement]'s children (lxml's `etree.Comment`).
+/// An XML comment in an [XmlElement]'s children.
 public final class XmlComment extends XmlNode {
 
     private final String text;

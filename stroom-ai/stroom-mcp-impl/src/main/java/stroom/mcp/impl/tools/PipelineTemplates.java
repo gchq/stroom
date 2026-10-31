@@ -415,7 +415,7 @@ class PipelineTemplates {
         }
         final List<Map<String, Object>> usages = new ArrayList<>(seen.values());
         usages.sort(Comparator.comparing(row -> -((List<?>) row.get("used_by")).size()));
-        // Everything each shared document offers, called or not (describe_document reads its full text).
+        // Everything each shared document offers, called or not (read_document reads its full text).
         shared.docs.forEach((href, doc) -> {
             final Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("href", href);

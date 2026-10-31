@@ -37,9 +37,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 
 /// rebuild_mapping, the tool: the mapping read back from the XSLT, proven by stepping both XSLTs over the sample,
-/// and saved only once the outputs agree (or the user accepts the differences) and the user confirms (the Stroom MCP
-/// server's `tools/rebuild.py`, whose flow `dev/e2e_restyle.py` covers against a live Stroom; the reader itself is
-/// tested in stroom-ai-impl's `TestXsltReader`).
+/// and saved only once the outputs agree (or the user accepts the differences) and the user confirms (its flow
+/// against a live Stroom is `TestE2eRestyle`'s, in stroom-app; the reader itself is tested in stroom-ai-impl's
+/// `TestXsltReader`).
 class TestRebuildMappingTool {
 
     private static final String BUILD = "acme-v1";

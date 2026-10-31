@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// One output value of a translation mapping: an event-logging path below Event, and where its value comes from.
-/// Give exactly one of field, any_of, join, value, xpath or lookup (or meta, read as an xpath). Ported from the Stroom
-/// MCP server's `FieldMapping` model.
+/// Give exactly one of field, any_of, join, value, xpath or lookup (or meta, read as an xpath).
 ///
 /// @param path         Event-logging path below Event, e.g. `EventSource/User/Id`,
 ///                     `EventDetail/Authenticate/Outcome/Success`, or `.../Data` with data_name.
@@ -53,12 +52,12 @@ import java.util.regex.Pattern;
 /// @param dataParent   `data_parent`: with data_name, the Name of the Data element (or `/`-separated Names of the
 ///                     Data elements, outermost first) the Data is written in, e.g. `members` for
 ///                     `<Data Name="members"><Data Name="member" Value="..."/>...</Data>`: one container, shared by
-///                     the entries naming it, and written only when one of them has a value. Not in the Stroom MCP
-///                     server's model, which wrote every Data at its path's element.
+///                     the entries naming it, and written only when one of them has a value. Without it, a Data
+///                     is written at its path's element.
 /// @param join         Input fields whose values are joined, each one's first value that has text, in order, with
 ///                     separator between them, e.g. `["event", "action"]` for `User-Login`: what a TypeId telling
-///                     kinds apart by two fields is written from. Not in the Stroom MCP server's model, which had no
-///                     way to join fields (an xpath can't read an extraction's names).
+///                     kinds apart by two fields is written from. The only way to join fields, as an xpath can't
+///                     read an extraction's names.
 /// @param separator    With join: what goes between the values (default `-`).
 public record FieldMapping(String path,
                            String field,
@@ -87,7 +86,7 @@ public record FieldMapping(String path,
     private static final Pattern SPILLED = Pattern.compile("[^\\w/@.-]", Pattern.UNICODE_CHARACTER_CLASS);
 
     /// @param json A field mapping as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
     public static FieldMapping fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
@@ -103,7 +102,7 @@ public record FieldMapping(String path,
                 null, null, dataName, null, null, null);
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -145,7 +144,7 @@ public record FieldMapping(String path,
             // Stream meta is read as stroom:meta('Name'), which the generator, the documentation and rebuild_mapping
             // already handle as an xpath: kept in that one form (asked for by the user: values like MyHostName).
             final List<String> others = given();
-            if (!others.isEmpty() || PyText.isBlank(meta) || meta.contains("'")) {
+            if (!others.isEmpty() || ToolText.isBlank(meta) || meta.contains("'")) {
                 return "'" + path + "': meta names one stream meta attribute (e.g. 'MyHostName'), and is the entry's "
                        + "only input" + (others.isEmpty()
                         ? ""
@@ -157,7 +156,7 @@ public record FieldMapping(String path,
             // Seen: 'EventDetail/View/User/Id**,xpath:': the call's JSON ran the next key into the path's string, and
             // the reply said only "give exactly one of", about a field whose xpath was inside its path.
             final String before = path.substring(0, spilled.start());
-            return "path " + PyText.repr(path) + " holds more than a path (from " + PyText.repr(spilled.group())
+            return "path " + ToolText.repr(path) + " holds more than a path (from " + ToolText.repr(spilled.group())
                    + " on): the next key ran into its string. Close the path's string and give the input as a key of "
                    + "its own, e.g. {\"path\": \"" + before + "\", \"xpath\": \"<the xpath>\"}";
         }
@@ -187,7 +186,7 @@ public record FieldMapping(String path,
         for (final String name : names) {
             final String called = MappingFacts.functionCall(name);
             if (called != null) {
-                return "'" + path + "': field " + PyText.repr(name) + " " + called;
+                return "'" + path + "': field " + ToolText.repr(name) + " " + called;
             }
         }
         if (dictionary != null && field == null && anyOf == null) {
@@ -196,19 +195,19 @@ public record FieldMapping(String path,
         if (transform != null && value != null) {
             return "'" + path + "': transform applies to an input, not a constant";
         }
-        if (value != null && PyText.isBlank(value)) {
+        if (value != null && ToolText.isBlank(value)) {
             // Seen: Network/Permit/Source/Device/IPAddress given value '' for want of the address (inside a string
             // field, unextracted): an empty element in every event, which the schema refuses.
             return "'" + path + "': value '' writes an empty element, which the schema refuses: map the field that "
                    + "holds it (extract it first if it is inside another field's text), or leave the entry out";
         }
         if (dataParent != null && (dataName == null || !path.endsWith("Data")
-                                   || Arrays.stream(dataParent.split("/", -1)).anyMatch(PyText::isBlank))) {
+                                   || Arrays.stream(dataParent.split("/", -1)).anyMatch(ToolText::isBlank))) {
             return "'" + path + "': data_parent names the Data element(s) a Data entry is written in (e.g. "
                    + "'members', or 'a/b' for one inside another), so it goes with a path ending in Data and its "
                    + "data_name";
         }
-        if (join != null && (join.size() < 2 || join.stream().anyMatch(PyText::isBlank))) {
+        if (join != null && (join.size() < 2 || join.stream().anyMatch(ToolText::isBlank))) {
             return "'" + path + "': join lists the fields whose values are joined, two or more, e.g. {\"path\": \""
                    + path + "\", \"join\": [\"event\", \"action\"]} for User-Login";
         }
@@ -248,7 +247,7 @@ public record FieldMapping(String path,
     }
 
     private FieldMapping withMetaRead() {
-        return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + PyText.strip(meta) + "')", null, lookup,
+        return new FieldMapping(path, field, anyOf, value, "stroom:meta('" + ToolText.strip(meta) + "')", null, lookup,
                 dictionary, transform, repeat, scope, timeFormat, timezone, map, defaultValue, dataName, dataParent,
                 join, separator);
     }
@@ -289,14 +288,14 @@ public record FieldMapping(String path,
                 : separator;
     }
 
-    /// @return True if the entry has a value map with at least one key (Python's truthiness of `map`).
+    /// @return True if the entry has a value map with at least one key.
     public boolean hasMap() {
         return map != null && !map.isEmpty();
     }
 
     /// @return The path without leading and trailing slashes.
     public String strippedPath() {
-        return PyText.strip(path, "/");
+        return ToolText.strip(path, "/");
     }
 
     private static boolean isSet(final String text) {
@@ -304,7 +303,7 @@ public record FieldMapping(String path,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("path", path, null)

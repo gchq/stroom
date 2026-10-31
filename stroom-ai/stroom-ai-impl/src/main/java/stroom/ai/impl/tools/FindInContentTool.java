@@ -64,10 +64,10 @@ import java.util.stream.Collectors;
 /// dictionaries), as the user, returning each matching document with its matching lines.
 ///
 /// - Given UUIDs (e.g. those document_links found), it reads just those documents.
-/// - Given types (or neither UUIDs nor types, for every type with content, as the Stroom MCP server's
-///   `find_documents` with `content` did), it searches Find in Content's index if it is ready. The index is built
-///   in full the first time it is needed, which can take minutes, so if it isn't ready the tool reads the
-///   documents of those types directly, and starts building the index in the background for later searches.
+/// - Given types (or neither UUIDs nor types, for every type with content), it searches Find in Content's index if
+///   it is ready. The index is built in full the first time it is needed, which can take minutes, so if it isn't
+///   ready the tool reads the documents of those types directly, and starts building the index in the background
+///   for later searches.
 ///
 /// Every document is checked for View before it is read, as reading a document without View silently gives
 /// nothing. Matches are always confirmed against the document's own text with the ReDoS-safe patterns the

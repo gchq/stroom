@@ -91,9 +91,9 @@ class TestProcessingStatusTool {
 
     @Test
     void eachFiltersProgressSaysWhetherItHasFinished() {
-        final Map<String, Object> result = PortedToolCalls.json(tool.execute(
-                PortedToolCalls.call(ProcessingStatusTool.NAME, "{\"pipeline_uuid\": \"p\"}"),
-                PortedToolCalls.context()).text());
+        final Map<String, Object> result = BuildToolCalls.json(tool.execute(
+                BuildToolCalls.call(ProcessingStatusTool.NAME, "{\"pipeline_uuid\": \"p\"}"),
+                BuildToolCalls.context()).text());
 
         final List<?> filters = (List<?>) result.get("filters");
         final Map<?, ?> first = (Map<?, ?>) filters.get(0);
@@ -143,8 +143,8 @@ class TestProcessingStatusTool {
                                                                      + "permission to list them"))
                 .when(processorFilterAccess).filtersOf(Mockito.any());
 
-        assertThat(tool.execute(PortedToolCalls.call(ProcessingStatusTool.NAME, "{\"pipeline_uuid\": \"p\"}"),
-                PortedToolCalls.context()).text())
+        assertThat(tool.execute(BuildToolCalls.call(ProcessingStatusTool.NAME, "{\"pipeline_uuid\": \"p\"}"),
+                BuildToolCalls.context()).text())
                 .startsWith("Error: Stroom refused to list this pipeline's processor filters: You need the Manage "
                             + "Processors permission");
     }

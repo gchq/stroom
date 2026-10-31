@@ -24,9 +24,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// What a translation XSLT does. Ported from the Stroom MCP server's `tests/test_validation.py`
-/// (`test_describe_translation_maps_outputs_to_inputs`), with the indexing XSLT case its `index_fields` docstring
-/// records.
+/// What a translation XSLT does, with an indexing XSLT's case too.
 class TestTranslationDescriptions {
 
     private static final String XSLT = """

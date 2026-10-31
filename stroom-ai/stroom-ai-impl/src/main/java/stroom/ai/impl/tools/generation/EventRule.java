@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /// A kind of event a translation mapping writes: the records it is for (its conditions) and the fields its events
-/// get. Ported from the Stroom MCP server's `EventRule` model.
+/// get.
 ///
 /// @param name         Short name for this kind of event, e.g. `logon`.
 /// @param when         All must hold. Empty: every record (such a rule goes last).
@@ -67,14 +67,14 @@ public record EventRule(String name,
     }
 
     /// @param json A rule as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
     public static EventRule fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("EventRule", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -126,10 +126,10 @@ public record EventRule(String name,
         for (final String field : data) {
             if (!have.contains(Arrays.asList(home + "/Data", field))) {
                 final FieldMapping entry = FieldMapping.data(home + "/Data", field, field);
-                // Made as the Python model makes it, so checked as it is: a field that is a function call, say.
+                // Made as any Data entry is, so checked as one: a field that is a function call, say.
                 final String problem = entry.problem();
                 if (problem != null) {
-                    // As pydantic reports the entry's own error: at the rule, with the entry as the input.
+                    // The entry's own error, reported at the rule, with the entry as the input.
                     final Map<String, Object> made = new LinkedHashMap<>();
                     made.put("path", home + "/Data");
                     made.put("data_name", field);
@@ -150,7 +150,7 @@ public record EventRule(String name,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("name", name, null)

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.indexing;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,8 +26,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /// What an index plan's fields mean: which event paths a plan source names (`*` for one element, `//` for any
-/// between), how often a source is populated, the logical types and what each backend makes of them. Ported from
-/// the Stroom MCP server's `utils/fieldplan.py` (its module-level functions and tables).
+/// between), how often a source is populated, the logical types and what each backend makes of them.
 public final class FieldPlans {
 
     /// The logical types a planned field may have.
@@ -116,8 +115,8 @@ public final class FieldPlans {
             return branches.stream().anyMatch(branch -> sourceMatches(branch, path));
         }
         if (!source.contains("//")) {
-            final String[] want = PyText.strip(source, "/").split("/", -1);
-            final String[] have = PyText.strip(path, "/").split("/", -1);
+            final String[] want = ToolText.strip(source, "/").split("/", -1);
+            final String[] have = ToolText.strip(path, "/").split("/", -1);
             if (want.length != have.length) {
                 return false;
             }
@@ -130,8 +129,8 @@ public final class FieldPlans {
         }
         final String regex = (source.startsWith("//")
                 ? "(?:[^/]+/)*"
-                : "") + descendants(PyText.strip(source, "/"));
-        return Pattern.compile(regex, Pattern.DOTALL).matcher(PyText.strip(path, "/")).matches();
+                : "") + descendants(ToolText.strip(source, "/"));
+        return Pattern.compile(regex, Pattern.DOTALL).matcher(ToolText.strip(path, "/")).matches();
     }
 
     // The source as a regex: '*' one element, '//' any elements between, the rest as it is.

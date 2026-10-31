@@ -20,7 +20,7 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.ToolRefusal;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerService;
@@ -51,8 +51,8 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The build record: one Documentation doc, [#NAME], in each build's folder (ported from the Stroom MCP server's
-/// `security/record.py`, in the same format, so a record either server wrote reads in the other).
+/// The build record: one Documentation doc, [#NAME], in each build's folder. Its format must keep reading as earlier
+/// versions of the tools wrote it: their records are still in users' build folders.
 ///
 /// It holds what is remembered about the build's documents between calls: which are working copies of production
 /// documents (and of which), the code digests that stepped clean, passed index verification or gave Events that
@@ -288,7 +288,7 @@ public class BuildRecords {
     /// @param prints Each element's code digest, from [#codeFingerprint].
     /// @return The fingerprint's digest, as the record keeps it.
     public static String fingerprintDigest(final Map<String, String> prints) {
-        return XsltCode.sha256(PyJson.dumpsSortedKeys(prints)).substring(0, 16);
+        return XsltCode.sha256(ToolJson.dumpsSortedKeys(prints)).substring(0, 16);
     }
 
     /// Records that the pipeline's code (or the draft stepped) passed. Only pipelines the tools manage (in a build)
@@ -340,7 +340,7 @@ public class BuildRecords {
 
     /// @param pipeline A pipeline.
     /// @param kind     One of [#KINDS].
-    /// @return Whether the pipeline's saved code is code that passed (on any node, or in the Stroom MCP server).
+    /// @return Whether the pipeline's saved code is code that passed (on any node).
     public boolean passed(final DocRef pipeline, final String kind) {
         final WriteGuard guard = guardProvider.get();
         final List<String> mine = JsonValues.strings(entry(guard.buildOf(pipeline).orElse(null), pipeline.getUuid())
@@ -460,13 +460,13 @@ public class BuildRecords {
             lines.add("Works from existing feeds: " + String.join(", ", sources) + ".");
         }
         lines.addAll(List.of("", "## Record", "", "Read by the server; do not edit.", "",
-                "```json build-record", PyJson.dumpsSortedKeys(state, 1), "```", ""));
+                "```json build-record", ToolJson.dumpsSortedKeys(state, 1), "```", ""));
         return String.join("\n", lines);
     }
 
     /// @param doc A Documentation doc.
     /// @return Its text: its body (data), which the Stroom UI shows and edits, else its Documentation tab, where
-    /// the Stroom MCP server 0.6.0 and earlier wrote it, and where people sometimes write.
+    /// earlier versions of the tools wrote it, and where people sometimes write.
     public static String bodyText(final DocumentationDoc doc) {
         if (doc == null) {
             return "";
@@ -521,8 +521,7 @@ public class BuildRecords {
                 documentWrites.write(withBodyText(doc, render(build, state)));
                 return state;
             } catch (final RuntimeException e) {
-                // Another node (or the Stroom MCP server) saved or created it since it was read: do the change
-                // again on what it saved.
+                // Another node saved or created it since it was read: do the change again on what it saved.
                 final String message = NullSafe.string(e.getMessage());
                 if (attempt == ATTEMPTS - 1 || !(message.contains("modified by another user")
                                                  || message.contains("already in build"))) {

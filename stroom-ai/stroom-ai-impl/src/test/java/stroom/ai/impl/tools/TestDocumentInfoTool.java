@@ -125,7 +125,7 @@ class TestDocumentInfoTool {
 
     @Test
     void aDocumentIsFoundByItsPath() {
-        // As the Stroom MCP server's find_documents gave paths: from the System root, or without it.
+        // Paths are taken from the System root, or without it.
         viewable.add(DICTIONARY);
         final ExplorerNode lookups = ExplorerNode.builder().type(ExplorerConstants.FOLDER_TYPE).uuid("f")
                 .name("Lookups").build();

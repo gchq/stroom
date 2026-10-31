@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Fixes, in a reference file, today's decisions about tool calls: what [ToolConsent] decides for each built-in
-/// tool, stand-ins for the ported tools that change Stroom, and a representative set of MCP tools in each situation
+/// tool, stand-ins for the built-in tools that change Stroom, and a representative set of MCP tools in each situation
 /// (normal, the user away, after reading untrusted content, after reading an untrusted server's output, allowed or
 /// denied earlier, allowed for a tool that has since changed, a server's read-only tools allowed, 'approve
 /// everything'), with the approval buttons each
@@ -105,7 +105,7 @@ class TestConsentDecisions {
 
             sb.append("\n## Stand-ins for Stroom's own tools that change Stroom (e.g. the build tools)\n");
             sb.append("The built-in tools above only change the chat's own things (its workspace files, and memory, "
-                      + "which asks about a lasting change itself), so these stand in for the ported tools.\n");
+                      + "which asks about a lasting change itself), so these stand in for the build tools.\n");
             final BuiltInTools standIns = StandInTools.builtInTools(
                     StandInTools.writeTool("save_xslt"),
                     StandInTools.selfConfirmingWriteTool("create_feed"),

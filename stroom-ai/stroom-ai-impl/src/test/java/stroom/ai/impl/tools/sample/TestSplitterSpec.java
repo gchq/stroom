@@ -24,8 +24,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The options the Java port adds to the Data Splitter spec: escape, spaced_values, catch_all, blank_line_records
-/// and the fields kind.
+/// The Data Splitter spec's further options: escape, spaced_values, catch_all, blank_line_records and the fields
+/// kind.
 class TestSplitterSpec {
 
     @Test
@@ -42,7 +42,7 @@ class TestSplitterSpec {
         assertThat(SplitterSpec.fromMap(Map.of("kind", "delimited", "header", true, "escape", "\\")).toMap())
                 .containsEntry("escape", "\\");
         assertThat(SplitterSpec.fromMap(Map.of("kind", "key_value", "spaced_values", true)).spacedValues()).isTrue();
-        // Defaults leave the JSON as the Python model wrote it.
+        // Defaults are left out of the JSON, so a spec without these options is written as it was before them.
         assertThat(SplitterSpec.builder("key_value").build().toMap()).containsOnlyKeys("kind", "delimiter");
     }
 

@@ -44,8 +44,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// Confirmations and approvals before a write (the Stroom MCP server's `tests/test_consent.py`, and
-/// `tests/test_stateless.py` where it applies): always a form; where the session can't show one, a refusal, never a
+/// Confirmations and approvals before a write: always a form; where the session can't show one, a refusal, never a
 /// pending id for the model to pass back.
 class TestConsent {
 

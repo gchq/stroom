@@ -30,8 +30,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// What the processing tools ask the user (the Stroom MCP server's `tests/test_processing.py`, its case for
-/// `_committed`).
+/// What the processing tools ask the user: going on with an index template of their own.
 class TestProcessingApprovals {
 
     @Test
@@ -45,7 +44,7 @@ class TestProcessingApprovals {
         final Map<String, Object> destination = new LinkedHashMap<>();
         destination.put("index name", "ecs-acme-v1");
         destination.put("cluster", "ES_PROD");
-        final ToolCall call = PortedToolCalls.call(CreateProcessorFilterTool.NAME, "{}");
+        final ToolCall call = BuildToolCalls.call(CreateProcessorFilterTool.NAME, "{}");
         final ToolCallContext context = ProcessingWorld.context();
 
         assertThatThrownBy(() -> w.approvals.committed(call, context, doc, destination,
@@ -60,7 +59,7 @@ class TestProcessingApprovals {
                 .hasMessageNotContaining("confirmation_id");
         assertThat(w.pipelineDoc("p1").getDescription()).isEqualTo("Indexes Acme.");
 
-        final ToolCallContext agreeing = PortedToolCalls.answering(Map.of("value", true));
+        final ToolCallContext agreeing = BuildToolCalls.answering(Map.of("value", true));
         final ProcessingApprovals.Committed said = w.approvals.committed(call, agreeing, doc, destination,
                 CreateProcessorFilterTool.NAME, true);
 

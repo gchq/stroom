@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.util.shared.NullSafe;
@@ -38,18 +38,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The sample Events a CEF plan is drafted from and checked against: each Event's kind (its action element) and
-/// its values by path, and what the plan's types make of them (an IPv4 address, a number, a time). Ported from the
-/// Stroom MCP server's `utils/cef.py`.
+/// its values by path, and what the plan's types make of them (an IPv4 address, a number, a time).
 public final class CefEvents {
 
     private static final Pattern NETWORK_ACTION = Pattern.compile("^EventDetail/Network/[^/]+/");
-    private static final Pattern INTEGER = PyText.re("-?\\d+");
-    private static final Pattern DECIMAL = PyText.re("-?\\d+(\\.\\d+)?");
+    private static final Pattern INTEGER = ToolText.re("-?\\d+");
+    private static final Pattern DECIMAL = ToolText.re("-?\\d+(\\.\\d+)?");
     private static final Pattern MAC = Pattern.compile("([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}");
-    private static final Pattern LONG = PyText.re("-?\\d{1,18}");
-    private static final Pattern FLOAT = PyText.re("-?\\d+\\.\\d+");
-    // datetime.fromisoformat (Python 3.12): a date (extended, basic or a week date), any one character, a time
-    // (hours, then minutes and seconds with or without colons, a fraction), and an offset.
+    private static final Pattern LONG = ToolText.re("-?\\d{1,18}");
+    private static final Pattern FLOAT = ToolText.re("-?\\d+\\.\\d+");
+    // An ISO 8601 time: a date (extended, basic or a week date), any one character, a time (hours, then minutes and
+    // seconds with or without colons, a fraction), and an offset.
     private static final Pattern ISO = Pattern.compile(
             "(?<date>\\d{4}-\\d{2}-\\d{2}|\\d{8}|\\d{4}-?W\\d{2}(?:-?\\d)?)"
             + "(?:.(?<hour>\\d{2})(?::?(?<minute>\\d{2})(?::?(?<second>\\d{2})(?:[.,](?<fraction>\\d+))?)?)?"
@@ -61,7 +60,7 @@ public final class CefEvents {
         // Static only.
     }
 
-    /// `events_of`: the Events in an XML text.
+    /// The Events in an XML text.
     ///
     /// @param xml The text, e.g. an Events stream.
     /// @return Its `event-logging:3` Event elements, in order.
@@ -70,7 +69,7 @@ public final class CefEvents {
         return XmlParser.parse(xml).iterElements(CefKeys.EL, "Event");
     }
 
-    /// `event_kind`: an Event's kind.
+    /// An Event's kind.
     ///
     /// @param event An Event element.
     /// @return Its action element's name (the first child of EventDetail not in [CefKeys#NOT_ACTION]), or null.
@@ -89,7 +88,7 @@ public final class CefEvents {
                 .orElse(null);
     }
 
-    /// `event_values`: each value an Event holds, by its path from the Event (the first, where an element
+    /// Each value an Event holds, by its path from the Event (the first, where an element
     /// repeats); a Data as `Data[@Name='x']/@Value`; Network's action as `*`.
     ///
     /// @param event An Event element.
@@ -105,7 +104,7 @@ public final class CefEvents {
         return anyAction;
     }
 
-    /// `_fits`: whether values suit a key's type.
+    /// Whether values suit a key's type.
     ///
     /// @param key    A key in the dictionary.
     /// @param values Values.
@@ -123,8 +122,7 @@ public final class CefEvents {
         };
     }
 
-    /// `_is_time`: whether a value is a date and time, as Python's `datetime.fromisoformat` reads one (a `Z` for
-    /// UTC), with a `T` in it.
+    /// Whether a value is an ISO 8601 date and time (a `Z` for UTC), with a `T` in it.
     ///
     /// @param value A value.
     /// @return True if it is a time.
@@ -132,7 +130,7 @@ public final class CefEvents {
         return parseIso(value).isPresent() && value.contains("T");
     }
 
-    /// `_slot_kind`: which custom slots values suit.
+    /// Which custom slots values suit.
     ///
     /// @param values Values.
     /// @return `long`, `float`, `time` or `string`.
@@ -149,8 +147,8 @@ public final class CefEvents {
         return "string";
     }
 
-    /// A time as CEF sends it: `int(datetime.fromisoformat(value).timestamp() * 1000)`; a time with no offset is
-    /// read in the server's time zone, as Python reads it.
+    /// A time as CEF sends it: its whole milliseconds since 1970; a time with no offset is read in the Stroom
+    /// node's time zone.
     ///
     /// @param value A value.
     /// @return Its milliseconds since 1970, or empty if it is not a time.
@@ -163,9 +161,9 @@ public final class CefEvents {
     }
 
     /// @param value A value.
-    /// @return True if Python's `IPv4Address` takes it: four decimal parts of 0 to 255, no leading zeros.
+    /// @return True if it is an IPv4 address: four decimal parts of 0 to 255, no leading zeros.
     static boolean isIpv4(final String value) {
-        final List<String> parts = PyText.split(value, ".");
+        final List<String> parts = ToolText.split(value, ".");
         if (parts.size() != 4) {
             return false;
         }
@@ -178,7 +176,7 @@ public final class CefEvents {
         return true;
     }
 
-    // The value as datetime.fromisoformat reads it, at its offset (or the server's zone).
+    // The value read as an ISO 8601 time, at its offset (or the Stroom node's zone).
     private static Optional<java.time.ZonedDateTime> parseIso(final String value) {
         final Matcher matcher = ISO.matcher(value.replace("Z", "+00:00"));
         if (!matcher.matches()) {
@@ -259,8 +257,8 @@ public final class CefEvents {
         final String here = path.isEmpty()
                 ? name
                 : path + "/" + name;
-        if (children.isEmpty() && !PyText.strip(NullSafe.string(el.text())).isEmpty()) {
-            out.putIfAbsent(here, PyText.strip(NullSafe.string(el.text())));
+        if (children.isEmpty() && !ToolText.strip(NullSafe.string(el.text())).isEmpty()) {
+            out.putIfAbsent(here, ToolText.strip(NullSafe.string(el.text())));
         }
         for (final XmlElement.Attribute attribute : el.attributes()) {
             if (attribute.namespace() == null) {

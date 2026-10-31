@@ -47,11 +47,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The CEF output for ArcSight: the plan drafted from Events, the XSLT it generates, reading and reviewing CEF lines,
-/// and what the standing instructions say. Ported from the Stroom MCP server's `tests/test_cef.py` (and the CEF
-/// cases of `test_saxon.py`, `test_required_imports.py` and `test_coverage.py`).
+/// and what the standing instructions say.
 class TestCefPlan {
 
-    /// test_coverage.py's Events: one View.
+    /// The coverage case's Events: one View.
     static final String COVERAGE_EVENTS = """
             <Events xmlns="event-logging:3">
             <Event><EventSource><User><Id>carol</Id></User></EventSource><EventDetail><TypeId>View</TypeId>
@@ -304,7 +303,7 @@ class TestCefPlan {
         // Placed in its section: not again at the end.
         assertThat(text.split("### Not sent", -1).length == 1
                    || !text.split("### Not sent")[1].contains("session_id")).isTrue();
-        // Without the Events: as the Stroom MCP server wrote it.
+        // Without the Events: the Not sent section alone.
         assertThat(withNotSent.markdown(Map.of(), FieldDocs.BY_EVENT_TYPE, null))
                 .doesNotContain("#### Fields not included", "TypeIds:").contains("### Not sent");
     }
@@ -457,7 +456,6 @@ class TestCefPlan {
 
     @Test
     void aCefPlanWithAnUnsafeExpressionIsAProblemAndWritesNoXslt() {
-        // From test_saxon.py.
         final CefPlan plan = CefFixtures.drafted().plan()
                 .withHeader("vendor", CefValue.from("environment-variable('STROOM_MCP_REQUEST_STATE_KEYS')"))
                 .withKafkaKey("doc('http://169.254.169.254/')");
@@ -472,7 +470,6 @@ class TestCefPlan {
     @ParameterizedTest
     @ValueSource(strings = {CefPlan.KAFKA, CefPlan.TEXT})
     void cefXsltsWriteTheirImportsFirst(final String output) {
-        // From test_required_imports.py.
         final Map<String, CefValue> header = new LinkedHashMap<>();
         header.put("vendor", CefValue.constant("Acme"));
         header.put("product", CefValue.constant("P"));
@@ -486,7 +483,6 @@ class TestCefPlan {
 
     @Test
     void aCefPlanIsExtendedWithoutMovingWhatItHas() {
-        // From test_coverage.py.
         final Map<String, CefValue> header = new LinkedHashMap<>();
         header.put("vendor", CefValue.constant("Acme"));
         header.put("product", CefValue.constant("P"));
@@ -535,7 +531,7 @@ class TestCefPlan {
     }
 
     @Test
-    void timesAreReadAsPythonsFromIsoFormatReadsThem() {
+    void timesAreReadInIsoFormat() {
         assertThat(CefEvents.isTime("2026-09-27T23:48:10.000Z")).isTrue();
         assertThat(CefEvents.isTime("20260927T234810")).isTrue();
         assertThat(CefEvents.isTime("2026-W39-1T10:00")).isTrue();

@@ -68,8 +68,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-/// `review_coverage` - whole-feed coverage of an events pipeline: kinds of event the sample missed, which only
-/// appear once the feed is processed. Ported from the Stroom MCP server's `tools/coverage.py`.
+/// `review_coverage` - whole-feed coverage of an events pipeline: kinds of event the sample missed, which only appear
+/// once the feed is processed.
 ///
 /// The generated translation logs, into each raw stream's Error stream, every record no rule matched ("No event
 /// mapping matched record N (action=view | ...)", WARN) and every record a rule keeps as Unknown ("Kept as Unknown
@@ -233,9 +233,9 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
     }
 
-    /// The review, as the Stroom MCP server's `review_coverage` gives it: `pipeline`, `progress`, `missed` (the
-    /// kinds found, most records first, with examples), `affected_raw_streams` (and `affected_raw_stream_ids`),
-    /// `tell_user`, `next`, and with `follow_on`, `follow_on` (each pipeline reviewed) and `follow_on_events`.
+    /// The review: `pipeline`, `progress`, `missed` (the kinds found, most records first, with examples),
+    /// `affected_raw_streams` (and `affected_raw_stream_ids`), `tell_user`, `next`, and with `follow_on`, `follow_on`
+    /// (each pipeline reviewed) and `follow_on_events`.
     ///
     /// @param context The call's context.
     /// @param request What is asked.
@@ -254,7 +254,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 .map(k -> TranslationMapping.parse(k.kept().payload().get("mapping")))
                 .orElse(null);
         final long after = Objects.requireNonNullElse(request.continueFrom(), 0L);
-        // As the Stroom MCP server read it: 0 is no earlier call.
+        // A continue_from of 0 is no earlier call.
         final boolean continued = after != 0;
         progress.say("Reading the Error streams of " + pipeline.getName());
         final CoverageReads.ErrorBatch batch = reads.errorBatch(pipeline, after, request.maxStreams());
@@ -576,7 +576,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         return streams.stream().limit(5).toList();
     }
 
-    /// `_review_follow_on`: a pipeline that reads the Events, checked against them.
+    /// A pipeline that reads the Events, checked against them.
     ///
     /// @param entry     The pipeline (`uuid`, `name`, `filters`).
     /// @param events    The Events the changed pipeline writes.
@@ -674,7 +674,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         return out;
     }
 
-    /// `_index_gaps`: the Event paths no field of an index plan takes.
+    /// The Event paths no field of an index plan takes.
     ///
     /// @param plan   The index plan.
     /// @param events Events.
@@ -694,7 +694,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 .toList();
     }
 
-    // Python's Counter.most_common: the most first, ties in the order first counted.
+    // The most first, ties in the order first counted.
     private static <K> List<Map.Entry<K, Integer>> mostCommon(final Map<K, Integer> counts, final int n) {
         return counts.entrySet().stream()
                 .sorted(Comparator.comparingInt((Map.Entry<K, Integer> e) -> -e.getValue()))

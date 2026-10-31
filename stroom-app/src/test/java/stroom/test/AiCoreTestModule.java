@@ -35,10 +35,9 @@ import stroom.util.io.DirProvidersModule;
 import com.google.inject.AbstractModule;
 import io.dropwizard.core.setup.Environment;
 
-/// The same as [CoreTestModule], but with the REAL AI chat and MCP endpoint ([AiModule], with its built-in tools,
-/// and [McpModule], with the tools ported from the Stroom MCP server) in place of `MockAiModule`, and the real
-/// security context in place of `MockUserSecurityContextModule`, so that users' permissions and tool policies are
-/// checked as they are in Stroom.
+/// The same as [CoreTestModule], but with the REAL AI chat and MCP endpoint ([AiModule], with its built-in tools, and
+/// [McpModule], with the building tools) in place of `MockAiModule`, and the real security context in place of
+/// `MockUserSecurityContextModule`, so that users' permissions and tool policies are checked as they are in Stroom.
 ///
 /// The only external things the AI modules reach are the chat model and any MCP servers a model is set up with,
 /// and a test points a model at a fake model server of its own (and sets up no MCP servers).

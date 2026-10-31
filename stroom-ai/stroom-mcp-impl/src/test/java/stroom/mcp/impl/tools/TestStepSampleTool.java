@@ -46,9 +46,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// step_sample (the Stroom MCP server's `tests/test_stepping.py`, and its stepping cases in
-/// `tests/test_build_checks.py`, `tests/test_progress.py`, `tests/test_token_time.py` and
-/// `tests/test_authoring_guards.py`): each case was seen in testing, as its comment says.
+/// step_sample: each case was seen in testing, as its comment says.
 class TestStepSampleTool {
 
     private static final String NO_EVENT = "No record produced an Event";
@@ -173,8 +171,8 @@ class TestStepSampleTool {
     void largeStreamsAreSteppedFromTheirHead() {
         world.records(3, AN_EVENT);
 
-        final Map<String, Object> result = PortedToolCalls.json(new StepSampleTool(world.stepping(), 2, 500)
-                .execute(PortedToolCalls.call(StepSampleTool.NAME, "{\"pipeline_uuid\": \"p-1\", "
+        final Map<String, Object> result = BuildToolCalls.json(new StepSampleTool(world.stepping(), 2, 500)
+                .execute(BuildToolCalls.call(StepSampleTool.NAME, "{\"pipeline_uuid\": \"p-1\", "
                                                                    + "\"stream_ids\": [7]}"), world.context())
                 .text());
 
@@ -188,8 +186,8 @@ class TestStepSampleTool {
         // again the same way: three more minutes for the same records.
         world.records(4, AN_EVENT);
 
-        final Map<String, Object> result = PortedToolCalls.json(new StepSampleTool(world.stepping(), 50, 3)
-                .execute(PortedToolCalls.call(StepSampleTool.NAME, "{\"pipeline_uuid\": \"p-1\", "
+        final Map<String, Object> result = BuildToolCalls.json(new StepSampleTool(world.stepping(), 50, 3)
+                .execute(BuildToolCalls.call(StepSampleTool.NAME, "{\"pipeline_uuid\": \"p-1\", "
                                                                    + "\"stream_ids\": [7], \"max_records\": 1000}"),
                         world.context())
                 .text());
@@ -290,7 +288,7 @@ class TestStepSampleTool {
                 .limits(SteppingWorld.queryTimeLimit(PipelineStepping.MARGIN))
                 .build();
 
-        final Map<String, Object> result = PortedToolCalls.json(call("{\"pipeline_uuid\": \"p-1\", "
+        final Map<String, Object> result = BuildToolCalls.json(call("{\"pipeline_uuid\": \"p-1\", "
                                                                      + "\"stream_ids\": [7]}", context).text());
 
         assertThat(result.get("records_stepped")).isEqualTo(1);
@@ -423,11 +421,11 @@ class TestStepSampleTool {
     private Map<String, Object> stepSample(final String arguments) {
         final ToolResult result = call(arguments, world.context());
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private ToolResult call(final String arguments, final ToolCallContext context) {
-        return new StepSampleTool(world.stepping()).execute(PortedToolCalls.call(StepSampleTool.NAME, arguments),
+        return new StepSampleTool(world.stepping()).execute(BuildToolCalls.call(StepSampleTool.NAME, arguments),
                 context);
     }
 

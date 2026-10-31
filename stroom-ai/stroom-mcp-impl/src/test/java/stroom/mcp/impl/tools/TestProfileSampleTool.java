@@ -35,7 +35,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// profile_sample (the Stroom MCP server's `tests/test_samples.py` and `tests/test_generation.py` tool cases).
+/// profile_sample, the tool.
 class TestProfileSampleTool {
 
     static final String PATHS = "c:\\Users\\pkimb\\Documents\\stroom-mcp\\sample-data\\fortios\\001_1.json, "
@@ -144,12 +144,12 @@ class TestProfileSampleTool {
     }
 
     private ToolResult call(final Map<String, Object> arguments) {
-        return tool.execute(PortedToolCalls.call(ProfileSampleTool.NAME, JsonUtil.writeValueAsString(arguments,
-                false)), PortedToolCalls.context());
+        return tool.execute(BuildToolCalls.call(ProfileSampleTool.NAME, JsonUtil.writeValueAsString(arguments,
+                false)), BuildToolCalls.context());
     }
 
     private static Map<String, Object> json(final ToolResult result) {
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

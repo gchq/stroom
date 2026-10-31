@@ -25,8 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// What standing instructions (AGENTS docs) say about CEF output: mappings (path -> key, with a label), whether keys
-/// outside the dictionary are allowed, the topic, the vendor, and the pipeline template they name. Ported from the
-/// Stroom MCP server's `from_instructions` in `utils/cef.py`.
+/// outside the dictionary are allowed, the topic, the vendor, and the pipeline template they name.
 public final class CefInstructions {
 
     /// The mappings found, as [CefOverride]s.
@@ -65,7 +64,7 @@ public final class CefInstructions {
         // Static only.
     }
 
-    /// `from_instructions`: what standing instructions say about CEF output.
+    /// What standing instructions say about CEF output.
     ///
     /// @param texts The instructions' texts (nulls allowed).
     /// @return [#OVERRIDES] (a list of [CefOverride], always), then what was found of [#CUSTOM_KEYS], [#TOPIC],

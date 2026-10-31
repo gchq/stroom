@@ -43,8 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /// `update_pipeline` - changes a pipeline the tools created, in its build: sets element properties and attaches
-/// reference data (the Stroom MCP server's `tools/pipeline_writes.py` `update_pipeline`, with
-/// `set_pipeline_property` and `set_pipeline_references`). It asks nothing itself.
+/// reference data. It asks nothing itself.
 class UpdatePipelineTool extends AbstractBuiltInTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UpdatePipelineTool.class);

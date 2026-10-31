@@ -33,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// A pipeline document read and saved as the user, and its own properties changed (the Stroom MCP server's
-/// `tools/pipeline_writes.py` `_set_property`, and the reads and writes of a pipeline its processing tools make).
+/// A pipeline document read and saved as the user, and its own properties changed (as the processing tools read and
+/// write a pipeline).
 ///
 /// Only the pipeline's own layer is changed: the properties it adds over its templates.
 class PipelineDocs {
@@ -86,7 +86,7 @@ class PipelineDocs {
         return doc.copy().pipelineData(changed).build();
     }
 
-    /// Sets one of the pipeline's own properties, replacing any value it set before (`_set_property`).
+    /// Sets one of the pipeline's own properties, replacing any value it set before.
     ///
     /// @param doc     A pipeline.
     /// @param element The element's id.

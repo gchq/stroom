@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -25,8 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The shape of a Documentation doc's text as `write_documentation` gives it: its name as its title, its sections at
-/// `## `, and text added under a section of the agent's. Ported from the Stroom MCP server's `titled`,
-/// `section_levels` and `_below_section` in `tools/builds.py`.
+/// `## `, and text added under a section of the agent's.
 public final class DocumentationText {
 
     private static final Pattern TITLE = Pattern.compile("\\A\\s*#[ \\t]+[^\\n]*(?:\\n|\\z)",
@@ -69,7 +68,7 @@ public final class DocumentationText {
     /// @param markdown The documentation, or null.
     /// @return It with its sections at `## `, or as it is if none is at `# `.
     public static String sectionLevels(final String markdown) {
-        final List<String> lines = new ArrayList<>(PyText.split(markdown == null
+        final List<String> lines = new ArrayList<>(ToolText.split(markdown == null
                 ? ""
                 : markdown, "\n"));
         boolean fenced = false;
@@ -87,7 +86,7 @@ public final class DocumentationText {
         }
         Integer first = null;
         for (int n = 0; n < lines.size(); n++) {
-            if (!PyText.strip(lines.get(n)).isEmpty()) {
+            if (!ToolText.strip(lines.get(n)).isEmpty()) {
                 first = n;
                 break;
             }
@@ -104,7 +103,7 @@ public final class DocumentationText {
                 lines.set(n, "#" + line);
             }
         }
-        return PyText.strip(String.join("\n", lines), "\n");
+        return ToolText.strip(String.join("\n", lines), "\n");
     }
 
     /// `_below_section`: the documentation with text added at the end of the `## heading` section (the agent's own
@@ -118,14 +117,15 @@ public final class DocumentationText {
         final Matcher found = Pattern.compile("^## " + Pattern.quote(heading) + "[^\\n]*\\n(.*?)(?=^## |\\z)",
                 Pattern.MULTILINE | Pattern.DOTALL).matcher(markdown);
         if (!found.find()) {
-            return "## " + heading + "\n\n" + PyText.strip(NullSafe.string(text)) + "\n\n" + PyText.lstrip(markdown);
+            return "## " + heading + "\n\n" + ToolText.strip(NullSafe.string(text)) + "\n\n"
+                   + ToolText.lstrip(markdown);
         }
-        return PyText.rstrip(markdown.substring(0, found.end(1))) + "\n\n" + PyText.strip(NullSafe.string(text))
-               + "\n\n" + PyText.lstrip(markdown.substring(found.end(1)));
+        return ToolText.rstrip(markdown.substring(0, found.end(1))) + "\n\n" + ToolText.strip(NullSafe.string(text))
+               + "\n\n" + ToolText.lstrip(markdown.substring(found.end(1)));
     }
 
     private static boolean isFence(final String line) {
-        final String stripped = PyText.lstrip(line);
+        final String stripped = ToolText.lstrip(line);
         return stripped.startsWith("```") || stripped.startsWith("~~~");
     }
 }

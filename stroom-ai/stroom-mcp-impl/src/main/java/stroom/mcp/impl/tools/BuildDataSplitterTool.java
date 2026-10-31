@@ -18,7 +18,6 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -28,6 +27,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
@@ -56,9 +56,8 @@ import java.util.TreeSet;
 
 /// `build_data_splitter` - writes a Data Splitter (text converter) from the sample: its format profiled, the spec
 /// inferred unless one is given, and the spec run on the sample, so the records and field names are seen before
-/// anything is created (the Stroom MCP server's `tools/generation.py` `build_data_splitter` and `_fragment_wrapper`,
-/// on [SplitterDryRun] and [SplitterXml]). For XML fragments, the wrapper the XMLFragmentParser puts round them.
-/// Saves nothing unless save_as is given.
+/// anything is created (on [SplitterDryRun] and [SplitterXml]). For XML fragments, the wrapper the XMLFragmentParser
+/// puts round them. Saves nothing unless save_as is given.
 class BuildDataSplitterTool extends AbstractBuiltInTool {
 
     static final String NAME = "build_data_splitter";
@@ -469,8 +468,8 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                 ? String.valueOf(list.getFirst())
                 : "";
         throw new ToolRefusal("The sample's format could not be inferred (" + format + "): give spec, a regex with a "
-                              + "name per group, e.g. " + PyText.repr(SplitterXml.EXAMPLES.get("unknown text"))
-                              + ", written for lines like " + PyText.repr(example));
+                              + "name per group, e.g. " + ToolText.repr(SplitterXml.EXAMPLES.get("unknown text"))
+                              + ", written for lines like " + ToolText.repr(example));
     }
 
     // build_data_splitter for XML fragments: the wrapper converter (the environment's own when it has one), saved
@@ -523,7 +522,7 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                     SplitterXml.EXAMPLES.get("delimited"));
             throw new ToolRefusal("spec is not a splitter spec (" + e.getMessage() + "). For "
                                   + NullSafe.nonBlankStringElse(format, "this") + " data it looks like "
-                                  + PyText.repr(example) + "; or leave spec out and it is inferred from the "
+                                  + ToolText.repr(example) + "; or leave spec out and it is inferred from the "
                                   + "sample.");
         }
     }

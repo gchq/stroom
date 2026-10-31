@@ -30,8 +30,7 @@ import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
-/// What the mapping or plan kept with an XSLT generates now (the Stroom MCP server's `tools/translation.py`
-/// `_kept_code`): the code the tools saved, but for their own changes since.
+/// What the mapping or plan kept with an XSLT generates now: the code the tools saved, but for their own changes since.
 class KeptCode {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KeptCode.class);

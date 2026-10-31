@@ -43,9 +43,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
 /// check_events, the tool: the schema and quality checks together, the events of streams read by the tool, and
-/// Events that pass recorded as validated. Ported from the Stroom MCP server's `tests/test_validation.py`,
-/// `tests/test_formats.py` and `tests/test_surface.py` (the cases that call check_events; the checks themselves
-/// are [EventChecks]'s, and reading the streams [EventStreams]', tested with them).
+/// Events that pass recorded as validated (the checks themselves are [EventChecks]'s, and reading the streams
+/// [EventStreams]', tested with them).
 class TestCheckEventsTool {
 
     private static final String EVENT = """
@@ -133,8 +132,8 @@ class TestCheckEventsTool {
     void eventsXmlOrStreamIdsNotBoth() {
         for (final Map<String, Object> arguments : List.<Map<String, Object>>of(
                 Map.of("events_xml", EVENT, "stream_ids", List.of(42)), Map.of())) {
-            final ToolResult result = tool.execute(PortedToolCalls.call(CheckEventsTool.NAME,
-                    JsonUtil.writeValueAsString(arguments, false)), PortedToolCalls.context());
+            final ToolResult result = tool.execute(BuildToolCalls.call(CheckEventsTool.NAME,
+                    JsonUtil.writeValueAsString(arguments, false)), BuildToolCalls.context());
             assertThat(result.isError()).isTrue();
             assertThat(result.text()).isEqualTo("Give events_xml (an <Events> document) or stream_ids (Events "
                                                 + "streams), not both");
@@ -179,8 +178,8 @@ class TestCheckEventsTool {
         Mockito.when(eventChecks.validateEvents(anyString(), any()))
                 .thenThrow(new ToolRefusal("Events XML is not well-formed XML: oops"));
 
-        final ToolResult result = tool.execute(PortedToolCalls.call(CheckEventsTool.NAME,
-                JsonUtil.writeValueAsString(Map.of("events_xml", "<Events"), false)), PortedToolCalls.context());
+        final ToolResult result = tool.execute(BuildToolCalls.call(CheckEventsTool.NAME,
+                JsonUtil.writeValueAsString(Map.of("events_xml", "<Events"), false)), BuildToolCalls.context());
 
         assertThat(result.isError()).isTrue();
         assertThat(result.text()).isEqualTo("Events XML is not well-formed XML: oops");
@@ -209,7 +208,7 @@ class TestCheckEventsTool {
     }
 
     private Map<String, Object> call(final Map<String, Object> arguments) {
-        return PortedToolCalls.json(tool.execute(PortedToolCalls.call(CheckEventsTool.NAME,
-                JsonUtil.writeValueAsString(arguments, false)), PortedToolCalls.context()).text());
+        return BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckEventsTool.NAME,
+                JsonUtil.writeValueAsString(arguments, false)), BuildToolCalls.context()).text());
     }
 }

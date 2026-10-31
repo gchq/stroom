@@ -19,8 +19,8 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// A translation mapping checked against its sample before anything is created or stepped (the Stroom MCP
-/// server's `utils/localcheck.py`, and its tests in `tests/test_sources.py`, `test_multi.py`, `test_wild_formats.py`,
-/// `test_extraction_check.py`, `test_record_shapes.py` and `test_draft.py`).
+/// A translation mapping checked against its sample before anything is created or stepped.
 class TestLocalCheck extends DraftFixtures {
 
     private static final SplitterSpec CSV = specOf("{\"kind\": \"delimited\", \"delimiter\": \",\", "
@@ -239,7 +237,7 @@ class TestLocalCheck extends DraftFixtures {
     @Test
     @SuppressWarnings("unchecked")
     void theSampleCheckLooksInItemsAndRecordsByScope() {
-        // test_multi.py: eval case 16, its batches' items one event each.
+        // Eval case 16, its batches' items one event each.
         final Map<String, Object> batches = check("16_json_batches_items reference");
         final Map<String, Object> plain = new LinkedHashMap<>((Map<String, Object>) batches.get("mapping"));
         plain.put("unmatched", "skip");
@@ -263,7 +261,7 @@ class TestLocalCheck extends DraftFixtures {
 
     @Test
     void xmlHeldInAFieldIsReadByLocalName() {
-        // test_wild_formats.py: a SOAP payload held in a JSON string.
+        // A SOAP payload held in a JSON string.
         final String payload = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                                + "<a:Login xmlns:a=\"urn:acme\"><a:User>alice</a:User><a:Account id=\"ACC-1\"/>"
                                + "</a:Login></soap:Body></soap:Envelope>";
@@ -274,7 +272,7 @@ class TestLocalCheck extends DraftFixtures {
                  "events": [{"name": "login", "fields": [{"path": "EventDetail/Authenticate/Action",
                                                           "value": "Logon"}]}]}"""));
         final List<Object> records = records(mapping, "{\"time\": \"2026-10-11T08:00:01Z\", \"payload\": "
-                                                      + PyJson.dumps(payload) + "}\n", null);
+                                                      + ToolJson.dumps(payload) + "}\n", null);
         @SuppressWarnings("unchecked")
         final Map<String, Object> first = (Map<String, Object>) records.getFirst();
         assertThat(first).containsEntry("payload//User", "alice").containsEntry("payload//Account/@id", "ACC-1")
@@ -405,14 +403,14 @@ class TestLocalCheck extends DraftFixtures {
 
     @Test
     void everySampleTextIsReadNotTheFirst200() {
-        // test_extraction_check.py: seen in production, a VPN rule's keys first appeared at the 557th of 3,933
-        // records; reading only the first 200, the check said they matched nothing.
+        // Seen in production: a VPN rule's keys first appeared at the 557th of 3,933 records; reading only the
+        // first 200, the check said they matched nothing.
         final StringBuilder sample = new StringBuilder();
         for (int n = 0; n < 600; n++) {
             final String body = n == 557
                     ? "type=\"event\" action=\"negotiate\" remip=\"10.0.0.1\" vpntunnel=\"hq\""
                     : "type=\"traffic\" action=\"deny\" n=\"" + n + "\"";
-            sample.append(PyJson.dumps(map("host", "fw1", "body", body))).append('\n');
+            sample.append(ToolJson.dumps(map("host", "fw1", "body", body))).append('\n');
         }
         final TranslationMapping m = mapping(json("""
                 {"input": "json",
@@ -448,7 +446,7 @@ class TestLocalCheck extends DraftFixtures {
 
     @Test
     void theUnknownRecordsAreRefusedWithTheRulesTheirValuesShow() {
-        // test_draft.py: the agent's give-up, each kind Unknown with a reason. Traffic and admin are refused with
+        // The agent's give-up, each kind Unknown with a reason. Traffic and admin are refused with
         // the rules to use, and so is system now: every record it catches has a rule from its own values (a
         // service starting, a configuration saved), so there is nothing to put to the user.
         final Map<String, Object> draft = TestDraftMapping.draft(Map.of("fw.csv", TestDraftMapping.FIREWALL_CSV),

@@ -46,8 +46,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 
-/// The Stroom MCP server's `tests/test_coverage.py`: what review_coverage reads of the Error streams and the
-/// streams a pipeline wrote.
+/// What review_coverage reads of the Error streams and the streams a pipeline wrote.
 class TestCoverageReads {
 
     private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "p", "P");

@@ -24,8 +24,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The ported tools' lenient arguments (the Stroom MCP server's `utils/params.py` `ONE_OR_MORE`, and its test in
-/// `tests/test_params.py`).
+/// The tools' lenient arguments: one value or more, as a list, JSON text, a Python literal or plain text.
 class TestToolArgs {
 
     @Test
@@ -46,7 +45,7 @@ class TestToolArgs {
     }
 
     @Test
-    void aPythonListLiteralIsReadAsAstLiteralEvalReadsIt() {
+    void aListLiteralWithSingleQuotesAndNoneIsRead() {
         assertThat(ToolArgs.oneOrMore("[True, None, 'x']")).containsExactly(true, null, "x");
         assertThat(ToolArgs.oneOrMore("{'field': 'UserId'}")).containsExactly(Map.of("field", "UserId"));
         // Neither JSON nor a Python literal: read as text.
@@ -106,7 +105,7 @@ class TestToolArgs {
     }
 
     @Test
-    void textThatIsNotJsonIsRefusedAsThePythonToolsWordIt() {
+    void textThatIsNotJsonIsRefusedWithTheParseError() {
         assertThat(ToolArgs.notJson("overrides", "Expecting value", "pass a list of objects").getMessage())
                 .isEqualTo("overrides is text that is not JSON (Expecting value): pass a list of objects");
         assertThat(ToolArgs.notJson("header", "Expecting value at character 0", null).getMessage())
@@ -114,7 +113,7 @@ class TestToolArgs {
     }
 
     @Test
-    void aPythonLiteralIsReadAsJsonWouldBe() {
+    void aSingleQuotedLiteralIsReadAsJsonWouldBe() {
         assertThat(ToolArgs.literal("{'V1': 'V2'}")).isEqualTo(Map.of("V1", "V2"));
         assertThat(ToolArgs.literal("[False]")).isEqualTo(List.of(false));
         assertThat(ToolArgs.literal("{\"a\": 'b'}")).isNull();

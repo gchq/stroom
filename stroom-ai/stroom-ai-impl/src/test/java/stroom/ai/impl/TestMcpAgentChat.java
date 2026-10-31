@@ -151,7 +151,7 @@ class TestMcpAgentChat {
 
     @Test
     void whatAToolCallHasGotToIsShownOnTheWorkingLine() {
-        // As the MCP server's index survey reports it: without a progress token for the call, it reports nothing.
+        // As an MCP server's long tool reports progress: without a progress token for the call, it reports nothing.
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.listTools()).thenReturn(new ListToolsResult(List.of(searchTool()), null));
         final McpServerConnection connection = new McpServerConnection("test", null, client, null);

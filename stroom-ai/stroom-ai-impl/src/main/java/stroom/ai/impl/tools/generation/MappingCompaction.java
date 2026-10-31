@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,8 +30,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// A mapping (as JSON) made smaller to send, meaning the same, and messages made fewer, as the Stroom MCP server
-/// shrinks a draft's reply (`compact_rules`, `compact_pairs` and `grouped` in `utils/xsltgen.py`).
+/// A mapping (as JSON) made smaller to send, meaning the same, and messages made fewer, to shrink a draft's reply.
 public final class MappingCompaction {
 
     private static final Set<String> PLAIN_DATA_KEYS = Set.of("path", "field", "data_name");
@@ -193,7 +192,7 @@ public final class MappingCompaction {
                 }
             }
             final String body = LIST.matcher(members.getFirst()[1])
-                    .replaceFirst(Matcher.quoteReplacement(PyText.list(List.copyOf(items))));
+                    .replaceFirst(Matcher.quoteReplacement(ToolText.list(List.copyOf(items))));
             out.add("[" + String.join(", ", members.stream().map(member -> member[0]).toList()) + "] " + body);
         }
         return out;

@@ -24,7 +24,6 @@ import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.MergedPipeline;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamReader;
@@ -32,6 +31,7 @@ import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltChecks;
@@ -76,11 +76,11 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-/// What the stepping tools (`step_pipeline`, `step_sample`, `step_records` and `compare_outputs`) share, ported from
-/// the Stroom MCP server's `tools/stepping.py`: reading the pipeline, refusing draft XSLT check_xslt rejects, a
-/// pipeline with a mistyped property or reference data not loaded yet, triaging what the steps met, the blocking
-/// check for EventDetail/Unknown nobody agreed to, recording a clean step in the build's record, stepping records
-/// spread over several streams, and keeping within the session's time limit for a long call.
+/// What the stepping tools (`step_pipeline`, `step_sample`, `step_records` and `compare_outputs`) share: reading the
+/// pipeline, refusing draft XSLT check_xslt rejects, a pipeline with a mistyped property or reference data not loaded
+/// yet, triaging what the steps met, the blocking check for EventDetail/Unknown nobody agreed to, recording a clean
+/// step in the build's record, stepping records spread over several streams, and keeping within the session's time
+/// limit for a long call.
 ///
 /// Stepping is done through Stroom's stepping service in-process, as the user, who needs the Stepping permission;
 /// a stepping session lives on this node. Each stream's steps are made in one session ([SteppingWalks]).
@@ -88,9 +88,9 @@ class PipelineStepping {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineStepping.class);
 
-    /// The most records one call steps (the Stroom MCP server's max_sample_records).
+    /// The most records one call steps.
     static final int MAX_SAMPLE_RECORDS = EventLocations.MAX_RECORDS;
-    /// The most characters of output a result gives in all (the Stroom MCP server's max_stream_chars).
+    /// The most characters of output a result gives in all.
     static final int MAX_STREAM_CHARS = 20_000;
     /// The longest one step may take.
     static final Duration STEP_TIME_LIMIT = EventLocations.STEP_TIME_LIMIT;
@@ -206,7 +206,7 @@ class PipelineStepping {
                         .filter(error -> !allowed.contains(error))
                         .toList();
                 if (!errors.isEmpty()) {
-                    throw new ToolRefusal("draft_code[" + PyText.repr(element)
+                    throw new ToolRefusal("draft_code[" + ToolText.repr(element)
                                           + "] is not stepped: " + String.join("; ", errors));
                 }
             }
@@ -241,7 +241,7 @@ class PipelineStepping {
                         .filter(why -> !allowed.contains(why))
                         .toList();
                 if (!refused.isEmpty()) {
-                    throw new ToolRefusal("draft_code[" + PyText.repr(element) + "] is not stepped: "
+                    throw new ToolRefusal("draft_code[" + ToolText.repr(element) + "] is not stepped: "
                                           + String.join("; ", refused));
                 }
             }
@@ -260,7 +260,7 @@ class PipelineStepping {
                               final Optional<XsltDoc> saved) {
         final String document = saved.map(XsltDoc::getUuid).orElse(pipelineUuid + "/" + element);
         lookups.require(call, context, document, "Step draft XSLT for element '" + element + "'",
-                "draft_code[" + PyText.repr(element) + "] is not stepped", xslt, saved.map(XsltDoc::getData)
+                "draft_code[" + ToolText.repr(element) + "] is not stepped", xslt, saved.map(XsltDoc::getData)
                         .orElse(null));
     }
 
@@ -636,8 +636,7 @@ class PipelineStepping {
 
     /// @param context A call's context.
     /// @param what    Where it stopped, e.g. `after 40 records`.
-    /// @return What a call that stopped before the session's time limit ran out tells the agent (the Stroom MCP
-    /// server's `out_of_time`, which named the caller's sign-in).
+    /// @return What a call that stopped before the session's time limit ran out tells the agent.
     static String outOfTime(final ToolCallContext context, final String what) {
         return "Stopped " + what + " before this session's time limit for a call ("
                + timeLimit(context).map(limit -> limit.toSeconds() + " s").orElse("none") + ") ran out. Call "

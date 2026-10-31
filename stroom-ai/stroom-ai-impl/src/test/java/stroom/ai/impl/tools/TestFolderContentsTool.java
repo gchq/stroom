@@ -381,8 +381,8 @@ class TestFolderContentsTool {
 
     @Test
     void documentsAreFoundByNameAndTypeWithTheirPaths() {
-        // As the Stroom MCP server's find_documents gave them: the folder Stroom also returns is left out, the
-        // path is as the folder tools take it, and a hint says when more match than are returned.
+        // The folder Stroom also returns is left out, the path is as the folder tools take it, and a hint says
+        // when more match than are returned.
         findResults(
                 new FindResult(FIREWALLS, "System / Security"),
                 new FindResult(PIPELINE, "System / Security / Firewalls"),

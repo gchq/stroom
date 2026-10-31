@@ -48,15 +48,14 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_coverage.py`: a kind of event the sample missed, found once the feed is
-/// processed; the rule added; only the affected stream processed again; the pipelines that follow reviewed, driving
-/// the real tools. Every numbered part is covered: 1 (an events pipeline from a sample of logons, processing the
-/// whole feed), 2 (a CEF pipeline to Kafka following it: a KafkaConfig doc and the standard Kafka producer, as the
-/// script's local stack has them, with no broker; stepping sends nothing), 3 (the whole feed reviewed: the views the
-/// sample missed, in the later stream alone, and the CEF pipeline a follow-on), 4 (the rule added, only that stream
-/// reprocessed, the follow-on reviewed against it and against the changed code stepped; the XSLT's pending
-/// changes), 5 (health pings kept as Unknown; a larger feed reviewed in batches; a hand edit carried into the
-/// mapping, proven on the original samples) and 6 (a Lucene indexing pipeline whose filter names the feed in a
+/// A kind of event the sample missed, found once the feed is processed; the rule added; only the affected stream
+/// processed again; the pipelines that follow reviewed, driving the real tools. Every numbered part is covered: 1 (an
+/// events pipeline from a sample of logons, processing the whole feed), 2 (a CEF pipeline to Kafka following it: a
+/// KafkaConfig doc and the standard Kafka producer, with no broker; stepping sends nothing), 3 (the whole feed
+/// reviewed: the views the sample missed, in the later stream alone, and the CEF pipeline a follow-on), 4 (the rule
+/// added, only that stream reprocessed, the follow-on reviewed against it and against the changed code stepped; the
+/// XSLT's pending changes), 5 (health pings kept as Unknown; a larger feed reviewed in batches; a hand edit carried
+/// into the mapping, proven on the original samples) and 6 (a Lucene indexing pipeline whose filter names the feed in a
 /// Dictionary, found as a follow-on).
 @SuppressWarnings("unchecked")
 class TestE2eCoverage extends AbstractE2eTest {
@@ -66,10 +65,11 @@ class TestE2eCoverage extends AbstractE2eTest {
     private static final String HEADER = "time,user,host,action,resource\n";
     private static final String SAMPLE = HEADER + "2026-10-01T10:00:00,alice,ws01,login,\n"
                                          + "2026-10-01T10:05:00,bob,ws02,login,\n";
-    // Not the script's: 300 records, the two views (records 151 and 291) well past the first 110. Stroom's split
-    // filter (100 records a split) queues a location per record and stops keeping them once 10 more than a split
-    // are unread: the XSLT read the number only for the records it logged, so in testing every miss after that was
-    // logged without one, and none was found. Stepping goes a record at a time, so only processing shows it.
+    // 300 records, the two views (records 151 and 291) well past the first 110. Stroom's split filter (100 records
+    // a split) queues a location per record and stops keeping them once 10 more than a split are unread: the XSLT
+    // read the number only for the records it logged, so in testing every miss after that was logged without one,
+    // and none was found (FINDINGS, Stroom's XSLT engine). Stepping goes a record at a time, so only processing
+    // shows it.
     private static final String LATER = HEADER + IntStream.rangeClosed(1, 300)
             .mapToObj(n -> switch (n) {
                 case 151 -> "2026-10-02T09:01:00,carol,ws03,view,Payroll\n";
@@ -160,9 +160,9 @@ class TestE2eCoverage extends AbstractE2eTest {
         final String soon = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS).toString();
         agreed("create_processor_filter", args("pipeline_uuid", forwarding, "feed", FEED, "stream_type", "Events",
                 "created_after", soon));
-        // Not the script's: design.md (Validation and safety, Write scope) and FINDINGS ("A filter enabled, nothing
-        // processed"): a CEF pipeline's filter is created disabled, for the user to enable, and the processor
-        // Stroom made for it (which takes its first filter's flag) is enabled, so enabling the filter is enough.
+        // As FINDINGS has it (Processing and reprocessing): a CEF pipeline's filter is created disabled, for the
+        // user to enable, and the processor Stroom made for it (which takes its first filter's flag) is enabled, so
+        // enabling the filter is enough.
         final List<ProcessorFilter> cefFilters = asUser(admin, () -> processorFilterService.find(
                 new DocRef(PipelineDoc.TYPE, forwarding)).getValues());
         assertThat(cefFilters).as("the CEF pipeline's filter").singleElement().satisfies(filter -> {
@@ -226,8 +226,7 @@ class TestE2eCoverage extends AbstractE2eTest {
                 .extracting(entry -> entry.get("change"))
                 .containsExactly("Created from its mapping",
                         "Rule for view events, found once the whole feed was processed");
-        // The script's 'stroom-mcp' (the server's name): the server is Stroom itself now, as its version history
-        // names it.
+        // The version history names Stroom itself as the author of the agent's changes.
         assertThat(String.valueOf(list(pending, "entries").getFirst().get("by"))).as("by the server")
                 .startsWith("Stroom ");
 

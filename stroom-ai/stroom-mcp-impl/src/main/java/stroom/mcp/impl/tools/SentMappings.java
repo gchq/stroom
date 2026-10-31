@@ -29,10 +29,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-/// The translation mapping as last sent for an XSLT (its uuid, or build/name), and the draft
-/// draft_translation_mapping made, so a fix can send only its changes (the Stroom MCP server's
-/// `tools/generation.py` `_remember_mapping`, `_sent` and `_DRAFT`). Seen in testing: a first save from a 50 KB
-/// draft had to send it whole, which the agent couldn't write out in one call.
+/// The translation mapping as last sent for an XSLT (its uuid, or build/name), and the draft draft_translation_mapping
+/// made, so a fix can send only its changes. Seen in testing: a first save from a 50 KB draft had to send it whole,
+/// which the agent couldn't write out in one call.
 ///
 /// Each is kept in the session's workspace (the chat's, or the MCP session's), under `/outputs/mappings/`, where
 /// the agent can read it too; a call that finds none falls back to the mapping saved with the XSLT. A session

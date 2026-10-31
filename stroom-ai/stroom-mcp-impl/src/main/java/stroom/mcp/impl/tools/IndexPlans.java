@@ -37,11 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// The index plans the indexing tools share (the Stroom MCP server's `tools/indexing.py` `plan_given`,
-/// `drafted_plans`, `with_cardinality`, `_plan_reply` and `_with_convention`, and `utils/mappingchanges.py`'s
-/// `apply_plan_changes`): the plan a tool was given, else the one kept with the pipeline's indexing XSLT, else the
-/// one drafted in the session; a plan's repeatable fields marked from the event-logging schema; and what a drafted
-/// or amended plan comes back as. save_xslt's port takes the plans drafted in the session from here.
+/// The index plans the indexing tools share: the plan a tool was given, else the one kept with the pipeline's indexing
+/// XSLT, else the one drafted in the session; a plan's repeatable fields marked from the event-logging schema; and what
+/// a drafted or amended plan comes back as. save_xslt takes the plans drafted in the session from here.
 class IndexPlans {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexPlans.class);
@@ -124,7 +122,7 @@ class IndexPlans {
         }
         final EventSchema schema;
         try {
-            // The build's chosen version is kept by the translation tools, not ported yet: the newest held.
+            // The newest version held, not yet the build's chosen one (which the translation tools keep).
             schema = heldSchemas.eventSchema(heldSchemas.chosenOrLatest(null));
         } catch (final RuntimeException e) {
             // A Stroom without the schema: nothing marked.

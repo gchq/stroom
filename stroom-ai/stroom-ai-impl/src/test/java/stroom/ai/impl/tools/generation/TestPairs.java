@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,9 +34,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Stroom MCP server's tests of a mapping's pairs entry (`tests/test_pairs.py`): a text field's key/value pairs,
-/// each key a field, written once for many keys. Seen in testing: a Fortigate draft carried its body's 60 keys as
-/// 60 extract entries, a regex each, in a mapping of 50 KB the agent had to send whole.
+/// A mapping's pairs entry: a text field's key/value pairs, each key a field, written once for many keys. Seen in
+/// testing: a Fortigate draft carried its body's 60 keys as 60 extract entries, a regex each, in a mapping of 50 KB
+/// the agent had to send whole.
 class TestPairs extends GenerationFixtures {
 
     private static final Map<String, Object> DRAFTS = json(resource("drafts.json"));
@@ -58,7 +58,7 @@ class TestPairs extends GenerationFixtures {
         assertThat(Pairs.pairOf(Pairs.pairRegex("equals", "srcip") + "x")).isEmpty();
     }
 
-    // The kv mapping (test_sample_check_speed), without its extract entries, with the overrides.
+    // The kv mapping, without its extract entries, with the overrides.
     @SuppressWarnings("unchecked")
     private static Map<String, Object> mapping(final Object... overrides) {
         final Map<String, Object> mapping = new LinkedHashMap<>((Map<String, Object>) DRAFTS.get("kv"));
@@ -104,7 +104,7 @@ class TestPairs extends GenerationFixtures {
     void theDraftFoldsItsKeyValueExtractsIntoPairsAndMeansTheSame() {
         final Map<String, Object> drafted = MappingCompaction.compactRules((Map<String, Object>) DRAFTS.get(
                 "fortigate"));
-        assertThat(PyJson.dumps(drafted)).isEqualTo(PyJson.dumps(DRAFTS.get("fortigate_compact_rules")));
+        assertThat(ToolJson.dumps(drafted)).isEqualTo(ToolJson.dumps(DRAFTS.get("fortigate_compact_rules")));
         final Map<String, Object> folded = MappingCompaction.compactPairs(drafted);
         assertThat(folded).doesNotContainKey("extract");
         final List<Map<String, Object>> pairs = (List<Map<String, Object>>) folded.get("pairs");
@@ -117,13 +117,13 @@ class TestPairs extends GenerationFixtures {
                 .sorted()
                 .toList();
         assertThat(keys.stream().sorted().toList()).isEqualTo(expected);
-        assertThat(PyJson.dumps(pairs).length()).isLessThan(PyJson.dumps(drafted.get("extract")).length() / 3);
+        assertThat(ToolJson.dumps(pairs).length()).isLessThan(ToolJson.dumps(drafted.get("extract")).length() / 3);
         assertThat(entries(folded)).isEqualTo(entries(drafted));
     }
 
     private static List<String> entries(final Map<String, Object> mapping) {
         return TranslationMapping.fromJson(mapping).extract().stream()
-                .map(e -> PyJson.dumpsCompact(e.toJson(DumpMode.ALL)))
+                .map(e -> ToolJson.dumpsCompact(e.toJson(DumpMode.ALL)))
                 .sorted()
                 .toList();
     }

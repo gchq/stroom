@@ -17,7 +17,6 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -26,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -44,9 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `create_processor_filter` - creates a processor filter for Stroom to process streams through a pipeline in a
-/// build: the sample stream ids, or a feed's streams. Ported from the Stroom MCP server's
-/// `tools/processing_writes.py`.
+/// `create_processor_filter` - creates a processor filter for Stroom to process streams through a pipeline in a build:
+/// the sample stream ids, or a feed's streams.
 ///
 /// For an events (or records) or indexing pipeline the user approves it in a form, then it is created enabled and
 /// processing starts; any other pipeline's filter is created disabled, for the user to enable. The filter is made
@@ -375,10 +374,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final List<Long> done = filterWrites.alreadyProcessed(ProcessorFilterWrites.ref(pipeline), streamIds);
         if (!done.isEmpty()) {
             throw new ToolRefusal("Pipeline '" + pipeline.getName() + "' has already processed stream(s) "
-                                  + PyText.repr(done) + ": use reprocess_streams (at most "
+                                  + ToolText.repr(done) + ": use reprocess_streams (at most "
                                   + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " per call)");
         }
-        return new Scope(ProcessorFilterWrites.anyOf(streamIds), "streams " + PyText.repr(streamIds),
+        return new Scope(ProcessorFilterWrites.anyOf(streamIds), "streams " + ToolText.repr(streamIds),
                 ProcessorFilterWrites.SAMPLE_MAX_TASKS, null);
     }
 

@@ -90,8 +90,8 @@ import java.util.regex.Pattern;
 /// store checks the user may view each stream's feed again when it opens it; without it, those values are left
 /// out and the summary says why. Reading the stream store is capped per call.
 ///
-/// Given a stream id alone, it describes that stream instead, as the Stroom MCP server's describe_stream did: the
-/// streams produced from it, the receipt headers it carries (read with View Data) and its processing counts.
+/// Given a stream id alone, it describes that stream instead: the streams produced from it, the receipt headers it
+/// carries (read with View Data) and its processing counts.
 class StreamMetaTool extends AbstractWorkspaceTool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMetaTool.class);
@@ -720,8 +720,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
     // Describing one stream.
     // --------------------------------------------------------------------------------
 
-    /// Describes one stream, as the Stroom MCP server's describe_stream did: its family, attributes and
-    /// processing counts.
+    /// Describes one stream: its family, attributes and processing counts.
     private ToolResult describe(final long streamId, final ToolCallContext context) {
         final Map<String, Object> result = describe(streamId);
         auditLog.streamsSearched(context.session(), "stream " + streamId + " and the streams produced from it",
@@ -772,8 +771,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
         return result;
     }
 
-    /// @return A stream as the Stroom MCP server gave one: id, feed, type, status, created, parent_id and
-    /// pipeline_uuid.
+    /// @return A stream as the tool gives one: id, feed, type, status, created, parent_id and pipeline_uuid.
     static Map<String, Object> stream(final MetaRow row) {
         final Meta meta = row.getMeta();
         final Map<String, Object> stream = new LinkedHashMap<>();
