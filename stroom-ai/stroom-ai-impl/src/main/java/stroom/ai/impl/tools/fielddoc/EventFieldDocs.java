@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlComment;
 import stroom.ai.impl.tools.generation.XmlElement;
+import stroom.ai.impl.tools.generation.XmlInstruction;
 import stroom.ai.impl.tools.generation.XmlNode;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -90,6 +91,10 @@ public final class EventFieldDocs {
     /// @return The rule's name, or null if the event has no marker.
     public static String ruleOf(final XmlElement event) {
         for (final XmlNode node : event.children()) {
+            if (node instanceof final XmlInstruction instruction
+                && XsltGenerator.RULE_INSTRUCTION.equals(instruction.target())) {
+                return PyText.strip(instruction.data());
+            }
             if (node instanceof final XmlComment comment) {
                 final String text = PyText.strip(comment.text());
                 if (text.startsWith(XsltGenerator.RULE_MARK)) {
@@ -116,6 +121,34 @@ public final class EventFieldDocs {
             root.iterElements().stream().filter(e -> "Event".equals(e.localName())).forEach(events::add);
         }
         return events;
+    }
+
+    /// The events an XSLT edited by hand wrote, as it runs, each marked with the rule the mapping's own XSLT
+    /// (generated with markers) gave the same record's event in the same place, so they are documented as the
+    /// pipeline writes them and still by rule. Seen: a hand edit making users distinct documented from what the
+    /// mapping generates, its duplicates and all. Where the two give a record different numbers of events, its events
+    /// are left unmarked, for the rule their elements fit.
+    ///
+    /// @param running Each record's output from the XSLT as saved, by record key.
+    /// @param marked  Each record's output from the mapping's XSLT with markers, by the same keys.
+    /// @return The running XSLT's events, in order, marked where the records agree.
+    public static List<XmlElement> runningEvents(final Map<String, String> running,
+                                                 final Map<String, String> marked) {
+        final List<XmlElement> out = new ArrayList<>();
+        running.forEach((record, xml) -> {
+            final List<XmlElement> events = sampledEvents(List.of(NullSafe.string(xml)));
+            final List<XmlElement> markers = sampledEvents(List.of(NullSafe.string(marked.get(record))));
+            if (events.size() == markers.size()) {
+                for (int n = 0; n < events.size(); n++) {
+                    final String rule = ruleOf(markers.get(n));
+                    if (rule != null && ruleOf(events.get(n)) == null) {
+                        events.get(n).insert(0, new XmlComment(XsltGenerator.RULE_MARK + rule));
+                    }
+                }
+            }
+            out.addAll(events);
+        });
+        return out;
     }
 
     /// [#fieldMappingMarkdown(TranslationMapping, EventSchema, List, String, Descriptions)] by event type, with no

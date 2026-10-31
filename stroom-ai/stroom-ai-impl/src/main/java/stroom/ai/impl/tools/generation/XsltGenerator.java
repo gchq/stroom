@@ -62,6 +62,9 @@ public final class XsltGenerator {
     public static final String EVT = "event-logging:3";
     /// The comment the documentation run puts in each Event, naming the rule that wrote it; never in saved XSLT.
     public static final String RULE_MARK = "stroom-mcp rule: ";
+    /// The processing instruction the documentation run writes in each Event, holding the name of the rule that
+    /// wrote it: what Stroom's stepping keeps (it drops comments); never in saved XSLT.
+    public static final String RULE_INSTRUCTION = "stroom-mcp-rule";
     /// Values listed per element (EventSource table) or per TypeId (Descriptions) in the documentation.
     public static final int DOC_VALUES_SHOWN = 3;
     /// Logged for each record no rule matches (WARN), then the values the rules test: "No event mapping matched
@@ -1793,7 +1796,10 @@ public final class XsltGenerator {
         }
         final XmlElement event = home.addElement(EVT, "Event");
         if (markRules) {
-            event.append(new XmlComment(RULE_MARK + rule.name()));
+            // A processing instruction the output carries: a comment in the stylesheet is not copied to the output,
+            // and one written (xsl:comment) Stroom's stepping drops, so every event was left to the guess by its
+            // elements (seen in testing, an event with an element added by hand fitted no rule).
+            event.addElement(XSL, "processing-instruction", "name", RULE_INSTRUCTION).setText(rule.name());
         }
         if (name != null) {
             inScope(home, () -> emit(event, tree, null, false));

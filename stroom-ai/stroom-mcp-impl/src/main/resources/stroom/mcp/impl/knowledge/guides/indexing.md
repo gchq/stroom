@@ -179,6 +179,19 @@ Arrays: `<array key="tags"><string>a</string></array>`. `indexName` may interpol
 document, e.g. `ecs-windows{_suffix}v1` with a `_suffix` string key; keys starting with `_` are not
 indexed. Field names and types follow the environment's field convention.
 
+An array of objects (Elasticsearch only) is one planned field of type `object` with `items`, each read from each
+element the field's `source` selects, and optionally `distinct_by`, the key (from each element) its objects are made
+distinct by. For every user an event names, once each by login name:
+`{"name": "users", "type": "object", "source": "EventSource/User | EventDetail//User", "distinct_by": "Id",
+"items": [{"name": "login", "type": "keyword", "source": "Id"}, {"name": "email", "type": "keyword", "source":
+"EmailAddress"}, {"name": "organisation", "type": "keyword", "source": "UserDetails/Organisation"}]}`. It is written
+with `xsl:for-each-group`: one object per key, from the first element with it, in the order first met; an element
+without the key is left out. The index template maps it as an object of its items (`users.login`...), so the
+dashboard and searches use those names. Elasticsearch flattens an array of objects, so a search for
+`users.login = a` and `users.organisation = b` also matches an event where a is one user and b is another user's
+organisation: say so when the user searches by two items at once. A Lucene index holds no objects: plan a field of
+values per item instead (several values in one event).
+
 Some problems only appear when documents reach Elasticsearch (a value of the wrong type for the mapping, a field
 name it refuses, the field limit). In the workspace, `create_processor_filter` and `reprocess_streams` start
 indexing with a batch size of 10, so each rejected document comes back whole in the Error stream; triage splits the

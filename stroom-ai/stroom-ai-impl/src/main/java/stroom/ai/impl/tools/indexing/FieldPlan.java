@@ -252,6 +252,14 @@ public record FieldPlan(String backend,
                 .toList();
     }
 
+    /// Every field as the index holds it: a field of objects as its items, each a field of its own under its name
+    /// ([PlannedField#leaves()]), as the index template maps them and searches read them.
+    ///
+    /// @return The fields.
+    public List<PlannedField> leafFields() {
+        return fields.stream().flatMap(field -> field.leaves().stream()).toList();
+    }
+
     /// @return True for an Elasticsearch plan.
     public boolean isElasticsearch() {
         return ELASTICSEARCH.equals(backend);
@@ -266,7 +274,7 @@ public record FieldPlan(String backend,
         if (!"ecs".equals(convention)) {
             return List.of();
         }
-        return ecs.problems(fields, customNamespaces);
+        return ecs.problems(leafFields(), customNamespaces);
     }
 
     /// @return The apply-templates select: every Event, less the ones drop_when names.
@@ -320,6 +328,12 @@ public record FieldPlan(String backend,
         }
         if (isElasticsearch() && !names.contains("@timestamp")) {
             problems.add("Elasticsearch data streams need '@timestamp'");
+        }
+        final List<String> objects = fields.stream().filter(PlannedField::isObjects).map(PlannedField::name).toList();
+        if (!isElasticsearch() && !objects.isEmpty()) {
+            problems.add(PyText.list(objects) + ": a Lucene index holds no objects; plan a field of values for each "
+                         + "item instead (e.g. user_login from EventSource/User/Id | EventDetail//User/Id), which "
+                         + "is several values in one event");
         }
         if (isElasticsearch()) {
             final List<String> hidden = new TreeSet<>(names).stream()

@@ -195,6 +195,27 @@ class TestHandEditGate {
         assertSaved(update(generated, mapping, true, null));
     }
 
+    @Test
+    void anEditNoMappingCanHoldIsSaidToBeTheUsersToKeepOrDrop() {
+        // Seen: users made distinct by login name with xsl:iterate, which no mapping can hold: "carry it into the
+        // mapping" sent the agent round in circles.
+        final TranslationMapping mapping = TranslationWorld.parsed();
+        final String generated = generate(mapping);
+        assertSaved(update(generated, mapping, false, null));
+        editByHand("</Authenticate>", "<xsl:iterate select=\"data\"><xsl:param name=\"seen\" select=\"()\"/>"
+                                      + "<Data Name=\"user\" Value=\"{@value}\"/><xsl:next-iteration>"
+                                      + "<xsl:with-param name=\"seen\" select=\"($seen, @value)\"/>"
+                                      + "</xsl:next-iteration></xsl:iterate></Authenticate>");
+
+        final ToolRefusal refused = refusal(() -> update(generated, mapping, false, null));
+
+        assertThat(refused.getMessage()).contains("uses what no mapping can hold (")
+                .contains("iterate not read")
+                .contains("keep the XSLT as it is (and make no generated change to it), or to drop the edit")
+                .contains("discard_hand_edit=true")
+                .doesNotContain("rebuild_mapping uuid=");
+    }
+
     // A field the agent's change changes that the user edited by hand too: theirs to decide, field by field (asked
     // for by the user: "keep their hand edit or overwrite it with the proposed field").
 

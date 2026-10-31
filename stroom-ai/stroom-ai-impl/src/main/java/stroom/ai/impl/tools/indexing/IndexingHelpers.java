@@ -88,7 +88,7 @@ public final class IndexingHelpers {
             return plan;
         }
         final List<PlannedField> fields = plan.fields().stream()
-                .map(field -> !field.multiple() && !field.source().startsWith("@")
+                .map(field -> !field.multiple() && !field.isObjects() && !field.source().startsWith("@")
                               && !field.source().startsWith("shared:") && schema.canRepeat(field.source())
                         ? field.withMultiple(true)
                         : field)
@@ -164,7 +164,7 @@ public final class IndexingHelpers {
         populated.forEach((path, share) -> {
             // A named Data entry's share is counted on its Data path too: that path is the one listed.
             if (share != null && share.doubleValue() != 0 && !path.contains("[@Name=")
-                && plan.fields().stream().noneMatch(field -> FieldPlans.sourceMatches(field.source(), path))) {
+                && plan.leafFields().stream().noneMatch(field -> FieldPlans.sourceMatches(field.source(), path))) {
                 unmapped.add(FieldPlans.anyAction(path));
             }
         });
@@ -182,7 +182,7 @@ public final class IndexingHelpers {
     public static List<String> plannedNotPopulated(final FieldPlan plan,
                                                    final Map<String, ? extends Number> populated) {
         final List<String> out = new ArrayList<>();
-        for (final PlannedField field : plan.fields()) {
+        for (final PlannedField field : plan.leafFields()) {
             final String source = field.source();
             if (source == null || source.isEmpty() || source.startsWith("@") || plan.writtenBy(field.name()) != null) {
                 continue;
@@ -476,7 +476,7 @@ public final class IndexingHelpers {
     }
 
     private static boolean covered(final String source, final FieldPlan plan) {
-        return plan.fields().stream().anyMatch(f -> f.source().equals(source)
+        return plan.leafFields().stream().anyMatch(f -> f.source().equals(source)
                                                     || FieldPlans.sourceMatches(f.source(), source)
                                                     || FieldPlans.sourceMatches(source, f.source()));
     }

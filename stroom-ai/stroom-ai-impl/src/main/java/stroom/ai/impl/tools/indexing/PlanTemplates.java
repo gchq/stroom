@@ -47,7 +47,8 @@ final class PlanTemplates {
         }
         final boolean component = "ecs".equals(plan.convention()) && leaveToComponent;
         final Map<String, Object> properties = new LinkedHashMap<>();
-        for (final PlannedField field : plan.fields()) {
+        // A field of objects is mapped as its items: users.login under users, an object array's own mapping.
+        for (final PlannedField field : plan.leafFields()) {
             if (component && ecs != null && ecs.leftToComponent(field.name(), field.type())) {
                 continue;
             }
