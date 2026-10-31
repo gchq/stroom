@@ -19,7 +19,6 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -27,6 +26,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.IndexingHelpers;
 import stroom.ai.impl.tools.indexing.PlannedField;
@@ -57,11 +57,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// `create_indexing_pipeline` - stage 2: creates an indexing pipeline as a child of an indexing template, setting
-/// its XSLT and where it indexes (the Stroom MCP server's `tools/indexing.py` `create_indexing_pipeline`, with
-/// `_events_available` and `_missing_index_fields`). The pipeline is made by create_pipeline's path, so the user
-/// confirms the template and name first; a Lucene index lacking fields the XSLT's plan writes gets them from the
-/// plan.
+/// `create_indexing_pipeline` - stage 2: creates an indexing pipeline as a child of an indexing template, setting its
+/// XSLT and where it indexes. The pipeline is made by create_pipeline's path, so the user confirms the template and
+/// name first; a Lucene index lacking fields the XSLT's plan writes gets them from the plan.
 class CreateIndexingPipelineTool extends AbstractBuiltInTool {
 
     static final String NAME = "create_indexing_pipeline";
@@ -128,8 +126,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
 
     @Override
     public boolean confirmsItself() {
-        // The user confirms the pipeline (create_pipeline's form), but not the index fields added after it, as the
-        // MCP server's tool didn't.
+        // The user confirms the pipeline (create_pipeline's form), but not the index fields added after it.
         return false;
     }
 
@@ -293,7 +290,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         final List<String> existing = pipelines.templateNames("discovery");
         if (!existing.isEmpty()) {
             throw new ToolRefusal("standalone='discovery' is only for a Stroom with no discovery template, and this "
-                                  + "one has " + PyText.list(existing) + ": give template_uuid (find_pipeline_"
+                                  + "one has " + ToolText.list(existing) + ": give template_uuid (find_pipeline_"
                                   + "templates stage=discovery).");
         }
         final Map<?, ?> discovery = KeptMapping.readMapping(xslt(xsltUuid).getDescription())
@@ -353,7 +350,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
             throw new ToolRefusal(converters.isEmpty()
                     ? "Delimited text is parsed by a Data Splitter, and build '" + build + "' has none: "
                       + "build_data_splitter save_as= first"
-                    : "Build '" + build + "' has several text converters (" + PyText.list(converters.stream()
+                    : "Build '" + build + "' has several text converters (" + ToolText.list(converters.stream()
                             .map(BuildDoc::name)
                             .toList()) + "): give text_converter_uuid, the one that reads this data");
         }
@@ -419,7 +416,7 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         if (!missing.isEmpty() && kept == null) {
             throw new ToolRefusal("Index '" + index.getName() + "' has " + (have.isEmpty()
                     ? "no fields"
-                    : "no field") + " for " + PyText.list(missing.subList(0,
+                    : "no field") + " for " + ToolText.list(missing.subList(0,
                     Math.min(MISSING_NAMED, missing.size()))) + (missing.size() > MISSING_NAMED
                     ? " ..."
                     : "") + ", which the indexing XSLT writes: Stroom would drop those values ('Attempt to "

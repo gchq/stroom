@@ -131,8 +131,8 @@ class DocumentDocumentationTool extends AbstractWorkspaceTool {
 
     // A Documentation document of the same name in the same folder is the document's documentation, as the tools
     // write a pipeline's: said, so its own tab (which may hold only what the server keeps) isn't taken for all of
-    // it. Not in the Stroom MCP server; seen: an agent read an indexing pipeline's tab, holding only the agreed
-    // index template, as its documentation lost, and rewrote the Documentation document three times over.
+    // it. Seen in testing: an agent read an indexing pipeline's tab, holding only the agreed index template, as its
+    // documentation lost, and rewrote the Documentation document three times over.
     private String documentedBeside(final DocRef docRef) {
         if (DOCUMENTATION_TYPE.equals(docRef.getType()) || docRef.getName() == null) {
             return "";

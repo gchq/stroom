@@ -302,7 +302,7 @@ class PipelineShapes {
                  List<String> referenceData,
                  Map<String, Object> properties) {
 
-        /// @return It as the Stroom MCP server gave it, without its properties.
+        /// @return It as a result gives it, without its properties.
         Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("stage", stage);

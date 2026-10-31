@@ -23,15 +23,15 @@ import stroom.util.guice.GuiceUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.OptionalBinder;
 
-/// Binds the tools that came from the Stroom MCP server, alongside the built-in ones (see
+/// Binds the build tools, alongside the built-in ones (see
 /// [stroom.ai.impl.tools.BuiltInToolsModule]): they are offered in the chat and over `/mcp` alike. Add a new
 /// [StroomTool] and a single `.addBinding(...)` line here.
 ///
 /// It also binds what the build tools share ([WriteGuard], [BuildRecords], [Consent], [BuildPlan]): what they know
 /// of a build ([BuildFacts], read from Stroom by [StroomBuildFacts]), sample profiling ([SampleProfiling], bound to
-/// the ported profiler), and what read_document (stroom-ai-impl) gives of an index doc and an XSLT
+/// the sample profiler), and what read_document (stroom-ai-impl) gives of an index doc and an XSLT
 /// ([DocumentAnalysesImpl]).
-public class PortedToolsModule extends AbstractModule {
+public class BuildToolsModule extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -91,7 +91,7 @@ public class PortedToolsModule extends AbstractModule {
         bind(BuildFacts.class).to(StroomBuildFacts.class);
         OptionalBinder.newOptionalBinder(binder(), SampleProfiling.class)
                 .setDefault().to(SampleProfiling.Profiled.class);
-        // What read_document (stroom-ai-impl) gives of an index doc and an XSLT from the ported helpers.
+        // What read_document (stroom-ai-impl) gives of an index doc and an XSLT from the build tools' helpers.
         OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class)
                 .setBinding().to(DocumentAnalysesImpl.class);
     }

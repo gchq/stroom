@@ -105,9 +105,9 @@ class TestPipelineIndex {
 
     @Test
     void testContentIsSearchedWhileTheIndexHasNotBeenBuiltSoTheSearchStartsIt() {
-        // As the Stroom MCP server's explorer content search: Stroom's findInContent starts the index's first build
-        // (and waits a moment for it). Seen in e2e_cef: asked only once the index was ready, draft_cef_mapping never
-        // found an XSLT writing CEF on a node where nothing else had started the index.
+        // Stroom's findInContent starts the index's first build (and waits a moment for it). Seen in TestE2eCef:
+        // asked only once the index was ready, draft_cef_mapping never found an XSLT writing CEF on a node where
+        // nothing else had started the index.
         final DocRef cefXslt = new DocRef(XsltDoc.TYPE, "cef", "Vault CEF");
         final ContentIndex contentIndex = Mockito.mock(ContentIndex.class);
         Mockito.when(contentIndex.isReady()).thenReturn(false);
@@ -120,8 +120,8 @@ class TestPipelineIndex {
 
     @Test
     void testContentStillBeingIndexedFindsNothing() {
-        // Stroom answers "The content is currently being indexed (17% complete)" until the build is done: the
-        // Stroom MCP server's draft went on without the XSLTs it would list.
+        // Stroom answers "The content is currently being indexed (17% complete)" until the build is done: nothing is
+        // found, and a draft goes on without the XSLTs it would list.
         final ContentIndex contentIndex = Mockito.mock(ContentIndex.class);
         Mockito.when(contentIndex.findInContent(any())).thenThrow(new RuntimeException(
                 "The content is currently being indexed (17% complete)."));

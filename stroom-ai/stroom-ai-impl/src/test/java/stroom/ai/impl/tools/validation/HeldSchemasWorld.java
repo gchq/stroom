@@ -47,7 +47,7 @@ import javax.xml.validation.SchemaFactory;
 /// does.
 public final class HeldSchemasWorld {
 
-    /// The event-logging 4.1.0 XSD (the Stroom MCP server's test fixture).
+    /// The event-logging 4.1.0 XSD (a test fixture).
     public static final String XSD_4_1_0 = resource("event-logging-v4.1.0.xsd");
 
     private final XmlSchemaStore store = Mockito.mock(XmlSchemaStore.class);

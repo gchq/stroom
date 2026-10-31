@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 
-/// What processing with a pipeline writes, read from its elements (the Stroom MCP server's `output_stream_type`,
-/// `_writes_output`, `_sends_to_kafka` and `_is_indexing`).
+/// What processing with a pipeline writes, read from its elements: the output stream type, or none for an indexing
+/// or Kafka pipeline.
 class TestPipelineOutputs {
 
     private final PipelineService pipelineService = PipelineLayers.service();

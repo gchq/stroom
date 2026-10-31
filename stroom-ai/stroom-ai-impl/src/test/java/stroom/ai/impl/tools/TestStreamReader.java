@@ -162,7 +162,7 @@ class TestStreamReader {
 
     @Test
     void theHeadOfAStreamStroomWontShowAsTextIsReadThroughItsBytesAndCut() {
-        // As the Stroom MCP server's read_head read such a stream through its HEX view: the head is the start of
+        // Read through its bytes, as Stroom won't show it as text: the head is the start of
         // the stream decoded as a pipeline decodes it, said to be cut, and what was replaced is remembered.
         world.addRaw(9, "");
         final ByteArrayOutputStream lines = new ByteArrayOutputStream();

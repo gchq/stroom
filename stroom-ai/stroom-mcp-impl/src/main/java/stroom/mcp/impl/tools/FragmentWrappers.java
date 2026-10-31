@@ -39,14 +39,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// What this environment reads XML fragments with: its own XML_FRAGMENT text converters, and the event-logging
-/// version an `<Events>` wrapper is written in (the Stroom MCP server's `tools/translation.py`
-/// `fragment_wrappers`, and the version `with_fragment_setup` reads through `chosen_or_latest`).
+/// What this environment reads XML fragments with: its own XML_FRAGMENT text converters, and the event-logging version
+/// an `<Events>` wrapper is written in (the build's chosen version, else the newest held).
 class FragmentWrappers {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FragmentWrappers.class);
 
-    /// The most text converters looked at, as the Stroom MCP server's search asked for.
+    /// The most text converters looked at.
     static final int LIMIT = 100;
 
     private final Provider<TextConverterStore> textConverterStoreProvider;

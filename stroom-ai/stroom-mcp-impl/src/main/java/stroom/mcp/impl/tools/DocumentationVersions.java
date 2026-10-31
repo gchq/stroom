@@ -16,7 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.shared.NullSafe;
 
 import java.time.Instant;
@@ -33,9 +33,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/// The version control block at the end of a pipeline's documentation (the Stroom MCP server's
-/// `utils/versionlog.py`): one row per released version, numbered, dated, with who made it (and whether through the
-/// agent), what changed and why, and the code it describes.
+/// The version control block at the end of a pipeline's documentation: one row per released version, numbered, dated,
+/// with who made it (and whether through the agent), what changed and why, and the code it describes.
 ///
 /// Asked for by the user: changes such as event types found only once a whole feed was processed, and the rules
 /// added for them, are recorded with the documentation they changed; and one row for a build, written when it is
@@ -45,8 +44,7 @@ import java.util.stream.Collectors;
 /// done). A doc written before this carries a bullet change log (`## Change log`, `- date: change`): its lines
 /// become the first rows.
 ///
-/// A row is a map, as the Python's dicts: `version`, `date`, `by`, `change` and `code`; a pending change has the
-/// same keys but `version`.
+/// A row is a map: `version`, `date`, `by`, `change` and `code`; a pending change has the same keys but `version`.
 final class DocumentationVersions {
 
     /// The block's heading.
@@ -117,7 +115,7 @@ final class DocumentationVersions {
             return List.of();
         }
         try {
-            final Object read = PyJson.loads(found.group(1).replace("- -", "--"));
+            final Object read = ToolJson.loads(found.group(1).replace("- -", "--"));
             final List<Map<String, String>> entries = new ArrayList<>();
             if (read instanceof final List<?> list) {
                 for (final Object item : list) {
@@ -240,8 +238,8 @@ final class DocumentationVersions {
         return row;
     }
 
-    // A row's changes: one as it is; several a bullet each, a line each (not in the Stroom MCP server, which ran
-    // them together with "; "; asked for by the user: seen, seven rewrites of a doc as one run-on sentence).
+    // A row's changes: one as it is; several a bullet each, a line each (asked for by the user: seen, seven rewrites of
+    // a doc run together with "; " as one run-on sentence).
     private static String changes(final List<String> changes) {
         if (changes.size() == 1) {
             return changes.getFirst();
@@ -270,6 +268,6 @@ final class DocumentationVersions {
     private static String pendingComment(final List<Map<String, String>> entries) {
         return entries.isEmpty()
                 ? ""
-                : "<!-- stroom-mcp pending changes " + PyJson.dumps(entries).replace("--", "- -") + " -->\n";
+                : "<!-- stroom-mcp pending changes " + ToolJson.dumps(entries).replace("--", "- -") + " -->\n";
     }
 }

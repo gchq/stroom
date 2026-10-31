@@ -19,7 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.draft.LocalCheck.QualifiedIds;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class TestDomainSplits {
 
     @SuppressWarnings("unchecked")
     private static final TranslationMapping MAPPING = TranslationMapping.fromJson(
-            (Map<String, Object>) PyJson.loads("""
+            (Map<String, Object>) ToolJson.loads("""
             {"input": "json",
              "common": [{"path": "EventSource/User/Id", "field": "by_user"},
                         {"path": "EventSource/System/Name", "value": "Acme"}],

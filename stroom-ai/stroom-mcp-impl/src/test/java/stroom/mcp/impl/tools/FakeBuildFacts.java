@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-/// What a build holds, as the plan's tests set it (the Stroom MCP server's tests patched each of these).
+/// What a build holds, as the plan's tests set it.
 final class FakeBuildFacts implements BuildFacts {
 
     List<Map<String, Object>> docs = new ArrayList<>();

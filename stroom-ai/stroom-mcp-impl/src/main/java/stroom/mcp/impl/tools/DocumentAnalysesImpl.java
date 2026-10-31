@@ -29,11 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// The parts of the Stroom MCP server's `describe_document` that `read_document` (`stroom-ai-impl`) gives from the
-/// ported tools' helpers: an index doc's survey ([IndexSurveys]) and an XSLT's lost mapping ([XsltSaves]).
+/// What `read_document` (`stroom-ai-impl`) gives from the build tools' helpers: an index doc's survey ([IndexSurveys])
+/// and an XSLT's lost mapping ([XsltSaves]).
 class DocumentAnalysesImpl implements DocumentAnalyses {
 
-    /// The most documents the survey samples, as describe_document's did.
+    /// The most documents the survey samples.
     static final int SURVEY_DOCUMENTS = 100;
 
     private final Provider<IndexSurveys> indexSurveys;
@@ -74,7 +74,7 @@ class DocumentAnalysesImpl implements DocumentAnalyses {
         return xsltSaves.get().lostMapping(xslt, description);
     }
 
-    // Python's bool(plan): a plan that is there and not empty.
+    // A plan that is there and not empty.
     private static boolean hasPlan(final Object plan) {
         if (plan instanceof final Map<?, ?> map) {
             return !map.isEmpty();

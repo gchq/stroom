@@ -73,9 +73,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// `survey_feed` - samples a feed's streams spread over its lifetime and groups their records into shapes (kinds of
-/// event), keeping the survey in a build's survey doc when given a build (the Stroom MCP server's
-/// `tools/sampling.py` `survey_feed`). It reads streams as the user, and writes only the survey doc, through
-/// [WriteGuard].
+/// event), keeping the survey in a build's survey doc when given a build. It reads streams as the user, and writes only
+/// the survey doc, through [WriteGuard].
 ///
 /// It is heavy (a run slot over `/mcp`): it stops between streams when its thread is interrupted, and at the
 /// session's time limit for a call it stops reading and returns what it has read, for the next call to carry on
@@ -625,7 +624,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                        .anyMatch(value -> value instanceof final String text && text.indexOf('\n') >= 0);
     }
 
-    // The call's result, as the Stroom MCP server gave it.
+    // The call's result.
     private Map<String, Object> result(final Outcome outcome,
                                        final Reading reading,
                                        final Shapes shapes,
@@ -883,7 +882,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return String.valueOf(shape.get("signature"));
     }
 
-    // The first characters of a text, counted as Python counts them (code points).
+    // The first characters of a text, counted in code points (a character outside the BMP is one).
     private static String head(final String text, final int chars) {
         return text.codePointCount(0, text.length()) <= chars
                 ? text

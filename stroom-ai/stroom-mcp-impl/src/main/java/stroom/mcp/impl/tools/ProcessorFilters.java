@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/// The processor filters the ported tools read, as the user: what each filter's pipeline reads, by its feeds.
+/// The processor filters the build tools read, as the user: what each filter's pipeline reads, by its feeds.
 ///
 /// Stroom shows processor filters only to a user with the Manage Processors permission
 /// ([ProcessorFilterService] refuses anyone else), and only for pipelines the user can view; so do these.

@@ -207,8 +207,8 @@ public final class MergedPipeline {
                 removalsOf(lastData), null);
     }
 
-    // What the pipeline's own layer removes from its template, by section, as the Stroom MCP server gave it: only
-    // the sections it removes anything from.
+    // What the pipeline's own layer removes from its template, by section: only the sections it removes anything
+    // from.
     private static Map<String, List<Map<String, Object>>> removalsOf(final PipelineData data) {
         final Map<String, List<Map<String, Object>>> removals = new LinkedHashMap<>();
         if (data == null) {
@@ -251,7 +251,7 @@ public final class MergedPipeline {
         return map;
     }
 
-    // A reference loader as the Stroom MCP server gave it: element, name, pipeline, feed and stream_type.
+    // A reference loader: element, name, pipeline, feed and stream_type.
     private static Map<String, Object> reference(final PipelineReference reference) {
         return entry("element", reference.getElement(), "name", reference.getName(),
                 "pipeline", docRef(reference.getPipeline()), "feed", docRef(reference.getFeed()),
@@ -320,7 +320,7 @@ public final class MergedPipeline {
         return docs;
     }
 
-    /// @return The XSLTs and text converters the pipeline runs, as the Stroom MCP server gave them: each with
+    /// @return The XSLTs and text converters the pipeline runs: each with
     /// `element`, `element_type`, `doc` (`type`, `uuid`, `name`), `set_by` (the pipeline whose layer sets it) and
     /// `inherited_from_template`.
     public List<Map<String, Object>> translationDocMaps() {
@@ -346,7 +346,7 @@ public final class MergedPipeline {
         return ownRemovals;
     }
 
-    /// The pipeline as Stroom runs it, as the Stroom MCP server's `describe_pipeline` gave it: its template chain
+    /// The pipeline as Stroom runs it: its template chain
     /// (root first), the element chain in processing order, its elements and links, every property value and the
     /// layer that set it, its reference loaders, and what it removes from its template; with the elements it sets
     /// itself and the code it runs ([#translationDocMaps()]).
@@ -427,7 +427,7 @@ public final class MergedPipeline {
     }
 
     /// @param reference A reference loader.
-    /// @return It in words, as the Stroom MCP server gave it: `<feed> via <loader pipeline>`.
+    /// @return It in words: `<feed> via <loader pipeline>`.
     public static String describe(final PipelineReference reference) {
         return NullSafe.get(reference.getFeed(), DocRef::getName) + " via "
                + NullSafe.get(reference.getPipeline(), DocRef::getName);
@@ -489,8 +489,7 @@ public final class MergedPipeline {
     public record TranslationDoc(String element, String elementType, DocRef doc, String setBy,
                                  boolean inheritedFromTemplate) {
 
-        /// @return It as the Stroom MCP server gave it: `element`, `element_type`, `doc`, `set_by` and
-        /// `inherited_from_template`.
+        /// @return It as a map: `element`, `element_type`, `doc`, `set_by` and `inherited_from_template`.
         public Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("element", element);

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -30,32 +30,31 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The ported reader against the Stroom MCP server's own (`utils/xsltread.py`): `reader_cases.json` holds every
-/// read and rebuild the server's tests made (the XSLTs once each, in a table), with what each gave (a reading's
-/// digest; a rebuild's mapping, compact, and its lists); and, per golden XSLT of the generator, digests of what
-/// `read(code)`, `rebuild(code, None, None)` (the mapping lost) and `rebuild(code, mapping, code)` (kept) gave. Made by
-/// running the server's code (`make_reader.py`).
-class TestXsltReaderParity {
+/// The reader against its fixed results: `reader_cases.json` holds every read and rebuild of the reader's cases (the
+/// XSLTs once each, in a table), with what each must give (a reading's digest; a rebuild's mapping, compact, and its
+/// lists); and, per golden XSLT of the generator, digests of what reading it, rebuilding it with the mapping lost,
+/// and rebuilding it with the mapping kept must give. They pin the reader's established behaviour.
+class TestXsltReaderCases {
 
     private static final Map<String, Object> CASES = ReadingFixtures.json("reader_cases.json");
     private static final List<String> CODES = list(CASES.get("codes"));
 
     @TestFactory
-    Stream<DynamicTest> everyReadTheTestsMadeReadsAsThePythonOne() {
+    Stream<DynamicTest> everyRecordedReadGivesTheRecordedMapping() {
         final List<Map<String, Object>> reads = list(CASES.get("reads"));
         assertThat(reads).hasSizeGreaterThan(30);
         return IntStream.range(0, reads.size()).mapToObj(n -> {
             final Map<String, Object> c = reads.get(n);
             return DynamicTest.dynamicTest(n + " " + c.get("test"), () -> {
                 final XsltReading reading = XsltReader.read(code(c.get("code")));
-                assertThat(ReadingFixtures.digest(reading.toMap())).as(PyJson.dumps(reading.toMap()))
+                assertThat(ReadingFixtures.digest(reading.toMap())).as(ToolJson.dumps(reading.toMap()))
                         .isEqualTo(c.get("reading"));
             });
         });
     }
 
     @TestFactory
-    Stream<DynamicTest> everyRebuildTheTestsMadeRebuildsAsThePythonOne() {
+    Stream<DynamicTest> everyRecordedRebuildGivesTheRecordedXslt() {
         final List<Map<String, Object>> rebuilds = list(CASES.get("rebuilds"));
         assertThat(rebuilds).hasSizeGreaterThan(45);
         return IntStream.range(0, rebuilds.size()).mapToObj(n -> {
@@ -69,14 +68,14 @@ class TestXsltReaderParity {
                         : map(c.get("imported"));
                 final RebuiltMapping rebuilt = XsltReader.rebuild(code(c.get("code")), kept, code(c.get("kept_code")),
                         imported);
-                assertThat(PyJson.dumps(result(rebuilt, DumpMode.COMPACT), 1))
-                        .isEqualTo(PyJson.dumps(c.get("result"), 1));
+                assertThat(ToolJson.dumps(result(rebuilt, DumpMode.COMPACT), 1))
+                        .isEqualTo(ToolJson.dumps(c.get("result"), 1));
             });
         });
     }
 
     @TestFactory
-    Stream<DynamicTest> everyGoldenXsltReadsAndRebuildsAsThePythonOne() {
+    Stream<DynamicTest> everyGoldenXsltReadsAndRebuildsToItsGolden() {
         final Map<String, List<String>> golden = map(CASES.get("golden"));
         final List<Path> files = ReadingFixtures.golden(".xslt");
         assertThat(files).hasSize(golden.size());
@@ -87,16 +86,16 @@ class TestXsltReaderParity {
             final TranslationMapping mapping = TranslationMapping.parse(json.get("mapping"));
             final List<String> expected = golden.get(path.getFileName().toString());
             final Map<String, Object> reading = XsltReader.read(code).toMap();
-            assertThat(ReadingFixtures.digest(reading)).as("reading %s", PyJson.dumps(reading))
+            assertThat(ReadingFixtures.digest(reading)).as("reading %s", ToolJson.dumps(reading))
                     .isEqualTo(expected.get(0));
             final Map<String, Object> lost = result(XsltReader.rebuild(code, null, null), DumpMode.ALL);
-            assertThat(ReadingFixtures.digest(lost)).as("lost %s", PyJson.dumps(lost)).isEqualTo(expected.get(1));
+            assertThat(ReadingFixtures.digest(lost)).as("lost %s", ToolJson.dumps(lost)).isEqualTo(expected.get(1));
             final Map<String, Object> kept = result(XsltReader.rebuild(code, mapping, code), DumpMode.ALL);
-            assertThat(ReadingFixtures.digest(kept)).as("kept %s", PyJson.dumps(kept)).isEqualTo(expected.get(2));
+            assertThat(ReadingFixtures.digest(kept)).as("kept %s", ToolJson.dumps(kept)).isEqualTo(expected.get(2));
         }));
     }
 
-    // A rebuild as the Python fixtures write one: the mapping (dumped so), and its lists.
+    // A rebuild as the fixtures write one: the mapping (dumped so), and its lists.
     private static Map<String, Object> result(final RebuiltMapping rebuilt, final DumpMode mode) {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("mapping", rebuilt.mapping() == null

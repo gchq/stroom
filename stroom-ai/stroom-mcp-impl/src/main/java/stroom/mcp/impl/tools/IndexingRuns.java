@@ -59,9 +59,7 @@ import java.util.regex.Pattern;
 
 /// What indexing a build's sample needs of the index it goes into: the Lucene index an indexing pipeline writes to,
 /// whether the build may empty it, what the cluster admin drops first for Elasticsearch, and the small batch
-/// Elasticsearch indexing runs in while it is developed. Ported from the Stroom MCP server's
-/// `tools/processing_writes.py` (`lucene_index`, `_own_index`, `_writes_refused`, `drop_request`, `_fresh_index`,
-/// `_delete_index_shards` and `development_batch`), for the processing tools and promotion to share.
+/// Elasticsearch indexing runs in while it is developed, for the processing tools and promotion to share.
 ///
 /// A Lucene index's shards are deleted through Stroom's own index service ([IndexResource], as its Shards tab
 /// deletes them: the user needs the Manage Index Shards permission). Elasticsearch is never written to: dropping an
@@ -136,7 +134,7 @@ class IndexingRuns {
     }
 
     /// @param pipelineUuid A pipeline.
-    /// @return The Lucene index doc it writes to; empty for other pipelines (`lucene_index`).
+    /// @return The Lucene index doc it writes to; empty for other pipelines.
     /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
     Optional<DocRef> luceneIndex(final String pipelineUuid) {
         final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
@@ -156,7 +154,7 @@ class IndexingRuns {
 
     /// @param pipelineUuid A pipeline.
     /// @param index        The Lucene index it writes to.
-    /// @return Whether the index is the build's own and no other pipeline of the build writes to it (`_own_index`).
+    /// @return Whether the index is the build's own and no other pipeline of the build writes to it.
     boolean ownIndex(final String pipelineUuid, final DocRef index) {
         final Optional<String> build = guard.buildOf(index);
         if (build.isEmpty()) {
@@ -173,8 +171,8 @@ class IndexingRuns {
         return true;
     }
 
-    /// Elasticsearch's reason, when it refused every stream this pipeline's filters processed (each has an Error
-    /// stream saying so, and nothing else came of it): what it was sent is not in the index (`_writes_refused`).
+    /// Elasticsearch's reason, when it refused every stream this pipeline's filters processed (each has an Error stream
+    /// saying so, and nothing else came of it): what it was sent is not in the index.
     ///
     /// @param pipelineUuid A pipeline.
     /// @param filters      Its processor filters.
@@ -216,8 +214,8 @@ class IndexingRuns {
         return Optional.ofNullable(reason);
     }
 
-    /// The Dev Tools request dropping an Elasticsearch index: its data stream, as the agreed template makes it, or
-    /// the index (`drop_request`).
+    /// The Dev Tools request dropping an Elasticsearch index: its data stream, as the agreed template makes it, or the
+    /// index.
     ///
     /// @param pipeline  The indexing pipeline, with its agreed template.
     /// @param indexName The index.
@@ -240,11 +238,11 @@ class IndexingRuns {
                 : "DELETE " + indexName;
     }
 
-    /// What an index this pipeline already wrote to needs before it indexes again, and whether the tools empty it
-    /// once the user approves (`_fresh_index`). Seen in testing: the Events translation amended and its sample
-    /// processed again, indexing the new Events left the superseded Events' documents beside them. The whole index
-    /// is dropped and starts fresh (asked for by the user: simpler than deleting by stream, and no tracking of
-    /// superseded streams, which may have aged off anyway).
+    /// What an index this pipeline already wrote to needs before it indexes again, and whether the tools empty it once
+    /// the user approves. Seen in testing: the Events translation amended and its sample processed again, indexing the
+    /// new Events left the superseded Events' documents beside them. The whole index is dropped and starts fresh (asked
+    /// for by the user: simpler than deleting by stream, and no tracking of superseded streams, which may have aged off
+    /// anyway).
     ///
     /// @param pipeline    The indexing pipeline.
     /// @param destination Its Elasticsearch destination, or null.
@@ -292,8 +290,8 @@ class IndexingRuns {
         return new FreshIndex(details, false);
     }
 
-    /// Deletes a Lucene index's shards, and with them every document in it (`_delete_index_shards`), through
-    /// Stroom's own index service, node by node as its Shards tab does.
+    /// Deletes a Lucene index's shards, and with them every document in it, through Stroom's own index service, node by
+    /// node as its Shards tab does.
     ///
     /// @param indexUuid The index.
     /// @return How many documents the shards held.
@@ -317,9 +315,8 @@ class IndexingRuns {
         return shards.stream().mapToLong(IndexShard::getDocumentCount).sum();
     }
 
-    /// Sets the workspace Elasticsearch indexing pipeline's own batchSize to [#DEV_BATCH_SIZE] (small), or removes
-    /// it so the template's (or Stroom's) default applies again (`development_batch`). Production pipelines are
-    /// left alone.
+    /// Sets the workspace Elasticsearch indexing pipeline's own batchSize to [#DEV_BATCH_SIZE] (small), or removes it
+    /// so the template's (or Stroom's) default applies again. Production pipelines are left alone.
     ///
     /// @param pipelineUuid A pipeline.
     /// @param small        True for the development batch, false for the default.
@@ -367,7 +364,8 @@ class IndexingRuns {
         return ids;
     }
 
-    // Whether a template's body makes a data stream, as Python's `'data_stream' in body` reads it.
+    // Whether a template's body makes a data stream: a map with a `data_stream` key, a list holding it, or text
+    // containing it.
     private static boolean holdsDataStream(final Object body) {
         if (body instanceof final Map<?, ?> map) {
             return map.containsKey("data_stream");

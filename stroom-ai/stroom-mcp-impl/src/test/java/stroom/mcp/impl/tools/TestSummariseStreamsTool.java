@@ -95,12 +95,12 @@ class TestSummariseStreamsTool {
     }
 
     private Map<String, Object> json(final String arguments) {
-        return PortedToolCalls.json(text(arguments));
+        return BuildToolCalls.json(text(arguments));
     }
 
     private String text(final String arguments) {
-        final ToolResult result = tool.execute(PortedToolCalls.call(SummariseStreamsTool.NAME, arguments),
-                PortedToolCalls.context());
+        final ToolResult result = tool.execute(BuildToolCalls.call(SummariseStreamsTool.NAME, arguments),
+                BuildToolCalls.context());
         return result.text();
     }
 }

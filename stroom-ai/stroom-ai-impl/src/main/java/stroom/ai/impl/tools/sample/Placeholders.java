@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -67,8 +67,8 @@ public final class Placeholders {
         final Map<String, Found> found = new LinkedHashMap<>();
         valuesByField.forEach((field, values) -> {
             final Map<String, Long> counts = values.stream()
-                    .filter(value -> value != null && !PyText.isBlank(value))
-                    .map(PyText::strip)
+                    .filter(value -> value != null && !ToolText.isBlank(value))
+                    .map(ToolText::strip)
                     .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
             final List<String> recurring = counts.entrySet().stream()
                     .filter(entry -> entry.getValue() >= MIN_RECORDS && !decided.contains(entry.getKey()))
@@ -77,7 +77,7 @@ public final class Placeholders {
             final String kind = kind(counts, recurring);
             for (final String value : recurring) {
                 final boolean known = isKnown(value);
-                final boolean misfit = kind != null && PyText.len(value) <= MAX_MISFIT_LENGTH
+                final boolean misfit = kind != null && ToolText.len(value) <= MAX_MISFIT_LENGTH
                                        && !kind.equals(kindOf(value));
                 if (known || misfit) {
                     final Found was = found.get(value);
@@ -103,7 +103,7 @@ public final class Placeholders {
     /// @param value A value.
     /// @return True if it is one of the usual stand-ins for none ([#KNOWN]).
     public static boolean isKnown(final String value) {
-        return value != null && KNOWN.contains(PyText.strip(value).toLowerCase(Locale.ROOT));
+        return value != null && KNOWN.contains(ToolText.strip(value).toLowerCase(Locale.ROOT));
     }
 
     // The kind nearly all the field's values are, or null. The recurring values not of a kind, which may be

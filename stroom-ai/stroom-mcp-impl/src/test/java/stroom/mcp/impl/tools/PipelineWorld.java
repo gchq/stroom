@@ -145,7 +145,7 @@ final class PipelineWorld {
         if (result.isError()) {
             throw new AssertionError("The tool refused: " + result.text());
         }
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 
     private PipelineDoc pipeline(final String uuid, final String name, final DocRef parent,

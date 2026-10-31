@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /// what it writes; and an input a template reads at least `variable_min_reads` times read once into a variable,
 /// declared just before its first use (`variables`). The translation generator's own helpers are used
 /// ([XsltNames], [XsltGenerator#justInTime(XmlElement)], [XsltComments]), so the three kinds of XSLT can't drift
-/// apart. Ported from the Stroom MCP server's `utils/xsltstyle.py`.
+/// apart.
 public final class StyledXslt {
 
     /// The XML declaration the indexing and CEF XSLTs start with.
@@ -56,10 +56,10 @@ public final class StyledXslt {
         // Comments too: whitespace left after one stops the layout around it.
         for (final XmlNode node : root.iter()) {
             if (node instanceof final XmlElement element && !element.is(XSL, "text") && element.text() != null
-                && PyText.isBlank(element.text()) && !element.children().isEmpty()) {
+                && ToolText.isBlank(element.text()) && !element.children().isEmpty()) {
                 element.setText(null);
             }
-            if (node.tail() != null && PyText.isBlank(node.tail())) {
+            if (node.tail() != null && ToolText.isBlank(node.tail())) {
                 node.setTail(null);
             }
         }

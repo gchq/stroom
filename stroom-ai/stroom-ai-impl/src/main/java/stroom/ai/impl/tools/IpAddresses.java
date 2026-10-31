@@ -19,9 +19,9 @@ package stroom.ai.impl.tools;
 import java.util.ArrayList;
 import java.util.List;
 
-/// IP addresses as Python's `ipaddress.ip_address` reads them (Python 3.12): an IPv4 address of four decimal
-/// octets with no leading zeros, or an IPv6 address (at most one `::`, an IPv4 address as its last part, an optional
-/// `%scope`). Elasticsearch's ip type takes what it takes; the Stroom MCP server checked documents this way.
+/// IP addresses as the tools check a document's values: an IPv4 address of four decimal octets with no leading
+/// zeros, or an IPv6 address (at most one `::`, an IPv4 address as its last part, an optional `%scope`).
+/// Elasticsearch's ip type takes what it takes.
 public final class IpAddresses {
 
     private static final int HEXTETS = 8;

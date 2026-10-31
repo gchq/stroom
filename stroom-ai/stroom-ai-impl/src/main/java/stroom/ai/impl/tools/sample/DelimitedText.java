@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,15 +26,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Delimited text read as Python's `csv` module reads it, which the profile of a sample ported from the Stroom MCP
-/// server relies on: `csv.reader` (a quote only opens a quoted value at its start, a doubled quote inside one is a
-/// quote, a value may run over lines), and `csv.Sniffer`, which guesses the delimiter and whether the first row is a
-/// header.
+/// Delimited text read for the profile of a sample: the reader (a quote only opens a quoted value at its start, a
+/// doubled quote inside one is a quote, a value may run over lines), and the sniffer, which guesses the delimiter
+/// and whether the first row is a header.
 ///
-/// Unlike Python's reader, a field may be of any length: `csv.field_size_limit()` (131,072 characters) is not kept.
-/// The text read is already cut to the caller's budget, and Stroom's Data Splitter reads longer fields, so the limit
-/// only lost records (seen in testing: one 250,000-character URL query stopped a whole stream part being surveyed).
-final class PyCsv {
+/// A field may be of any length: there is no field size limit (such as 131,072 characters). The text read is
+/// already cut to the caller's budget, and Stroom's Data Splitter reads longer fields, so a limit only lost records
+/// (seen in testing: one 250,000-character URL query stopped a whole stream part being surveyed).
+final class DelimitedText {
 
     /// The dialect `csv.reader` reads with unless told otherwise.
     static final Dialect EXCEL = new Dialect(',', '"', true, false);
@@ -45,19 +44,19 @@ final class PyCsv {
     private static final String QUOTED_BODY = "(?:\\k<quote>{2}|(?!\\k<quote>).)*+";
     private static final List<Pattern> QUOTE_AND_DELIMITER = List.of(
             // ,"...",
-            PyText.re("(?<delim>[^\\w\\n\"'])(?<space> ?)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>\\k<delim>",
+            ToolText.re("(?<delim>[^\\w\\n\"'])(?<space> ?)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>\\k<delim>",
                     Pattern.DOTALL | Pattern.MULTILINE),
             //  "...",
-            PyText.re("(?:^|\\n)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?<delim>[^\\w\\n\"'])(?<space> ?)",
+            ToolText.re("(?:^|\\n)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?<delim>[^\\w\\n\"'])(?<space> ?)",
                     Pattern.DOTALL | Pattern.MULTILINE),
             // ,"..."
-            PyText.re("(?<delim>[^\\w\\n\"'])(?<space> ?)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?:$|\\n)",
+            ToolText.re("(?<delim>[^\\w\\n\"'])(?<space> ?)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?:$|\\n)",
                     Pattern.DOTALL | Pattern.MULTILINE),
             //  "..." (no delim, no space)
-            PyText.re("(?:^|\\n)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?:$|\\n)",
+            ToolText.re("(?:^|\\n)(?<quote>[\"'])" + QUOTED_BODY + "\\k<quote>(?:$|\\n)",
                     Pattern.DOTALL | Pattern.MULTILINE));
 
-    private PyCsv() {
+    private DelimitedText() {
         // Static methods only.
     }
 
@@ -66,7 +65,7 @@ final class PyCsv {
     /// @param text    The text.
     /// @param dialect How it is delimited and quoted.
     /// @return Its rows (an empty line is an empty row).
-    /// @throws CsvException where Python's reader raises `csv.Error`.
+    /// @throws CsvException if a line break is in an unquoted field.
     static List<List<String>> read(final String text, final Dialect dialect) {
         return new Reader(dialect).read(text);
     }
@@ -155,7 +154,7 @@ final class PyCsv {
         boolean doubleQuote = false;
         if (!delim.isEmpty()) {
             final String quotedDelim = Pattern.quote(delim);
-            final Pattern doubled = PyText.re("(?:(?<=" + quotedDelim + ")|^)" + (" ".equals(delim)
+            final Pattern doubled = ToolText.re("(?:(?<=" + quotedDelim + ")|^)" + (" ".equals(delim)
                     ? ""
                     : " *+") + quoteChar + "((?:" + quoteChar + quoteChar + "|[^" + quoteChar + "]++)*+)" + quoteChar
                     + "(?:" + quotedDelim + "|$)", Pattern.MULTILINE);
@@ -278,7 +277,7 @@ final class PyCsv {
     private static Guess guessed(final char delim, final List<String> data, final String quote,
                                  final boolean doubleQuote) {
         final String first = data.getFirst();
-        final boolean skipInitialSpace = count(first, delim) == PyText.count(first, delim + " ");
+        final boolean skipInitialSpace = count(first, delim) == ToolText.count(first, delim + " ");
         return new Guess(quote, doubleQuote, String.valueOf(delim), skipInitialSpace);
     }
 
@@ -323,7 +322,7 @@ final class PyCsv {
             for (final Integer col : new ArrayList<>(columnTypes.keySet())) {
                 final Object thisType = isComplex(row.get(col))
                         ? COMPLEX
-                        : (Object) PyText.len(row.get(col));
+                        : (Object) ToolText.len(row.get(col));
                 final Object current = columnTypes.get(col);
                 if (!thisType.equals(current)) {
                     if (current == null) {
@@ -339,11 +338,11 @@ final class PyCsv {
         for (final Map.Entry<Integer, Object> entry : columnTypes.entrySet()) {
             final String cell = header.get(entry.getKey());
             if (entry.getValue() instanceof final Integer length) {
-                hasHeader += PyText.len(cell) != length
+                hasHeader += ToolText.len(cell) != length
                         ? 1
                         : -1;
             } else if (entry.getValue() == null) {
-                // Python calls None(cell): a TypeError, counted as a header.
+                // A column no row typed: counted as a header.
                 hasHeader++;
             } else {
                 hasHeader += isComplex(cell)
@@ -354,7 +353,7 @@ final class PyCsv {
         return hasHeader > 0;
     }
 
-    /// @return True if Python's `complex(text)` reads the text: a number such as `1`, `-2.5e3`, `1_000`, `inf`,
+    /// @return True if the text is a number, complex numbers included: such as `1`, `-2.5e3`, `1_000`, `inf`,
     /// `nan`, `3j` or `(1+2j)`, with any whitespace around it.
     static boolean isComplex(final String text) {
         String s = text;
@@ -367,12 +366,12 @@ final class PyCsv {
             }
             s = s.replace("_", "");
         }
-        s = PyText.strip(s);
+        s = ToolText.strip(s);
         if (s.startsWith("(")) {
             if (!s.endsWith(")") || s.length() < 2) {
                 return false;
             }
-            s = PyText.strip(s.substring(1, s.length() - 1));
+            s = ToolText.strip(s.substring(1, s.length() - 1));
         }
         if (s.isEmpty()) {
             return false;
@@ -473,10 +472,10 @@ final class PyCsv {
         }
     }
 
-    /// What Python's `csv.Error` says.
+    /// Delimited text that can't be read, or whose delimiter can't be told.
     static final class CsvException extends RuntimeException {
 
-        /// @param message What Python's reader or sniffer says.
+        /// @param message What the reader or sniffer says.
         CsvException(final String message) {
             super(message);
         }
@@ -486,7 +485,7 @@ final class PyCsv {
 
     }
 
-    // The state machine of CPython's _csv reader, for the default dialect's settings: no escape character, minimal
+    // The reader's state machine, for the default dialect's settings: no escape character, minimal
     // quoting, not strict.
     private static final class Reader {
 

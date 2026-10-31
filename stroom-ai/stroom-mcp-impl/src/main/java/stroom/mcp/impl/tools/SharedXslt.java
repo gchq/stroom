@@ -236,7 +236,7 @@ final class SharedXslt {
         return templates;
     }
 
-    /// The JSON values a shared indexing template writes (the Stroom MCP server's `json_values`).
+    /// The JSON values a shared indexing template writes.
     ///
     /// @param xslt     A shared XSLT's text.
     /// @param template A named template in it.

@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -34,9 +34,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The survey record: a Documentation document per surveyed feed, readable by people and by survey_feed (the
-/// Stroom MCP server's `utils/surveydoc.py`, whose document format this keeps exactly, so a record the Python
-/// server wrote reads here and the other way round).
+/// The survey record: a Documentation document per surveyed feed, readable by people and by survey_feed. Its
+/// format is what is stored, so it changes only in ways a survey document already kept still reads.
 ///
 /// The document shows which kinds of event the feed holds (counts, shares, streams, examples with where they are),
 /// and ends with a fenced JSON block that survey_feed reads back to carry on where the last survey stopped: which
@@ -50,13 +49,13 @@ import java.util.regex.Pattern;
 public final class SurveyDoc {
 
     /// The fenced block holding the state.
-    public static final Pattern STATE_FENCE = PyText.re("```json survey-state\\n(.*?)\\n```", Pattern.DOTALL);
+    public static final Pattern STATE_FENCE = ToolText.re("```json survey-state\\n(.*?)\\n```", Pattern.DOTALL);
     /// The most characters of an example record kept.
     public static final int MAX_EXAMPLE_CHARS = 4000;
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
-    private static final Pattern WHITESPACE = PyText.re("\\s+");
+    private static final Pattern WHITESPACE = ToolText.re("\\s+");
 
     private SurveyDoc() {
         // Static methods only.
@@ -85,11 +84,11 @@ public final class SurveyDoc {
             return null;
         }
         try {
-            final Object state = PyJson.loads(match.group(1));
+            final Object state = ToolJson.loads(match.group(1));
             return state instanceof Map
                     ? (Map<String, Object>) state
                     : null;
-        } catch (final PyJson.JsonDecodeException e) {
+        } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
     }
@@ -151,7 +150,7 @@ public final class SurveyDoc {
         }
         handling.forEach((signature, value) -> {
             if (value instanceof final Map<?, ?> entry && "drop".equals(entry.get("handling"))) {
-                out.put((String) signature, PyText.str(entry.get("reason")));
+                out.put((String) signature, ToolText.str(entry.get("reason")));
             }
         });
         return out;
@@ -229,7 +228,7 @@ public final class SurveyDoc {
                     break;
                 }
                 if (!texts.contains(example.get("text"))) {
-                    examples.add(SampleProfiler.map("text", PyText.head((String) example.get("text"),
+                    examples.add(SampleProfiler.map("text", ToolText.head((String) example.get("text"),
                             MAX_EXAMPLE_CHARS), "location", example.get("location")));
                 }
             }
@@ -246,10 +245,10 @@ public final class SurveyDoc {
     }
 
     private static String cell(final String text, final int width) {
-        final String flat = PyText.sub(WHITESPACE, " ", text).replace("|", "\\|");
-        return PyText.len(flat) <= width
+        final String flat = ToolText.sub(WHITESPACE, " ", text).replace("|", "\\|");
+        return ToolText.len(flat) <= width
                 ? flat
-                : PyText.head(flat, width - 1) + "…";
+                : ToolText.head(flat, width - 1) + "…";
     }
 
     /// Writes the survey document.
@@ -270,13 +269,13 @@ public final class SurveyDoc {
                 ? Map.of()
                 : surveys.getLast();
         final long records = surveys.stream().mapToLong(s -> ((Number) s.get("records")).longValue()).sum();
-        final String feed = PyText.str(state.get("feed"));
+        final String feed = ToolText.str(state.get("feed"));
         final List<String> lines = new ArrayList<>(List.of("# " + docName(feed), "",
-                "Kinds of event found in feed **" + feed + "** (" + PyText.str(state.get("format")) + "): "
+                "Kinds of event found in feed **" + feed + "** (" + ToolText.str(state.get("format")) + "): "
                 + shapes.size() + " from " + records + " records in " + ((List<?>) state.get("streams_read")).size()
                 + " streams"
                 + (span != null
-                        ? ", created " + PyText.str(span.get("oldest")) + " to " + PyText.str(span.get("newest"))
+                        ? ", created " + ToolText.str(span.get("oldest")) + " to " + ToolText.str(span.get("newest"))
                         : "") + ". "
                 + (JsonValues.truthy(state.get("saturated"))
                         ? "The last survey found nothing new: the feed looks covered."
@@ -284,7 +283,8 @@ public final class SurveyDoc {
                 + (drop.isEmpty()
                         ? ""
                         : " " + drop.size() + " kind(s) are left untranslated by choice (Handling)."), "",
-                "Last survey: " + PyText.str(last.get("at")) + ". Examples are the feed's own records; where each one "
+                "Last survey: " + ToolText.str(last.get("at")) + ". Examples are the feed's own records; where each "
+                + "one "
                 + "is (stream:part:record) is given so it can be stepped. Streams expire under retention, so older "
                 + "locations may be gone.", "",
                 "## Kinds of event", "",
@@ -297,12 +297,12 @@ public final class SurveyDoc {
             final List<Map<String, Object>> examples = (List<Map<String, Object>>) shape.get("examples");
             final String example = examples.isEmpty()
                     ? ""
-                    : PyText.str(examples.getFirst().get("text"));
+                    : ToolText.str(examples.getFirst().get("text"));
             final String handling = drop.containsKey(signature)
                     ? "left untranslated: " + cell(drop.get(signature), 60)
                     : "translate";
             lines.add("| " + n + " | " + cell(signature, 90) + " | " + count(shape) + " | "
-                      + PyText.floatRepr(PyText.round(100.0 * count(shape) / total, 1)) + "% | "
+                      + ToolText.floatRepr(ToolText.round(100.0 * count(shape) / total, 1)) + "% | "
                       + ((List<?>) shape.get("streams")).size() + " | " + handling + " | " + cell(example, 100) + " |");
             n++;
         }
@@ -314,10 +314,10 @@ public final class SurveyDoc {
             final Map<String, Object> shape = (Map<String, Object>) entry.getValue();
             for (final Map<String, Object> example : (List<Map<String, Object>>) shape.get("examples")) {
                 final Map<String, Object> location = (Map<String, Object>) example.get("location");
-                lines.addAll(List.of("Stream " + PyText.str(location.get("stream")) + ", part "
-                                     + PyText.str(location.get("part")) + ", record "
-                                     + PyText.str(location.get("record")) + ":", "", "```",
-                        PyText.str(example.get("text")), "```", ""));
+                lines.addAll(List.of("Stream " + ToolText.str(location.get("stream")) + ", part "
+                                     + ToolText.str(location.get("part")) + ", record "
+                                     + ToolText.str(location.get("record")) + ":", "", "```",
+                        ToolText.str(example.get("text")), "```", ""));
             }
             n++;
         }
@@ -325,13 +325,13 @@ public final class SurveyDoc {
                 "| --- | --- | --- | --- |"));
         for (final Map<String, Object> survey : surveys) {
             final List<String> streams = new ArrayList<>();
-            ((List<?>) survey.get("streams")).forEach(stream -> streams.add(PyText.str(stream)));
-            lines.add("| " + PyText.str(survey.get("at")) + " | " + String.join(", ", streams) + " | "
-                      + PyText.str(survey.get("records")) + " | " + PyText.str(survey.get("new_shapes")) + " |");
+            ((List<?>) survey.get("streams")).forEach(stream -> streams.add(ToolText.str(stream)));
+            lines.add("| " + ToolText.str(survey.get("at")) + " | " + String.join(", ", streams) + " | "
+                      + ToolText.str(survey.get("records")) + " | " + ToolText.str(survey.get("new_shapes")) + " |");
         }
         lines.addAll(List.of("", "## Survey state", "",
                 "Read by survey_feed to carry on where the last survey stopped; do not edit.", "",
-                "```json survey-state", PyJson.dumps(state, 1), "```", ""));
+                "```json survey-state", ToolJson.dumps(state, 1), "```", ""));
         return String.join("\n", lines);
     }
 

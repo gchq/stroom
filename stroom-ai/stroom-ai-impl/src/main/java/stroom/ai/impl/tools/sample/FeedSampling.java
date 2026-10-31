@@ -35,10 +35,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/// The sampling of an existing feed to learn which kinds of event it holds, as survey_feed and set_shape_handling
-/// do it (the helpers of the Stroom MCP server's `tools/sampling.py`): streams picked spread over the feed's
-/// lifetime, what reading a stream through its bytes replaced, the survey's hint, and the keeping of a survey in a
-/// build's survey document.
+/// The sampling of an existing feed to learn which kinds of event it holds, as survey_feed and set_shape_handling do
+/// it: streams picked spread over the feed's lifetime, what reading a stream through its bytes replaced, the survey's
+/// hint, and the keeping of a survey in a build's survey document.
 public final class FeedSampling {
 
     /// Streams a survey call reads unless the user says otherwise.

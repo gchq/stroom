@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// The names most like one given, as Python's `difflib.get_close_matches` finds them: the Stroom MCP server's
-/// "did you mean" suggestions (a stroom: function, an event-logging element) are worded around them.
+/// The names most like one given, by the gestalt pattern matching of Python's `difflib.get_close_matches`, for the
+/// "did you mean" suggestions (a stroom: function, an event-logging element). The scoring is kept exactly, as the
+/// suggestions tests and fixtures pin depend on it.
 public final class CloseMatches {
 
     /// difflib's default number of matches.

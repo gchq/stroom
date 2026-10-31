@@ -29,8 +29,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_source_docs.py`: the user's vendor and event reference documentation, kept in
-/// Stroom and used, driving the real tools. Every numbered part is covered:
+/// The user's vendor and event reference documentation, kept in Stroom and used, driving the real tools. Every numbered
+/// part is covered:
 ///
 /// 1. Documentation small enough to pass along: record_source_notes keeps it verbatim, the draft follows its
 ///    notes, the stepped events carry what it says, a contradicting mapping is reported, the documentation lists
@@ -41,8 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///    XSLT writing every record as Unknown is blocked, and the draft's mapping saved over it steps clean.
 ///
 /// A long Documentation doc read whole comes back as Stroom's read_document gives one (saved to the session's
-/// workspace, with its outline), where describe_document cut it short with its outline: the merge TOOLS.md
-/// describes.
+/// workspace, with its outline).
 @SuppressWarnings("unchecked")
 class TestE2eSourceDocs extends AbstractE2eTest {
 

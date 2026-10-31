@@ -24,7 +24,6 @@ import stroom.ai.impl.tools.InstructionRules;
 import stroom.ai.impl.tools.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -36,6 +35,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
@@ -54,10 +54,10 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.Placeholders;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.workspace.PatternTimeoutException;
@@ -81,11 +81,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// `build_translation_xslt` - writes the event-logging translation XSLT from a field mapping instead of by hand, and
-/// with build and name (or uuid) saves it with its mapping (the Stroom MCP server's `tools/generation.py`
-/// `build_translation_xslt`). The mapping is checked against the schema, compiled as Stroom compiles it, and checked
-/// against the sample; rules kept as Unknown are agreed with the user, as is splitting the domain off a user's Id
-/// whose values carry one ([DomainSplits]); an edit made by hand in Stroom since the tools saved the XSLT is kept
-/// ([HandEditGate]).
+/// with build and name (or uuid) saves it with its mapping. The mapping is checked against the schema, compiled as
+/// Stroom compiles it, and checked against the sample; rules kept as Unknown are agreed with the user, as is splitting
+/// the domain off a user's Id whose values carry one ([DomainSplits]); an edit made by hand in Stroom since the tools
+/// saved the XSLT is kept ([HandEditGate]).
 class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
     static final String NAME = "build_translation_xslt";
@@ -374,9 +373,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // Fast: what the schema says is wrong comes back before the sample is read and checked (seen: minutes
             // a call on a large sample, for a mapping that could not have generated anyway).
             b.result.put("warnings", MappingCompaction.grouped(TranslationBuilds.warnings(b.result)));
-            // Not in the Python server: without what each rule writes, which is for a mapping that generates, so the
-            // problems come back whole rather than in a file read in parts (seen: 20-70 KB results each round, and
-            // their problems fixed a part at a time: 18 rules, then 10, then 1).
+            // Without what each rule writes, which is for a mapping that generates, so the problems come back whole
+            // rather than in a file read in parts (seen in testing: 20-70 KB results each round, and their problems
+            // fixed a part at a time: 18 rules, then 10, then 1).
             b.result.remove("events");
             b.result.put("sample_check", "not run: fix the problems first");
             b.result.put("hint", TranslationBuilds.fixHint(request.uuid(), request.build(), request.name())
@@ -429,8 +428,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             Object changes = request.changes();
             if (changes instanceof final String text) {
                 try {
-                    changes = PyJson.loads(text);
-                } catch (final PyJson.JsonDecodeException e) {
+                    changes = ToolJson.loads(text);
+                } catch (final ToolJson.JsonDecodeException e) {
                     throw ToolArgs.notJson("changes", ToolArgs.where(e), "pass it as an object. "
                                                                          + MappingProblems.ESCAPING);
                 }
@@ -457,8 +456,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         if (given instanceof final String text) {
             try {
-                given = PyJson.loads(text);
-            } catch (final PyJson.JsonDecodeException e) {
+                given = ToolJson.loads(text);
+            } catch (final ToolJson.JsonDecodeException e) {
                 final String around = text.substring(Math.max(0, e.pos() - 30), Math.min(text.length(),
                         e.pos() + 30));
                 throw ToolArgs.notJson("mapping", ToolArgs.where(e) + ", around `" + around + "`",
@@ -514,7 +513,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         throw new ToolRefusal("mapping is not a translation mapping: " + String.join("; ", problems) + ". Fix these "
                               + "in the mapping you have; to start again, draft_translation_mapping "
                               + "(stream_ids=the sample streams) gives one." + (MappingProblems.structural(e)
-                ? " A whole mapping looks like: " + PyJson.dumps(MappingProblems.MAPPING_EXAMPLE)
+                ? " A whole mapping looks like: " + ToolJson.dumps(MappingProblems.MAPPING_EXAMPLE)
                 : ""));
     }
 
@@ -581,8 +580,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         if (!b.unknownKeys.isEmpty()) {
             TranslationBuilds.warnings(b.result).add("mapping keys ignored, as a mapping has no such key: "
-                                                     + PyText.list(b.unknownKeys) + " (it has "
-                                                     + PyText.list(MappingProblems.mappingKeys())
+                                                     + ToolText.list(b.unknownKeys) + " (it has "
+                                                     + ToolText.list(MappingProblems.mappingKeys())
                                                      + ")");
         }
     }
@@ -877,11 +876,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
-    // A user's Id whose sample values carry a domain (domain.com\sam.lee) is put to the user, before saving: split
-    // it, the account name in the Id and the domain in the Domain beside it, or keep it whole. Not in the Stroom MCP
-    // server, which told only the agent; asked for by the user (seen: SecretServer's Ids kept the domain). The
-    // choice is kept with the XSLT, so a field is asked about once (again only if it goes into other Ids); without
-    // forms the warning is left for the agent.
+    // A user's Id whose sample values carry a domain (domain.com\sam.lee) is put to the user, before saving: split it,
+    // the account name in the Id and the domain in the Domain beside it, or keep it whole. Asked for by the user, as
+    // telling only the agent let it through (seen: SecretServer's Ids kept the domain). The choice is kept with the
+    // XSLT, so a field is asked about once (again only if it goes into other Ids); without forms the warning is left
+    // for the agent.
     private boolean splitDomains(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
         if (b.qualified == null || b.qualified.isEmpty() || !ok(b)
@@ -935,11 +934,10 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return true;
     }
 
-    // Values in the sample that look like stand-ins for none ('-', 'N/A', ...) are put to the user, before saving,
-    // all in one form: leave each out (nil_values) or keep it as written. Not in the Stroom MCP server; asked for by
-    // the user (seen: W3C logs' '-' for a missing address went on into an Elasticsearch ip field, which refused the
-    // documents). The choices are kept with the XSLT, so a value is asked about once; without forms the warning is
-    // left for the agent.
+    // Values in the sample that look like stand-ins for none ('-', 'N/A', ...) are put to the user, before saving, all
+    // in one form: leave each out (nil_values) or keep it as written. Asked for by the user (seen: W3C logs' '-' for a
+    // missing address went on into an Elasticsearch ip field, which refused the documents). The choices are kept with
+    // the XSLT, so a value is asked about once; without forms the warning is left for the agent.
     private boolean leavePlaceholdersOut(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
         if (b.placeholders == null || b.placeholders.isEmpty() || !ok(b)
@@ -1169,7 +1167,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             }
             try {
                 final Object value = given instanceof final String text
-                        ? PyJson.loads(text)
+                        ? ToolJson.loads(text)
                         : given;
                 if (value instanceof final Map<?, ?> map) {
                     return SplitterSpec.fromMap((Map<String, ?>) map);

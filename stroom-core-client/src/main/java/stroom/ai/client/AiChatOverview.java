@@ -422,7 +422,7 @@ final class AiChatOverview {
     /// @param tools    The tools called, in order, with repeats.
     /// @param maxChars The most characters the summary may have, beyond the count of those left out.
     /// @return The tools, each once with how many times it was called, in the order first called, e.g.
-    /// "find_documents ×3, build_status", or as many as fit with how many more, e.g. "find_documents ×3, +2 more".
+    /// "read_document ×3, build_status", or as many as fit with how many more, e.g. "read_document ×3, +2 more".
     static String toolSummary(final List<String> tools, final int maxChars) {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final String tool : tools) {

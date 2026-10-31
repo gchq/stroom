@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /// Timestamp patterns: a Java (`stroom:format-date`) pattern inferred from a value, and a pattern checked against
-/// values (the Stroom MCP server's `utils/timefmt.py`).
+/// values.
 ///
 /// The profiler used to know ten shapes; anything else was typed as a string and the model guessed a pattern,
 /// which `stroom:format-date` then failed silently, leaving TimeCreated empty. Here a value is read left to right
@@ -46,26 +46,26 @@ public final class TimePatterns {
     private static final Set<String> DAYS = Set.of("mon", "tue", "wed", "thu", "fri", "sat", "sun");
     private static final Set<String> MONTH_FULL = Set.of("january", "february", "march", "april", "may", "june",
             "july", "august", "september", "october", "november", "december");
-    private static final Pattern ZONE_NAME = PyText.re(
+    private static final Pattern ZONE_NAME = ToolText.re(
             "(?:UTC|GMT|Z(?![a-z])|[A-Z]{3,4}T|[A-Z][a-z]+/[A-Z][A-Za-z_]+)");
-    private static final Pattern EPOCH_S = PyText.re("1\\d{9}(\\.\\d{1,9})?");
-    private static final Pattern EPOCH_MS = PyText.re("1\\d{12}");
-    private static final Pattern EPOCH_US = PyText.re("1\\d{15}");
-    private static final Pattern EPOCH_NS = PyText.re("1\\d{18}");
-    private static final Pattern COMPACT_DATE_TIME = PyText.re("\\d{14}");
-    private static final Pattern COMPACT_DATE = PyText.re("\\d{8}");
-    private static final Pattern COMPACT_ISO = PyText.re("\\d{8}T\\d{6}(\\.\\d+)?Z?");
-    private static final Pattern FRACTION = PyText.re("\\.(\\d+)");
-    private static final Pattern DIGITS = PyText.re("\\d+");
-    private static final Pattern LETTERS = PyText.re("[A-Za-z]+");
-    private static final Pattern YEAR_FIRST_DATE = PyText.re("([-/.])(\\d{1,2})\\1(\\d{1,2})");
-    private static final Pattern NUMERIC_DATE = PyText.re("(\\d{1,2})([-/.])(\\d{1,2})\\2(\\d{2,4})");
-    private static final Pattern DAY_MONTH_NAME = PyText.re("(\\d{1,2})[ -/]([A-Za-z]{3,})[ -/,]+(\\d{2,4})");
-    private static final Pattern TIME = PyText.re("(\\d{1,2}):(\\d{2})(?::(\\d{2}))?(?:([.,])(\\d{1,9}))?");
-    private static final Pattern AM_PM = PyText.re("\\s?([AaPp][Mm])");
-    private static final Pattern MONTH_NAME_DATE = PyText.re("[A-Za-z]+\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?");
-    private static final Pattern BRACKETED_ZONE = PyText.re("\\[([A-Z][a-z]+/[A-Z][A-Za-z_]+)\\]");
-    private static final Pattern OFFSET = PyText.re("[+-]\\d{2}:?\\d{2}");
+    private static final Pattern EPOCH_S = ToolText.re("1\\d{9}(\\.\\d{1,9})?");
+    private static final Pattern EPOCH_MS = ToolText.re("1\\d{12}");
+    private static final Pattern EPOCH_US = ToolText.re("1\\d{15}");
+    private static final Pattern EPOCH_NS = ToolText.re("1\\d{18}");
+    private static final Pattern COMPACT_DATE_TIME = ToolText.re("\\d{14}");
+    private static final Pattern COMPACT_DATE = ToolText.re("\\d{8}");
+    private static final Pattern COMPACT_ISO = ToolText.re("\\d{8}T\\d{6}(\\.\\d+)?Z?");
+    private static final Pattern FRACTION = ToolText.re("\\.(\\d+)");
+    private static final Pattern DIGITS = ToolText.re("\\d+");
+    private static final Pattern LETTERS = ToolText.re("[A-Za-z]+");
+    private static final Pattern YEAR_FIRST_DATE = ToolText.re("([-/.])(\\d{1,2})\\1(\\d{1,2})");
+    private static final Pattern NUMERIC_DATE = ToolText.re("(\\d{1,2})([-/.])(\\d{1,2})\\2(\\d{2,4})");
+    private static final Pattern DAY_MONTH_NAME = ToolText.re("(\\d{1,2})[ -/]([A-Za-z]{3,})[ -/,]+(\\d{2,4})");
+    private static final Pattern TIME = ToolText.re("(\\d{1,2}):(\\d{2})(?::(\\d{2}))?(?:([.,])(\\d{1,9}))?");
+    private static final Pattern AM_PM = ToolText.re("\\s?([AaPp][Mm])");
+    private static final Pattern MONTH_NAME_DATE = ToolText.re("[A-Za-z]+\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?");
+    private static final Pattern BRACKETED_ZONE = ToolText.re("\\[([A-Z][a-z]+/[A-Z][A-Za-z_]+)\\]");
+    private static final Pattern OFFSET = ToolText.re("[+-]\\d{2}:?\\d{2}");
     private static final Map<Character, IntFunction<String>> LETTER = letters();
 
     private TimePatterns() {
@@ -87,29 +87,29 @@ public final class TimePatterns {
     /// @param value A value.
     /// @return The pattern, or null when the value doesn't look like a date and time.
     public static String inferTimePattern(final String value) {
-        final String text = PyText.strip(value);
+        final String text = ToolText.strip(value);
         // Epoch seconds may carry a fraction (1791712800.123: a Bluecoat column, GELF's timestamp), which epoch_s
         // keeps. Seen in production: a fraction made the value a plain decimal, the time was mapped by hand, and its
         // milliseconds were dropped.
-        if (PyText.fullmatch(EPOCH_S, text)) {
+        if (ToolText.fullmatch(EPOCH_S, text)) {
             return "epoch seconds";
         }
-        if (PyText.fullmatch(EPOCH_MS, text)) {
+        if (ToolText.fullmatch(EPOCH_MS, text)) {
             return "epoch milliseconds";
         }
-        if (PyText.fullmatch(EPOCH_US, text)) {
+        if (ToolText.fullmatch(EPOCH_US, text)) {
             return "epoch microseconds";
         }
-        if (PyText.fullmatch(EPOCH_NS, text)) {
+        if (ToolText.fullmatch(EPOCH_NS, text)) {
             return "epoch nanoseconds";
         }
-        if (PyText.fullmatch(COMPACT_DATE_TIME, text)) {
+        if (ToolText.fullmatch(COMPACT_DATE_TIME, text)) {
             return "yyyyMMddHHmmss";
         }
-        if (PyText.fullmatch(COMPACT_DATE, text)) {
+        if (ToolText.fullmatch(COMPACT_DATE, text)) {
             return "yyyyMMdd";
         }
-        if (PyText.fullmatch(COMPACT_ISO, text)) {
+        if (ToolText.fullmatch(COMPACT_ISO, text)) {
             final Matcher fraction = FRACTION.matcher(text);
             return "yyyyMMdd'T'HHmmss" + (fraction.find()
                     ? "." + "S".repeat(fraction.group(1).length())
@@ -196,7 +196,7 @@ public final class TimePatterns {
                 if (end < 0) {
                     return null;
                 }
-                out.append(PyText.escape(pattern.substring(i + 1, end)));
+                out.append(ToolText.escape(pattern.substring(i + 1, end)));
                 i = end + 1;
                 continue;
             }
@@ -213,11 +213,11 @@ public final class TimePatterns {
                 i += n;
                 continue;
             }
-            out.append(PyText.escape(String.valueOf(ch)));
+            out.append(ToolText.escape(String.valueOf(ch)));
             i++;
         }
         try {
-            return PyText.re(out + "$");
+            return ToolText.re(out + "$");
         } catch (final PatternSyntaxException e) {
             return null;
         }
@@ -238,26 +238,26 @@ public final class TimePatterns {
                 case "epoch_ns", "epoch nanoseconds" -> "\\d{15,19}";
                 default -> "\\d{9,13}";
             };
-            final Pattern regex = PyText.re(allowed);
+            final Pattern regex = ToolText.re(allowed);
             final List<String> bad = new ArrayList<>();
             for (final String value : values) {
-                if (!PyText.isBlank(value) && !PyText.fullmatch(regex, PyText.strip(value))) {
+                if (!ToolText.isBlank(value) && !ToolText.fullmatch(regex, ToolText.strip(value))) {
                     bad.add(value);
                 }
             }
             return bad.isEmpty()
                     ? null
-                    : "time_format " + PyText.repr(pattern) + " expects digits only" + (allowed.contains(".")
+                    : "time_format " + ToolText.repr(pattern) + " expects digits only" + (allowed.contains(".")
                             ? " (a fraction of a second allowed)"
-                            : "") + "; the sample has " + PyText.repr(bad.subList(0, Math.min(3, bad.size())));
+                            : "") + "; the sample has " + ToolText.repr(bad.subList(0, Math.min(3, bad.size())));
         }
         final Pattern regex = patternRegex(pattern);
         if (regex == null) {
-            return "time_format " + PyText.repr(pattern) + " is not a Java date pattern this check understands";
+            return "time_format " + ToolText.repr(pattern) + " is not a Java date pattern this check understands";
         }
         final List<String> bad = new ArrayList<>();
         for (final String value : values) {
-            if (!PyText.isBlank(value) && !PyText.match(regex, PyText.strip(value))) {
+            if (!ToolText.isBlank(value) && !ToolText.match(regex, ToolText.strip(value))) {
                 bad.add(value);
             }
         }
@@ -265,10 +265,10 @@ public final class TimePatterns {
             return null;
         }
         final String inferred = inferTimePattern(bad.getFirst());
-        return "time_format " + PyText.repr(pattern) + " does not match the sample's values, e.g. "
-               + PyText.repr(bad.subList(0, Math.min(3, bad.size())))
+        return "time_format " + ToolText.repr(pattern) + " does not match the sample's values, e.g. "
+               + ToolText.repr(bad.subList(0, Math.min(3, bad.size())))
                + (inferred != null && !inferred.equals(pattern)
-                ? "; the values look like " + PyText.repr(inferred)
+                ? "; the values look like " + ToolText.repr(inferred)
                 : "");
     }
 
@@ -292,12 +292,12 @@ public final class TimePatterns {
         String pattern() {
             while (i < text.length()) {
                 final String rest = text.substring(i);
-                final Matcher digits = PyText.matchAt(DIGITS, rest);
+                final Matcher digits = ToolText.matchAt(DIGITS, rest);
                 final Boolean read;
                 if (digits != null) {
                     read = readDigits(rest, digits.group());
                 } else {
-                    final Matcher letters = PyText.matchAt(LETTERS, rest);
+                    final Matcher letters = ToolText.matchAt(LETTERS, rest);
                     read = letters != null
                             ? readWord(rest, letters.group())
                             : readOther(rest);
@@ -310,14 +310,14 @@ public final class TimePatterns {
                 return null;
             }
             // Letters that are not pattern letters must be quoted; here only T and Z appear, already quoted.
-            return PyText.strip(String.join("", out));
+            return ToolText.strip(String.join("", out));
         }
 
         private boolean readDigits(final String rest, final String digits) {
             if (!seenDate && digits.length() == 4) {
                 out.add("yyyy");
                 // yyyy-MM-dd or yyyy/MM/dd follows.
-                final Matcher dm = PyText.matchAt(YEAR_FIRST_DATE, rest.substring(4));
+                final Matcher dm = ToolText.matchAt(YEAR_FIRST_DATE, rest.substring(4));
                 if (dm != null) {
                     out.add(dm.group(1));
                     out.add(dm.group(2).length() == 2
@@ -364,7 +364,7 @@ public final class TimePatterns {
 
         // Day first (dd/MM/yyyy, dd-MM-yyyy), else MM/dd/yyyy.
         private boolean readDayFirstDate(final String rest) {
-            final Matcher dm = PyText.matchAt(NUMERIC_DATE, rest);
+            final Matcher dm = ToolText.matchAt(NUMERIC_DATE, rest);
             if (dm == null) {
                 return false;
             }
@@ -395,8 +395,8 @@ public final class TimePatterns {
 
         // dd-MMM-yyyy, dd MMM yyyy.
         private boolean readDayMonthName(final String rest) {
-            final Matcher dm = PyText.matchAt(DAY_MONTH_NAME, rest);
-            if (dm == null || !MONTHS.contains(PyText.head(dm.group(2).toLowerCase(Locale.ROOT), 3))) {
+            final Matcher dm = ToolText.matchAt(DAY_MONTH_NAME, rest);
+            if (dm == null || !MONTHS.contains(ToolText.head(dm.group(2).toLowerCase(Locale.ROOT), 3))) {
                 return false;
             }
             final int dayLength = dm.group(1).length();
@@ -420,7 +420,7 @@ public final class TimePatterns {
         }
 
         private boolean readTime(final String rest) {
-            final Matcher tm = PyText.matchAt(TIME, rest);
+            final Matcher tm = ToolText.matchAt(TIME, rest);
             if (tm == null) {
                 return false;
             }
@@ -428,7 +428,7 @@ public final class TimePatterns {
             final String seconds = tm.group(3);
             final String fractionSeparator = tm.group(4);
             final String fraction = tm.group(5);
-            final Matcher amPm = PyText.matchAt(AM_PM, rest.substring(tm.end()));
+            final Matcher amPm = ToolText.matchAt(AM_PM, rest.substring(tm.end()));
             final String h = amPm != null
                     ? repeat("hh", hour.length(), 2)
                     : repeat("HH", hour.length(), 2);
@@ -457,7 +457,7 @@ public final class TimePatterns {
 
         private boolean readWord(final String rest, final String word) {
             final String low = word.toLowerCase(Locale.ROOT);
-            final Matcher zone = PyText.matchAt(ZONE_NAME, rest);
+            final Matcher zone = ToolText.matchAt(ZONE_NAME, rest);
             if (seenTime && (zone != null || "z".equals(low))) {
                 // X parses a literal Z as UTC, as a zone offset would be; a region (Australia/Sydney) is a zone id,
                 // VV; an abbreviation (AEST, UTC) a zone name, z.
@@ -476,10 +476,10 @@ public final class TimePatterns {
                 i += 1;
                 return true;
             }
-            if (MONTHS.contains(PyText.head(low, 3)) && (word.length() == 3 || MONTH_FULL.contains(low))
+            if (MONTHS.contains(ToolText.head(low, 3)) && (word.length() == 3 || MONTH_FULL.contains(low))
                 && !seenDate) {
                 // 'Sep 28 ...' or 'September 28, 2026': month, day, maybe year.
-                final Matcher dm = PyText.matchAt(MONTH_NAME_DATE, rest);
+                final Matcher dm = ToolText.matchAt(MONTH_NAME_DATE, rest);
                 if (dm == null) {
                     return false;
                 }
@@ -501,7 +501,7 @@ public final class TimePatterns {
                 seenDate = true;
                 return true;
             }
-            if (DAYS.contains(PyText.head(low, 3)) && (word.length() == 3 || word.length() > 5)) {
+            if (DAYS.contains(ToolText.head(low, 3)) && (word.length() == 3 || word.length() > 5)) {
                 out.add(word.length() == 3
                         ? "EEE"
                         : "EEEE");
@@ -513,7 +513,7 @@ public final class TimePatterns {
 
         private boolean readOther(final String rest) {
             final char ch = text.charAt(i);
-            final Matcher bracketed = PyText.matchAt(BRACKETED_ZONE, rest);
+            final Matcher bracketed = ToolText.matchAt(BRACKETED_ZONE, rest);
             if (bracketed != null && seenTime) {
                 // An offset with its region after it, as Java writes a zoned time:
                 // 2026-10-01T18:00:00+10:00[Australia/Sydney].
@@ -521,8 +521,8 @@ public final class TimePatterns {
                 i += bracketed.end();
                 return true;
             }
-            if ((ch == '+' || ch == '-') && seenTime && PyText.match(OFFSET, rest)) {
-                final boolean colon = PyText.head(rest, 6).contains(":");
+            if ((ch == '+' || ch == '-') && seenTime && ToolText.match(OFFSET, rest)) {
+                final boolean colon = ToolText.head(rest, 6).contains(":");
                 out.add(colon
                         ? "XXX"
                         : "Z");

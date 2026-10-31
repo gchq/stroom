@@ -17,8 +17,8 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
@@ -33,12 +33,11 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// A hand edit kept through the agent's next change: the Stroom MCP server's `utils/handedit.py`. Asked for by the
-/// user: an XSLT the server saved (from a mapping, an index or CEF plan, or written by the agent), then edited by
-/// hand in Stroom's editor (say to write http.request.body.bytes as well), was saved over by the next
-/// regeneration, and the edit was gone.
+/// A hand edit kept through the agent's next change. Asked for by the user: an XSLT the tools saved (from a mapping, an
+/// index or CEF plan, or written by the agent), then edited by hand in Stroom's editor (say to write
+/// http.request.body.bytes as well), was saved over by the next regeneration, and the edit was gone.
 ///
-/// What the edit changed is what the XSLT writes and reads that the code the server saved doesn't (and the
+/// What the edit changed is what the XSLT writes and reads that the code the tools saved doesn't (and the
 /// reverse): the names of the elements and keys it writes (`<number key="bytes">`, `<Data Name="device_class">`)
 /// and the constants in them, and the XPath it reads (select, test and `{...}` in attribute values). New code keeps
 /// the edit when it still writes and reads those, whichever way it is written: a hand edit carried into the plan
@@ -113,7 +112,7 @@ public final class HandEdits {
     private static List<String> written(final XmlElement element) {
         final String text = element.text() == null
                 ? ""
-                : PyText.strip(element.text());
+                : ToolText.strip(element.text());
         if (isXsl(element)) {
             if ("text".equals(element.localName()) && !text.isEmpty()) {
                 return List.of("text = " + text);
@@ -275,10 +274,10 @@ public final class HandEdits {
         return a.equals(b) || a.endsWith("/" + b) || b.endsWith("/" + a);
     }
 
-    /// What the hand edit (current, against base: what the server saved, regenerated) changed that new code undoes.
+    /// What the hand edit (current, against base: what the tools saved, regenerated) changed that new code undoes.
     /// With no base (nothing to regenerate it from), everything the XSLT writes and reads counts as the edit's.
     ///
-    /// @param base    The code the server saved, regenerated, or null.
+    /// @param base    The code the tools saved, regenerated, or null.
     /// @param current The code as it is, edited by hand.
     /// @param code    The new code.
     /// @return What the new code undoes of the edit.
@@ -346,11 +345,11 @@ public final class HandEdits {
             case "index" -> {
                 for (final Map<String, Object> f : JsonValues.maps(payload.get("fields"))) {
                     final String name = (String) f.get("name");
-                    final List<String> parts = PyText.split(name, ".");
-                    out.put(name, new PlanField(PyJson.dumpsSortedKeys(f), name + " (" + PyText.str(f.get("type"))
-                                                                          + ") from " + PyText.str(f.get("source"))
+                    final List<String> parts = ToolText.split(name, ".");
+                    out.put(name, new PlanField(ToolJson.dumpsSortedKeys(f), name + " (" + ToolText.str(f.get("type"))
+                                                                          + ") from " + ToolText.str(f.get("source"))
                                                                           + (JsonValues.truthy(f.get("transform"))
-                            ? ", as " + PyText.str(f.get("transform"))
+                            ? ", as " + ToolText.str(f.get("transform"))
                             : ""), Set.of(parts.getLast()), Set.of(expression(
                             f.get("source") instanceof final String source
                                     ? source
@@ -389,9 +388,9 @@ public final class HandEdits {
                     ? JsonValues.map(given)
                     : Map.of();
             final String said = "header " + header + ": " + (value.get("value") != null
-                    ? "'" + PyText.str(value.get("value")) + "'"
-                    : "from " + PyText.str(value.get("source")));
-            out.put("header " + header, new PlanField(PyJson.dumpsSortedKeys(value), said, Set.of(),
+                    ? "'" + ToolText.str(value.get("value")) + "'"
+                    : "from " + ToolText.str(value.get("source")));
+            out.put("header " + header, new PlanField(ToolJson.dumpsSortedKeys(value), said, Set.of(),
                     JsonValues.truthy(value.get("source"))
                             ? Set.of(expression((String) value.get("source")))
                             : Set.of()));
@@ -405,14 +404,14 @@ public final class HandEdits {
             @SuppressWarnings("unchecked") final List<Map<String, Object>> fields =
                     (List<Map<String, Object>>) event[1];
             for (final Map<String, Object> f : fields) {
-                final String key = PyText.str(f.get("key"));
+                final String key = ToolText.str(f.get("key"));
                 final String label = JsonValues.truthy(f.get("label"))
-                        ? " (label '" + PyText.str(f.get("label")) + "')"
+                        ? " (label '" + ToolText.str(f.get("label")) + "')"
                         : "";
-                out.put(event[0] + ": " + key, new PlanField(PyJson.dumpsSortedKeys(f), key + " from "
-                                                                                       + PyText.str(f.get("path"))
+                out.put(event[0] + ": " + key, new PlanField(ToolJson.dumpsSortedKeys(f), key + " from "
+                                                                                       + ToolText.str(f.get("path"))
                                                                                        + label, Set.of(key),
-                        Set.of(expression(PyText.str(f.get("path"))), "'" + key + "'")));
+                        Set.of(expression(ToolText.str(f.get("path"))), "'" + key + "'")));
             }
         }
     }
@@ -421,41 +420,41 @@ public final class HandEdits {
                                          final Map<String, Object> e,
                                          final String input,
                                          final Map<String, PlanField> out) {
-        final String path = PyText.str(e.get("path"));
-        // With the Data it is in (data_parent, not in the Python model), so entries of one name in two don't meet.
+        final String path = ToolText.str(e.get("path"));
+        // With the Data it is in (data_parent), so entries of one name in two don't meet.
         final String parent = JsonValues.truthy(e.get("data_parent"))
-                ? PyText.str(e.get("data_parent")) + "/"
+                ? ToolText.str(e.get("data_parent")) + "/"
                 : "";
         final String label = rule + ": " + path + (JsonValues.truthy(e.get("data_name"))
-                ? " [" + parent + PyText.str(e.get("data_name")) + "]"
+                ? " [" + parent + ToolText.str(e.get("data_name")) + "]"
                 : "");
         final List<String> inputs = new ArrayList<>();
         if (JsonValues.truthy(e.get("field"))) {
-            inputs.add(PyText.str(e.get("field")));
+            inputs.add(ToolText.str(e.get("field")));
         }
         if (e.get("any_of") instanceof final List<?> anyOf) {
-            anyOf.forEach(field -> inputs.add(PyText.str(field)));
+            anyOf.forEach(field -> inputs.add(ToolText.str(field)));
         }
         final Set<String> sources = new HashSet<>();
         inputs.forEach(field -> sources.add(expression(XPathText.fieldText(input, field))));
         if (JsonValues.truthy(e.get("xpath"))) {
-            sources.add(expression(PyText.str(e.get("xpath"))));
+            sources.add(expression(ToolText.str(e.get("xpath"))));
         }
         final List<String> said = new ArrayList<>();
         e.forEach((key, value) -> {
             if (!"path".equals(key)) {
                 said.add(key + " " + (value instanceof final String text
                         ? text
-                        : PyText.repr(value)));
+                        : ToolText.repr(value)));
             }
         });
         final Set<String> names = new HashSet<>();
-        final List<String> steps = PyText.split(path, "/");
+        final List<String> steps = ToolText.split(path, "/");
         names.add(steps.getLast());
         if (JsonValues.truthy(e.get("data_name"))) {
-            names.add(PyText.str(e.get("data_name")));
+            names.add(ToolText.str(e.get("data_name")));
         }
-        out.put(label, new PlanField(PyJson.dumpsSortedKeys(e), label + ": " + String.join(", ", said),
+        out.put(label, new PlanField(ToolJson.dumpsSortedKeys(e), label + ": " + String.join(", ", said),
                 Set.copyOf(names), Set.copyOf(sources)));
     }
 

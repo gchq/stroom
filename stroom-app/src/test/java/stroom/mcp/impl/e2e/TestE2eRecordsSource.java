@@ -33,17 +33,16 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's `dev/e2e_records_source.py`, ported: a source whose own XML is
-/// `<records><record>...` is never taken for an Events stream, nor for a Data Splitter's records, through the REAL
-/// tools on a real Stroom, for two sources: `<records>` in no namespace, and `<records>` declaring records:2 itself.
+/// A source whose own XML is `<records><record>...` is never taken for an Events stream, nor for a Data Splitter's
+/// records, through the REAL tools on a real Stroom, for two sources: `<records>` in no namespace, and `<records>`
+/// declaring records:2 itself.
 ///
-/// Covered, as the script numbers them, for both sources: 1 (profiled as XML for the XMLParser, which
-/// create_pipeline takes; the Data Splitter template refused), 2 (the XSLT generated in the source's own namespace;
-/// a hand-written XSLT reading records by bare name saved for the source in no namespace and refused for the
-/// records:2 one), 3 (the translation's output valid event-logging Events; a source record said not to be Events,
-/// or validated against the records schema) and 4 (the raw stream refused as the Events to index; the Events
-/// indexed into Lucene, the indexing XSLT's records:2 output valid against the records schema, every record indexed
-/// and found by its user).
+/// Covered, for both sources: 1 (profiled as XML for the XMLParser, which create_pipeline takes; the Data Splitter
+/// template refused), 2 (the XSLT generated in the source's own namespace; a hand-written XSLT reading records by bare
+/// name saved for the source in no namespace and refused for the records:2 one), 3 (the translation's output valid
+/// event-logging Events; a source record said not to be Events, or validated against the records schema) and 4 (the raw
+/// stream refused as the Events to index; the Events indexed into Lucene, the indexing XSLT's records:2 output valid
+/// against the records schema, every record indexed and found by its user).
 @SuppressWarnings("unchecked")
 class TestE2eRecordsSource extends AbstractE2eTest {
 
@@ -209,7 +208,7 @@ class TestE2eRecordsSource extends AbstractE2eTest {
         assertThat(found).as("every record indexed, and found by its user").containsEntry("passed", true);
     }
 
-    // The script's decide() (from e2e_formats.py) for this source: the user from its user field, and a host.
+    // The agent's decisions for this source, as for the format cases: the user from its user field, and a host.
     private static Map<String, Object> decide(final Map<String, Object> draft) {
         final Map<String, Object> mapping = new LinkedHashMap<>(draft);
         final List<Map<String, Object>> common = new ArrayList<>(

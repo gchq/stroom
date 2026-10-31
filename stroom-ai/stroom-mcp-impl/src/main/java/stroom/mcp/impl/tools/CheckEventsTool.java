@@ -50,10 +50,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /// `check_events` - checks event XML both ways: against the event-logging XSD this Stroom holds, and against the
-/// quality rules beyond the schema. Given Events streams that processing wrote, it reads their events itself, and
-/// when they pass records the pipelines that wrote them as validated in their build's record (the plan's
-/// `validated` step), with the plan's next step. Ported from the Stroom MCP server's `tools/validation.py`, on
-/// [EventChecks] and [EventStreams].
+/// quality rules beyond the schema. Given Events streams that processing wrote, it reads their events itself, and when
+/// they pass records the pipelines that wrote them as validated in their build's record (the plan's `validated` step),
+/// with the plan's next step. Built on [EventChecks] and [EventStreams].
 ///
 /// Read as the user: the XML schemas are those the user may view, and streams are read only where the user may
 /// view their feeds and has View Data.
@@ -63,7 +62,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
     static final String EVENTS_XML_ARG = "events_xml";
     static final String SCHEMA_VERSION_ARG = "schema_version";
     static final String STREAM_IDS_ARG = "stream_ids";
-    /// The most records read from the streams in all (the Stroom MCP server's max_sample_records).
+    /// The most records read from the streams in all.
     static final int MAX_RECORDS = EventLocations.MAX_RECORDS;
 
     private final EventChecks eventChecks;
@@ -130,11 +129,10 @@ class CheckEventsTool extends AbstractBuiltInTool {
 
     @Override
     public boolean isReadOnly() {
-        // Read-only, although Events that pass are recorded as validated in their build's record, as the Stroom MCP
-        // server's check_events did (it said readOnlyHint false for that). The record is the tools' own
-        // bookkeeping, kept only for pipelines in a build (WriteGuard's own), never for anything a person wrote or
-        // anything that runs: it changes no data, document content or processing, and promotion, which reads it,
-        // asks for its own approval. Taken as a write, every check would need approving over /mcp, and couldn't be
+        // Read-only, although Events that pass are recorded as validated in their build's record. The record is the
+        // tools' own bookkeeping, kept only for pipelines in a build (WriteGuard's own), never for anything a person
+        // wrote or anything that runs: it changes no data, document content or processing, and promotion, which reads
+        // it, asks for its own approval. Taken as a write, every check would need approving over /mcp, and couldn't be
         // made while the user is away.
         return true;
     }

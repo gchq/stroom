@@ -41,8 +41,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// write_documentation (the Stroom MCP server's `tools/builds.py` `write_documentation`, `_document_index` and
-/// `_write_evaluation`, and their tests in `tests/test_fielddoc.py` and `tests/test_choices_and_unknown.py`).
+/// write_documentation: a pipeline's documentation, an index's, and an evaluation's.
 class TestWriteDocumentationTool {
 
     private static final String BUILD = "bb";
@@ -50,7 +49,7 @@ class TestWriteDocumentationTool {
 
     private final DocumentationWorld world = new DocumentationWorld();
     private final WriteDocumentationTool tool = world.documentationTool();
-    private final ToolCallContext context = PortedToolCalls.context();
+    private final ToolCallContext context = BuildToolCalls.context();
 
     @Test
     void aKeptMappingNeedsStreamsAndAnXsltWithoutOneASection() {
@@ -138,7 +137,7 @@ class TestWriteDocumentationTool {
                                                                       + "benign for pipeline 'Acme'");
         assertThat(world.world.created).noneMatch(made -> made.startsWith(DocumentationDoc.TYPE));
 
-        final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
         final Map<String, Object> made = world.call(tool, user.context(), arguments);
 
         assertThat(user.shown()).singleElement().asString().contains("decorationFilter: No HR record for user "
@@ -343,7 +342,7 @@ class TestWriteDocumentationTool {
                 .contains("pipeline_uuid='p' ('TWITTER-Indexing-V1.0')");
 
         // Asked for by the user: the index doc itself as well. It goes on, to the user's confirmation.
-        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
         assertThat(world.refusal(tool, user.context(), "{\"build\": \"bb\", \"index_uuid\": \"i\", "
                                                       + "\"markdown\": \"x\", \"index_itself\": true}"))
                 .startsWith("The user did not agree to:");
@@ -378,8 +377,8 @@ class TestWriteDocumentationTool {
 
     @Test
     void itIsAWriteApprovedAsAWhole() {
-        // The Stroom MCP server's tools/toolmeta.py: write_documentation confirms only accepted errors and an index
-        // doc itself, so over /mcp a call is approved as a whole.
+        // write_documentation confirms only accepted errors and an index doc itself, so over /mcp a call is approved
+        // as a whole.
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
         assertThat(tool.usesRunSlot()).isTrue();

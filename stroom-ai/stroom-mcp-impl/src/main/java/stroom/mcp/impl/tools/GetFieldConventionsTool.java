@@ -54,10 +54,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// `get_field_conventions` - the field naming conventions for indexes (the Stroom MCP server's
-/// `tools/indexing.py` `get_field_conventions`): without a name it puts the choice to the user (the backend, then for
-/// Elasticsearch their own example first), in a form where the session can show one, and never picks a convention
-/// itself; with a name, the profile's field map and the fields of its reference index docs.
+/// `get_field_conventions` - the field naming conventions for indexes: without a name it puts the choice to the user
+/// (the backend, then for Elasticsearch their own example first), in a form where the session can show one, and never
+/// picks a convention itself; with a name, the profile's field map and the fields of its reference index docs.
 class GetFieldConventionsTool extends AbstractBuiltInTool {
 
     static final String NAME = "get_field_conventions";
@@ -325,9 +324,9 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         return result;
     }
 
-    // What the user settled in the forms, so it isn't asked again (not in the Stroom MCP server; seen: the user chose
-    // Elasticsearch and ECS in these forms, and the agent, told only the naming, asked the backend again with an
-    // example template to follow, in its own form).
+    // What the user settled in the forms, so it isn't asked again (seen in testing: the user chose Elasticsearch and
+    // ECS in these forms, and the agent, told only the naming, asked the backend again with an example template to
+    // follow, in its own form).
     private static String settled(final String backend,
                                   final String chosen,
                                   final List<String> others,
@@ -351,9 +350,9 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         result.put("status", "chosen");
         result.put("choice", chosen);
         result.put("how", option.get("how"));
-        // What is settled, so it isn't asked again (not in the Stroom MCP server; seen: the user chose
-        // Elasticsearch and ECS in these forms, and the agent, told only the naming, asked the backend again with
-        // an example template to follow, in its own form).
+        // What is settled, so it isn't asked again (seen in testing: the user chose Elasticsearch and ECS in these
+        // forms, and the agent, told only the naming, asked the backend again with an example template to follow, in
+        // its own form).
         result.put("backend", FieldPlan.ELASTICSEARCH);
         if (templates != null) {
             result.put("indexing_templates", templates);

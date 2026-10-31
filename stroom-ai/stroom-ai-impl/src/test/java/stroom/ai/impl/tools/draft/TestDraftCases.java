@@ -17,9 +17,9 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.generation.TranslationMapping;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -35,17 +35,17 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Stroom MCP server's own results, kept as fixtures, against the port's: `draft_mapping` over every
+/// The draft and the sample check against their established results, kept as fixtures: the draft over every
 /// evaluation case's samples (as the user shows them, with the case's own splitter where it has one, and the first
-/// lines of its files) and `dev/format_samples.py`'s; `sample_records`, `check_mapping` and `check_schema_values`
-/// for each case's reference mapping and for each draft; and `generate_splitter` for every spec those infer or
-/// give. The fixtures were made by running the Python server's code over the same samples.
-class TestDraftParity extends DraftFixtures {
+/// lines of its files) and the format samples; the sample's records, the mapping check and the schema values check
+/// for each case's reference mapping and for each draft; and the splitter written for every spec those infer or
+/// give. Where the tools now differ on purpose, the difference is applied to the fixture below.
+class TestDraftCases extends DraftFixtures {
 
-    private static final List<Map<String, Object>> DRAFTS = cases("draft_parity.json");
+    private static final List<Map<String, Object>> DRAFTS = cases("draft_cases.json");
 
     @TestFactory
-    Stream<DynamicTest> theDraftsAreThePythonServers() {
+    Stream<DynamicTest> theDraftsAreTheRecordedOnes() {
         return DRAFTS.stream().map(entry -> DynamicTest.dynamicTest((String) entry.get("name"), () -> {
             final Map<String, Object> expected = result(entry);
             final SplitterSpec splitter = spec(entry.get("splitter"));
@@ -56,22 +56,22 @@ class TestDraftParity extends DraftFixtures {
             final Map<String, Object> actual = withoutMessageNotes(drafted(entry, splitter));
             assertThat(typeIdSaid(actual, "problems")).isEqualTo(typeIdSaid(expected, "warnings"));
             asTheRulesRecordsHold(actual.get("mapping"), expected.get("mapping"));
-            assertThat(PyJson.dumps(inCatalogueOrder(actual), 1))
-                    .isEqualTo(PyJson.dumps(inCatalogueOrder(expected), 1));
+            assertThat(ToolJson.dumps(inCatalogueOrder(actual), 1))
+                    .isEqualTo(ToolJson.dumps(inCatalogueOrder(expected), 1));
         }));
     }
 
     @TestFactory
-    Stream<DynamicTest> theSampleChecksAreThePythonServers() {
+    Stream<DynamicTest> theSampleChecksAreTheRecordedOnes() {
         final Map<String, Object> samples = new LinkedHashMap<>();
         DRAFTS.forEach(entry -> samples.put((String) entry.get("name"), entry.get("samples")));
-        return cases("localcheck_parity.json").stream()
+        return cases("localcheck_cases.json").stream()
                 .map(entry -> DynamicTest.dynamicTest((String) entry.get("name"), () -> {
                     final Map<String, Object> expected = result(entry);
                     final String error = (String) expected.get("error");
                     if (error != null && error.startsWith("AttributeError")) {
-                        // A number in a JSON record where the Python server read text: it failed, the port reads
-                        // the number's text.
+                        // A number in a JSON record where text was read: the fixture holds a failure, the check
+                        // now reads the number's text.
                         return;
                     }
                     final List<String> texts = entry.containsKey("texts")
@@ -83,21 +83,21 @@ class TestDraftParity extends DraftFixtures {
                     }
                     final Map<String, Object> actual = asPythonSaid(checked(entry, texts));
                     assertThat(typeIdSaid(actual, "problems")).isEqualTo(typeIdSaid(expected, "warnings"));
-                    assertThat(PyJson.dumps(actual, 1)).isEqualTo(PyJson.dumps(expected, 1));
+                    assertThat(ToolJson.dumps(actual, 1)).isEqualTo(ToolJson.dumps(expected, 1));
                 }));
     }
 
     @TestFactory
-    Stream<DynamicTest> theSplittersAreThePythonServers() {
-        return cases("splitter_parity.json").stream()
+    Stream<DynamicTest> theSplittersAreTheRecordedOnes() {
+        return cases("splitter_cases.json").stream()
                 .map(entry -> DynamicTest.dynamicTest((String) entry.get("name"), () -> {
                     final SplitterSpec spec = spec(entry.get("spec"));
                     assertThat(SplitterXml.generateSplitter(spec)).isEqualTo(entry.get("xml"));
                 }));
     }
 
-    // The draft's notes but those on where the event's message goes, which the port adds and the Python server's draft
-    // didn't (see DraftMapping's descriptionNote).
+    // The draft's notes but those on where the event's message goes, which the draft now adds and the fixtures
+    // predate (see DraftMapping's descriptionNote).
     @SuppressWarnings("unchecked")
     private static Map<String, Object> withoutMessageNotes(final Map<String, Object> draft) {
         if (draft.get("notes") instanceof final List<?> notes) {
@@ -107,10 +107,10 @@ class TestDraftParity extends DraftFixtures {
         return draft;
     }
 
-    // A TypeId the sample shows to be the same for different kinds of event: a warning from the Python server, a
-    // problem from the port (see LocalCheck's sharedTypeIds), worded on to say how to fix it. Taken out of the result
-    // (wherever a check is in it) where it is, to be compared on its own: what it says of the sample, up to the
-    // Python server's 'TypeId names the kind of event'.
+    // A TypeId the sample shows to be the same for different kinds of event: a warning in the fixtures, now a
+    // problem (see LocalCheck's sharedTypeIds), worded on to say how to fix it. Taken out of the result (wherever a
+    // check is in it) where it is, to be compared on its own: what it says of the sample, up to the fixtures'
+    // 'TypeId names the kind of event'.
     @SuppressWarnings("unchecked")
     private static List<String> typeIdSaid(final Object result, final String list) {
         final List<String> said = new ArrayList<>();
@@ -131,8 +131,8 @@ class TestDraftParity extends DraftFixtures {
         return said;
     }
 
-    // The checks as the Python server words them: for values that fit once cased, the port names the transform
-    // (see LocalCheck's checkSchemaValues), where the Python server said to map only the values that fit.
+    // The checks as the fixtures word them: for values that fit once cased, the check now names the transform
+    // (see LocalCheck's checkSchemaValues), where the fixtures say to map only the values that fit.
     @SuppressWarnings("unchecked")
     private static Map<String, Object> asPythonSaid(final Map<String, Object> checked) {
         if (checked.get("schema_values") instanceof final List<?> said) {
@@ -144,8 +144,8 @@ class TestDraftParity extends DraftFixtures {
         return checked;
     }
 
-    // The values the catalogue doesn't list, sorted: the Python server listed them in the order of a set of the
-    // catalogue's fields, which differs from run to run; the port lists them in the catalogue's order.
+    // The values the catalogue doesn't list, sorted: the fixtures list them in an order that differs from run to
+    // run; the draft now lists them in the catalogue's order.
     @SuppressWarnings("unchecked")
     private static Map<String, Object> inCatalogueOrder(final Map<String, Object> draft) {
         if (!(draft.get("source_notes") instanceof final Map<?, ?> applied)) {

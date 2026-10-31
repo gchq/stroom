@@ -21,7 +21,6 @@ import stroom.ai.impl.tools.AcceptedErrors;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -31,10 +30,11 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.DocumentationText;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -51,10 +51,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// `write_documentation` - creates or updates the Documentation doc of a pipeline in a build, or of an existing
-/// index, its Field mapping and Errors sections generated (the Stroom MCP server's `tools/builds.py`
-/// `write_documentation`, with `_write_evaluation`). The doc is made in the build as the user ([WriteGuard]), and
-/// a doc already promoted is changed through a working copy that promote_build writes back.
+/// `write_documentation` - creates or updates the Documentation doc of a pipeline in a build, or of an existing index,
+/// its Field mapping and Errors sections generated. The doc is made in the build as the user ([WriteGuard]), and a doc
+/// already promoted is changed through a working copy that promote_build writes back.
 class WriteDocumentationTool extends AbstractBuiltInTool {
 
     static final String NAME = "write_documentation";
@@ -282,7 +281,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final String change = NullSafe.string(rawArg(call, CHANGE_ARG)).strip();
         final String layout = stringArg(call, FIELD_MAPPING_LAYOUT_ARG);
         if (layout != null && !FieldDocs.LAYOUTS.contains(layout)) {
-            throw new ToolRefusal("field_mapping_layout is one of " + PyText.list(FieldDocs.LAYOUTS)
+            throw new ToolRefusal("field_mapping_layout is one of " + ToolText.list(FieldDocs.LAYOUTS)
                                   + ", not '" + layout + "'");
         }
         final Map<String, String> descriptions = fieldDescriptions(call);
@@ -365,10 +364,10 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         }
         String body = request.body();
         String generated = null;
-        // An XSLT edited since its mapping was kept is documented as it runs (its own events, by the mapping's
-        // rules, with a note of the edit): documented from the mapping, the section said what the XSLT no longer
-        // writes (not in the Python server; seen: TWITTER's links, saved with save_xslt, left out, and its mentions
-        // shown joined as the mapping wrote them). A section the agent wrote for it is kept as written.
+        // An XSLT edited since its mapping was kept is documented as it runs (its own events, by the mapping's rules,
+        // with a note of the edit): documented from the mapping, the section said what the XSLT no longer writes (seen
+        // in testing: TWITTER's links, saved with save_xslt, left out, and its mentions shown joined as the mapping
+        // wrote them). A section the agent wrote for it is kept as written.
         final Optional<String> edited = kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind())
                 ? mappingDrift.editDrift(kept)
                 : Optional.empty();
@@ -504,9 +503,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         return plan.withNext(context, request.build(), result);
     }
 
-    // `_write_evaluation`: an evaluation report, its own doc beside the pipeline (asked for by the user): saved as
-    // the pipeline's documentation, it would have replaced that at promotion. An earlier report beside the pipeline
-    // is updated through a working copy, written back at promotion after a backup.
+    // An evaluation report, its own doc beside the pipeline (asked for by the user): saved as the pipeline's
+    // documentation, it would have replaced that at promotion. An earlier report beside the pipeline is updated through
+    // a working copy, written back at promotion after a backup.
     private Map<String, Object> writeEvaluation(final ToolCallContext context,
                                                 final String build,
                                                 final String pipelineUuid,
@@ -577,7 +576,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                + from + " kept with the XSLT by stepping them, each field with the values the sample gave";
     }
 
-    /// `utils/sourcenotes.py` `fields_markdown`: 'Source fields', for the Field mapping section: each source field
+    /// 'Source fields', for the Field mapping section: each source field
     /// the documentation describes, with its meaning and codes.
     ///
     /// @param notes The build's source notes ([TranslationBuilds#notesInBuild]).
@@ -616,7 +615,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 return List.of();
             }
             try {
-                value = PyJson.loads(text.strip());
+                value = ToolJson.loads(text.strip());
             } catch (final RuntimeException e) {
                 throw new ToolRefusal("accept_errors is a list of objects, {element, example, reason, matches}");
             }
@@ -654,7 +653,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 return Map.of();
             }
             try {
-                value = PyJson.loads(text);
+                value = ToolJson.loads(text);
             } catch (final RuntimeException e) {
                 throw new ToolRefusal(NOT_AN_OBJECT);
             }

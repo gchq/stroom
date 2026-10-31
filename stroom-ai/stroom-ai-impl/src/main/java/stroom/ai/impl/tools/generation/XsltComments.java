@@ -16,16 +16,16 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The text of the comments the generated XSLTs carry (the Stroom MCP server's `_comment` in `utils/xsltgen.py`):
-/// no `--` (a comment can't hold it), and wrapped as Python's `textwrap.wrap` wraps it, its later lines indented
-/// under the first.
+/// The text of the comments the generated XSLTs carry: no `--` (a comment can't hold it), and wrapped at spaces
+/// (no word broken, nor at a hyphen), its later lines indented under the first. The wrapping is part of the generated
+/// text the golden XSLTs pin.
 public final class XsltComments {
 
     /// The width comments are wrapped to.
@@ -51,12 +51,12 @@ public final class XsltComments {
     /// @param width The width to wrap it to.
     /// @return The comment's text: dashes runs made one, trailing dashes dropped, wrapped, with a space either side.
     public static String comment(final String text, final int width) {
-        final String single = PyText.rstrip(DASHES.matcher(text).replaceAll("-"), "-");
+        final String single = ToolText.rstrip(DASHES.matcher(text).replaceAll("-"), "-");
         return String.join("\n", wrap(single, width, FIRST_INDENT, LATER_INDENT)) + " ";
     }
 
-    /// Python's `textwrap.wrap(text, width, initial_indent=..., subsequent_indent=..., break_long_words=False,
-    /// break_on_hyphens=False)`.
+    /// The text wrapped to lines of at most width (a longer word left whole on a line of its own), broken only at
+    /// white space, never at a hyphen, the first line and the later ones with their own indents.
     ///
     /// @param text        The text.
     /// @param width       The width of each line.
@@ -69,14 +69,14 @@ public final class XsltComments {
                                     final String laterIndent) {
         final List<String> chunks = new ArrayList<>(chunks(munged(text)));
         final List<String> lines = new ArrayList<>();
-        // Taken from the end, as textwrap reverses its chunks and pops them.
+        // Each line takes chunks in order until the next won't fit.
         int next = 0;
         while (next < chunks.size()) {
             final String indent = lines.isEmpty()
                     ? firstIndent
                     : laterIndent;
             final int room = width - length(indent);
-            if (!lines.isEmpty() && PyText.isBlank(chunks.get(next))) {
+            if (!lines.isEmpty() && ToolText.isBlank(chunks.get(next))) {
                 next++;
             }
             final List<String> line = new ArrayList<>();
@@ -94,7 +94,7 @@ public final class XsltComments {
             if (next < chunks.size() && length(chunks.get(next)) > room && line.isEmpty()) {
                 line.add(chunks.get(next++));
             }
-            if (!line.isEmpty() && PyText.isBlank(line.getLast())) {
+            if (!line.isEmpty() && ToolText.isBlank(line.getLast())) {
                 line.removeLast();
             }
             if (!line.isEmpty()) {
@@ -104,7 +104,7 @@ public final class XsltComments {
         return lines;
     }
 
-    // Tabs expanded, and every white space character textwrap knows made a space.
+    // Tabs expanded, and every other white space character made a space.
     private static String munged(final String text) {
         final StringBuilder out = new StringBuilder();
         int column = 0;

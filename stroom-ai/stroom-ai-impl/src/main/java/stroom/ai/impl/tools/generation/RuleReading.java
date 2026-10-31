@@ -21,8 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// One rule of an XSLT, as [XsltReader] reads it (the Stroom MCP server's `xsltread.RuleReading`): the condition it
-/// is chosen by, and each element its Event gets.
+/// One rule of an XSLT, as [XsltReader] reads it: the condition it is chosen by, and each element its Event gets.
 public final class RuleReading {
 
     private final String key;
@@ -115,7 +114,8 @@ public final class RuleReading {
         this.unknown = unknown;
     }
 
-    /// @return It as the Python reading's fields: key, name, test, leaves, drop, unknown, notes, guards, calls.
+    /// @return It as a map, keys in the order the reader fixtures pin: key, name, test, leaves, drop, unknown, notes,
+    /// guards, calls.
     public Map<String, Object> toMap() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("key", key);

@@ -43,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 
-/// The write guard (the Stroom MCP server's `tests/test_guard.py`), on an in-memory explorer.
+/// The write guard, on an in-memory explorer.
 class TestWriteGuard {
 
     private static final ToolSession SESSION = new ToolSession(ToolSession.Kind.MCP, "s1",

@@ -29,9 +29,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// The Events of processed streams read by the tool itself. Ported from the Stroom MCP server's
-/// `tests/test_validation.py` (`test_check_events_reads_the_events_streams_itself`): Qwen in VS Code read 50
-/// processed events back 23 at a time, 47 s a read, to send them to check_events.
+/// The Events of processed streams read by the tool itself: Qwen in VS Code read 50 processed events back 23 at a
+/// time, 47 s a read, to send them to check_events.
 class TestEventStreams {
 
     private final StreamReader streamReader = Mockito.mock(StreamReader.class);

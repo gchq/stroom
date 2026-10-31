@@ -20,8 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// One map a reference feed provides: the name `stroom:lookup()` uses, the key, and what the key maps to. Ported
-/// from the Stroom MCP server's `ReferenceMap` model (`utils/refgen.py`).
+/// One map a reference feed provides: the name `stroom:lookup()` uses, the key, and what the key maps to.
 ///
 /// @param name     The map name stroom:lookup() uses, e.g. `USER_TO_DEPARTMENT`.
 /// @param key      Input field holding the key.
@@ -38,14 +37,14 @@ public record ReferenceMap(String name,
     }
 
     /// @param json A map as JSON-like values.
-    /// @return It validated, as the Python model validates it.
+    /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
     public static ReferenceMap fromJson(final Map<String, Object> json) {
         final ModelReader reader = new ModelReader();
         return reader.orThrow("ReferenceMap", read(reader, json, List.of()));
     }
 
-    /// Reads one from JSON-like values, as pydantic validates it in the Stroom MCP server.
+    /// Reads one from JSON-like values: lax types, defaults and the model's own checks, every error collected.
     ///
     /// @param reader The reader, collecting the errors.
     /// @param input  The value given.
@@ -75,7 +74,7 @@ public record ReferenceMap(String name,
     }
 
     /// @param mode How to write it.
-    /// @return It as JSON, as the Python model's `model_dump` writes it.
+    /// @return It as JSON, as the mode says, keys in the model's field order.
     public Map<String, Object> toJson(final DumpMode mode) {
         return mode.builder()
                 .put("name", name, null)

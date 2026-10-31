@@ -38,28 +38,25 @@ import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The Stroom MCP server's evaluation set run with its reference solutions (`dev/eval/run_eval.py --reference`),
-/// ported: for each of its 53 cases (`eval/*.yaml`, [EvalCases]), the case's own converter or Data Splitter and
-/// field mapping go through the REAL tools on a real Stroom the way an agent would, with no model: the feed and
-/// sample (or the files on the user's disk, sent by their upload command, [McpTerminal]), the Data Splitter,
-/// build_translation_xslt, the pipeline from the case's template, stepping, processing, each event validated and
-/// scored against what the case expects ([EvalScore]), the documentation's Field mapping, then a Lucene index,
-/// its pipeline, processing and the verification searches.
+/// The evaluation set run with its reference solutions: for each of its 53 cases (`eval/*.yaml`, [EvalCases]), the
+/// case's own converter or Data Splitter and field mapping go through the REAL tools on a real Stroom the way an agent
+/// would, with no model: the feed and sample (or the files on the user's disk, sent by their upload command,
+/// [McpTerminal]), the Data Splitter, build_translation_xslt, the pipeline from the case's template, stepping,
+/// processing, each event validated and scored against what the case expects ([EvalScore]), the documentation's Field
+/// mapping, then a Lucene index, its pipeline, processing and the verification searches.
 ///
-/// A case passes when its Events hold what it expects and they are indexed and found, as `run_eval.py` has it, and,
-/// stricter, when nothing else was found wrong on the way (`run_eval.py` reports those problems but passes the
-/// case). Each case's score is written to `build/eval-reference/<case>.json`. All 53 take about 20 minutes;
-/// `STROOM_EVAL_CASES=12,35` runs only those.
+/// A case passes when its Events hold what it expects, they are indexed and found, and nothing else was found
+/// wrong on the way. Each case's score is written to `build/eval-reference/<case>.json`. All 53 take about 20
+/// minutes; `STROOM_EVAL_CASES=12,35` runs only those.
 ///
-/// Not ported: `set_index_fields` after `create_index_doc` (the Java port's `create_index_doc` adds the plan
-/// drafted for the index in the session, and has no such tool), and the processor filters' deletion after each
-/// case (each case here starts from an empty Stroom).
+/// `create_index_doc` adds the fields of the plan drafted for the index in the session, so nothing else sets them;
+/// the processor filters aren't deleted after each case, as each case starts from an empty Stroom.
 @SuppressWarnings("unchecked")
 class TestE2eEvalReference extends AbstractE2eTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestE2eEvalReference.class);
 
-    // As run_eval.py's DOC_SKELETON.
+    // The documentation's skeleton.
     private static final String DOC_SKELETON = """
             ## Purpose and data
 
@@ -82,15 +79,13 @@ class TestE2eEvalReference extends AbstractE2eTest {
     @Inject
     private Injector injector;
 
-    // As e2e.agreed, which run_eval.py's calls go through: a filter made disabled (a reference pipeline's) is
-    // enabled, as the user would in Stroom.
+    // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
     @Override
     boolean enablesDisabledFilters() {
         return true;
     }
 
-    // All of them, or those STROOM_EVAL_CASES names (their numbers, comma-separated, e.g. 12,35), as run_eval.py
-    // takes them.
+    // All of them, or those STROOM_EVAL_CASES names (their numbers, comma-separated, e.g. 12,35).
     static List<String> cases() {
         final String only = System.getenv("STROOM_EVAL_CASES");
         if (only == null || only.isBlank()) {
@@ -105,14 +100,14 @@ class TestE2eEvalReference extends AbstractE2eTest {
     void theReferenceSolutionReachesIndexedEvents(final String id) {
         final Map<String, Object> evalCase = EvalCases.load(id);
         final EvalScore score = new EvalScore(id);
-        // The reference solutions leave a user's Id whole (the Stroom MCP server never split its domain off), so the
-        // user keeps the Ids as they are when the translation asks; seen: case 30's alice@example.org split to alice.
+        // The reference solutions leave a user's Id whole, so the user keeps the Ids as they are when the
+        // translation asks; seen: case 30's alice@example.org split to alice.
         client.answeringWith(choosing("Keep as is"));
         final long startMs = System.currentTimeMillis();
         try {
             runReference(evalCase, score);
         } catch (final AssertionError | RuntimeException e) {
-            // A step failing is the case's problem, as run_eval.py has it.
+            // A step failing is the case's problem.
             LOGGER.info(() -> id + " failed at a step", e);
             score.problem(e.getClass().getSimpleName() + ": " + firstLines(e.getMessage()));
         }
@@ -122,7 +117,7 @@ class TestE2eEvalReference extends AbstractE2eTest {
         assertThat(score.passed()).as(score.summary()).isTrue();
     }
 
-    // run_eval.py's run_reference.
+    // A case run with its reference solution.
     private void runReference(final Map<String, Object> evalCase, final EvalScore score) {
         final String tag = ((String) evalCase.get("id")).split("_", 2)[0];
         final String build = "eval-" + tag;
@@ -330,8 +325,8 @@ class TestE2eEvalReference extends AbstractE2eTest {
         }
     }
 
-    // run_eval.py's check_output: every event of a case's sample, up to READ_EVENTS a stream, a larger stream's in
-    // blocks spread over it, each validated.
+    // Every event of a case's sample, up to READ_EVENTS a stream, a larger stream's in blocks spread over it, each
+    // validated.
     private void checkOutput(final Map<String, Object> evalCase, final EvalScore score, final List<Long> streams) {
         final List<String> records = new ArrayList<>();
         final List<Boolean> validity = new ArrayList<>();
@@ -347,7 +342,7 @@ class TestE2eEvalReference extends AbstractE2eTest {
                 final int blocks = READ_EVENTS / BLOCK;
                 got = new ArrayList<>(got.subList(0, Math.min(BLOCK, got.size())));
                 for (int i = 1; i < blocks; i++) {
-                    // Python's round(), half to even.
+                    // Rounded half to even.
                     final int from = (int) Math.rint(i * (total - BLOCK) / (double) (blocks - 1));
                     got.addAll(readEvents(stream, from, BLOCK).records());
                 }

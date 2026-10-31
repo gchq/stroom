@@ -55,8 +55,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// Sending sample data into a feed (the Stroom MCP server's `utils/uploads.py` `send_to_feed` and `commands`, and
-/// their tests in `tests/test_uploads.py`).
+/// Sending sample data into a feed, and the commands that send the user's files.
 class TestFeedUploads {
 
     @TempDir

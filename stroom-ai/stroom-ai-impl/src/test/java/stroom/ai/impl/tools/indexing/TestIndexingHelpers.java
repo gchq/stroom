@@ -34,10 +34,9 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The pure parts of the Stroom MCP server's indexing tools ([IndexingHelpers]): ported from its
-/// `tests/test_indexing.py` (a plan marked from the schema), `tests/test_index_names.py` (the plan the tools take
-/// from the session), `tests/test_replaced_index.py` and `tests/test_fielddoc.py` (the plan kept with an XSLT, the
-/// fields an index lacks), with cases for the helpers their tools' tests reach.
+/// The pure parts of the indexing tools ([IndexingHelpers]): a plan marked from the schema, the plan the tools take
+/// from the session, the plan kept with an XSLT and the fields an index lacks, with cases for the helpers the tools
+/// reach.
 class TestIndexingHelpers {
 
     private static final EventSchema SCHEMA = EventSchema.parse(HeldSchemasWorld.XSD_4_1_0);

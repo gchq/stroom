@@ -20,7 +20,6 @@ import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.ErrorTriage;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.SteppingWalks.Walk;
 import stroom.ai.impl.tools.StreamSummaries;
@@ -31,6 +30,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -46,9 +46,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/// `step_pipeline` - steps one record through a pipeline and shows what each element does to it: the input and
-/// output of the chosen elements, and every element's errors and warnings, triaged; draft code tries a change
-/// without saving it. Ported from the Stroom MCP server's `tools/stepping.py`.
+/// `step_pipeline` - steps one record through a pipeline and shows what each element does to it: the input and output
+/// of the chosen elements, and every element's errors and warnings, triaged; draft code tries a change without saving
+/// it.
 ///
 /// Stepped as the user, who needs the Stepping permission, in a stepping session of its own on this node, ended
 /// when the step is done. It changes nothing, and takes a run slot over `/mcp`. It stops when its thread is
@@ -156,9 +156,8 @@ class StepPipelineTool extends AbstractBuiltInTool {
         }
     }
 
-    /// One record stepped, as the Stroom MCP server gave it: `pipeline`, `stream_id`, `part`, `record`,
-    /// `draft_code_used`, `elements` (each chosen element's `type`, `input` and `output`), and the triage
-    /// (`verdict`, `groups_by_class`, `groups`).
+    /// One record stepped: `pipeline`, `stream_id`, `part`, `record`, `draft_code_used`, `elements` (each chosen
+    /// element's `type`, `input` and `output`), and the triage (`verdict`, `groups_by_class`, `groups`).
     Map<String, Object> step(final ToolCall call,
                              final ToolCallContext context,
                              final String pipelineUuid,
@@ -230,7 +229,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
             final String kind = given == null
                     ? "first"
                     : given.toLowerCase(Locale.ROOT);
-            return new Record(kind, 0, PyText.repr(kind));
+            return new Record(kind, 0, ToolText.repr(kind));
         }
         final Integer index = intArg(call, RECORD_ARG);
         if (index == null || index < 0) {
@@ -257,7 +256,7 @@ class StepPipelineTool extends AbstractBuiltInTool {
     ///
     /// @param kind  `first`, `last` or `index`.
     /// @param index The zero-based index within the part, for `index`.
-    /// @param said  It as the Stroom MCP server said it (`4`, `'first'`).
+    /// @param said  It as the call's messages name it (`4`, `'first'`).
     record Record(String kind, long index, String said) {
 
     }

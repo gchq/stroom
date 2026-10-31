@@ -51,8 +51,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-/// The write guard: everything the agent makes lives in its workspace and carries its tags (ported from the Stroom
-/// MCP server's `security/guard.py`).
+/// The write guard: everything the agent makes lives in its workspace and carries its tags.
 ///
 /// Creates land in `System/<workspace>/<build>/` (the workspace folder is `stroom.ai.builds.workspaceFolder`);
 /// updates are allowed only on documents tagged [#MANAGED]. Changing anything else (a production XSLT, say) goes
@@ -657,8 +656,7 @@ public class WriteGuard {
             return new DocRef(type, uuid, name);
         }
 
-        /// @return It as the Stroom MCP server listed it: `type`, `uuid`, `name`, `tags`, `path` and, in a role
-        /// subfolder, `role`.
+        /// @return It as a result lists it: `type`, `uuid`, `name`, `tags`, `path` and, in a role subfolder, `role`.
         public Map<String, Object> toMap() {
             final Map<String, Object> map = new LinkedHashMap<>();
             map.put("type", type);

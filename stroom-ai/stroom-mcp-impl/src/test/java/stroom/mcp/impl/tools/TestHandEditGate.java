@@ -45,9 +45,9 @@ import javax.xml.transform.stream.StreamSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Edits made by hand in Stroom's editor survive the agent's next change (the Stroom MCP server's
-/// `tests/test_hand_edits.py`, its tool cases; the pure `utils/handedit.py` ones are `TestHandEdits`'). Asked for by
-/// the user: an indexing XSLT generated from its plan, edited by hand to write another ECS field
+/// Edits made by hand in Stroom's editor survive the agent's next change (the tools' cases; the pure ones are
+/// `TestHandEdits`'). Asked for by the user: an indexing XSLT generated from its plan, edited by hand to write another
+/// ECS field
 /// (http.request.body.bytes), was regenerated from the plan at the agent's next change, and the edit was gone. Now a
 /// save whose code undoes an edit made since the server saved the XSLT is refused, saying what the edit changed,
 /// until it is carried into the plan (or the user says to drop it).

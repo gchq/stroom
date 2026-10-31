@@ -36,8 +36,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// Sample profiling, and the fragment wrapper an environment uses (the Stroom MCP server's
-/// `tests/test_xml_fragments.py` cases for `with_fragment_setup`).
+/// Sample profiling, and the fragment wrapper an environment uses.
 class TestSampleProfiling {
 
     static final String FRAGMENTS = """

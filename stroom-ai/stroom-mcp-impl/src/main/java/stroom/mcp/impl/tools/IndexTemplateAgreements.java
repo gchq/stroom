@@ -21,7 +21,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -38,10 +38,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// The Elasticsearch index template agreed with the user for an indexing pipeline (the Stroom MCP server's
-/// `tools/processing_writes.py` `elastic_destination`, `agreement_problem` and `indexing_xslt_digest`): kept in
-/// the pipeline's description, for the index and cluster and the indexing XSLT it was agreed against, so the plan
-/// and promotion know whether one is agreed for the documents the pipeline's current code writes.
+/// The Elasticsearch index template agreed with the user for an indexing pipeline: kept in the pipeline's description,
+/// for the index and cluster and the indexing XSLT it was agreed against, so the plan and promotion know whether one is
+/// agreed for the documents the pipeline's current code writes.
 class IndexTemplateAgreements {
 
     /// The description block an agreed template is kept in.
@@ -120,7 +119,7 @@ class IndexTemplateAgreements {
             final String devTools = NullSafe.string(NullSafe.get(agreed.get("dev_tools"), String::valueOf));
             return Optional.of("The indexing XSLT changed since index template '" + agreed.get("name") + "' was "
                                + "agreed: check_index_template with it (and its component templates "
-                               + PyText.list(JsonValues.strings(agreed.get("component_templates")))
+                               + ToolText.list(JsonValues.strings(agreed.get("component_templates")))
                                + ") over the Events streams, so "
                                + "the user confirms it again for the documents the pipeline now writes (or, if the "
                                + "user says the template on the cluster is theirs and fits, call again with "

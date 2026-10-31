@@ -46,10 +46,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// `upload_sample` - sends sample data into a build's feed as the user, as the real source's data is received (the
-/// Stroom MCP server's `tools/feeds.py` `upload_sample` and `upload_ticket`). Text the user pasted is sent at once
-/// ([FeedUploads]); files on the user's disk are given a command each, for the user's terminal, that posts the
-/// file to `/mcp/upload` as the user ([SampleUploads]), never through the model.
+/// `upload_sample` - sends sample data into a build's feed as the user, as the real source's data is received. Text the
+/// user pasted is sent at once ([FeedUploads]); files on the user's disk are given a command each, for the user's
+/// terminal, that posts the file to `/mcp/upload` as the user ([SampleUploads]), never through the model.
 class UploadSampleTool extends AbstractBuiltInTool {
 
     static final String NAME = "upload_sample";

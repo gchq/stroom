@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DropRule;
 import stroom.ai.impl.tools.generation.DumpMode;
@@ -27,11 +27,11 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.Placeholders;
-import stroom.ai.impl.tools.sample.PyJson;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.TimePatterns;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 import stroom.ai.impl.tools.validation.CloseMatches;
 import stroom.ai.impl.tools.validation.EventSchema;
@@ -55,8 +55,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-/// A translation mapping checked against the sample it is for, before anything is created or stepped (the Stroom
-/// MCP server's `utils/localcheck.py`).
+/// A translation mapping checked against the sample it is for, before anything is created or stepped.
 ///
 /// The sample is read locally into records the way the pipeline's parser would (JSON keys with dots, Data Splitter
 /// names through the splitter spec's dry run, XML paths by local name), and the mapping's inputs are looked up in
@@ -65,13 +64,13 @@ import java.util.stream.Collectors;
 ///
 /// A record is a map of field name to value (data_splitter and json inputs), or an [XmlTree.Element] (xml
 /// inputs). Regular expressions written for the mapping (a condition's `matches`, an extraction's regex) are run
-/// with Java's regex engine, as Stroom's XSLT runs them in its own; Python's `re` ran them in the server.
+/// with Java's regex engine, as Stroom's XSLT runs them in its own.
 public final class LocalCheck {
 
-    private static final Pattern STEP = PyText.re("^(?:@(?<attr>[\\w.-]+)|(?<name>[\\w.-]+|\\*)(?:\\[@(?<pattr>"
+    private static final Pattern STEP = ToolText.re("^(?:@(?<attr>[\\w.-]+)|(?<name>[\\w.-]+|\\*)(?:\\[@(?<pattr>"
                                                   + "[\\w.-]+)=(?<q>['\"])(?<pval>.*?)\\k<q>\\])?)$");
-    private static final Pattern TOKEN = PyText.re("^[A-Za-z][\\w.:-]{0,39}$");
-    private static final Pattern WORD = PyText.re("[A-Za-z_][\\w.-]*");
+    private static final Pattern TOKEN = ToolText.re("^[A-Za-z][\\w.:-]{0,39}$");
+    private static final Pattern WORD = ToolText.re("[A-Za-z_][\\w.-]*");
     private static final String NAME = "Name";
     // An element that holds a user's id, e.g. EventSource/User/Id, EventDetail/Authenticate/User/Id: without the
     // schema, by its name.
@@ -123,12 +122,12 @@ public final class LocalCheck {
                 return null;
             }
         }
-        return PyText.strip(String.join("", nodes.getFirst().itertext()));
+        return ToolText.strip(String.join("", nodes.getFirst().itertext()));
     }
 
     private static List<String> segments(final String path) {
         final List<String> out = new ArrayList<>();
-        for (final String segment : PyText.strip(path, "/").split("/", -1)) {
+        for (final String segment : ToolText.strip(path, "/").split("/", -1)) {
             if (!segment.isEmpty()) {
                 out.add(segment);
             }
@@ -163,15 +162,15 @@ public final class LocalCheck {
         for (final XmlTree.Element node : record.iter()) {
             final String here = node == record
                     ? ""
-                    : PyText.strip(ancestorPath(node, record) + "/" + node.localName(), "/");
+                    : ToolText.strip(ancestorPath(node, record) + "/" + node.localName(), "/");
             node.attrib().forEach((attribute, value) -> flat.put((here.isEmpty()
                     ? ""
                     : here + "/") + "@" + attribute, value));
-            if (node != record && node.isLeaf() && !PyText.strip(node.text()).isEmpty()) {
+            if (node != record && node.isLeaf() && !ToolText.strip(node.text()).isEmpty()) {
                 final String named = node.get(NAME);
                 flat.put(named != null && !named.isEmpty()
                         ? here + "[@Name='" + named + "']"
-                        : here, PyText.strip(node.text()));
+                        : here, ToolText.strip(node.text()));
             }
         }
         return flat;
@@ -219,10 +218,10 @@ public final class LocalCheck {
             return null;
         }
         try {
-            return PyJson.loads(value == null
+            return ToolJson.loads(value == null
                     ? ""
                     : (String) value);
-        } catch (final PyJson.JsonDecodeException e) {
+        } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
     }
@@ -257,7 +256,7 @@ public final class LocalCheck {
         if (!(value instanceof final String held)) {
             return null;
         }
-        final String text = PyText.strip(held);
+        final String text = ToolText.strip(held);
         if (!text.startsWith("<")) {
             return null;
         }
@@ -276,7 +275,7 @@ public final class LocalCheck {
                 steps.addFirst(at.localName());
             }
             final String path = String.join("/", steps);
-            final String value = PyText.strip(node.text());
+            final String value = ToolText.strip(node.text());
             for (final String name : List.of(field + "/" + path, field + "//" + node.localName())) {
                 if (!value.isEmpty() || node.isLeaf()) {
                     record.putIfAbsent(name, value);
@@ -329,7 +328,7 @@ public final class LocalCheck {
                     ? null
                     : String.join("; ", notes));
         }
-        final String text = PyText.strip((String) sample, "﻿\r\n ");
+        final String text = ToolText.strip((String) sample, "﻿\r\n ");
         if ("data_splitter".equals(mapping.input())) {
             if (splitter == null) {
                 return new SampleRecords(new ArrayList<>(), "no splitter spec: the sample's fields are not known "
@@ -349,24 +348,24 @@ public final class LocalCheck {
         final List<Object> values = new ArrayList<>();
         if (text.startsWith("{") && SampleProfiler.wrappedRecords(text) != null) {
             // One object wrapping the records (CloudTrail): the parser's one record; for_each reads its items.
-            values.add(PyJson.loads(text));
+            values.add(ToolJson.loads(text));
         } else if (text.startsWith("[")) {
             try {
-                if (PyJson.loads(text) instanceof final List<?> list) {
+                if (ToolJson.loads(text) instanceof final List<?> list) {
                     list.stream().filter(Map.class::isInstance).forEach(values::add);
                 }
-            } catch (final PyJson.JsonDecodeException e) {
+            } catch (final ToolJson.JsonDecodeException e) {
                 return new SampleRecords(new ArrayList<>(), "the sample is not a JSON array");
             }
         } else {
-            for (final String line : PyText.splitlines(text)) {
-                if (PyText.isBlank(line)) {
+            for (final String line : ToolText.splitlines(text)) {
+                if (ToolText.isBlank(line)) {
                     continue;
                 }
                 final Object value;
                 try {
-                    value = PyJson.loads(line);
-                } catch (final PyJson.JsonDecodeException e) {
+                    value = ToolJson.loads(line);
+                } catch (final ToolJson.JsonDecodeException e) {
                     return new SampleRecords(new ArrayList<>(), "the sample is neither a JSON array nor JSON lines");
                 }
                 if (value instanceof Map) {
@@ -384,7 +383,7 @@ public final class LocalCheck {
         List<XmlTree.Element> cut = null;
         if ("xml".equals(mapping.input())) {
             try {
-                root = XmlTree.parse(PyText.subFirst(xmlDeclaration(), "", text));
+                root = XmlTree.parse(ToolText.subFirst(xmlDeclaration(), "", text));
             } catch (final XmlTree.XmlException e) {
                 // A big document read only to here: its complete records.
                 final XmlTree.Pull pull = SampleProfiler.cutDocument(text);
@@ -421,7 +420,7 @@ public final class LocalCheck {
     }
 
     private static Pattern xmlDeclaration() {
-        return PyText.re("^\\s*<\\?xml[^>]*\\?>");
+        return ToolText.re("^\\s*<\\?xml[^>]*\\?>");
     }
 
     /// @param record A record (a map, or an XML element).
@@ -488,7 +487,7 @@ public final class LocalCheck {
                 ? extracted.get(c.field())
                 : valueOf(record, c.field());
         if (c.present() != null) {
-            return (value != null && !PyText.strip(value).isEmpty()) == c.present();
+            return (value != null && !ToolText.strip(value).isEmpty()) == c.present();
         }
         if (value == null) {
             return false;
@@ -505,7 +504,7 @@ public final class LocalCheck {
                 : SafePattern.matcher(pattern, value).find();
     }
 
-    // A regex compiled, or null if it can't be (Python's re.error).
+    // A regex compiled, or null if it can't be.
     private static Pattern compiled(final String regex, final int flags) {
         if (regex == null) {
             return null;
@@ -515,7 +514,7 @@ public final class LocalCheck {
         }
         return PATTERNS.computeIfAbsent(flags + ":" + regex, key -> {
             try {
-                return Optional.of(SafePattern.compile(regex, PyText.FLAGS | flags));
+                return Optional.of(SafePattern.compile(regex, ToolText.FLAGS | flags));
             } catch (final PatternSyntaxException e) {
                 return Optional.empty();
             }
@@ -639,16 +638,16 @@ public final class LocalCheck {
         String[] text = null;
         for (final Map<String, Object> record : JsonValues.maps(records)) {
             for (final Map.Entry<String, Object> entry : record.entrySet()) {
-                if (!(entry.getValue() instanceof final String value) || PyText.isBlank(value)) {
+                if (!(entry.getValue() instanceof final String value) || ToolText.isBlank(value)) {
                     continue;
                 }
-                if (PyText.match(TOKEN, value)) {
+                if (ToolText.match(TOKEN, value)) {
                     final List<String> seen = fields.computeIfAbsent(entry.getKey(), k -> new ArrayList<>());
                     if (!seen.contains(value)) {
                         seen.add(value);
                     }
-                } else if (text == null && PyText.split(value).size() > 2) {
-                    text = new String[]{entry.getKey(), PyText.head(value, 80)};
+                } else if (text == null && ToolText.split(value).size() > 2) {
+                    text = new String[]{entry.getKey(), ToolText.head(value, 80)};
                 }
             }
         }
@@ -751,8 +750,8 @@ public final class LocalCheck {
                   + "before '" + name + "' (they validate as they are; add Data entries as you like)"
                   + (shown.left().isEmpty()
                         ? ""
-                        : ", leaving " + shown.split() + " " + PyText.repr(shown.left()) + " to it")
-                  + ": " + PyJson.dumps(shown.rules());
+                        : ", leaving " + shown.split() + " " + ToolText.repr(shown.left()) + " to it")
+                  + ": " + ToolJson.dumps(shown.rules());
         // Connections allowed or denied, and logons, are never unknown; a configuration change is the user's call.
         final List<Map<String, Object>> plain = shown.rules().stream()
                 .filter(r -> JsonValues.maps(r.get("fields")).stream().anyMatch(f -> {
@@ -856,16 +855,16 @@ public final class LocalCheck {
                 .limit(3)
                 .forEach(entry -> examples.add("'" + entry.getKey() + "' for rules "
                                                + String.join(", ", entry.getValue().keySet().stream()
-                        .sorted(PyText::compare)
+                        .sorted(ToolText::compare)
                         .toList())));
         if (examples.isEmpty()) {
             return List.of();
         }
-        // A problem, not the Python server's warning (seen: two runs that left TypeId the category alone, 'User' for
-        // logons, logoffs and lockouts, the warning one among many).
+        // A problem, not a warning (seen in testing, as a warning: two runs that left TypeId the category alone,
+        // 'User' for logons, logoffs and lockouts, the warning one among many).
         return List.of("EventDetail/TypeId reads " + (typeId.join() == null
                 ? "'" + typeId.field() + "'"
-                : "join " + PyText.list(typeId.join())) + ", which in the sample is the same for events of different "
+                : "join " + ToolText.list(typeId.join())) + ", which in the sample is the same for events of different "
                        + "kinds (" + String.join("; ", examples) + "). TypeId names the kind of event, so each "
                        + "kind needs its own: write it in the format the standing instructions (AGENTS docs) set "
                        + "for TypeIds, if they set one; otherwise join the fields that tell the kinds apart, e.g. "
@@ -878,9 +877,8 @@ public final class LocalCheck {
     /// Required elements a rule writes only when their inputs have a value, whose inputs are empty in sample records
     /// the rule takes: those events fail the schema, which reports the element written after the one left out
     /// (seen: "Invalid content was found starting with element '{Data}'. One of '{Command}' is expected", read as
-    /// Data put in the wrong place, two rounds of stepping before the Command entry was given a default). Not in the
-    /// Python server, which warned of such elements without saying whether the sample has any. Only entries read
-    /// from fields are counted (an xpath's value isn't known here).
+    /// Data put in the wrong place, two rounds of stepping before the Command entry was given a default). Only
+    /// entries read from fields are counted (an xpath's value isn't known here).
     ///
     /// @param mapping         The mapping.
     /// @param records         The sample's records.
@@ -954,8 +952,8 @@ public final class LocalCheck {
 
     /// Data entries reading fields that none of the sample records their rule takes holds: Data the kind doesn't
     /// carry, which the documentation then lists as "(not in the sample)". A warning, as the sample may lack them
-    /// while other records have them. Not in the Python server; seen: a SecretServer launch rule's rpc_account,
-    /// target and duration_ms, in none of its records.
+    /// while other records have them. Seen in testing: a SecretServer launch rule's rpc_account, target and
+    /// duration_ms, in none of its records.
     ///
     /// @param mapping The mapping.
     /// @param records The sample's records.
@@ -1018,8 +1016,8 @@ public final class LocalCheck {
     }
 
     /// Fields mapped as they are into a user's Id whose sample values are domain-qualified (`DOMAIN\\user`,
-    /// `user@domain`): an Id is usually the account name alone, which `strip_domain` gives (unlike the Stroom MCP
-    /// server, which said nothing: seen in eval cases 35, 36 and 43, the domain kept in every Id).
+    /// `user@domain`): an Id is usually the account name alone, which `strip_domain` gives (seen in eval cases 35,
+    /// 36 and 43, with nothing said: the domain kept in every Id).
     ///
     /// @param mapping The mapping.
     /// @param records The sample's records.
@@ -1039,7 +1037,7 @@ public final class LocalCheck {
         for (final QualifiedIds found : qualified) {
             for (final String path : found.paths()) {
                 final String said = path + " takes field '" + found.field() + "', whose values are "
-                                    + "domain-qualified (" + PyText.repr(found.examples()) + "): an Id is usually "
+                                    + "domain-qualified (" + ToolText.repr(found.examples()) + "): an Id is usually "
                                     + "the account name alone. If so, give the entry transform: strip_domain";
                 if (!out.contains(said)) {
                     out.add(said);
@@ -1073,8 +1071,8 @@ public final class LocalCheck {
             }
             final Set<String> found = new LinkedHashSet<>();
             for (final String value : values.of(entry)) {
-                if (value != null && DOMAIN_QUALIFIED.matcher(PyText.strip(value)).matches()) {
-                    found.add(PyText.strip(value));
+                if (value != null && DOMAIN_QUALIFIED.matcher(ToolText.strip(value)).matches()) {
+                    found.add(ToolText.strip(value));
                 }
             }
             if (!found.isEmpty()) {
@@ -1092,8 +1090,8 @@ public final class LocalCheck {
     }
 
     /// Values the sample's records hold in the fields the mapping writes, that look like stand-ins for none (`-`,
-    /// `N/A`, ...; see [Placeholders]), for the user to say whether to leave them out. Not in the Stroom MCP server;
-    /// asked for by the user (seen: W3C logs' `-` for a missing address went on into an Elasticsearch ip field).
+    /// `N/A`, ...; see [Placeholders]), for the user to say whether to leave them out. Asked for by the user (seen:
+    /// W3C logs' `-` for a missing address went on into an Elasticsearch ip field).
     ///
     /// @param mapping The mapping.
     /// @param records The sample's records.
@@ -1150,8 +1148,7 @@ public final class LocalCheck {
                                                  final EventSchema schema) {
         final List<String> out = new ArrayList<>();
         // Read from the record or from what the mapping's extractions give it (seen: SecretServer's fields, read
-        // from its message's key/value pairs, never checked; not in the Stroom MCP server, which read the record's
-        // own fields alone).
+        // from its message's key/value pairs, never checked when the record's own fields alone were read).
         final FieldValues fieldValues = new FieldValues(mapping, records);
         final Set<String> nil = new HashSet<>(mapping.nilValues() == null
                 ? List.of()
@@ -1168,13 +1165,13 @@ public final class LocalCheck {
             }
             final List<String> values = new ArrayList<>();
             for (final String value : fieldValues.of(entry)) {
-                if (value != null && !PyText.isBlank(value) && !nil.contains(PyText.strip(value))) {
+                if (value != null && !ToolText.isBlank(value) && !nil.contains(ToolText.strip(value))) {
                     values.add(value);
                 }
             }
             final Set<String> bad = new LinkedHashSet<>();
             for (final String value : values) {
-                if (patterns.stream().noneMatch(p -> p.matcher(PyText.strip(value)).matches())) {
+                if (patterns.stream().noneMatch(p -> p.matcher(ToolText.strip(value)).matches())) {
                     bad.add(value);
                 }
             }
@@ -1182,7 +1179,7 @@ public final class LocalCheck {
                 final long count = values.stream().filter(bad::contains).count();
                 final String caseTransform = caseTransform(bad, patterns);
                 final String said = entry.path() + " takes values of a set form (the schema's pattern), but field '"
-                                    + entry.field() + "' has " + PyText.repr(bad.stream().limit(3).toList())
+                                    + entry.field() + "' has " + ToolText.repr(bad.stream().limit(3).toList())
                                     + " in " + count + " of the " + values.size() + " sample records: Stroom's "
                                     + "schema check refuses those events. " + (caseTransform != null
                         ? "They fit once " + caseTransform + "-cased: give the entry transform: " + caseTransform
@@ -1201,8 +1198,8 @@ public final class LocalCheck {
         for (final String transform : List.of("lower", "upper")) {
             final boolean fits = values.stream()
                     .map(value -> "lower".equals(transform)
-                            ? PyText.strip(value).toLowerCase(Locale.ROOT)
-                            : PyText.strip(value).toUpperCase(Locale.ROOT))
+                            ? ToolText.strip(value).toLowerCase(Locale.ROOT)
+                            : ToolText.strip(value).toUpperCase(Locale.ROOT))
                     .allMatch(value -> patterns.stream().anyMatch(p -> p.matcher(value).matches()));
             if (fits) {
                 return transform;
@@ -1253,7 +1250,7 @@ public final class LocalCheck {
     }
 
     /// @param text A text, or null.
-    /// @return True if it is neither null nor empty (Python's truthiness of a string).
+    /// @return True if it is neither null nor empty.
     static boolean hasText(final String text) {
         return text != null && !text.isEmpty();
     }
@@ -1484,9 +1481,9 @@ public final class LocalCheck {
                         : "") + ") is in none of the " + pool.size() + " " + what
                                        + (close.isEmpty()
                         ? ""
-                        : "; did you mean " + PyText.repr(close) + "?")
+                        : "; did you mean " + ToolText.repr(close) + "?")
                                        + (!seen.isEmpty() && close.isEmpty()
-                        ? ". Fields seen: " + PyText.repr(seen.subList(0, Math.min(30, seen.size())))
+                        ? ". Fields seen: " + ToolText.repr(seen.subList(0, Math.min(30, seen.size())))
                         : "");
                 // A near miss of a field the sample has is a slip (srcip for src_ip, or names recalled from
                 // another source's logs), and its element would be empty in every event; with nothing close, the
@@ -1499,7 +1496,7 @@ public final class LocalCheck {
                 }
             });
             if (!unreadPaths.isEmpty()) {
-                notChecked.add("fields " + PyText.repr(unreadPaths.subList(0, Math.min(5, unreadPaths.size())))
+                notChecked.add("fields " + ToolText.repr(unreadPaths.subList(0, Math.min(5, unreadPaths.size())))
                                + " were not looked up in the sample (only plain paths are here)");
             }
             return suggested;
@@ -1540,17 +1537,17 @@ public final class LocalCheck {
                 // names every step of it somewhere.
                 final List<String> texts = new ArrayList<>(MappingFacts.mappingXpaths(mapping));
                 wanted.keySet().forEach(key -> texts.add(key.name()));
-                texts.forEach(text -> readWords.addAll(PyText.findall(WORD, text)));
+                texts.forEach(text -> readWords.addAll(ToolText.findall(WORD, text)));
             }
             final List<String> unread = seen.stream()
                     .filter(k -> !derived.contains(k) && !suggested.contains(k) && !MappingFacts.readsInput(mapping, k))
-                    .filter(k -> !(xml && readWords.containsAll(PyText.findall(WORD, k))))
+                    .filter(k -> !(xml && readWords.containsAll(ToolText.findall(WORD, k))))
                     .toList();
             if (!unread.isEmpty()) {
                 // A parsed field no output reads is lost from every event: often one the request asked for (a
                 // source address).
                 warnings.add("fields in the sample that nothing reads: "
-                             + PyText.repr(unread.subList(0, Math.min(12, unread.size())))
+                             + ToolText.repr(unread.subList(0, Math.min(12, unread.size())))
                              + (unread.size() > 12
                         ? " ..."
                         : "")

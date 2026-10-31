@@ -55,9 +55,8 @@ import java.util.Optional;
 
 /// `propose_index_template` - builds the final Elasticsearch index template for an indexing pipeline's destination
 /// index, from the user's example index template (pasted, or kept in the build when the plan was drafted) and its
-/// component templates, checks it against the documents the pipeline writes, and has the user agree it (the Stroom
-/// MCP server's `tools/indexing.py` `propose_index_template`). The agreed template is kept with the pipeline; the
-/// user's cluster admin commits it: nothing is written to Elasticsearch.
+/// component templates, checks it against the documents the pipeline writes, and has the user agree it. The agreed
+/// template is kept with the pipeline; the user's cluster admin commits it: nothing is written to Elasticsearch.
 class ProposeIndexTemplateTool extends AbstractBuiltInTool {
 
     static final String NAME = "propose_index_template";
@@ -416,7 +415,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         }
     }
 
-    /// Says when the session's time limit cut the stepping short (the Stroom MCP server's tool had no time limit).
+    /// Says when the session's time limit cut the stepping short.
     ///
     /// @param context   The call's context.
     /// @param documents The documents stepped.

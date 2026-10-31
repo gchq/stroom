@@ -30,9 +30,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The sections of AGENTS docs that the tools apply themselves, rather than only hand to the agent, as the Stroom
-/// MCP server reads them. Each is a heading followed by bullets of the form `- key: value, value`, and a doc's
-/// section ends at its next heading.
+/// The sections of AGENTS docs that the tools apply themselves, rather than only hand to the agent. Each is a
+/// heading followed by bullets of the form `- key: value, value`, and a doc's section ends at its next heading.
 ///
 /// - `## Required imports`: shared XSLTs every XSLT of a stage imports (asked for by the user), e.g. Raw Events to
 ///   Events translations importing Stream-Meta-V1:
@@ -260,7 +259,7 @@ public final class InstructionRules {
                 : rest);
     }
 
-    // The text without any of the characters at either end, as Python's str.strip(chars) does.
+    // The text without any of the characters at either end.
     private static String stripChars(final String text, final String chars) {
         int start = 0;
         int end = text.length();

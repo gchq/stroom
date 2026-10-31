@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.indexing;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.StyledXslt;
 import stroom.ai.impl.tools.generation.XPathText;
@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
 
 /// A field plan's draft indexing XSLT, reading Events (xpath-default-namespace event-logging:3), written in the
 /// Events translation's style: each part of the record (or document) a template of its own, with a comment saying
-/// what it writes, and an input a template reads often read once into a variable ([StyledXslt]). Ported from the
-/// Stroom MCP server's `FieldPlan.xslt`; it writes the same text.
+/// what it writes, and an input a template reads often read once into a variable ([StyledXslt]). The golden plans
+/// pin what it writes to the byte.
 final class IndexingXslt {
 
     /// A plain path: steps of names, a predicate kept with its step.
@@ -276,7 +276,7 @@ final class IndexingXslt {
             }
             for (final String value : values) {
                 for (final String given : OR.split(value.split(" ! ", -1)[0], -1)) {
-                    final String piece = PyText.strip(given);
+                    final String piece = ToolText.strip(given);
                     if (".".equals(piece) || piece.isEmpty() || !plain(piece)) {
                         continue;
                     }

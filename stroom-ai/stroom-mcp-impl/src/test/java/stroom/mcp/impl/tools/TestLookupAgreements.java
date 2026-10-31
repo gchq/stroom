@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The user's agreement to an XSLT calling Stroom's DNS lookup functions: asked in a form, remembered for the
-/// session by document and function. Not in the Stroom MCP server, which let them through.
+/// session by document and function, rather than let through unasked.
 class TestLookupAgreements {
 
     private static final ToolCall CALL = new ToolCall("call-1", SaveXsltTool.NAME, "{}");

@@ -208,7 +208,7 @@ class TestFindInContentTool {
 
     @Test
     void withoutUuidsOrTypesEveryTypeIsSearched() {
-        // As the Stroom MCP server's find_documents with content did: its types were optional.
+        // Types are optional: without them, every type is searched.
         Mockito.when(contentIndex.isReady()).thenReturn(false);
 
         assertThat(run("{\"pattern\":\"host_to_ip\"}"))

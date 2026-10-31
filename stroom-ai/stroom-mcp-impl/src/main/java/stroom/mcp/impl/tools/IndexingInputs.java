@@ -20,10 +20,10 @@ import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
-import stroom.ai.impl.tools.PyText;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.docref.DocRef;
@@ -39,11 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/// The streams the indexing tools index, and what they hold (the Stroom MCP server's `tools/indexing.py`
-/// `require_events`, `_require_input`, `_is_discovery` and `_build_of_stream`, and `summarise_events`' path
-/// population): an index holds the Events an events pipeline writes, never a source's own data, unless it is a
-/// discovery index, which indexes raw data as it is. create_indexing_pipeline's port checks its streams with
-/// [#requireEvents].
+/// The streams the indexing tools index, and what they hold: an index holds the Events an events pipeline writes, never
+/// a source's own data, unless it is a discovery index, which indexes raw data as it is. create_indexing_pipeline
+/// checks its streams with [#requireEvents].
 class IndexingInputs {
 
     /// How many events are read to see which paths a sample populates.
@@ -97,7 +95,7 @@ class IndexingInputs {
             if (!"Events".equals(type)) {
                 throw new ToolRefusal("Stream " + streamId + " is " + (type == null
                         ? "None"
-                        : PyText.repr(type)) + ", not Events: the source's own data, whatever its XML or "
+                        : ToolText.repr(type)) + ", not Events: the source's own data, whatever its XML or "
                                       + "records look like. An index holds the Events an events pipeline writes: "
                                       + "process the sample through it (create_processor_filter, "
                                       + "wait_for_processing) and give those Events streams (stage 1 first).");
@@ -175,9 +173,9 @@ class IndexingInputs {
         }
     }
 
-    /// [#population(Map)], with each Data element's share by its Name as well (`<path>[@Name='<name>']/@Value`), so
-    /// a field read from one Data entry is counted. Not in the Stroom MCP server, whose documentation said "not in
-    /// the sample" for every such field (seen: SecretServer's, read from `EventDetail//Data[@Name='...']/@Value`,
+    /// [#population(Map)], with each Data element's share by its Name as well (`<path>[@Name='<name>']/@Value`), so a
+    /// field read from one Data entry is counted. Seen in testing, when only paths were counted: the documentation said
+    /// "not in the sample" for every such field (SecretServer's, read from `EventDetail//Data[@Name='...']/@Value`,
     /// though the documents written from the sample held their values).
     ///
     /// @param summary A profile from [#summariseEvents].

@@ -26,8 +26,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// What a parsed XPath expression reads, for reading an XSLT back: the Stroom MCP server's `utils/xpathtree.py`
-/// (its functions; the parser is [XPathTreeParser], the nodes [XPathNode]).
+/// What a parsed XPath expression reads, for reading an XSLT back (the parser is [XPathTreeParser], the nodes
+/// [XPathNode]).
 ///
 /// [#normal(XPathNode)] takes off what doesn't change what an expression reads for the reader (brackets around one
 /// expression, the generator's has-a-value predicates), and [#unify(XPathNode, XPathNode)] matches a tree against a
@@ -266,11 +266,10 @@ public final class XPathTrees {
         return out.append(slice(text, at, text.length())).toString();
     }
 
-    // Python's text[from:to].
     /// @param text Some text.
     /// @param from Where to start (negative: from the end).
     /// @param to   Where to end (negative: from the end).
-    /// @return Python's `text[from:to]`: clamped to the text, empty when to is before from.
+    /// @return The text from `from` to `to`: clamped to the text, empty when to is before from.
     static String slice(final String text, final int from, final int to) {
         final int length = text.length();
         final int start = Math.clamp(from < 0

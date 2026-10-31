@@ -29,8 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// What the translation tools' arguments share: their descriptions, as the Stroom MCP server's
-/// `tools/translation.py` and `tools/generation.py` annotate them, and how the structured ones are read.
+/// What the translation tools' arguments share: their descriptions, one wording for every tool that takes the argument,
+/// and how the structured ones are read.
 final class TranslationArgs {
 
     /// `build`.

@@ -25,8 +25,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// The small XML tree written as lxml 6.1 (libxml2 2.14) writes it: the expected texts are what lxml gave for the
-/// same calls (where it declares namespaces, the prefixes it makes up, escaping, pretty-printing).
+/// The small XML tree written as the golden XSLTs have it: the expected texts fix where it declares namespaces, the
+/// prefixes it makes up, escaping and pretty-printing.
 class TestXmlSerialiser {
 
     private static final String XSL = XmlTrees.XSL;
@@ -107,8 +107,8 @@ class TestXmlSerialiser {
 
     @Test
     void anElementWrittenAloneDeclaresTheNamespacesOfItsNameAndAttributesFirst() {
-        // As lxml writes it (libxml2 copies the element, declaring what it uses, then adds its ancestors'
-        // declarations): seen reading back an xsl:for-each, whose text the reader compares.
+        // The element copied, declaring what it uses, then its ancestors' declarations added: seen reading back an
+        // xsl:for-each, whose text the reader compares.
         final XmlElement root = XmlParser.parse("<a xmlns=\"d\" xmlns:x=\"X\" xmlns:y=\"Y\"><b><x:c y:at=\"1\" "
                                                 + "q=\"2\"><e/></x:c></b></a>");
         final XmlElement c = root.childElements().getFirst().childElements().getFirst();

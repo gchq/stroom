@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// One node of a parsed XPath expression (the Stroom MCP server's `xpathtree.Node`): its symbol, as elementpath
-/// names it (`/`, `[`, `(name)`, `(string)`, `(integer)`, `$`, `:`, `if`, `=`, ...; `call` for a function call;
-/// `map` for a map constructor), its value (a name, a string's value, a number, a function's name as written, an
-/// operator's symbol), its children, and its exact text in the expression it was parsed from, with where that is.
+/// One node of a parsed XPath expression: its symbol (`/`, `[`, `(name)`, `(string)`, `(integer)`, `$`, `:`, `if`, `=`,
+/// ...; `call` for a function call; `map` for a map constructor), its value (a name, a string's value, a number, a
+/// function's name as written, an operator's symbol), its children, and its exact text in the expression it was parsed
+/// from, with where that is.
 ///
 /// Nodes are compared by [#key()], which is what the expression is whatever its spacing; never by identity.
 public final class XPathNode {
@@ -67,7 +67,7 @@ public final class XPathNode {
         return value;
     }
 
-    /// @return Its value as Python's `str()` gives it (`None` for null).
+    /// @return Its value as text (`None` for null).
     public String valueText() {
         return value == null
                 ? "None"

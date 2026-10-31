@@ -48,13 +48,13 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /// The documentation that says what a data source's fields hold, which its field names often don't: e.g. that an
-/// index's `document.description` is a tweet's text. Gathered from where people and the Stroom MCP server write it:
+/// index's `document.description` is a tweet's text. Gathered from where people and the build tools write it:
 ///
 /// - the data source's own Documentation tab;
-/// - the Documentation docs in its folder that are about it: named after it (where the MCP server documents an
-///   existing index) or after a pipeline that feeds it (where it documents an index's build), or that mention it;
+/// - the Documentation docs in its folder that are about it: named after it (where the build tools document an
+///   existing index) or after a pipeline that feeds it (where they document an index's build), or that mention it;
 /// - for each pipeline that feeds it, the pipeline's Documentation tab and the Documentation doc beside the pipeline
-///   with its name (where the MCP server documents a pipeline it builds, with a field mapping from the source's
+///   with its name (where the build tools document a pipeline they build, with a field mapping from the source's
 ///   fields to the index's);
 /// - for a View, the same for the index or pipeline it reads.
 ///
@@ -152,7 +152,7 @@ public class DataSourceDocumentation {
             besideDoc(pipeline).ifPresent(doc -> found.putIfAbsent(doc.from().getUuid(), doc));
         }
 
-        // Some hold nothing but what the MCP server keeps hidden.
+        // Some hold nothing but what the build tools keep hidden.
         final List<Documented> docs = found.values().stream()
                 .filter(doc -> !doc.text().isBlank())
                 .toList();
@@ -382,7 +382,7 @@ public class DataSourceDocumentation {
     /// @param text The documentation.
     public record Documented(DocRef from, DocRef of, String what, String text) {
 
-        /// The text without HTML comments, where the Stroom MCP server keeps what it needs (its mapping, field
+        /// The text without HTML comments, where the build tools keep what they need (a mapping, field
         /// descriptions, an index template), hidden from people and only noise to the agent.
         public Documented {
             text = withoutComments(text);

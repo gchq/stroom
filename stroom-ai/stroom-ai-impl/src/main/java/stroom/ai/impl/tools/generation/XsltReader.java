@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.generation;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 
@@ -33,9 +33,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Reads a translation XSLT back into a mapping (the Stroom MCP server's `utils/xsltread.py`): the mapping kept with
-/// it lost (its Documentation tab cleared), or out of step with it (the XSLT changed by hand). Asked for by the
-/// user.
+/// Reads a translation XSLT back into a mapping: the mapping kept with it lost (its Documentation tab cleared), or out
+/// of step with it (the XSLT changed by hand). Asked for by the user.
 ///
 /// An XSLT the generator wrote is read back the way the generator writes it ([#read(String)]): per rule, the
 /// condition it is chosen by, and each element (or Data entry, or attribute) the Event gets, with its constant or
@@ -461,8 +460,8 @@ public final class XsltReader {
                 rule.lose(at + ": xsl:sequence " + head(select, 80) + " not read");
             }
         } else if (child.is(XSL, "for-each")) {
-            // A Data entry repeated in a named Data (data_parent, not in the Python model): known by its Name, as
-            // its entry is. Elsewhere read as the Python reader reads it, with no Data name.
+            // A Data entry repeated in a named Data (data_parent): known by its Name, as its entry is. Elsewhere read
+            // with no Data name.
             final XmlElement first = firstEventElement(child);
             final boolean inContainer = path.stream().anyMatch(step -> step.startsWith(LeafReading.CONTAINER));
             final String dataName = inContainer && first != null && "Data".equals(first.localName())
@@ -509,7 +508,7 @@ public final class XsltReader {
                 rule.leaves().add(leaf);
             }
         }
-        final String text = PyText.strip(Objects.requireNonNullElse(child.text(), ""));
+        final String text = ToolText.strip(Objects.requireNonNullElse(child.text(), ""));
         if (!text.isEmpty() && child.childElements().isEmpty()) {
             final LeafReading leaf = new LeafReading(String.join("/", here), null);
             leaf.setValue(text);
@@ -745,7 +744,7 @@ public final class XsltReader {
         return parent.childElements(EVT, "Event").stream().findFirst().orElse(null);
     }
 
-    // The first xsl element of that name below (lxml's find('.//xsl:name')).
+    // The first xsl element of that name below.
     private static XmlElement descendant(final XmlElement parent, final String xslName) {
         return parent.iterElements(XSL, xslName).stream().filter(element -> element != parent).findFirst()
                 .orElse(null);
@@ -753,14 +752,14 @@ public final class XsltReader {
 
     // A Data element whose Value is the loop's current value, as the generator writes it ({.} or xsl:attribute).
     private static boolean eachValue(final XmlElement data) {
-        if (".".equals(PyText.strip(Objects.requireNonNullElse(data.get("Value"), "").replaceAll("^\\{|}$", "")))
+        if (".".equals(ToolText.strip(Objects.requireNonNullElse(data.get("Value"), "").replaceAll("^\\{|}$", "")))
             && data.childElements().isEmpty()) {
             return true;
         }
         return data.get("Value") == null && data.childElements().size() == 1
                && data.childElements().getFirst().is(XSL, "attribute")
                && "Value".equals(data.childElements().getFirst().get("name"))
-               && ".".equals(PyText.strip(Objects.requireNonNullElse(data.childElements().getFirst().get("select"),
+               && ".".equals(ToolText.strip(Objects.requireNonNullElse(data.childElements().getFirst().get("select"),
                 "")));
     }
 
@@ -792,24 +791,24 @@ public final class XsltReader {
     }
 
     /// @param text Some text, or null.
-    /// @return Whether Python takes it for true: not null and not empty.
+    /// @return Whether it counts as given: not null and not empty.
     static boolean truthy(final String text) {
         return text != null && !text.isEmpty();
     }
 
     /// @param node A node, or null.
-    /// @return Whether Python takes it for true: not null, and with children (a node is as long as its children).
+    /// @return Whether it counts as given: not null, and with children.
     static boolean truthy(final XPathNode node) {
         return node != null && node.size() > 0;
     }
 
     /// @param text Some text.
-    /// @return Its words, as Python's `split()` gives them.
+    /// @return Its words: split at runs of white space, none empty.
     static List<String> words(final String text) {
         final List<String> out = new ArrayList<>();
         final StringBuilder word = new StringBuilder();
         text.codePoints().forEach(cp -> {
-            if (PyText.isSpace(cp)) {
+            if (ToolText.isSpace(cp)) {
                 if (!word.isEmpty()) {
                     out.add(word.toString());
                     word.setLength(0);
@@ -826,7 +825,7 @@ public final class XsltReader {
 
     /// @param text  Some text.
     /// @param count How many characters.
-    /// @return Its first characters (code points), as Python's `text[:count]`.
+    /// @return Its first count characters (code points), or all of it if shorter.
     static String head(final String text, final int count) {
         return text.codePointCount(0, text.length()) <= count
                 ? text

@@ -74,7 +74,7 @@ class FeedNames {
 
     /// @param name A feed's name, exactly.
     /// @return The feed of exactly that name, if the user can view it (Stroom keeps one feed per name). A direct
-    /// lookup, as the Stroom MCP server's `/feed/v1/getDocRefForName`.
+    /// lookup, as Stroom's `/feed/v1/getDocRefForName` makes it.
     Optional<DocRef> exact(final String name) {
         return docFinder(name).stream().findFirst();
     }

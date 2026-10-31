@@ -25,15 +25,14 @@ import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.indexing.Discovery;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
-import stroom.ai.impl.tools.sample.PyJson;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// The indexing tools' models given as arguments (a field plan, planned fields, a discovery, shared templates),
-/// read as leniently as [ToolArgs] reads any argument and validated as pydantic validated them, a refusal saying
-/// what is wrong.
+/// The indexing tools' models given as arguments (a field plan, planned fields, a discovery, shared templates), read as
+/// leniently as [ToolArgs] reads any argument and validated, a refusal saying what is wrong.
 final class IndexingArgs {
 
     private IndexingArgs() {
@@ -86,7 +85,7 @@ final class IndexingArgs {
         for (final Object item : ToolArgs.oneOrMore(call, name)) {
             if (!(item instanceof Map<?, ?>)) {
                 throw new ToolRefusal(name + " are fields, each {'name': ..., 'type': ..., 'source': ...}, not "
-                                      + PyJson.dumps(item));
+                                      + ToolJson.dumps(item));
             }
             try {
                 fields.add(PlannedField.fromJson((Map<String, Object>) item));

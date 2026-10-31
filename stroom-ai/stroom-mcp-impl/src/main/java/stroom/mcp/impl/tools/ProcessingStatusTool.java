@@ -144,7 +144,7 @@ class ProcessingStatusTool extends AbstractBuiltInTool {
                                                        && tasks.containsKey(TaskStatus.PROCESSING.name()));
     }
 
-        /// @return The status of the filters, as the Stroom MCP server gave it.
+        /// @return The status of the filters.
     Map<String, Object> status(final String pipelineUuid, final List<ProcessorFilter> filters) {
         final Map<Integer, Map<String, Integer>> byFilter = new HashMap<>();
         String tasksUnreadable = null;

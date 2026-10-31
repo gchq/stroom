@@ -24,9 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// The lines one list has that another hasn't, and the reverse, as Python's `difflib.unified_diff(a, b, n=0)` gives
-/// them (its `SequenceMatcher`, with its heuristic that treats the lines more than 1% of a long list are as
-/// unmatchable): for each change in order, the lines taken out (`-`) then those put in (`+`).
+/// The lines one list has that another hasn't, and the reverse, as a unified diff with no context lines gives them
+/// (longest matching blocks first, treating the lines more than 1% of a long list are as unmatchable): for each
+/// change in order, the lines taken out (`-`) then those put in (`+`).
 final class LineDiff {
 
     private static final int AUTOJUNK_LENGTH = 200;

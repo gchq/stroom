@@ -17,7 +17,7 @@
 package stroom.ai.impl.tools.fielddoc;
 
 import stroom.ai.impl.tools.JsonValues;
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -48,8 +48,7 @@ import java.util.stream.Collectors;
 /// The Field mapping section of an indexing pipeline's documentation (from its index plan, or the documents it
 /// wrote), of an existing index (from its survey), and of a discovery pipeline: each index field with a
 /// description, its type, the event-logging path it comes from, and from the sample how often it was populated and
-/// its values; by event type (the fields any kind of event has, then a table per action element) or compact. Ported
-/// from the Stroom MCP server's `utils/fielddoc.py`.
+/// its values; by event type (the fields any kind of event has, then a table per action element) or compact.
 public final class IndexFieldDocs {
 
     // Where the bundled conventions are on the class path.
@@ -210,10 +209,10 @@ public final class IndexFieldDocs {
     }
 
     /// [#indexTables(List, List, String, Map)], with each field only some events have under each event type whose
-    /// events have it. Not in the Stroom MCP server, whose common fields held every field not of an action element
-    /// and every one read from whichever action element the event has (EventDetail/*/User/Id,
-    /// EventDetail//Data[@Name='x']), though only some kinds of event have them (seen: source.ip, in 40% of the
-    /// events, user.target.*, the object's and folder's fields). Common fields are then only those every event of
+    /// events have it. Seen in testing, with every field not of an action element and every one read from
+    /// whichever action element the event has (EventDetail/*/User/Id, EventDetail//Data[@Name='x']) taken as
+    /// common, though only some kinds of event have them: source.ip, in 40% of the events, user.target.*, the
+    /// object's and folder's fields. Common fields are then only those every event of
     /// the sample has, without the In sample column; one no event of the sample has is under "Not in the
     /// sample".
     ///
@@ -298,7 +297,7 @@ public final class IndexFieldDocs {
                             .max(Double::compare)
                             .orElse(null);
                     if (share != null) {
-                        shares.add(PyText.formatG(share) + "%" + (group.size() > 1
+                        shares.add(ToolText.formatG(share) + "%" + (group.size() > 1
                                 ? " (" + action + ")"
                                 : ""));
                     }
@@ -330,8 +329,8 @@ public final class IndexFieldDocs {
         return lines;
     }
 
-    // The TypeIds of a section's events, most first, each with its share of all events (not in the Stroom MCP
-    // server; seen: nothing said which kinds of event, Secret-View say, a section's fields come from).
+    // The TypeIds of a section's events, most first, each with its share of all events (seen in testing: nothing
+    // said which kinds of event, Secret-View say, a section's fields come from).
     private static String typeIdsOf(final List<String> group, final ByAction byAction) {
         if (byAction == null) {
             return "";
@@ -347,7 +346,7 @@ public final class IndexFieldDocs {
                 .toList();
         final String listed = sorted.stream()
                 .limit(MAX_TYPE_IDS)
-                .map(entry -> "`" + entry.getKey() + "` (" + PyText.formatG(entry.getValue()) + "%)")
+                .map(entry -> "`" + entry.getKey() + "` (" + ToolText.formatG(entry.getValue()) + "%)")
                 .collect(Collectors.joining(", "));
         return "TypeIds: " + listed + (sorted.size() > MAX_TYPE_IDS
                 ? " and " + (sorted.size() - MAX_TYPE_IDS) + " more"
@@ -369,7 +368,7 @@ public final class IndexFieldDocs {
 
     // A source read from whichever action element the event has: EventDetail/*/... or EventDetail//...
     private static boolean isAnyAction(final String source) {
-        final String path = PyText.strip(NullSafe.string(source), "/");
+        final String path = ToolText.strip(NullSafe.string(source), "/");
         return path.startsWith("EventDetail/*/") || path.startsWith("EventDetail//");
     }
 
@@ -427,7 +426,7 @@ public final class IndexFieldDocs {
     private static List<String> withShare(final List<String> cells, final double share) {
         final List<String> out = new ArrayList<>(cells);
         if (out.size() > 4 && out.get(4).endsWith("% of events")) {
-            out.set(4, PyText.formatG(share) + "% of events");
+            out.set(4, ToolText.formatG(share) + "% of events");
         }
         return out;
     }
@@ -447,7 +446,7 @@ public final class IndexFieldDocs {
         final Map<String, List<PlannedField>> groups = new LinkedHashMap<>();
         for (final PlannedField field : plan.leafFields()) {
             if (!head.contains(field.name())) {
-                groups.computeIfAbsent(PyText.split(field.name(), ".").getFirst(), k -> new ArrayList<>())
+                groups.computeIfAbsent(ToolText.split(field.name(), ".").getFirst(), k -> new ArrayList<>())
                         .add(field);
             }
         }
@@ -502,7 +501,7 @@ public final class IndexFieldDocs {
 
     /// [#indexFieldMappingMarkdown(FieldPlan, Map, Map, List, EventSchema, String, Descriptions)], with example
     /// values the index holds for fields the sample's documents have none of, so a reader sees what kind of data
-    /// each holds (asked for by the user; not in the Stroom MCP server): shown as from the index, and given to the
+    /// each holds (asked for by the user): shown as from the index, and given to the
     /// field's description.
     ///
     /// @param plan        The index plan.
@@ -583,20 +582,20 @@ public final class IndexFieldDocs {
                 cells.add(f.source().startsWith("@") || shared != null
                         ? "always"
                         : pct != null
-                                ? PyText.formatG(pct) + "% of events"
+                                ? ToolText.formatG(pct) + "% of events"
                                 : "not in the sample");
             }
             if (documents != null) {
                 final List<String> values = distinctNonEmpty(allValues(documents, f.name()));
                 cells.add(!values.isEmpty()
                         ? values.subList(0, Math.min(3, values.size())).stream()
-                                  .map(v -> "`" + PyText.head(v, 40) + "`")
+                                  .map(v -> "`" + ToolText.head(v, 40) + "`")
                                   .collect(Collectors.joining(", ")) + (values.size() > 3
                                 ? " (+" + (values.size() - 3) + ")"
                                 : "")
                         : !fromIndex.isEmpty()
                                 ? fromIndex.stream()
-                                          .map(v -> "`" + PyText.head(v, 40) + "`")
+                                          .map(v -> "`" + ToolText.head(v, 40) + "`")
                                           .collect(Collectors.joining(", ")) + " (from the index)"
                                 : "(none in the sample)");
             }
@@ -620,50 +619,51 @@ public final class IndexFieldDocs {
         final List<String> lines = new ArrayList<>(List.of("### Data surveyed", ""));
         if (JsonValues.truthy(profile.get("documents"))) {
             final String span = JsonValues.truthy(profile.get("earliest"))
-                    ? ", from " + PyText.str(profile.get("earliest")) + " to " + PyText.str(profile.get("latest"))
+                    ? ", from " + ToolText.str(profile.get("earliest")) + " to " + ToolText.str(profile.get("latest"))
                     : "";
             final String streams = JsonValues.truthy(profile.get("streams"))
-                    ? ", in " + PyText.str(profile.get("streams")) + " stream" + plural(profile.get("streams"))
+                    ? ", in " + ToolText.str(profile.get("streams")) + " stream" + plural(profile.get("streams"))
                     : "";
             final String atLeast = JsonValues.truthy(profile.get("partial"))
                     ? "at least "
                     : "";
-            lines.add("- `" + PyText.str(index.get("name")) + "` holds " + atLeast
-                      + PyText.str(profile.get("documents"))
+            lines.add("- `" + ToolText.str(index.get("name")) + "` holds " + atLeast
+                      + ToolText.str(profile.get("documents"))
                       + " document" + plural(profile.get("documents")) + span + streams + "."
                       + (JsonValues.truthy(profile.get("partial"))
-                    ? " (" + PyText.str(profile.get("partial")) + ".)"
+                    ? " (" + ToolText.str(profile.get("partial")) + ".)"
                     : ""));
             final List<Object> sources = JsonValues.listOrEmpty(profile.get("sources"));
             final double examined = number(profile.get("streams_examined"));
             for (final Object item : sources.subList(0, Math.min(10, sources.size()))) {
                 final Map<String, Object> s = JsonValues.mapOrEmpty(item);
                 final String made = JsonValues.truthy(s.get("produced_by"))
-                        ? ", produced by pipeline `" + PyText.str(s.get("produced_by")) + "`"
+                        ? ", produced by pipeline `" + ToolText.str(s.get("produced_by")) + "`"
                         : "";
                 final String said = JsonValues.truthy(s.get("description"))
-                        ? " The feed's description: " + PyText.str(s.get("description"))
+                        ? " The feed's description: " + ToolText.str(s.get("description"))
                         : "";
-                lines.add("- From feed `" + PyText.str(s.get("feed")) + "` (" + PyText.str(s.get("type")) + " streams"
+                lines.add("- From feed `" + ToolText.str(s.get("feed")) + "` (" + ToolText.str(s.get("type"))
+                          + " streams"
                           + made
-                          + "): " + PyText.str(s.get("streams")) + " stream" + plural(s.get("streams")) + ", "
-                          + PyText.str(s.get("documents")) + " documents." + said);
+                          + "): " + ToolText.str(s.get("streams")) + " stream" + plural(s.get("streams")) + ", "
+                          + ToolText.str(s.get("documents")) + " documents." + said);
             }
             if (!sources.isEmpty() && JsonValues.truthy(profile.get("streams"))
                 && examined < number(profile.get("streams"))) {
                 lines.add("- (Sources from the "
-                          + PyText.str(Objects.requireNonNullElse(profile.get("streams_examined"), 0))
+                          + ToolText.str(Objects.requireNonNullElse(profile.get("streams_examined"), 0))
                           + " streams with the most documents.)");
             }
         } else if (survey.get("documents_sampled") instanceof final Number sampled && sampled.doubleValue() == 0) {
             lines.add("- " + (JsonValues.truthy(survey.get("note"))
-                    ? PyText.str(survey.get("note"))
+                    ? ToolText.str(survey.get("note"))
                     : "No documents came back through Stroom."));
         }
         final List<Object> fed = JsonValues.listOrEmpty(survey.get("fed_by"));
         for (final Object item : fed) {
             final Map<String, Object> p = JsonValues.mapOrEmpty(item);
-            lines.add("- Indexed by pipeline `" + PyText.str(p.get("name")) + "`" + (JsonValues.truthy(p.get("plan"))
+            lines.add("- Indexed by pipeline `" + ToolText.str(p.get("name")) + "`" + (JsonValues.truthy(p.get("plan"))
                     ? ", from the index plan kept with its XSLT."
                     : "."));
         }
@@ -679,9 +679,9 @@ public final class IndexFieldDocs {
             final String recent = sampledFrom.startsWith("the last")
                     ? " of " + sampledFrom
                     : "";
-            lines.add("- The field table is drawn from " + PyText.str(survey.get("documents_sampled")) + " documents"
+            lines.add("- The field table is drawn from " + ToolText.str(survey.get("documents_sampled")) + " documents"
                       + recent + (JsonValues.truthy(survey.get("earliest"))
-                    ? " (" + PyText.str(survey.get("earliest")) + " to " + PyText.str(survey.get("latest")) + ")"
+                    ? " (" + ToolText.str(survey.get("earliest")) + " to " + ToolText.str(survey.get("latest")) + ")"
                     : "") + ": In sample and Sample values are what they held.");
         }
         return String.join("\n", lines) + "\n";
@@ -706,13 +706,13 @@ public final class IndexFieldDocs {
         final Map<String, Object> index = JsonValues.mapOrEmpty(survey.get("index"));
         final List<Map<String, List<String>>> documents = documents(survey.get("documents"));
         final String target = "elasticsearch".equals(survey.get("backend"))
-                ? "Elasticsearch index `" + PyText.str(survey.get("index_name")) + "`"
+                ? "Elasticsearch index `" + ToolText.str(survey.get("index_name")) + "`"
                 : "a Lucene index";
         // The overall facts (what feeds it, what was surveyed) are in Data surveyed: only what explains the columns
         // here.
         final List<Object> fed = JsonValues.listOrEmpty(survey.get("fed_by"));
-        String intro = "`" + PyText.str(index.get("name")) + "` is " + target + "; the time field is `"
-                       + PyText.str(survey.get("time_field")) + "`.";
+        String intro = "`" + ToolText.str(index.get("name")) + "` is " + target + "; the time field is `"
+                       + ToolText.str(survey.get("time_field")) + "`.";
         if (fed.stream().noneMatch(p -> JsonValues.truthy(JsonValues.mapOrEmpty(p).get("plan")))) {
             intro += " Where each field comes from is not recorded: no pipeline that writes to it keeps an index "
                      + "plan.";
@@ -732,7 +732,7 @@ public final class IndexFieldDocs {
         final Map<String, List<Map<String, Object>>> groups = new LinkedHashMap<>();
         for (final Map<String, Object> f : fields) {
             if (!first.contains(f.get("name"))) {
-                groups.computeIfAbsent(PyText.split(PyText.str(f.get("name")), ".").getFirst(),
+                groups.computeIfAbsent(ToolText.split(ToolText.str(f.get("name")), ".").getFirst(),
                         k -> new ArrayList<>()).add(f);
             }
         }
@@ -742,10 +742,10 @@ public final class IndexFieldDocs {
         }
         groups.values().forEach(ordered::addAll);
         final Set<String> surveyed = new LinkedHashSet<>(JsonValues.truthy(survey.get("surveyed_fields"))
-                ? JsonValues.listOrEmpty(survey.get("surveyed_fields")).stream().map(PyText::str).toList()
-                : fields.stream().map(f -> PyText.str(f.get("name"))).toList());
+                ? JsonValues.listOrEmpty(survey.get("surveyed_fields")).stream().map(ToolText::str).toList()
+                : fields.stream().map(f -> ToolText.str(f.get("name"))).toList());
         final List<String> unsurveyed = fields.stream()
-                .map(f -> PyText.str(f.get("name")))
+                .map(f -> ToolText.str(f.get("name")))
                 .filter(n -> !surveyed.contains(n))
                 .toList();
         if (!documents.isEmpty() && !unsurveyed.isEmpty()) {
@@ -757,9 +757,9 @@ public final class IndexFieldDocs {
                 ? new Descriptions()
                 : described;
         final List<IndexRow> rows = new ArrayList<>();
-        for (final String f : new LinkedHashSet<>(ordered.stream().map(x -> PyText.str(x.get("name"))).toList())) {
+        for (final String f : new LinkedHashSet<>(ordered.stream().map(x -> ToolText.str(x.get("name"))).toList())) {
             final Map<String, Object> field = fields.stream()
-                    .filter(x -> f.equals(PyText.str(x.get("name"))))
+                    .filter(x -> f.equals(ToolText.str(x.get("name"))))
                     .findFirst()
                     .orElseThrow();
             final PlannedField plan = planned.get(f);
@@ -807,7 +807,7 @@ public final class IndexFieldDocs {
                 held = percent((int) count, documents.size()) + " of documents";
                 values = FieldDocs.values(perDocument.stream().flatMap(List::stream).toList());
             }
-            rows.add(new IndexRow(source, List.of("`" + f + "`", description, PyText.str(field.get("type")),
+            rows.add(new IndexRow(source, List.of("`" + f + "`", description, ToolText.str(field.get("type")),
                     !source.isEmpty()
                             ? "`" + source + "`"
                             : "(not recorded)", held, values)));
@@ -838,7 +838,7 @@ public final class IndexFieldDocs {
     /// @return Their names, in the plans' order.
     public static List<String> notListed(final Map<String, Object> survey, final Map<String, PlannedField> planned) {
         final Set<String> listed = JsonValues.listOrEmpty(survey.get("fields")).stream()
-                .map(f -> PyText.str(JsonValues.mapOrEmpty(f).get("name")))
+                .map(f -> ToolText.str(JsonValues.mapOrEmpty(f).get("name")))
                 .collect(Collectors.toSet());
         return planned.keySet().stream().filter(n -> !listed.contains(n)).toList();
     }
@@ -903,7 +903,7 @@ public final class IndexFieldDocs {
             final String name = entry.getKey();
             final String what = meaning.containsKey(name)
                     ? meaning.get(name)
-                    : "The stream's `" + PyText.str(d.meta().get(name)) + "` meta attribute.";
+                    : "The stream's `" + ToolText.str(d.meta().get(name)) + "` meta attribute.";
             final List<List<String>> perDocument = documents == null
                     ? null
                     : perDocument(documents, name);
@@ -925,7 +925,7 @@ public final class IndexFieldDocs {
                                      + "mapped dynamically:", "",
                     "| Field | Description | In sample | Sample values |", "| --- | --- | --- | --- |"));
             for (final String key : new TreeSet<>(seen.keySet()).stream().limit(80).toList()) {
-                final String top = PyText.split(key, ".").getFirst();
+                final String top = ToolText.split(key, ".").getFirst();
                 final String what = top.endsWith("_json") && d.unpackJson()
                         ? "Parsed from the JSON held in the source's `" + top.substring(0, top.length() - 5)
                           + "` field."
@@ -1001,9 +1001,9 @@ public final class IndexFieldDocs {
         return new ArrayList<>(new LinkedHashSet<>(values.stream().filter(v -> !v.isEmpty()).toList()));
     }
 
-    // Python's f'{100 * count / total:.0f}%'.
+    // A share as a whole percentage, a half rounded to the even number: the documentation's established form.
     private static String percent(final int count, final int total) {
-        return PyText.formatFixed0(100.0 * count / total) + "%";
+        return ToolText.formatFixed0(100.0 * count / total) + "%";
     }
 
     private static String orElse(final String text, final String fallback) {
@@ -1031,7 +1031,7 @@ public final class IndexFieldDocs {
             final Map<String, List<String>> document = new LinkedHashMap<>();
             JsonValues.mapOrEmpty(item).forEach((key, values) -> document.put(key, JsonValues.listOrEmpty(values)
                     .stream()
-                    .map(PyText::str)
+                    .map(ToolText::str)
                     .toList()));
             documents.add(document);
         }

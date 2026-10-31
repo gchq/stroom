@@ -29,9 +29,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/// save_text_converter, and the converter checks (the Stroom MCP server's `tools/translation.py`
-/// `save_text_converter` and `_check_converter`: their cases in `tests/test_authoring_guards.py` and
-/// `tests/test_xml_fragments.py`).
+/// save_text_converter, and the converter checks.
 class TestSaveTextConverterTool {
 
     private static final String SPLITTER = "<dataSplitter xmlns=\"data-splitter:3\" version=\"3.0\"/>";

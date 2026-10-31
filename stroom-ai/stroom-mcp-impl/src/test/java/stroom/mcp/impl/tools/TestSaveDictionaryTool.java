@@ -25,8 +25,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// save_dictionary (the Stroom MCP server's `tools/translation.py` `save_dictionary`: its case in
-/// `tests/test_surface.py`, creating or updating by uuid).
+/// save_dictionary: creating or updating by uuid.
 class TestSaveDictionaryTool {
 
     private final TranslationWorld world = new TranslationWorld();

@@ -16,7 +16,7 @@
 
 package stroom.ai.impl.tools.sample;
 
-import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.ToolText;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// Groups records into shapes, one per kind of event, across the streams of a survey; `known` signatures (from an
-/// earlier survey) are recognised. The Stroom MCP server's `survey.Shapes`.
+/// earlier survey) are recognised.
 ///
 /// A feed's streams rarely show every event type in one stream, so the agent samples stream after stream and
 /// groups records into shapes until a few more streams add nothing new. A shape is signed by:
@@ -45,38 +45,38 @@ import java.util.regex.Pattern;
 /// - Syslog and other text: the message with its variable parts masked (numbers, addresses, quoted strings),
 ///   merged with other messages that differ only in a few words (user names, hosts), in the style of Drain.
 ///
-/// A shape is JSON, as the Python server held it: `signature`, `known`, `count`, `examples` (each `text` and
+/// A shape is JSON, as the survey doc keeps it: `signature`, `known`, `count`, `examples` (each `text` and
 /// `location`: `stream`, `part`, `record`) and `streams`.
 public final class Shapes {
 
     /// A field or column that usually names the kind of event.
-    public static final Pattern NAMING = PyText.re(
+    public static final Pattern NAMING = ToolText.re(
             "(^|[._-])(type|event|event_?type|event_?name|event_?id|action|category|activity|operation|op|kind|"
             + "result_?type|msg_?id|message_?id|log_?type|subtype|logger|logger_?name)$", Pattern.CASE_INSENSITIVE);
     /// A field holding the message itself, whose content may name the event.
-    public static final Pattern MESSAGE = PyText.re("(^|[._-])(body|message|msg|log|text|payload)$",
+    public static final Pattern MESSAGE = ToolText.re("(^|[._-])(body|message|msg|log|text|payload)$",
             Pattern.CASE_INSENSITIVE);
     /// A merged word of a text template.
     public static final String WILD = "<*>";
 
-    static final Pattern TOKEN_WITH_DIGIT = PyText.re("\\S*\\d\\S*");
+    static final Pattern TOKEN_WITH_DIGIT = ToolText.re("\\S*\\d\\S*");
 
-    private static final Pattern KV = PyText.re("(?<![\\w.])([A-Za-z_][\\w.]*)=\\\\?\"?([\\w.:-]+)");
+    private static final Pattern KV = ToolText.re("(?<![\\w.])([A-Za-z_][\\w.]*)=\\\\?\"?([\\w.:-]+)");
     // Key: [Value], as audit messages name the event (Secret Server: "Event: [User] Action: [Login Failed]").
-    private static final Pattern BRACKETED = PyText.re(
+    private static final Pattern BRACKETED = ToolText.re(
             "(?<![\\w.])([A-Za-z_][\\w.]*)\\s*[:=]\\s*\\[([^\\[\\]]{1,60})\\]");
     private static final int DEPTH = 3;
     private static final List<Map.Entry<Pattern, String>> MASKS = List.of(
-            Map.entry(PyText.re("\"[^\"]*\""), "<s>"),
-            Map.entry(PyText.re("'[^']*'"), "<s>"),
-            Map.entry(PyText.re("\\b[\\w.+-]+@[\\w-]+\\.[\\w.]+\\b"), "<email>"),
-            Map.entry(PyText.re("\\b(?:\\d{1,3}\\.){3}\\d{1,3}(?::\\d+)?\\b"), "<ip>"),
-            Map.entry(PyText.re("\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b"),
+            Map.entry(ToolText.re("\"[^\"]*\""), "<s>"),
+            Map.entry(ToolText.re("'[^']*'"), "<s>"),
+            Map.entry(ToolText.re("\\b[\\w.+-]+@[\\w-]+\\.[\\w.]+\\b"), "<email>"),
+            Map.entry(ToolText.re("\\b(?:\\d{1,3}\\.){3}\\d{1,3}(?::\\d+)?\\b"), "<ip>"),
+            Map.entry(ToolText.re("\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b"),
                     "<uuid>"),
-            Map.entry(PyText.re("\\b(?:0x)?[0-9a-fA-F]{12,}\\b"), "<hex>"));
-    private static final Pattern SYSLOG_5424_PARTS = PyText.re(
+            Map.entry(ToolText.re("\\b(?:0x)?[0-9a-fA-F]{12,}\\b"), "<hex>"));
+    private static final Pattern SYSLOG_5424_PARTS = ToolText.re(
             "^<\\d+>1 \\S+ \\S+ (\\S+) \\S+ \\S+ (?:\\[.*?\\]|-) ?(.*)$");
-    private static final Pattern SYSLOG_3164_PARTS = PyText.re(
+    private static final Pattern SYSLOG_3164_PARTS = ToolText.re(
             "^(?:<\\d+>)?\\w{3} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} \\S+ ([^:\\[\\s]+)(?:\\[\\d+\\])?: ?(.*)$");
     private static final List<String> CEF_FIELDS = List.of("version", "vendor", "product", "device_version",
             "signature_id", "name", "severity");
@@ -108,7 +108,7 @@ public final class Shapes {
                 final String template = bar < 0
                         ? ""
                         : rest.substring(bar + 1);
-                final List<String> tokens = new ArrayList<>(PyText.split(template, " "));
+                final List<String> tokens = new ArrayList<>(ToolText.split(template, " "));
                 templates.computeIfAbsent(List.of(program, tokens.size()), k -> new ArrayList<>()).add(tokens);
             }
         }
@@ -138,7 +138,7 @@ public final class Shapes {
                 return "row:all";
             }
             final List<String> values = new ArrayList<>();
-            columns.forEach(c -> values.add(c + "=" + PyText.str(parsed == null
+            columns.forEach(c -> values.add(c + "=" + ToolText.str(parsed == null
                     ? ""
                     : parsed.getOrDefault(c, ""))));
             return "row:" + String.join(", ", values);
@@ -170,25 +170,25 @@ public final class Shapes {
 
     private String fields(final Map<String, Object> parsed, final int depth) {
         final List<String> keys = new ArrayList<>(parsed.keySet());
-        keys.sort(PyText::compare);
+        keys.sort(ToolText::compare);
         final List<String> naming = new ArrayList<>();
         for (final String key : keys) {
             final Object value = parsed.get(key);
-            if (PyText.search(NAMING, lastPart(key))
+            if (ToolText.search(NAMING, lastPart(key))
                 && (value instanceof String || value instanceof Long || value instanceof Integer
                     || value instanceof BigInteger || value instanceof Boolean)
-                && PyText.len(PyText.str(value)) <= 60) {
-                naming.add(key + "=" + PyText.str(value));
+                && ToolText.len(ToolText.str(value)) <= 60) {
+                naming.add(key + "=" + ToolText.str(value));
             }
         }
-        naming.sort(PyText::compare);
+        naming.sort(ToolText::compare);
         String signature = String.join(",", keys) + (naming.isEmpty()
                 ? ""
                 : " | " + String.join(", ", naming));
         String message = null;
         for (final String key : keys) {
-            if (PyText.search(MESSAGE, lastPart(key)) && parsed.get(key) instanceof final String text
-                && !PyText.isBlank(text)) {
+            if (ToolText.search(MESSAGE, lastPart(key)) && parsed.get(key) instanceof final String text
+                && !ToolText.isBlank(text)) {
                 message = key;
                 break;
             }
@@ -199,8 +199,8 @@ public final class Shapes {
             // Data, every record alike but for the kind of event inside it. Read for naming pairs only.
             for (final String key : keys) {
                 if (freeText(parsed.get(key))
-                    && (message == null || PyText.len((String) parsed.get(key))
-                                           > PyText.len((String) parsed.get(message)))) {
+                    && (message == null || ToolText.len((String) parsed.get(key))
+                                           > ToolText.len((String) parsed.get(message)))) {
                     message = key;
                 }
             }
@@ -217,31 +217,31 @@ public final class Shapes {
 
     // A value that reads as a sentence or message rather than a code or name.
     private static boolean freeText(final Object value) {
-        return value instanceof final String text && PyText.len(text) >= 40 && PyText.count(text, " ") >= 5;
+        return value instanceof final String text && ToolText.len(text) >= 40 && ToolText.count(text, " ") >= 5;
     }
 
     // The shape of a message field's content: JSON in it, naming key=value pairs, or (only when nothing else
     // names the event) its masked text.
     private String inner(final String value, final int depth, final boolean drain) {
-        final String text = PyText.strip(value.replace("﻿", ""));
+        final String text = ToolText.strip(value.replace("﻿", ""));
         final int start = text.indexOf('{');
         if (start >= 0) {
             Object json = null;
             try {
-                json = PyJson.loads(text.substring(start));
-            } catch (final PyJson.JsonDecodeException e) {
+                json = ToolJson.loads(text.substring(start));
+            } catch (final ToolJson.JsonDecodeException e) {
                 // Not JSON.
             }
             if (json instanceof Map) {
                 return "json:" + fields(SampleProfiler.flatten(json), depth);
             }
         }
-        final Set<String> pairs = new TreeSet<>(PyText::compare);
-        final List<String[]> found = new ArrayList<>(PyText.findallGroups(KV, text));
-        found.addAll(PyText.findallGroups(BRACKETED, text));
+        final Set<String> pairs = new TreeSet<>(ToolText::compare);
+        final List<String[]> found = new ArrayList<>(ToolText.findallGroups(KV, text));
+        found.addAll(ToolText.findallGroups(BRACKETED, text));
         for (final String[] pair : found) {
-            if (PyText.search(NAMING, pair[0]) && PyText.len(pair[1]) <= 60) {
-                pairs.add(pair[0] + "=" + PyText.strip(pair[1]));
+            if (ToolText.search(NAMING, pair[0]) && ToolText.len(pair[1]) <= 60) {
+                pairs.add(pair[0] + "=" + ToolText.strip(pair[1]));
             }
         }
         if (!pairs.isEmpty()) {
@@ -385,11 +385,11 @@ public final class Shapes {
     public static List<String> mask(final String message) {
         String masked = message;
         for (final Map.Entry<Pattern, String> entry : MASKS) {
-            masked = PyText.sub(entry.getKey(), entry.getValue(), masked);
+            masked = ToolText.sub(entry.getKey(), entry.getValue(), masked);
         }
         final List<String> tokens = new ArrayList<>();
-        for (final String token : PyText.split(masked)) {
-            tokens.add(PyText.fullmatch(TOKEN_WITH_DIGIT, token) && !token.startsWith("<")
+        for (final String token : ToolText.split(masked)) {
+            tokens.add(ToolText.fullmatch(TOKEN_WITH_DIGIT, token) && !token.startsWith("<")
                     ? "<n>"
                     : token);
         }
@@ -398,9 +398,9 @@ public final class Shapes {
 
     // (program, message) for syslog lines; ("", line) otherwise.
     private static String[] syslogParts(final String line) {
-        Matcher m = PyText.matchAt(SYSLOG_5424_PARTS, line);
+        Matcher m = ToolText.matchAt(SYSLOG_5424_PARTS, line);
         if (m == null) {
-            m = PyText.matchAt(SYSLOG_3164_PARTS, line);
+            m = ToolText.matchAt(SYSLOG_3164_PARTS, line);
         }
         return m != null
                 ? new String[]{m.group(1), m.group(2)}
@@ -427,7 +427,7 @@ public final class Shapes {
             } else if (ch == '\\') {
                 escaped = true;
             } else if (ch == '|' && fields.size() < CEF_FIELDS.size()) {
-                fields.add(PyText.strip(current.toString()));
+                fields.add(ToolText.strip(current.toString()));
                 current.setLength(0);
             } else {
                 current.append(ch);
@@ -451,7 +451,7 @@ public final class Shapes {
         final Number count = counts.get(key);
         return total == 0
                 ? 0.0
-                : PyText.round(100.0 * (count == null
+                : ToolText.round(100.0 * (count == null
                         ? 0
                         : count.longValue()) / total, 1);
     }

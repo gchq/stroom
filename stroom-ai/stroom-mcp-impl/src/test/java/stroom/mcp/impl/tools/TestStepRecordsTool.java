@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-/// step_records (the Stroom MCP server's `tests/test_stepping.py`, its step_records cases).
+/// step_records, the tool.
 class TestStepRecordsTool {
 
     private static final String AN_EVENT = "<Events xmlns=\"event-logging:3\"><Event/></Events>";
@@ -150,7 +150,7 @@ class TestStepRecordsTool {
 
     @Test
     void aLocationWithoutARecordIsRefused() {
-        final ToolResult result = new StepRecordsTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
                 StepRecordsTool.NAME, "{\"pipeline_uuid\": \"p-1\", \"locations\": [{\"stream\": 7}]}"),
                 world.context());
 
@@ -159,9 +159,9 @@ class TestStepRecordsTool {
     }
 
     private Map<String, Object> stepRecords(final String arguments) {
-        final ToolResult result = new StepRecordsTool(world.stepping()).execute(PortedToolCalls.call(
+        final ToolResult result = new StepRecordsTool(world.stepping()).execute(BuildToolCalls.call(
                 StepRecordsTool.NAME, arguments), world.context());
         assertThat(result.isError()).as(result.text()).isFalse();
-        return PortedToolCalls.json(result.text());
+        return BuildToolCalls.json(result.text());
     }
 }

@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 /// Generates a reference-data XSLT: the translation of a reference feed (a user list, an asset register) into the
-/// reference-data:2 maps that `stroom:lookup()` reads from an events pipeline. The Stroom MCP server's
-/// `utils/refgen.py`, writing the same XSLT, to the byte.
+/// reference-data:2 maps that `stroom:lookup()` reads from an events pipeline. The XSLT is stable to the byte (the
+/// reference generator's fixtures pin it).
 ///
 /// A reference-data pipeline parses the feed as any other (Data Splitter or JSON) and its XSLT writes one
 /// `<reference>` per record and map: the map's name, the key, and the value (text, or elements). The events pipeline
@@ -148,7 +148,7 @@ public final class ReferenceGenerator {
         }
     }
 
-    // An XPath given, or else the field's selector (Python's `xpath or selector(field)`).
+    // An XPath given, or else the field's selector.
     private static String orSelector(final ReferenceMapping mapping, final String xpath, final String field) {
         return xpath != null && !xpath.isEmpty()
                 ? xpath
@@ -196,7 +196,7 @@ public final class ReferenceGenerator {
         return names.stream().sorted(ReferenceGenerator::byCodePoint).toList();
     }
 
-    // Python's string order: by code point.
+    // Names in order by code point (not by UTF-16 unit).
     private static int byCodePoint(final String a, final String b) {
         return Arrays.compare(a.codePoints().toArray(), b.codePoints().toArray());
     }
@@ -213,7 +213,7 @@ public final class ReferenceGenerator {
     /// @param maps     The maps' names: in order, or sorted when there are problems.
     public record Generated(boolean ok, List<String> problems, String xslt, List<String> maps) {
 
-        /// @return It as the Python generator's dict: ok, problems, xslt, maps.
+        /// @return It as a map, keys in the order the fixtures pin: ok, problems, xslt, maps.
         public Map<String, Object> toMap() {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("ok", ok);

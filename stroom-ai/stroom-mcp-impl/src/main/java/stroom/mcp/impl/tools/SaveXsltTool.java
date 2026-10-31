@@ -52,9 +52,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// `save_xslt` - saves an XSLT written by hand, or an indexing XSLT from its plan: creates it in the build, or
-/// replaces the code of one the tools created (the Stroom MCP server's `tools/translation.py` `save_xslt`,
-/// `_plan_to_save` and `_generated`, on [TranslationDocs]). A translation generated from a mapping is saved by
+/// `save_xslt` - saves an XSLT written by hand, or an indexing XSLT from its plan: creates it in the build, or replaces
+/// the code of one the tools created (on [TranslationDocs]). A translation generated from a mapping is saved by
 /// build_translation_xslt.
 class SaveXsltTool extends AbstractBuiltInTool {
 

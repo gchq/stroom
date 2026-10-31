@@ -61,11 +61,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-/// The translation documents of a build, created and saved through Stroom's own stores as the user: text
-/// converters, XSLTs and dictionaries (the Stroom MCP server's `tools/translation.py` `create_text_converter`,
-/// `update_text_converter`, `create_xslt`, `update_xslt`, `create_dictionary`, `update_dictionary`, `lost_mapping`
-/// and their helpers `_check_converter`, `_checked`, `_described`, `_tag_kept`, `_summary`, `_pending` and
-/// `_previewed`).
+/// The translation documents of a build, created and saved through Stroom's own stores as the user: text converters,
+/// XSLTs and dictionaries.
 ///
 /// The tools that write translation code call these: save_text_converter, save_xslt and save_dictionary, and the
 /// builds (build_translation_xslt, build_data_splitter, rebuild_mapping, and draft_cef_mapping's save). Each create
