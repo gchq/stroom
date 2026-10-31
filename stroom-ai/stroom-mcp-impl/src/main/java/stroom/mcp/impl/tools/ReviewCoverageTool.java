@@ -680,7 +680,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
     /// @param events Events.
     /// @return The 25 most common, each `path (n of N events)`.
     static List<String> indexGaps(final FieldPlan plan, final List<XmlElement> events) {
-        final List<String> sources = NullSafe.list(plan.fields()).stream().map(PlannedField::source).toList();
+        final List<String> sources = NullSafe.list(plan.leafFields()).stream().map(PlannedField::source).toList();
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final XmlElement event : events) {
             for (final String path : CefEvents.eventValues(event).keySet()) {

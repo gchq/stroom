@@ -128,11 +128,38 @@ class TestEventFieldDocs {
     }
 
     @Test
+    void anXsltEditedByHandIsDocumentedAsItRunsByTheRulesOfTheMappingsXslt() {
+        // Seen: a hand edit documented from what the mapping generates. The XSLT as it runs gives the values; the
+        // mapping's marked XSLT, stepped over the same records, says which rule wrote each event.
+        final TranslationMapping m = golden("sampled-mapping.json");
+        final String marked = XsltGenerator.generate(m, SCHEMA, "4.1.0", true).xslt();
+        final String edited = XsltGenerator.generate(m, SCHEMA, "4.1.0").xslt()
+                .replace("<TypeId>Logon</TypeId>", "<TypeId>Logon (edited)</TypeId>");
+        assertThat(edited).contains("Logon (edited)");
+        final Map<String, String> running = Map.of("7:1", FieldDocFixtures.transform(edited, FieldDocFixtures.RECORDS));
+        final Map<String, String> markers = Map.of("7:1", FieldDocFixtures.transform(marked, FieldDocFixtures.RECORDS));
+
+        assertThat(markers.get("7:1")).as("the marked XSLT's output").contains("<?stroom-mcp-rule logon?>");
+        final List<XmlElement> events = EventFieldDocs.runningEvents(running, markers);
+
+        assertThat(events).hasSize(2).extracting(EventFieldDocs::ruleOf).containsExactly("logon", "other");
+        final String doc = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, events, FieldDocs.BY_EVENT_TYPE, null);
+        assertThat(doc).contains("Logon (edited)").doesNotContain("not written by a rule of this mapping");
+        // Read alone, the edited event fits no rule (its TypeId isn't the mapping's constant), so it isn't placed.
+        assertThat(EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, EventFieldDocs.sampledEvents(List.copyOf(
+                running.values())), FieldDocs.BY_EVENT_TYPE, null)).contains("not written by a rule of this mapping");
+        // Records that give different numbers of events are left unmarked.
+        assertThat(EventFieldDocs.runningEvents(running, Map.of("7:1", "<Events xmlns=\"event-logging:3\"/>")))
+                .extracting(EventFieldDocs::ruleOf).containsOnlyNulls();
+    }
+
+    @Test
     void sampledFieldMappingMatchesEventsToRulesByTheMarker() {
         final TranslationMapping m = golden("sampled-mapping.json");
         final String marked = XsltGenerator.generate(m, SCHEMA, "4.1.0", true).xslt();
-        assertThat(marked).contains("<!--stroom-mcp rule: logon-->");
-        assertThat(XsltGenerator.generate(m, SCHEMA, "4.1.0").xslt()).doesNotContain("stroom-mcp rule");
+        assertThat(marked).contains("<xsl:processing-instruction name=\"stroom-mcp-rule\">logon"
+                                    + "</xsl:processing-instruction>");
+        assertThat(XsltGenerator.generate(m, SCHEMA, "4.1.0").xslt()).doesNotContain("stroom-mcp-rule");
         final List<XmlElement> events = EventFieldDocs.sampledEvents(List.of(FieldDocFixtures.transform(marked,
                 FieldDocFixtures.RECORDS)));
         final String[] halves = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, events, FieldDocs.COMPACT, null)

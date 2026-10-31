@@ -363,6 +363,12 @@ public class TranslationDocs {
         description = history.previewed(description, data);
         final XsltDoc saved = write(XsltDoc.TYPE, doc.copy().data(data).description(description).build());
         tagKept(saved, source.keeps());
+        if (source.mapping() != null) {
+            // What the XSLT is now generated from is what the next changes= start from, whichever tool saved it.
+            // Seen in testing: rebuild_mapping carried a hand edit into the kept mapping, but changes= then
+            // started from the copy the session last sent (from before the edit), and the edit was lost.
+            SentMappings.remember(context, uuid, source.mapping().toJson(DumpMode.COMPACT));
+        }
         final Map<String, Object> result = summary(saved);
         result.putAll(extra);
         return planProvider.get().nextFor(context, ref, result);

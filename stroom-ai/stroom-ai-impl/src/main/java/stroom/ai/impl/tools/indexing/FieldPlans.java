@@ -60,9 +60,42 @@ public final class FieldPlans {
     }
 
     /// @param source A plan field's source.
-    /// @return True if it names several paths (`*` or `//`).
+    /// @return True if it names several paths (`*`, `//`, or a union of paths).
     static boolean wild(final String source) {
-        return source.contains("*") || source.contains("//");
+        return source.contains("*") || source.contains("//") || branches(source).size() > 1;
+    }
+
+    /// The paths of a union (`EventSource/User | EventDetail//User`), each as it is; a source of one path is that
+    /// path. A `|` inside a predicate or a quoted value is part of its path.
+    ///
+    /// @param source A plan field's source.
+    /// @return Its paths, stripped.
+    public static List<String> branches(final String source) {
+        final List<String> out = new ArrayList<>();
+        final StringBuilder current = new StringBuilder();
+        int depth = 0;
+        char quote = 0;
+        for (int i = 0; i < source.length(); i++) {
+            final char ch = source.charAt(i);
+            if (quote != 0) {
+                if (ch == quote) {
+                    quote = 0;
+                }
+            } else if (ch == '\'' || ch == '"') {
+                quote = ch;
+            } else if (ch == '[' || ch == '(') {
+                depth++;
+            } else if (ch == ']' || ch == ')') {
+                depth--;
+            } else if (ch == '|' && depth == 0) {
+                out.add(current.toString().strip());
+                current.setLength(0);
+                continue;
+            }
+            current.append(ch);
+        }
+        out.add(current.toString().strip());
+        return out;
     }
 
     /// Whether a plan source names this event path: `*` stands for one element, as in the XPath it is
@@ -77,6 +110,10 @@ public final class FieldPlans {
     public static boolean sourceMatches(final String source, final String path) {
         if (!wild(source)) {
             return source.equals(path);
+        }
+        final List<String> branches = branches(source);
+        if (branches.size() > 1) {
+            return branches.stream().anyMatch(branch -> sourceMatches(branch, path));
         }
         if (!source.contains("//")) {
             final String[] want = PyText.strip(source, "/").split("/", -1);

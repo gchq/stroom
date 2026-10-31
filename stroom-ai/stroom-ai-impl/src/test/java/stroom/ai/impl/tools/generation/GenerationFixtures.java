@@ -38,6 +38,9 @@ class GenerationFixtures {
     // The Python server's own function rounding a time to the millisecond, as its generator wrote it.
     private static final Pattern TIME_MS_FUNCTION = Pattern.compile(
             "[ \\t]*<xsl:function name=\"mcp:time-ms\"[\\s\\S]*?</xsl:function>\\n");
+    // A documentation run's rule marker, as the Python server's generator wrote it.
+    private static final Pattern RULE_MARKER = Pattern.compile("<!--" + Pattern.quote(XsltGenerator.RULE_MARK)
+                                                               + "([^-]*)-->");
     // The record's number in a log line, as the Python server's generator wrote it.
     private static final String LOGGED_RECORD_NO = "record ', stroom:record-no()";
     // The opening line of a template, with its indent.
@@ -193,6 +196,18 @@ class GenerationFixtures {
                                           final Map<String, Object> next,
                                           final Map<String, Object> last) {
         return plus(plus(plus(entries, more), next), last);
+    }
+
+    /// The Stroom MCP server's XSLT as the port writes it: a documentation run's rule marker written as a processing
+    /// instruction, so the output carries it through Stroom's stepping (a comment in the stylesheet isn't copied to
+    /// the output, and one written is dropped).
+    ///
+    /// @param xslt The Python server's XSLT.
+    /// @return It as the port writes it.
+    static String asThePortMarksRules(final String xslt) {
+        return RULE_MARKER.matcher(xslt).replaceAll(match -> Matcher.quoteReplacement(
+                "<xsl:processing-instruction name=\"" + XsltGenerator.RULE_INSTRUCTION + "\">" + match.group(1)
+                + "</xsl:processing-instruction>"));
     }
 
     /// The Stroom MCP server's XSLT as the port writes it: its log lines' record number read once, first, for every

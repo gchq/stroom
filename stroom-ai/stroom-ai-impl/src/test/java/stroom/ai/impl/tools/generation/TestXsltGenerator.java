@@ -469,8 +469,9 @@ class TestXsltGenerator extends XsltRuns {
         // From test_sampled_field_mapping_matches_events_to_rules_by_the_marker: the marker the documentation run
         // puts in each Event (its tables are ported with the documentation).
         final TranslationMapping m = mapping();
-        assertThat(XsltGenerator.generate(m, SCHEMA, "4.1.0", true).xslt()).contains("<!--stroom-mcp rule: logon-->");
-        assertThat(generate(m).xslt()).doesNotContain("stroom-mcp rule");
+        assertThat(XsltGenerator.generate(m, SCHEMA, "4.1.0", true).xslt())
+                .contains("<xsl:processing-instruction name=\"stroom-mcp-rule\">logon</xsl:processing-instruction>");
+        assertThat(generate(m).xslt()).doesNotContain("stroom-mcp-rule");
     }
 
     @Test

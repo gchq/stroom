@@ -152,9 +152,9 @@ class IndexDocumentation {
             if (plan == null) {
                 continue;
             }
-            plan.fields().forEach(field -> planned.putIfAbsent(field.name(), field));
+            plan.leafFields().forEach(field -> planned.putIfAbsent(field.name(), field));
             if (plan.discovery() == null) {
-                expected.put(String.valueOf(fed.get("name")), plan.fields().stream().map(PlannedField::name)
+                expected.put(String.valueOf(fed.get("name")), plan.leafFields().stream().map(PlannedField::name)
                         .toList());
             }
         }

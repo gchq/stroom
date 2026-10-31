@@ -23,6 +23,8 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.generation.CodeDiff;
 import stroom.ai.impl.tools.generation.HandEdits;
+import stroom.ai.impl.tools.generation.XsltReader;
+import stroom.ai.impl.tools.generation.XsltReading;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.shared.NullSafe;
@@ -279,9 +281,19 @@ class HandEditGate {
                                   final List<HandEdits.Undone> left,
                                   final Map<String, String> decided,
                                   final Map<String, HandEdits.Collision> clashes) {
-        final String carry = carry(kept == null
-                ? null
-                : kept.kind(), doc.getUuid());
+        final List<String> unexpressible = kept != null && KeptMapping.TRANSLATION.equals(kept.kind())
+                ? unexpressible(current)
+                : List.of();
+        // An edit no mapping can hold (seen: an xsl:iterate making users distinct by login name): carrying it into
+        // the mapping, as asked otherwise, can't be done, so the choices left are said instead.
+        final String carry = unexpressible.isEmpty()
+                ? carry(kept == null
+                        ? null
+                        : kept.kind(), doc.getUuid())
+                : "say that the edit uses what no mapping can hold (" + String.join("; ",
+                        unexpressible.subList(0, Math.min(3, unexpressible.size()))) + "), so it can't be carried "
+                  + "into the mapping: the choice is the user's, to keep the XSLT as it is (and make no generated "
+                  + "change to it), or to drop the edit with this change";
         final List<String> keptFields = copied(decided).entrySet().stream()
                 .filter(entry -> "keep".equals(entry.getValue()) && clashes.containsKey(entry.getKey()))
                 .map(Map.Entry::getKey)
@@ -306,6 +318,20 @@ class HandEditGate {
                + "this code undoes the edit: it " + String.join("; ", said) + "." + shown + keeps + " Tell the user, "
                + "and " + carry + "; then save again. Only if the user says to drop their edit: "
                + "discard_hand_edit=true.";
+    }
+
+    // What in the XSLT's events the reader can't read back, so no mapping can hold: a construct the generator
+    // doesn't write (xsl:iterate, say). None when it can't be read at all (another layout), which carrying says.
+    static List<String> unexpressible(final String code) {
+        try {
+            final XsltReading reading = XsltReader.read(code);
+            return reading.rules().stream()
+                    .flatMap(rule -> rule.lost().stream())
+                    .distinct()
+                    .toList();
+        } catch (final RuntimeException e) {
+            return List.of();
+        }
     }
 
     // The user's answers for this XSLT as it is now, kept for the session: asked once, however many calls.

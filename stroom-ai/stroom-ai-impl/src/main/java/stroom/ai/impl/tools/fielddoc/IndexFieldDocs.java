@@ -441,11 +441,11 @@ public final class IndexFieldDocs {
         final List<String> head = new ArrayList<>(List.of("StreamId", "EventId"));
         head.add(plan.timeField());
         head.add("@timestamp");
-        final List<PlannedField> out = new ArrayList<>(plan.fields().stream()
+        final List<PlannedField> out = new ArrayList<>(plan.leafFields().stream()
                 .filter(f -> head.contains(f.name()))
                 .toList());
         final Map<String, List<PlannedField>> groups = new LinkedHashMap<>();
-        for (final PlannedField field : plan.fields()) {
+        for (final PlannedField field : plan.leafFields()) {
             if (!head.contains(field.name())) {
                 groups.computeIfAbsent(PyText.split(field.name(), ".").getFirst(), k -> new ArrayList<>())
                         .add(field);
@@ -894,7 +894,7 @@ public final class IndexFieldDocs {
                 ? " --- |"
                 : ""));
         final Map<String, String> types = new LinkedHashMap<>();
-        plan.fields().forEach(f -> types.put(f.name(), f.type()));
+        plan.leafFields().forEach(f -> types.put(f.name(), f.type()));
         final Map<String, String> meaning = Map.of(
                 "StreamId", "The id of the raw stream the record came from.",
                 "EventId", "The record's number in its stream; with StreamId, it identifies the record.",

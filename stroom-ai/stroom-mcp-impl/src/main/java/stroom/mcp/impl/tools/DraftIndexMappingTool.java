@@ -629,7 +629,7 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             return plan.withStandIns(remembered);
         }
         final Map<String, List<String>> byField = new LinkedHashMap<>();
-        for (final PlannedField field : plan.fields()) {
+        for (final PlannedField field : plan.leafFields()) {
             if (!JsonValues.truthy(field.source())) {
                 continue;
             }

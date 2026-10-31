@@ -466,6 +466,32 @@ class TestXsltReader extends XsltRuns {
                 : text.substring(0, at) + replacement + text.substring(at + old.length());
     }
 
+    @TestFactory
+    Stream<DynamicTest> anXslIterateIsNamedAsWhatNoMappingCanHoldWhereverItIs() {
+        final String iterate = "<xsl:iterate select=\"data[@name='user']\"><xsl:param name=\"seen\" select=\"()\"/>"
+                               + "<xsl:if test=\"not(@value = $seen)\"><User><Id><xsl:value-of select=\"@value\"/>"
+                               + "</Id></User></xsl:if><xsl:next-iteration><xsl:with-param name=\"seen\" "
+                               + "select=\"($seen, @value)\"/></xsl:next-iteration></xsl:iterate>";
+        final Map<String, UnaryOperator<String>> edits = new LinkedHashMap<>();
+        // Written where it is.
+        edits.put("in place", code -> code.replace("</Authenticate>", iterate + "</Authenticate>"));
+        // Built into a variable, then copied into an element (asked for by the user: how distinct users are often
+        // written by hand).
+        edits.put("in a variable", code -> code.replace("</Authenticate>", "<xsl:variable name=\"users\">"
+                                                                           + iterate + "</xsl:variable><Data "
+                                                                           + "Name=\"users\"><xsl:copy-of "
+                                                                           + "select=\"$users\"/></Data>"
+                                                                           + "</Authenticate>"));
+        final String code = codeOf(mapping());
+        assertThat(code).contains("</Authenticate>");
+        return edits.entrySet().stream().map(edit -> DynamicTest.dynamicTest(edit.getKey(), () -> {
+            final List<String> lost = XsltReader.read(edit.getValue().apply(code)).rules().stream()
+                    .flatMap(rule -> rule.lost().stream())
+                    .toList();
+            assertThat(lost).anySatisfy(note -> assertThat(note).contains("iterate not read"));
+        }));
+    }
+
     private static List<String> key(final FieldMapping f) {
         return Arrays.asList(f.path(), f.dataName());
     }
