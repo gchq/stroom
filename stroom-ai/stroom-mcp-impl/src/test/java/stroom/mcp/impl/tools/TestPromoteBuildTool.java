@@ -333,12 +333,16 @@ class TestPromoteBuildTool {
         final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
                 PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
 
-        final Map<String, Object> shown = call(destinations, null);
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
         docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
+        // Asked once, before the layout was shown, not again at the approval.
+        assertThat(user.shown()).filteredOn(form -> form.contains("was changed in production")).hasSize(1);
         assertThat(user.shown().getFirst())
                 .startsWith("XSLT 'ACME-XSLT' was changed in production since its working copy was taken by john.smith")
-                .contains("- production now, + the working copy", "v1-by-hand", "v2",
+                .contains("Overwriting it loses from production: <xsl:stylesheet>v1-by-hand</xsl:stylesheet>",
+                        "The working copy brings: <xsl:stylesheet>v2</xsl:stylesheet>",
                         PromoteBuildTool.OVERWRITE_ORIGINAL, "kept only in its backup");
         assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
     }
@@ -349,7 +353,10 @@ class TestPromoteBuildTool {
         final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("choice",
                 PromoteBuildTool.KEEP_ORIGINAL, "value", true));
 
-        final Map<String, Object> shown = call(destinations, null);
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
+        // The layout shown says the copy stays, as the user chose before it was shown.
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("updated from its working copy");
         final Map<String, Object> promoted = docs.call(tool, user.context(), DocumentationWorld.args(args(
                 destinations, shown.get("review_id"))));
 
@@ -357,6 +364,15 @@ class TestPromoteBuildTool {
                 .isEqualTo("<xsl:stylesheet>v1-by-hand</xsl:stylesheet>");
         assertThat(world.nodes).containsKey("x-copy");
         assertThat(promoted.get("promoted")).asList().contains("left XSLT 'ACME-XSLT' in the workspace");
+
+        // Promoted again, it is asked again: the choice held for that promotion only.
+        final PortedToolCalls.FormUser later = PortedToolCalls.user(Map.of("choice",
+                PromoteBuildTool.OVERWRITE_ORIGINAL, "value", true));
+        final Map<String, Object> again = docs.call(tool, later.context(), DocumentationWorld.args(args(
+                destinations, null)));
+        docs.call(tool, later.context(), DocumentationWorld.args(args(destinations, again.get("review_id"))));
+        assertThat(later.shown()).anyMatch(form -> form.contains("was changed in production"));
+        assertThat(((XsltDoc) world.docs.get("x-prod")).getData()).isEqualTo("<xsl:stylesheet>v2</xsl:stylesheet>");
     }
 
     @Test
@@ -366,7 +382,8 @@ class TestPromoteBuildTool {
         world.docs.put("x-prod", ((XsltDoc) world.docs.get("x-prod")).copy().version("v0").build());
         final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
 
-        final Map<String, Object> shown = call(destinations, null);
+        final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(destinations,
+                null)));
         docs.call(tool, user.context(), DocumentationWorld.args(args(destinations, shown.get("review_id"))));
 
         assertThat(user.shown()).noneMatch(form -> form.contains("was changed in production"));
