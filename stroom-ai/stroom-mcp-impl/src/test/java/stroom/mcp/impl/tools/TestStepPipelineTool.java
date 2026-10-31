@@ -87,7 +87,7 @@ class TestStepPipelineTool {
     void anXsltWhoseTemplatesMatchNothingIsAnError() {
         // When no template matches the input (typically a wrong xpath-default-namespace), XSLT's built-in rules copy
         // the text through and nothing raises an error.
-        world.records(1, "some text copied through");
+        world.copiedThrough(1, "some text copied through");
 
         final Map<String, Object> result = step("{\"pipeline_uuid\": \"p-1\", \"stream_id\": 7}");
 
