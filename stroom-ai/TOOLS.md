@@ -152,20 +152,20 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `grep` | Finds lines of a workspace file containing some text | core | yes | | | | | |
 | `jq` | Runs a jq query on a workspace JSON file | core | yes | | | | | |
 | `list_data_sources` | Lists the data sources the user can query | search | yes | | | | View, Use | |
-| `list_visualisations` | The charting libraries installed, the chart kinds each draws, and the Visualisations in Stroom | content | yes | dashboards | | | | trusted |
+| `list_visualisations` | The charting libraries installed, the chart kinds each draws, and the Visualisations in Stroom | content | yes | dashboards | | | View, Use | trusted |
 | `ls` | Lists the workspace's files | core | yes | | | | | |
 | `memory` | Reads and changes the user's and the chat's memory | core | no | | | | | chat, trusted, ro calls |
 | `pipeline` | Chains data tools over workspace files | core | yes | | | | | |
-| `preview_extraction` | Tries a draft search extraction for the attached dashboard's table on some of its events, by stepping | content | yes | dashboards | Stepping, View Data | | View | slot |
+| `preview_extraction` | Tries a draft search extraction for the attached dashboard's table on some of its events, by stepping | content | yes | dashboards | Stepping, View Data | | View | chat, slot |
 | `processor_tasks` | Processing failures and why, backlogs, task lists and counts across the cluster | processing | yes | processing | Manage Processors | View Data | | |
 | `propose_code_change` | Proposes a change to the XSLT or converter being stepped, tried by stepping | content | yes | | | | View | chat |
 | `propose_dashboard` | Offers a button to create a dashboard from StroomQL | content | yes | dashboards | | | Use | chat |
 | `propose_dashboard_change` | Proposes changes to the attached dashboard's tables and components | content | yes | dashboards | | | View | chat |
 | `propose_documentation_change` | Proposes a change to a document's Documentation tab, reviewed as a diff | content | yes | | | | View | chat |
-| `propose_extraction_pipeline` | Offers a button to create, or change, the search extraction for the attached dashboard's table | content | yes | dashboards | | | View | |
+| `propose_extraction_pipeline` | Offers a button to create, or change, the search extraction for the attached dashboard's table | content | yes | dashboards | | | View | chat |
 | `propose_query` | Offers a button to create a StroomQL Query document | content | yes | | | | Use | chat |
 | `propose_query_change` | Offers a button to change the query in the attached tab | content | yes | | | | View, Use | chat |
-| `propose_visualisation` | Plans a chart of the attached table, checks its rows can make it, and offers a button to create it | content | yes | dashboards | | | | chat |
+| `propose_visualisation` | Plans a chart of the attached table, checks its rows can make it, and offers a button to create it | content | yes | dashboards | | | View, Use, Edit | chat |
 | `read_document` | A document's content; a pipeline as Stroom runs it, an XSLT's translation, an index's survey | core | yes | | | Manage Processors | View | |
 | `read_file` | Reads lines of a workspace file | core | yes | | | | | |
 | `read_turn` | Reads a whole earlier turn of the chat | core | yes | | | | | chat |
@@ -186,8 +186,9 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `xslt_lookups` | The reference data lookups XSLTs make, and which loaders write each map | content | yes | | | | View | |
 
 `run_stroomql` checks no permission itself: Stroom's query service checks Use on the data source when the search
-runs. `preview_extraction`, `propose_extraction_pipeline` and `xslt_lookups` aren't flagged chat only, so `/mcp`
-offers them, but each needs a chat to work (the attached tab, or a button) and refuses over `/mcp`.
+runs. `preview_extraction` and `propose_extraction_pipeline` work on the dashboard attached to the chat, so they are
+chat only: offered over `/mcp`, they always failed there. `xslt_lookups` works over `/mcp` too, reading XSLTs as
+saved.
 `elastic_index_templates` is also checked by Stroom for Read on the Elastic Index document, and reads with
 the document's cluster connection, whose credentials need the privileges to read templates.
 
@@ -429,7 +430,10 @@ Core · read-only · checks View · Classes: `DocumentDocumentationTool`, `Docum
 
 The Markdown on a document's Documentation tab. The tab edits the document's own `description` field, which each
 type declares for itself, so the document is read through its type's handler and the field taken from its JSON.
-Documentation larger than the characters per read is saved to `/documents/<uuid>/documentation.md` with a preview.
+What the build tools keep hidden in that field (an XSLT's kept mapping, a build's pending changes, their note) is
+left out (`KeptMapping.withoutBlock`), as `read_document` leaves it out: it is the tools', not the documentation.
+Found reviewing the tools: `read_document` left it out, but this tool gave the model the hidden JSON. Documentation
+larger than the characters per read is saved to `/documents/<uuid>/documentation.md` with a preview.
 
 When a Documentation document of the same name sits in the same folder, the result says that is the document's
 documentation and the tab holds only what is kept with the document itself. This is because the build tools write
@@ -647,9 +651,10 @@ A nested map name (`a/b`) is checked a segment at a time.
   is neither XSLT nor pipeline, an XSLT that isn't well-formed XML.
 * **Notes**: structure only; it doesn't read the reference data. Loaders the user can't view are counted, not
   named. In a chat, an XSLT shown in the user's attached tab (as the tab's document, or the element selected while
-  stepping) is read as edited there, unsaved, when shared in full, and the report says so. It finds the attached tab
-  through the session's chat id, so over MCP (no chat) a call that reads an XSLT fails with "xslt_lookups can only be
-  used in a chat" (see the report notes).
+  stepping) is read as edited there, unsaved, when shared in full, and the report says so. Outside a chat (over
+  `/mcp`) there is no tab, so every XSLT is read as saved. Found reviewing the tools: it looked for the tab through
+  the session's chat id, so over `/mcp` every call that read an XSLT failed with "xslt_lookups can only be used in
+  a chat".
 
 ## The chat and its workspace
 
@@ -1078,13 +1083,17 @@ warns that the row count is not a total, and to count with `count()` and `group 
 
 Before running, a query on a Lucene or Elastic index is checked by `RunStroomQlTool.misleading`. The check parses
 the query (`QueryService.parseQuery`), takes every enabled term at any depth, and asks `MisleadingSearches.refusal`
-with the index's ip fields and its unqueryable fields. A query is refused for:
+with the index's ip fields, its unqueryable fields and, for a Lucene index, its text fields' analyzers
+(`LuceneTextFields`). A query is refused for:
 
 * STARTS_WITH or CONTAINS on Elasticsearch;
 * IS_NULL or IS_NOT_NULL on Elasticsearch, which match every document;
 * EQUALS with a wildcard on an Elasticsearch ip field, with the CIDR range to use (`MisleadingSearches.cidr`:
   `192.0.2.*` is `192.0.2.0/24`);
 * STARTS_WITH or ENDS_WITH on Lucene;
+* CONTAINS on a Lucene keyword field (a TEXT field with the KEYWORD analyzer), with the `*value*` wildcard to use;
+* a range (BETWEEN, GREATER_THAN, LESS_THAN and their OR_EQUAL_TO forms) on a Lucene text field with an analyzer,
+  with a wildcard or IN to use instead;
 * IN with one value holding a space and no commas, or, on Lucene, any IN value holding a space;
 * a field Stroom lists as not queryable ("the index doc's field isn't indexed" on Lucene).
 
@@ -1103,9 +1112,11 @@ for every row the cap allows, with each row's stream and event ids. `StreamId` a
   given as "The query failed: ..." or, once it had started, "The query started, but failed while it ran: ...".
 * **Notes**: the time limit is the session's query time limit (`stroom.ai.workspace.queryTimeLimit`, default 2
   minutes), not the tool time limit. The search is always destroyed when the call ends (`AgentSearches.destroy`),
-  including on a timeout, so it never runs on after the call. The Lucene keyword and text-field checks
-  (CONTAINS on a keyword field, a range on a text field) are not made here: `MisleadingSearches` needs each text
-  field's analyser for them, and this tool passes none.
+  including on a timeout, so it never runs on after the call.
+* **Lucene analyzers**: a Lucene index's query fields (`QueryService.findFields`) don't say which analyzer a field
+  has, so `LuceneTextFields` reads them from the index's own field list (`IndexResource.findFields`, as the user,
+  up to 2,000 fields), the TEXT fields only. If they can't be read, the check goes on without them. Found reviewing
+  the tools: none were passed, so a CONTAINS on a keyword field ran and found nothing.
 
 ### `current_results`
 
@@ -1292,7 +1303,8 @@ neither is given.
   from `fetch_events`; a `join` table without the id columns; a malformed `where` or a condition dashboards don't
   take; an index the user can't use; unknown fields; misleading searches; no conditions.
 * **Notes**: with `index` the time limit is the query time limit; otherwise it is the tool time limit. As for
-  `run_stroomql`, the Lucene keyword and text-field checks aren't made (no analysers are passed).
+  `run_stroomql`, a Lucene index's text fields' analyzers come from `LuceneTextFields`, so a CONTAINS on a keyword
+  field and a range on a text field are refused too.
 
 ## Streams and processing
 
@@ -1843,7 +1855,8 @@ unsaved edits included. Otherwise it is against the documentation as saved. The 
 ## Dashboards, extractions and visualisations
 
 These six tools are in the chat's dashboards tool group. They are offered once the group is active, or from the
-start when the attached tab is a dashboard (`BuiltInToolGroups`). All are in category Content and read-only.
+start when the attached tab is a dashboard (`BuiltInToolGroups`). All are in category Content and read-only, and
+all but `list_visualisations` are chat only.
 
 ### `propose_dashboard`
 
@@ -1947,7 +1960,7 @@ proposed for its table.
 ### `preview_extraction`
 
 Content · read-only · requires Stepping and View Data; checks View on the dashboard, its extraction pipeline and
-XSLT · takes a run slot · not chat only (see Notes) · Classes: `PreviewExtractionTool`, `ExtractionField`,
+XSLT · takes a run slot · chat only · Classes: `PreviewExtractionTool`, `ExtractionField`,
 `ExtractionXslt`, `ExtractionChange`, `ExtractionPipelines`, `ExtractionPreview`, `ExtractionEvents`,
 `PreviewRecord`, `SteppingWalks`
 
@@ -2013,13 +2026,14 @@ events reach the XSLT in, and the XSLT is written for that namespace.
     by `current_results` (checked from the snapshot's metadata, so the model can't supply other events), and the
     events' stored namespace (`ExtractionEvents.namespace`) matches the one stepping found. If they differ, an
     earlier pipeline element changes the events, and an XSLT written for them couldn't be checked.
-  * It needs a chat (`requireChatId`) and the attached tab. `isChatOnly()` is not overridden, so `/mcp` offers it,
-    but a call there fails with "preview_extraction can only be used in a chat."
+  * It needs a chat (`requireChatId`) and the attached tab, so it is chat only (`isChatOnly()`): `/mcp` doesn't
+    offer it. Found reviewing the tools: offered over `/mcp`, every call failed with "preview_extraction can only be
+    used in a chat."
 
 ### `propose_extraction_pipeline`
 
 Content · read-only · checks View on the dashboard and on the table's extraction pipeline and XSLT (Edit on the
-XSLT decides whether a change in place is offered) · not chat only (see Notes) · Classes:
+XSLT decides whether a change in place is offered) · chat only · Classes:
 `ProposeExtractionPipelineTool`, `ExtractionPlan`, `ExtractionActions`, `ExtractionChange`, `ExtractionEvents`,
 `PreviewRecord`, `UserActionService.writeExtraction`
 
@@ -2062,13 +2076,15 @@ table up to use it, as unsaved changes, with a column for each new field.
 * **Notes**:
   * An XSLT that names fields as it runs has its blank-column check left to the preview, which stepped it.
   * It writes an audit "document viewed" record.
-  * `isChatOnly()` is not overridden, so `/mcp` offers the tool. A call there returns "Error: a button can only be
+  * Chat only (`isChatOnly()`), as it works on the dashboard attached to the chat and offers a button: `/mcp`
+    doesn't offer it. Found reviewing the tools: offered there, every call returned "Error: a button can only be
     offered while answering a question in a chat."
 
 ### `list_visualisations`
 
-Content · read-only · no permissions declared (reports when the user lacks Use on a library's Script doc) · reads
-no untrusted content · Classes: `ListVisualisationsTool`, `ChartLibraries`, `ChartKind`, `ChartRole`,
+Content · read-only · checks View (the Visualisations listed are those the user can view) and Use (reports when the
+user lacks Use on a library's Script doc) · reads no untrusted content · Classes: `ListVisualisationsTool`,
+`ChartLibraries`, `ChartKind`, `ChartRole`,
 `StyleSetting`, `D3Visualisation`, `AdapterScripts`
 
 Reports, as Markdown:
@@ -2107,8 +2123,8 @@ How generated charts are served:
 
 ### `propose_visualisation`
 
-Content · read-only · no permissions declared; checks View on the attached dashboard or Query, Use on the
-library's Script doc, and Edit on a Visualisation it replaces · chat only · Classes: `ProposeVisualisationTool`,
+Content · read-only · checks View on the attached dashboard or Query, Use on the library's Script doc, and Edit on
+a Visualisation it replaces · chat only · Classes: `ProposeVisualisationTool`,
 `VisualisationPlan`, `ChartCheck`, `ChartConversions`, `ChartLibraries`, `ChartLibrary`, `EChartsTemplate`,
 `VisualisationActions`, `D3Visualisation`, `ProposeDashboardChangeTool` (to check table and filter changes)
 
@@ -2401,6 +2417,9 @@ instructions that apply to the `feeds` and `folders` given. Any feed given that 
 in the build record as what the build works from (`BuildRecords.addSourceFeeds`, `source_feeds`): the plan then
 doesn't send the agent to create a feed and upload samples, and promotion's filters name those feeds. Seen in VS
 Code: without this, a test feed was made and a workspace file uploaded though the user had chosen production streams.
+The build is remembered for the session (`BuildPlan.rememberBuild`), as `start_onboarding`'s is, so later calls that
+name no build work on it. Found reviewing the tools: it remembered none, so a build started here wasn't the one
+those calls fell back to.
 
 * **Arguments**: `build` (required), `feeds`, `folders`, `kind` (`events`, `discovery`, `reference`; given again it
   changes the build's).
@@ -2456,7 +2475,7 @@ Where each document goes (`plan`):
   keeps running); a working copy of anything else is **written back**: the original is copied into
   `<workspace>/backups` as `<name> backup <yyyyMMddHHmmss>` (UTC, tagged `mcp-generated`), then the copy's `data`,
   `converterType`, `documentation` and `description` are written over it, and the copy deleted. An unchanged copy is
-  just deleted.
+  just deleted. A copy whose original was changed since it was taken is put to the user first (below).
 * `keep` for a document UUID leaves it in the workspace (seen: a test feed made while fixing had nowhere to go but
   production, and the agent never promoted the fix). A build on existing feeds keeps its feeds there unless given a
   folder, as does any `-MCP-TEST` feed.
@@ -2470,6 +2489,29 @@ Where each document goes (`plan`):
   place join it (`PromotionLayout.versionFolders`, `joining`). Documents given a destination of their own keep it.
 * Role subfolders (`Events`/`Records`, `Indexing`, `CEF`, `Reference`) are kept under each destination only when
   documents of more than one role move, unless `role_subfolders=false`.
+
+**Production changed since the copy.** `copy_pipeline` records in each working copy's build record entry the version
+its original had when copied (`BuildRecords.COPY_OF_VERSION`, `copy_of_version`). Before the layout is built (on the
+first call, so the reviewed tree shows the choice), each document to be written back whose original's version is now
+different (`changedSinceCopied`; e.g. edited by hand in production) is put to the user in a form of its own
+(`askAboutChangedOriginals`, through `Consent.choose`): who changed production and when (the original's
+`updateUser` and `updateTimeMs`), then, for a document with code, what overwriting would lose from production and
+what the working copy brings (`CodeDiff`, at most six lines of each, at most 1,000 characters, so the form can
+always be shown). The choices:
+
+* "Overwrite production with the working copy": written back as below; the production change is then only in the
+  backup.
+* "Keep production as it is": the step becomes a keep, so production isn't touched; the working copy, and the
+  working-copy pipelines that would have been discarded, stay in the build, for the change to be made again on a
+  fresh working copy.
+
+The choice is kept in the copy's build record entry (`original_choice`) against the original's version, so the
+approval call doesn't ask again; it is cleared once the promotion is carried out, so promoting the build again asks
+afresh, and a further change in production asks again. Promotion already needs a client that can show forms (its
+approval), so a client without them is refused. A copy taken before the version was recorded has none, and is
+written back without asking. Asked for by the user: before, the copy was written over a production edit made after
+it was taken, and the edit survived only in the backup; they chose a question that explains the difference over a
+refusal.
 
 Every destination is resolved before approval (`WriteGuard.resolveFolder`), and the folders to create are listed in
 the tree, so a missing folder can't stop a promotion half way. On approval, in order: pending changes are consolidated
@@ -2493,8 +2535,11 @@ minimum creation time.
   destination, named in one refusal with the destinations already placed (seen: Delinea SecretServer, one failed call
   per type); a blocking check (`Not promoted: ... once promoted, the pipeline's documentation can only change through a
   working copy`), because an agent once promoted with stale documentation and then made a second doc trying to fix
-  it. A hand edit to an XSLT only warns, so a user's own edits never hold a promotion up. A failure part way is
-  refused with what was done before it and what is still in the build (each step is its own write).
+  it. A hand edit to an XSLT only warns, so a user's own edits never hold a promotion up. A working copy whose
+  original changed since it was taken, over a client that can't show forms (or when the form would be too large to
+  show): `Not promoted: <what changed, the difference and the choice> Promotion needs a client that can show forms to
+  ask the user.`; no choice made in the form: `The user made no choice: ...`. A failure part way
+  is refused with what was done before it and what is still in the build (each step is its own write).
 * **Notes**: `PromotionProcessing.promotionProcessing` decides what each pipeline goes on processing: the feeds and
   stream types of its sample filters (the feed's own stream type, e.g. Raw Reference), or for a build on existing data
   its source feeds, never a test feed (seen in VS Code: the promoted filter selected the test feed). An indexing
@@ -2743,10 +2788,11 @@ by reference (`IS_DOC_REF`), so Stroom keeps the dependency and a renamed feed i
 * **Sample** (`stream_ids`): exactly those streams, one task at a time. Streams the pipeline already processed (it
   has output for them, or a filter already selects them) are refused: use `reprocess_streams`.
 * **Feed** (`feed`, `stream_type`, `created_after`): the feed's streams of the type created after the bound, at most
-  2 tasks. `stream_type` defaults to Events for an indexing pipeline, else the feed's own type. The bound is raised to
-  the feed's creation (seen: one agent guessed midnight after its sample arrived and the filter selected nothing;
-  another chose a date before the feed existed, which selects an earlier, deleted namesake's streams). A translation
-  pipeline's feed filter that selects none of the feed's streams still to process is refused, as is the same
+  2 tasks at a time (`ProcessorFilterWrites.MAX_FEED_FILTER_TASKS`, which the description states). `stream_type`
+  defaults to Events for an indexing pipeline, else the feed's own type. The bound is raised to the feed's creation
+  (seen: one agent guessed midnight after its sample arrived and the filter selected nothing; another chose a date
+  before the feed existed, which selects an earlier, deleted namesake's streams). A translation pipeline's feed
+  filter that selects none of the feed's streams still to process is refused, as is the same
   feed-wide filter twice (seen: made twice, neither selecting anything).
 
 Gates, in order: the pipeline's current code has a recorded clean step (`BuildRecords.steppedClean`); a translation
@@ -2816,8 +2862,14 @@ itself · chat group processing · Classes: `ReprocessStreamsTool`, `ProcessorFi
 `ProcessingApprovals`, `IndexingRuns`, `IndexTemplateAgreements`
 
 Processes up to 10 streams again through a pipeline in a build after a change, one task at a time, with a new filter
-selecting them by id (made as `create_processor_filter` makes one). Stroom marks the pipeline's earlier outputs for
-those streams deleted once the new ones are written; `wait_for_processing filter_id=` then counts only the new ones.
+selecting them by id (made as `create_processor_filter` makes one). As for `create_processor_filter`, the
+pipeline's current code must have a recorded clean step (`CreateProcessorFilterTool.steppedClean`, over
+`BuildRecords.steppedClean`; code that can't be read counts as not stepped): a change to its XSLT or converter since
+the last clean step needs stepping again first. The description says so. Asked for by the user, after streams were
+found reprocessed through code never stepped.
+
+Stroom marks the pipeline's earlier outputs for those streams deleted once the new ones are written;
+`wait_for_processing filter_id=` then counts only the new ones.
 Stroom's own reprocess filters (the data browser's Reprocess action) aren't used: they select the output streams a
 processor made, which an indexing pipeline doesn't have, and give no filter id to count by.
 
@@ -2834,10 +2886,10 @@ index is emptied once approved.
   filter what the user does first, with buttons; or a `drop_first` reply.
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build (promoted pipelines too: reprocessing
   production data is the user's); 0 or more than 10 streams (`Give 1 to 10 streams per call`); streams the pipeline
-  hasn't processed (`use create_processor_filter`); feeds outside the build; streams older than their feed; the
-  source and template checks; the form declined.
-* **Notes**: unlike `create_processor_filter`, no recorded clean step is required before the call; `wait_for_processing`
-  fails its gate while the code hasn't stepped clean.
+  hasn't processed (`use create_processor_filter`); no clean step of the current code (`... has no clean step of its
+  current code recorded: step_sample (or step_records) over the streams until the verdict is clean, then
+  reprocess`); feeds outside the build; streams older than their feed; the source and template checks; the form
+  declined.
 
 ### `wait_for_processing`
 
@@ -3254,7 +3306,6 @@ before it is stepped (`PipelineStepping.checkDrafts`). In order:
 * **Returns**: `ok`, `errors`, `warnings`, and for a well-formed XSLT `imports` (hrefs in document order) and
   `stroom_functions` (the `stroom:` functions it calls).
 * **Refuses**: an empty `xslt`. Everything else is an error in the result, not a refusal.
-* **Notes**: the class Javadoc still says it "compiles nothing"; the code does compile (step 10).
 
 ### `check_events`
 
@@ -3433,7 +3484,9 @@ production pipeline.
     clash with the replacement's (v2's XSLT made first, then V1's copied and renamed to the same name, which the
     build refused).
   * A working copy is tagged as a copy of its original (`WriteGuard.create` with the source's UUID), as are its
-    documents; a new version is recorded as `version_of` its source in the build record.
+    documents; a new version is recorded as `version_of` its source in the build record. Each working copy also
+    records the version its original had when copied (`BuildRecords.COPY_OF_VERSION`), so `promote_build` can ask
+    the user before writing it back over an original changed since.
   * Unlike `create_pipeline`, the copy is created and then written in two steps (`WriteGuard.create`, then the
     pipeline store), and `set_properties` is not checked against validation elements.
 
@@ -3460,7 +3513,6 @@ its XSLT's `stroom:lookup()` calls find the maps. It asks nothing itself; as it 
     ones set.
   * A pipeline made before its XSLT, or with one written by hand, never had `addRootObject` set for a JSON array:
     the update sets it when needed (a convenience; a failure is logged and never fails the update).
-  * Its description still says "a pipeline this server created".
 
 ## Translations: mappings, XSLTs, text converters and dictionaries
 
@@ -3726,9 +3778,11 @@ The checks every XSLT save makes (`TranslationDocs.createXslt` / `updateXslt`), 
    from its Documentation tab is noticed (`lostMapping`). For a translation, `matches_mapping` says whether the code
    is what its mapping generates; for an index plan, `ecs_check` lists its convention problems (saved all the same).
 
-* **Arguments**: `build`, `name` (required by the schema); `code`, or `index_plan` (object or JSON text), or
-  neither (the session's plan); `uuid`, `version`; `change` (default `Created by hand`, `Created from its index
-  plan`, `Saved again ...`); `discard_hand_edit`; `hand_edit_choices`.
+* **Arguments**: none required by the schema (it required `build` and `name`, which an update by `uuid` doesn't
+  give; found reviewing the tools, as were `save_text_converter`'s and `save_dictionary`'s): `build` and `name` for a
+  new XSLT, or `uuid` to replace one; `code`, or `index_plan` (object or JSON text), or neither (the session's plan);
+  `version`; `change` (default `Created by hand`, `Created from its index plan`, `Saved again ...`);
+  `discard_hand_edit`; `hand_edit_choices`.
 * **Returns**: `type`, `uuid`, `name`, `version`, and `matches_mapping`, `warning`, `ecs_check`, `warnings`
   (shared templates) as they apply, with the build's `next`. Or the hand-edit question (`needs_guidance`, no
   `uuid`, nothing saved).
@@ -3819,8 +3873,8 @@ Creates a text converter in the build (in its Events folder, until create_pipeli
 replaces the code of one the tools created. For templates whose parser needs one (`DSParser.textConverter`,
 `xmlFragmentParser.textConverter`).
 
-* **Arguments**: `build`, `name`, `converter_type` (`DATA_SPLITTER` or `XML_FRAGMENT`), `code` (all required by the
-  schema); `uuid`, `version`.
+* **Arguments**: `code` (the only one required by the schema); `build` and `name` for a new converter, or `uuid` to
+  replace one; `converter_type` (`DATA_SPLITTER` or `XML_FRAGMENT`; default `DATA_SPLITTER`); `version`.
 * **Returns**: `type`, `uuid`, `name`, `version`, with the build's next step.
 * **Refuses** (`TranslationDocs.checkConverter`): blank code; an XML_FRAGMENT that isn't a wrapper (no `<!ENTITY
   fragment SYSTEM "fragment">` and `&fragment;`); a Data Splitter holding a JSON element ("a text converter cannot
@@ -3838,7 +3892,8 @@ A Dictionary doc a translation reads at run time with `stroom:dictionary()`: key
 `dictionary`, plain lines for `in_dictionary`. Creates it in the build, or with `uuid` replaces the entries of one
 the tools created. Data that changes or is large belongs in reference data instead.
 
-* **Arguments**: `build`, `name`, `text` (required by the schema); `description`; `uuid`, `version`.
+* **Arguments**: `text` (the only one required by the schema); `build` and `name` for a new dictionary, or `uuid` to
+  replace one; `description`; `version`.
 * **Returns**: `type`, `uuid`, `name`, `version`, `entries` (non-blank lines).
 * **Refuses**: a new dictionary without `build` and `name`; the build already has one of the name; an update of
   one that isn't the tools' own, or that changed since `version`.
@@ -3854,8 +3909,10 @@ each record and map, a `<reference>` with the map name, key and value in referen
 pipeline reference and its mapping reads the map with `lookup`.
 
 * **Arguments**: `mapping` (required; object or JSON text: input, root, record, maps with name, key and value
-  parts, imports, drop rules); `schema_version` (default: the newest reference-data schema this Stroom holds, else
-  the generator's default); `build` (the imports standing instructions require of reference XSLTs there are added).
+  parts, imports, drop rules); `schema_version` (default: the highest version of the reference-data schemas this
+  Stroom holds, compared as versions (`stroom.util.shared.Version`) whatever order they are listed in, else the
+  generator's default; found reviewing the tools: the last listed was taken); `build` (the imports standing
+  instructions require of reference XSLTs there are added).
 * **Returns**: the generator's result (`ok`, `xslt`, `problems`, `warnings`), `schema_version`, `required_imports`,
   and a `hint` with the steps after (save_xslt, create_pipeline from the reference template, a processor filter on
   the Raw Reference stream, wait_for_processing, then the events pipeline's `references`).
@@ -4558,8 +4615,9 @@ with its mapping also carries `mcp-kept-mapping`.
 **`BuildRecords`**: the build's record, the Documentation doc `Build record` in its folder: a readable table, then
 fenced JSON (```` ```json build-record ````). It is `{"docs": {uuid: entry}}` with build-level `source_feeds`,
 `event_logging_version` (`version`, `how`) and `kind` (`events`, `discovery`, `reference`). An entry may hold `type`,
-`name`, `copy_of`, `version_of`, `stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`,
-`sample_files` and `user_samples`. `recordPassed(pipeline, kind, draftCode, extra)` records a clean step (`STEPPED`), a
+`name`, `copy_of`, `version_of`, `copy_of_version` (a working copy's original's version when copied:
+`COPY_OF_VERSION`), `stepped`, `verified`, `validated` (lists of code digests), `stepped_streams`, `sample_files` and
+`user_samples`. `recordPassed(pipeline, kind, draftCode, extra)` records a clean step (`STEPPED`), a
 passed verification (`VERIFIED`) or Events that passed `check_events` (`VALIDATED`), only for pipelines in a build. The
 digest is per element the pipeline sets its own code for: the draft stepped, else the saved XSLT or converter, never
 the version history, so a draft stepped clean is still clean once saved. `steppedClean`, `verified` and `validated`
