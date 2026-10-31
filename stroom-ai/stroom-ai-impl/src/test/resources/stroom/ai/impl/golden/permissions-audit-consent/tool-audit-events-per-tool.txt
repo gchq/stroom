@@ -365,6 +365,9 @@
 ## grep {"pattern":"a","path":"/outputs"}
 (nothing recorded)
 
+## instruction_evidence {}
+(nothing recorded)
+
 ## jq {"path":"/outputs/a.json","query":".a"}
 (nothing recorded)
 
