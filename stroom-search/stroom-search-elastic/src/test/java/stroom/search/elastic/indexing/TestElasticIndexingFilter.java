@@ -703,7 +703,8 @@ class TestElasticIndexingFilter {
 
     @Test
     void testOverloadedItemsAreRetried() throws IOException {
-        // One document was indexed and the other rejected, so the indexed one is deleted before retrying
+        // One document was indexed and the other rejected as Elasticsearch is overloaded, so only that one is
+        // retried
         final BulkResponse partialResponse = BulkResponse.of(b -> b
                 .errors(true)
                 .took(1L)
@@ -722,25 +723,20 @@ class TestElasticIndexingFilter {
         Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
                 .thenAnswer(invocation -> {
                     requests.add(snapshot(invocation.getArgument(0)));
-                    return switch (requests.size()) {
-                        case 1 -> partialResponse;
-                        case 2 -> successResponse(1);
-                        default -> successResponse(2);
-                    };
+                    return requests.size() == 1
+                            ? partialResponse
+                            : successResponse(1);
                 });
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
 
         harness.process(filter, jsonXml(documents(2)));
 
         assertThat(harness.getErrors()).isEmpty();
-        assertThat(requests).hasSize(3);
-        final BulkOperation deleteOperation = requests.get(1).operations().getFirst();
-        assertThat(requests.get(1).operations()).hasSize(1);
-        assertThat(deleteOperation.isDelete()).isTrue();
-        assertThat(deleteOperation.delete().index()).isEqualTo(INDEX_NAME);
-        assertThat(deleteOperation.delete().id()).isEqualTo("doc-1");
-        // The whole batch is resent
-        assertThat(requests.get(2).operations()).hasSize(2);
+        assertThat(requests).hasSize(2);
+        // Only the rejected document is resent (trimmed of the space Jackson writes between root values)
+        assertThat(ElasticIndexingFilterTestHarness.documentJsons(List.of(requests.get(1))))
+                .extracting(String::trim)
+                .containsExactly("{\"n\":1}");
     }
 
     @Test
