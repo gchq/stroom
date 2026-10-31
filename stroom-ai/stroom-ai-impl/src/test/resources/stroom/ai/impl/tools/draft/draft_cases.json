@@ -688,6 +688,7 @@
    "kinds": [],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -1076,6 +1077,7 @@
    "kinds": [],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [],
@@ -2176,21 +2178,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2231,21 +2218,6 @@
         "path": "EventDetail/Process/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2297,21 +2269,6 @@
         "path": "EventDetail/Alert/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2356,21 +2313,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2404,21 +2346,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2455,21 +2382,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -2524,6 +2436,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; SYSTEM: Update for action CONFIG_SAVED; Process for action START; Alert for action HIGH_CPU, VPN_TUNNEL_DOWN, VPN_TUNNEL_UP; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Authenticate for action LOGOUT; Update for action CONFIG_CHANGE, CONFIG_BACKUP.",
     "One rule per value of 'event_type' (TRAFFIC, SYSTEM, ADMIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -2625,11 +2538,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "received",
         "field": "received"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "event.resource",
-        "field": "event.resource"
        }
       ]
      },
@@ -2654,11 +2562,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "received",
         "field": "received"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "event.resource",
-        "field": "event.resource"
        }
       ]
      },
@@ -2704,11 +2607,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "received",
         "field": "received"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "event.resource",
-        "field": "event.resource"
        }
       ]
      },
@@ -2754,11 +2652,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "received",
         "field": "received"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "event.resource",
-        "field": "event.resource"
        }
       ]
      },
@@ -2794,6 +2687,7 @@
    "notes": [
     "'event' holds JSON: its keys are fields of their own, e.g. 'event.timestamp', 'event.username', 'event.event_type', 'event.message' (json_fields). The text itself isn't mapped.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'event.message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "One rule per value of 'event.event_type' (LOGIN_SUCCESS, LOGIN_FAILURE, DOCUMENT_VIEW, PASSWORD_CHANGE, DOCUMENT_DELETE, LOGOUT): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -2947,6 +2841,7 @@
    "notes": [
     "'message' holds key/value pairs: 6 keys are fields of their own through pairs ('user', 'src', 'method', 'reason', 'peer', 'name'), each read as an extract entry would. A key only one record shows is left out: add it the same way if it's wanted.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -3178,16 +3073,6 @@
         "path": "EventDetail/Network/Connect/Data",
         "data_name": "policy",
         "field": "policy"
-       },
-       {
-        "path": "EventDetail/Network/Connect/Data",
-        "data_name": "bytes_in",
-        "field": "bytes_in"
-       },
-       {
-        "path": "EventDetail/Network/Connect/Data",
-        "data_name": "bytes_out",
-        "field": "bytes_out"
        }
       ]
      },
@@ -3480,26 +3365,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "outcome",
         "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "request",
-        "field": "request"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "cat",
-        "field": "cat"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "fname",
-        "field": "fname"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "fileHash",
-        "field": "fileHash"
        }
       ]
      },
@@ -3561,11 +3426,6 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "outcome",
-        "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "request",
         "field": "request"
        },
@@ -3573,16 +3433,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "cat",
         "field": "cat"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "fname",
-        "field": "fname"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "fileHash",
-        "field": "fileHash"
        }
       ]
      },
@@ -3644,11 +3494,6 @@
        },
        {
         "path": "EventDetail/Network/Deny/Data",
-        "data_name": "outcome",
-        "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
         "data_name": "request",
         "field": "request"
        },
@@ -3656,16 +3501,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "cat",
         "field": "cat"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "fname",
-        "field": "fname"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "fileHash",
-        "field": "fileHash"
        }
       ]
      },
@@ -3712,21 +3547,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "outcome",
-        "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "request",
-        "field": "request"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "cat",
-        "field": "cat"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -3791,31 +3611,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome",
-        "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "request",
-        "field": "request"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "cat",
-        "field": "cat"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "fname",
-        "field": "fname"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "fileHash",
-        "field": "fileHash"
        }
       ]
      },
@@ -3911,6 +3706,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow; block: Network/Deny for act block.",
     "One rule per value of 'act' (login, allow, block, quarantine, logout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -4042,12 +3838,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "customer",
         "field": "customer"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "comment",
-        "field": "comment",
-        "transform": "unescape_quotes"
        }
       ]
      },
@@ -4160,6 +3950,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (create, view, update, close): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
     "['comment'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -5178,26 +4969,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectDomainName']",
-        "field": "EventData/Data[@Name='SubjectDomainName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='PrivilegeList']",
-        "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='FailureReason']",
-        "field": "EventData/Data[@Name='FailureReason']"
        }
       ]
      },
@@ -5244,21 +5015,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectDomainName']",
-        "field": "EventData/Data[@Name='SubjectDomainName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='PrivilegeList']",
-        "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "EventData/Data[@Name='FailureReason']",
         "field": "EventData/Data[@Name='FailureReason']"
        }
@@ -5285,16 +5041,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='TargetDomainName']",
-        "field": "EventData/Data[@Name='TargetDomainName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='LogonType']",
-        "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='SubjectUserName']",
         "field": "EventData/Data[@Name='SubjectUserName']"
        },
@@ -5307,11 +5053,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='PrivilegeList']",
         "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='FailureReason']",
-        "field": "EventData/Data[@Name='FailureReason']"
        }
       ]
      },
@@ -5341,28 +5082,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='LogonType']",
-        "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='SubjectUserName']",
         "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectDomainName']",
-        "field": "EventData/Data[@Name='SubjectDomainName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='PrivilegeList']",
-        "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='FailureReason']",
-        "field": "EventData/Data[@Name='FailureReason']"
        }
       ]
      },
@@ -5392,28 +5113,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='LogonType']",
-        "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='SubjectUserName']",
         "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectDomainName']",
-        "field": "EventData/Data[@Name='SubjectDomainName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='PrivilegeList']",
-        "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='FailureReason']",
-        "field": "EventData/Data[@Name='FailureReason']"
        }
       ]
      },
@@ -5453,26 +5154,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='SubjectDomainName']",
-        "field": "EventData/Data[@Name='SubjectDomainName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='PrivilegeList']",
-        "field": "EventData/Data[@Name='PrivilegeList']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "EventData/Data[@Name='FailureReason']",
-        "field": "EventData/Data[@Name='FailureReason']"
        }
       ]
      },
@@ -5721,6 +5402,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -6588,16 +6270,6 @@
        },
        {
         "path": "EventDetail/Alert/Data",
-        "data_name": "ts",
-        "field": "ts"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "ok",
-        "field": "ok"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
         "data_name": "outcome.reason",
         "field": "outcome.reason"
        }
@@ -6624,16 +6296,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "ts",
-        "field": "ts"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ok",
-        "field": "ok"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "outcome.reason",
         "field": "outcome.reason"
        }
@@ -6657,21 +6319,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "outcome.result",
         "field": "outcome.result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ts",
-        "field": "ts"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ok",
-        "field": "ok"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "outcome.reason",
-        "field": "outcome.reason"
        }
       ]
      },
@@ -6693,21 +6340,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "outcome.result",
         "field": "outcome.result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ts",
-        "field": "ts"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ok",
-        "field": "ok"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "outcome.reason",
-        "field": "outcome.reason"
        }
       ]
      },
@@ -6730,16 +6362,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "actor.alternateId",
-        "field": "actor.alternateId"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.result",
-        "field": "outcome.result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "ts",
         "field": "ts"
        },
@@ -6747,11 +6369,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "ok",
         "field": "ok"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.reason",
-        "field": "outcome.reason"
        }
       ]
      },
@@ -6774,16 +6391,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "actor.alternateId",
-        "field": "actor.alternateId"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.result",
-        "field": "outcome.result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "ts",
         "field": "ts"
        },
@@ -6791,11 +6398,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "ok",
         "field": "ok"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.reason",
-        "field": "outcome.reason"
        }
       ]
      },
@@ -6818,16 +6420,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "actor.alternateId",
-        "field": "actor.alternateId"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.result",
-        "field": "outcome.result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "ts",
         "field": "ts"
        },
@@ -6835,11 +6427,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "ok",
         "field": "ok"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "outcome.reason",
-        "field": "outcome.reason"
        }
       ]
      },
@@ -7176,6 +6763,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0101039424: Alert for subtype vpn; 0101039425: Alert for subtype vpn; 0101039426: Alert for subtype vpn.",
     "One rule per value of 'logid' (0101039424, 0101039425, 0101039426), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -8095,38 +7683,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "permission",
-        "field": "permission"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8137,11 +7695,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "secret_id",
         "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "scope",
-        "field": "scope"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8207,31 +7760,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -8311,26 +7839,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
        },
@@ -8341,108 +7849,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "server_node",
         "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "job_id",
-        "field": "job_id"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -8529,148 +7937,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -8740,26 +8008,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
        },
@@ -8770,108 +8018,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "server_node",
         "field": "server_node"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "job_id",
-        "field": "job_id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8988,111 +8141,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "permission",
         "field": "permission"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -9176,113 +8224,8 @@
        },
        {
         "path": "EventDetail/Process/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Process/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
        },
        {
         "path": "EventDetail/Process/Data",
@@ -9291,33 +8234,8 @@
        },
        {
         "path": "EventDetail/Process/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Process/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -9387,63 +8305,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9452,83 +8315,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "target_host",
         "field": "target_host"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -9605,128 +8398,8 @@
        },
        {
         "path": "EventDetail/Update/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "correlation_id",
-        "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Update/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "protocol",
-        "field": "protocol"
        },
        {
         "path": "EventDetail/Update/Data",
@@ -9737,16 +8410,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "job_id",
         "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -9816,128 +8479,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "principal",
-        "field": "principal"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "permission",
-        "field": "permission"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "scope",
-        "field": "scope"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "protocol",
-        "field": "protocol"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9948,16 +8496,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "job_id",
         "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -10027,33 +8565,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "folder_id",
-        "field": "folder_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "parent_folder",
-        "field": "parent_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_folder",
-        "field": "target_folder"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ticket",
-        "field": "ticket"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -10079,96 +8592,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "scope",
         "field": "scope"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "checkout_id",
-        "field": "checkout_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "reason",
-        "field": "reason"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "expiration",
-        "field": "expiration"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "access_method",
-        "field": "access_method"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "template",
-        "field": "template"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target",
-        "field": "target"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "rpc_account",
-        "field": "rpc_account"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration_ms",
-        "field": "duration_ms"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "error",
-        "field": "error"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "retry_count",
-        "field": "retry_count"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "target_host",
-        "field": "target_host"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "result",
-        "field": "result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "protocol",
-        "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "component",
-        "field": "component"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "job_id",
-        "field": "job_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
        }
       ]
      },
@@ -10394,6 +8817,7 @@
    "notes": [
     "'EventData/Data' holds key/value pairs: 37 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'folder' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login, Login Failed; Authenticate for action Logout; Session: Process for action Start; System: Update for action Configuration Changed.",
     "One rule per value of 'event' (Secret, User, Folder, Session, System, Permission): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -10731,26 +9155,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
        }
       ]
      },
@@ -10827,38 +9231,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "client",
-        "field": "client"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
        }
       ]
      },
@@ -10925,21 +9299,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "item_id",
         "field": "item_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "correlation_id",
-        "field": "correlation_id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -11429,31 +9788,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "duration",
-        "field": "duration"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
        }
       ]
      },
@@ -11530,36 +9864,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "client",
-        "field": "client"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "failure_reason",
-        "field": "failure_reason"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "attempt",
-        "field": "attempt"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "correlation_id",
         "field": "correlation_id"
        },
@@ -11567,26 +9871,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "duration",
         "field": "duration"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "folder",
-        "field": "folder"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "access_method",
-        "field": "access_method"
        }
       ]
      },
@@ -11653,46 +9937,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "item_id",
         "field": "item_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "authentication",
-        "field": "authentication"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "client",
-        "field": "client"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "failure_reason",
-        "field": "failure_reason"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "attempt",
-        "field": "attempt"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "server_node",
-        "field": "server_node"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "ticket",
-        "field": "ticket"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "correlation_id",
-        "field": "correlation_id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "duration",
-        "field": "duration"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -11849,6 +10093,7 @@
    "notes": [
     "'EventData/Data' holds key/value pairs: 20 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login Failed, Login; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -12027,16 +10272,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "outcome",
         "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "request",
-        "field": "request"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "cat",
-        "field": "cat"
        }
       ]
      },
@@ -12095,11 +10330,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "outcome",
-        "field": "outcome"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
@@ -12192,6 +10422,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
     "One rule per value of 'act' (login, allow), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -12347,11 +10578,6 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "outcome",
-        "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "request",
         "field": "request"
        },
@@ -12418,16 +10644,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "outcome",
         "field": "outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "request",
-        "field": "request"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "cat",
-        "field": "cat"
        }
       ]
      },
@@ -12510,6 +10726,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
     "One rule per value of 'act' (allow, login), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -12963,7 +11180,7 @@
   "source_name": "40_json_cloudtrail_records",
   "splitter": null,
   "result": {
-   "error": "ToolError: This starts as JSON but isn't valid JSON: Expecting property name enclosed in double quotes at character 1, near '{'. Pass the source's text exactly as it is, not retyped (an escape such as \\+ isn't JSON). A file on the user's disk isn't passed through you: upload_sample files= sends it whole, and the server reads it from the stream."
+   "error": "ToolRefusal: This starts as JSON but isn't valid JSON: Expecting property name enclosed in double quotes at character 1, near '{'. Pass the source's text exactly as it is, not retyped (an escape such as \\+ isn't JSON). A file on the user's disk isn't passed through you: upload_sample files= sends it whole, and the server reads it from the stream."
   }
  },
  {
@@ -13384,6 +11601,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -13486,6 +11704,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -13604,6 +11823,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (create): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
     "['comment'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -13753,6 +11973,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (update, create): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
     "['comment'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -14119,6 +12340,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -14840,6 +13062,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
     "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -15553,6 +13776,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
     "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -16409,16 +14633,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "event.outcome",
         "field": "event.outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "file.path",
-        "field": "file.path"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "file.name",
-        "field": "file.name"
        }
       ]
      },
@@ -16618,16 +14832,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "event.outcome",
         "field": "event.outcome"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "file.path",
-        "field": "file.path"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "file.name",
-        "field": "file.name"
        }
       ]
      },
@@ -16877,21 +15081,6 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "logdesc",
-        "field": "logdesc"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "ui",
-        "field": "ui"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "status",
-        "field": "status"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "policyid",
         "field": "policyid"
        }
@@ -16965,21 +15154,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "vd",
         "field": "vd"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "logdesc",
-        "field": "logdesc"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "ui",
-        "field": "ui"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "status",
-        "field": "status"
        },
        {
         "path": "EventDetail/Network/Deny/Data",
@@ -17063,11 +15237,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "status",
         "field": "status"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "policyid",
-        "field": "policyid"
        }
       ]
      },
@@ -17157,6 +15326,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0100032001: Authenticate for action login.",
     "One rule per value of 'logid' (0000000013, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -17335,38 +15505,8 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "logdesc",
-        "field": "logdesc"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "ui",
-        "field": "ui"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "status",
-        "field": "status"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "policyid",
         "field": "policyid"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "eventtype",
-        "field": "eventtype"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "severity",
-        "field": "severity"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "attack",
-        "field": "attack"
        }
       ]
      },
@@ -17441,38 +15581,8 @@
        },
        {
         "path": "EventDetail/Network/Deny/Data",
-        "data_name": "logdesc",
-        "field": "logdesc"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "ui",
-        "field": "ui"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "status",
-        "field": "status"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
         "data_name": "policyid",
         "field": "policyid"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "eventtype",
-        "field": "eventtype"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "severity",
-        "field": "severity"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "attack",
-        "field": "attack"
        }
       ]
      },
@@ -17544,26 +15654,6 @@
         "path": "EventDetail/Network/Deny/Data",
         "data_name": "vd",
         "field": "vd"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "logdesc",
-        "field": "logdesc"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "ui",
-        "field": "ui"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "status",
-        "field": "status"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
-        "data_name": "policyid",
-        "field": "policyid"
        },
        {
         "path": "EventDetail/Network/Deny/Data",
@@ -17657,26 +15747,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "status",
         "field": "status"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "policyid",
-        "field": "policyid"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "eventtype",
-        "field": "eventtype"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "severity",
-        "field": "severity"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "attack",
-        "field": "attack"
        }
       ]
      },
@@ -17782,6 +15852,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0419016384: Network/Deny for action dropped; 0100032001: Authenticate for action login.",
     "One rule per value of 'logid' (0000000013, 0419016384, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -18414,46 +16485,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
-        "field": "payload/Envelope/Body/GetAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Result",
-        "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Account/@id",
-        "field": "payload/Envelope/Body/UpdateAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Result",
-        "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
       ]
      },
@@ -18473,11 +16504,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/Login/Result",
-        "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
        },
@@ -18505,21 +16531,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Result",
         "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Account/@id",
-        "field": "payload/Envelope/Body/UpdateAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Result",
-        "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
       ]
      },
@@ -18539,23 +16550,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/Login/Result",
-        "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
-        "field": "payload/Envelope/Body/GetAccount/Account/@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18566,11 +16562,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "payload//@id",
         "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Result",
-        "field": "payload/Envelope/Body/GetAccount/Result"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18789,46 +16780,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
-        "field": "payload/Envelope/Body/GetAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//Account/@id",
-        "field": "payload//Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload//@id",
-        "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Result",
-        "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Account/@id",
-        "field": "payload/Envelope/Body/UpdateAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Result",
-        "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
       ]
      },
@@ -18848,11 +16799,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/Login/Result",
-        "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
        },
@@ -18880,21 +16826,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "payload/Envelope/Body/GetAccount/Result",
         "field": "payload/Envelope/Body/GetAccount/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/User",
-        "field": "payload/Envelope/Body/UpdateAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Account/@id",
-        "field": "payload/Envelope/Body/UpdateAccount/Account/@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/UpdateAccount/Result",
-        "field": "payload/Envelope/Body/UpdateAccount/Result"
        }
       ]
      },
@@ -18914,23 +16845,8 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/Login/Result",
-        "field": "payload/Envelope/Body/Login/Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "payload//Result",
         "field": "payload//Result"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/User",
-        "field": "payload/Envelope/Body/GetAccount/User"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Account/@id",
-        "field": "payload/Envelope/Body/GetAccount/Account/@id"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -18941,11 +16857,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "payload//@id",
         "field": "payload//@id"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "payload/Envelope/Body/GetAccount/Result",
-        "field": "payload/Envelope/Body/GetAccount/Result"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -19705,6 +17616,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (logout, login), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -19858,6 +17770,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -19944,6 +17857,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -20058,6 +17972,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -20182,6 +18097,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -20550,11 +18466,6 @@
        },
        {
         "path": "EventDetail/Alert/Data",
-        "data_name": "esult",
-        "field": "esult"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
         "data_name": "pod",
         "field": "pod"
        },
@@ -20572,16 +18483,6 @@
         "path": "EventDetail/Alert/Data",
         "data_name": "detail",
         "field": "detail"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "sult",
-        "field": "sult"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "ult",
-        "field": "ult"
        }
       ]
      },
@@ -20665,43 +18566,13 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "esult",
-        "field": "esult"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "pod",
         "field": "pod"
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "ail",
-        "field": "ail"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rows",
-        "field": "rows"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "detail",
-        "field": "detail"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "sult",
-        "field": "sult"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ult",
-        "field": "ult"
        }
       ]
      },
@@ -20729,43 +18600,13 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "esult",
-        "field": "esult"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "pod",
         "field": "pod"
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "ail",
-        "field": "ail"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rows",
-        "field": "rows"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "detail",
-        "field": "detail"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "result",
         "field": "result"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "sult",
-        "field": "sult"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ult",
-        "field": "ult"
        }
       ]
      },
@@ -20796,38 +18637,13 @@
        },
        {
         "path": "EventDetail/Alert/Data",
-        "data_name": "esult",
-        "field": "esult"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
         "data_name": "pod",
         "field": "pod"
        },
        {
         "path": "EventDetail/Alert/Data",
-        "data_name": "ail",
-        "field": "ail"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
         "data_name": "rows",
         "field": "rows"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "detail",
-        "field": "detail"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "sult",
-        "field": "sult"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "ult",
-        "field": "ult"
        }
       ]
      },
@@ -21159,6 +18975,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW.",
     "One rule per value of 'event_type' (TRAFFIC, LOGIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -21411,6 +19228,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW.",
     "One rule per value of 'event_type' (TRAFFIC, LOGIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -21704,11 +19522,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
        }
       ]
      },
@@ -21742,11 +19555,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
        }
       ]
      },
@@ -21780,11 +19588,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
        }
       ]
      },
@@ -21918,11 +19721,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
        }
       ]
      },
@@ -21963,11 +19761,6 @@
         "path": "EventDetail/Process/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
        }
       ]
      },
@@ -22011,6 +19804,7 @@
     "SYSTEM"
    ],
    "notes": [
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Authenticate for action LOGOUT; Update for action CONFIG_CHANGE; TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; SYSTEM: Update for action CONFIG_SAVED; Process for action START.",
     "One rule per value of 'event_type' (ADMIN, TRAFFIC, SYSTEM), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -22192,6 +19986,7 @@
     "SYSTEM"
    ],
    "notes": [
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): SYSTEM: Process for action START; Alert for action HIGH_CPU, VPN_TUNNEL_DOWN, VPN_TUNNEL_UP.",
     "One rule per value of 'event_type' (SYSTEM), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -22918,16 +20713,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "client",
         "field": "client"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
        }
       ]
      },
@@ -22971,21 +20756,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "item_id",
         "field": "item_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "client",
-        "field": "client"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret",
-        "field": "secret"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "secret_id",
-        "field": "secret_id"
        }
       ]
      },
@@ -23478,6 +21248,7 @@
     "SYSTEM"
    ],
    "notes": [
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; ADMIN: Authenticate for action LOGIN_SUCCESS; SYSTEM: Alert for action HIGH_CPU.",
     "One rule per value of 'event_type' (TRAFFIC, ADMIN, SYSTEM), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -23724,21 +21495,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -23779,21 +21535,6 @@
         "path": "EventDetail/Process/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Process/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -23845,21 +21586,6 @@
         "path": "EventDetail/Alert/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -23904,21 +21630,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -23952,21 +21663,6 @@
         "path": "EventDetail/Authenticate/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -24003,21 +21699,6 @@
         "path": "EventDetail/Update/Data",
         "data_name": "protocol",
         "field": "protocol"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "rule_id",
-        "field": "rule_id"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_sent",
-        "field": "bytes_sent"
-       },
-       {
-        "path": "EventDetail/Update/Data",
-        "data_name": "bytes_received",
-        "field": "bytes_received"
        }
       ]
      },
@@ -24072,6 +21753,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; SYSTEM: Update for action CONFIG_SAVED; Process for action START; Alert for action HIGH_CPU, VPN_TUNNEL_DOWN, VPN_TUNNEL_UP; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Authenticate for action LOGOUT; Update for action CONFIG_CHANGE, CONFIG_BACKUP.",
     "One rule per value of 'event_type' (TRAFFIC, SYSTEM, ADMIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -24185,16 +21867,6 @@
          "user",
          "message.user"
         ]
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "level",
-        "field": "level"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "message.timestamp",
-        "field": "message.timestamp"
        }
       ]
      },
@@ -24217,16 +21889,6 @@
          "user",
          "message.user"
         ]
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "level",
-        "field": "level"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "message.timestamp",
-        "field": "message.timestamp"
        }
       ]
      },
@@ -24749,6 +22411,7 @@
    "notes": [
     "'body' holds key/value pairs: 7 keys are fields of their own through pairs ('logid', 'type', 'action', 'srcip', 'dstip', 'msg' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): traffic: Network/Permit for action accept; event: Network/Permit for action accept.",
     "One rule per value of 'type' (traffic, event), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -25561,10 +23224,10 @@
     ],
     "not_in_sample": [],
     "not_in_catalogue": [
-     "action=ALLOW",
-     "action=DENY",
      "event_type=ADMIN",
-     "event_type=SYSTEM"
+     "event_type=SYSTEM",
+     "action=ALLOW",
+     "action=DENY"
     ],
     "from_sample": [
      "event_type=TRAFFIC: the catalogue has more than one event for it, so the sample's rules are kept (traffic_permitted: Network; traffic_denied: Network)",
@@ -25585,8 +23248,9 @@
    "notes": [
     "Drafted from the source documentation: LOGIN-SUCCESS (action=LOGIN_SUCCESS) -> Authenticate; LOGIN-FAILED (action=LOGIN_FAILED) -> Authenticate; CONFIG-CHANGE (action=CONFIG_CHANGE) -> Update.",
     "Kept from the sample's values, where the catalogue can't be followed: event_type=TRAFFIC: the catalogue has more than one event for it, so the sample's rules are kept (traffic_permitted: Network; traffic_denied: Network); action=VPN_TUNNEL_DOWN: the catalogue gives no action element, so the sample's rules are kept (system_alert: Alert).",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Update for action CONFIG_CHANGE; SYSTEM: Alert for action VPN_TUNNEL_DOWN.",
-    "The catalogue does not list action=ALLOW, action=DENY, event_type=ADMIN, event_type=SYSTEM: those records fall to the rule for the rest; read the reference documents (find_in_content pattern=the value) or ask the user."
+    "The catalogue does not list event_type=ADMIN, event_type=SYSTEM, action=ALLOW, action=DENY: those records fall to the rule for the rest; read the reference documents (find_in_content pattern=the value) or ask the user."
    ],
    "unmapped_fields": [
     "protocol",
@@ -25907,6 +23571,7 @@
     "SYSTEM"
    ],
    "notes": [
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Update for action CONFIG_CHANGE; SYSTEM: Alert for action VPN_TUNNEL_DOWN.",
     "One rule per value of 'event_type' (TRAFFIC, ADMIN, SYSTEM), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26508,6 +24173,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
     "['message'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -26632,6 +24298,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26755,6 +24422,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27023,6 +24691,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -27666,6 +25335,7 @@
    ],
    "notes": [
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): failed: Alert for act failed.",
     "One rule per value of 'act' (login, logout, failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -27971,6 +25641,7 @@
    "notes": [
     "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): failed: Alert for act failed.",
     "One rule per value of 'act' (login, logout, failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],

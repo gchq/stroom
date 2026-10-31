@@ -6,8 +6,10 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="kind_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+)')"/>
     <xsl:variable name="kind" select="$kind_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$kind = 'AUTH'">
         <xsl:apply-templates select="." mode="event_type_auth"/>
@@ -20,7 +22,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', stroom:record-no(), ' (', string-join((concat('kind=', string(($kind)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('kind=', string(($kind)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

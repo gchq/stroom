@@ -16,6 +16,8 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event']) = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
@@ -24,7 +26,7 @@
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no()))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.fielddoc;
 
+import stroom.ai.impl.GoldenFiles;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.FieldMapping;
@@ -110,10 +111,10 @@ class TestFieldDocs {
 
     @Test
     void eachSchemaDescriptionIsItsGolden() {
+        // The paths are the golden file's keys; the descriptions, what the schema gives for them.
         final Map<String, Object> golden = FieldDocFixtures.goldenJson("fielddoc/schema-descriptions.json");
-        golden.forEach((path, said) -> assertThat(FieldDocs.schemaDescription(FieldDocFixtures.SCHEMA, path))
-                .as(path)
-                .isEqualTo(said));
+        golden.replaceAll((path, said) -> FieldDocs.schemaDescription(FieldDocFixtures.SCHEMA, path));
+        GoldenFiles.assertJsonMatches("fielddoc/schema-descriptions.json", golden);
     }
 
     @Test

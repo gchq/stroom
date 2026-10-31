@@ -6,11 +6,15 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:apply-templates select="*[@key='Records']/*" mode="item">
       <xsl:with-param name="record" select="." tunnel="yes"/>
+      <xsl:with-param name="record-no" select="$record-no" tunnel="yes"/>
     </xsl:apply-templates>
   </xsl:template>
   <xsl:template match="*" mode="item">
+    <xsl:param name="record-no" tunnel="yes"/>
     <xsl:variable name="event_name" select="*[@key='eventName'][normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$event_name = 'ConsoleLogin'">
@@ -29,7 +33,7 @@
         <xsl:apply-templates select="." mode="event_type_policy_change"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('eventName=', string(($event_name)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('eventName=', string(($event_name)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>

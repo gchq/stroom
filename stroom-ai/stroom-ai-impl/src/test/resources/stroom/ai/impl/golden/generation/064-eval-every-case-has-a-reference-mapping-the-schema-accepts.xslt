@@ -9,22 +9,17 @@
       <xsl:map-entry key="'MFA Challenge'" select="'Other'"/>
     </xsl:map>
   </xsl:variable>
-  <xsl:function name="mcp:time-ms" as="xs:string?">
-    <xsl:param name="value" as="xs:string?"/>
-    <xsl:param name="pattern" as="xs:string"/>
-    <xsl:param name="zone" as="xs:string"/>
-    <xsl:variable name="time" select="if ($zone) then stroom:format-date($value, $pattern, $zone) else stroom:format-date($value, $pattern)"/>
-    <xsl:sequence select="if (matches($value, '^.*\d[.,]\d{3}(\d)\d*(\D.*)?$') and replace($value, '^.*\d[.,]\d{3}(\d)\d*(\D.*)?$', '$1') ge '5') then format-dateTime(xs:dateTime($time) + xs:dayTimeDuration('PT0.001S'), '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z') else $time"/>
-  </xsl:function>
   <xsl:template match="/">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="*/Event" mode="event"/>
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
     <xsl:variable name="category" select="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$category = 'User' and $action = ('Login', 'Login Failed', 'Logout', 'MFA Challenge', 'Account Locked')">
         <xsl:apply-templates select="." mode="event_type_auth"/>
@@ -70,7 +65,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', stroom:record-no(), ' (', string-join((concat('category=', string(($category)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('category=', string(($category)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -387,7 +382,7 @@
     <xsl:if test="(System/TimeCreated/@SystemTime)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="mcp:time-ms(string(System/TimeCreated/@SystemTime[1]), 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSSX', '')"/>
+          <xsl:value-of select="stroom:format-date(System/TimeCreated/@SystemTime[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

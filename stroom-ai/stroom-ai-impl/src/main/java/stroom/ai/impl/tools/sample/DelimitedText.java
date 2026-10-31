@@ -26,17 +26,21 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Delimited text read for the profile of a sample: the reader (a quote only opens a quoted value at its start, a
-/// doubled quote inside one is a quote, a value may run over lines), and the sniffer, which guesses the delimiter
-/// and whether the first row is a header.
+/// Delimited text read for the profile of a sample: its records split into cells as the Data Splitter the tools
+/// generate splits them, and the sniffer, which guesses the delimiter and whether the first row is a header.
 ///
-/// A field may be of any length: there is no field size limit (such as 131,072 characters). The text read is
-/// already cut to the caller's budget, and Stroom's Data Splitter reads longer fields, so a limit only lost records
-/// (seen in testing: one 250,000-character URL query stopped a whole stream part being surveyed).
+/// Cells are read as Stroom reads them, so the profile shows the values a mapping will see (asked for by the user:
+/// they were read by other CSV rules, which turned a doubled quote into one and took a quote for a quote only at a
+/// value's start). A quote opens or closes a quoted stretch wherever it is, and a doubled quote inside one stays
+/// doubled, for the mapping's `unescape_quotes` to make one ([SplitterDryRun#splitQuoted(String, String, String)]).
+///
+/// A field may be of any length: there is no field size limit. The text read is already cut to the caller's
+/// budget, and Stroom's Data Splitter reads longer fields, so a limit only lost records (seen in testing: one
+/// 250,000-character URL query stopped a whole stream part being surveyed).
 final class DelimitedText {
 
-    /// The dialect `csv.reader` reads with unless told otherwise.
-    static final Dialect EXCEL = new Dialect(',', '"', true, false);
+    /// The quote the generated Data Splitter takes as a cell's container.
+    static final String QUOTE = "\"";
 
     // The type has_header gives a column of numbers.
     private static final Object COMPLEX = new Object();
@@ -60,14 +64,18 @@ final class DelimitedText {
         // Static methods only.
     }
 
-    /// Reads delimited text as `list(csv.reader(io.StringIO(text), dialect))` does.
+    /// Splits records into cells as the generated Data Splitter does: at the delimiter outside quotes, the quotes
+    /// taken out, a doubled quote kept doubled.
     ///
-    /// @param text    The text.
-    /// @param dialect How it is delimited and quoted.
-    /// @return Its rows (an empty line is an empty row).
-    /// @throws CsvException if a line break is in an unquoted field.
-    static List<List<String>> read(final String text, final Dialect dialect) {
-        return new Reader(dialect).read(text);
+    /// @param records   The records: a line each, or, for quoted values holding new lines, the lines
+    ///                  [SplitterDryRun#quotedLines(String, String)] joins.
+    /// @param delimiter What separates cells.
+    /// @return Each record's cells.
+    static List<List<String>> cells(final List<String> records, final char delimiter) {
+        final String delimiterText = String.valueOf(delimiter);
+        final List<List<String>> rows = new ArrayList<>();
+        records.forEach(record -> rows.add(SplitterDryRun.splitQuoted(record, delimiterText, QUOTE)));
+        return rows;
     }
 
     /// Guesses how a sample is delimited and quoted, as `csv.Sniffer().sniff(sample, delimiters)` does.
@@ -298,7 +306,7 @@ final class DelimitedText {
     /// @return True if it looks like it has a header row.
     /// @throws CsvException if the sample's delimiter can't be told.
     static boolean hasHeader(final String sample) {
-        final List<List<String>> rows = read(sample, sniff(sample, null));
+        final List<List<String>> rows = cells(ToolText.nonBlankLines(sample), sniff(sample, null).delimiter());
         if (rows.isEmpty()) {
             return false;
         }
@@ -458,7 +466,7 @@ final class DelimitedText {
     // --------------------------------------------------------------------------------
 
 
-    /// How delimited text is read.
+    /// How the sniffer guesses delimited text is written.
     ///
     /// @param delimiter        What separates values.
     /// @param quote            What quotes a value.
@@ -466,16 +474,12 @@ final class DelimitedText {
     /// @param skipInitialSpace True if spaces after a delimiter are left out.
     record Dialect(char delimiter, char quote, boolean doubleQuote, boolean skipInitialSpace) {
 
-        /// @return The default dialect with another delimiter.
-        static Dialect delimitedBy(final char delimiter) {
-            return new Dialect(delimiter, '"', true, false);
-        }
     }
 
-    /// Delimited text that can't be read, or whose delimiter can't be told.
+    /// Delimited text whose delimiter can't be told.
     static final class CsvException extends RuntimeException {
 
-        /// @param message What the reader or sniffer says.
+        /// @param message What the sniffer says.
         CsvException(final String message) {
             super(message);
         }
@@ -483,147 +487,5 @@ final class DelimitedText {
 
     private record Guess(String quote, boolean doubleQuote, String delimiter, boolean skipInitialSpace) {
 
-    }
-
-    // The reader's state machine, for the default dialect's settings: no escape character, minimal
-    // quoting, not strict.
-    private static final class Reader {
-
-        private static final int START_RECORD = 0;
-        private static final int START_FIELD = 1;
-        private static final int IN_FIELD = 2;
-        private static final int IN_QUOTED_FIELD = 3;
-        private static final int QUOTE_IN_QUOTED_FIELD = 4;
-        private static final int EAT_CRNL = 5;
-        private static final int EOL = -1;
-
-        private final Dialect dialect;
-        private final List<List<String>> rows = new ArrayList<>();
-        private List<String> fields = new ArrayList<>();
-        private final StringBuilder field = new StringBuilder();
-        private int state = START_RECORD;
-
-        Reader(final Dialect dialect) {
-            this.dialect = dialect;
-        }
-
-        List<List<String>> read(final String text) {
-            int start = 0;
-            while (start < text.length()) {
-                final int newline = text.indexOf('\n', start);
-                final int end = newline < 0
-                        ? text.length()
-                        : newline + 1;
-                for (int i = start; i < end; i++) {
-                    process(text.charAt(i));
-                }
-                process(EOL);
-                if (state == START_RECORD) {
-                    rows.add(fields);
-                    fields = new ArrayList<>();
-                }
-                start = end;
-            }
-            if (!field.isEmpty() || state == IN_QUOTED_FIELD) {
-                saveField();
-                rows.add(fields);
-                fields = new ArrayList<>();
-            }
-            return rows;
-        }
-
-        private void saveField() {
-            fields.add(field.toString());
-            field.setLength(0);
-        }
-
-        private void addChar(final int c) {
-            field.append((char) c);
-        }
-
-        private void endRecord(final int c) {
-            saveField();
-            state = c == EOL
-                    ? START_RECORD
-                    : EAT_CRNL;
-        }
-
-        private void process(final int c) {
-            switch (state) {
-                case START_RECORD -> {
-                    if (c == EOL) {
-                        // An empty line: an empty row.
-                        return;
-                    }
-                    if (c == '\n' || c == '\r') {
-                        state = EAT_CRNL;
-                        return;
-                    }
-                    state = START_FIELD;
-                    startField(c);
-                }
-                case START_FIELD -> startField(c);
-                case IN_FIELD -> {
-                    if (c == '\n' || c == '\r' || c == EOL) {
-                        endRecord(c);
-                    } else if (c == dialect.delimiter()) {
-                        saveField();
-                        state = START_FIELD;
-                    } else {
-                        addChar(c);
-                    }
-                }
-                case IN_QUOTED_FIELD -> {
-                    if (c == EOL) {
-                        return;
-                    }
-                    if (c == dialect.quote()) {
-                        state = dialect.doubleQuote()
-                                ? QUOTE_IN_QUOTED_FIELD
-                                : IN_FIELD;
-                    } else {
-                        addChar(c);
-                    }
-                }
-                case QUOTE_IN_QUOTED_FIELD -> {
-                    if (c == dialect.quote()) {
-                        addChar(c);
-                        state = IN_QUOTED_FIELD;
-                    } else if (c == dialect.delimiter()) {
-                        saveField();
-                        state = START_FIELD;
-                    } else if (c == '\n' || c == '\r' || c == EOL) {
-                        endRecord(c);
-                    } else {
-                        addChar(c);
-                        state = IN_FIELD;
-                    }
-                }
-                case EAT_CRNL -> {
-                    if (c == EOL) {
-                        state = START_RECORD;
-                    } else if (c != '\n' && c != '\r') {
-                        throw new CsvException("new-line character seen in unquoted field - do you need to open "
-                                               + "the file with newline=''?");
-                    }
-                }
-                default -> throw new IllegalStateException("Unknown state " + state);
-            }
-        }
-
-        private void startField(final int c) {
-            if (c == '\n' || c == '\r' || c == EOL) {
-                endRecord(c);
-            } else if (c == dialect.quote()) {
-                state = IN_QUOTED_FIELD;
-            } else if (c == ' ' && dialect.skipInitialSpace()) {
-                return;
-            } else if (c == dialect.delimiter()) {
-                saveField();
-            } else {
-                addChar(c);
-                state = IN_FIELD;
-            }
-        }
     }
 }

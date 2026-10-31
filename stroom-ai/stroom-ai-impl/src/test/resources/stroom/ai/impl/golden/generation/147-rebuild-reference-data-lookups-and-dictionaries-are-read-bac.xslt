@@ -7,10 +7,12 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="data[@name='user']/@value = $vip_users_list">
         <xsl:apply-templates select="." mode="event_type_vip"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', stroom:record-no(), ' (', string-join((concat('user=', string((normalize-space(data[@name='user']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string((normalize-space(data[@name='user']/@value))[1]))), ' | '), ')'))"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>

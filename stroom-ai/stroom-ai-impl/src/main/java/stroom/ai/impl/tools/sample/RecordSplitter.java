@@ -219,8 +219,7 @@ public final class RecordSplitter {
         if (delimiter.length() > 1) {
             records.forEach(line -> rows.add(ToolText.split(line, delimiter)));
         } else {
-            rows.addAll(DelimitedText.read(String.join("\n", records),
-                    DelimitedText.Dialect.delimitedBy(delimiter.charAt(0))));
+            rows.addAll(DelimitedText.cells(records, delimiter.charAt(0)));
         }
         final List<String> columns = JsonValues.strings(info.get("columns"));
         final List<Map<String, Object>> parsed = new ArrayList<>();

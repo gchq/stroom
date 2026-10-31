@@ -16,7 +16,9 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <xsl:variable name="record-no" select="stroom:record-no()"/>
     <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
+    <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="not(normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time']))">
         <!-- drop: damaged lines (not JSON): left untranslated on purpose -->
@@ -31,7 +33,7 @@
         <xsl:apply-templates select="." mode="event_type_password"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', stroom:record-no(), ' (', string-join((concat('json.time=', string((normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time']))[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string((normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time']))[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
