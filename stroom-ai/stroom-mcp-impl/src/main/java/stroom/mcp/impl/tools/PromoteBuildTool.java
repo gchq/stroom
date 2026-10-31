@@ -85,6 +85,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String KEEP = "keep";
     static final String OVERWRITE_ORIGINAL = "Overwrite production with the working copy";
     static final String KEEP_ORIGINAL = "Keep production as it is";
+    // In a working copy's record entry: what the user chose for an original changed since, and at which version.
+    private static final String ORIGINAL_CHOICE = "original_choice";
+    // The most of a diff a question quotes: the form's message must stay short enough to show.
+    private static final int MAX_DIFF_CHARS = 1_000;
+    // The most lines of each side of the difference a question quotes.
+    private static final int MAX_DIFF_LINES = 6;
     private static final DateTimeFormatter BACKUP_STAMP = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
             .withZone(ZoneOffset.UTC);
     private static final List<String> INDEX_TYPES = List.of(ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE);
@@ -240,6 +246,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, versions.proposed(), joins, sources);
+        // Before the layout is shown, so it shows what the user chose (found reviewing the change: asked after
+        // the review, a copy kept still showed as written back).
+        askAboutChangedOriginals(call, context, build, plan);
         // The build's role subfolders kept in production (asked for by the user), unless they say otherwise: where
         // they tell stages apart, so only when it promotes documents of more than one role (an index documented,
         // or a new indexing version, is all Indexing: a subfolder there only adds a level).
@@ -312,11 +321,16 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!processing.isEmpty()) {
             shortForm.put("processing after promotion", processed);
         }
-        askAboutChangedOriginals(call, context, build, plan);
         consent.require(call, context, Consent.Request.approval(NAME,
                 "Promote build '" + build + "' as shown in the chat", shortForm));
         final List<String> done = new ArrayList<>();
         carryOut(build, docs, plan, folders, creating, done);
+        // A choice about a changed original holds for this promotion only: promoted again, it is asked again.
+        plan.stream()
+                .filter(p -> PromotionLayout.KEEP.equals(p.action())
+                             && buildRecords.entry(build, String.valueOf(p.doc().get("uuid")))
+                                     .containsKey(ORIGINAL_CHOICE))
+                .forEach(p -> buildRecords.update(build, ref(p.doc()), entry -> entry.remove(ORIGINAL_CHOICE)));
         // What the record kept about the promoted docs only meant something inside the build; it goes once nothing
         // is left in the build.
         buildRecords.forget(build, plan.stream()
@@ -670,41 +684,63 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     }
 
     // Each working copy whose original was changed since it was taken (e.g. edited by hand in production): the user
-    // chooses whether the copy overwrites it, told how the two differ; kept, the copy stays in the build (asked for
-    // by the user: a production edit made after the copy was taken was lost, but for its backup).
+    // chooses whether the copy overwrites it, told how the two differ; kept, the copy (and the working-copy
+    // pipeline that uses it) stays in the build (asked for by the user: a production edit made after the copy was
+    // taken was lost, but for its backup). The choice is kept in the build's record against the original's version,
+    // so the review and the approval ask once; changed again, it is asked again.
     private void askAboutChangedOriginals(final ToolCall call,
                                           final ToolCallContext context,
                                           final String build,
                                           final List<PromotionLayout.Step> plan) {
+        boolean anyKept = false;
         for (int i = 0; i < plan.size(); i++) {
             final PromotionLayout.Step step = plan.get(i);
             if (!PromotionLayout.WRITE_BACK.equals(step.action())) {
                 continue;
             }
             final DocRef copy = ref(step.doc());
-            final Optional<String> changed = changedSinceCopied(build, copy, step.target());
+            final Optional<ChangedOriginal> changed = changedSinceCopied(build, copy, step.target());
             if (changed.isEmpty()) {
                 continue;
             }
-            final Optional<String> chosen = consent.choose(call, context, NAME, changed.get(),
-                    List.of(OVERWRITE_ORIGINAL, KEEP_ORIGINAL), copy.getType() + " '" + copy.getName()
-                                                                + "' was changed in production since it was copied");
-            if (chosen.isEmpty()) {
-                throw new ToolRefusal("Not promoted: " + changed.get() + " Explain the difference to the user, ask "
-                                      + "which they want, then promote_build again.");
+            final Map<String, Object> entry = buildRecords.entry(build, copy.getUuid());
+            Boolean keep = entry.get(ORIGINAL_CHOICE) instanceof final Map<?, ?> choice
+                           && changed.get().version().equals(choice.get("version"))
+                    ? Boolean.TRUE.equals(choice.get("keep"))
+                    : null;
+            if (keep == null) {
+                final Optional<String> chosen = consent.choose(call, context, NAME, changed.get().said(),
+                        List.of(OVERWRITE_ORIGINAL, KEEP_ORIGINAL), copy.getType() + " '" + copy.getName()
+                                                                    + "' was changed in production since it was "
+                                                                    + "copied");
+                if (chosen.isEmpty()) {
+                    throw new ToolRefusal("Not promoted: " + changed.get().said() + " Promotion needs a client that "
+                                          + "can show forms to ask the user.");
+                }
+                keep = KEEP_ORIGINAL.equals(chosen.get());
+                final boolean kept = keep;
+                buildRecords.update(build, copy, record -> record.put(ORIGINAL_CHOICE, Map.of("version",
+                        changed.get().version(), "keep", kept)));
             }
-            if (KEEP_ORIGINAL.equals(chosen.get())) {
+            if (keep) {
                 plan.set(i, new PromotionLayout.Step(step.doc(), PromotionLayout.KEEP, step.target(), step.role()));
+                anyKept = true;
             }
+        }
+        if (anyKept) {
+            // The working-copy pipelines stay with the copies kept, rather than being discarded from under them.
+            plan.replaceAll(step -> PromotionLayout.DISCARD.equals(step.action())
+                    ? new PromotionLayout.Step(step.doc(), PromotionLayout.KEEP, step.target(), step.role())
+                    : step);
         }
     }
 
     /// @param build        The build.
     /// @param copy         A working copy.
     /// @param originalUuid Its original's UUID.
-    /// @return What changed in the original since the copy was taken, said for the user, with the choice; empty if
-    /// it is as it was (or it isn't known, for a copy taken before this was recorded).
-    Optional<String> changedSinceCopied(final String build, final DocRef copy, final String originalUuid) {
+    /// @return What changed in the original since the copy was taken, said for the user with the choice, and its
+    /// version now; empty if it is as it was (or it isn't known, for a copy taken before this was recorded).
+    Optional<ChangedOriginal> changedSinceCopied(final String build, final DocRef copy, final String originalUuid) {
         final Object copiedVersion = buildRecords.entry(build, copy.getUuid()).get(BuildRecords.COPY_OF_VERSION);
         if (copiedVersion == null) {
             return Optional.empty();
@@ -722,14 +758,41 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 : "";
         final String difference = original.get("data") instanceof final String productionCode
                                   && copied.get("data") instanceof final String copyCode
-                ? " Writing the copy back changes production so (- production now, + the working copy): "
-                  + String.join(" | ", CodeDiff.diff(productionCode, copyCode)) + "."
+                ? difference(productionCode, copyCode)
                 : "";
-        return Optional.of(copy.getType() + " '" + copy.getName() + "' was changed in production since its working "
+        return Optional.of(new ChangedOriginal(original.get("version"), copy.getType() + " '" + copy.getName()
+                           + "' was changed in production since its working "
                            + "copy was taken" + by + when + "." + difference + " " + OVERWRITE_ORIGINAL + " (the "
                            + "production change is then kept only in its backup), or "
                            + KEEP_ORIGINAL.toLowerCase(Locale.ROOT) + " (the working copy stays in the build, for "
-                           + "its change to be made again on a fresh working copy)?");
+                           + "its change to be made again on a fresh working copy)?"));
+    }
+
+    // How production and the copy differ, what overwriting would lose from production first (found testing it: in
+    // the code's order, the copy's change filled the lines shown and production's own edit was cut off).
+    private static String difference(final String productionCode, final String copyCode) {
+        final List<String> lost = new ArrayList<>();
+        final List<String> added = new ArrayList<>();
+        for (final String line : CodeDiff.diff(productionCode, copyCode, Integer.MAX_VALUE)) {
+            if (line.startsWith("- ")) {
+                lost.add(line.substring(2));
+            } else if (line.startsWith("+ ")) {
+                added.add(line.substring(2));
+            }
+        }
+        return PipelineTemplates.shorten((lost.isEmpty()
+                ? ""
+                : " Overwriting it loses from production: " + lines(lost) + ".")
+                + (added.isEmpty()
+                ? ""
+                : " The working copy brings: " + lines(added) + "."), MAX_DIFF_CHARS);
+    }
+
+    private static String lines(final List<String> lines) {
+        final List<String> shown = lines.subList(0, Math.min(MAX_DIFF_LINES, lines.size()));
+        return String.join(" | ", shown) + (lines.size() > shown.size()
+                ? " | ... and " + (lines.size() - shown.size()) + " more lines"
+                : "");
     }
 
     // A working copy written back over its original, after the original is backed up.
@@ -965,6 +1028,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param target           Its folder, or null if none is known.
     /// @param besideProduction True if beside a production document, where no role subfolder is kept.
     private record Placing(String target, boolean besideProduction) {
+
+    }
+
+    /// An original changed since its working copy was taken.
+    ///
+    /// @param version Its version now.
+    /// @param said    What changed, for the user, with the choice.
+    record ChangedOriginal(Object version, String said) {
 
     }
 }
