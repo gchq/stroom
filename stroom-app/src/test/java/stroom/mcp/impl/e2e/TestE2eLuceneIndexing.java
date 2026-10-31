@@ -323,6 +323,12 @@ class TestE2eLuceneIndexing extends AbstractE2eTest {
         assertThat(result).as("verification searches pass, each hit traced to its event")
                 .containsEntry("passed", true);
 
+        // A search Stroom answers with nothing is refused, from the index's own field list (found reviewing the
+        // tools: the analyzers weren't read, so a range on a Lucene text field ran, and found nothing).
+        assertThat(refusal("search_events", Map.of("index", uuidOf(index), "where", List.of(Map.of(
+                "field", "UserId", "condition", "GREATER_THAN", "value", "b")))))
+                .contains("UserId GREATER_THAN 'b': UserId is a text field in Lucene");
+
         // Reprocessing: Stroom keeps what a stream put in a Lucene index, so the build's own index, holding only
         // these streams, is emptied first; after it, the count is three again, not six.
         final int formsBeforeReprocess = client.forms().size();
