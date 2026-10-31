@@ -84,10 +84,11 @@ class TestSurveyFeedTool {
         // Seen in VS Code: an agent surveyed a live feed 3 streams at a time until the user asked for a larger
         // sample. A number the user gives is still theirs: fewer is confirmed in a form, then not asked again for
         // that feed.
+        feedHoldsMany();
         // Without a form, the user can't confirm it: nothing is read.
         assertThat(call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", PortedToolCalls.context()).text())
                 .startsWith("Not done: Survey feed 'ACME-VPN' only 3 stream(s) a call (the default is 10).");
-        Mockito.verify(streamReader, Mockito.never()).find(any(), anyInt(), anyBoolean());
+        Mockito.verify(streamReader, Mockito.never()).readHead(anyLong(), anyInt(), anyInt());
 
         final PortedToolCalls.FormUser user = PortedToolCalls.user(Map.of("value", true));
         final ToolResult agreed = call("{\"feed\": \"ACME-VPN\", \"max_streams\": 3}", user.context());
@@ -123,6 +124,55 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void aPartCutAtItsHeadIsReadInWindowsToItsEndTheirRecordsWhereTheyAre() {
+        // Seen in testing: only the first 5,000,000 characters of a 160 MB part were surveyed, so the kinds of
+        // event further in were found only once the feed was processed; and the coverage said to survey again at
+        // the size just read.
+        sampleFeedInABuild();
+        final String header = "time,user,action";
+        stream(7, "ACME-VPN", 0, header + "\n2026-10-01T10:00:00Z,alice,login\n2026-10-01T10:01:00Z,bob,login\n",
+                true);
+        Mockito.when(streamReader.readWindows(eq(7L), eq(0), anyLong(), anyInt(), anyInt())).thenReturn(List.of(
+                new StreamReader.Window("2026-10-01T12:00:00Z,carol,login\n", 5_001, 4_000_000),
+                new StreamReader.Window("2026-10-01T23:00:00Z,dave,login\n2026-10-01T23:01:00Z,erin,useralert\n",
+                        9_998, 8_000_000)));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_chars_per_stream\": 5000000}"));
+
+        assertThat(result.get("records_read")).isEqualTo(5);
+        assertThat((List<Map<String, Object>>) result.get("per_stream")).singleElement()
+                .satisfies(stream -> assertThat(stream).containsEntry("windows", 2).containsEntry("head_only", true));
+        // The kind only in the tail, at its own record (line 9,999 of the part, after the header).
+        assertThat(String.valueOf(result.get("shapes"))).contains("useralert");
+        assertThat((List<Map<String, Object>>) result.get("locations"))
+                .anySatisfy(location -> assertThat(((Number) location.get("record")).longValue()).isEqualTo(9_998L));
+        assertThat((String) result.get("coverage")).contains("windows spread to their end were read")
+                .contains("review_coverage")
+                .doesNotContain("max_chars_per_stream=5000000");
+    }
+
+    @Test
+    void quotedValuesOverSeveralLinesAreSaidToNeedQuotedNewlines() {
+        // Seen in testing: the Data Splitter was built from the first lines, which held none, so processing split
+        // each such record into pieces, the first translated with fields missing.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, "time,user,reason\n2026-10-01T10:00:00Z,alice,ok\n"
+                                 + "2026-10-01T10:01:00Z,bob,\"Approved.\nTicket CHG-1\"\n"
+                                 + "2026-10-01T10:02:00Z,carol,ok\n", false);
+        stream(8, "ACME-VPN", 0, "time,user,reason\n2026-10-01T11:00:00Z,dave,ok\n", false);
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7, 8], \"max_streams\": 2}"));
+
+        assertThat(result.get("records_read")).as("the record over two lines read as one").isEqualTo(4);
+        assertThat((String) result.get("quoted_newlines")).startsWith("Some quoted values in streams [7] run over "
+                                                                     + "several lines.")
+                .contains("quoted_newlines=true");
+        stream(9, "ACME-VPN", 0, "time,user,reason\n2026-10-01T12:00:00Z,erin,ok\n", false);
+        assertThat(json(call("{\"stream_ids\": [9], \"max_streams\": 1}"))).doesNotContainKey("quoted_newlines");
+    }
+
+    @Test
     void aFewOfAnExistingFeedsStreamsByIdAreTheUsersToConfirm() {
         // Seen in testing on 0.18.13: an existing feed onboarded from 5 streams, given by id, so not asked about.
         final DocRef existing = new DocRef(FeedDoc.TYPE, "feed-0", "ACME-VPN");
@@ -130,6 +180,7 @@ class TestSurveyFeedTool {
         for (int id = 1; id <= 5; id++) {
             stream(id, "ACME-VPN", 0, "{\"a\": 1}\n", false);
         }
+        feedHoldsMany();
         final PortedToolCalls.FormUser user = PortedToolCalls.declining();
         call("{\"stream_ids\": [1, 2, 3, 4, 5]}", user.context());
         assertThat(user.shown()).singleElement().asString().contains("only 5 stream(s) a call");
@@ -138,6 +189,21 @@ class TestSurveyFeedTool {
         sampleFeedInABuild();
         assertThat(json(call("{\"stream_ids\": [1, 2, 3, 4, 5]}")).get("streams_read"))
                 .isEqualTo(List.of(1, 2, 3, 4, 5));
+    }
+
+    @Test
+    void aFeedOfNoMoreStreamsThanGivenIsNotAskedAbout() {
+        // Seen in testing: a feed of one stream, and the user asked to agree to survey only that one, which was no
+        // choice at all.
+        final DocRef existing = new DocRef(FeedDoc.TYPE, "feed-0", "ACME-VPN");
+        Mockito.when(feedNames.feedsNamed("ACME-VPN")).thenReturn(List.of(existing));
+        final Meta only = stream(1, "ACME-VPN", 0, "{\"a\": 1}\n", false);
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean()))
+                .thenReturn(new ResultPage<>(List.of(new MetaRow(only, null, Map.of()))));
+        final PortedToolCalls.FormUser user = PortedToolCalls.declining();
+
+        assertThat(json(call("{\"stream_ids\": [1]}", user.context())).get("streams_read")).isEqualTo(List.of(1));
+        assertThat(user.shown()).isEmpty();
     }
 
     @Test
@@ -301,6 +367,19 @@ class TestSurveyFeedTool {
         assertThat(tool.confirmsItself()).isFalse();
         assertThat(tool.usesRunSlot()).isTrue();
         assertThat(tool.category()).isEqualTo(AiToolCategory.PROCESSING);
+    }
+
+    // A feed holding more streams than a call asks for: as many as asked for, but none to pick for a survey (whose
+    // first find is of one, the newest).
+    private void feedHoldsMany() {
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenAnswer(find -> {
+            final int limit = find.getArgument(1);
+            return limit < 2
+                    ? ResultPage.empty()
+                    : new ResultPage<>(IntStream.range(0, limit)
+                            .mapToObj(n -> new MetaRow(meta(100 + n, "ACME-VPN", 0), null, Map.of()))
+                            .toList());
+        });
     }
 
     // The build's feed, which the sample streams were uploaded to.

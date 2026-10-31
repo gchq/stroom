@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -92,6 +93,20 @@ class TestBuildDataSplitterTool {
         // And Stroom's own parser keeps the line whole with it.
         assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 1);
         assertThat(firstRecord(splitter)).containsEntry("action", "x".repeat(20_000));
+        // Agreeing on the sample says nothing of records further in (seen in testing: taken for the whole feed).
+        assertThat((String) stroomCheck(splitter).get("summary"))
+                .startsWith("writes the same 1 record(s), of the 20,045 characters of sample read.")
+                .contains("Records further in, longer or laid out differently, are not checked");
+    }
+
+    @Test
+    void anExhaustedBufferIsExplainedAsOverHalfOfIt() {
+        // Seen in testing: told a record was "longer than the read buffer", the agent took a lost 751,000-character
+        // record under a 1,000,000 buffer for a quoting fault.
+        assertThat(ErrorTriage.bundled().classify("ERROR", "dsParser", true, "Top level expression 'split[1]' "
+                                                  + "matched too much content and exhausted the buffer.").reason())
+                .contains("longer than half the Data Splitter's read buffer")
+                .contains("at least double the buffer");
     }
 
     @ParameterizedTest(name = "a line of {0} characters")
@@ -104,6 +119,27 @@ class TestBuildDataSplitterTool {
         final Map<String, Object> splitter = world.call(tool, Map.of("sample", csv));
 
         assertThat(stroomCheck(splitter)).containsEntry("matches", true).containsEntry("records", 2);
+    }
+
+    @Test
+    void onlyARecordUpToHalfTheBufferIsSureToFit() {
+        // Seen in testing: a 751,000-character record lost with bufferSize 1000000, after many shorter ones. Stroom
+        // refills the buffer only once less than half of it is unread, so a record over half fits or not by where
+        // it starts (a long line near the start of a sample fits, which the tests above rely on).
+        final int buffer = 40_000;
+        final String converter = SplitterXml.withBufferSize(lines(), buffer);
+        assertThat(StroomSplitterRun.run(converter, after(15_000, 19_000)).errors()).as("under half").isEmpty();
+        assertThat(StroomSplitterRun.run(converter, after(15_000, 25_000)).errors()).as("over half, started late")
+                .anyMatch(error -> error.contains("exhausted the buffer"));
+        assertThat(StroomSplitterRun.run(converter, after(0, 25_000)).errors()).as("over half, started early")
+                .isEmpty();
+
+        // The size the tool gives (four times the longest) keeps it wherever it starts.
+        final String sized = SplitterXml.withBufferSize(lines(), SplitterXml.bufferSizeFor(25_000).orElseThrow());
+        for (int before = 0; before <= 60_000; before += 7_500) {
+            assertThat(StroomSplitterRun.run(sized, after(before, 25_000)).errors()).as("after %s", before)
+                    .isEmpty();
+        }
     }
 
     @Test
@@ -330,6 +366,23 @@ class TestBuildDataSplitterTool {
     }
 
     @SuppressWarnings("unchecked")
+    // A Data Splitter of one record a line.
+    private static String lines() {
+        return "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" "
+               + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"data-splitter:3 "
+               + "file://data-splitter-v3.0.xsd\" version=\"3.0\">\n<split id=\"record\" delimiter=\"\\n\">"
+               + "<data name=\"line\" value=\"$1\"/></split>\n</dataSplitter>";
+    }
+
+    // Short lines to about `before` characters, then a line of `length`, then a short one.
+    private static String after(final int before, final int length) {
+        final StringBuilder text = new StringBuilder();
+        while (text.length() < before) {
+            text.append("a short line of text, as most of a feed's records are 0123456789\n");
+        }
+        return text.append("y".repeat(length)).append("\nafter\n").toString();
+    }
+
     private static Map<String, Object> stroomCheck(final Map<String, Object> splitter) {
         return (Map<String, Object>) splitter.get("stroom_check");
     }
