@@ -160,6 +160,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private int currentDocPropertyCount = 0;
     private String currentDocEventId = null;
     private long queuedDocumentCount = 0;
+    // The number of documents in the current batch that Elasticsearch rejected for reasons other than overload
+    private int batchRejectedCount = 0;
     private boolean inOuterArray = false;
     private int currentDepth = 0;
     private int maxNestedElementDepth;
@@ -714,22 +716,24 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * Index the current batch of documents
+     * Index the current batch of documents. Documents that Elasticsearch rejects because it is overloaded are
+     * retried after a delay, and only those. Documents it rejects for any other reason are reported, and fail the
+     * batch once the rest have been indexed.
      */
     private void indexDocuments() {
         if (bulkOperations.isEmpty()) {
             return;
         }
 
+        final int batchDocumentCount = bulkOperations.size();
+        batchRejectedCount = 0;
         try {
-            final AtomicBoolean succeeded = new AtomicBoolean(false);
-            while (!succeeded.get()) {
+            final AtomicBoolean complete = new AtomicBoolean(false);
+            while (!complete.get()) {
                 elasticClientCache.context(elasticCluster.getConnection(), elasticClient -> {
                     try {
-                        // Create a new bulk indexing request, containing the current batch of documents
+                        // Create a new bulk indexing request, containing the documents still to be indexed
                         final Builder bulkRequestBuilder = new BulkRequest.Builder();
-
-                        // For each document, create an indexing request and append to the bulk request
                         bulkRequestBuilder.operations(bulkOperations);
 
                         if (refreshAfterEachBatch) {
@@ -743,30 +747,30 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (response.errors()) {
                             LOGGER.debug(() -> "Bulk indexing request for stream " + metaHolder.getMeta().getId() +
                                                " had errors: " + response);
-                            final boolean overloaded = response.items().stream()
-                                    .anyMatch(item -> item.status() == ES_TOO_MANY_REQUESTS_STATUS);
-                            if (overloaded) {
-                                // Failure was due to Elasticsearch being overloaded, so retry after a delay
-                                deleteBulkRequestDocuments(elasticClient, response);
-                                throw new ElasticsearchOverloadedException(response);
-                            } else {
-                                // Request failed for some other reason, so report each rejected document and
-                                // abort without retry
-                                final int rejectedCount = reportRejectedDocuments(response);
-                                throw new IOException("Bulk indexing request failed: " + rejectedCount + " of " +
-                                                      response.items().size() +
-                                                      " documents rejected by Elasticsearch");
+                            if (response.items().size() != bulkOperations.size()) {
+                                throw new IOException("Bulk indexing response has " + response.items().size() +
+                                                      " items for " + bulkOperations.size() + " documents");
                             }
-                        } else {
-                            succeeded.set(true);
-                            final String retryMessage = currentRetry > 0
-                                    ? " (retries: " + currentRetry + ")"
-                                    : "";
-                            LOGGER.info("Pipeline '{}' indexed {} documents from stream {} to Elasticsearch cluster " +
-                                        "'{}' in {} seconds{}", pipelineName, bulkOperations.size(),
-                                    metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
-                                    retryMessage);
+                            // A document rejected for a reason other than overload would be rejected again, so
+                            // report it rather than retry it
+                            reportRejectedDocuments(response);
+                            final int overloadedCount = retainOverloadedDocuments(response);
+                            if (overloadedCount > 0) {
+                                // Elasticsearch was too busy to index some documents, so retry just those after a
+                                // delay. The others were either indexed or reported.
+                                throw new ElasticsearchOverloadedException(
+                                        describeOverload(overloadedCount, batchDocumentCount));
+                            }
                         }
+
+                        complete.set(true);
+                        final String retryMessage = currentRetry > 0
+                                ? " (retries: " + currentRetry + ")"
+                                : "";
+                        LOGGER.info("Pipeline '{}' indexed {} documents from stream {} to Elasticsearch cluster " +
+                                    "'{}' in {} seconds{}", pipelineName, batchDocumentCount - batchRejectedCount,
+                                metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
+                                retryMessage);
                     } catch (final ElasticsearchOverloadedException e) {
                         handleElasticsearchOverloadedException(e);
                     } catch (final ElasticsearchException e) {
@@ -791,6 +795,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     }
                 });
             }
+
+            if (batchRejectedCount > 0) {
+                reportRejectionSummary();
+                fatalError("Bulk indexing request failed: " + batchRejectedCount + " of " + batchDocumentCount +
+                           " documents rejected by Elasticsearch", null);
+            }
         } finally {
             currentRetry = 0;
             bulkOperations.clear();
@@ -799,34 +809,63 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    /// Logs an error for each document Elasticsearch rejected, naming the document and giving Elasticsearch's
-    /// reason. Documents rejected because Elasticsearch was overloaded are left out, as they are not at fault.
-    /// Only the first [#MAX_REPORTED_REJECTIONS] are logged individually, followed by a summary of the rest.
+    /// Keeps only the documents that Elasticsearch rejected because it was overloaded, so that they can be
+    /// retried.
     ///
-    /// @param response The response to a bulk request that reported errors.
-    /// @return The number of documents rejected for reasons other than Elasticsearch being overloaded.
-    private int reportRejectedDocuments(final BulkResponse response) {
+    /// @param response The response to a bulk request of the documents in `bulkOperations`, with an item for
+    ///                 each.
+    /// @return The number of documents kept.
+    private int retainOverloadedDocuments(final BulkResponse response) {
         final List<BulkResponseItem> items = response.items();
-        int rejectedCount = 0;
+        final List<BulkOperation> overloadedOperations = new ArrayList<>();
+        final List<String> overloadedDocumentNames = new ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).status() == ES_TOO_MANY_REQUESTS_STATUS) {
+                overloadedOperations.add(bulkOperations.get(i));
+                overloadedDocumentNames.add(bulkDocumentNames.get(i));
+            }
+        }
+        bulkOperations.clear();
+        bulkOperations.addAll(overloadedOperations);
+        bulkDocumentNames.clear();
+        bulkDocumentNames.addAll(overloadedDocumentNames);
+        return overloadedOperations.size();
+    }
+
+    private String describeOverload(final int overloadedCount, final int batchDocumentCount) {
+        final String otherRejected = batchRejectedCount > 0
+                ? ", and rejected " + batchRejectedCount + " for other reasons"
+                : "";
+        return "Elasticsearch was overloaded and rejected " + overloadedCount + " of " + batchDocumentCount +
+               " documents" + otherRejected;
+    }
+
+    /// Logs an error for each document Elasticsearch rejected, naming the document and giving Elasticsearch's
+    /// reason, and adds them to the count for the batch. Documents rejected because Elasticsearch was overloaded are
+    /// left out, as they are not at fault. Only the first [#MAX_REPORTED_REJECTIONS] in a batch are logged; see
+    /// [#reportRejectionSummary()] for the rest.
+    ///
+    /// @param response The response to a bulk request of the documents in `bulkOperations`, with an item for each.
+    private void reportRejectedDocuments(final BulkResponse response) {
+        final List<BulkResponseItem> items = response.items();
         for (int i = 0; i < items.size(); i++) {
             final BulkResponseItem item = items.get(i);
             if (item.error() != null && item.status() != ES_TOO_MANY_REQUESTS_STATUS) {
-                rejectedCount++;
-                if (rejectedCount <= MAX_REPORTED_REJECTIONS) {
+                batchRejectedCount++;
+                if (batchRejectedCount <= MAX_REPORTED_REJECTIONS) {
                     // Bulk response items are in the same order as the operations in the request
-                    final String documentName = i < bulkDocumentNames.size()
-                            ? bulkDocumentNames.get(i)
-                            : "the document";
-                    log(Severity.ERROR, describeRejection(documentName, item.error()), null);
+                    log(Severity.ERROR, describeRejection(bulkDocumentNames.get(i), item.error()), null);
                 }
             }
         }
+    }
 
-        if (rejectedCount > MAX_REPORTED_REJECTIONS) {
-            log(Severity.ERROR, "Elasticsearch rejected " + rejectedCount + " documents in this batch; only the " +
-                                "first " + MAX_REPORTED_REJECTIONS + " are reported individually", null);
+    /// Logs how many documents in the batch were rejected, if more than could be reported individually.
+    private void reportRejectionSummary() {
+        if (batchRejectedCount > MAX_REPORTED_REJECTIONS) {
+            log(Severity.ERROR, "Elasticsearch rejected " + batchRejectedCount + " documents in this batch; only " +
+                                "the first " + MAX_REPORTED_REJECTIONS + " are reported individually", null);
         }
-        return rejectedCount;
     }
 
     /// Describes why Elasticsearch rejected a document, including the first cause where given, as that usually
@@ -850,42 +889,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         sb.append(" (").append(errorCause.type()).append(')');
         if (errorCause.reason() != null) {
             sb.append(": ").append(errorCause.reason());
-        }
-    }
-
-    /**
-     * Delete any documents that were successfully indexed during a failed bulk request.
-     * This removes duplicates in the destination index.
-     */
-    private void deleteBulkRequestDocuments(final ElasticsearchClient elasticClient,
-                                            final BulkResponse response) {
-        final List<BulkOperation> deleteOperations = new ArrayList<>();
-
-        for (final BulkResponseItem item : response.items()) {
-            if (item.error() == null) {
-                deleteOperations.add(BulkOperation.of(b -> b
-                        .delete(deleteOp -> deleteOp
-                                .index(item.index())
-                                .id(item.id())
-                        )
-                ));
-            }
-        }
-
-        if (!deleteOperations.isEmpty()) {
-            try {
-                final BulkRequest bulkRequest = new BulkRequest.Builder()
-                        .operations(deleteOperations)
-                        .build();
-
-                elasticClient.bulk(bulkRequest);
-
-                LOGGER.info("Deleted {} documents from failed bulk indexing request for stream {}, pipeline '{}'",
-                        deleteOperations.size(), metaHolder.getMeta().getId(), pipelineName);
-            } catch (final IOException e) {
-                LOGGER.warn("Error occurred when deleting documents indexed during a failed bulk request. " +
-                            "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
-            }
         }
     }
 
@@ -915,10 +918,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 fatalError("Indexing terminated after " + currentRetry + " retries: " + errorDetailMsg, ex);
             }
         } else {
-            if (e instanceof final ElasticsearchOverloadedException overloadedException) {
-                // Documents rejected for other reasons would not be indexed by a further retry either
-                reportRejectedDocuments(overloadedException.getResponse());
-            }
+            reportRejectionSummary();
             fatalError("Indexing failed to complete after " + currentRetry + " retries: " + errorDetailMsg, e);
         }
     }
@@ -1064,29 +1064,8 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private static class ElasticsearchOverloadedException extends RuntimeException {
 
-        private final transient BulkResponse response;
-
-        public ElasticsearchOverloadedException(final BulkResponse response) {
-            super(describe(response));
-            this.response = response;
-        }
-
-        BulkResponse getResponse() {
-            return response;
-        }
-
-        private static String describe(final BulkResponse response) {
-            final long overloadedCount = response.items().stream()
-                    .filter(item -> item.status() == ES_TOO_MANY_REQUESTS_STATUS)
-                    .count();
-            final long otherRejectedCount = response.items().stream()
-                    .filter(item -> item.error() != null && item.status() != ES_TOO_MANY_REQUESTS_STATUS)
-                    .count();
-            final String otherRejected = otherRejectedCount > 0
-                    ? ", and rejected " + otherRejectedCount + " for other reasons"
-                    : "";
-            return "Elasticsearch was overloaded and rejected " + overloadedCount + " of " +
-                   response.items().size() + " documents" + otherRejected;
+        public ElasticsearchOverloadedException(final String message) {
+            super(message);
         }
     }
 }
