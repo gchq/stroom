@@ -71,7 +71,7 @@ class SetProcessorFilterEnabledTool extends AbstractBuiltInTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(BuildPlan.onboardingLabel(NAME)
-                             + "Disable a processor filter on a pipeline this server created. Enabling one is the "
+                             + "Disable a processor filter on a pipeline the agent created. Enabling one is the "
                              + "user's, in Stroom: this refuses it.")
                 .parameters(ObjectSchema.builder()
                         .addIntegerProperty(FILTER_ID_ARG, "Processor filter id, e.g. from processing_status.")

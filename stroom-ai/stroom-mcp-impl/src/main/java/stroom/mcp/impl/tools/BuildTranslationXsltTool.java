@@ -291,7 +291,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                       + "never has to pass through you. With name for a new XSLT.")
                         .addStringProperty(NAME_ARG, "With build: the new XSLT's name, following the environment's "
                                                      + "naming.")
-                        .addStringProperty(UUID_ARG, "Replace an XSLT this server created (the one an earlier call "
+                        .addStringProperty(UUID_ARG, "Replace an XSLT the agent created (the one an earlier call "
                                                      + "saved) with the code generated now; build is then not "
                                                      + "needed.")
                         .addBooleanProperty(INCLUDE_XSLT_ARG, "When saving, also return the code (to read it).")

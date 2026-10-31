@@ -344,7 +344,7 @@ class StepSampleTool extends AbstractBuiltInTool {
             final String asked = maxRecords != null && maxRecords > cap
                     ? " (max_records=" + maxRecords + " is more than it steps)"
                     : "";
-            result.put("hint", "Stopped at " + cap + " records, the server's limit for one step_sample" + asked
+            result.put("hint", "Stopped at " + cap + " records, the limit for one step_sample" + asked
                                + ": calling it again steps the same " + cap + ". The rest are checked when the "
                                + "sample is processed: wait_for_processing reports any record that fails, and "
                                + "check_events reads the Events.");
