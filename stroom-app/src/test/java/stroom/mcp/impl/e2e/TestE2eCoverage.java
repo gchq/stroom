@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,9 +66,17 @@ class TestE2eCoverage extends AbstractE2eTest {
     private static final String HEADER = "time,user,host,action,resource\n";
     private static final String SAMPLE = HEADER + "2026-10-01T10:00:00,alice,ws01,login,\n"
                                          + "2026-10-01T10:05:00,bob,ws02,login,\n";
-    private static final String LATER = HEADER + "2026-10-02T09:00:00,carol,ws03,login,\n"
-                                        + "2026-10-02T09:01:00,carol,ws03,view,Payroll\n"
-                                        + "2026-10-02T09:02:00,dave,ws04,view,Firewall\n";
+    // Not the script's: 300 records, the two views (records 151 and 291) well past the first 110. Stroom's split
+    // filter (100 records a split) queues a location per record and stops keeping them once 10 more than a split
+    // are unread: the XSLT read the number only for the records it logged, so in testing every miss after that was
+    // logged without one, and none was found. Stepping goes a record at a time, so only processing shows it.
+    private static final String LATER = HEADER + IntStream.rangeClosed(1, 300)
+            .mapToObj(n -> switch (n) {
+                case 151 -> "2026-10-02T09:01:00,carol,ws03,view,Payroll\n";
+                case 291 -> "2026-10-02T09:02:00,dave,ws04,view,Firewall\n";
+                default -> "2026-10-02T09:00:00,carol,ws03,login,\n";
+            })
+            .collect(Collectors.joining());
     private static final Map<String, Object> MAPPING = Map.of(
             "input", "data_splitter",
             "unmatched", "warn",
@@ -173,6 +182,12 @@ class TestE2eCoverage extends AbstractE2eTest {
                 .containsEntry("kind", Map.of("action", "view"))
                 .containsEntry("records", 2);
         assertThat(ids(missed.getFirst(), "raw_streams")).containsExactly(later);
+        // Records 151 and 291, as step_records numbers them (from 0).
+        assertThat(list(missed.getFirst(), "examples")).as("each logged with its own record's number")
+                .extracting(example -> example.get("record"))
+                .containsExactly(150, 290);
+        assertThat(String.valueOf(list(missed.getFirst(), "examples").getFirst().get("holds")))
+                .as("the example read is that record").contains("Payroll");
         assertThat(ids(review, "affected_raw_stream_ids")).containsExactly(later);
         assertThat(map(review, "progress")).containsEntry("done", true);
         assertThat((String) review.get("tell_user")).startsWith("Found untranslated events");

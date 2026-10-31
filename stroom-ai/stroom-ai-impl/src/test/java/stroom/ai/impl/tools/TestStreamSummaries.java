@@ -98,6 +98,9 @@ class TestStreamSummaries {
         assertThat(out.get("error_streams")).isEqualTo(List.of(10L, 9L));
         assertThat(out.get("unread")).isEqualTo(List.of("Error stream 10: 500 volume gone"));
         assertThat(groups(out)).isEmpty();
+        // Not clean, with one not read (seen in testing: an Error stream still being written, said to be clean).
+        assertThat(out.get("verdict")).isEqualTo(StreamSummaries.UNREAD);
+        assertThat((String) out.get("hint")).contains("doesn't say they are clean").contains("wait_for_processing");
     }
 
     @Test

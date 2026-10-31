@@ -257,11 +257,14 @@ class StepRecordsTool extends AbstractBuiltInTool {
         entry.put("record", key);
         entry.put("shape", location.shape());
         if (!PipelineStepping.isFound(result)) {
+            // Said in records_not_found, with why; judged only if no record was found at all (an XSLT that doesn't
+            // compile). Seen in testing: a record past a stream's end turned a clean verdict into review, on
+            // stepping's own complaint that it had nothing to replay.
             final List<ErrorTriage.Marker> found = SteppingWalks.markers(result, key);
-            walked.markers.addAll(found);
+            walked.missingMarkers.addAll(found);
             entry.put("found", false);
             if (!found.isEmpty()) {
-                entry.put("errors", found.size());
+                entry.put("why", found.getFirst().message());
             }
             walked.records.add(entry);
             return;
@@ -304,6 +307,10 @@ class StepRecordsTool extends AbstractBuiltInTool {
                                         final Map<String, String> draftCode,
                                         final Walked walked) {
         final List<Map<String, Object>> records = walked.records;
+        final boolean noneFound = records.stream().allMatch(r -> Boolean.FALSE.equals(r.get("found")));
+        if (noneFound) {
+            walked.markers.addAll(walked.missingMarkers);
+        }
         final Map<String, Object> summary = stepping.triage(walked.markers, pipeline, records.size());
         SteppingVerdicts.listRecords(summary, walked.markers);
         SteppingVerdicts.block(summary, stepping.unagreedUnknown(pipeline, pipeline.outputElement(),
@@ -447,6 +454,8 @@ class StepRecordsTool extends AbstractBuiltInTool {
     private static final class Walked {
 
         private final List<ErrorTriage.Marker> markers = new ArrayList<>();
+        // What stepping said of the records it didn't find.
+        private final List<ErrorTriage.Marker> missingMarkers = new ArrayList<>();
         private final List<Map<String, Object>> records = new ArrayList<>();
         private final List<String> unknown = new ArrayList<>();
         private final List<String> unknownOutputs = new ArrayList<>();

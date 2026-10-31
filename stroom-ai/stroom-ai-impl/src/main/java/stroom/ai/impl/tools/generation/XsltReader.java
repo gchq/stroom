@@ -457,7 +457,7 @@ public final class XsltReader {
                 final LeafReading leaf = new LeafReading(join(path, "Data"), data.get(0));
                 leaf.setExpr(resolve(data.get(1), scope, parser));
                 rule.leaves().add(leaf);
-            } else if (!select.startsWith("stroom:log(")) {
+            } else if (!select.startsWith("stroom:log(") && !select.equals(XsltGenerator.READ_RECORD_NO)) {
                 rule.notes().add(at + ": xsl:sequence " + head(select, 80) + " not read");
             }
         } else if (child.is(XSL, "for-each")) {

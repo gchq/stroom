@@ -76,6 +76,25 @@ class TestErrorTriage {
     }
 
     @Test
+    void unmatchedRecordsWithEveryTestedValueEmptyMayBePiecesOfARecord() {
+        // Seen in testing: CSV values holding line breaks split each record into pieces, logged with every tested
+        // value empty, and the agent nearly added a rule for them.
+        for (final String message : List.of("Log - No event mapping matched record 12 (x-action=)",
+                "No event mapping matched record 5 (action= | type=)",
+                "Log - No event mapping matched record  (x-action=)")) {
+            final ErrorTriage.Classified piece = RULES.classify("WARNING", "translationFilter", true, message);
+            assertThat(piece.classification()).as(message).isEqualTo(ErrorTriage.REVIEW);
+            assertThat(piece.reason()).as(message).contains("quoted_newlines=true").contains("whole records");
+        }
+        // A value in any tested field: a kind of record no rule takes yet, as before.
+        for (final String message : List.of("No event mapping matched record 7 (x-action=useralert)",
+                "No event mapping matched record 5 (action= | type=login)")) {
+            assertThat(RULES.classify("WARNING", "translationFilter", true, message).reason()).as(message)
+                    .doesNotContain("quoted_newlines");
+        }
+    }
+
+    @Test
     void environmentRulesComeFirst() {
         final ErrorTriage rules = ErrorTriage.withEnvironmentRules(List.of(
                 "{element: decorationFilter, message: lookup, class: benign, reason: known miss}"));

@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.sample.RecordSplitter;
+import stroom.ai.impl.workspace.ToolDeadline;
+import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
@@ -55,6 +57,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -384,6 +387,156 @@ public class StreamReader {
         return new RawHead(text, truncated, (int) Math.min(Integer.MAX_VALUE, parts));
     }
 
+    /// Text from further into one part of a raw stream than its head: windows spread evenly from `fromByte` to the
+    /// part's end, the last one its tail, each starting at the start of a line and cut at a line end, with the
+    /// number of the line it starts on, so a record in it can be stepped where it is. Seen in testing: a survey read
+    /// only the first 5,000,000 characters of a 160 MB part, and the kinds of event only further in were found
+    /// only once the whole feed was processed. The part is read through once (the store can't jump into it), holding
+    /// only a window's text at a time; reading stops, with the windows read so far, when the call's time is nearly
+    /// up. Only for an encoding whose line end is one byte (not UTF-16 or UTF-32).
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param fromByte Where its head, already read, ends.
+    /// @param count    The most windows.
+    /// @param maxChars The most characters in a window.
+    /// @return The windows, in order; none when the part is no longer than its head, or its encoding's line end is
+    /// more than one byte.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public List<Window> readWindows(final long streamId,
+                                    final int part,
+                                    final long fromByte,
+                                    final int count,
+                                    final int maxChars) {
+        requireViewData(streamId);
+        final int maxBytes = (int) Math.min(Integer.MAX_VALUE - 8L, (long) maxChars * MAX_BYTES_PER_CHAR);
+        try (final Source source = storeProvider.get().openSource(streamId)) {
+            final String encoding = encoding(source.getMeta());
+            if (count < 1 || !lineEndIsOneByte(encoding)) {
+                return List.of();
+            }
+            try (final InputStreamProvider provider = source.get(part);
+                    final SegmentInputStream in = provider.get()) {
+                in.includeAll();
+                final long size = in.size();
+                if (size <= fromByte) {
+                    return List.of();
+                }
+                return windows(in, encoding, windowStarts(fromByte, size, count, maxChars), maxBytes, maxChars);
+            }
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
+        }
+    }
+
+    // Where each window starts: spread evenly from the head's end to the part's end, the last one ending there.
+    private static List<Long> windowStarts(final long fromByte, final long size, final int count, final int maxChars) {
+        final long last = Math.max(fromByte, size - maxChars);
+        final List<Long> starts = new ArrayList<>();
+        for (int n = 0; n < count; n++) {
+            final long start = count == 1
+                    ? last
+                    : fromByte + (last - fromByte) * n / (count - 1);
+            if (starts.isEmpty() || start > starts.getLast()) {
+                starts.add(start);
+            }
+        }
+        return starts;
+    }
+
+    // The windows, read in one pass: the bytes before each passed over, counting line ends, then up to maxChars from
+    // the start of the next line, cut at the last line end (the end of the part need not be one).
+    private static List<Window> windows(final SegmentInputStream in,
+                                        final String encoding,
+                                        final List<Long> starts,
+                                        final int maxBytes,
+                                        final int maxChars) throws IOException {
+        final List<Window> out = new ArrayList<>();
+        final byte[] buffer = new byte[64 * 1024];
+        long position = 0;
+        long lines = 0;
+        boolean atLineStart = true;
+        for (final long start : starts) {
+            if (start < position) {
+                continue;
+            }
+            while (position < start) {
+                if (timeIsUp()) {
+                    return out;
+                }
+                final int read = in.read(buffer, 0, (int) Math.min(buffer.length, start - position));
+                if (read < 0) {
+                    return out;
+                }
+                lines += lineEnds(buffer, 0, read);
+                atLineStart = buffer[read - 1] == '\n';
+                position += read;
+            }
+            final byte[] read = in.readNBytes(maxBytes);
+            final boolean last = read.length < maxBytes;
+            // The rest of the line the window starts in belongs to a record before it: passed over.
+            int from = 0;
+            if (!atLineStart) {
+                while (from < read.length && read[from] != '\n') {
+                    from++;
+                }
+                from = Math.min(read.length, from + 1);
+            }
+            final long firstLine = lines + lineEnds(read, 0, from);
+            final String text = StreamCharsets.decode(Arrays.copyOfRange(read, from, read.length), encoding, last)
+                    .text();
+            final String whole = last && text.length() <= maxChars
+                    ? text
+                    : text.substring(0, text.substring(0, Math.min(text.length(), maxChars)).lastIndexOf('\n') + 1);
+            if (!whole.isEmpty()) {
+                out.add(new Window(whole, firstLine, start));
+            }
+            lines += lineEnds(read, 0, read.length);
+            position += read.length;
+            atLineStart = read.length == 0 || read[read.length - 1] == '\n';
+            if (last) {
+                break;
+            }
+        }
+        return out;
+    }
+
+    // Whether the call's time is up: what is read so far is given (an interrupted call stops at once).
+    private static boolean timeIsUp() {
+        try {
+            ToolDeadline.check();
+            return false;
+        } catch (final ToolTimeoutException e) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw e;
+            }
+            return true;
+        }
+    }
+
+    private static long lineEnds(final byte[] bytes, final int from, final int to) {
+        long count = 0;
+        for (int i = from; i < to; i++) {
+            if (bytes[i] == '\n') {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Whether the encoding writes a line end as the one byte \n, which no other character's bytes hold.
+    private static boolean lineEndIsOneByte(final String encoding) {
+        try {
+            final Charset charset = Charset.forName(encoding);
+            return !charset.name().toUpperCase(Locale.ROOT).startsWith("UTF-16")
+                   && !charset.name().toUpperCase(Locale.ROOT).startsWith("UTF-32")
+                   && Arrays.equals("\n".getBytes(charset), new byte[]{'\n'});
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
     /// As [#rawText(long, int)], kept a while for the user: a stream never changes, and the same sample is read
     /// on every attempt at a mapping. Kept per user, as a stream one user may read another may not.
     ///
@@ -707,6 +860,15 @@ public class StreamReader {
     /// @param truncated True if it was cut short.
     /// @param parts     The number of parts the stream has.
     public record RawHead(String text, boolean truncated, int parts) {
+
+    }
+
+    /// Text from further into a part than its head.
+    ///
+    /// @param text      Whole lines of it.
+    /// @param firstLine The zero-based number, in the part, of the line it starts with.
+    /// @param fromByte  Where in the part it was taken from (it starts at the first line start at or after it).
+    public record Window(String text, long firstLine, long fromByte) {
 
     }
 

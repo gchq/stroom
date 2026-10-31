@@ -30,10 +30,12 @@ import java.util.regex.Pattern;
 /// server relies on: `csv.reader` (a quote only opens a quoted value at its start, a doubled quote inside one is a
 /// quote, a value may run over lines), and `csv.Sniffer`, which guesses the delimiter and whether the first row is a
 /// header.
+///
+/// Unlike Python's reader, a field may be of any length: `csv.field_size_limit()` (131,072 characters) is not kept.
+/// The text read is already cut to the caller's budget, and Stroom's Data Splitter reads longer fields, so the limit
+/// only lost records (seen in testing: one 250,000-character URL query stopped a whole stream part being surveyed).
 final class PyCsv {
 
-    /// The longest field `csv.reader` reads, as Python's `csv.field_size_limit()` has it.
-    static final int FIELD_LIMIT = 131_072;
     /// The dialect `csv.reader` reads with unless told otherwise.
     static final Dialect EXCEL = new Dialect(',', '"', true, false);
 
@@ -537,9 +539,6 @@ final class PyCsv {
         }
 
         private void addChar(final int c) {
-            if (field.length() >= FIELD_LIMIT) {
-                throw new CsvException("field larger than field limit (" + FIELD_LIMIT + ")");
-            }
             field.append((char) c);
         }
 

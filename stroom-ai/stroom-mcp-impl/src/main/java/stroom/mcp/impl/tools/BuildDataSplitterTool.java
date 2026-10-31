@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.PyText;
+import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -169,8 +170,10 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(
                                 DraftTranslationMappingTool.SAMPLE_STREAMS))
                         .addIntegerProperty(BUFFER_SIZE_ARG, "The Data Splitter's read buffer (bufferSize), in "
-                                                             + "characters: a record longer than it matches nothing "
-                                                             + "and is lost. Stroom's default is "
+                                                             + "characters: only a record up to HALF of it is sure "
+                                                             + "to fit (Stroom refills the buffer once half is "
+                                                             + "read); a longer one matches nothing and is lost. "
+                                                             + "Stroom's default is "
                                                              + RootFactory.DEFAULT_BUFFER_SIZE + "; set from the "
                                                              + "sample's longest record when that needs more. Give it "
                                                              + "when the feed holds longer records than the sample "
@@ -386,7 +389,12 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                         ? String.join("; ", counts) + "."
                         : "reports " + errors.size() + " error(s), e.g. " + errors.getFirst() + ".")
                 : differences.isEmpty()
-                        ? "writes the same records."
+                        // Only of the text read: seen in testing, "parses exactly as Stroom's own parser does" was
+                        // taken for the whole feed, where longer records and quoted line breaks further in were lost.
+                        ? "writes the same " + records + " record(s), of the " + StreamReader.thousands(
+                                texts.stream().mapToLong(String::length).sum()) + " characters of sample read. "
+                          + "Records further in, longer or laid out differently, are not checked: processing the "
+                          + "whole feed is the check of those."
                         : "writes " + differences.size() + " record(s) differently, e.g. record "
                           + differences.getFirst().get("record") + ".");
         return check;

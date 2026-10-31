@@ -66,6 +66,9 @@ import javax.xml.parsers.ParserConfigurationException;
 /// stream store, which only reach streams of feeds the user may view.
 public class StreamSummaries {
 
+    /// The verdict of an error summary that couldn't read every Error stream and found nothing in the rest.
+    public static final String UNREAD = "unread";
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamSummaries.class);
 
     /// The event-logging schema's namespace.
@@ -186,6 +189,14 @@ public class StreamSummaries {
         result.putAll(triage.triage(markers, own, null, 3, accepted));
         if (!unread.isEmpty()) {
             result.put("unread", unread);
+            if ("clean".equals(result.get("verdict"))) {
+                // Not clean: nothing is known of what it couldn't read (seen in testing: an Error stream still
+                // being written, unreadable until its task ended, summarised as clean).
+                result.put("verdict", UNREAD);
+                result.put("hint", "Not every Error stream could be read (unread), so this doesn't say they are "
+                                   + "clean. One still being written (its processing task running) can be read once "
+                                   + "the task has finished: wait_for_processing, then summarise them again.");
+            }
         }
         return result;
     }

@@ -38,6 +38,16 @@ class GenerationFixtures {
     // The Python server's own function rounding a time to the millisecond, as its generator wrote it.
     private static final Pattern TIME_MS_FUNCTION = Pattern.compile(
             "[ \\t]*<xsl:function name=\"mcp:time-ms\"[\\s\\S]*?</xsl:function>\\n");
+    // The record's number in a log line, as the Python server's generator wrote it.
+    private static final String LOGGED_RECORD_NO = "record ', stroom:record-no()";
+    // The opening line of a template, with its indent.
+    private static final Pattern EVENT_TEMPLATE = Pattern.compile("(?m)^([ \\t]*)<xsl:template match=\"\\*\" "
+                                                                  + "mode=\"event\">\\n");
+    private static final Pattern ITEM_TEMPLATE = Pattern.compile("(?m)^([ \\t]*)<xsl:template match=\"\\*\" "
+                                                                 + "mode=\"item\">\\n");
+    // The record handed to the items, with its indent.
+    private static final Pattern RECORD_TO_ITEMS = Pattern.compile("(?m)^([ \\t]*)<xsl:with-param name=\"record\" "
+                                                                   + "select=\"\\.\" tunnel=\"yes\"/>\\n");
     // The mcp prefix in use (not its namespace's own name, stroom-mcp:functions).
     private static final Pattern MCP_PREFIX = Pattern.compile("(?<![\\w-])mcp:[\\w-]");
     // A call of it: the value, the pattern and the zone ('' for none).
@@ -183,6 +193,54 @@ class GenerationFixtures {
                                           final Map<String, Object> next,
                                           final Map<String, Object> last) {
         return plus(plus(plus(entries, more), next), last);
+    }
+
+    /// The Stroom MCP server's XSLT as the port writes it: its log lines' record number read once, first, for every
+    /// record ([XsltGenerator#READ_RECORD_NO]), and handed to the items' template when there are items; the server
+    /// read it in the log line alone, which gives a later record's number in processing.
+    ///
+    /// @param xslt The Python server's XSLT.
+    /// @return It as the port writes it.
+    static String asThePortReadsRecordNumbers(final String xslt) {
+        if (!xslt.contains(LOGGED_RECORD_NO)) {
+            return xslt;
+        }
+        String out = xslt.replace(LOGGED_RECORD_NO, "record ', $" + XsltGenerator.RECORD_NO);
+        out = EVENT_TEMPLATE.matcher(out).replaceFirst(match -> Matcher.quoteReplacement(match.group()
+                + match.group(1) + "  <xsl:variable name=\"" + XsltGenerator.RECORD_NO
+                + "\" select=\"stroom:record-no()\"/>\n"));
+        out = afterLeadingVariables(out, "  <xsl:sequence select=\"" + XsltGenerator.READ_RECORD_NO + "\"/>");
+        if (ITEM_TEMPLATE.matcher(out).find()) {
+            out = RECORD_TO_ITEMS.matcher(out).replaceFirst(match -> Matcher.quoteReplacement(match.group()
+                    + match.group(1) + "<xsl:with-param name=\"" + XsltGenerator.RECORD_NO + "\" select=\"$"
+                    + XsltGenerator.RECORD_NO + "\" tunnel=\"yes\"/>\n"));
+            out = ITEM_TEMPLATE.matcher(out).replaceFirst(match -> Matcher.quoteReplacement(match.group()
+                    + match.group(1) + "  <xsl:param name=\"" + XsltGenerator.RECORD_NO + "\" tunnel=\"yes\"/>\n"));
+        }
+        return out;
+    }
+
+    // The XSLT with a line put in the event template after its leading variables (each of one line, or over several
+    // lines indented deeper), at the template's indent plus the line's own.
+    private static String afterLeadingVariables(final String xslt, final String line) {
+        final Matcher template = EVENT_TEMPLATE.matcher(xslt);
+        if (!template.find()) {
+            return xslt;
+        }
+        final String indent = template.group(1) + "  ";
+        int at = template.end();
+        while (at < xslt.length()) {
+            final int end = xslt.indexOf('\n', at) + 1;
+            final String next = xslt.substring(at, end);
+            final boolean variable = next.startsWith(indent + "<xsl:variable ")
+                                     || next.startsWith(indent + "</xsl:variable>")
+                                     || next.startsWith(indent + " ");
+            if (!variable) {
+                break;
+            }
+            at = end;
+        }
+        return xslt.substring(0, at) + template.group(1) + line + "\n" + xslt.substring(at);
     }
 
     /// The Stroom MCP server's XSLT as the port writes it: times finer than a millisecond cut, not rounded (see

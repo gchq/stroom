@@ -197,9 +197,10 @@ public final class SplitterXml {
     }
 
     /// The read buffer a Data Splitter needs for records as long as the longest seen. Stroom reads a Data Splitter's
-    /// input through a buffer of `bufferSize` characters (20,000 by default) and a record longer than that matches
-    /// nothing, so is lost. Seen in testing: CSV lines of about 20,000 characters dropped. A sample need not hold the
-    /// feed's longest record, so the size allows four times the longest seen.
+    /// input through a buffer of `bufferSize` characters (20,000 by default), refilled only once less than half of
+    /// it is unread, so only a record up to half of it is sure to fit; a longer one may match nothing, so be lost.
+    /// Seen in testing: CSV lines of about 20,000 characters dropped, and a 751,000-character one with a buffer of
+    /// 1,000,000. A sample need not hold the feed's longest record, so the size allows four times the longest seen.
     ///
     /// @param longestRecord The length of the longest record seen, in characters.
     /// @return The `bufferSize` to write, or empty when Stroom's default leaves enough room (twice the longest).
