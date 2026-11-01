@@ -119,6 +119,35 @@ public final class SourceNotes {
                 : null;
     }
 
+    /// The fields' event-logging paths the schema doesn't have, each left out of the notes it was given in, so a
+    /// draft from them maps nothing to an element that doesn't exist. Seen: paths such as
+    /// EventSource/Client/Device/IpAddress copied into the draft, each then costing schema lookups to put right.
+    ///
+    /// @param schema The event-logging schema of the build's version.
+    /// @param fields The field notes given; an invalid `event_logging_path` is removed from its note.
+    /// @return For each path left out, the field, the path, and why (what the schema allows where it stops).
+    public static List<Map<String, Object>> withoutUnknownPaths(final EventSchema schema,
+                                                                final List<Map<String, Object>> fields) {
+        final List<Map<String, Object>> problems = new ArrayList<>();
+        for (final Map<String, Object> field : fields) {
+            final String path = ToolText.strip(text(field.get("event_logging_path")).strip(), "/");
+            if (path.isEmpty()) {
+                continue;
+            }
+            try {
+                schema.resolve(path);
+            } catch (final IllegalArgumentException e) {
+                final Map<String, Object> problem = new LinkedHashMap<>();
+                problem.put("field", text(field.get("field")));
+                problem.put("event_logging_path", path);
+                problem.put("problem", e.getMessage());
+                problems.add(problem);
+                field.remove("event_logging_path");
+            }
+        }
+        return problems;
+    }
+
     /// Why an event's `event_detail` can't be its action element: it must be an EventDetail action element that
     /// takes Data (where the draft puts the event's other fields), so Network needs its action (Network/Permit).
     ///

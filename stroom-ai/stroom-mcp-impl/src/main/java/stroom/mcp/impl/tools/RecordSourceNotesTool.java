@@ -181,6 +181,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                       + String.join("; ", problems) + ". Correct the events and call again.");
             }
         }
+        final List<Map<String, Object>> pathProblems = unknownPaths(context, build, givenFields);
         final List<Map<String, Object>> documents = documents(call);
         // Called again for the same source (a long manual sent a part at a time), the build's docs are updated, not
         // made twice: the build refuses a second doc of one name.
@@ -212,7 +213,15 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         result.put("fields", fields.size());
         result.put("events", events.size());
         result.put("documents_kept", keptDocs);
-        result.put("hint", "draft_translation_mapping with build= drafts from these notes" + (usable < events.size()
+        if (!pathProblems.isEmpty()) {
+            result.put("path_problems", pathProblems);
+        }
+        result.put("hint", (pathProblems.isEmpty()
+                ? ""
+                : pathProblems.size() + " event_logging_path(s) aren't in the event-logging schema and were left "
+                  + "out (path_problems says what is allowed where each stops): call again with just those fields "
+                  + "and corrected paths; the rest is kept. ")
+                           + "draft_translation_mapping with build= drafts from these notes" + (usable < events.size()
                 ? "; events without a field and value (" + (events.size() - usable) + ") cannot become rules: give "
                   + "them where the documentation says how a record shows the event"
                 : "") + ".");
@@ -248,6 +257,22 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             }
         }
         return keptDocs;
+    }
+
+    // The given fields' paths the build's event-logging schema doesn't have, each left out of its note; none when
+    // the schema is unreadable (the paths are then kept, as before).
+    private List<Map<String, Object>> unknownPaths(final ToolCallContext context,
+                                                   final String build,
+                                                   final List<Map<String, Object>> fields) {
+        final EventSchema schema;
+        try {
+            schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No event-logging schema to check the paths against: {}",
+                    e.getMessage()), e);
+            return List.of();
+        }
+        return SourceNotes.withoutUnknownPaths(schema, fields);
     }
 
     // Why an event_detail can't be an action element, from the event-logging schema of the version chosen for the
