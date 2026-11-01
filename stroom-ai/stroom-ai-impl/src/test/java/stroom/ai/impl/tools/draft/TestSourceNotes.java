@@ -203,6 +203,33 @@ class TestSourceNotes {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void aFieldsTimeFormatIsKeptWhenANoteMapsItAndNotTakenFromAnotherField() {
+        // Seen: the note for an epoch field replaced the drafted TimeCreated entry and its time_format with it, and
+        // the agent spent turns finding the syntax.
+        final List<Map<String, Object>> common = new ArrayList<>(List.of(
+                new LinkedHashMap<>(Map.of("path", "EventTime/TimeCreated", "field", "ts", "time_format", "epoch_s",
+                        "timezone", "UTC")),
+                new LinkedHashMap<>(Map.of("path", "EventSource/Device/HostName", "field", "host",
+                        "time_format", "not a time"))));
+        final Map<String, Object> mapping = mapping(common, new ArrayList<>(List.of(other())));
+        final Map<String, Object> notes = new LinkedHashMap<>(Map.of("fields", List.of(
+                Map.of("field", "ts", "meaning", "When", "event_logging_path", "EventTime/TimeCreated"),
+                Map.of("field", "usr", "meaning", "Who", "event_logging_path", "EventSource/Device/HostName"))));
+
+        SourceNotes.applyToDraft(mapping, NAMES, VALUES, notes, CHECK);
+
+        final List<Map<String, Object>> after = (List<Map<String, Object>>) mapping.get("common");
+        assertThat(after).filteredOn(entry -> "EventTime/TimeCreated".equals(entry.get("path"))).singleElement()
+                .satisfies(entry -> assertThat(entry).containsEntry("field", "ts")
+                        .containsEntry("time_format", "epoch_s").containsEntry("timezone", "UTC"));
+        assertThat(after).filteredOn(entry -> "EventSource/Device/HostName".equals(entry.get("path")))
+                .singleElement()
+                .as("another field's format isn't taken")
+                .satisfies(entry -> assertThat(entry).containsEntry("field", "usr").doesNotContainKey("time_format"));
+    }
+
+    @Test
     void whereTheCatalogueCantBeFollowedTheSamplesOwnRulesAreKept() {
         final Map<String, Object> permitted = sampleRule("traffic_permitted", List.of(
                         entry("field", "event_type", "equals", "TRAFFIC"), entry("field", "action", "equals", "ALLOW")),
