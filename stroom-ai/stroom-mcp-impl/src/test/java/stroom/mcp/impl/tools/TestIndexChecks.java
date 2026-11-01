@@ -129,14 +129,21 @@ class TestIndexChecks {
 
     @Test
     void aSearchOnAFieldStroomDoesntListSaysWhy() {
-        // Seen in production: message EQUALS '*connection*', MATCHES_REGEX and the rest all found 0, as Stroom lists
-        // no match_only_text field; the agent dropped the check after three tries without knowing why.
+        // Seen in production: message EQUALS '*connection*', MATCHES_REGEX and the rest all found 0, as Stroom listed
+        // no match_only_text field (before #5878); the agent dropped the check after three tries without knowing why.
+        // Stroom still lists no geo_point field.
         final Set<String> listed = Set.of("@timestamp", "event.code", "source.ip");
+        assertThatThrownBy(() -> IndexChecks.searchable("elasticsearch",
+                List.of(search("source.geo.location", "EQUALS", "41*")), Set.of(), List.of(), Map.of(), listed,
+                Map.of(), ECS))
+                .hasMessageMatching("(?s).*source.geo.location isn't among the index's fields in Stroom: ecs@mappings "
+                                    + "maps it as geo_point.*Map it as keyword.*");
+        // match_only_text is listed now, so an unlisted message is one no document has brought yet.
         assertThatThrownBy(() -> IndexChecks.searchable("elasticsearch",
                 List.of(search("message", "EQUALS", "*connection*")), Set.of(), List.of(), Map.of(), listed, Map.of(),
                 ECS))
-                .hasMessageMatching("(?s).*message isn't among the index's fields in Stroom: ecs@mappings maps it as "
-                                    + "match_only_text.*Map it as text.*");
+                .hasMessageContaining("message isn't among the index's fields in Stroom: either no document has it "
+                                      + "yet");
         assertThatThrownBy(() -> IndexChecks.searchable("elasticsearch", List.of(), Set.of(),
                 List.of(Map.of("field", "acme.ticket", "value", "T-1")), Map.of(), listed, Map.of(),
                 ECS))

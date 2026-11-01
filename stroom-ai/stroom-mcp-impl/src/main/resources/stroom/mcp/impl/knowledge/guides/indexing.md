@@ -14,8 +14,8 @@ Following ECS (the `ecs` profile, no example): the server has the full schema. T
 it (`ecs_check`: a name in an ECS field set that ECS doesn't define, a known field of another type, or a top-level
 name that is neither ECS's nor one of the plan's `custom_namespaces`), the template
 composes Elastic's `ecs@mappings` and leaves the standard ECS fields to it (mapping only the rest, with dynamic
-mapping on, which the component needs; `message` and other fields it maps as `match_only_text` are mapped as `text`,
-as Stroom can't list or search a `match_only_text`, `flattened`, `geo_point` or `search_as_you_type` field), and `get_field_conventions name=ecs ecs_fields=<set>` lists a field set's fields to
+mapping on, which the component needs; a field it maps as `flattened`, `geo_point` or `search_as_you_type` is mapped
+as the plan says, as Stroom can't list or search those types), and `get_field_conventions name=ecs ecs_fields=<set>` lists a field set's fields to
 name one ECS's way. A template built from an earlier one (a new version of an index) leaves the ECS fields that
 template maps just as `ecs@mappings` does to the component too: only overrides are mapped explicitly. To drop
 explicit mappings, never remove `ecs@mappings` from `composed_of`: it is what maps those fields. A field of the
