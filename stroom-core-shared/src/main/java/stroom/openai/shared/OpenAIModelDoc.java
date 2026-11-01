@@ -196,8 +196,9 @@ public class OpenAIModelDoc extends AbstractDoc {
     }
 
     /**
-     * @return Whether the model's reasoning, if it returns any, is shown to users (collapsed, under the answer's
-     * activity). On by default.
+     * @return Whether the model is asked for its reasoning and it is kept with each chat, for users who choose to
+     * see it (Keep reasoning in the model's settings; stored as `showReasoning`). When false, no one can see it.
+     * On by default.
      */
     public boolean isShowReasoning() {
         return showReasoning;

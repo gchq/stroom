@@ -548,7 +548,7 @@ public class AiServiceImpl implements AiService {
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
         }
-        // Only ask for the model's reasoning if it is going to be shown.
+        // Only ask for the model's reasoning if it is to be kept.
         modelBuilder.returnThinking(modelDoc.isShowReasoning());
 
         return LOGGER.logDurationIfDebugEnabled(

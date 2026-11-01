@@ -46,9 +46,9 @@
                         helpText="Whether 'Ask Stroom AI' may offer this model tools (built-in and MCP). Turn off for models that do not support tool calling, e.g. some small local models.">
             <tickbox:CustomCheckBox ui:field="toolsEnabled" label="Tools enabled"/>
         </form:FormGroup>
-        <form:FormGroup identity="openAIShowReasoning"
-                        helpText="Whether users see the model's reasoning, when it returns any. It is shown collapsed, with the tools used to answer a question.">
-            <tickbox:CustomCheckBox ui:field="showReasoning" label="Show reasoning"/>
+        <form:FormGroup identity="openAIKeepReasoning"
+                        helpText="Ask the model for its reasoning and keep it with each chat, for users who choose to see it (Show reasoning in the Stroom AI settings). When off, the reasoning isn't kept, so no one can see it, now or later.">
+            <tickbox:CustomCheckBox ui:field="keepReasoning" label="Keep reasoning"/>
         </form:FormGroup>
         <form:FormGroup identity="openAIMaxToolDefinitions"
                         label="Maximum tools per request"
