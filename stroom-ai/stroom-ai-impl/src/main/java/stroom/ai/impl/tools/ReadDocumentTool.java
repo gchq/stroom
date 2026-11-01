@@ -99,6 +99,8 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     static final String CONTEXT_LINES_ARG = "contextLines";
     static final String MAPPING_ARG = "mapping";
     static final String ELEMENT_ARG = "element";
+    /// The most event-logging elements described in one call.
+    static final int MAX_ELEMENTS = 10;
     /// The part that gives only a dictionary's own words, without those of its imports.
     static final String OWN_PART = "own";
     /// The most lines of a large document shown as a preview.
@@ -228,7 +230,10 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                                                         + "takes, e.g. 'EventDetail' (the action elements), "
                                                         + "'EventDetail/Authenticate' or 'EventSource/User': its "
                                                         + "children (required, repeatable, one of a choice), a "
-                                                        + "leaf's type and allowed values, each described.")
+                                                        + "leaf's type and allowed values, each described. Up to "
+                                                        + MAX_ELEMENTS + " paths in one call, comma-separated "
+                                                        + "(e.g. 'EventSource/Client, EventDetail/Network/Permit/"
+                                                        + "Source'): each described under its path.")
                         .build())
                 .build();
     }
@@ -236,7 +241,10 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final String uuid = stringArg(request, UUID_ARG);
-        final String element = stringArg(request, ELEMENT_ARG);
+        final List<String> elements = stringListArg(request, ELEMENT_ARG);
+        final List<String> element = elements.isEmpty()
+                ? null
+                : elements;
         if (uuid == null) {
             if (element != null && XmlSchemaDoc.TYPE.equalsIgnoreCase(stringArg(request, TYPE_ARG))) {
                 return describeElement(null, element, null);
@@ -286,7 +294,7 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
 
     // What an event-logging element takes, from the XMLSchema document given: the whole XSD is over 100 KB (seen in
     // testing: an agent's client put it in a file, and the agent spent twelve minutes reading it with PowerShell).
-    private ToolResult readElement(final DocRef docRef, final String element) {
+    private ToolResult readElement(final DocRef docRef, final List<String> element) {
         if (!XmlSchemaDoc.TYPE.equals(docRef.getType())) {
             return ToolResult.text("Error: " + ELEMENT_ARG + " is for the event-logging XMLSchema only; "
                                    + describe(docRef) + " is a " + docRef.getType() + ".");
@@ -305,17 +313,37 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         return describeElement(fields, element, version);
     }
 
-    // What an event-logging element takes, in the version given, or the newest this Stroom holds.
-    private ToolResult describeElement(final Map<String, Object> fields, final String element, final String version) {
+    // What event-logging elements take, in the version given, or the newest this Stroom holds: one as before, or
+    // several each under its path. Seen: the schema read one element a call, 22 calls over about 12 turns.
+    private ToolResult describeElement(final Map<String, Object> fields,
+                                       final List<String> elements,
+                                       final String version) {
         final HeldSchemas heldSchemas = heldSchemasProvider.get();
         if (heldSchemas == null) {
             return ToolResult.text("Error: the XML schemas can't be read here.");
         }
+        if (elements.size() > MAX_ELEMENTS) {
+            return ToolResult.text("Error: give at most " + MAX_ELEMENTS + " paths in " + ELEMENT_ARG + ", not "
+                                   + elements.size() + ".");
+        }
         final Map<String, Object> json = new LinkedHashMap<>(NullSafe.map(fields));
-        try {
-            json.putAll(EventElements.describe(heldSchemas, element, version, null));
-        } catch (final ToolRefusal e) {
-            return ToolResult.text("Error: " + e.getMessage());
+        if (elements.size() == 1) {
+            try {
+                json.putAll(EventElements.describe(heldSchemas, elements.getFirst(), version, null));
+            } catch (final ToolRefusal e) {
+                return ToolResult.text("Error: " + e.getMessage());
+            }
+        } else {
+            // A path the schema doesn't have says so in its place: the others are still described.
+            final Map<String, Object> described = new LinkedHashMap<>();
+            for (final String element : elements) {
+                try {
+                    described.put(element, EventElements.describe(heldSchemas, element, version, null));
+                } catch (final ToolRefusal e) {
+                    described.put(element, Map.of("error", e.getMessage()));
+                }
+            }
+            json.put("elements", described);
         }
         if (fields != null) {
             json.put("hint", "element= any path below Event (e.g. EventDetail/Authenticate, EventSource/User) says "
