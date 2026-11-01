@@ -435,6 +435,13 @@ class TestWorkspaceTools {
                 .startsWith("Error:");
         assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/events.log\",\"query\":\".\"}"))
                 .startsWith("Error: /outputs/events.log is not JSON");
+        // A path that doesn't fit says what the input holds. Seen: `.name` guessed where the key was `field`.
+        workspace.write(chatId, WorkspacePath.parse("/outputs/fields.json"),
+                "{\"fields\": [{\"field\": \"user\", \"fill_rate\": 100}], \"hint\": \"x\"}", null);
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/fields.json\",\"query\":\".hint[]\"}"))
+                .contains("The value iterated is a string")
+                .endsWith("The input is a JSON object with the fields fields (1 items, each an object with field, "
+                          + "fill_rate), hint.");
     }
 
     @Test
