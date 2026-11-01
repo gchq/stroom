@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -346,15 +347,34 @@ public record FieldPlan(String backend,
             // Nested names make 'time' an object if 'time.min' exists; with subobjects: false (flat names) both
             // are fields of their own.
             if (subobjects) {
-                for (final String name : new TreeSet<>(names)) {
-                    final List<String> inner = new TreeSet<>(names).stream()
-                            .filter(n -> n.startsWith(name + "."))
-                            .toList();
-                    if (!inner.isEmpty()) {
-                        problems.add("'" + name + "' is a value and also the object holding "
-                                     + ToolText.list(inner) + ": an Elasticsearch field cannot be both; rename one");
-                    }
-                }
+                problems.addAll(valuesAndObjects(names));
+            }
+        }
+        return problems;
+    }
+
+    /// A plan whose fields can't be mapped at all: a name that is a value and also the object holding others
+    /// (`netskope.ssl.bypass` and `netskope.ssl.bypass.reason`), which nested Elasticsearch properties can't hold.
+    /// Seen in Ask Stroom AI: such a plan was kept for the session, then failed to render on every later change.
+    ///
+    /// @return Each such name, said with the names it holds; none for Lucene or flat (`subobjects: false`) names.
+    public List<String> valueAndObjectClashes() {
+        if (!isElasticsearch() || !subobjects) {
+            return List.of();
+        }
+        return valuesAndObjects(fields.stream().map(PlannedField::name).toList());
+    }
+
+    private static List<String> valuesAndObjects(final Collection<String> names) {
+        final Set<String> sorted = new TreeSet<>(names);
+        final List<String> problems = new ArrayList<>();
+        for (final String name : sorted) {
+            final List<String> inner = sorted.stream()
+                    .filter(n -> n.startsWith(name + "."))
+                    .toList();
+            if (!inner.isEmpty()) {
+                problems.add("'" + name + "' is a value and also the object holding "
+                             + ToolText.list(inner) + ": an Elasticsearch field cannot be both; rename one");
             }
         }
         return problems;

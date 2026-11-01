@@ -4461,7 +4461,10 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   plan for Lucene; a records:2 sample drafted as other than delimited; `like_index` matching no single doc the user
   can view; a `replaces` that is neither an XSLT nor a pipeline running one; `changes` with no plan drafted for
   `index_name` (and no `pipeline_uuid` whose XSLT keeps one); an amended plan that doesn't validate (`The amended
-  plan isn't valid: ...`); argument objects that don't validate (`plan isn't a valid field plan: ...`).
+  plan isn't valid: ...`); argument objects that don't validate (`plan isn't a valid field plan: ...`); a plan,
+  drafted or amended, in which a name is a value and also the object holding others (`'a.b' is a value and also the
+  object holding ['a.b.c'] ... Nothing was kept`), for nested Elasticsearch names: the plan kept before stays (seen:
+  kept, it failed to render on every later change, an empty one too).
 * **Notes**:
   * An amendment (`changes=`) merges only what changes (`MappingChanges.applyPlanChanges`): each field replaces the
     one of that name or is added, `{"name": ..., "remove": true}` removes one, any other key replaces it. Without
