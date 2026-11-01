@@ -22,6 +22,8 @@ import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +47,33 @@ class TestSplitterXml extends DraftFixtures {
         final Map<String, String> out = new LinkedHashMap<>();
         element.attributes().forEach(attribute -> out.put(attribute.name(), attribute.value()));
         return out;
+    }
+
+    @Test
+    void theBlankLineCheckLooksOnlyAtTheStartOfTheBuffer() {
+        // Seen: with "^a|^b", Java searched every position of the read buffer before failing, on every record,
+        // so a 211 MB stream with a 3,010,000-character buffer ran over 745 seconds against 241 with 210,000.
+        // hitEnd says whether a failed search read to the end of the input.
+        final String buffer = "NSClient,syd1,10.0.0.1,\"a,b\",x\n".repeat(100_000);
+        final Matcher record = Pattern.compile(SplitterXml.BLANK_LINE).matcher(buffer);
+
+        assertThat(record.find(0)).isFalse();
+        assertThat(record.hitEnd()).as("stopped at the record's first character").isFalse();
+        final Matcher unanchored = Pattern.compile("^[^\\S\\n]*\\n|^[^\\S\\n]+$").matcher(buffer);
+        assertThat(unanchored.find(0)).isFalse();
+        assertThat(unanchored.hitEnd()).as("the pattern it replaces read the whole buffer").isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\n", "   \n", "\t \nnext", "  ", "\t"})
+    void aBlankLineOrTrailingWhiteSpaceIsMatched(final String text) {
+        assertThat(Pattern.compile(SplitterXml.BLANK_LINE).matcher(text).find(0)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"a\n", "  a\n", "", "x  \n\n"})
+    void aLineWithTextIsNot(final String text) {
+        assertThat(Pattern.compile(SplitterXml.BLANK_LINE).matcher(text).find(0)).isFalse();
     }
 
     @Test
