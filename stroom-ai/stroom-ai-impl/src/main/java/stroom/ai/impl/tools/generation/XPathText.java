@@ -117,7 +117,16 @@ public final class XPathText {
     /// @param sources Inputs.
     /// @return The first of them with a value.
     public static String anyOfText(final List<String> sources) {
-        return "(" + String.join(", ", sources) + ")[normalize-space(.)][1]";
+        return anyOfText(sources, "");
+    }
+
+    /// @param sources Inputs.
+    /// @param nil     The predicate leaving out the mapping's nil values (`[not(normalize-space(.) = ('-'))]`), or
+    ///                empty.
+    /// @return The first of them with a value that isn't a nil value. Seen in Ask Stroom AI: with the nil values
+    /// left out after the first was picked, a '-' in the first column hid a real value in the next.
+    public static String anyOfText(final List<String> sources, final String nil) {
+        return "(" + String.join(", ", sources) + ")[normalize-space(.)]" + nil + "[1]";
     }
 
     /// @param sources   The fields' selectors, in order.
@@ -125,8 +134,17 @@ public final class XPathText {
     /// @return Each one's first value that has text, joined with the separator: empty when none has one, as an
     /// empty input is.
     public static String joinText(final List<String> sources, final String separator) {
+        return joinText(sources, separator, "");
+    }
+
+    /// @param sources   The fields' selectors, in order.
+    /// @param separator What goes between their values.
+    /// @param nil       The predicate leaving out the mapping's nil values, or empty.
+    /// @return Each one's first value that has text and isn't a nil value, joined with the separator: empty when
+    /// none has one, as an empty input is.
+    public static String joinText(final List<String> sources, final String separator, final String nil) {
         return "string-join((" + sources.stream()
-                .map(source -> "(" + source + ")[normalize-space(.)][1]")
+                .map(source -> "(" + source + ")[normalize-space(.)]" + nil + "[1]")
                 .collect(Collectors.joining(", ")) + "), " + literal(separator) + ")";
     }
 
