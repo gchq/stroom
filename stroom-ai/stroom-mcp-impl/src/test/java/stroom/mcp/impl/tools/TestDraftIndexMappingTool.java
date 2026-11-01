@@ -216,6 +216,32 @@ class TestDraftIndexMappingTool {
         assertThat(world.plans.given(null, List.of("ecs-elsewhere-v1"), null)).isNull();
     }
 
+    @Test
+    void aChangeMakingAValueAlsoAnObjectIsRefusedAndTheKeptPlanStillAmends() {
+        // Seen in Ask Stroom AI: netskope.ssl.bypass beside netskope.ssl.bypass.reason failed to render with a
+        // NullPointerException, yet was kept, so every later change= failed the same way, an empty one too.
+        final Map<String, Object> drafted = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true, "extra_fields", List.of(ordered("name", "firewall.ssl.bypass", "type", "keyword", "source",
+                        "EventDetail//Configuration/Type"))), agreeing());
+        final ToolResult refused = world.draftTool().execute(BuildToolCalls.call(DraftIndexMappingTool.NAME,
+                ToolJson.dumps(Map.of("backend", "elasticsearch", "index_name", "ecs-firewall-v1", "changes",
+                        Map.of("fields", List.of(ordered("name", "firewall.ssl.bypass.reason", "type", "keyword",
+                                "source", "EventDetail/Alert/Data[@Name='Reason']/@Value")))))),
+                IndexingWorld.noForms());
+
+        assertThat(refused.text()).contains("'firewall.ssl.bypass' is a value and also the object holding "
+                                            + "['firewall.ssl.bypass.reason']")
+                .contains("Nothing was kept")
+                .doesNotContain("NullPointerException");
+        assertThat(world.plans.given(null, List.of("ecs-firewall-v1"), null).fields())
+                .extracting(PlannedField::name).doesNotContain("firewall.ssl.bypass.reason");
+        final Map<String, Object> amended = call(Map.of("backend", "elasticsearch", "index_name", "ecs-firewall-v1",
+                "changes", Map.of("fields", List.of(ordered("name", "firewall.ssl.bypass_reason", "type", "keyword",
+                        "source", "EventDetail/Alert/Data[@Name='Reason']/@Value")))), IndexingWorld.noForms());
+        assertThat(fieldNames(amended)).hasSize(fieldNames(drafted).size() + 1)
+                .contains("firewall.ssl.bypass", "firewall.ssl.bypass_reason");
+    }
+
     // --------------------------------------------------------------------------------
     // Indexing plans
     // --------------------------------------------------------------------------------
