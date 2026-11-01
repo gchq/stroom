@@ -184,8 +184,9 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return maxStreamStoreReads;
     }
 
-    @JsonPropertyDescription("The largest an MCP tool call's arguments may be, in bytes, once the content of the "
-                             + "workspace files they name (with {\"$workspace\": \"<path>\"}) has been put in.")
+    @JsonPropertyDescription("The largest a tool call's arguments (Stroom's own tools or an MCP server's) may "
+                             + "be, in bytes, once the content of the workspace files they name (with "
+                             + "{\"$workspace\": \"<path>\"}) has been put in.")
     @JsonProperty("maxToolArgumentBytes")
     public long getMaxToolArgumentBytes() {
         return maxToolArgumentBytes;

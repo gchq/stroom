@@ -146,9 +146,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                              + "build's own feeds, or the existing feeds the build works from (start_build feeds=): "
                              + "those streams are processed where they are, and their Events go to a test feed the "
                              + "server makes in the build (output_feed in the reply; promotion leaves it in the "
-                             + "workspace). Sample filters run one task at a time. A disabled filter: give the user "
-                             + "the reply's pipeline_link and what enabling does; once they say it is enabled, "
-                             + "wait_for_processing. An enabled one: wait_for_processing with its filter_id.")
+                             + "workspace). Sample filters run one task a stream, several streams side by side. A "
+                             + "disabled filter: give the user the reply's pipeline_link and what enabling does; "
+                             + "once they say it is enabled, wait_for_processing. An enabled one: "
+                             + "wait_for_processing with its filter_id.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PIPELINE_UUID_ARG, "A pipeline the agent created.")
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Process exactly these streams (the "

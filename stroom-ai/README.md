@@ -231,7 +231,7 @@ defaults: regenerate it (`GenerateExpectedYaml`) when one changes.
 | `workspace.maxEventsPerFetch` | `500` | The most events `fetch_events` fetches in one call |
 | `workspace.maxEventBytes` | `1048576` | The largest event `fetch_events` fetches |
 | `workspace.maxStreamStoreReads` | `500` | The most streams `stream_meta` reads attributes for from the stream store in one call |
-| `workspace.maxToolArgumentBytes` | `1048576` | The largest MCP tool call's arguments once `{"$workspace": ...}` references are filled in |
+| `workspace.maxToolArgumentBytes` | `1048576` | The largest a tool call's arguments may be (Stroom's own tools or an MCP server's) once `{"$workspace": ...}` references are filled in |
 | `mcpEndpoint.enabled` | `true` | Whether `/mcp` serves MCP clients |
 | `mcpEndpoint.formTimeout` | `PT10M` | How long a form asked of an MCP client's user waits |
 | `mcpEndpoint.maxFormsPerNode` | `50` | Forms that may wait for MCP clients' users on a node at once (a user at most half) |
