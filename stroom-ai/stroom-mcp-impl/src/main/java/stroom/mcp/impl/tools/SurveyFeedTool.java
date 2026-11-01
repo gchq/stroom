@@ -112,6 +112,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     /// The most characters read of a part, asked for.
     static final int MAX_CHARS = 5_000_000;
+    /// The most fields naming the kind of event summed in `kinds`.
+    static final int MAX_KIND_FIELDS = 6;
+    /// The most values of each listed in `kinds`.
+    static final int MAX_KIND_VALUES = 25;
 
     private final StreamReader streamReader;
     private final FeedNames feedNames;
@@ -676,6 +680,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             result.put("quoted_newlines", QUOTED_NEWLINES_NOTE.replace("{streams}",
                     String.valueOf(List.copyOf(reading.quotedNewlinesIn))));
         }
+        final Map<String, Map<String, Long>> kinds = kinds(found);
+        if (!kinds.isEmpty()) {
+            result.put("kinds", kinds);
+        }
         result.put("shapes", shapesShown(found, counts, drop));
         result.put("new_shapes", newShapes.size());
         // Records of a kind left untranslated are stepped too, expecting no Event.
@@ -880,6 +888,47 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     private static String signature(final Map<String, Object> shape) {
         return String.valueOf(shape.get("signature"));
+    }
+
+    // The values of the fields that name the kind of event, each with how many records hold it, over every shape
+    // found (not only those shown), commonest first. Seen: a 790 KB survey regrouped by x-type and x-action with jq,
+    // its shapes being their combinations.
+    static Map<String, Map<String, Long>> kinds(final List<Map<String, Object>> found) {
+        final Map<String, Map<String, Long>> counted = new LinkedHashMap<>();
+        for (final Map<String, Object> shape : found) {
+            final String naming = namingPart(signature(shape));
+            if (naming == null) {
+                continue;
+            }
+            for (final String pair : naming.split(", ")) {
+                final int eq = pair.indexOf('=');
+                if (eq > 0) {
+                    counted.computeIfAbsent(pair.substring(0, eq), k -> new LinkedHashMap<>())
+                            .merge(pair.substring(eq + 1), count(shape), Long::sum);
+                }
+            }
+        }
+        final Map<String, Map<String, Long>> kinds = new LinkedHashMap<>();
+        counted.entrySet().stream().limit(MAX_KIND_FIELDS).forEach(field -> {
+            final Map<String, Long> values = new LinkedHashMap<>();
+            field.getValue().entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(MAX_KIND_VALUES)
+                    .forEach(value -> values.put(value.getKey(), value.getValue()));
+            kinds.put(field.getKey(), values);
+        });
+        return kinds;
+    }
+
+    // The naming pairs of a signature (`row:a=x, b=y`, `kv:...`, `keys | a=x, b=y`), or null for one without them.
+    private static String namingPart(final String signature) {
+        if (signature.startsWith("row:") || signature.startsWith("kv:")) {
+            return signature.substring(signature.indexOf(':') + 1);
+        }
+        final int bar = signature.indexOf(" | ");
+        return !signature.startsWith("text:") && !signature.startsWith("cef:") && bar >= 0
+                ? signature.substring(bar + 3)
+                : null;
     }
 
     // The first characters of a text, counted in code points (a character outside the BMP is one).
