@@ -214,8 +214,8 @@ class IndexChecks {
         final List<String> problems = new ArrayList<>(MisleadingSearches.problems(backend, List.of(), Set.of(),
                 List.of(), Map.of(), unindexed));
         if (MisleadingSearches.ELASTICSEARCH.equals(backend) && !NullSafe.isEmptyCollection(listed)) {
-            // Seen in production: message, mapped as match_only_text by ecs@mappings, isn't listed by Stroom; every
-            // search on it found nothing, and after three tries the agent dropped the check.
+            // Seen in production: a field Stroom didn't list (message, as match_only_text before #5878) found nothing
+            // on every search, and after three tries the agent dropped the check.
             final Set<String> names = new LinkedHashSet<>();
             searches.forEach(search -> names.add(search.field()));
             NullSafe.list(exact).forEach(check -> {
