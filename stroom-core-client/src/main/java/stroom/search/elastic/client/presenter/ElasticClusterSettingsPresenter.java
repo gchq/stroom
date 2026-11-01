@@ -127,6 +127,7 @@ public class ElasticClusterSettingsPresenter
         } else {
             getView().getApiKeySelectionBox().setValue(null);
         }
+        getView().setCompressRequests(NullSafe.isTrue(connectionConfig.getCompressRequests()));
 
         httpClientConfiguration = connectionConfig.getHttpClientConfiguration();
         if (httpClientConfiguration == null) {
@@ -146,6 +147,11 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setApiKeyName(NullSafe.get(
                 getView().getApiKeySelectionBox().getValue(),
                 Credential::getName));
+        // Store null rather than false, so the setting is left out of the document unless it is turned on,
+        // as in documents saved before it existed
+        connectionConfig.setCompressRequests(getView().isCompressRequests()
+                ? Boolean.TRUE
+                : null);
         connectionConfig.setHttpClientConfiguration(httpClientConfiguration);
 
         return cluster.copy().connection(connectionConfig).build();
@@ -159,5 +165,11 @@ public class ElasticClusterSettingsPresenter
         void setConnectionUrls(List<String> connectionUrls);
 
         SelectionBox<Credential> getApiKeySelectionBox();
+
+        /// @return `true` if the compress requests box is ticked.
+        boolean isCompressRequests();
+
+        /// @param compressRequests `true` to tick the compress requests box.
+        void setCompressRequests(boolean compressRequests);
     }
 }

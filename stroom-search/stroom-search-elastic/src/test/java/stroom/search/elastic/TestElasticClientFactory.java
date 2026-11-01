@@ -270,6 +270,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 API_KEY,
+                false,
                 httpClientConfiguration(trustStoreTls().build())));
 
         assertThat(response.clusterName())
@@ -283,6 +284,7 @@ class TestElasticClientFactory {
         info(new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 null,
+                false,
                 httpClientConfiguration(trustStoreTls().build())));
 
         httpsServer.verify(WireMock.getRequestedFor(WireMock.urlEqualTo("/"))
@@ -295,6 +297,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 API_KEY,
+                false,
                 httpClientConfiguration(HttpTlsConfiguration.builder().build()));
 
         assertThatThrownBy(() -> info(connection))
@@ -309,6 +312,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 null,
+                false,
                 httpClientConfiguration(HttpTlsConfiguration.builder()
                         .trustSelfSignedCertificates(true)
                         .build())));
@@ -323,6 +327,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(loopbackIpUrl()),
                 API_KEY,
+                false,
                 httpClientConfiguration(trustStoreTls().build()));
 
         assertThatThrownBy(() -> info(connection))
@@ -337,6 +342,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(loopbackIpUrl()),
                 null,
+                false,
                 httpClientConfiguration(trustStoreTls()
                         .verifyHostname(false)
                         .build())));
@@ -352,6 +358,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(loopbackIpUrl()),
                 API_KEY,
+                false,
                 httpClientConfiguration(HttpTlsConfiguration.builder()
                         .trustSelfSignedCertificates(true)
                         .verifyHostname(false)
@@ -366,6 +373,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(caSignedUrl("localhost")),
                 API_KEY,
+                false,
                 httpClientConfiguration(caTrustStoreTls().build())));
 
         assertThat(response.clusterName())
@@ -380,6 +388,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(caSignedUrl("localhost")),
                 API_KEY,
+                false,
                 httpClientConfiguration(HttpTlsConfiguration.builder().build()));
 
         assertThatThrownBy(() -> info(connection))
@@ -394,6 +403,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(caSignedUrl("127.0.0.1")),
                 API_KEY,
+                false,
                 httpClientConfiguration(caTrustStoreTls().build()));
 
         assertThatThrownBy(() -> info(connection))
@@ -408,6 +418,7 @@ class TestElasticClientFactory {
         final InfoResponse response = info(new ResolvedElasticConnection(
                 List.of(caSignedUrl("127.0.0.1")),
                 null,
+                false,
                 httpClientConfiguration(caTrustStoreTls()
                         .verifyHostname(false)
                         .build())));
@@ -424,6 +435,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(caSignedUrl("localhost")),
                 API_KEY,
+                false,
                 httpClientConfiguration(HttpTlsConfiguration.builder()
                         .trustSelfSignedCertificates(true)
                         .verifyHostname(false)
@@ -440,6 +452,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 null,
+                false,
                 httpClientConfiguration(trustStoreTls()
                         .trustStorePassword("wrong")
                         .build()));
@@ -456,6 +469,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 null,
+                false,
                 HttpClientConfiguration.builder()
                         .timeout(StroomDuration.ofMillis(500))
                         .tlsConfiguration(trustStoreTls().build())
@@ -479,6 +493,7 @@ class TestElasticClientFactory {
         final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                 List.of(localhostUrl()),
                 null,
+                false,
                 httpClientConfiguration(trustStoreTls().build()));
 
         assertThatThrownBy(() -> info(connection))
@@ -505,6 +520,7 @@ class TestElasticClientFactory {
             final InfoResponse response = info(new ResolvedElasticConnection(
                     List.of("http://localhost:" + elasticServer.port()),
                     API_KEY,
+                    false,
                     HttpClientConfiguration.builder()
                             .proxyConfiguration(HttpProxyConfiguration.builder()
                                     .host("localhost")
@@ -528,7 +544,7 @@ class TestElasticClientFactory {
 
     @Test
     void testRequestsCompressed() throws IOException {
-        final LoggedRequest request = sendBulkRequest(new ElasticClientConfig(null, null, true));
+        final LoggedRequest request = sendBulkRequest(true);
 
         assertThat(request.header("Content-Encoding").firstValue())
                 .isEqualTo("gzip");
@@ -538,8 +554,8 @@ class TestElasticClientFactory {
     }
 
     @Test
-    void testRequestsNotCompressedByDefault() throws IOException {
-        final LoggedRequest request = sendBulkRequest(new ElasticClientConfig());
+    void testRequestsNotCompressed() throws IOException {
+        final LoggedRequest request = sendBulkRequest(false);
 
         assertThat(request.containsHeader("Content-Encoding"))
                 .isFalse();
@@ -547,11 +563,11 @@ class TestElasticClientFactory {
                 .contains("{\"user\":\"jbloggs\"}");
     }
 
-    /// Sends a bulk request indexing one document to a plain HTTP WireMock server, with a client made with the
-    /// supplied settings.
+    /// Sends a bulk request indexing one document to a plain HTTP WireMock server.
     ///
+    /// @param compressRequests Whether the connection compresses request bodies.
     /// @return The request as the server received it.
-    private static LoggedRequest sendBulkRequest(final ElasticClientConfig elasticClientConfig) throws IOException {
+    private static LoggedRequest sendBulkRequest(final boolean compressRequests) throws IOException {
         final WireMockServer elasticServer = new WireMockServer(WireMockConfiguration.wireMockConfig()
                 .dynamicPort()
                 .http2PlainDisabled(true));
@@ -566,9 +582,10 @@ class TestElasticClientFactory {
             final ResolvedElasticConnection connection = new ResolvedElasticConnection(
                     List.of("http://localhost:" + elasticServer.port()),
                     null,
+                    compressRequests,
                     HttpClientConfiguration.builder().build());
             try (final ElasticsearchClient elasticClient = new ElasticClientFactory().create(
-                    connection, elasticClientConfig)) {
+                    connection, new ElasticClientConfig())) {
                 elasticClient.bulk(BulkRequest.of(b -> b.operations(BulkOperation.of(op -> op
                         .create(create -> create
                                 .index("test-index")

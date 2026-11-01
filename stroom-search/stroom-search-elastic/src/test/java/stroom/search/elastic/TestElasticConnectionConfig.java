@@ -58,12 +58,15 @@ class TestElasticConnectionConfig {
                 .isNull();
         assertThat(doc.getConnection().getHttpClientConfiguration())
                 .isNull();
+        assertThat(doc.getConnection().getCompressRequests())
+                .isNull();
 
         final String written = JsonUtil.writeValueAsString(doc);
         assertThat(written)
                 .doesNotContain("topSecret")
                 .doesNotContain("keyId")
-                .doesNotContain("CERTIFICATE");
+                .doesNotContain("CERTIFICATE")
+                .doesNotContain("compressRequests");
     }
 
     @Test
@@ -71,6 +74,7 @@ class TestElasticConnectionConfig {
         final ElasticConnectionConfig connectionConfig = new ElasticConnectionConfig(
                 List.of("https://elastic1:9200", "https://elastic2:9200"),
                 "elastic-api-key",
+                true,
                 HttpClientConfig.builder()
                         .tlsConfiguration(HttpTlsConfig.builder()
                                 .trustStoreName("elastic-trust-store")
@@ -83,6 +87,8 @@ class TestElasticConnectionConfig {
                 .build();
 
         final String json = JsonUtil.writeValueAsString(doc);
+        assertThat(json)
+                .contains("\"compressRequests\" : true");
         final ElasticClusterDoc read = JsonUtil.readValue(json, ElasticClusterDoc.class);
 
         assertThat(read.getConnection())
