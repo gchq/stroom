@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.workspace;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -33,9 +35,12 @@ import net.thisptr.jackson.jq.path.Path;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// Runs jq queries given by the model, locked down:
 ///
@@ -67,6 +72,10 @@ public final class SafeJq {
             "halt_error/1");
 
     private static final Scope ROOT_SCOPE = createRootScope();
+    // jq's errors for a path that doesn't fit the data.
+    private static final Pattern INDEXED = Pattern.compile("Cannot index (\\w+) with (?:string )?(\"[^\"]*\"|\\w+)");
+    private static final Pattern ITERATED = Pattern.compile("Cannot iterate over (\\w+)");
+    private static final Pattern NOT_APPLICABLE = Pattern.compile("is not applicable to NULL");
     private static final ThreadLocal<AtomicLong> OPERATIONS = new ThreadLocal<>();
 
     private SafeJq() {
@@ -116,6 +125,42 @@ public final class SafeJq {
             }
         });
         output.emit(BooleanNode.valueOf(found[0]), null);
+    }
+
+    /// @param message What jq said of a failed query.
+    /// @return For a query whose path doesn't fit the data (a key read from text, an array iterated that isn't
+    /// there), what it means and how to look before trying again; else empty. Seen: 29 of 77 failed jq calls were
+    /// such guesses at the data's shape, often several in a row.
+    public static String pathAdvice(final String message) {
+        final Matcher index = INDEXED.matcher(NullSafe.string(message));
+        if (index.find()) {
+            final String key = index.group(2).startsWith("\"")
+                    ? index.group(2)
+                    : "a " + index.group(2) + " index";
+            return " A step reads " + key + " from " + article(index.group(1)) + ", so the data there "
+                   + "isn't shaped as the query expects. Look before guessing again: run the query up to the step "
+                   + "before, ending `| type`, `| keys` or `| .[0]`. `?` (or `// empty`) skips values of another "
+                   + "kind.";
+        }
+        final Matcher iterate = ITERATED.matcher(NullSafe.string(message));
+        if (iterate.find()) {
+            return "null".equals(iterate.group(1))
+                    ? " The key iterated isn't there (or is null) in some values: `.key[]?` skips them, and `keys` "
+                      + "on the step before shows what is there."
+                    : " The value iterated is " + article(iterate.group(1)) + ", not an array or object: run the "
+                      + "query up to the step before, ending `| type`, to see what it is.";
+        }
+        return NOT_APPLICABLE.matcher(NullSafe.string(message)).find()
+                ? " The value is missing (null) there: run the query up to the step before, ending `| keys`, to "
+                  + "see what is there, or skip it with `?`."
+                : "";
+    }
+
+    private static String article(final String type) {
+        final String lower = type.toLowerCase(Locale.ROOT);
+        return (lower.startsWith("a") || lower.startsWith("o")
+                ? "an "
+                : "a ") + lower;
     }
 
     private static Function guarded(final Function function) {
@@ -179,7 +224,7 @@ public final class SafeJq {
                 output.emit(value);
             });
         } catch (final JsonQueryException e) {
-            throw new WorkspaceException("The jq query failed: " + e.getMessage());
+            throw new WorkspaceException("The jq query failed: " + e.getMessage() + pathAdvice(e.getMessage()));
         } catch (final StackOverflowError e) {
             throw new WorkspaceException("The jq query recursed too deeply and was stopped.");
         } finally {

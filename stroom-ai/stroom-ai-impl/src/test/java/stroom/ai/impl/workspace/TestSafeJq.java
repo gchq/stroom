@@ -46,6 +46,26 @@ class TestSafeJq {
     }
 
     @Test
+    void aPathThatDoesntFitTheDataSaysHowToLookBeforeGuessingAgain() throws Exception {
+        // Seen: 29 of 77 failed jq calls were guesses at the data's shape, often several in a row.
+        final JsonNode input = MAPPER.readTree("{\"fields\": \"x\", \"rows\": [1]}");
+
+        assertThatThrownBy(() -> run(".fields.name", input))
+                .hasMessageContaining("Cannot index string with string \"name\"")
+                .hasMessageContaining("A step reads \"name\" from a string")
+                .hasMessageContaining("`| type`, `| keys` or `| .[0]`");
+        assertThatThrownBy(() -> run(".missing[]", input))
+                .hasMessageContaining("Cannot iterate over null")
+                .hasMessageContaining("`.key[]?` skips them");
+        assertThatThrownBy(() -> run(".fields[]", input))
+                .hasMessageContaining("The value iterated is a string");
+        assertThatThrownBy(() -> run(".rows.x", input)).hasMessageContaining("A step reads \"x\" from an array");
+        assertThat(SafeJq.pathAdvice("Cannot index object with number")).startsWith(" A step reads a number "
+                                                                                     + "index from an object");
+        assertThat(SafeJq.pathAdvice("some other failure")).isEmpty();
+    }
+
+    @Test
     void jqsInAndDateFunctionsAreThere() throws Exception {
         // Seen: IN and todate refused as unknown, a failed call each.
         final JsonNode input = MAPPER.readTree("""

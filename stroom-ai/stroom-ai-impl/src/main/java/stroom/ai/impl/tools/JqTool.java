@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SafeJq;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import net.thisptr.jackson.jq.JsonQuery;
+import net.thisptr.jackson.jq.Output;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -110,7 +112,7 @@ class JqTool extends AbstractWorkspaceTool {
             while (inputs.hasNextValue()) {
                 ToolDeadline.check();
                 final JsonNode input = inputs.nextValue();
-                SafeJq.run(query, input, value -> {
+                runOn(query, input, value -> {
                     total[0]++;
                     final String line = raw && value.isTextual()
                             ? value.asText()
@@ -145,6 +147,19 @@ class JqTool extends AbstractWorkspaceTool {
             writer.newLine();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    // The query run on one JSON value of the file; a path that doesn't fit it also says what the value holds, so
+    // the next try needn't be a guess.
+    private static void runOn(final JsonQuery query, final JsonNode input, final Output output) {
+        try {
+            SafeJq.run(query, input, output);
+        } catch (final WorkspaceException e) {
+            if (SafeJq.pathAdvice(e.getMessage()).isEmpty()) {
+                throw e;
+            }
+            throw new WorkspaceException(e.getMessage() + " The input is " + ToolOutputs.shapeOf(input) + ".");
         }
     }
 }

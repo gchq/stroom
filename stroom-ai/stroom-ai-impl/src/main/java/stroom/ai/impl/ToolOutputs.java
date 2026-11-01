@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /// Decides when a tool's output is too large to give the model in full, and what to give it instead: a short stub
@@ -39,7 +40,7 @@ import java.util.Set;
 ///
 /// A JSON result's `next` and `hint`, which say what to do next and which a tool often puts last, are repeated in
 /// its stub: the preview, from its start, would not reach them.
-final class ToolOutputs {
+public final class ToolOutputs {
 
     /// Outputs longer than this are saved to the workspace and the model is given a stub.
     static final int MAX_INLINE_CHARS = 4_000;
@@ -241,26 +242,41 @@ final class ToolOutputs {
             return "";
         }
         if (json.isArray()) {
-            return "It is a JSON array of " + json.size() + " items" + itemShape(json) + ". Pick out the parts you "
-                   + "need with the jq tool, e.g. `.[0]`, or `length`.\n\n";
+            return "It is " + shapeOf(json) + ". Pick out the parts you need with the jq tool, e.g. `.[0]`, or "
+                   + "`length`.\n\n";
         }
         final List<String> fields = new ArrayList<>();
         json.fieldNames().forEachRemaining(fields::add);
-        // Each field with what it holds, an object's or an array's items' keys too. Seen: the agent guessed `.name`
-        // where the items' key was `field`, and an array's key that wasn't there, a jq call each.
+        final String example = fields.isEmpty()
+                ? "keys"
+                : "." + fields.getLast();
+        return "It is " + shapeOf(json) + ". Pick out the parts you need with the jq tool, e.g. `" + example
+               + "`.\n\n";
+    }
+
+    /// @param json A JSON value.
+    /// @return What it holds: an array's length and its first item's keys, or an object's fields, each with what
+    /// it holds (an object's keys, an array's length and its first item's keys). Seen: the agent guessed `.name`
+    /// where the items' key was `field`, and an array's key that wasn't there, a jq call each.
+    public static String shapeOf(final JsonNode json) {
+        if (json == null || json.isValueNode()) {
+            return "a single " + (json == null
+                    ? "null"
+                    : json.getNodeType().toString().toLowerCase(Locale.ROOT)) + " value";
+        }
+        if (json.isArray()) {
+            return "a JSON array of " + json.size() + " items" + itemShape(json);
+        }
+        final List<String> fields = new ArrayList<>();
+        json.fieldNames().forEachRemaining(fields::add);
         final List<String> described = new ArrayList<>();
         for (final String field : fields.subList(0, Math.min(fields.size(), MAX_LISTED_FIELDS))) {
             described.add(field + shape(json.get(field)));
         }
-        final String listed = String.join(", ", described)
-                              + (fields.size() > MAX_LISTED_FIELDS
+        return "a JSON object with the fields " + String.join(", ", described)
+               + (fields.size() > MAX_LISTED_FIELDS
                 ? " and " + (fields.size() - MAX_LISTED_FIELDS) + " more"
                 : "");
-        final String example = fields.isEmpty()
-                ? "keys"
-                : "." + fields.getLast();
-        return "It is a JSON object with the fields " + listed + ". Pick out the parts you need with the jq tool, "
-               + "e.g. `" + example + "`.\n\n";
     }
 
     // What a field holds, in brackets: an object's keys, an array's length and its first item's keys; nothing for
