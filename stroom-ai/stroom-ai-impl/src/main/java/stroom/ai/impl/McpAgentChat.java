@@ -1344,7 +1344,7 @@ class McpAgentChat {
             builder.toolSpecifications(tools);
         }
         final ChatRequest request = builder.build();
-        final boolean showReasoning = modelDoc == null || modelDoc.isShowReasoning();
+        final boolean keepReasoning = modelDoc == null || modelDoc.isShowReasoning();
         final StreamingChatModel streamingModel = streamingModel(modelDoc);
         final long startMs = System.currentTimeMillis();
         final ChatResponse response;
@@ -1352,14 +1352,14 @@ class McpAgentChat {
         if (streamingModel != null) {
             // Stream the answer, so the user can watch it being written.
             final ModelStreamer.StreamedResponse streamed = modelStreamer.chat(streamingModel, request, chatId,
-                    showReasoning, McpAgentChat::isCancelled);
+                    keepReasoning, McpAgentChat::isCancelled);
             response = streamed.response();
             thinkingMs = streamed.thinkingMs();
         } else {
             response = chatModel.chat(request);
         }
         usageTracker.record(chatId, modelDoc, request.messages(), request.toolSpecifications(), response);
-        if (showReasoning) {
+        if (keepReasoning) {
             storeThinking(chatId, response, thinkingMs > 0
                     ? thinkingMs
                     : System.currentTimeMillis() - startMs);
