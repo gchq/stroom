@@ -33,11 +33,11 @@ class TestAiPipelineStagesConfig {
         assertThat(stages.getTranslation().getTemplateNames()).containsExactly("Event Data (*)");
         assertThat(stages.getTranslation().getSchemaGroups()).containsExactly("EVENTS");
         assertThat(stages.getTranslation().getStreamTypes()).containsExactly("Events");
-        assertThat(stages.getIndexing().getTemplateFolders())
-                .containsExactly("System/Template Pipelines", "System/Template Pipelines/Elasticsearch");
-        assertThat(stages.getIndexing().getTemplateNames())
-                .containsExactly("Indexing", "Events to Elasticsearch", "Indexing - Elasticsearch");
-        assertThat(stages.getDiscovery().getTemplateNames()).containsExactly("Raw to Elasticsearch");
+        assertThat(stages.getIndexing().getTemplateFolders()).containsExactly("System/Template Pipelines");
+        assertThat(stages.getIndexing().getTemplateNames()).containsExactly("Indexing");
+        // The standard content pack has no discovery template: an environment configures its own.
+        assertThat(stages.getDiscovery().getTemplateFolders()).isEmpty();
+        assertThat(stages.getDiscovery().getTemplateNames()).isEmpty();
         assertThat(stages.getReference().getTemplateNames()).containsExactly("Reference Data");
         assertThat(stages.getReference().getSchemaGroups()).containsExactly("REFERENCE_DATA");
         assertThat(stages.getRecords().getStreamTypes()).containsExactly("Records");

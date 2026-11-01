@@ -31,8 +31,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /// The pipeline stages as the agent's tools find and read pipelines (e.g. find_pipeline_templates): for each, where
-/// its templates are looked for and what marks a pipeline as it. The defaults are Stroom's standard template
-/// folders and names, and its standard schema groups and stream types.
+/// its templates are looked for and what marks a pipeline as it. The defaults are the folder and names of the
+/// templates in Stroom's standard template-pipelines content pack, and Stroom's standard schema groups and stream
+/// types. The pack has no discovery template (raw structured data straight to an index), so that stage has no
+/// template folders unless configured; an environment's own templates (e.g. for Elasticsearch) are configured
+/// there, not in the defaults.
 @JsonPropertyOrder(alphabetic = true)
 public class AiPipelineStagesConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -42,10 +45,9 @@ public class AiPipelineStagesConfig extends AbstractConfig implements IsStroomCo
     static final AiPipelineStageConfig DEFAULT_TRANSLATION = new AiPipelineStageConfig(
             List.of(TEMPLATE_PIPELINES), List.of("Event Data (*)"), List.of("EVENTS"), List.of("Events"));
     static final AiPipelineStageConfig DEFAULT_INDEXING = new AiPipelineStageConfig(
-            List.of(TEMPLATE_PIPELINES, TEMPLATE_PIPELINES + "/Elasticsearch"),
-            List.of("Indexing", "Events to Elasticsearch", "Indexing - Elasticsearch"), List.of(), List.of());
+            List.of(TEMPLATE_PIPELINES), List.of("Indexing"), List.of(), List.of());
     static final AiPipelineStageConfig DEFAULT_DISCOVERY = new AiPipelineStageConfig(
-            List.of(TEMPLATE_PIPELINES + "/Elasticsearch"), List.of("Raw to Elasticsearch"), List.of(), List.of());
+            List.of(), List.of(), List.of(), List.of());
     static final AiPipelineStageConfig DEFAULT_REFERENCE = new AiPipelineStageConfig(
             List.of(TEMPLATE_PIPELINES), List.of("Reference Data"), List.of("REFERENCE_DATA"), List.of("Reference"));
     // A pipeline that writes records:2 records as a stream of their own (e.g. a source's parsed text).

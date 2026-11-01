@@ -74,10 +74,8 @@ appConfig:
       discovery:
         schemaGroups: []
         streamTypes: []
-        templateFolders:
-        - "System/Template Pipelines/Elasticsearch"
-        templateNames:
-        - "Raw to Elasticsearch"
+        templateFolders: []
+        templateNames: []
       forwarding:
         schemaGroups: []
         streamTypes: []
@@ -88,11 +86,8 @@ appConfig:
         streamTypes: []
         templateFolders:
         - "System/Template Pipelines"
-        - "System/Template Pipelines/Elasticsearch"
         templateNames:
         - "Indexing"
-        - "Events to Elasticsearch"
-        - "Indexing - Elasticsearch"
       records:
         schemaGroups:
         - "RECORDS"
