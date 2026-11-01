@@ -78,6 +78,10 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     private static final Pattern DATA_NAME = Pattern.compile("<data\\s+name=\"([^\"{]+)\"");
     // How many missing fields a refusal names.
     private static final int MISSING_NAMED = 10;
+    // What to do when a Lucene template is given for Elasticsearch.
+    private static final String ELASTIC_TEMPLATE_INSTEAD = "give the template_uuid of an Elasticsearch indexing "
+                                                           + "template (find_pipeline_templates stage=indexing gives "
+                                                           + "each one's backend)";
     // The parser each kind of raw data a discovery index reads is parsed by.
     private static final Map<String, String> DISCOVERY_PARSERS = Map.of("json", "JSONParser", "delimited",
             "DSParser", "xml", "XMLParser");
@@ -253,8 +257,15 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         MissingFields missing = new MissingFields(List.of(), null);
         if (lucene) {
             if (indexUuid == null) {
-                throw new ToolRefusal("This template indexes into Lucene: give index_uuid");
+                throw new ToolRefusal("This template indexes into Lucene: give index_uuid (a Lucene index), or, for "
+                                      + "Elasticsearch, " + ELASTIC_TEMPLATE_INSTEAD);
             }
+            // Seen in Ask Stroom AI: an Elasticsearch index given to the Lucene template was said not to exist, and
+            // the agent tried index_name and cluster_uuid before finding the template was the fault.
+            elasticIndexOrEmpty(indexUuid).ifPresent(elastic -> {
+                throw new ToolRefusal("Index '" + elastic.getName() + "' is an Elasticsearch index, and this "
+                                      + "template indexes into Lucene: " + ELASTIC_TEMPLATE_INSTEAD);
+            });
             missing = missingIndexFields(indexUuid, xsltUuid);
             final String element = openElement(openProperties, "index")
                     .orElseThrow(() -> new ToolRefusal("This template sets its own Lucene index: it leaves no index "
@@ -505,15 +516,18 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     }
 
     private ElasticIndexDoc elasticIndex(final String uuid) {
-        Optional<ElasticIndexDoc> doc;
+        return elasticIndexOrEmpty(uuid).orElseThrow(() -> new ToolRefusal("index_uuid " + uuid + " is not an "
+                                                                           + "Elastic Index doc this template can "
+                                                                           + "index into: give index_name (and "
+                                                                           + "cluster_uuid)"));
+    }
+
+    private Optional<ElasticIndexDoc> elasticIndexOrEmpty(final String uuid) {
         try {
-            doc = documentAccess.read(new DocRef(ElasticIndexDoc.TYPE, uuid), ElasticIndexDoc.class);
+            return documentAccess.read(new DocRef(ElasticIndexDoc.TYPE, uuid), ElasticIndexDoc.class);
         } catch (final RuntimeException e) {
-            doc = Optional.empty();
+            return Optional.empty();
         }
-        return doc.orElseThrow(() -> new ToolRefusal("index_uuid " + uuid + " is not an Elastic Index doc this "
-                                                     + "template can index into: give index_name (and "
-                                                     + "cluster_uuid)"));
     }
 
     private static FieldPlan keptPlan(final Map<String, Object> payload) {
