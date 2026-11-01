@@ -260,7 +260,10 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         }
         carriageReturns.ifPresent(note -> result.put("line_endings", note));
         if (saveAs != null) {
-            if (result.get("unmatched_count") instanceof final Integer unmatched && unmatched > 0) {
+            if (result.get("wider_than_header") instanceof final Long wider) {
+                result.put("not_saved", wider + " record(s) have more cells than the header: fix the spec (see the "
+                                        + "hint) before saving");
+            } else if (result.get("unmatched_count") instanceof final Integer unmatched && unmatched > 0) {
                 result.put("not_saved", unmatched + " line(s) match nothing: fix the spec (or confirm they are "
                                         + "noise) before saving");
             } else if (carriageReturns.isPresent()) {
@@ -361,7 +364,17 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         result.put("first_records", records.subList(0, Math.min(5, records.size())));
         result.put("unmatched_lines", unmatched.subList(0, Math.min(10, unmatched.size())));
         result.put("unmatched_count", unmatched.size());
-        if (!unmatched.isEmpty() && records.isEmpty()) {
+        final long wider = records.stream().filter(record -> record.containsKey(StroomSplitterRun.UNNAMED)).count();
+        if (wider > 0) {
+            result.put("wider_than_header", wider);
+        }
+        if (wider > 0) {
+            // Seen in both runs of a 185-column CSV: no quote in the spec, "Every line parsed", and quoted values
+            // holding a comma split, so every field after them took the next one's value.
+            result.put("hint", wider + " record(s) have more cells than the header names, so their values shift "
+                               + "into the wrong fields from the first extra cell. " + widerCause(chosen, records)
+                               + " Fix the spec first: it isn't saved until every record fits the header.");
+        } else if (!unmatched.isEmpty() && records.isEmpty()) {
             result.put("hint", "No line matched the spec: check the pattern or delimiter against the lines shown.");
         } else if (!unmatched.isEmpty()) {
             result.put("hint", unmatched.size() + " line(s) match nothing and would produce no record: widen the "
@@ -372,6 +385,19 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                + "save_as=<name>).");
         }
         return runs;
+    }
+
+    // Why records have more cells than the header: values holding the delimiter in quotes the spec doesn't know.
+    private static String widerCause(final SplitterSpec spec, final List<Map<String, String>> records) {
+        final boolean quotedCells = records.stream()
+                .flatMap(record -> record.values().stream())
+                .anyMatch(value -> value.startsWith("\""));
+        if (spec.quote() == null && quotedCells) {
+            return "Cells start with \", so values in quotes hold the delimiter: add \"quote\": \"\\\"\" to the "
+                   + "spec.";
+        }
+        return "A value holds the delimiter without quotes the spec knows, or the header line names too few "
+               + "columns: compare a wide record with the header.";
     }
 
     // The converter run by Stroom's own parser on each sample text, beside the dry run: what it reports, and the
