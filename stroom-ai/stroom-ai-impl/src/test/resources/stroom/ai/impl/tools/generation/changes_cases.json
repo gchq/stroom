@@ -1258,7 +1258,7 @@
    "unmatched": "skip"
   },
   "done": [
-   "rule 'other' replaced",
+   "rule 'other' entry 'EventDetail/TypeId' added",
    "rule 'logoff' added after the others",
    "rule 'logon' removed",
    "common 'EventDetail/Unknown/Data' (Data 'a') replaced",
@@ -1293,7 +1293,7 @@
    ]
   },
   "changes": {},
-  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{\"name\": ..., \"fields\": [only the entries that change]}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
  },
  {
   "kind": "mapping",
@@ -1328,7 +1328,7 @@
     }
    ]
   },
-  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+  "error": "Each rule in changes.events needs its name: it changes the rule of that name, or is added after the others"
  },
  {
   "kind": "mapping",
@@ -1601,6 +1601,11 @@
      ],
      "fields": [
       {
+       "path": "EventDetail/Nope",
+       "value": "x",
+       "repeat": false
+      },
+      {
        "path": "EventDetail/TypeId",
        "value": "Logon",
        "repeat": false
@@ -1674,7 +1679,15 @@
    "functions": []
   },
   "done": [
-   "rule 'logon' replaced"
+   "rule 'logon': 'when' replaced",
+   "rule 'logon' entry 'EventDetail/TypeId' added",
+   "rule 'logon' entry 'EventDetail/Authenticate/Action' added",
+   "rule 'logon' entry 'EventDetail/Authenticate/User/Id' added",
+   "rule 'logon' entry 'EventDetail/Authenticate/Outcome/Success' added",
+   "rule 'logon' entry 'EventDetail/Authenticate/Data' (Data 'session') added",
+   "rule 'logon': 'drop' replaced",
+   "rule 'logon': 'keep_unknown' replaced",
+   "rule 'logon': 'data' replaced"
   ]
  },
  {
@@ -2084,7 +2097,7 @@
    ]
   },
   "changes": {},
-  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{\"name\": ..., \"fields\": [only the entries that change]}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
  },
  {
   "kind": "mapping",
@@ -2113,7 +2126,7 @@
    ]
   },
   "changes": [],
-  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{\"name\": ..., \"fields\": [only the entries that change]}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
  },
  {
   "kind": "mapping",
@@ -2142,7 +2155,7 @@
    ]
   },
   "changes": "x",
-  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{\"name\": ..., \"fields\": [only the entries that change]}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
  },
  {
   "kind": "mapping",
@@ -2171,7 +2184,7 @@
    ]
   },
   "changes": null,
-  "error": "changes is an object holding only what changes, e.g. {\"events\": [{the rule, whole}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
+  "error": "changes is an object holding only what changes, e.g. {\"events\": [{\"name\": ..., \"fields\": [only the entries that change]}]} or {\"common\": [{\"path\": ..., \"value\": ...}]}"
  },
  {
   "kind": "mapping",
@@ -2206,7 +2219,7 @@
     }
    ]
   },
-  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+  "error": "Each rule in changes.events needs its name: it changes the rule of that name, or is added after the others"
  },
  {
   "kind": "mapping",
@@ -2339,7 +2352,7 @@
     "x"
    ]
   },
-  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+  "error": "Each rule in changes.events needs its name: it changes the rule of that name, or is added after the others"
  },
  {
   "kind": "mapping",
@@ -2374,7 +2387,7 @@
     }
    ]
   },
-  "error": "Each rule in changes.events needs its name: a rule replaces the one of that name whole, or is added after the others"
+  "error": "Each rule in changes.events needs its name: it changes the rule of that name, or is added after the others"
  },
  {
   "kind": "mapping",
