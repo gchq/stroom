@@ -268,7 +268,8 @@ flowchart TD
    errors its own content causes first; only what it can't resolve (an inherited element, reference data, the
    source data) goes to the user.
 9. **processed.** `create_processor_filter` with the sample stream ids asks the user's approval in a form, then
-   creates the filter enabled, one task at a time. It refuses a pipeline with no clean step of its current code.
+   creates the filter enabled, up to `stroom.ai.builds.maxProcessingTasks` tasks at once (4 by default, a stream each).
+   It refuses a pipeline with no clean step of its current code.
    `wait_for_processing` waits until no output is locked and no task is still open, triages the Error streams
    written beside the output, and fails the gate on blocking errors.
 10. **validated.** `check_events` validates the Events against the schema this Stroom holds and the quality rules
@@ -1713,11 +1714,13 @@ button (the server side and the GWT compile are tested).
 * **The processor.** Stroom gives a pipeline's new processor its first filter's enabled flag, and a disabled processor
   runs none of its filters, so the tools enable a processor they made even for a disabled filter (seen in testing: the
   filter enabled, nothing processed). An existing disabled processor is enabled only for an approved run.
-* **Blast radius.** Sample filters select the stream ids (`Id EQUALS` terms, OR'd), one task at a time. A feed-wide
-  filter needs `created_after` (raised to the feed's creation time, and refused if it selects nothing still to
-  process), and runs at most 2 tasks. A filter is refused for a stream the pipeline already processed (or an existing
-  filter already selects); those go through `reprocess_streams`, at most 10 streams a call, one task at a time, which
-  refuses streams not yet processed. A duplicate feed filter is refused.
+* **Blast radius.** Sample filters select the stream ids (`Id EQUALS` terms, OR'd), up to
+  `stroom.ai.builds.maxProcessingTasks` tasks at once (4 by default; seen: two sample streams of 160 and 211 MB
+  processed one after the other with a limit of 1). A feed-wide filter needs `created_after` (raised to the feed's
+  creation time, and refused if it selects nothing still to process), and runs at most 2 tasks. A filter is refused
+  for a stream the pipeline already processed (or an existing filter already selects); those go through
+  `reprocess_streams`, at most 10 streams a call, with the same task limit, which refuses streams not yet processed. A
+  duplicate feed filter is refused.
 * **Code proved first.** `create_processor_filter` and `reprocess_streams` both refuse a pipeline with no clean step
   of its current code recorded (`CreateProcessorFilterTool.steppedClean`): a change to its XSLT or converter since
   the last clean step is stepped again before anything is processed. `reprocess_streams` gained the check on

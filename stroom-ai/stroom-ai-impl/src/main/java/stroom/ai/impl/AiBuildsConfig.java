@@ -26,23 +26,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /// Where the agent's tools build things: the workspace folder, below System, that holds a folder for each build
-/// (the documents the agent makes, until they are promoted into place). The tools write nowhere else.
+/// (the documents the agent makes, until they are promoted into place), and how many tasks process a build's streams
+/// at once. The tools write nowhere else.
 @JsonPropertyOrder(alphabetic = true)
 public class AiBuildsConfig extends AbstractConfig implements IsStroomConfig {
 
     /// The workspace folder's name unless configured.
     public static final String DEFAULT_WORKSPACE_FOLDER = "MCP Workspace";
+    /// The most tasks processing a build's streams at once unless configured.
+    public static final int DEFAULT_MAX_PROCESSING_TASKS = 4;
 
     private final String workspaceFolder;
+    private final int maxProcessingTasks;
 
     public AiBuildsConfig() {
         workspaceFolder = DEFAULT_WORKSPACE_FOLDER;
+        maxProcessingTasks = DEFAULT_MAX_PROCESSING_TASKS;
     }
 
     @JsonCreator
-    public AiBuildsConfig(@JsonProperty("workspaceFolder") final String workspaceFolder) {
+    public AiBuildsConfig(@JsonProperty("workspaceFolder") final String workspaceFolder,
+                          @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks) {
         this.workspaceFolder = NullSafe.nonBlankStringElse(NullSafe.trim(workspaceFolder),
                 DEFAULT_WORKSPACE_FOLDER);
+        this.maxProcessingTasks = maxProcessingTasks == null || maxProcessingTasks < 1
+                ? DEFAULT_MAX_PROCESSING_TASKS
+                : maxProcessingTasks;
     }
 
     /// @return The name of the folder, directly below System, that holds a folder for each build.
@@ -56,10 +65,24 @@ public class AiBuildsConfig extends AbstractConfig implements IsStroomConfig {
         return workspaceFolder;
     }
 
+    /// @return The most tasks a processor filter the tools make for a build's own streams (its sample, or streams
+    /// it reprocesses) runs at once: one a stream, up to this many.
+    @JsonPropertyDescription("The most tasks that process a build's own streams at once: the processor filters the "
+                             + "agent's tools make to process a build's sample streams, or to reprocess streams, "
+                             + "run up to this many tasks, one a stream, so the sample is processed side by side "
+                             + "rather than one stream after another. Lower it to leave more of the nodes' task "
+                             + "capacity to other processing. At least 1. Filters made when a build is promoted, "
+                             + "over a whole feed, are not affected.")
+    @JsonProperty("maxProcessingTasks")
+    public int getMaxProcessingTasks() {
+        return maxProcessingTasks;
+    }
+
     @Override
     public String toString() {
         return "AiBuildsConfig{" +
                "workspaceFolder='" + workspaceFolder + '\'' +
+               ", maxProcessingTasks=" + maxProcessingTasks +
                '}';
     }
 }

@@ -2801,7 +2801,8 @@ Creates a processor filter on a pipeline in a build (`ProcessorFilterWrites.mana
 `ProcessorFilterService` as the user, as the data browser's Process action makes one. Feeds and pipelines are named
 by reference (`IS_DOC_REF`), so Stroom keeps the dependency and a renamed feed is still the one selected. Two scopes:
 
-* **Sample** (`stream_ids`): exactly those streams, one task at a time. Streams the pipeline already processed (it
+* **Sample** (`stream_ids`): exactly those streams, up to `stroom.ai.builds.maxProcessingTasks` tasks at once (4 by
+  default, `ProcessorFilterWrites.buildMaxTasks`). Streams the pipeline already processed (it
   has output for them, or a filter already selects them) are refused: use `reprocess_streams`.
 * **Feed** (`feed`, `stream_type`, `created_after`): the feed's streams of the type created after the bound, at most
   2 tasks at a time (`ProcessorFilterWrites.MAX_FEED_FILTER_TASKS`, which the description states). `stream_type`
@@ -2876,7 +2877,8 @@ build's own Lucene index needs Manage Index Shards; unlocked by View Data (as `c
 itself · chat group processing · Classes: `ReprocessStreamsTool`, `ProcessorFilterWrites`, `ProcessingSources`,
 `ProcessingApprovals`, `IndexingRuns`, `IndexTemplateAgreements`
 
-Processes up to 10 streams again through a pipeline in a build after a change, one task at a time, with a new filter
+Processes up to 10 streams again through a pipeline in a build after a change, up to
+`stroom.ai.builds.maxProcessingTasks` tasks at once, with a new filter
 selecting them by id (made as `create_processor_filter` makes one). As for `create_processor_filter`, the
 pipeline's current code must have a recorded clean step (`CreateProcessorFilterTool.steppedClean`, over
 `BuildRecords.steppedClean`; code that can't be read counts as not stepped): a change to its XSLT or converter since

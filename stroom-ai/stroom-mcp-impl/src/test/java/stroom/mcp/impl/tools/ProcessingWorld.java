@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiBuildsConfig;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.FeedAccess;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
@@ -82,6 +84,8 @@ final class ProcessingWorld {
     final List<String> deletedShards = new ArrayList<>();
     // The processor Stroom gives each filter made from now on.
     Processor processor = Processor.builder().id(70).enabled(true).build();
+    // The builds' settings (stroom.ai.builds), changed by a test that needs to.
+    AiBuildsConfig builds = new AiBuildsConfig();
     int nextFilterId = 9;
 
     final PipelineDocs pipelineDocs = new PipelineDocs(world.documentAccess);
@@ -104,7 +108,11 @@ final class ProcessingWorld {
                 () -> Mockito.mock(ProcessorTaskService.class));
         filterWrites = new ProcessorFilterWrites(processorFilterAccess, () -> filterService, () -> processorService,
                 streamProcessing, feeds.streamReader, feeds.feedNames, world.documentAccess, pipelineDocs,
-                pipelineOutputs, world.guard());
+                pipelineOutputs, world.guard(), () -> {
+                    final AiConfig config = Mockito.mock(AiConfig.class);
+                    Mockito.when(config.getBuilds()).thenReturn(builds);
+                    return config;
+                });
         outputFeeds = new OutputFeeds(world.pipelineShapes, pipelineDocs, world.guard(), world.records(),
                 feeds.buildFeeds, feeds.feedNames);
         sources = new ProcessingSources(pipelineOutputs, streamProcessing, feeds.streamReader, pipelineDocs,
