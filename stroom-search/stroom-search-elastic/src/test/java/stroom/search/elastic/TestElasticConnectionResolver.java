@@ -65,7 +65,7 @@ class TestElasticConnectionResolver {
     @Test
     void testResolve_noApiKeyUsesDefaultHttpClientConfig() {
         final ResolvedElasticConnection connection = resolver.resolve(
-                new ElasticConnectionConfig(URLS, null, null));
+                new ElasticConnectionConfig(URLS, null, null, null));
 
         assertThat(connection.connectionUrls())
                 .isEqualTo(URLS);
@@ -75,6 +75,24 @@ class TestElasticConnectionResolver {
                 .isEqualTo(StroomDuration.ofSeconds(3));
         assertThat(connection.httpClientConfiguration().getTimeout())
                 .isEqualTo(StroomDuration.ofMinutes(5));
+        assertThat(connection.compressRequests())
+                .isFalse();
+    }
+
+    @Test
+    void testResolve_compressRequests() {
+        final ResolvedElasticConnection compressed = resolver.resolve(
+                new ElasticConnectionConfig(URLS, null, true, null));
+        final ResolvedElasticConnection uncompressed = resolver.resolve(
+                new ElasticConnectionConfig(URLS, null, false, null));
+
+        assertThat(compressed.compressRequests())
+                .isTrue();
+        assertThat(uncompressed.compressRequests())
+                .isFalse();
+        // The resolved connection keys the client cache, so changing the setting must give a new client
+        assertThat(compressed)
+                .isNotEqualTo(uncompressed);
     }
 
     @Test
@@ -84,7 +102,7 @@ class TestElasticConnectionResolver {
                 .build();
 
         final ResolvedElasticConnection connection = resolver.resolve(
-                new ElasticConnectionConfig(URLS, null, httpClientConfig));
+                new ElasticConnectionConfig(URLS, null, null, httpClientConfig));
 
         assertThat(connection.httpClientConfiguration().getTimeout())
                 .isEqualTo(StroomDuration.ofSeconds(10));
@@ -96,7 +114,7 @@ class TestElasticConnectionResolver {
                 .thenReturn(new StoredSecret(createCred(), new AccessTokenSecret(" encodedKey== "), null));
 
         final ResolvedElasticConnection connection = resolver.resolve(
-                new ElasticConnectionConfig(URLS, API_KEY_NAME, null));
+                new ElasticConnectionConfig(URLS, API_KEY_NAME, null, null));
 
         assertThat(connection.apiKey())
                 .isEqualTo("encodedKey==");
@@ -109,7 +127,7 @@ class TestElasticConnectionResolver {
         when(storedSecrets.get(API_KEY_NAME))
                 .thenReturn(null);
 
-        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
+        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unable to find")
                 .hasMessageContaining(API_KEY_NAME);
@@ -120,7 +138,7 @@ class TestElasticConnectionResolver {
         when(storedSecrets.get(API_KEY_NAME))
                 .thenReturn(new StoredSecret(createCred(), new UsernamePasswordSecret("user", "pass"), null));
 
-        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
+        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not an access token");
     }
@@ -130,7 +148,7 @@ class TestElasticConnectionResolver {
         when(storedSecrets.get(API_KEY_NAME))
                 .thenReturn(new StoredSecret(createCred(), new AccessTokenSecret("  "), null));
 
-        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
+        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null, null)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -139,7 +157,7 @@ class TestElasticConnectionResolver {
         when(storedSecrets.get(API_KEY_NAME))
                 .thenThrow(new PermissionException(null, "You do not have permission to view these credentials"));
 
-        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null)))
+        assertThatThrownBy(() -> resolver.resolve(new ElasticConnectionConfig(URLS, API_KEY_NAME, null, null)))
                 .isInstanceOf(PermissionException.class);
     }
 
@@ -152,7 +170,7 @@ class TestElasticConnectionResolver {
     @Test
     void testResolve_sameConfigGivesEqualConnections() {
         // The client cache relies on this
-        final ElasticConnectionConfig config = new ElasticConnectionConfig(URLS, null, null);
+        final ElasticConnectionConfig config = new ElasticConnectionConfig(URLS, null, null, null);
 
         assertThat(resolver.resolve(config))
                 .isEqualTo(resolver.resolve(config));
