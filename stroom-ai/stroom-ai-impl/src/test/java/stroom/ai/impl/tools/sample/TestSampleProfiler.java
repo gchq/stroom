@@ -68,6 +68,23 @@ class TestSampleProfiler {
     }
 
     @Test
+    void placeholdersAndEmptyValuesArentCountedAsFilled() {
+        // Seen: '-' counted as filled, so a required element read from a field of dashes looked always filled.
+        final List<Map<String, Object>> fields = SampleProfiler.inventory(List.of(
+                Map.of("dst", "10.0.0.1", "zone", "-", "note", ""),
+                Map.of("dst", "-", "zone", "N/A", "note", "x"),
+                Map.of("dst", "10.0.0.2", "zone", "null"),
+                Map.of("dst", "10.0.0.3", "zone", "internal")));
+
+        final Map<String, Map<String, Object>> byName = new LinkedHashMap<>();
+        fields.forEach(field -> byName.put(String.valueOf(field.get("field")), field));
+        assertThat(byName.get("dst")).containsEntry("fill_rate", 75L).containsEntry("placeholder_rate", 25L);
+        assertThat(byName.get("zone")).containsEntry("fill_rate", 25L).containsEntry("placeholder_rate", 75L);
+        assertThat(byName.get("note")).as("an empty value is neither").containsEntry("fill_rate", 25L)
+                .doesNotContainKey("placeholder_rate");
+    }
+
+    @Test
     void jsonLinesFlattenAndFlagEmbeddedJson() {
         final String lines = ToolJson.dumps(SampleProfiler.map("ts", 1790600000L, "user", SampleProfiler.map("name",
                 "a"), "body", "INFO x {\"type\":\"LOGIN\"}")) + "\n"

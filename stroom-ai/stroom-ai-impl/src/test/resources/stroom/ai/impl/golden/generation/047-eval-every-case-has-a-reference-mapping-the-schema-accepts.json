@@ -146,15 +146,15 @@
   "problems": [],
   "warnings": [
    "[logon] TypeId is read from its input, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[logoff] TypeId is read from its input, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[password change] TypeId is read from its input, which its records may lack: those get TypeId 'password change', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[password change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[password change] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[view] TypeId is read from its input, which its records may lack: those get TypeId 'view', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[view] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[view] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[delete] TypeId is read from its input, which its records may lack: those get TypeId 'delete', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[delete] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

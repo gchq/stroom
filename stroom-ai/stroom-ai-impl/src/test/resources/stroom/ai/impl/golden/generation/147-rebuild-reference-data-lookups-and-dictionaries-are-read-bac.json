@@ -93,9 +93,9 @@
   "problems": [],
   "warnings": [
    "[vip] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
-   "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
-   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "Lookups read reference map(s) ['HOST_SITE']: the pipeline needs the feed that loads each as a pipeline reference (create_pipeline references, or update_pipeline (references=...)); find_reference_data lists the maps and their feeds."
   ],
   "events": [

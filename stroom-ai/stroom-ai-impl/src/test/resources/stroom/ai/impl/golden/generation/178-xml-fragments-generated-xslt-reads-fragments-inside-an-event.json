@@ -120,9 +120,9 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[failed logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[failed logon] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventTime', 'EventSource/Device', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

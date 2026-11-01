@@ -156,12 +156,12 @@
   "problems": [],
   "warnings": [
    "[connect] TypeId is read from level or verb, which its records may lack: those get TypeId 'connect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[connect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[connect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[disconnect] TypeId is read from level or verb, which its records may lack: those get TypeId 'disconnect', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[disconnect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[query] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[update] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[delete] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[disconnect] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[query] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[update] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[delete] required ['EventTime', 'EventDetail/TypeId'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

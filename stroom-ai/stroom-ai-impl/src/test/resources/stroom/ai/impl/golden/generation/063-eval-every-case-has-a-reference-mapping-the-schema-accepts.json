@@ -131,9 +131,9 @@
   "problems": [],
   "warnings": [
    "[user access] TypeId is read from result, which its records may lack: those get TypeId 'user access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[user access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[user access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[device access] TypeId is read from result, which its records may lack: those get TypeId 'device access', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[device access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[device access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

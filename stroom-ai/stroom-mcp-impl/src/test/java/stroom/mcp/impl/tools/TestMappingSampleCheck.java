@@ -124,6 +124,15 @@ class TestMappingSampleCheck {
                           + "which reports the element written after it (often Data) as unexpected. Give the entry "
                           + "a default, or any_of with a field that is filled.");
 
+        // A value the mapping's nil_values leaves out is empty too: seen, '-' counted as a value.
+        final String dashed = sample.replace("<note>b</note>", "<cmd>-</cmd><note>b</note>");
+        json.put("nil_values", List.of("-"));
+        assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(dashed), null,
+                TranslationWorld.SCHEMA, false, Clock.systemUTC()).get("warnings")))
+                .anySatisfy(warning -> assertThat(warning).contains("Command is required by the schema, but its "
+                                                                    + "input ('cmd') is empty in 1 of the 2"));
+        json.remove("nil_values");
+
         // Given a default: nothing to say.
         command.put("default", "unknown");
         assertThat(strings(MappingSampleCheck.check(TranslationMapping.fromJson(json), List.of(sample), null,
