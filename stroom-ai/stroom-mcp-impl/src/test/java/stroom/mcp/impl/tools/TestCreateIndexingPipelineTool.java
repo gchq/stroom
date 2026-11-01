@@ -193,7 +193,26 @@ class TestCreateIndexingPipelineTool {
         template("lucene", List.of(slot("xsltFilter", "XSLTFilter", "xslt"),
                 slot("indexingFilter", "IndexingFilter", "index")), List.of());
 
-        assertThat(call("").text()).isEqualTo("This template indexes into Lucene: give index_uuid");
+        assertThat(call("").text()).isEqualTo("This template indexes into Lucene: give index_uuid (a Lucene index), "
+                                              + "or, for Elasticsearch, give the template_uuid of an Elasticsearch "
+                                              + "indexing template (find_pipeline_templates stage=indexing gives each "
+                                              + "one's backend)");
+    }
+
+    @Test
+    void anElasticsearchIndexGivenToALuceneTemplateNamesTheTemplateAsTheFault() {
+        // Seen in Ask Stroom AI: told the Elastic Index doc it had just made didn't exist, the agent tried
+        // index_name and cluster_uuid before finding it had picked the Lucene template.
+        template("lucene", List.of(slot("xsltFilter", "XSLTFilter", "xslt"),
+                slot("indexingFilter", "IndexingFilter", "index")), List.of());
+        elasticIndex("acme-v1", "c");
+
+        assertThat(call("\"index_uuid\": \"i\"").text()).isEqualTo("Index 'ACME-ES' is an Elasticsearch index, and "
+                                                                   + "this template indexes into Lucene: give the "
+                                                                   + "template_uuid of an Elasticsearch indexing "
+                                                                   + "template (find_pipeline_templates "
+                                                                   + "stage=indexing gives each one's backend)");
+        Mockito.verify(pipelines, Mockito.never()).fromTemplate(any(), any(), any());
     }
 
     @Test
