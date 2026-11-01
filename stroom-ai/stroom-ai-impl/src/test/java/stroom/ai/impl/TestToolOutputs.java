@@ -97,10 +97,17 @@ class TestToolOutputs {
     void theStubOfJsonSaysWhatItHolds() {
         final String object = ToolOutputs.forSaving("{\"build\":\"b\",\"steps\":[],\"next\":{\"step\":\"x\"}}");
         assertThat(ToolOutputs.stub(object, "/p"))
-                .contains("It is a JSON object with the fields build, steps, next.")
+                .contains("It is a JSON object with the fields build, steps (0 items), next (object: step).")
                 .contains("`.next`");
 
         assertThat(ToolOutputs.stub("[1, 2, 3]", "/p")).contains("It is a JSON array of 3 items.");
+        // Seen: `.name` guessed where the items' key was `field`, a jq call each time.
+        final String fields = ToolOutputs.forSaving("{\"fields\": [{\"field\": \"user\", \"fill_rate\": 1.0}], "
+                                                    + "\"hint\": \"x\"}");
+        assertThat(ToolOutputs.stub(fields, "/p")).contains("It is a JSON object with the fields fields (1 items, each "
+                                                            + "an object with field, fill_rate), hint.");
+        assertThat(ToolOutputs.stub("[{\"a\": 1, \"b\": 2}]", "/p"))
+                .contains("It is a JSON array of 1 items, each an object with a, b.");
         assertThat(ToolOutputs.stub("row 1", "/p")).doesNotContain("JSON");
     }
 

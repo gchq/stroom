@@ -49,6 +49,8 @@ final class ToolOutputs {
     static final int PREVIEW_CHARS = 1_500;
     /// The most field names of a large JSON object listed in its stub.
     static final int MAX_LISTED_FIELDS = 30;
+    /// The most keys of a nested object, or of an array's first item, listed.
+    static final int MAX_LISTED_KEYS = 12;
     /// Results the user must be shown in full (see [#mustShowInFull(String)]) longer than this are stubbed too.
     static final int MAX_SHOWN_IN_FULL_CHARS = 64_000;
     /// The field of an MCP server's result that says what it is, e.g. `needs_review`.
@@ -239,12 +241,18 @@ final class ToolOutputs {
             return "";
         }
         if (json.isArray()) {
-            return "It is a JSON array of " + json.size() + " items. Pick out the parts you need with the jq "
-                   + "tool, e.g. `.[0]`, or `length`.\n\n";
+            return "It is a JSON array of " + json.size() + " items" + itemShape(json) + ". Pick out the parts you "
+                   + "need with the jq tool, e.g. `.[0]`, or `length`.\n\n";
         }
         final List<String> fields = new ArrayList<>();
         json.fieldNames().forEachRemaining(fields::add);
-        final String listed = String.join(", ", fields.subList(0, Math.min(fields.size(), MAX_LISTED_FIELDS)))
+        // Each field with what it holds, an object's or an array's items' keys too. Seen: the agent guessed `.name`
+        // where the items' key was `field`, and an array's key that wasn't there, a jq call each.
+        final List<String> described = new ArrayList<>();
+        for (final String field : fields.subList(0, Math.min(fields.size(), MAX_LISTED_FIELDS))) {
+            described.add(field + shape(json.get(field)));
+        }
+        final String listed = String.join(", ", described)
                               + (fields.size() > MAX_LISTED_FIELDS
                 ? " and " + (fields.size() - MAX_LISTED_FIELDS) + " more"
                 : "");
@@ -253,6 +261,34 @@ final class ToolOutputs {
                 : "." + fields.getLast();
         return "It is a JSON object with the fields " + listed + ". Pick out the parts you need with the jq tool, "
                + "e.g. `" + example + "`.\n\n";
+    }
+
+    // What a field holds, in brackets: an object's keys, an array's length and its first item's keys; nothing for
+    // a single value.
+    private static String shape(final JsonNode value) {
+        if (value == null || value.isValueNode()) {
+            return "";
+        }
+        if (value.isObject()) {
+            return " (object: " + keys(value) + ")";
+        }
+        return " (" + value.size() + " items" + itemShape(value) + ")";
+    }
+
+    // An array's items' keys, from its first item, when it is an object.
+    private static String itemShape(final JsonNode array) {
+        return !array.isEmpty() && array.get(0).isObject()
+                ? ", each an object with " + keys(array.get(0))
+                : "";
+    }
+
+    private static String keys(final JsonNode object) {
+        final List<String> keys = new ArrayList<>();
+        object.fieldNames().forEachRemaining(keys::add);
+        return String.join(", ", keys.subList(0, Math.min(keys.size(), MAX_LISTED_KEYS)))
+               + (keys.size() > MAX_LISTED_KEYS
+                ? " and " + (keys.size() - MAX_LISTED_KEYS) + " more"
+                : "");
     }
 
     // The output read as a JSON object or array, or null if it is something else.
