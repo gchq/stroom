@@ -112,6 +112,38 @@ class TestBuildDataSplitterTool {
     }
 
     @Test
+    void recordsWiderThanTheHeaderAreNotSavedAndAMissingQuoteIsNamed() {
+        // Seen in both runs of a 185-column CSV: no quote in the spec, "Every line parsed", and quoted values
+        // holding a comma split, so every field after them took the next one's value.
+        final String quoted = "time,user,group,action\n2026-10-01T10:00:00Z,alice,\"OU=Staff,DC=example\",login\n"
+                              + "2026-10-01T10:05:00Z,bob,\"OU=Admins,DC=example\",logout\n";
+        final Map<String, Object> spec = Map.of("kind", "delimited", "delimiter", ",", "header", true);
+
+        final Map<String, Object> unquoted = world.call(tool, Map.of("sample", quoted, "spec", spec,
+                "save_as", "ACME-SPLITTER", "build", "acme-v1"));
+
+        assertThat(unquoted).containsEntry("wider_than_header", 2).doesNotContainKey("saved");
+        assertThat((String) unquoted.get("hint")).startsWith("2 record(s) have more cells than the header names")
+                .contains("add \"quote\": \"\\\"\" to the spec");
+        assertThat((String) unquoted.get("not_saved")).contains("more cells than the header");
+
+        final Map<String, Object> withQuote = new LinkedHashMap<>(spec);
+        withQuote.put("quote", "\"");
+        final Map<String, Object> fixed = world.call(tool, Map.of("sample", quoted, "spec", withQuote));
+        assertThat(fixed).doesNotContainKey("wider_than_header");
+        assertThat((String) fixed.get("hint")).startsWith("Every line parsed.");
+    }
+
+    @Test
+    void aShortHeaderWithoutQuotesSaysToCompareARecordWithIt() {
+        final Map<String, Object> result = world.call(tool, Map.of("sample", "time,user\n2026-10-01,alice,extra\n",
+                "spec", Map.of("kind", "delimited", "delimiter", ",", "header", true)));
+
+        assertThat(result).containsEntry("wider_than_header", 1);
+        assertThat((String) result.get("hint")).contains("compare a wide record with the header");
+    }
+
+    @Test
     void everySampleStreamMustParseNotJustTheFirst() {
         Mockito.when(world.sampleStreamTexts.read(List.of(7L, 8L))).thenReturn(new SampleStreamTexts.Texts(
                 orderedOf("stream 7", CSV, "stream 8", "time,user,action\n2026-10-01T11:00:00Z,carol,login\n"
