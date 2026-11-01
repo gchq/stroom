@@ -6,7 +6,9 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs">
+        <form:FormGroup identity="elasticClusterSettingsConnectionURLs"
+                        label="Connection URLs"
+                        helpText="The URLs of the cluster's nodes, one per line, each with its scheme and port, e.g. https://es-node-1:9200. Requests are spread across the nodes listed, so listing several keeps Stroom connected when one is down. Blank lines are ignored.">
             <g:TextArea ui:field="connectionUrls" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsAPIKey"
