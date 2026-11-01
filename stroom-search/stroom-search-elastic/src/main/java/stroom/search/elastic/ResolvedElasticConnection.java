@@ -28,9 +28,11 @@ import java.util.Objects;
 ///
 /// @param connectionUrls          The URLs of the cluster nodes.
 /// @param apiKey                  The base64 encoded Elasticsearch API key, or `null` if none is used.
+/// @param compressRequests        Whether to compress request bodies with gzip and accept compressed responses.
 /// @param httpClientConfiguration The HTTP client configuration, with key/trust stores resolved.
 public record ResolvedElasticConnection(List<String> connectionUrls,
                                         String apiKey,
+                                        boolean compressRequests,
                                         HttpClientConfiguration httpClientConfiguration) {
 
     public ResolvedElasticConnection {
@@ -47,6 +49,7 @@ public record ResolvedElasticConnection(List<String> connectionUrls,
                ", apiKey=" + (apiKey == null
                 ? "null"
                 : "<redacted>") +
+               ", compressRequests=" + compressRequests +
                '}';
     }
 }

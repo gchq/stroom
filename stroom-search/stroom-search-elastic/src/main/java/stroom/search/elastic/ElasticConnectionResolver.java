@@ -84,6 +84,7 @@ public class ElasticConnectionResolver {
         return new ResolvedElasticConnection(
                 NullSafe.list(connectionConfig.getConnectionUrls()),
                 resolveApiKey(connectionConfig.getApiKeyName()),
+                NullSafe.isTrue(connectionConfig.getCompressRequests()),
                 httpConfigResolver.resolve(httpClientConfig));
     }
 
