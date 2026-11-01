@@ -761,7 +761,8 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
   (`ToolDeadline`: the larger of `toolTimeLimit` and `queryTimeLimit`, paused while the user answers a form). Every
   call is audited, refusals included.
 * **Resources** (`McpResources`): `stroom://guides` (an index), `stroom://guide/{name}` (agent-instructions, cef,
-  data-splitter, documentation, event-logging, indexing, json-input, reference-data, visualisation, xslt), and
+  data-splitter, documentation, event-logging, indexing, json-input, mapping, reference-data, visualisation, xslt),
+  and
   `stroom://conventions/{name}` (ecs, stroom-flat). The same for every user. In the chat the same guides are read
   with `get_instructions guide=`.
 * The endpoint isn't in the Swagger spec, which lists JAX-RS resources only. Clients get the tools from `tools/list`,

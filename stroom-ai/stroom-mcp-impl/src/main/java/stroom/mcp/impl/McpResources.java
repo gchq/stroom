@@ -45,9 +45,9 @@ class McpResources {
     static final String MARKDOWN = "text/markdown";
     static final String YAML = "text/yaml";
     /// The guide template's description, which names every guide.
-    static final String GUIDE_DESCRIPTION = "Working guides: event-logging, xslt, data-splitter, json-input, "
-                                            + "reference-data, indexing, cef, documentation, agent-instructions, "
-                                            + "visualisation.";
+    static final String GUIDE_DESCRIPTION = "Working guides: event-logging, xslt, mapping, data-splitter, "
+                                            + "json-input, reference-data, indexing, cef, documentation, "
+                                            + "agent-instructions, visualisation.";
     static final String GUIDES_DESCRIPTION = "Index of the working guides.";
     static final String CONVENTION_DESCRIPTION = "A field convention profile.";
 

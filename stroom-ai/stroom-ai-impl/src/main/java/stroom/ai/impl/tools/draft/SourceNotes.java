@@ -60,6 +60,8 @@ public final class SourceNotes {
     /// Between the source and the title in a kept document's name: `<source> reference - <title>`.
     public static final String REFERENCE_INFIX = " reference - ";
 
+    // What a draft entry read from a field's own values, kept when a note maps the field elsewhere.
+    private static final List<String> KEPT_FROM_VALUES = List.of("time_format", "timezone");
     private static final Pattern BLOCK = Pattern.compile("<!-- stroom-mcp source notes\n(.*?)\n-->", Pattern.DOTALL);
     private static final Pattern SUCCESS = Pattern.compile(
             "\\b(success|succeeded|successful|ok|allow(ed)?|accept(ed)?|granted|pass(ed)?)\\b",
@@ -285,7 +287,17 @@ public final class SourceNotes {
             if (path.startsWith(EVENT_DETAIL) && !"EventDetail/TypeId".equals(path)) {
                 detailFields.add(entry);
             } else {
-                // The dictionary's word wins over a guess from the field's name.
+                // The dictionary's word wins over a guess from the field's name; but what the draft read from the
+                // field's own values stays (its time format and zone). Seen: TimeCreated replaced by the note's entry
+                // for the same epoch field lost its time_format, and the agent spent turns finding the syntax.
+                common.stream()
+                        .filter(existing -> name.equals(existing.get("field")))
+                        .findFirst()
+                        .ifPresent(existing -> KEPT_FROM_VALUES.forEach(key -> {
+                            if (existing.get(key) != null && !entry.containsKey(key)) {
+                                entry.put(key, existing.get(key));
+                            }
+                        }));
                 common.removeIf(existing -> path.equals(existing.get("path")) || name.equals(existing.get("field")));
                 common.add(entry);
             }
