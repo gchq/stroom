@@ -28,6 +28,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,9 +59,12 @@ import java.util.stream.Collectors;
 /// Repeated failures. Seen in a test environment: an agent called build_translation_xslt over a hundred times with
 /// near-identical mappings, each a minute and more, adding backslashes to a regex that failed for another reason.
 /// Per session, a tool's failures in a row are counted: from the fifth (and every fifth after) the reply says to
-/// step back, with what to do instead for that tool. The same call (tool and arguments) failing three times is
-/// answered from that failure after, without running it again, for a tool whose answer to the same arguments
-/// can't change. A success resets both.
+/// step back, with what to do instead for that tool, when a problem has come back in the run; when each was a new
+/// one, the agent is getting on, so only from the tenth. Seen: five build_translation_xslt failures in a row, each
+/// a different problem fixed in turn (when not a list, a bare Purpose, mapping and changes together, one TypeId for
+/// two kinds, no name to save under), told to start again from a clean mapping. The same call (tool and arguments)
+/// failing three times is answered from that failure after, without running it again, for a tool whose answer to
+/// the same arguments can't change. A success resets both.
 @Singleton
 public class ToolCallGuard {
 
@@ -150,6 +154,7 @@ public class ToolCallGuard {
         if (failure == null) {
             synchronized (failures) {
                 failures.streaks.remove(name);
+                failures.problems.remove(name);
                 failures.calls.remove(new CallKey(name, digest));
             }
             noted = result;
@@ -244,8 +249,17 @@ public class ToolCallGuard {
             same.failures++;
             same.message = message;
             final int streak = failures.streaks.merge(name, 1, Integer::sum);
-            if (streak >= STREAK && (streak - STREAK) % STREAK == 0) {
-                return "That is " + streak + " failed " + name + " calls in a row. " + advice;
+            final Set<String> met = failures.problems.computeIfAbsent(name, key -> new HashSet<>());
+            met.add(problem(message));
+            // Each a new problem: getting on, so told later.
+            final boolean eachNew = met.size() == streak;
+            final int every = eachNew
+                    ? 2 * STREAK
+                    : STREAK;
+            if (streak % every == 0) {
+                return "That is " + streak + " failed " + name + " calls in a row" + (eachNew
+                        ? ", each a new problem"
+                        : "") + ". " + advice;
             }
             if (same.failures > 1) {
                 return "The same arguments as a call that already failed (" + same.failures + " times): change "
@@ -253,6 +267,13 @@ public class ToolCallGuard {
             }
             return null;
         }
+    }
+
+    /// @param message What a failure said.
+    /// @return It as failures are compared, to tell a problem come back from a new one: its numbers and quoted
+    /// values left out (where a regex stops matching, a count of records).
+    static String problem(final String message) {
+        return NullSafe.string(message).replaceAll("\\d+", "#").replaceAll("'[^']*'", "''");
     }
 
     /// @param result What a tool returned.
@@ -457,6 +478,8 @@ public class ToolCallGuard {
 
         private final Map<CallKey, SameCall> calls = new LinkedHashMap<>();
         private final Map<String, Integer> streaks = new LinkedHashMap<>();
+        // The problems a tool's run of failures has met, by tool, each as compared ([#problem(String)]).
+        private final Map<String, Set<String>> problems = new LinkedHashMap<>();
         private volatile long usedMs;
     }
 }

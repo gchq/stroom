@@ -732,7 +732,8 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
 * **Lenient arguments** (`ToolCallGuard`, `MojibakeRepair`): unknown arguments are dropped and reported, choices given
   with stray punctuation or case are read as meant, and text mangled by a Windows code page is repaired; the notes go
   in `argument_notes`. After three identical failures a call is answered from the last failure without running
-  again, and from the fifth failure in a row the reply says to step back. JSON given to a text argument is passed on
+  again, and from the fifth failure in a row the reply says to step back; when each failure was a new problem, only
+  from the tenth (seen: five different problems fixed in turn, told to start again from a clean mapping, 2026-11-02). JSON given to a text argument is passed on
   as JSON (2026-10-31).
 * **Workspace arguments** (`WorkspaceArguments`): `{"$workspace": path, "jq": ...}` or `"$workspace:path"` in an
   argument is replaced by the file's content, and taints the run (seen in testing: a 186 KB mapping saved to the
