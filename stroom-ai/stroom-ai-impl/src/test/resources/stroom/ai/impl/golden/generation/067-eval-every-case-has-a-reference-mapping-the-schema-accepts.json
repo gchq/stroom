@@ -216,17 +216,17 @@
   "problems": [],
   "warnings": [
    "[logon] TypeId is read from logger, which its records may lack: those get TypeId 'logon', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logon] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[logoff] TypeId is read from logger, which its records may lack: those get TypeId 'logoff', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logoff] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logoff] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[logon-failed] TypeId is read from logger, which its records may lack: those get TypeId 'logon-failed', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[logon-failed] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon-failed] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[invoice] TypeId is read from logger, which its records may lack: those get TypeId 'invoice', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[invoice] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[invoice] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[payment-error] TypeId is read from logger, which its records may lack: those get TypeId 'payment-error', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[payment-error] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[payment-error] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[config] TypeId is read from logger, which its records may lack: those get TypeId 'config', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[config] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[config] required ['EventTime', 'EventSource/Generator'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "extract names ['failed_from'], which nothing reads: map each to the element that means it (a Data entry if nothing else fits), or leave it out of names ('')."
   ],
   "events": [

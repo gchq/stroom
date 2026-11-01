@@ -94,10 +94,10 @@
   "warnings": [
    "xpath \"upper-case(//data[@name='user']/@value)\" starts at the document root (//data[@name='user']/@value), not at the record. Stepping hands the XSLT one record at a time, so there it finds that record's value; processing reads a stream's records as one document, where //data[@name='user']/@value finds every record's: a function taking one value fails the whole stream (\"A sequence of more than one item is not allowed\"), and otherwise every event gets the first record's value. Start from the record: .//data[@name='user']/@value (anywhere below it), or the path from the record's own children. Fine only for a value outside the records.",
    "[logon] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
-   "[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[logon] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[other] TypeId is read from action, which its records may lack: those get TypeId 'other', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
    "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
-   "[other] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[other] required ['EventTime'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

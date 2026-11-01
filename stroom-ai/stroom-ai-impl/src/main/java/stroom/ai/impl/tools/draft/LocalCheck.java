@@ -929,11 +929,15 @@ public final class LocalCheck {
                     taken++;
                     final Object record = records.get(n);
                     final Map<String, String> values = extracted.get(n);
-                    if (fields.stream().allMatch(field -> !hasText(derived.contains(field)
-                            ? (values == null
-                                    ? null
-                                    : values.get(field))
-                            : valueOf(record, field)))) {
+                    // A value the mapping's nil_values leaves out is empty too (seen: '-' counted as a value).
+                    if (fields.stream().allMatch(field -> {
+                        final String value = derived.contains(field)
+                                ? (values == null
+                                        ? null
+                                        : values.get(field))
+                                : valueOf(record, field);
+                        return !hasText(value) || mapping.nilValues().contains(value.strip());
+                    })) {
                         empty++;
                     }
                 }
