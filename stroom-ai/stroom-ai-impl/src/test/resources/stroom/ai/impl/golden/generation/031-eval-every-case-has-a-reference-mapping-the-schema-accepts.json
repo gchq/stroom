@@ -81,7 +81,7 @@
   "ok": true,
   "problems": [],
   "warnings": [
-   "[alert] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[alert] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[alert] Data 'source_ip' looks like EventSource/Client/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",
    "[alert] Data 'destination_ip' looks like EventSource/Server/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",
    "[alert] Data 'destination_port' looks like EventSource/Server/Port, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else."

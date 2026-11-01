@@ -87,8 +87,8 @@
    "[logoff] Event/EventDetail/Authenticate needs one of ['User', 'Device', 'Group']. Already mapped elsewhere in the event: EventSource/User/Id (field 'roles'). If the action is about one of them, map the same input here as well (EventDetail/Authenticate/User/Id), and keep the existing mapping: it says something different"
   ],
   "warnings": [
-   "[logon] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
-   "[logoff] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[logon] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[logoff] required ['EventSource'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

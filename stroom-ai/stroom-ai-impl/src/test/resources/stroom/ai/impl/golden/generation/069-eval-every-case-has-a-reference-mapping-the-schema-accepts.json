@@ -100,7 +100,7 @@
   "problems": [],
   "warnings": [
    "[session] TypeId is read from its input, which its records may lack: those get TypeId 'session', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[session] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[session] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {
