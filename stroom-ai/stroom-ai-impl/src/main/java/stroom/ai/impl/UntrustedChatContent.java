@@ -31,8 +31,9 @@ import java.util.function.Predicate;
 /// Whether a stored chat already holds content that could hold instructions planted by someone other than the
 /// user, so a run of it starts tainted (see [AiChatRunManager#markTainted(int)]).
 ///
-/// It does when it holds an attachment or Stroom data put in the chat (a dashboard, query or table), or the
-/// result of a tool that reads untrusted content. A result whose tool can't be told (an old row without the
+/// It does when it holds an attachment or Stroom data put in the chat (a dashboard, query or table), a question
+/// whose attached tab's note previews some of the tab's content, or the result of a tool that reads untrusted
+/// content. A result whose tool can't be told (an old row without the
 /// tool's name, a row that can't be read, a tool since removed) counts. Results of tools that read only trusted
 /// content (e.g. the time, or the chat's own task list) don't count.
 final class UntrustedChatContent {
@@ -53,10 +54,25 @@ final class UntrustedChatContent {
     /// @param history        The chat's stored messages.
     /// @param readsUntrusted Whether a tool, by name, reads untrusted content: true for any tool that isn't one of
     ///                       Stroom's own (e.g. an MCP server's), or that Stroom no longer has.
+    /// @param tabPreviewed   Whether the tab snapshot, by the id recorded on a question, is shown in part in the
+    ///                       note the model is given with it.
     /// @return True if the chat holds content that could hold planted instructions.
-    static boolean isIn(final List<AiChatMessage> history, final Predicate<String> readsUntrusted) {
+    static boolean isIn(final List<AiChatMessage> history,
+                        final Predicate<String> readsUntrusted,
+                        final Predicate<Integer> tabPreviewed) {
         if (history.stream().anyMatch(message -> UNTRUSTED_DATA_TYPES.contains(message.getMessageType()))) {
             return true;
+        }
+        // Seen in review: a tab's note previews its small parts (a stream's data, an XSLT), yet the chat wasn't
+        // tainted unless a tool read the tab.
+        for (final AiChatMessage message : history) {
+            if (message.getMessageType() == AiMessageType.USER_MESSAGE
+                && message.getAttachmentId() != null
+                && tabPreviewed.test(message.getAttachmentId())) {
+                LOGGER.debug(() -> "Message " + message.getId() + " of chatId=" + message.getChatId()
+                                   + " was sent with a tab whose note previews its content");
+                return true;
+            }
         }
         final Map<String, String> callTools = callTools(history);
         for (final AiChatMessage message : history) {
