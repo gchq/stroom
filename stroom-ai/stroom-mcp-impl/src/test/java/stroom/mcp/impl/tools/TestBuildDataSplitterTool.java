@@ -105,6 +105,47 @@ class TestBuildDataSplitterTool {
     }
 
     @Test
+    void recordsSpanningLinesInAQuotedValueAreNotSavedUntilTheSpecSaysSo() {
+        // Seen with Netskope: the quote added, "Every line parsed" on the text profiled, and 40 records further in
+        // split in two by processing, their second parts matching no rule; found only after the streams were
+        // processed. The agent had given buffer_size, so the streams weren't measured at all.
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+        Mockito.when(world.streamReader.recordLengths(7L, '"')).thenReturn(new StreamReader.PartLengths(List.of(
+                new RecordLengths.Measured(30_033, 159_000_000, new RecordLengths.Span(751_409, 22_023),
+                        new RecordLengths.Span(751_410, 22_023), 20, true)), 1));
+        final Map<String, Object> spec = Map.of("kind", "delimited", "delimiter", ",", "header", true, "quote", "\"");
+
+        final Map<String, Object> split = world.call(tool, Map.of("stream_ids", List.of(7), "spec", spec,
+                "buffer_size", 3_010_000, "save_as", "ACME-SPLITTER", "build", "acme-v1"));
+
+        assertThat(split).containsEntry("spans_lines", 20).containsEntry("buffer_size", 3_010_000)
+                .doesNotContainKey("saved");
+        assertThat((String) split.get("hint")).startsWith("20 record(s) of the sample streams have a quoted value "
+                                                          + "holding a line break")
+                .contains("\"quoted_newlines\": true");
+        assertThat((String) split.get("not_saved")).contains("quoted_newlines");
+
+        final Map<String, Object> withNewLines = new LinkedHashMap<>(spec);
+        withNewLines.put("quoted_newlines", true);
+        final Map<String, Object> fixed = world.call(tool, Map.of("stream_ids", List.of(7), "spec", withNewLines,
+                "save_as", "ACME-SPLITTER", "build", "acme-v1"));
+        assertThat(fixed).doesNotContainKey("spans_lines").doesNotContainKey("not_saved")
+                .containsEntry("longest_record", 751_410).containsKey("saved");
+    }
+
+    @Test
+    void withoutAQuoteTheStreamsAreMeasuredByTheirLines() {
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        world.call(tool, Map.of("stream_ids", List.of(7), "buffer_size", 100_000, "spec", Map.of("kind",
+                "delimited", "delimiter", ",", "header", true)));
+
+        Mockito.verify(world.streamReader, Mockito.never()).recordLengths(Mockito.anyLong(), Mockito.any());
+    }
+
+    @Test
     void textGivenInsteadOfStreamsIsNotMeasuredAgain() {
         world.call(tool, Map.of("sample", CSV));
 
