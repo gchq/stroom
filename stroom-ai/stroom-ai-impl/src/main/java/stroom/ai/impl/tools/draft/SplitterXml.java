@@ -55,8 +55,11 @@ public final class SplitterXml {
     /// schema) read them.
     public static final Pattern ID_PATTERN = Pattern.compile("[a-z][a-zA-Z0-9]*");
     /// A blank line at the place the records' split would read the next: white space and its new line, or white
-    /// space to the end.
-    public static final String BLANK_LINE = "^[^\\S\\n]*\\n|^[^\\S\\n]+$";
+    /// space to the end. The `^` is outside the alternatives, so Java anchors the search: a line that isn't blank
+    /// fails at its first character. With `^` in each alternative, every record's check scanned the whole read
+    /// buffer (seen: with a 3,010,000-character buffer, a 211 MB stream ran over 745 seconds, against 241 with
+    /// 210,000).
+    public static final String BLANK_LINE = "^(?:[^\\S\\n]*\\n|[^\\S\\n]+$)";
     /// The catch_all regex over a record: all of it, without the new line at its end; never the new line alone
     /// that a record the spec matched leaves.
     public static final String UNPARSED_RECORD = "^(?=.*\\S)(.*?)\\n?$";
