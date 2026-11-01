@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -71,6 +72,8 @@ public final class MappingFacts {
     private static final Pattern CALL_START = Pattern.compile("[\\w:.-]+\\(", Pattern.UNICODE_CHARACTER_CLASS);
     // Pattern letters of Java's SimpleDateFormat and DateTimeFormatter; any other letter must be quoted.
     private static final String PATTERN_LETTERS = "GuyDMLdQqYwWEecFaHkKhmsSAnNVzOXxZp";
+    // An epoch time described in words rather than named (epoch_s and the like).
+    private static final Pattern EPOCH_WORDS = Pattern.compile("\\b(?:epoch|unix)\\b");
 
     private MappingFacts() {
         // Static only.
@@ -366,8 +369,15 @@ public final class MappingFacts {
 
     /// @param pattern A Java time pattern.
     /// @return The unquoted letters Java would reject in it (the T in `yyyy-MM-ddTHH:mm:ss`), with the pattern
-    /// fixed; null if it has none.
+    /// fixed; for an epoch time described in words (`epoch seconds`), the name to write instead; null if it has
+    /// no problem.
     public static String patternProblem(final String pattern) {
+        final String epoch = epochName(pattern);
+        if (epoch != null) {
+            // Seen: 'epoch seconds' told to quote its letters, "ep'o'ch sec'o'nds", which isn't a time at all.
+            return "time_format " + ToolText.repr(pattern) + " describes an epoch time: write it as " + epoch
+                   + " (epoch_s, epoch_ms, epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds)";
+        }
         boolean quoted = false;
         final Set<String> bad = new TreeSet<>();
         final StringBuilder fixed = new StringBuilder();
@@ -386,6 +396,24 @@ public final class MappingFacts {
         }
         return "time_format " + ToolText.repr(pattern) + " has unquoted letters " + ToolText.list(bad)
                + "; quote them, e.g. " + ToolText.repr(fixed.toString());
+    }
+
+    // The epoch time format a pattern describes in words (epoch seconds, unix time in ms), or null.
+    private static String epochName(final String pattern) {
+        final String words = pattern.strip().toLowerCase(Locale.ROOT);
+        if (!EPOCH_WORDS.matcher(words).find()) {
+            return null;
+        }
+        if (words.contains("nano") || words.matches(".*\\bns\\b.*")) {
+            return "epoch_ns";
+        }
+        if (words.contains("micro") || words.matches(".*\\bus\\b.*")) {
+            return "epoch_us";
+        }
+        if (words.contains("milli") || words.matches(".*\\bms\\b.*")) {
+            return "epoch_ms";
+        }
+        return "epoch_s";
     }
 
     /// @param mapping A mapping.

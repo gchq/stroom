@@ -51,6 +51,7 @@ public class BundledKnowledge implements AgentKnowledge {
             "event-logging",
             "indexing",
             "json-input",
+            "mapping",
             "reference-data",
             "visualisation",
             "xslt");
