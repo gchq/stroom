@@ -45,6 +45,20 @@ class TestSafeJq {
         assertThat(run(".events[0].host | ascii_upcase", input)).containsExactly("\"FW1\"");
     }
 
+    @Test
+    void jqsInAndDateFunctionsAreThere() throws Exception {
+        // Seen: IN and todate refused as unknown, a failed call each.
+        final JsonNode input = MAPPER.readTree("""
+                {"events": [{"host": "fw1", "t": 1790000000}, {"host": "fw2", "t": 1790000060},
+                            {"host": "fw3", "t": 0}]}""");
+
+        assertThat(run("[.events[] | select(.host | IN(\"fw1\", \"fw3\")) | .host]", input))
+                .containsExactly("[\"fw1\",\"fw3\"]");
+        assertThat(run(".events[0].host | IN(\"fw2\")", input)).containsExactly("false");
+        assertThat(run(".events[0].t | todate", input)).containsExactly("\"2026-09-21T14:13:20Z\"");
+        assertThat(run("\"2026-09-21T14:13:20Z\" | fromdate", input)).containsExactly("1790000000");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "env",

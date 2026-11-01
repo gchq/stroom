@@ -244,6 +244,29 @@ class TestDataPipelineTools {
     }
 
     @Test
+    void anEarlierStepsOwnOutIsKeptAndReadNextAndARunsOwnFileIsntNamed() {
+        // Seen: a step's out replaced by a file of the run's (so a step reading it by name found nothing), and the
+        // log naming a step file the run then deleted.
+        final PipelineTool pipeline = pipeline();
+
+        final String kept = run(pipeline, "{\"steps\":["
+                                         + "{\"tool\":\"grep\",\"args\":{\"path\":\"/outputs/events.log\","
+                                         + "\"pattern\":\"ERROR\",\"out\":\"/outputs/errors.txt\"}},"
+                                         + "{\"tool\":\"grep\",\"args\":{\"path\":\"/outputs/errors.txt\","
+                                         + "\"pattern\":\"fw1\"}}]}");
+        assertThat(kept).startsWith("Step 1 (grep): Wrote 100 matching line(s) to /outputs/errors.txt")
+                .contains("ERROR event 3 host=fw1");
+        assertThat(workspace.find(chatId, WorkspacePath.parse("/outputs/errors.txt"))).isPresent();
+
+        final String passed = run(pipeline, "{\"steps\":["
+                                           + "{\"tool\":\"grep\",\"args\":{\"path\":\"/outputs/events.log\","
+                                           + "\"pattern\":\"ERROR\"}},"
+                                           + "{\"tool\":\"grep\",\"args\":{\"pattern\":\"fw1\"}}]}");
+        assertThat(passed).startsWith("Step 1 (grep): Wrote 100 matching line(s) to step 2's input")
+                .doesNotContain("/outputs/pipeline/");
+    }
+
+    @Test
     void testPipelineIsConfined() {
         final PipelineTool pipeline = pipeline();
 

@@ -106,8 +106,15 @@ class TestStreamReader {
         world.addSegmented(7, StreamTypeNames.EVENTS, null, null, List.of(EVENT));
         world.errors.put(7L, List.of("You cannot view locked streams."));
 
+        // A stream still being written says so, and what to do: seen, five calls retrying one its processing hadn't
+        // finished writing.
         assertThatThrownBy(() -> reader.readRecords(7, 0, 1, null, 1000))
-                .hasMessage("Stroom could not read stream 7: You cannot view locked streams.");
+                .hasMessage("Stroom could not read stream 7: You cannot view locked streams. It is most likely still "
+                            + "being written (locked) by the processing that makes it: wait_for_processing for that "
+                            + "pipeline and its input streams, then read it again.");
+        world.errors.put(7L, List.of("Something else went wrong."));
+        assertThatThrownBy(() -> reader.readRecords(7, 0, 1, null, 1000))
+                .hasMessage("Stroom could not read stream 7: Something else went wrong.");
     }
 
     @Test
