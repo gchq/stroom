@@ -23,6 +23,7 @@ import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.El
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -47,6 +48,8 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     TextArea connectionUrls;
     @UiField
     SelectionBox<Credential> apiKey;
+    @UiField
+    CustomCheckBox compressRequests;
     @UiField
     Button setHttpClientConfig;
     @UiField
@@ -82,9 +85,20 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
     }
 
     @Override
+    public boolean isCompressRequests() {
+        return compressRequests.getValue();
+    }
+
+    @Override
+    public void setCompressRequests(final boolean compressRequests) {
+        this.compressRequests.setValue(compressRequests);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         connectionUrls.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
+        compressRequests.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -100,6 +114,11 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
 
     @UiHandler("apiKey")
     public void onApiKeyValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Credential> event) {
+        fireChange();
+    }
+
+    @UiHandler("compressRequests")
+    public void onCompressRequestsValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Boolean> event) {
         fireChange();
     }
 
