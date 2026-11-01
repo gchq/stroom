@@ -338,6 +338,48 @@ class TestErrorTriage {
     }
 
     @Test
+    void aLostRecordComesBeforeTheSchemaErrorsItCausesAndTheySaySo() {
+        // Seen: a Data Splitter losing records longer than half its buffer read on from part-way through a record,
+        // and the 58 schema errors that followed came first, so the agent chased them as a quoting fault.
+        final List<Marker> markers = new ArrayList<>();
+        for (int n = 0; n < 58; n++) {
+            markers.add(ErrorTriage.marker("ERROR", "schemaFilter", "Value 'DC=org\",-,SAML' is not a valid value "
+                                                                    + "for 'integer'.", null));
+        }
+        for (int n = 0; n < 4; n++) {
+            markers.add(ErrorTriage.marker("ERROR", "dsParser", "Top level expression 'split[1] : <split "
+                                                                + "delimiter=\"\\n\">' matched too much content "
+                                                                + "and exhausted the buffer. Attempting recovery...",
+                    null));
+        }
+        markers.add(ErrorTriage.marker("WARNING", "translationFilter", "A warning of its own", null));
+
+        final List<Map<String, Object>> groups = groups(RULES.triage(markers, Set.of("translationFilter")));
+
+        assertThat(groups.getFirst()).containsEntry("element", "dsParser").containsEntry("cause", true)
+                .doesNotContainKey("may_follow_from");
+        assertThat(groups.get(1)).containsEntry("element", "schemaFilter").containsEntry("count", 58);
+        assertThat((String) groups.get(1).get("may_follow_from"))
+                .isEqualTo("The dsParser errors listed first lose text, so what is read after it is misread: these "
+                           + "may follow from them. Fix those first, then process again before working on these.");
+        assertThat(groups).filteredOn(group -> "translationFilter".equals(group.get("element"))).singleElement()
+                .satisfies(group -> assertThat(group).containsEntry("class", "review").containsKey("may_follow_from"));
+    }
+
+    @Test
+    void withoutALostRecordGroupsKeepTheirOrderAndSayNothingOfCauses() {
+        final List<Marker> markers = List.of(
+                ErrorTriage.marker("ERROR", "schemaFilter", "Value 'x' is not a valid value for 'integer'.", null),
+                ErrorTriage.marker("ERROR", "schemaFilter", "Value 'y' is not a valid value for 'integer'.", null),
+                ErrorTriage.marker("ERROR", "schemaFilter", "Element 'Foo' is not valid.", null));
+
+        final List<Map<String, Object>> groups = groups(RULES.triage(markers, Set.of()));
+
+        assertThat(groups.getFirst()).containsEntry("count", 2);
+        assertThat(groups).allSatisfy(group -> assertThat(group).doesNotContainKeys("cause", "may_follow_from"));
+    }
+
+    @Test
     void retriesOfAnOverloadedClusterRunningOutSaysToProcessAgainOnceItHasCapacity() {
         // As Stroom reports it since #5958, when the documents Elasticsearch was too busy for are still refused.
         final List<Map<String, Object>> groups = groups(RULES.triage(List.of(ErrorTriage.marker("FATAL",

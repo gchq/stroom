@@ -676,8 +676,10 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
                     if (group.get("records_affected") != null) {
                         brief.put("records_affected", group.get("records_affected"));
                     }
-                    if (group.get("listed_only") != null) {
-                        brief.put("listed_only", group.get("listed_only"));
+                    for (final String key : List.of("listed_only", "cause", "may_follow_from")) {
+                        if (group.get(key) != null) {
+                            brief.put(key, group.get(key));
+                        }
                     }
                     if (Boolean.TRUE.equals(group.get("accepted"))) {
                         brief.put("accepted", true);

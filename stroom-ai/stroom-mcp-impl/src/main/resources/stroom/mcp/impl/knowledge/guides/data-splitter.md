@@ -66,9 +66,13 @@ of it is read: only a record up to half the buffer is sure to fit (`bufferSize` 
 longer one is lost, and processing reports that a top-level expression "matched too much content and exhausted the
 buffer". The buffer is an attribute of the converter's root element, `<dataSplitter ... version="3.0" bufferSize="100000">`
 (20,000 to 1,000,000,000), not a property of the DSParser element. `build_data_splitter` sets it from the sample's
-longest record (a record over several lines counts whole), at four times that, when the default leaves too little room. When records the sample didn't hold
-are lost for their length, build the converter again with `buffer_size` (about four times the longest record)
-and replace the saved one (`save_text_converter` with its `uuid`), then step and process those streams again.
+longest record (a record over several lines counts whole), at four times that, when the default leaves too little
+room; given `stream_ids`, it reads those streams through whole for it, not just the start it profiles. When
+records are lost for their length in other streams, `measure_records` with those streams gives their longest
+record and the `buffer_size` that holds it (a line, or with `quote`, the lines a quoted value spans joined; a
+record of a marked line or a blank-line block is measured only by its lines). Build the converter again with that
+`buffer_size` and replace the saved one (`save_text_converter` with its `uuid`), then step and process those
+streams again.
 Tell the user the size chosen and why.
 
 ## Delimited with a header row

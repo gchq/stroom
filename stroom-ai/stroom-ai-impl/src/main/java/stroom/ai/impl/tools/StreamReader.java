@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
@@ -57,6 +58,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -425,6 +427,49 @@ public class StreamReader {
                 return windows(in, encoding, windowStarts(fromByte, size, count, maxChars), maxBytes, maxChars);
             }
         } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
+        }
+    }
+
+    /// The longest line of each part of a raw stream, and, given the quote of delimited text whose quoted values
+    /// may hold new lines, the longest record with them joined ([RecordLengths]): what a Data Splitter's read buffer
+    /// must hold. Every part is read through once, decoded with its feed's encoding as a pipeline decodes it, holding
+    /// only a chunk at a time, so a stream of any size can be measured. Seen in testing: a buffer sized from a
+    /// sample of a 159 MB stream's start lost records of over 105,000 characters further in. Reading stops, with the
+    /// parts measured so far (the last one perhaps only partly), when the call's time is nearly up.
+    ///
+    /// @param streamId The stream.
+    /// @param quote    The quote character, or null to measure lines only.
+    /// @return Each part measured, in order, and how many parts the stream has.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public PartLengths recordLengths(final long streamId, final Character quote) {
+        requireViewData(streamId);
+        final List<RecordLengths.Measured> measured = new ArrayList<>();
+        try (final Source source = storeProvider.get().openSource(streamId)) {
+            final Charset charset = StreamCharsets.charset(encoding(source.getMeta()));
+            final long parts = Math.max(1, source.count());
+            for (int part = 0; part < parts; part++) {
+                if (part > 0 && timeIsUp()) {
+                    break;
+                }
+                try (final InputStreamProvider provider = source.get(part);
+                        final SegmentInputStream in = provider.get()) {
+                    in.includeAll();
+                    // Bytes the encoding can't decode are replaced, as a pipeline replaces them.
+                    final RecordLengths.Measured lengths = RecordLengths.measure(new InputStreamReader(in, charset),
+                            quote, StreamReader::timeIsUp);
+                    measured.add(lengths);
+                    if (!lengths.complete()) {
+                        break;
+                    }
+                }
+            }
+            return new PartLengths(measured, (int) Math.min(Integer.MAX_VALUE, parts));
+        } catch (final IOException | RuntimeException e) {
+            if (e instanceof final ToolTimeoutException timeout) {
+                throw timeout;
+            }
             LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
             throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
         }
@@ -869,6 +914,23 @@ public class StreamReader {
     /// @param fromByte  Where in the part it was taken from (it starts at the first line start at or after it).
     public record Window(String text, long firstLine, long fromByte) {
 
+    }
+
+    /// A raw stream's parts measured.
+    ///
+    /// @param measured Each part measured, in order; fewer than its parts when time ran out.
+    /// @param parts    How many parts the stream has.
+    public record PartLengths(List<RecordLengths.Measured> measured, int parts) {
+
+        /// @return True if every part was read through.
+        public boolean complete() {
+            return measured.size() == parts && measured.stream().allMatch(RecordLengths.Measured::complete);
+        }
+
+        /// @return The longest record as a Data Splitter reads it, over every part measured.
+        public int longest() {
+            return measured.stream().mapToInt(RecordLengths.Measured::longest).max().orElse(0);
+        }
     }
 
     private record CachedText(long at, RawText text) {
