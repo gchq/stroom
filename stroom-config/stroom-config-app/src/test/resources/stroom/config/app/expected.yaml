@@ -20,6 +20,7 @@ appConfig:
     allowApproveEverything: false
     askReadOnlyToolsAfterUntrustedContent: false
     builds:
+      maxProcessingTasks: 4
       workspaceFolder: "MCP Workspace"
     chatResponseCache:
       expireAfterAccess: null

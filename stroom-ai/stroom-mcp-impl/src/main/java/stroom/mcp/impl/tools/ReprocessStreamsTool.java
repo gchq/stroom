@@ -192,7 +192,7 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,
                 stringArg(call, CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG), streamIds,
                 ProcessorFilters.EVENTS);
-        final int maxTasks = ProcessorFilterWrites.REPROCESS_MAX_TASKS;
+        final int maxTasks = filterWrites.buildMaxTasks();
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("pipeline", pipeline.getName());
         details.put("streams", streamIds);

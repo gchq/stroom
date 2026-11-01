@@ -72,7 +72,7 @@ class TestReprocessStreamsTool {
         assertThat(gated.statuses()).containsExactly("needs_approval");
         assertThat(String.valueOf(TestCreateProcessorFilterTool.details(gated.gates().getFirst())
                 .get("earlier outputs"))).contains("superseded");
-        assertThat(w.created.getLast().getMaxProcessingTasks()).isEqualTo(1);
+        assertThat(w.created.getLast().getMaxProcessingTasks()).isEqualTo(4);
         assertThat(w.created.getLast().isEnabled()).isTrue();
         assertThat(gated.result().get("filter_id")).isEqualTo(9);
         assertThat(gated.result().get("enabled")).isEqualTo(true);

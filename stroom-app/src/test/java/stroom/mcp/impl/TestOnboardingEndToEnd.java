@@ -209,7 +209,7 @@ class TestOnboardingEndToEnd extends AbstractAiIntegrationTest {
         final Map<String, Object> reprocess = client.json("reprocess_streams", Map.of(
                 "pipeline_uuid", built.pipelineUuid(), "stream_ids", List.of(built.rawStreamId())));
         dump("reprocess_streams", reprocess);
-        assertThat(reprocess).containsEntry("max_tasks", 1);
+        assertThat(reprocess).containsEntry("max_tasks", 4);
         securityContext.asProcessingUser(() -> translationTestHelper.processAll());
         final Map<String, Object> processed = client.json("wait_for_processing", Map.of(
                 "pipeline_uuid", built.pipelineUuid(),
