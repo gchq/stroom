@@ -81,6 +81,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
     static final String DEFAULT_OUT = "/outputs/events.xml";
     static final String STREAM_ID_ARG = "streamId";
     static final String FIRST_RECORD_ARG = "firstRecord";
+    static final String PART_ARG = "part";
     static final String RECORD_COUNT_ARG = "recordCount";
     static final String CHILD_TYPE_ARG = "childType";
     static final String MAX_CHARS_ARG = "maxChars";
@@ -160,7 +161,12 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                 .general(", in place of a table.")
                                 .build()))
                         .addIntegerProperty(FIRST_RECORD_ARG, "With streamId: zero-based index of the first "
-                                                              + "record (default 0).")
+                                                              + "record (default 0); of a raw stream, within the "
+                                                              + "part, as step_records and review_coverage give "
+                                                              + "it.")
+                        .addIntegerProperty(PART_ARG, "With streamId: the zero-based part of a raw stream of "
+                                                      + "several (a file each), as step_records and "
+                                                      + "review_coverage give it (default 0).")
                         .addIntegerProperty(RECORD_COUNT_ARG, "With streamId: how many records (default "
                                                               + DEFAULT_RECORD_COUNT + ", at most "
                                                               + MAX_RECORD_COUNT + ").")
@@ -246,6 +252,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                                          + " can't be read.");
         }
         final int firstRecord = Math.max(0, Objects.requireNonNullElse(intArg(request, FIRST_RECORD_ARG), 0));
+        final int part = Math.max(0, Objects.requireNonNullElse(intArg(request, PART_ARG), 0));
         final int recordCount = Math.max(1, Math.min(MAX_RECORD_COUNT,
                 Objects.requireNonNullElse(intArg(request, RECORD_COUNT_ARG), DEFAULT_RECORD_COUNT)));
         final String childType = stringArg(request, CHILD_TYPE_ARG);
@@ -265,7 +272,7 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                 : Math.max(MIN_MAX_CHARS, Math.min(MAX_MAX_CHARS, maxChars));
         final Map<String, Object> result;
         try {
-            result = readRecords(streamId, firstRecord, recordCount, childType, limit);
+            result = readRecords(streamId, part, firstRecord, recordCount, childType, limit);
         } catch (final StreamReader.StreamReadException e) {
             throw new WorkspaceException(e.getMessage());
         } finally {
@@ -296,8 +303,21 @@ class FetchEventsTool extends AbstractWorkspaceTool {
                            + "search_events on it.");
     }
 
-    /// @return The records, with where to read on.
+    /// @return The records of the stream's first part, with where to read on.
     Map<String, Object> readRecords(final long streamId,
+                                    final int firstRecord,
+                                    final int recordCount,
+                                    final String childType,
+                                    final int limit) {
+        return readRecords(streamId, 0, firstRecord, recordCount, childType, limit);
+    }
+
+    /// @return The records, with where to read on: of a raw stream, those of the part given, split from its text
+    /// and numbered as a pipeline numbers them. Seen: record 9,000 of part 0 of a two-part CSV stream, as
+    /// review_coverage gave it, read as Stroom's record 9,000, which a raw stream doesn't have: the agent was given
+    /// the part's start, header and all, twice.
+    Map<String, Object> readRecords(final long streamId,
+                                    final int part,
                                     final int firstRecord,
                                     final int recordCount,
                                     final String childType,
@@ -336,14 +356,33 @@ class FetchEventsTool extends AbstractWorkspaceTool {
         if (report != null) {
             result.put("undecodable_bytes", report);
         }
-        if (childType == null && !first.segmented() && Objects.requireNonNullElse(first.totalItems(), 1L) <= 1) {
-            final Map<String, Object> split = streamReader.splitRaw(streamId, firstRecord, recordCount, limit);
+        if (childType == null && !first.segmented()) {
+            // A raw stream: Stroom holds each part as one record, whatever it holds.
+            final int parts = streamReader.partCount(streamId);
+            if (parts > 1) {
+                result.put("parts", parts);
+                result.put("part", part);
+            }
+            if (part >= parts) {
+                result.put("records", List.of());
+                result.put("hint", "Stream " + streamId + " has " + parts + " part(s): part runs from 0 to "
+                                   + (parts - 1) + ".");
+                return result;
+            }
+            final Map<String, Object> split = streamReader.splitRaw(streamId, part, firstRecord, recordCount,
+                    limit);
             if (split != null) {
                 result.putAll(split);
                 records = castList(split.get("records"));
                 if (records.isEmpty()) {
                     return result;
                 }
+            } else if (parts > 1) {
+                // A part of one record: its text (Stroom counts the parts as its records).
+                final String text = streamReader.cachedRawText(streamId, part, StreamReader.MAX_SAMPLE_CHARS).text();
+                records = List.of(text.substring(0, Math.min(text.length(), limit)));
+                result.put("records", records);
+                result.put("total_records", 1);
             }
         }
         final long total = result.get("total_records") instanceof final Number number

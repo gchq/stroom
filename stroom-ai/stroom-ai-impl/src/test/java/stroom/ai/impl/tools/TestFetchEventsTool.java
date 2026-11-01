@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -98,6 +99,45 @@ class TestFetchEventsTool {
         assertThat((String) past.get("hint")).contains("past the end");
         world.addRaw(8, "just one line of text");
         assertThat(records(tool.readRecords(8, 0, 5, null, 60_000))).containsExactly("just one line of text");
+    }
+
+    @Test
+    void aRecordOfAnyPartIsReadWhereverItIsAsAPipelineNumbersIt() {
+        // Seen: review_coverage gave a missed kind at part 0, record 9,000 of a two-part 211 MB CSV stream; read as
+        // Stroom's record 9,000, it gave the part's start, header and all, twice, and the agent asked the user how
+        // to translate the kind without having seen one.
+        final String header = "action,user,note";
+        final StringBuilder first = new StringBuilder(header).append('\n');
+        // Past the first million characters read of a part, and a quoted value holding a new line on the way.
+        final String padding = "x".repeat(200);
+        for (int n = 0; n < 9000; n++) {
+            first.append(n == 10
+                    ? "allow,u10,\"two\nlines\""
+                    : "allow,u" + n + "," + padding).append('\n');
+        }
+        first.append("bypass,u9000,the one\n").append("allow,u9001,after\n");
+        world.addRaw(7, "");
+        world.parts.put(7L, List.of(first.toString().getBytes(StandardCharsets.UTF_8),
+                (header + "\nblock,v0,second part\nbypass,v1,second part\n").getBytes(StandardCharsets.UTF_8)));
+
+        final Map<String, Object> deep = tool.readRecords(7, 0, 9000, 1, null, 60_000);
+
+        assertThat(records(deep)).containsExactly("bypass,u9000,the one");
+        assertThat(deep.get("header")).isEqualTo(header);
+        assertThat(deep.get("parts")).isEqualTo(2);
+        assertThat((String) deep.get("records_are")).contains("read through part 0");
+        // The record with a quoted new line is one record, as the Data Splitter reads it.
+        assertThat(records(tool.readRecords(7, 0, 10, 1, null, 60_000))).containsExactly("allow,u10,\"two\nlines\"");
+        // The second part, numbered from its own start.
+        final Map<String, Object> second = tool.readRecords(7, 1, 1, 1, null, 60_000);
+        assertThat(records(second)).containsExactly("bypass,v1,second part");
+        assertThat(second.get("part")).isEqualTo(1);
+        assertThat(second.get("total_records")).isEqualTo(2);
+        // A part or record the stream doesn't have says so, rather than giving another.
+        assertThat((String) tool.readRecords(7, 2, 0, 1, null, 60_000).get("hint")).contains("part runs from 0 to 1");
+        final Map<String, Object> past = tool.readRecords(7, 0, 9100, 1, null, 60_000);
+        assertThat(records(past)).isEmpty();
+        assertThat((String) past.get("hint")).contains("Records run from 0 to 9001 in part 0");
     }
 
     @Test
