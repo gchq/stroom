@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -259,8 +260,16 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
             }
         }
         carriageReturns.ifPresent(note -> result.put("line_endings", note));
+        if (result.get("spans_lines") instanceof final Long spanning) {
+            result.put("hint", spanning + " record(s) of the sample streams have a quoted value holding a line break: "
+                               + "read line by line, each is split in two, its second part's values in the wrong "
+                               + "fields. Add \"quoted_newlines\": true to the spec. " + result.get("hint"));
+        }
         if (saveAs != null) {
-            if (result.get("wider_than_header") instanceof final Long wider) {
+            if (result.get("spans_lines") instanceof final Long spanning) {
+                result.put("not_saved", spanning + " record(s) span lines in a quoted value: add \"quoted_newlines\": "
+                                        + "true to the spec before saving");
+            } else if (result.get("wider_than_header") instanceof final Long wider) {
                 result.put("not_saved", wider + " record(s) have more cells than the header: fix the spec (see the "
                                         + "hint) before saving");
             } else if (result.get("unmatched_count") instanceof final Integer unmatched && unmatched > 0) {
@@ -296,6 +305,10 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                 throw new ToolRefusal(BUFFER_SIZE_ARG + " is from " + RootFactory.MIN_BUFFER_SIZE + " (Stroom's "
                                       + "default) to " + RootFactory.MAX_BUFFER_SIZE + " characters, not " + given);
             }
+            if (quoteOf(spec) != null && !spec.quotedNewlines() && rawArg(call, SAMPLE_ARG) == null) {
+                // Measured all the same, for quoted values holding a line break.
+                measuredLongest(streamIds, spec, result);
+            }
             return OptionalInt.of(given);
         }
         final List<String> texts = new ArrayList<>(others);
@@ -315,19 +328,25 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
 
     // The longest record of the sample streams read through whole (MeasureRecordsTool), said in the result; 0 when
     // none can be measured. A spec making records of a marked line or a blank-line block is measured by its lines.
+    // With a quote but not quoted_newlines, the records whose quoted values hold a line break are counted
+    // (spans_lines): seen with Netskope, 40 records in 70,000 split in two by processing, after "Every line parsed".
     private int measuredLongest(final List<Long> streamIds,
                                 final SplitterSpec spec,
                                 final Map<String, Object> result) {
-        final Character quote = "delimited".equals(spec.kind()) && spec.quotedNewlines() && spec.quote() != null
-                                && spec.quote().length() == 1
-                ? spec.quote().charAt(0)
-                : null;
+        final Character quote = quoteOf(spec);
         int longest = 0;
+        long spanning = 0;
         boolean complete = true;
         for (final long streamId : streamIds) {
             try {
                 final StreamReader.PartLengths lengths = streamReader.recordLengths(streamId, quote);
-                longest = Math.max(longest, lengths.longest());
+                for (final RecordLengths.Measured measured : lengths.measured()) {
+                    // Without quoted_newlines, Stroom reads each line as a record.
+                    longest = Math.max(longest, spec.quotedNewlines()
+                            ? measured.longest()
+                            : measured.longestLine().chars());
+                    spanning += measured.recordsOverLines();
+                }
                 complete = complete && lengths.complete();
             } catch (final StreamReader.StreamReadException e) {
                 complete = false;
@@ -339,11 +358,21 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         if (longest > 0) {
             result.put("longest_record", longest);
         }
+        if (spanning > 0 && !spec.quotedNewlines()) {
+            result.put("spans_lines", spanning);
+        }
         if (!complete) {
             result.put("longest_record_note", "The sample streams weren't all read through, so a longer record may "
                                               + "be further in: measure_records stream_ids= gives the longest.");
         }
         return longest;
+    }
+
+    // The spec's quote, when it is a delimited spec's single character; else null.
+    private static Character quoteOf(final SplitterSpec spec) {
+        return "delimited".equals(spec.kind()) && spec.quote() != null && spec.quote().length() == 1
+                ? spec.quote().charAt(0)
+                : null;
     }
 
     // The spec run on the sample: every sample stream must parse, not just the first.
