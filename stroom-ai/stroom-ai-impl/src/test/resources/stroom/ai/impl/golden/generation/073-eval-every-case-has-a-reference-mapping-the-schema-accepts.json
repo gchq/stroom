@@ -157,11 +157,11 @@
   "problems": [],
   "warnings": [
    "[traffic] TypeId is read from logid, which its records may lack: those get TypeId 'traffic', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[traffic] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[traffic] required ['EventTime', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[admin-login] TypeId is read from logid, which its records may lack: those get TypeId 'admin-login', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[admin-login] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default.",
+   "[admin-login] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[ips] TypeId is read from logid, which its records may lack: those get TypeId 'ips', as the schema requires one (without it the event fails validation). Give TypeId a default to choose another.",
-   "[ips] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[ips] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

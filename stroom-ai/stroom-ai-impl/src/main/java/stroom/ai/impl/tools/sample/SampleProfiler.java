@@ -502,18 +502,31 @@ public final class SampleProfiler {
                 : prefix, value);
     }
 
-    /// Each field of the records: how often it is there, its commonest type, and up to three examples.
+    /// Each field of the records: how often it has a value, how often a placeholder for none, its commonest type,
+    /// and up to three examples. `fill_rate` counts real values only: an empty value and a placeholder (`-`,
+    /// `null`, `N/A` and the like, [Placeholders#isKnown]) are not filled; `placeholder_rate`, when there are
+    /// any, says how many records hold a placeholder. The rest are empty or lack the field. Seen: `-` counted as
+    /// filled, so a required element read from a field of dashes looked always filled, and stepping found it
+    /// missing.
     ///
     /// @param records Records, as field name to value.
     /// @return Each field's inventory.
     public static List<Map<String, Object>> inventory(final List<? extends Map<String, ?>> records) {
         final Map<String, Map<String, Integer>> types = new LinkedHashMap<>();
         final Map<String, Integer> present = new LinkedHashMap<>();
+        final Map<String, Integer> filled = new LinkedHashMap<>();
+        final Map<String, Integer> placeholders = new LinkedHashMap<>();
         final Map<String, List<String>> examples = new LinkedHashMap<>();
         for (final Map<String, ?> record : records) {
             for (final Map.Entry<String, ?> field : record.entrySet()) {
                 final String name = field.getKey();
                 present.merge(name, 1, Integer::sum);
+                final Object value = field.getValue();
+                if (value instanceof final String string && Placeholders.isKnown(string)) {
+                    placeholders.merge(name, 1, Integer::sum);
+                } else if (value != null && !(value instanceof final String string && string.isBlank())) {
+                    filled.merge(name, 1, Integer::sum);
+                }
                 types.computeIfAbsent(name, k -> new LinkedHashMap<>()).merge(valueType(field.getValue()), 1,
                         Integer::sum);
                 final List<String> kept = examples.computeIfAbsent(name, k -> new ArrayList<>());
@@ -527,11 +540,15 @@ public final class SampleProfiler {
         }
         final int total = Math.max(1, records.size());
         final List<Map<String, Object>> fields = new ArrayList<>();
-        for (final Map.Entry<String, Integer> entry : present.entrySet()) {
-            fields.add(map("field", entry.getKey(),
-                    "fill_rate", ToolText.round(100.0 * entry.getValue() / total),
-                    "type", mostCommon(types.get(entry.getKey())),
-                    "examples", examples.get(entry.getKey())));
+        for (final String name : present.keySet()) {
+            final Map<String, Object> field = map("field", name,
+                    "fill_rate", ToolText.round(100.0 * filled.getOrDefault(name, 0) / total));
+            if (placeholders.containsKey(name)) {
+                field.put("placeholder_rate", ToolText.round(100.0 * placeholders.get(name) / total));
+            }
+            field.put("type", mostCommon(types.get(name)));
+            field.put("examples", examples.get(name));
+            fields.add(field);
         }
         return fields;
     }

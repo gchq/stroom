@@ -54,7 +54,7 @@
   "problems": [],
   "warnings": [
    "[a] maps EventDetail/Authenticate/User but not EventSource/User: EventSource/User/Id is the account that acted (for a logon, the account logging on), and searches by user read it. Map it as well, from the same input when it is the same account.",
-   "[a] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default."
+   "[a] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [
    {

@@ -4882,7 +4882,8 @@ fragment wrapper (`FragmentWrappers`).
 
 * **`SampleProfiler`**: a sample's profile: `characters`, `lines`, `format` (`xml`, `xml fragments`, `json array`,
   `json object`, `json lines`, `delimited`, `cef`, `syslog rfc5424`, `syslog rfc3164`, `cri`, `multi-line text`,
-  `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate`, `type`, `examples`; types include
+  `key=value` or `unknown text`), `records`, `fields` (each `field`, `fill_rate` (real values only: an empty
+  value or a placeholder such as `-` isn't filled), `placeholder_rate` (when any), `type`, `examples`; types include
   `ip`, `integer`, `decimal`, `embedded json` and `embedded json after prefix`), `suggested_parser`, and what the format
   needs (`text_converter`, `parser_properties`, `xslt_input`, `delimiter`, `has_header`, `columns`, `malformed_lines`,
   `note`). Up to 200 records a sample are profiled. Lines that are not records are named from up to 5,000 lines (a JSON
