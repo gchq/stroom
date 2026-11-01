@@ -87,6 +87,9 @@ import java.util.regex.Pattern;
 @Singleton
 public class StreamReader {
 
+    // What Stroom says of a stream it won't read yet, being written.
+    private static final Pattern LOCKED = Pattern.compile("locked stream|with valid status",
+            Pattern.CASE_INSENSITIVE);
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamReader.class);
 
     /// What the data viewer says of a stream with bytes its feed's character set can't decode.
@@ -232,8 +235,7 @@ public class StreamReader {
                                final int budget) {
         Fetched fetched = fetch(streamId, first, childType);
         if (!fetched.errors().isEmpty()) {
-            throw new StreamReadException("Stroom could not read stream " + streamId + ": "
-                                          + String.join("; ", fetched.errors()));
+            throw couldNotRead(streamId, String.join("; ", fetched.errors()));
         }
         final Fetched firstFetched = fetched;
         final long total = Math.max(1, fetched.totalItems() == null
@@ -369,7 +371,7 @@ public class StreamReader {
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
-            throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
+            throw couldNotRead(streamId, e.getMessage());
         }
         final StreamCharsets.Decoded decoded = StreamCharsets.decode(bytes, encoding, !moreBytes);
         remember(streamId, decoded.report());
@@ -428,7 +430,7 @@ public class StreamReader {
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
-            throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
+            throw couldNotRead(streamId, e.getMessage());
         }
     }
 
@@ -471,7 +473,7 @@ public class StreamReader {
                 throw timeout;
             }
             LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
-            throw new StreamReadException("Stroom could not read stream " + streamId + ": " + e.getMessage());
+            throw couldNotRead(streamId, e.getMessage());
         }
     }
 
@@ -545,6 +547,18 @@ public class StreamReader {
             }
         }
         return out;
+    }
+
+    // Why a stream couldn't be read, for the agent: a stream still being written says so, and what to do. Seen:
+    // "You cannot view locked streams" and "Unable to find meta data ... with valid status" read as faults, five
+    // calls retrying a stream its processing hadn't finished writing.
+    private static StreamReadException couldNotRead(final long streamId, final String reason) {
+        final String said = NullSafe.string(reason);
+        final boolean locked = LOCKED.matcher(said).find();
+        return new StreamReadException("Stroom could not read stream " + streamId + ": " + said + (locked
+                ? " It is most likely still being written (locked) by the processing that makes it: "
+                  + "wait_for_processing for that pipeline and its input streams, then read it again."
+                : ""));
     }
 
     // Whether the call's time is up: what is read so far is given (an interrupted call stops at once).

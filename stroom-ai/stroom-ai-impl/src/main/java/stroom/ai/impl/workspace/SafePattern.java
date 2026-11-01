@@ -64,7 +64,10 @@ public final class SafePattern {
             throw new WorkspaceException("Give the text to find.");
         }
         if (text.length() > MAX_PATTERN_LENGTH) {
-            throw new WorkspaceException("The text to find may be at most " + MAX_PATTERN_LENGTH + " characters.");
+            // Seen: a 230-character pattern refused with the limit alone, and the agent tried again much the same.
+            throw new WorkspaceException("The text to find may be at most " + MAX_PATTERN_LENGTH + " characters, "
+                                         + "not " + text.length() + ": search for a shorter part of it that is "
+                                         + "distinctive, or for each part in turn.");
         }
         if (!regex) {
             return new SafePattern(ignoreCase

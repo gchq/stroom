@@ -17,14 +17,19 @@
 package stroom.ai.impl.workspace;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import net.thisptr.jackson.jq.BuiltinFunctionLoader;
+import net.thisptr.jackson.jq.Expression;
 import net.thisptr.jackson.jq.Function;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Output;
+import net.thisptr.jackson.jq.PathOutput;
 import net.thisptr.jackson.jq.Scope;
+import net.thisptr.jackson.jq.Version;
 import net.thisptr.jackson.jq.Versions;
 import net.thisptr.jackson.jq.exception.JsonQueryException;
+import net.thisptr.jackson.jq.path.Path;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +80,10 @@ public final class SafeJq {
         // jq's own definitions look them up by name, they use these.
         builtins.addFunction("_match_impl/3", SafeJqRegex::match);
         builtins.addFunction("_sub_impl/3", SafeJqRegex::sub);
+        // jq's own functions this jq lacks, which the agent reached for (seen: IN and todate, a failed call each).
+        builtins.addFunction("todate/0", builtins.getFunction("todateiso8601", 0));
+        builtins.addFunction("fromdate/0", builtins.getFunction("fromdateiso8601", 0));
+        builtins.addFunction("IN/1", SafeJq::in);
         final Scope scope = Scope.newEmptyScope();
         for (final Map.Entry<String, Function> entry : builtins.getLocalFunctions().entrySet()) {
             final String key = entry.getKey();
@@ -91,6 +100,22 @@ public final class SafeJq {
         scope.setValue("ENV", JsonNodeFactory.instance.objectNode());
         scope.setModuleLoader(null);
         return scope;
+    }
+
+    // IN(s): whether the input is one of the values s gives, as jq 1.6 defines it (any(s == .; .)).
+    private static void in(final Scope scope,
+                           final List<Expression> args,
+                           final JsonNode in,
+                           final Path path,
+                           final PathOutput output,
+                           final Version version) throws JsonQueryException {
+        final boolean[] found = {false};
+        args.getFirst().apply(scope, in, value -> {
+            if (!found[0] && value.equals(in)) {
+                found[0] = true;
+            }
+        });
+        output.emit(BooleanNode.valueOf(found[0]), null);
     }
 
     private static Function guarded(final Function function) {

@@ -180,6 +180,11 @@ class PipelineTool extends AbstractWorkspaceTool {
                     } else {
                         args.remove(OUT_ARG);
                     }
+                } else if (args.get(OUT_ARG) instanceof final String own && !own.isBlank()) {
+                    // A step's own out is kept, and is what the next step reads. Seen: it was replaced by a file of
+                    // the run's, so a later step reading it by name found nothing.
+                    previous = WorkspacePath.parse(own).path();
+                    args.put(OUT_ARG, previous);
                 } else {
                     final WorkspacePath stepOut = WorkspacePath.parse(runDir + "step-" + (i + 1) + extension(step));
                     args.put(OUT_ARG, stepOut.path());
@@ -197,8 +202,14 @@ class PipelineTool extends AbstractWorkspaceTool {
                 if (last) {
                     return ToolResult.text(log.append(result.text()).toString());
                 }
-                log.append("Step ").append(i + 1).append(" (").append(step.tool()).append("): ")
-                        .append(result.text().lines().findFirst().orElse("")).append('\n');
+                // A file of the run's own is deleted at the end: the log says where it went, not its name (seen:
+                // the agent read a step file the log named, and it was gone).
+                String said = result.text().lines().findFirst().orElse("");
+                if (!intermediate.isEmpty() && intermediate.getLast().path().equals(previous)) {
+                    said = said.replace(previous, "step " + (i + 2) + "'s input");
+                }
+                log.append("Step ").append(i + 1).append(" (").append(step.tool()).append("): ").append(said)
+                        .append('\n');
             }
             return ToolResult.text(log.toString().strip());
         } finally {
