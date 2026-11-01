@@ -1545,12 +1545,10 @@ public final class LocalCheck {
                     .toList();
             if (!unread.isEmpty()) {
                 // A parsed field no output reads is lost from every event: often one the request asked for (a
-                // source address).
-                warnings.add("fields in the sample that nothing reads: "
-                             + ToolText.repr(unread.subList(0, Math.min(12, unread.size())))
-                             + (unread.size() > 12
-                        ? " ..."
-                        : "")
+                // source address). Every one is listed: seen, a list cut at 12 cost about 20 calls working out the
+                // rest from the field inventory and the mapping.
+                warnings.add("fields in the sample that nothing reads (" + unread.size() + " of " + seen.size()
+                             + "): " + ToolText.repr(unread)
                              + ": map each to the element that means it (a Data entry if nothing else fits), or "
                              + "leave it out on purpose.");
             }

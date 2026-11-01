@@ -55,6 +55,28 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void everyFieldNothingReadsIsListedWithHowManyThereAre() {
+        // Seen: a list cut at 12 ("...") on a 184-column CSV cost about 20 calls working out the rest.
+        final StringBuilder record = new StringBuilder("{\"ts\": \"2026-10-01T10:00:00Z\"");
+        for (int n = 1; n <= 20; n++) {
+            record.append(", \"f").append(n).append("\": \"v\"");
+        }
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records(mapping, record + "}", null));
+
+        final String unread = warnings(check).stream()
+                .filter(w -> w.startsWith("fields in the sample that nothing reads"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(unread).startsWith("fields in the sample that nothing reads (20 of 21): ['f1', 'f2',")
+                .contains("'f12', 'f13'", "'f20']").doesNotContain("...");
+    }
+
+    @Test
     void theMappingIsCheckedAgainstTheSampleBeforeStepping() {
         final TranslationMapping mapping = mapping(json("""
                 {"input": "json", "json_layout": "lines", "common": [
@@ -74,8 +96,8 @@ class TestLocalCheck extends DraftFixtures {
         assertThat(warnings(check)).containsExactly(
                 "field 'usr' (used for EventSource/User/Id) is in none of the 2 sample records. Fields seen: "
                 + "['ts', 'user.name']",
-                "fields in the sample that nothing reads: ['user.name']: map each to the element that means it (a "
-                + "Data entry if nothing else fits), or leave it out on purpose.");
+                "fields in the sample that nothing reads (1 of 2): ['user.name']: map each to the element that "
+                + "means it (a Data entry if nothing else fits), or leave it out on purpose.");
         // XML fragments: paths with attributes and predicates, by local name whatever the namespace.
         final Map<String, Object> fragmentsCase = check("12_xml_fragments_events reference");
         final TranslationMapping xmlMapping = mapping(fragmentsCase.get("mapping"));
