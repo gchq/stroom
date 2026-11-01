@@ -227,11 +227,10 @@ class TestEcsSchema {
         assertThat(body.get("composed_of")).isEqualTo(List.of("ecs@mappings"));
         assertThat(mappings.get("dynamic")).isEqualTo(true);
         final Map<String, Object> properties = (Map<String, Object>) mappings.get("properties");
-        // message too: the component maps it as match_only_text, which Stroom can't search (seen in production).
-        assertThat(properties).containsOnlyKeys("StreamId", "source", "gen_ai", "acme", "message");
+        // message is left to it too: the component maps it as match_only_text, which Stroom lists as text (#5878).
+        assertThat(properties).containsOnlyKeys("StreamId", "source", "gen_ai", "acme");
         assertThat(((Map<String, Object>) properties.get("source")).get("properties"))
                 .isEqualTo(Map.of("port", Map.of("type", "keyword")));
-        assertThat(properties.get("message")).isEqualTo(Map.of("type", "text"));
         assertThat(TemplateMappings.readMapping(mappings).fields().get("gen_ai.usage.input_tokens"))
                 .isEqualTo(Map.of("type", "long"));
         // Every field mapped, for a template built from the user's example (which says what it is composed of).
@@ -256,8 +255,11 @@ class TestEcsSchema {
         assertThat(ECS.leftToComponent("source.port", "keyword")).isFalse();
         assertThat(ECS.leftToComponent("data_stream.dataset", "keyword")).isFalse();
         assertThat(ECS.leftToComponent("StreamId", "id")).isFalse();
-        assertThat(ECS.leftToComponent("message", "text")).isFalse();
-        assertThat(ECS.leftToComponent("error.message", "text")).isFalse();
+        assertThat(ECS.leftToComponent("message", "text")).isTrue();
+        assertThat(ECS.leftToComponent("error.message", "text")).isTrue();
+        // A type Stroom doesn't list is mapped by the template, as the plan says.
+        assertThat(ECS.componentType("source.geo.location")).isEqualTo("geo_point");
+        assertThat(ECS.leftToComponent("source.geo.location", "keyword")).isFalse();
     }
 
     @Test
@@ -391,22 +393,27 @@ class TestEcsSchema {
     @Test
     @SuppressWarnings("unchecked")
     void aFieldStroomCantListIsSaidWhenATemplateMapsItSo() {
-        // Seen in production: Stroom leaves match_only_text (message, under ecs@mappings) out of an Elastic Index
-        // doc's fields, so no search on it found anything.
+        // Stroom leaves geo_point (source.geo.location, under ecs@mappings) out of an Elastic Index doc's fields, so
+        // no search on it can find anything. match_only_text (message) was left out too until #5878: it is listed.
         final List<Map<String, Object>> docs = TemplateCheck.jsonXmlDocuments(
                 "<array xmlns=\"http://www.w3.org/2005/xpath-functions\"><map><number key=\"StreamId\">7</number>"
-                + "<string key=\"message\">Connection Failed</string></map></array>");
+                + "<string key=\"message\">Connection Failed</string><map key=\"source\"><map key=\"geo\">"
+                + "<string key=\"location\">41.12,-71.34</string></map></map></map></array>");
         final Map<String, Object> body = IndexingFixtures.json("""
                 {"index_patterns": ["ecs-acme-v1*"], "composed_of": ["ecs@mappings"],
                  "template": {"mappings": {"dynamic": true, "properties": {"StreamId": {"type": "long"}}}}}""");
         final Map<String, Object> left = TemplateCheck.compare(body, docs, "ecs-acme-v1", ECS);
         assertThat(left.get("compatible")).isEqualTo(true);
-        assertThat((List<String>) left.get("notes")).anyMatch(n -> n.contains("message: mapped as match_only_text"));
+        assertThat((List<String>) left.get("notes"))
+                .anyMatch(n -> n.contains("source.geo.location: mapped as geo_point"))
+                .noneMatch(n -> n.contains("message"));
         assertThat(((List<Map<String, Object>>) left.get("pipeline_changes")).stream()
-                .filter(c -> "message".equals(c.get("field"))).findFirst().orElseThrow().get("change").toString())
-                .startsWith("map 'message' in the template as text");
+                .filter(c -> "source.geo.location".equals(c.get("field"))).findFirst().orElseThrow().get("change")
+                .toString())
+                .startsWith("map 'source.geo.location' in the template as keyword");
         ((Map<String, Object>) TemplateMappings.mappingsOf(body).get("properties"))
-                .put("message", new LinkedHashMap<>(Map.of("type", "text")));
+                .put("source", new LinkedHashMap<>(Map.of("properties",
+                        Map.of("geo", Map.of("properties", Map.of("location", Map.of("type", "keyword")))))));
         assertThat(TemplateCheck.compare(body, docs, "ecs-acme-v1", ECS).get("notes")).isEqualTo(List.of());
     }
 
