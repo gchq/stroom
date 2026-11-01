@@ -326,17 +326,22 @@ class TestStreamReader {
     }
 
     @Test
-    void aRawStreamReadOnlyInPartSaysSo() {
+    void aRecordPastTheTextReadIsReadThroughThePart() {
         final List<String> lines = IntStream.range(0, 30_000)
                 .mapToObj(n -> "<Event xmlns=\"urn:win\"><Id>" + n + "</Id></Event>")
                 .toList();
         world.addRaw(7, String.join("\n", lines) + "\n");
 
-        final Map<String, Object> partly = reader.splitRaw(7, 29_000, 2, 60_000);
+        final Map<String, Object> deep = reader.splitRaw(7, 29_000, 2, 60_000);
 
-        assertThat(partly.get("records")).isEqualTo(List.of());
-        assertThat(partly.get("total_records")).isNull();
-        assertThat((String) partly.get("hint")).contains("characters read");
+        assertThat(deep.get("records")).isEqualTo(lines.subList(29_000, 29_002));
+        // Read only as far as the records wanted: how many there are isn't known.
+        assertThat(deep.get("total_records")).isNull();
+        assertThat((String) deep.get("records_are")).contains("read through part 0");
+        final Map<String, Object> past = reader.splitRaw(7, 31_000, 2, 60_000);
+        assertThat(past.get("records")).isEqualTo(List.of());
+        assertThat(past.get("total_records")).isEqualTo(30_000L);
+        assertThat((String) past.get("hint")).contains("past the end");
     }
 
     @Test

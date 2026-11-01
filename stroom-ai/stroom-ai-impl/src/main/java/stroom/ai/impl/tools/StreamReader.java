@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.RecordSplitter;
+import stroom.ai.impl.tools.sample.RecordStream;
 import stroom.ai.impl.workspace.ToolDeadline;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.data.shared.DataInfoSection;
@@ -334,8 +335,72 @@ public class StreamReader {
     /// @return The text, and whether it was cut short.
     /// @throws StreamReadException if the stream can't be read.
     public RawText rawText(final long streamId, final int maxChars) {
-        final RawHead head = readHead(streamId, 0, maxChars);
+        return rawText(streamId, 0, maxChars);
+    }
+
+    /// As [#rawText(long, int)], of one part of the stream.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param maxChars The most characters.
+    /// @return The text, and whether it was cut short.
+    /// @throws StreamReadException if the stream can't be read.
+    public RawText rawText(final long streamId, final int part, final int maxChars) {
+        final RawHead head = readHead(streamId, part, maxChars);
         return new RawText(head.text(), head.truncated());
+    }
+
+    /// @param streamId A stream.
+    /// @return How many parts it has (a stream of several files received at once has a part each).
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public int partCount(final long streamId) {
+        requireViewData(streamId);
+        try (final Source source = storeProvider.get().openSource(streamId)) {
+            return (int) Math.min(Integer.MAX_VALUE, Math.max(1, source.count()));
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        }
+    }
+
+    /// Records of one part of a raw stream held a record a line, read through from the part's start
+    /// ([RecordStream]): a record any way in, however big the part, as a pipeline numbers them (step_records' and
+    /// review_coverage's `part` and `record`). Reading stops, with what is read so far, when the call's time is
+    /// nearly up.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param quote    The quote of delimited text whose quoted values may hold new lines, or null.
+    /// @param header   True if the part starts with a header line, not counted as a record.
+    /// @param first    The zero-based index of the first record wanted.
+    /// @param count    How many records are wanted.
+    /// @param budget   The most characters of record data.
+    /// @return The records, and how far the part was read.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public RecordStream.Read rawRecords(final long streamId,
+                                        final int part,
+                                        final Character quote,
+                                        final boolean header,
+                                        final long first,
+                                        final int count,
+                                        final int budget) {
+        requireViewData(streamId);
+        try (final Source source = storeProvider.get().openSource(streamId)) {
+            final Charset charset = StreamCharsets.charset(encoding(source.getMeta()));
+            try (final InputStreamProvider provider = source.get(part);
+                    final SegmentInputStream in = provider.get()) {
+                in.includeAll();
+                // Bytes the encoding can't decode are replaced, as a pipeline replaces them.
+                return RecordStream.read(new InputStreamReader(in, charset), quote, header, first, count, budget,
+                        StreamReader::timeIsUp);
+            }
+        } catch (final IOException | RuntimeException e) {
+            if (e instanceof final ToolTimeoutException timeout) {
+                throw timeout;
+            }
+            LOGGER.debug(() -> LogUtil.message("Unable to read stream {}: {}", streamId, e.getMessage()), e);
+            throw couldNotRead(streamId, e.getMessage());
+        }
     }
 
     /// The start of one part of a raw stream (a stream of several files received at once has a part each), as a
@@ -605,8 +670,19 @@ public class StreamReader {
     /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission
     ///                             (checked before the cache, as the permission may have been taken away).
     public RawText cachedRawText(final long streamId, final int maxChars) {
+        return cachedRawText(streamId, 0, maxChars);
+    }
+
+    /// As [#cachedRawText(long, int)], of one part of the stream.
+    ///
+    /// @param streamId The stream.
+    /// @param part     The zero-based index of the part.
+    /// @param maxChars The most characters.
+    /// @return The text, and whether it was cut short.
+    /// @throws StreamReadException if the stream can't be read, or the user doesn't have the View Data permission.
+    public RawText cachedRawText(final long streamId, final int part, final int maxChars) {
         requireViewData(streamId);
-        final List<Object> key = List.of(userKey(), streamId, maxChars);
+        final List<Object> key = List.of(userKey(), streamId, part, maxChars);
         final long now = clock.getAsLong();
         synchronized (texts) {
             texts.values().removeIf(cached -> now - cached.at() > SAMPLE_TTL_MS);
@@ -615,7 +691,7 @@ public class StreamReader {
                 return cached.text();
             }
         }
-        final RawText text = rawText(streamId, maxChars);
+        final RawText text = rawText(streamId, part, maxChars);
         if (text.text().length() > cacheChars) {
             // Not kept: it would push out everything else and still be more than may be kept.
             return text;
@@ -704,7 +780,27 @@ public class StreamReader {
     /// @return `records`, `total_records`, any `header`, `records_are` and any `hint`; or null when it holds only one
     /// record after all, or its text can't be split.
     public Map<String, Object> splitRaw(final long streamId, final int first, final int count, final int budget) {
-        final RawText raw = cachedRawText(streamId, MAX_SAMPLE_CHARS);
+        return splitRaw(streamId, 0, first, count, budget);
+    }
+
+    /// As [#splitRaw(long, int, int, int)], of one part of the stream, numbered as a pipeline numbers them
+    /// (step_records' and review_coverage's `part` and `record`). Records past the part's first
+    /// [#MAX_SAMPLE_CHARS] characters, held a record a line, are read through the part ([#rawRecords]): seen, an
+    /// agent asking for record 9,000 of a 100 MB part was given the stream's start.
+    ///
+    /// @param streamId The raw stream.
+    /// @param part     The zero-based index of the part.
+    /// @param first    The zero-based index of the first record.
+    /// @param count    The most records.
+    /// @param budget   The most characters of record data.
+    /// @return `records`, `total_records`, any `header`, `records_are` and any `hint`; or null when it holds only one
+    /// record after all, or its text can't be split.
+    public Map<String, Object> splitRaw(final long streamId,
+                                        final int part,
+                                        final int first,
+                                        final int count,
+                                        final int budget) {
+        final RawText raw = cachedRawText(streamId, part, MAX_SAMPLE_CHARS);
         final String text = raw.text();
         final boolean truncated = raw.truncated();
         final RecordSplitter.Chunk chunk;
@@ -740,6 +836,10 @@ public class StreamReader {
             used += out.getLast().length();
         }
         final int total = whole.size();
+        if (truncated && first + count > total && LINE_FORMATS.contains(chunk.format())
+            && (lines.size() == chunk.records().size() || RecordSplitter.DELIMITED.equals(chunk.format()))) {
+            return readThrough(streamId, part, chunk, first, count, budget);
+        }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("records", out);
         result.put("total_records", truncated
@@ -764,6 +864,43 @@ public class StreamReader {
                     ? "firstRecord=" + first + " is past the " + total + " records in the first "
                       + thousands(text.length()) + " characters read."
                     : "Records run from 0 to " + (total - 1) + ": firstRecord=" + first + " is past the end.");
+        }
+        return result;
+    }
+
+    // Records further into a part than its head holds, read through the part: a record a line, or, delimited, a
+    // record ending at a new line outside quotes (as a Data Splitter reads quoted values holding new lines).
+    private Map<String, Object> readThrough(final long streamId,
+                                            final int part,
+                                            final RecordSplitter.Chunk chunk,
+                                            final int first,
+                                            final int count,
+                                            final int budget) {
+        final Character quote = RecordSplitter.DELIMITED.equals(chunk.format())
+                ? '"'
+                : null;
+        final RecordStream.Read read = rawRecords(streamId, part, quote, chunk.header() != null, first, count,
+                budget);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("records", read.records());
+        result.put("total_records", read.ended()
+                ? read.seen()
+                : null);
+        if (chunk.header() != null) {
+            result.put("header", Objects.requireNonNullElse(read.header(), chunk.header()));
+        }
+        result.put("records_are", "split from the stream's text (" + chunk.format()
+                                  + (chunk.header() != null
+                ? "; its header line, naming the columns, is header"
+                : "")
+                                  + "), as Stroom holds it as one record; read through part " + part
+                                  + " from its start to record " + first);
+        if (read.records().isEmpty()) {
+            result.put("hint", read.timedOut()
+                    ? "Time ran out reading to record " + first + " (" + thousands(read.seen()) + " records read "
+                      + "through): step_records reads a record wherever it is."
+                    : "Records run from 0 to " + (read.seen() - 1) + " in part " + part + ": firstRecord=" + first
+                      + " is past the end.");
         }
         return result;
     }

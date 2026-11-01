@@ -1213,16 +1213,22 @@ reads whole records within a budget of characters, not of records. When fewer re
 
 A raw stream Stroom holds as one record is split into its records from its text, as a survey splits them
 (`StreamReader.splitRaw`). Without this, reads at different offsets of a one-record stream all returned its first
-records. A stream with bytes its feed's encoding can't decode is read as a pipeline reads it: each bad byte is
+records. Records are numbered within a part, as a pipeline numbers them (`step_records`' and `review_coverage`'s
+`part` and `record`); `part` picks the part of a stream of several. A record past the part's first million
+characters, held a record a line, is read through the part from its start (`StreamReader.rawRecords`,
+`RecordStream`), a delimited record ending at a new line outside quotes. Seen: record 9,000 of a two-part 211 MB CSV
+stream was read as Stroom's record 9,000, and the agent was given the part's start, header and all, twice. A part or
+record the stream doesn't have says so in `hint`. A stream with bytes its feed's encoding can't decode is read as a
+pipeline reads it: each bad byte is
 replaced, and `undecodable_bytes` reports what was replaced (`StreamCharsets`). With `out`, the records are
 written to that file, one after another, in place of the result's `records`. The budget is then the maximum.
 
-* **Arguments**: from a table: `path`, `limit`, `out`. From a stream: `streamId`, `firstRecord` (default 0),
-  `recordCount` (default 5, at most 100), `childType`, `maxChars` (default 60,000; 1,000 to 200,000), `out`.
+* **Arguments**: from a table: `path`, `limit`, `out`. From a stream: `streamId`, `part` (default 0),
+  `firstRecord` (default 0), `recordCount` (default 5, at most 100), `childType`, `maxChars` (default 60,000; 1,000 to 200,000), `out`.
 * **Returns**: from a table: a text summary, plus the events file. From a stream: JSON (also structured content):
   `stream_id`, `feed`, `type`, `first_record`, `total_records`, `available_child_types`, and `records` (or
   `records_read`, `out` and `note` when written to a file). It may also include `undecodable_bytes`, `truncated`,
-  `next_first_record`, `hint`, and the split's `header` and `records_are`.
+  `next_first_record`, `hint`, the split's `header` and `records_are`, and `parts` and `part` for a stream of several.
 * **Refuses**: neither `path` nor `streamId`; no View Data ("You don't have permission to view data, ..."); a table
   without `StreamId` and `EventId` columns ("A grouped table has none; ask for the table without grouping."); a
   stream id that isn't a whole number; a stream that can't be read (`StreamReader.StreamReadException`).
