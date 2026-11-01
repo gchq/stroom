@@ -13,7 +13,7 @@ rules:
   # Stroom's retries of documents Elasticsearch was too busy to index ran out (#5958: only those are retried, with a
   # growing wait between tries).
   - {message: 'Elasticsearch was overloaded and rejected', class: blocking,
-     reason: "Elasticsearch was too busy to index some documents and Stroom's retries ran out, so those records are not indexed and the stream's processing stopped: process the stream again once the cluster has capacity. If it recurs, it is for the cluster admin (its load), or smaller requests may ease it (the indexing filter's maxBatchSize, and the stroom.elastic.client.compressRequests property). Documents rejected for other reasons are reported in their own errors"}
+     reason: "Elasticsearch was too busy to index some documents and Stroom's retries ran out, so those records are not indexed and the stream's processing stopped: process the stream again once the cluster has capacity. If it recurs, it is for the cluster admin (its load), or smaller requests may ease it (the indexing filter's maxBatchSize, and Compress Requests on the Elastic Cluster's settings, for a cluster over a slow network). Documents rejected for other reasons are reported in their own errors"}
   - {message: 'Bulk indexing request failed: \d+ of \d+ documents rejected', class: blocking,
      reason: "Elasticsearch rejected documents in a bulk request, so their records are not indexed (the rest of the batch was) and the stream's processing stopped; each rejected document is reported in its own error, with Elasticsearch's reason"}
   - {message: 'Elasticsearch rejected .*as object, but found a concrete value', class: blocking,
