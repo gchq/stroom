@@ -1012,7 +1012,7 @@ An untrusted server can't choose its tools' category (2026-10-23).
 | Where | What asks | Why |
 | --- | --- | --- |
 | Chat, built-in write tools | An approval card, but only once the chat has read untrusted content (2026-10-23). Tools that confirm themselves, or change only their build, aren't asked (2026-10-24). | Untrusted content (data, attachments) could have steered the model. |
-| Chat, taint | A chat is tainted only by results of tools that read untrusted content (`readsUntrustedContent`), by attached data and by workspace arguments. Trusted tools' results don't count. | Not every result can carry instructions. |
+| Chat, taint | A chat is tainted only by results of tools that read untrusted content (`readsUntrustedContent`), by attached data, by an attached tab whose note previews its content (its small parts' first lines; 2026-11-02) and by workspace arguments. Trusted tools' results don't count. | Not every result can carry instructions. |
 | Chat, other MCP servers' tools | Per-tool policy (allow, ask always, deny); trusted read-only tools run; a trusted server's modifying tool runs unless the run has read an untrusted server's output (2026-10-16). | Trust is per server. |
 | Chat, unattended | Only read-only calls; everything else waits for the user. | Nobody is there to answer. |
 | `/mcp`, any write | A yes-or-no form (MCP elicitation), unless the tool confirms itself or changes only its build. A client that can't show forms can't make write calls (`FormsRequired`); its read-only calls still work. No approval ids are ever issued (2026-10-23). | An outside client's model isn't Stroom's, and with an id it could approve its own call. |

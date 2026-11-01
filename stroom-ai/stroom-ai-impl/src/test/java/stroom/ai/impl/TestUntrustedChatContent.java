@@ -35,6 +35,9 @@ class TestUntrustedChatContent {
     // The tools that read only trusted content; any other tool reads untrusted content, as BuiltInTools says.
     private static final Set<String> TRUSTED = Set.of("get_current_time", "task_list", "memory");
     private static final Predicate<String> READS_UNTRUSTED = tool -> !TRUSTED.contains(tool);
+    // The tab snapshots, by id, whose notes preview some of the tab's content.
+    private static final int PREVIEWED_TAB = 41;
+    private static final int UNPREVIEWED_TAB = 42;
 
     private final List<AiChatMessage> history = new ArrayList<>();
 
@@ -43,7 +46,7 @@ class TestUntrustedChatContent {
         add(AiMessageType.USER_MESSAGE, "What time is it?");
         add(AiMessageType.AI_RESPONSE, "It is noon.");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isFalse();
+        assertThat(isIn()).isFalse();
     }
 
     @Test
@@ -52,7 +55,7 @@ class TestUntrustedChatContent {
         addCallAndResult("call-2", "task_list");
         addCallAndResult("call-3", "memory");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isFalse();
+        assertThat(isIn()).isFalse();
     }
 
     @Test
@@ -60,7 +63,7 @@ class TestUntrustedChatContent {
         addCallAndResult("call-1", "get_current_time");
         addCallAndResult("call-2", "fetch_events");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
@@ -68,7 +71,7 @@ class TestUntrustedChatContent {
         // An MCP server's tool isn't one of Stroom's own, so reads untrusted content.
         addCallAndResult("call-1", "stroom__find_feeds");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
@@ -77,7 +80,7 @@ class TestUntrustedChatContent {
                 new ToolCallRecord("call-1", "get_current_time", "{}", null), false));
         add(AiMessageType.TOOL_RESULT, "{\"callId\":\"call-1\",\"text\":\"12:00\"}");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isFalse();
+        assertThat(isIn()).isFalse();
     }
 
     @Test
@@ -85,21 +88,21 @@ class TestUntrustedChatContent {
         // An old row: neither it nor a call says which tool gave it.
         add(AiMessageType.TOOL_RESULT, "{\"callId\":\"call-1\",\"text\":\"12:00\"}");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
     void aResultThatCannotBeReadCounts() {
         add(AiMessageType.TOOL_RESULT, "not json");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
     void anEmptyResultCounts() {
         add(AiMessageType.TOOL_RESULT, "{}");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
@@ -107,7 +110,7 @@ class TestUntrustedChatContent {
         // BuiltInTools says any name it doesn't know reads untrusted content.
         addCallAndResult("call-1", "list_feeds_v1");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
@@ -117,14 +120,14 @@ class TestUntrustedChatContent {
         add(AiMessageType.TOOL_CALL, JsonUtil.writeValueAsString(
                 new ToolCallRecord("call-1", "get_field_conventions", "{}", null), false));
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isFalse();
+        assertThat(isIn()).isFalse();
     }
 
     @Test
     void anAttachmentCounts() {
         add(AiMessageType.ATTACHMENT, "Firewall events");
 
-        assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).isTrue();
+        assertThat(isIn()).isTrue();
     }
 
     @Test
@@ -134,8 +137,44 @@ class TestUntrustedChatContent {
             history.clear();
             add(type, "data");
 
-            assertThat(UntrustedChatContent.isIn(history, READS_UNTRUSTED)).as(type.name()).isTrue();
+            assertThat(isIn()).as(type.name()).isTrue();
         }
+    }
+
+    @Test
+    void aQuestionWhoseTabNotePreviewsItsContentCounts() {
+        // The note sent with the question shows the first lines of the tab's small parts, e.g. a stream's data.
+        addQuestion(PREVIEWED_TAB);
+        add(AiMessageType.AI_RESPONSE, "It looks like CSV.");
+
+        assertThat(isIn()).isTrue();
+    }
+
+    @Test
+    void aQuestionWhoseTabNoteShowsNoContentDoesNotCount() {
+        // E.g. a tab whose parts are all too large to preview: the note gives only names, paths and sizes.
+        addQuestion(UNPREVIEWED_TAB);
+        add(AiMessageType.AI_RESPONSE, "It is a large stream.");
+
+        assertThat(isIn()).isFalse();
+    }
+
+    @Test
+    void anEarlierQuestionsPreviewedTabCounts() {
+        addQuestion(PREVIEWED_TAB);
+        add(AiMessageType.AI_RESPONSE, "It looks like CSV.");
+        addQuestion(null);
+
+        assertThat(isIn()).isTrue();
+    }
+
+    private boolean isIn() {
+        return UntrustedChatContent.isIn(history, READS_UNTRUSTED, id -> id == PREVIEWED_TAB);
+    }
+
+    private void addQuestion(final Integer tabSnapshotId) {
+        history.add(new AiChatMessage(history.size() + 1, CHAT_ID, 0L, AiMessageType.USER_MESSAGE, tabSnapshotId,
+                "What is this?", 1, null));
     }
 
     private void addCallAndResult(final String callId, final String tool) {

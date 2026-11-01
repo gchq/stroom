@@ -160,17 +160,18 @@ class TestStoredChatCompatibility {
     @Test
     void whetherAnOldChatHasReadUntrustedContentIsStillTold() {
         // The chat starts with an attached table, which counts whatever its tools are.
-        assertThat(UntrustedChatContent.isIn(history, tool -> false)).isTrue();
+        assertThat(UntrustedChatContent.isIn(history, tool -> false, tab -> false)).isTrue();
 
         // Without it, only the tools' results count: each row still names its tool.
         final List<AiChatMessage> withoutAttachment = history.stream()
                 .filter(message -> message.getMessageType() != AiMessageType.ATTACHMENT)
                 .toList();
-        assertThat(UntrustedChatContent.isIn(withoutAttachment, tool -> false)).isFalse();
-        assertThat(UntrustedChatContent.isIn(withoutAttachment, "stroom__find_feeds"::equals)).isTrue();
-        assertThat(UntrustedChatContent.isIn(withoutAttachment, "run_stroomql"::equals)).isTrue();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, tool -> false, tab -> false)).isFalse();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "stroom__find_feeds"::equals, tab -> false))
+                .isTrue();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "run_stroomql"::equals, tab -> false)).isTrue();
         // create_filter's call, answered on its approval card, has no result, so gave the model nothing.
-        assertThat(UntrustedChatContent.isIn(withoutAttachment, "create_filter"::equals)).isFalse();
+        assertThat(UntrustedChatContent.isIn(withoutAttachment, "create_filter"::equals, tab -> false)).isFalse();
     }
 
     // What the code that reads a message back makes of it, as text: the record it reads (its fields, by name), and
