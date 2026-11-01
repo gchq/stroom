@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiBuildsConfig;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
@@ -72,10 +74,6 @@ class ProcessorFilterWrites {
 
     /// The most streams reprocessed in one call.
     static final int MAX_REPROCESS_STREAMS = 10;
-    /// The task limit of a reprocessing filter.
-    static final int REPROCESS_MAX_TASKS = 1;
-    /// The task limit of a filter over a build's sample streams.
-    static final int SAMPLE_MAX_TASKS = 1;
     /// The task limit of a feed-wide filter.
     static final int MAX_FEED_FILTER_TASKS = 2;
     /// The priority a filter is given unless the call says otherwise.
@@ -97,6 +95,7 @@ class ProcessorFilterWrites {
     private final PipelineDocs pipelineDocs;
     private final PipelineOutputs pipelineOutputs;
     private final WriteGuard guard;
+    private final Provider<AiConfig> aiConfigProvider;
 
     /// @param processorFilterAccess          Lists a pipeline's filters as the user.
     /// @param processorFilterServiceProvider Makes filters as the user.
@@ -108,6 +107,7 @@ class ProcessorFilterWrites {
     /// @param pipelineDocs                   Reads pipelines as the user.
     /// @param pipelineOutputs                Says whether a pipeline indexes.
     /// @param guard                          Checks a pipeline is in a build.
+    /// @param aiConfigProvider               Gives the task limit of a build's own processing.
     @Inject
     ProcessorFilterWrites(final ProcessorFilterAccess processorFilterAccess,
                           final Provider<ProcessorFilterService> processorFilterServiceProvider,
@@ -118,7 +118,9 @@ class ProcessorFilterWrites {
                           final DocumentAccess documentAccess,
                           final PipelineDocs pipelineDocs,
                           final PipelineOutputs pipelineOutputs,
-                          final WriteGuard guard) {
+                          final WriteGuard guard,
+                          final Provider<AiConfig> aiConfigProvider) {
+        this.aiConfigProvider = aiConfigProvider;
         this.processorFilterAccess = processorFilterAccess;
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.processorServiceProvider = processorServiceProvider;
@@ -129,6 +131,14 @@ class ProcessorFilterWrites {
         this.pipelineDocs = pipelineDocs;
         this.pipelineOutputs = pipelineOutputs;
         this.guard = guard;
+    }
+
+    /// @return The task limit of a filter over a build's own streams (its sample, or streams reprocessed): one task a
+    /// stream, up to `stroom.ai.builds.maxProcessingTasks`, so the streams are processed side by side. Seen: two
+    /// sample streams of 160 and 211 MB processed one after the other with a limit of 1.
+    int buildMaxTasks() {
+        return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getBuilds, AiBuildsConfig::getMaxProcessingTasks,
+                AiBuildsConfig.DEFAULT_MAX_PROCESSING_TASKS);
     }
 
     /// A pipeline the tools created, in its build: processing it may set its batch size, and keeps its agreed template.
