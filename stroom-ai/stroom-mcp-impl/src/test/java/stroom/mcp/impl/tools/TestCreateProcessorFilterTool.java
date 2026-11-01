@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiBuildsConfig;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
@@ -106,13 +107,26 @@ class TestCreateProcessorFilterTool {
     }
 
     @Test
-    void sampleFiltersRunOneTaskAtATime() {
+    void sampleStreamsAreProcessedSideBySideUpToTheConfiguredLimit() {
+        // Seen: two sample streams of 160 and 211 MB processed one after the other with a limit of 1.
         translationInBuild(true);
         w.stream(6, "ACME", "Raw Events", null, null);
 
         gatedThrough(Map.of("stream_ids", List.of(6)));
 
-        assertThat(w.created.getLast().getMaxProcessingTasks()).isEqualTo(1);
+        assertThat(w.created.getLast().getMaxProcessingTasks())
+                .isEqualTo(AiBuildsConfig.DEFAULT_MAX_PROCESSING_TASKS).isEqualTo(4);
+    }
+
+    @Test
+    void anAdministratorSetsHowManyTasksProcessABuildsStreams() {
+        w.builds = new AiBuildsConfig(null, 2);
+        translationInBuild(true);
+        w.stream(6, "ACME", "Raw Events", null, null);
+
+        gatedThrough(Map.of("stream_ids", List.of(6)));
+
+        assertThat(w.created.getLast().getMaxProcessingTasks()).isEqualTo(2);
     }
 
     @Test

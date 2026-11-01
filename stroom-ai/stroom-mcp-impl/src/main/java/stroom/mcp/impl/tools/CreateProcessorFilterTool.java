@@ -369,7 +369,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                   + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " per call)");
         }
         return new Scope(ProcessorFilterWrites.anyOf(streamIds), "streams " + ToolText.repr(streamIds),
-                ProcessorFilterWrites.SAMPLE_MAX_TASKS, null);
+                filterWrites.buildMaxTasks(), null);
     }
 
     // A feed's streams of the type, created after the bound.

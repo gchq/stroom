@@ -185,7 +185,7 @@ Rules for every run:
   output, reference data) is created disabled, as promotion's are: give the user its pipeline_link, what
   enabling does and anything before_enabling says; ask them to enable it on the pipeline's Processors tab and to tell
   you when they have. Then wait_for_processing with its filter_id: never before.
-- Reprocessing in a build, after a fix (reprocess_streams, at most 10 streams a call, one task at a time): for an
+- Reprocessing in a build, after a fix (reprocess_streams, at most 10 streams a call, processed side by side): for an
   events or indexing pipeline the user approves it in a form and it runs (an index is dropped first, so it starts
   fresh: give every Events stream it should hold); any other pipeline's (CEF output, reference data) is created
   disabled, for the user to enable. Then wait_for_processing with its filter_id. Reprocessing
