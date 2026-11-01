@@ -224,6 +224,19 @@ class TestFieldPlan {
     }
 
     @Test
+    void aValueThatIsAlsoAnObjectIsAClashOnlyForNestedElasticsearchNames() {
+        final List<PlannedField> clashing = new ArrayList<>(FIELDS.subList(0, 4));
+        clashing.add(PlannedField.of("user", "keyword", "EventSource/User/Id"));
+        final FieldPlan nested = FieldPlan.of("elasticsearch", "x", "@timestamp", clashing);
+
+        assertThat(nested.valueAndObjectClashes()).singleElement().asString()
+                .startsWith("'user' is a value and also the object holding ['user.name']");
+        assertThat(IndexingFixtures.withSubobjects(nested, false).valueAndObjectClashes()).isEmpty();
+        assertThat(FieldPlan.of("elasticsearch", "x", "@timestamp", FIELDS.subList(0, 4)).valueAndObjectClashes())
+                .isEmpty();
+    }
+
+    @Test
     void aFieldStartingWithAnUnderscoreIsReportedAsDropped() {
         final List<PlannedField> fields = new ArrayList<>(FIELDS.subList(0, 3));
         fields.add(PlannedField.of("meta._source_host", "keyword", "EventSource/Device/HostName"));

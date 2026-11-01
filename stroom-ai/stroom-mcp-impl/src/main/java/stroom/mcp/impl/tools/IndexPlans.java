@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AgentKnowledge;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
@@ -161,12 +162,15 @@ class IndexPlans {
     /// @param populated How often the sample populates each event path (%), or null when no streams were read.
     /// @return `plan`, `problems`, `rendered`, with the sample `populated_paths_not_mapped`, `fields_not_in_sample`
     /// (if any) and `field_mapping`, `ecs_check` when it departs from ECS, and `hint`.
+    /// @throws ToolRefusal if a name is a value and also an object, which no template can map; the plan kept before
+    /// stays.
     Map<String, Object> reply(final FieldPlan plan, final Map<String, Double> populated) {
-        try {
-            memory.keepPlan(plan);
-        } catch (final RuntimeException e) {
-            // Kept for convenience; the plan is in the reply all the same.
-            LOGGER.debug(() -> LogUtil.message("Plan not kept: {}", e.getMessage()));
+        // Refused before it is kept: kept, every later change= failed to render it (seen in Ask Stroom AI).
+        final List<String> clashes = plan.valueAndObjectClashes();
+        if (!clashes.isEmpty()) {
+            throw new ToolRefusal(String.join("; ", clashes) + ". Nothing was kept: send the change again with one "
+                                  + "of each renamed (e.g. netskope.ssl.bypass_reason beside netskope.ssl.bypass), "
+                                  + "or without it.");
         }
         final EcsSchema ecs = ecs();
         final Map<String, Object> reply = new LinkedHashMap<>();
@@ -175,6 +179,13 @@ class IndexPlans {
         reply.put("rendered", FieldPlan.LUCENE.equals(plan.backend())
                 ? plan.luceneFields()
                 : plan.elasticTemplate(plan.indexName(), ecs));
+        // Kept once it renders, so a plan that can't be shown never replaces the last good one.
+        try {
+            memory.keepPlan(plan);
+        } catch (final RuntimeException e) {
+            // Kept for convenience; the plan is in the reply all the same.
+            LOGGER.debug(() -> LogUtil.message("Plan not kept: {}", e.getMessage()));
+        }
         if (populated != null) {
             // Network paths once, whichever action: one field for a source address, not one per Permit and Deny.
             reply.put("populated_paths_not_mapped", IndexingHelpers.populatedNotMapped(plan, populated));
