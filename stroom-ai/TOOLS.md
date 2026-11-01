@@ -3950,7 +3950,9 @@ a space) and kept white space Stroom trims.
   build); `buffer_size`.
 * **Returns**: `spec`, `inferred`, `converter`, `converter_type` (`DATA_SPLITTER`), `format`, `records`, `fields`
   (inventory), `first_records` (5), `unmatched_lines` (10), `unmatched_count`, `wider_than_header` (records with
-  more cells than the header names, kept as `(no name)` as Stroom writes them), `buffer_size` when set,
+  more cells than the header names, kept as `(no name)` as Stroom writes them), `spans_lines` (records of the
+  sample streams whose quoted value holds a line break, with a quote but not `quoted_newlines`), `buffer_size` when
+  set,
   `stroom_check` (`matches`, `records`, `errors` with `error_hints`, `record_counts`, up to 5 `differences` of
   `dry_run` against `stroom` values, `loses_records`, `summary`), `line_endings`, `hint`, and `saved` or
   `not_saved`. For XML fragments: the wrapper converter (`XML_FRAGMENT`, the environment's own where it has one),
@@ -3960,7 +3962,10 @@ a space) and kept white space Stroom trims.
   that isn't one (with an example for the format); `buffer_size` outside 20,000 to 1,000,000,000; no sample and no
   spec.
 * **Notes**:
-  * `save_as` doesn't save while any record has more cells than the header (its values shift into the wrong
+  * `save_as` doesn't save while a record of the sample streams spans lines in a quoted value without
+    `quoted_newlines` (each would be split in two: seen with Netskope, 40 records of 70,000 found only once the
+    streams were processed; they are measured even when `buffer_size` is given),
+    while any record has more cells than the header (its values shift into the wrong
     fields; the hint says to add the quote when cells start with one: seen in both runs of a 185-column CSV, a spec
     without a quote reported "Every line parsed"), while any line matches nothing, while the sample's lines end in
     a carriage return alone
