@@ -107,7 +107,7 @@ public final class ErrorTriage {
     public Classified classify(final String severity, final String element, final boolean own, final String message) {
         for (final Rule rule : rules) {
             if (rule.matches(severity, element, own, message)) {
-                return new Classified(rule.classification(), rule.reason());
+                return new Classified(rule.classification(), rule.reason(), rule.cause());
             }
         }
         return new Classified(REVIEW, "No rule matched");
@@ -233,6 +233,9 @@ public final class ErrorTriage {
     /// @param accepted    The errors the user accepted as benign for the pipeline.
     /// @return `verdict` (blocking, review or clean), `groups_by_class` and `groups`. A group of rejected
     /// documents says, in `listed_only`, when its count leaves out documents Stroom rejected without listing them.
+    /// A group whose rule marks it as a cause (text a parser lost, so what it read next was misread) comes first in
+    /// its class, saying `cause`, and the other blocking and review groups say, in `may_follow_from`, that they may
+    /// be its consequences.
     public Map<String, Object> triage(final List<Marker> markers,
                                       final Set<String> ownElements,
                                       final Integer recordCount,
@@ -298,11 +301,15 @@ public final class ErrorTriage {
             entry.put("examples", group.examples);
             if (known != null) {
                 entry.put("accepted", true);
+            } else if (classified.cause()) {
+                entry.put("cause", true);
             }
             result.add(entry);
         }
         result.sort(Comparator.<Map<String, Object>>comparingInt(g -> CLASSES.indexOf(String.valueOf(g.get("class"))))
+                .thenComparing(g -> !Boolean.TRUE.equals(g.get("cause")))
                 .thenComparing(g -> -((Integer) g.get("count"))));
+        markConsequences(result);
         final Map<String, Integer> byClass = new LinkedHashMap<>();
         CLASSES.forEach(c -> byClass.put(c, 0));
         result.forEach(g -> byClass.merge(String.valueOf(g.get("class")), 1, Integer::sum));
@@ -315,6 +322,27 @@ public final class ErrorTriage {
         out.put("groups_by_class", byClass);
         out.put("groups", result);
         return out;
+    }
+
+    // Says, on each blocking or review group that isn't a cause, that it may follow from the causes listed first.
+    // Seen: a Data Splitter losing records longer than its buffer left it reading from part-way through a record,
+    // and the schema errors that followed outnumbered it, so the agent chased them as a quoting fault for 10 minutes.
+    private static void markConsequences(final List<Map<String, Object>> groups) {
+        final List<String> causes = groups.stream()
+                .filter(group -> Boolean.TRUE.equals(group.get("cause")))
+                .map(group -> String.valueOf(group.get("element")))
+                .distinct()
+                .toList();
+        if (causes.isEmpty()) {
+            return;
+        }
+        final String note = "The " + String.join(" and ", causes) + " errors listed first lose text, so what is "
+                            + "read after it is misread: these may follow from them. Fix those first, then process "
+                            + "again before working on these.";
+        groups.stream()
+                .filter(group -> !Boolean.TRUE.equals(group.get("cause")))
+                .filter(group -> BLOCKING.equals(group.get("class")) || REVIEW.equals(group.get("class")))
+                .forEach(group -> group.put("may_follow_from", note));
     }
 
     private static List<Rule> loadBundled() {
@@ -383,8 +411,14 @@ public final class ErrorTriage {
     ///
     /// @param classification blocking, review or benign.
     /// @param reason         Why.
-    public record Classified(String classification, String reason) {
+    /// @param cause          True if errors after it may follow from it (see [Rule#cause()]).
+    public record Classified(String classification, String reason, boolean cause) {
 
+        /// @param classification blocking, review or benign.
+        /// @param reason         Why.
+        public Classified(final String classification, final String reason) {
+            this(classification, reason, false);
+        }
     }
 
     /// One triage rule. Every field but the class and reason is optional, and a rule matches an error that meets
@@ -396,12 +430,15 @@ public final class ErrorTriage {
     /// @param message        A regular expression found in the message (case is ignored), or null.
     /// @param classification blocking, review or benign.
     /// @param reason         Why, for the agent and the user.
+    /// @param cause          True if the error loses text (a parser's lost record), so errors after it in the same
+    ///                       stream may be its consequences: its group is listed first, and the others say so.
     public record Rule(List<String> severity,
                        String element,
                        Boolean own,
                        Pattern message,
                        String classification,
-                       String reason) {
+                       String reason,
+                       boolean cause) {
 
         /// @param map A rule as the YAML has it, with its class as `class`.
         /// @return The rule.
@@ -428,7 +465,8 @@ public final class ErrorTriage {
                     NullSafe.get(map.get("message"), m -> Pattern.compile(String.valueOf(m),
                             Pattern.CASE_INSENSITIVE)),
                     classification,
-                    String.valueOf(reason));
+                    String.valueOf(reason),
+                    Boolean.parseBoolean(String.valueOf(map.get("cause"))));
         }
 
         /// @return True if an error meets everything the rule has.

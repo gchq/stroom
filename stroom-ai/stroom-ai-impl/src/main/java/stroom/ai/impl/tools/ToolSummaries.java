@@ -29,6 +29,7 @@ public final class ToolSummaries {
             Map.entry("ask_user", "Asks the user questions, with options to pick from, and waits for the answers."),
             Map.entry("build_data_splitter", "Onboarding: writes a Data Splitter text converter from the sample."),
             Map.entry("build_reference_xslt", "Writes the XSLT of a reference data pipeline from a mapping."),
+            Map.entry("measure_records", "Measures the longest record in raw streams, for a Data Splitter's buffer."),
             Map.entry("build_status", "Onboarding: shows where a build stands, step by step."),
             Map.entry("build_translation_xslt",
                     "Onboarding: writes an event-logging translation XSLT from a field mapping."),

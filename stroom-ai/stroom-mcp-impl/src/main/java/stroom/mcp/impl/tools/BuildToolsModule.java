@@ -83,6 +83,7 @@ public class BuildToolsModule extends AbstractModule {
                 .addBinding(DraftTranslationMappingTool.class)
                 .addBinding(BuildTranslationXsltTool.class)
                 .addBinding(BuildDataSplitterTool.class)
+                .addBinding(MeasureRecordsTool.class)
                 .addBinding(BuildReferenceXsltTool.class)
                 .addBinding(RebuildMappingTool.class)
                 .addBinding(StartBuildTool.class)

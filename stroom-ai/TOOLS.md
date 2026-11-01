@@ -3962,13 +3962,44 @@ a space) and kept white space Stroom trims.
     nothing and is lost. When the sample's longest record (its longest line, or a multi-line record whole) is more
     than half the default, `bufferSize` is written at four times it, rounded, at most 1,000,000,000
     (`SplitterXml.bufferSizeFor`); `buffer_size` sets it outright. Seen in testing: CSV lines of about 20,000
-    characters lost in processing, and a 751,000-character line with a buffer of 1,000,000.
+    characters lost in processing, and a 751,000-character line with a buffer of 1,000,000. Given `stream_ids`, the
+    sample streams are also read through whole (`StreamReader.recordLengths`, as `measure_records` does), so a
+    record further in than the text profiled counts: `longest_record`, with `longest_record_note` when a stream
+    wasn't read through in the call's time (seen: records of over 105,000 characters lost further into a 159 MB
+    stream, with a buffer sized from its start).
   * The `stroom_check` summary says how many characters of sample it covered: "parses exactly as Stroom does" was
     taken for the whole feed in testing, where longer records further in were lost. Only a dry run of fewer than
     2,000 records is compared record by record.
   * `error_hints` come from the bundled error triage rules, for errors classed as blocking (the buffer exhausted,
     unmatched content).
   * The save goes through `TranslationDocs.createTextConverter`, with save_text_converter's checks.
+
+### `measure_records`
+
+processing · read-only · unlocked by View Data (the streams are read as the user) · Classes: `MeasureRecordsTool`,
+`StreamReader`, `RecordLengths`, `SplitterXml`
+
+Measures the longest record of whole raw streams, every part read through once on the server, holding only a chunk
+at a time, decoded with the feed's encoding as a pipeline decodes it (`StreamReader.recordLengths`,
+`RecordLengths`), and gives the Data Splitter `bufferSize` that holds it (`SplitterXml.bufferSizeFor`: four times
+the longest, rounded). Asked for by the user: an agent whose converter lost records of over 105,000 characters in a
+159 MB stream had no way to find the longest, and guessed from a sample.
+
+A record is a line, or, with `quote` (delimited text whose quoted values hold new lines: the spec's
+`quoted_newlines`), the lines a quoted value spans joined, counted as `SplitterDryRun.longestRecord` counts a
+sample. A newline in a record whose converter splits records at every newline (`<split delimiter="\n">` with no
+container) ends the record anyway, so the longest line is the measure there. A record over several lines of
+another kind (a marked start line, a blank-line block) needs the converter's own pattern and isn't measured: its
+longest line understates it.
+
+* **Arguments**: `stream_ids` (required; 1 to 10), `quote` (one character).
+* **Returns**: `streams` (each `stream_id`, `parts`, `lines`, `chars`, `longest_line` and, with `quote`,
+  `longest_record` (each `chars`, `line`, and `part` when there are several), `records_over_lines`, `complete`),
+  `longest`, `complete`, `buffer_size` (none when Stroom's default holds every record), `hint`, and `not_measured`
+  when the call's time ran out first (reading stops at the first stream not read through).
+* **Refuses**: 0 or more than 10 streams; a `quote` of more than one character; a stream Stroom can't read.
+* **Notes**: a record over half of Stroom's largest buffer (1,000,000,000) can't be held by any Data Splitter: the
+  hint says to tell the user.
 
 ### `save_text_converter`
 
