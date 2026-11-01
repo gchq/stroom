@@ -48,6 +48,65 @@ field_map:
   EventDetail/Network/*/Destination/HTTPMethod: {name: http.request.method, type: keyword}
   EventDetail/Network/*/ProcessName: {name: process.name, type: keyword}
   EventDetail/Network/*/Rule: {name: rule.name, type: keyword}
+  # A Network action's port written on its Device, its outcome, and the web request it carries (its Payload).
+  EventDetail/Network/*/Source/Device/Port: {name: source.port, type: long}
+  EventDetail/Network/*/Destination/Device/Port: {name: destination.port, type: long}
+  EventDetail/Network/*/Outcome/Success: {name: event.outcome, type: keyword, transform: outcome}
+  EventDetail/Network/*/Outcome/Description: {name: event.reason, type: keyword}
+  EventDetail/Network/*/Payload/Resource/URL: {name: url.original, type: keyword}
+  EventDetail/Network/*/Payload/Resource/Referrer: {name: http.request.referrer, type: keyword}
+  EventDetail/Network/*/Payload/Resource/UserAgent: {name: user_agent.original, type: keyword}
+  EventDetail/Network/*/Payload/Resource/HTTPMethod: {name: http.request.method, type: keyword}
+  EventDetail/Network/*/Payload/Resource/HTTPVersion: {name: http.version, type: keyword}
+  EventDetail/Network/*/Payload/Resource/ResponseCode: {name: http.response.status_code, type: long}
+  EventDetail/Network/*/Payload/Resource/MimeType: {name: http.response.mime_type, type: keyword}
+  # A network alert (Alert's Network or IDS): the same as a Network action's, which has no Outcome.
+  EventDetail/Alert/*/Source/Device/IPAddress: {name: source.ip, type: ip}
+  EventDetail/Alert/*/Source/Device/HostName: {name: source.domain, type: keyword}
+  EventDetail/Alert/*/Source/Device/MACAddress: {name: source.mac, type: keyword}
+  EventDetail/Alert/*/Source/Port: {name: source.port, type: long}
+  EventDetail/Alert/*/Source/Device/Port: {name: source.port, type: long}
+  EventDetail/Alert/*/Source/TransportProtocol: {name: network.transport, type: keyword}
+  EventDetail/Alert/*/Source/ApplicationProtocol: {name: network.protocol, type: keyword}
+  EventDetail/Alert/*/Destination/Device/IPAddress: {name: destination.ip, type: ip}
+  EventDetail/Alert/*/Destination/Device/HostName: {name: destination.domain, type: keyword}
+  EventDetail/Alert/*/Destination/Device/MACAddress: {name: destination.mac, type: keyword}
+  EventDetail/Alert/*/Destination/Port: {name: destination.port, type: long}
+  EventDetail/Alert/*/Destination/Device/Port: {name: destination.port, type: long}
+  EventDetail/Alert/*/Destination/TransportProtocol: {name: network.transport, type: keyword}
+  EventDetail/Alert/*/Destination/ApplicationProtocol: {name: network.protocol, type: keyword}
+  EventDetail/Alert/*/Destination/HTTPMethod: {name: http.request.method, type: keyword}
+  EventDetail/Alert/*/ProcessName: {name: process.name, type: keyword}
+  # Named, not Alert/*: an Alert's Change has a Rule too, the rule changed.
+  EventDetail/Alert/Network/Rule: {name: rule.name, type: keyword}
+  EventDetail/Alert/IDS/Rule: {name: rule.name, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/URL: {name: url.original, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/Referrer: {name: http.request.referrer, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/UserAgent: {name: user_agent.original, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/HTTPMethod: {name: http.request.method, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/HTTPVersion: {name: http.version, type: keyword}
+  EventDetail/Alert/*/Payload/Resource/ResponseCode: {name: http.response.status_code, type: long}
+  EventDetail/Alert/*/Payload/Resource/MimeType: {name: http.response.mime_type, type: keyword}
+  # Something sent or received (an email, a file) between two devices, and the URL of what it carries. Each action
+  # named, not EventDetail/*: a wildcard action's paths are left out when an example names the fields.
+  EventDetail/Send/Source/Device/IPAddress: {name: source.ip, type: ip}
+  EventDetail/Send/Source/Device/HostName: {name: source.domain, type: keyword}
+  EventDetail/Send/Source/Device/MACAddress: {name: source.mac, type: keyword}
+  EventDetail/Send/Source/Device/Port: {name: source.port, type: long}
+  EventDetail/Send/Destination/Device/IPAddress: {name: destination.ip, type: ip}
+  EventDetail/Send/Destination/Device/HostName: {name: destination.domain, type: keyword}
+  EventDetail/Send/Destination/Device/MACAddress: {name: destination.mac, type: keyword}
+  EventDetail/Send/Destination/Device/Port: {name: destination.port, type: long}
+  EventDetail/Send/Payload/Resource/URL: {name: url.original, type: keyword}
+  EventDetail/Receive/Source/Device/IPAddress: {name: source.ip, type: ip}
+  EventDetail/Receive/Source/Device/HostName: {name: source.domain, type: keyword}
+  EventDetail/Receive/Source/Device/MACAddress: {name: source.mac, type: keyword}
+  EventDetail/Receive/Source/Device/Port: {name: source.port, type: long}
+  EventDetail/Receive/Destination/Device/IPAddress: {name: destination.ip, type: ip}
+  EventDetail/Receive/Destination/Device/HostName: {name: destination.domain, type: keyword}
+  EventDetail/Receive/Destination/Device/MACAddress: {name: destination.mac, type: keyword}
+  EventDetail/Receive/Destination/Device/Port: {name: destination.port, type: long}
+  EventDetail/Receive/Payload/Resource/URL: {name: url.original, type: keyword}
   # The user who acted.
   EventSource/User/Id: {name: user.name, type: keyword}
   EventSource/User/Name: {name: user.full_name, type: keyword}

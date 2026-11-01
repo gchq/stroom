@@ -894,7 +894,10 @@ every run, and how to ask the user questions.
 It is written as labelled paragraphs, not headings, as it goes into a system prompt.
 The guides (`guides/*.md`) are short working references for the agent (event-logging, XSLT, Data Splitter, JSON input,
 indexing, reference data, CEF, documentation, visualisation, AGENTS docs).
-Conventions (`conventions/ecs.yaml`, `stroom-flat.yaml`) are field-naming profiles; `ecs_fields.json` (ECS 9.5.0)
+Conventions (`conventions/ecs.yaml`, `stroom-flat.yaml`) are field-naming profiles, each path an exact event-logging
+path (a `*` one element): ECS's covers a Network action's Payload Resource, Outcome and Device ports, network alerts
+(Alert/Network, Alert/IDS) and Send/Receive devices as well, each checked against the 4.1.0 and 3.5.2 schemas (seen:
+a web proxy's index drafted with 21 fields, the rest named by hand, 2026-11-01). `ecs_fields.json` (ECS 9.5.0)
 and `ecs_component.json` (what Elasticsearch 9.5.3's `ecs@mappings` maps otherwise than ECS: 48 of 2,521 fields) are
 read by the tools.
 The agent guides and conventions are resources of `stroom-mcp-impl`, not stroom-docs, which is for people

@@ -134,6 +134,35 @@ class TestDraftIndexMappingTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void followingEcsANetworkActionsPayloadOutcomeAndAlertAreNamedAsEcsNamesThem() {
+        // Seen: a web proxy's Permit and Deny with a Payload Resource, an Outcome and a port on the Device, and an
+        // Alert/Network, drafted 21 fields; the agent named the rest by hand for 11 minutes.
+        final Map<String, Integer> population = ordered("EventTime/TimeCreated", 100,
+                "EventDetail/Network/Permit/Payload/Resource/URL", 60,
+                "EventDetail/Network/Deny/Payload/Resource/URL", 25,
+                "EventDetail/Network/Deny/Outcome/Success", 25,
+                "EventDetail/Network/Permit/Destination/Device/Port", 60,
+                "EventDetail/Alert/Network/Source/Device/IPAddress", 15,
+                "EventDetail/Alert/Network/Payload/Resource/URL", 15,
+                "EventDetail/Alert/Change/Rule", 5);
+        world.populated(population, Map.of());
+        final Map<String, Object> result = draft("ecs-proxy-v1", Map.of("convention", "ecs", "without_example",
+                true), agreeing());
+        final Map<String, String> names = names(result);
+        assertThat(names).containsEntry("EventDetail/Network/*/Payload/Resource/URL", "url.original")
+                .containsEntry("EventDetail/Network/*/Outcome/Success", "event.outcome")
+                .containsEntry("EventDetail/Network/*/Destination/Device/Port", "destination.port")
+                .containsEntry("EventDetail/Alert/*/Source/Device/IPAddress", "source.ip");
+        // A name is planned from one path: the alert's URL, named by the profile too, is still listed for the agent
+        // to add (url.original's source as a union), not taken silently.
+        assertThat((List<String>) result.get("populated_paths_not_mapped"))
+                .contains("EventDetail/Alert/Network/Payload/Resource/URL");
+        // An Alert's Change has a Rule of its own (the rule changed): not ECS's rule.name.
+        assertThat(names).doesNotContainValue("rule.name");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void followingEcsWhatHappenedAndDataElementsAreNamedAsEcsNamesThem() {
         // Asked by the user: the full ECS schema, not only the profile's few names.
         world.populated(POPULATED, Map.of("EventDetail/Network/Permit/Data", Map.of("user_agent_original", 35.0,
