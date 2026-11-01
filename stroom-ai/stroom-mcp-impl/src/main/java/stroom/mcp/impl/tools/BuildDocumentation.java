@@ -355,9 +355,11 @@ class BuildDocumentation {
                   + "describe it as it is now."
                 : "")
                           + (shared
-                ? " A field named Data[@Name='x'] is a Data value read from the same source under every element in "
-                  + "under: one description covers it under all of them (only where it means something else "
-                  + "under one, describe that one by its full path too)."
+                ? " A field with under is read from the same source wherever under lists: a Data value named "
+                  + "Data[@Name='x'] under every element in under, an element named EventDetail/*/x under every "
+                  + "action element in under (Network/Permit, Network/Deny, Alert/Network...). One description "
+                  + "covers it in all of them (only where it means something else in one, describe that one by its "
+                  + "full path too)."
                 : "")
                           + " Then call write_documentation again with the same arguments plus "
                           + "field_descriptions={field: description}.");

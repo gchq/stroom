@@ -1841,7 +1841,12 @@ judging them:
   (`EventFieldDocs`, `IndexFieldDocs`) has the details.
 * **Descriptions** are the agent's, saying what each field means for this source (`needs_descriptions`), kept with the
   doc with where each field came from, so an update asks only for new fields or fields whose source changed (asked
-  for by the user: the schema's generic words said nothing a reader couldn't see).
+  for by the user: the schema's generic words said nothing a reader couldn't see). A field read from the same source
+  in several places is asked once: a Data value by its name (`Data[@Name='x']`), an element under several action
+  elements by its path with the action element as `*` (`EventDetail/*/Payload/Resource/URL` for Network/Permit,
+  Network/Deny and Alert/Network), each with `under`; a full-path description still wins for its row, and a `*`
+  description never covers a row read from elsewhere (seen: 334 fields asked for a web proxy's allow, block and
+  alert rules, the same 130 columns under each, 2026-11-01).
 * `stream_ids` default to the streams the current code last stepped clean; Events streams given for an events pipeline
   are mapped to their raw parents.
 * **Version control**: one row per promoted build: Version, Date, By (the user, and the agent: Stroom's version and
