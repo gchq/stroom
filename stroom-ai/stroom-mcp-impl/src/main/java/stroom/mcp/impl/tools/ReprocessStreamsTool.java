@@ -42,7 +42,8 @@ import java.util.Map;
 import java.util.Set;
 
 /// `reprocess_streams` - processes streams again through a pipeline under development, after changing it, at most
-/// [ProcessorFilterWrites#MAX_REPROCESS_STREAMS] a call, one task at a time.
+/// [ProcessorFilterWrites#MAX_REPROCESS_STREAMS] a call, one task a stream, up to
+/// [ProcessorFilterWrites#buildMaxTasks()] at once.
 ///
 /// A new filter on the pipeline selects the streams by id, made through Stroom's processor filter service as the
 /// user, as the data browser's Process action makes one with the pipeline chosen; Stroom marks the pipeline's
@@ -93,8 +94,8 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                 .description(BuildPlan.onboardingLabel(NAME)
                              + "Process streams again through a pipeline under development, after changing it and "
                              + "stepping it clean (its current code, as create_processor_filter needs). At "
-                             + "most " + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " streams per call, run one "
-                             + "task at a time. Stroom marks the pipeline's earlier outputs for "
+                             + "most " + ProcessorFilterWrites.MAX_REPROCESS_STREAMS + " streams per call, one "
+                             + "task a stream, several side by side. Stroom marks the pipeline's earlier outputs for "
                              + "these streams deleted once the new ones are written; pass the returned filter_id to "
                              + "wait_for_processing so only the new outputs count. An events (or records) or "
                              + "indexing pipeline: the user approves it in a form, then its filter is created "
