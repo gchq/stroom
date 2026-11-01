@@ -15,9 +15,8 @@
             <l:SelectionBox ui:field="apiKey"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsCompressRequests"
-                        label="Compress Requests"
                         helpText="Compress the body of each request to the cluster with gzip, and accept compressed responses. Bulk indexing requests usually compress to a fraction of their size, which helps where the network between Stroom and the cluster is slow, at the cost of some CPU on both.">
-            <tickbox:CustomCheckBox ui:field="compressRequests"/>
+            <tickbox:CustomCheckBox ui:field="compressRequests" label="Compress Requests"/>
         </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
                   addStyleNames="allow-focus"/>

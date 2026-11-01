@@ -348,7 +348,7 @@ class TestErrorTriage {
         assertThat(groups).singleElement().satisfies(group -> {
             assertThat(group.get("class")).isEqualTo("blocking");
             assertThat((String) group.get("reason")).startsWith("Elasticsearch was too busy to index some documents")
-                    .contains("maxBatchSize");
+                    .contains("maxBatchSize", "Compress Requests on the Elastic Cluster's settings");
         });
     }
 
