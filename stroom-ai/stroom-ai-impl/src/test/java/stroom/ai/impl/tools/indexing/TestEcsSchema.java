@@ -91,6 +91,7 @@ class TestEcsSchema {
         // A wildcard stands for one element: the path must exist for at least one action that has it.
         final Map<String, List<String>> actions = new LinkedHashMap<>();
         actions.put("Network/*", List.of("Permit", "Deny", "Connect"));
+        actions.put("Alert/*", List.of("Network", "IDS"));
         actions.put("EventDetail/*", List.of("Authenticate", "Process", "View", "Create", "Delete", "Alert",
                 "Network"));
         fieldMap.forEach((path, spec) -> {
