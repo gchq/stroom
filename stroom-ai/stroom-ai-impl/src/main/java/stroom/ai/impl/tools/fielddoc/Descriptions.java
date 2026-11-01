@@ -41,6 +41,10 @@ import java.util.stream.Collectors;
 /// ([FieldDocs#dataKey(String)]): seen, 224 fields asked of the agent for one feed, most of them its 18 Data names
 /// once per action element. A description given by full path still wins for that row.
 ///
+/// So is an element read from the same source under several action elements, by its path with the action element
+/// as `*` ([#anyActionKey(String)]): seen, 334 fields asked of the agent for a web proxy whose allow, block and alert
+/// rules each wrote the same 130 columns, under Network/Permit, Network/Deny and Alert/Network.
+///
 /// Each description is kept with where its field came from when it was given ([#sources()]), and asked for again
 /// when that changes. Seen in testing, without that: a description outlived its field's source (TWITTER's
 /// Description, "the tweet's text, including mentions and links", kept once both were taken out of it).
@@ -56,6 +60,14 @@ public final class Descriptions {
     private static final Pattern DATA_PATH = Pattern.compile("^(.*)/Data\\[@Name='([^']*)'\\]/@Value$");
     private static final Pattern NAME = Pattern.compile("\\[@Name='([^']*)'\\]");
     private static final Pattern BARE = Pattern.compile("\\[[^\\]]*\\]|/@Value$");
+    // An action element and what is under it. Network's action is an element of its own (Network/Permit), as is a
+    // network alert's (Alert/Network, Alert/IDS: the same elements as a Network action's); a row of several is
+    // shown as (Send|Receive).
+    private static final Pattern ACTION_HOME = Pattern.compile(
+            "^EventDetail/(?:Network/(?:\\([^)/]*\\)|[^/(]+)|Alert/(?:Network|IDS)|\\([^)/]*\\)"
+            + "|(?!(?:TypeId|Description|Classification|Purpose|Data)\\b)[^/(\\[]+)/([^|\\n]+)$");
+    // What a row reads when it isn't in the mapping: never the same field because it reads the same.
+    private static final String NOT_IN_THE_MAPPING = "not in the mapping";
 
     private final Map<String, String> given;
     // Where each given description's field came from when it was given, for those it was recorded of.
@@ -65,6 +77,8 @@ public final class Descriptions {
     private final boolean ask;
     private final List<Map<String, Object>> notes;
     private final Map<String, Map<String, Object>> asked = new LinkedHashMap<>();
+    // Field -> what it reads, for those asked.
+    private final Map<String, Set<String>> askedReads = new LinkedHashMap<>();
     // Data key -> field -> its ask, with what it reads.
     private final Map<String, Map<String, DataAsk>> data = new LinkedHashMap<>();
 
@@ -147,43 +161,90 @@ public final class Descriptions {
     }
 
     /// The fields to ask about. A Data name every element reads from the same source: once, by its name, with the
-    /// elements it is under and their values together; else each by its full path.
+    /// elements it is under and their values together; an element read from the same source under several action
+    /// elements: once, by its path with the action element as `*`, with the paths it stands for; else each by its
+    /// full path.
     ///
     /// @return Field to what is asked of it (`field`, `from`, `values`, and `schemas_say` when a schema says
-    /// anything; `under` for a Data name).
+    /// anything; `under` for a Data name or an element under several action elements).
     public Map<String, Map<String, Object>> wanted() {
-        final Map<String, Map<String, Object>> out = new LinkedHashMap<>(asked);
+        final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
+        final Map<String, List<String>> byKey = new LinkedHashMap<>();
+        asked.keySet().forEach(field -> byKey.computeIfAbsent(Objects.requireNonNullElse(anyActionKey(field), field),
+                k -> new ArrayList<>()).add(field));
+        for (final Map.Entry<String, List<String>> entry : byKey.entrySet()) {
+            final List<String> fields = entry.getValue();
+            final Set<Set<String>> reads = fields.stream().map(askedReads::get).collect(Collectors.toSet());
+            if (fields.size() > 1 && reads.size() == 1 && readsAlike(reads.iterator().next())) {
+                final Map<String, Object> merged = merged(entry.getKey(), fields.stream().map(asked::get).toList(),
+                        reads.iterator().next());
+                merged.put("under", fields);
+                out.put(entry.getKey(), merged);
+            } else {
+                fields.forEach(field -> out.put(field, asked.get(field)));
+            }
+        }
         for (final Map.Entry<String, Map<String, DataAsk>> entry : data.entrySet()) {
             final Map<String, DataAsk> asks = entry.getValue();
             final Set<Set<String>> reads = asks.values().stream().map(DataAsk::reads).collect(Collectors.toSet());
             if (asks.size() > 1 && reads.size() == 1) {
-                final List<String> values = new ArrayList<>(new LinkedHashSet<>(asks.values().stream()
-                        .flatMap(a -> JsonValues.strings(a.asked().get("values")).stream())
-                        .toList()));
-                final Object said = asks.values().stream()
-                        .map(a -> a.asked().get("schemas_say"))
-                        .filter(JsonValues::truthy)
-                        .findFirst()
-                        .orElse(null);
-                final Map<String, Object> merged = new LinkedHashMap<>();
-                merged.put("field", entry.getKey());
+                final Map<String, Object> merged = merged(entry.getKey(), asks.values().stream()
+                        .map(DataAsk::asked)
+                        .toList(), reads.iterator().next());
                 merged.put("under", asks.keySet().stream().map(f -> {
                     final Matcher matcher = DATA_PATH.matcher(f);
                     return matcher.find()
                             ? matcher.group(1)
                             : null;
                 }).toList());
-                merged.put("from", String.join("\n", new TreeSet<>(reads.iterator().next())));
-                merged.put("values", values.subList(0, Math.min(3, values.size())));
-                if (said != null) {
-                    merged.put("schemas_say", said);
-                }
                 out.put(entry.getKey(), merged);
             } else {
                 asks.forEach((field, a) -> out.put(field, a.asked()));
             }
         }
         return out;
+    }
+
+    /// `any_action_key`: the key one description of an element goes under, for every action element it is under.
+    ///
+    /// @param field A field as a row shows it, e.g. `EventDetail/Network/Permit/Payload/Resource/URL`.
+    /// @return It with its action element as `*`, e.g. `EventDetail/*/Payload/Resource/URL`; null for a field under
+    /// no action element (TypeId, a Data value, an index field, a row of several paths).
+    public static String anyActionKey(final String field) {
+        if (field == null || DATA_PATH.matcher(field).find()) {
+            return null;
+        }
+        final Matcher matcher = ACTION_HOME.matcher(field);
+        return matcher.matches()
+                ? "EventDetail/*/" + matcher.group(1)
+                : null;
+    }
+
+    // One ask for several fields: their values together, and the first thing a schema says of any.
+    private static Map<String, Object> merged(final String field,
+                                              final List<Map<String, Object>> asks,
+                                              final Set<String> reads) {
+        final List<String> values = new ArrayList<>(new LinkedHashSet<>(asks.stream()
+                .flatMap(a -> JsonValues.strings(a.get("values")).stream())
+                .toList()));
+        final Object said = asks.stream()
+                .map(a -> a.get("schemas_say"))
+                .filter(JsonValues::truthy)
+                .findFirst()
+                .orElse(null);
+        final Map<String, Object> merged = new LinkedHashMap<>();
+        merged.put("field", field);
+        merged.put("from", String.join("\n", new TreeSet<>(reads)));
+        merged.put("values", values.subList(0, Math.min(3, values.size())));
+        if (said != null) {
+            merged.put("schemas_say", said);
+        }
+        return merged;
+    }
+
+    // True if fields reading this are the same field: not when what they read is that they aren't in the mapping.
+    private static boolean readsAlike(final Set<String> reads) {
+        return !reads.isEmpty() && reads.stream().noneMatch(r -> r.startsWith(NOT_IN_THE_MAPPING));
     }
 
     /// `vendor`: what the vendor's documentation says of the source fields a field is read from; else of the
@@ -254,15 +315,30 @@ public final class Descriptions {
         if (isData) {
             keys.add(FieldDocs.dataKey(dataPath.group(2)));
         }
+        final String anyAction = anyActionKey(field);
+        if (anyAction != null) {
+            keys.add(anyAction);
+        }
         String was = null;
         for (final String key : keys) {
             if (given.containsKey(key)) {
-                if (givenFrom.containsKey(key) && !givenFrom.get(key).equals(source)) {
+                // An element under several action elements is described by what it reads: its rows can show
+                // that differently (a row of several event types names each).
+                final String from = key.equals(anyAction) && !key.equals(field)
+                        ? String.join("\n", new TreeSet<>(reads != null
+                                ? reads
+                                : List.of(source)))
+                        : source;
+                if (key.equals(anyAction) && used.containsKey(key) && !used.get(key).equals(from)) {
+                    // Already said of an element read from elsewhere: not this one's meaning.
+                    continue;
+                }
+                if (givenFrom.containsKey(key) && !givenFrom.get(key).equals(from)) {
                     // Given of a field that came from elsewhere: asked again, with what it said.
                     was = given.get(key);
                     continue;
                 }
-                used.put(key, source);
+                used.put(key, from);
                 return given.get(key);
             }
         }
@@ -286,6 +362,9 @@ public final class Descriptions {
                                 : List.of(source))));
             } else {
                 asked.putIfAbsent(field, asking);
+                askedReads.putIfAbsent(field, Set.copyOf(reads != null
+                        ? reads
+                        : List.of(source)));
             }
         }
         return said.values().stream().findFirst().orElse("");

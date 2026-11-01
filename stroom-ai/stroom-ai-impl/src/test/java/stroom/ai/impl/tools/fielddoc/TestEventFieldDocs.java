@@ -354,6 +354,78 @@ class TestEventFieldDocs {
     }
 
     @Test
+    void anElementReadAlikeUnderSeveralActionElementsIsAskedOnce() {
+        // Seen (a web proxy): 334 fields asked, its allow, block and alert rules each writing the same 130 columns
+        // under Network/Permit, Network/Deny and Alert/Network; ten minutes and 70 calls to describe them.
+        final TranslationMapping m = TranslationMapping.fromJson(FieldDocFixtures.json("""
+                {"input": "data_splitter", "unmatched": "skip", "common": [], "events": [
+                 {"name": "allow", "when": [{"field": "a", "equals": "allow"}], "fields": [
+                  {"path": "EventDetail/Network/Permit/Source/Device/IPAddress", "field": "src"},
+                  {"path": "EventDetail/Network/Permit/Destination/Device/IPAddress", "field": "dst"},
+                  {"path": "EventDetail/Network/Permit/Payload/Resource/URL", "field": "url"}]},
+                 {"name": "block", "when": [{"field": "a", "equals": "block"}], "fields": [
+                  {"path": "EventDetail/Network/Deny/Source/Device/IPAddress", "field": "src"},
+                  {"path": "EventDetail/Network/Deny/Destination/Device/IPAddress", "field": "dst"},
+                  {"path": "EventDetail/Network/Deny/Payload/Resource/URL", "field": "url"}]},
+                 {"name": "alert", "fields": [{"path": "EventDetail/Alert/Type", "value": "Network"},
+                  {"path": "EventDetail/Alert/Network/Source/Device/IPAddress", "field": "src"},
+                  {"path": "EventDetail/Alert/Network/Destination/Device/IPAddress", "field": "alerted_ip"},
+                  {"path": "EventDetail/Alert/Network/Payload/Resource/URL", "field": "url"}]}]}"""));
+        final Descriptions asking = Descriptions.asking(true);
+        EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, asking);
+        final Map<String, Map<String, Object>> wanted = asking.wanted();
+        assertThat(wanted.get("EventDetail/*/Payload/Resource/URL"))
+                .containsEntry("from", "`url`")
+                .containsEntry("under", List.of("EventDetail/Network/Permit/Payload/Resource/URL",
+                        "EventDetail/Network/Deny/Payload/Resource/URL",
+                        "EventDetail/Alert/Network/Payload/Resource/URL"));
+        // Read from another column under the alert: not the same field, each asked by its own path.
+        assertThat(wanted.get("EventDetail/*/Destination/Device/IPAddress")).isNull();
+        assertThat(wanted.keySet()).contains("EventDetail/*/Source/Device/IPAddress",
+                "EventDetail/Network/Permit/Destination/Device/IPAddress",
+                "EventDetail/Alert/Network/Destination/Device/IPAddress");
+        assertThat(wanted.keySet()).noneMatch(k -> k.contains("Payload") && !k.startsWith("EventDetail/*/"));
+
+        // One description covers the element under every action element; one by full path wins for its row.
+        final Map<String, String> descriptions = new LinkedHashMap<>();
+        descriptions.put("EventDetail/*/Payload/Resource/URL", "Full URL the client requested.");
+        descriptions.put("EventDetail/Alert/Network/Payload/Resource/URL", "URL that raised the alert.");
+        descriptions.put("EventDetail/*/Destination/Device/IPAddress", "Address of the server requested.");
+        final Descriptions given = new Descriptions(descriptions, true);
+        final String text = EventFieldDocs.fieldMappingMarkdown(m, SCHEMA, null, FieldDocs.BY_EVENT_TYPE, given);
+        assertThat(text).contains("| `EventDetail/Network/Permit/Payload/Resource/URL` | Full URL the client "
+                                  + "requested. |",
+                "| `EventDetail/Network/Deny/Payload/Resource/URL` | Full URL the client requested. |",
+                "| `EventDetail/Alert/Network/Payload/Resource/URL` | URL that raised the alert. |");
+        assertThat(given.wanted().keySet()).noneMatch(k -> k.contains("Payload"));
+        // Said of the element read from dst: not the alert's, read from another column, which is still asked.
+        assertThat(text).contains("| `EventDetail/Network/Deny/Destination/Device/IPAddress` | Address of the server "
+                                  + "requested. |");
+        assertThat(given.wanted()).containsKey("EventDetail/Alert/Network/Destination/Device/IPAddress");
+        // Kept with what it reads, so an update with the rows shown another way doesn't ask again.
+        assertThat(given.sources()).containsEntry("EventDetail/*/Payload/Resource/URL", "`url`");
+    }
+
+    @Test
+    void anyActionKeyNamesTheElementUnderWhicheverActionElement() {
+        assertThat(Descriptions.anyActionKey("EventDetail/Network/Permit/Source/Port"))
+                .isEqualTo("EventDetail/*/Source/Port");
+        assertThat(Descriptions.anyActionKey("EventDetail/Alert/IDS/Rule")).isEqualTo("EventDetail/*/Rule");
+        assertThat(Descriptions.anyActionKey("EventDetail/(Send|Receive)/Source/Device/IPAddress"))
+                .isEqualTo("EventDetail/*/Source/Device/IPAddress");
+        assertThat(Descriptions.anyActionKey("EventDetail/View/Resource/URL")).isEqualTo("EventDetail/*/Resource/URL");
+        // An Alert's own elements stay under Alert: its Change's Rule is the rule changed, not a network rule.
+        assertThat(Descriptions.anyActionKey("EventDetail/Alert/Change/Rule")).isEqualTo("EventDetail/*/Change/Rule");
+        // Not under an action element, a Data value (asked by its name), or a row of several paths: no key.
+        assertThat(Descriptions.anyActionKey("EventDetail/TypeId")).isNull();
+        assertThat(Descriptions.anyActionKey("EventSource/Device/HostName")).isNull();
+        assertThat(Descriptions.anyActionKey("EventDetail/View/Data[@Name='x']/@Value")).isNull();
+        assertThat(Descriptions.anyActionKey("EventDetail/View/Object/Id | EventDetail/Create/Object/Id")).isNull();
+        assertThat(Descriptions.anyActionKey("source.ip")).isNull();
+        assertThat(Descriptions.anyActionKey(null)).isNull();
+    }
+
+    @Test
     void dataEveryEventTypeWritesAlikeIsACommonField() {
         // Seen: a Windows event's System/EventID and the like in each of 23 SecretServer rules, repeated in every
         // event type's table, and, outweighing what told the kinds apart, putting them all in one section.

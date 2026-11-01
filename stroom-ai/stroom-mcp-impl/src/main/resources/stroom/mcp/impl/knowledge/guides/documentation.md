@@ -91,7 +91,9 @@ that the meaning is unconfirmed. Until a field is described, the doc shows the f
 same arguments plus `field_descriptions={field: description}`, each field as the reply names it (and any ids the
 reply gives). A Data value read from the same source under several elements is asked once, by its name
 (`Data[@Name='Folder']`, with `under` listing the elements): one description covers it under all of them; where it
-means something else under one, describe that one by its full path too. A row of event types shown together is
+means something else under one, describe that one by its full path too. So is an element read from the same source
+under several action elements, by its path with the action element as `*` (`EventDetail/*/Payload/Resource/URL`,
+with `under` listing the paths: `Network/Permit`, `Network/Deny`, `Alert/Network`...). A row of event types shown together is
 asked by the path the table shows (`EventDetail/(Authenticate|Process)/Action`). They are kept with the
 documentation: an update asks only for fields new since, and a description given again replaces the kept one. The
 reply says whether the doc was `created` or `updated` (`written`).

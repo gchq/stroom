@@ -231,7 +231,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                 "What each field means for this source, {field: description}, when a "
                                 + "needs_descriptions reply asks, each field as the reply names it: inferred from "
                                 + "its name, where it comes from and its sample values (and the user's source "
-                                + "notes). A Data name (Data[@Name='x']) covers it under every element; a full "
+                                + "notes). A Data name (Data[@Name='x']) covers it under every element, and "
+                                + "EventDetail/*/x the element under every action element the reply lists; a full "
                                 + "path, that one row. Kept with the documentation, so later updates ask only for "
                                 + "new fields; give one again to change it."))
                         .addStringProperty(FIELD_MAPPING_LAYOUT_ARG, "Only when the user asks for a layout: "
