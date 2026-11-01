@@ -52,6 +52,78 @@ class TestMappingChanges {
                                          {"path": "EventDetail/Unknown/Data", "data_name": "a", "field": "a"}],
              "events": [{"name": "logon", "fields": []}, {"name": "other", "fields": []}]}""";
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void oneEntryOfARuleIsChangedRemovedOrAddedAndTheRestKept() {
+        // Seen: a rule replaced whole meant resending all of its ~140 entries to change one, so the agent edited the
+        // mapping file by hand (a dozen calls), and a rule it resent without its TypeId lost it.
+        final Map<String, Object> base = json("""
+                {"events": [{"name": "allow", "when": [{"field": "x-action", "equals": "allow"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Allow"},
+                                        {"path": "EventDetail/Network/Permit/Data", "data_name": "dc", "field": "dc"},
+                                        {"path": "EventDetail/Network/Permit/Data", "data_name": "pop",
+                                         "field": "pop"}]}]}
+                """);
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"events": [{"name": "allow", "fields": [
+                    {"path": "EventDetail/Network/Permit/Data", "data_name": "dc", "field": "datacentre"},
+                    {"path": "EventDetail/Network/Permit/Data", "data_name": "pop", "remove": true},
+                    {"path": "EventDetail/Network/Permit/Destination/Port", "field": "dport"}]}]}
+                """));
+
+        final Map<String, Object> rule = ((List<Map<String, Object>>) applied.merged().get("events")).getFirst();
+        assertThat(rule.get("when")).as("kept").isEqualTo(((List<Map<String, Object>>) base.get("events"))
+                .getFirst().get("when"));
+        assertThat(ToolJson.dumps(rule.get("fields"))).isEqualTo(ToolJson.dumps(json("""
+                {"f": [{"path": "EventDetail/TypeId", "value": "Allow"},
+                       {"path": "EventDetail/Network/Permit/Data", "data_name": "dc", "field": "datacentre"},
+                       {"path": "EventDetail/Network/Permit/Destination/Port", "field": "dport"}]}
+                """).get("f")));
+        assertThat(applied.done()).containsExactly(
+                "rule 'allow' entry 'EventDetail/Network/Permit/Data' (Data 'dc') replaced",
+                "rule 'allow' entry 'EventDetail/Network/Permit/Data' (Data 'pop') removed",
+                "rule 'allow' entry 'EventDetail/Network/Permit/Destination/Port' added");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aRuleIsReplacedWholeOnlyWhenSaid() {
+        final Map<String, Object> base = json("""
+                {"events": [{"name": "allow", "when": [{"field": "a", "equals": "b"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Allow"}]}]}
+                """);
+
+        final MappingChanges.Applied changedWhen = MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"allow\", \"when\": [{\"field\": \"c\", \"equals\": \"d\"}]}]}"));
+        final MappingChanges.Applied replaced = MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"allow\", \"replace\": true, \"fields\": []}]}"));
+
+        final Map<String, Object> keptFields = ((List<Map<String, Object>>) changedWhen.merged().get("events"))
+                .getFirst();
+        assertThat((List<?>) keptFields.get("fields")).as("its entries kept").hasSize(1);
+        assertThat(changedWhen.done()).containsExactly("rule 'allow': 'when' replaced");
+        final Map<String, Object> whole = ((List<Map<String, Object>>) replaced.merged().get("events")).getFirst();
+        assertThat(whole).doesNotContainKeys("when", "replace");
+        assertThat((List<?>) whole.get("fields")).isEmpty();
+        assertThat(replaced.done()).containsExactly("rule 'allow' replaced whole");
+    }
+
+    @Test
+    void anEntryOfARuleWithoutItsPathOrOneNotThereToRemoveIsRefused() {
+        final Map<String, Object> base = json(
+                "{\"events\": [{\"name\": \"allow\", \"fields\": []}]}");
+
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"allow\", \"fields\": [{\"field\": \"x\"}]}]}")))
+                .hasMessageStartingWith("Each entry in a rule's fields needs its path");
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"allow\", \"fields\": [{\"path\": \"EventDetail/TypeId\", "
+                + "\"remove\": true}]}]}")))
+                .hasMessage("changes.events removes rule 'allow' entry 'EventDetail/TypeId', which the mapping "
+                            + "does not have");
+    }
+
     @TestFactory
     Stream<DynamicTest> theChangesMergeAsRecorded() {
         final List<Map<String, Object>> cases = ReadingFixtures.json("changes_cases.json");
@@ -122,7 +194,9 @@ class TestMappingChanges {
         // The base is left alone.
         final List<Map<String, Object>> baseRules = list(base.get("events"));
         assertThat(baseRules.getFirst()).containsEntry("name", "logon");
-        assertThat(applied.done()).containsExactly("rule 'other' replaced", "rule 'logoff' added after the others",
+        // An existing rule is changed entry by entry; a new one added whole.
+        assertThat(applied.done()).containsExactly("rule 'other' entry 'EventDetail/TypeId' added",
+                "rule 'logoff' added after the others",
                 "rule 'logon' removed", "common 'EventDetail/Unknown/Data' (Data 'a') replaced",
                 "common 'EventTime/TimeCreated' removed", "'unmatched' replaced");
     }
@@ -148,5 +222,10 @@ class TestMappingChanges {
     @SuppressWarnings("unchecked")
     private static <T> List<T> list(final Object value) {
         return (List<T>) value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> json(final String text) {
+        return (Map<String, Object>) ToolJson.loads(text);
     }
 }
