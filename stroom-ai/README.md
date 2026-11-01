@@ -364,3 +364,15 @@ Planned, not yet built. Decisions and status are in [DESIGN.md](DESIGN.md).
 * **Suggested standing instructions.** Built (`instruction_evidence`, `propose_instructions`, the nudge at
   promotion; see DESIGN.md). Still to do: try the review and apply on an AGENTS doc, and creating one from the
   button, in a browser.
+* **A token budget per turn.** Every model turn sends the tools' definitions and the whole context again, so an
+  onboarding run cost 11 to 13 million input tokens (runs 393 and 394, chats 134 and 135, 2026-11-01). Planned:
+  measure what each turn spends on tool definitions, guidance and earlier results; set a budget for it; and meet
+  it with fewer, larger tools and short reference guides (as `guides/mapping.md`) rather than long prose the agent
+  reads again.
+* **Generated tool reference, and lighter goldens.** `TOOLS.md` and `DESIGN.md` are about 11,000 lines kept by
+  hand, and drifted (11 defects found on 2026-10-31). Planned: generate the tool reference (arguments, returns,
+  refusals) from the tools' definitions, keeping hand-written docs for design decisions; and fewer, smaller golden
+  files than the generation goldens (some 218,000 lines of test resources, so one warning's wording is a 239-file
+  diff).
+* **Shorter comments.** The "Seen in testing" comments record why each rule exists, but make the code long.
+  Planned: keep that history in the tests and commit messages, with a one-line pointer in the code.
