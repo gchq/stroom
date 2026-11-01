@@ -67,14 +67,14 @@ class ModelStreamer {
     /// @param model         The model.
     /// @param request       The request.
     /// @param chatId        The chat to stream into.
-    /// @param showReasoning True if the model's reasoning is to be shown as it arrives.
+    /// @param keepReasoning True if the model's reasoning is kept, so streamed into the chat as it arrives.
     /// @param cancelled     Says if the user has stopped the run.
     /// @return The model's response, with how long it spent thinking.
     /// @throws TaskTerminatedException If the run was stopped.
     StreamedResponse chat(final StreamingChatModel model,
                           final ChatRequest request,
                           final int chatId,
-                          final boolean showReasoning,
+                          final boolean keepReasoning,
                           final BooleanSupplier cancelled) {
         final Collector collector = new Collector();
         stream(model, request, chatId, collector);
@@ -82,7 +82,7 @@ class ModelStreamer {
         final StreamedRow thinkingRow = new StreamedRow(chatId, AiMessageType.STREAMING_THINKING);
         try {
             final ChatResponse response = await(collector.future, cancelled, collector::cancel, () -> {
-                if (showReasoning) {
+                if (keepReasoning) {
                     thinkingRow.write(collector.thinking());
                 }
                 answerRow.write(collector.answer());

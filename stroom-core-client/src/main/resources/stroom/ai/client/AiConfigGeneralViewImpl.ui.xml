@@ -26,7 +26,7 @@
             <tickbox:CustomCheckBox ui:field="showToolCalls" label="Show tool calls"/>
         </form:FormGroup>
         <form:FormGroup identity="showReasoning"
-                        helpText="Show the model's reasoning in each turn's activity, when the model gives any and its settings allow it to be shown.">
+                        helpText="Show the model's reasoning in each turn's activity, when the model gives any. It has no effect for a model whose reasoning isn't kept (Keep reasoning in the model's settings).">
             <tickbox:CustomCheckBox ui:field="showReasoning" label="Show reasoning"/>
         </form:FormGroup>
         <form:FormGroup identity="enableDebugDetail"
