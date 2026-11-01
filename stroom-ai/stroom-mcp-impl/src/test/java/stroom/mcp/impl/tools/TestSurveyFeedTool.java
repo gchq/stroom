@@ -80,6 +80,26 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void theValuesNamingTheKindOfEventAreCountedOverEveryShape() {
+        // Seen: a 790 KB survey regrouped by x-type and x-action with jq, its shapes being their combinations.
+        final List<Map<String, Object>> found = List.of(
+                Map.of("signature", "row:x-type=nspolicy, x-action=allow", "count", 70L),
+                Map.of("signature", "row:x-type=nspolicy, x-action=block", "count", 20L),
+                Map.of("signature", "row:x-type=connection, x-action=allow", "count", 10L),
+                Map.of("signature", "ts,user,event | event=login", "count", 5L),
+                Map.of("signature", "kv:action=login, result=ok", "count", 3L),
+                Map.of("signature", "text:sshd|Accepted password for <*>", "count", 9L),
+                Map.of("signature", "cef:Acme|Door|1|100", "count", 4L));
+
+        final Map<String, Map<String, Long>> kinds = SurveyFeedTool.kinds(found);
+
+        assertThat(kinds.keySet()).containsExactly("x-type", "x-action", "event", "action", "result");
+        assertThat(kinds.get("x-type")).containsExactly(Map.entry("nspolicy", 90L), Map.entry("connection", 10L));
+        assertThat(kinds.get("x-action")).containsExactly(Map.entry("allow", 80L), Map.entry("block", 20L));
+        assertThat(kinds.get("event")).containsExactly(Map.entry("login", 5L));
+    }
+
+    @Test
     void fewerStreamsThanTheDefaultAreTheUsersToConfirmOnce() {
         // Seen in VS Code: an agent surveyed a live feed 3 streams at a time until the user asked for a larger
         // sample. A number the user gives is still theirs: fewer is confirmed in a form, then not asked again for

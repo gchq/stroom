@@ -2634,7 +2634,9 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   default 2), `build`.
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
-  parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `shapes` (up to 60:
+  parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
+  naming the kind of event, up to 6, with how many records hold each of its values, up to 25, over every shape;
+  seen: a 790 KB survey regrouped by x-type and x-action with jq), `shapes` (up to 60:
   `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `locations`), `new_shapes`,
   `locations` (stream, part, record, shape, for `step_records`; only new shapes once some are known), `hint`. With a
   build, the survey doc's details too.
