@@ -590,7 +590,8 @@ public final class XsltGenerator {
             return new Source(null, XPathText.lookupText(entry.lookup().map(), key, entry.lookup().path()), null);
         }
         final String keySource = hasAnyOf(entry)
-                ? XPathText.anyOfText(entry.anyOf().stream().map(field -> source(field, null, entryScope)).toList())
+                ? XPathText.anyOfText(entry.anyOf().stream().map(field -> source(field, null, entryScope)).toList(),
+                        nil())
                 : null;
         if (isSet(entry.dictionary())) {
             final String key = XPathText.keyText(keySource != null
@@ -604,7 +605,7 @@ public final class XsltGenerator {
         if (entry.join() != null) {
             return new Source(null, XPathText.joinText(entry.join().stream()
                     .map(field -> source(field, null, entryScope))
-                    .toList(), entry.joinSeparator()), null);
+                    .toList(), entry.joinSeparator(), nil()), null);
         }
         return new Source(entry.field(), entry.xpath(), entryScope);
     }

@@ -372,6 +372,32 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aNilValueIsSkippedByAnyOfAndJoinNotTakenAsTheValue() {
+        // Seen in Ask Stroom AI (Netskope): any_of [x-cs-src-ip, x-cs-src-ip-egress] with nil_values ['-'] took the
+        // first column's '-' and then left it out, so Source had no address though the second column held one.
+        final Map<String, Object> json = baseJson();
+        json.put("nil_values", List.of("-"));
+        json.put("events", List.of(rule("any", List.of(), List.of(
+                Map.of("path", "EventDetail/TypeId", "join", List.of("event", "action")),
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/User/Id", "any_of", List.of("user", "login"))))));
+        final String records = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"t\"/>"
+                               + "<data name=\"user\" value=\"-\"/><data name=\"login\" value=\"pat\"/>"
+                               + "<data name=\"event\" value=\"User\"/><data name=\"action\" value=\"-\"/>"
+                               + "</record><record><data name=\"time\" value=\"t\"/><data name=\"user\" value=\"-\"/>"
+                               + "<data name=\"login\" value=\"-\"/><data name=\"event\" value=\"User\"/>"
+                               + "<data name=\"action\" value=\"Login\"/></record></records>";
+
+        final List<XmlElement> events = children(transform(generate(TranslationMapping.fromJson(json)).xslt(),
+                records), "Event");
+
+        assertThat(events).extracting(event -> find(event, "EventDetail/TypeId").text())
+                .containsExactly("User", "User-Login");
+        assertThat(find(events.getFirst(), "EventDetail/Authenticate/User/Id").text()).isEqualTo("pat");
+        assertThat(find(events.getLast(), "EventDetail/Authenticate/User")).isNull();
+    }
+
+    @Test
     void aFieldWrittenToAnElementAndAsDataIsWarnedOf() {
         // Seen: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept beside the
         // elements the agent mapped. A warning: a Data copy may be kept on purpose.
