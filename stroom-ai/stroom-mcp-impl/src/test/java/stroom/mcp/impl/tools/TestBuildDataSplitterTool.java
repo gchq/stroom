@@ -17,7 +17,9 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ErrorTriage;
+import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
@@ -46,7 +48,7 @@ class TestBuildDataSplitterTool {
 
     private final TranslationWorld world = new TranslationWorld();
     private final BuildDataSplitterTool tool = new BuildDataSplitterTool(world.sampleStreamTexts,
-            world.sampleProfiling, world.docs, world.eventVersions, world.plan);
+            world.streamReader, world.sampleProfiling, world.docs, world.eventVersions, world.plan);
 
     @Test
     void toolsReadTheSampleFromItsStreamsInsteadOfItsText() {
@@ -60,6 +62,53 @@ class TestBuildDataSplitterTool {
                 .containsEntry("converter_type", "DATA_SPLITTER");
         assertThat(((Map<?, ?>) splitter.get("spec")).get("kind")).isEqualTo("delimited");
         assertThat((String) splitter.get("hint")).startsWith("Every line parsed.");
+    }
+
+    @Test
+    void theBufferHoldsTheLongestRecordOfTheWholeStreamNotJustItsStart() {
+        // Seen: a buffer sized from the start of a 159 MB stream lost records of over 105,000 characters further in.
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+        Mockito.when(world.streamReader.recordLengths(7L, null)).thenReturn(lengths(150_000, true));
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("stream_ids", List.of(7)));
+
+        assertThat(splitter).containsEntry("longest_record", 150_000).containsEntry("buffer_size", 600_000)
+                .doesNotContainKey("longest_record_note");
+        assertThat((String) splitter.get("converter")).contains("bufferSize=\"600000\"");
+    }
+
+    @Test
+    void aStreamNotReadThroughSaysALongerRecordMayBeFurtherIn() {
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+        Mockito.when(world.streamReader.recordLengths(7L, null)).thenReturn(lengths(30_000, false));
+
+        final Map<String, Object> splitter = world.call(tool, Map.of("stream_ids", List.of(7)));
+
+        assertThat(splitter).containsEntry("buffer_size", 120_000);
+        assertThat((String) splitter.get("longest_record_note")).contains("measure_records");
+    }
+
+    @Test
+    void quotedValuesHoldingNewLinesAreMeasuredWithTheirLinesJoined() {
+        final String quoted = "id,note\n1,\"one\ntwo\"\n2,three\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", quoted), List.of()));
+        Mockito.when(world.streamReader.recordLengths(Mockito.eq(7L), Mockito.any()))
+                .thenReturn(lengths(0, true));
+
+        world.call(tool, Map.of("stream_ids", List.of(7), "spec", Map.of("kind", "delimited", "delimiter", ",",
+                "header", true, "quote", "\"", "quoted_newlines", true)));
+
+        Mockito.verify(world.streamReader).recordLengths(7L, '"');
+    }
+
+    @Test
+    void textGivenInsteadOfStreamsIsNotMeasuredAgain() {
+        world.call(tool, Map.of("sample", CSV));
+
+        Mockito.verify(world.streamReader, Mockito.never()).recordLengths(Mockito.anyLong(), Mockito.any());
     }
 
     @Test
@@ -105,7 +154,7 @@ class TestBuildDataSplitterTool {
         assertThat(ErrorTriage.bundled().classify("ERROR", "dsParser", true, "Top level expression 'split[1]' "
                                                   + "matched too much content and exhausted the buffer.").reason())
                 .contains("longer than half the Data Splitter's read buffer")
-                .contains("at least double the buffer");
+                .contains("measure_records stream_ids=");
     }
 
     @ParameterizedTest(name = "a line of {0} characters")
@@ -342,7 +391,8 @@ class TestBuildDataSplitterTool {
         Mockito.when(wrappers.find()).thenReturn(List.of(live));
         Mockito.when(wrappers.version(any())).thenReturn(TranslationWorld.VERSION);
         final BuildDataSplitterTool environment = new BuildDataSplitterTool(world.sampleStreamTexts,
-                new SampleProfiling.Profiled(wrappers), world.docs, world.eventVersions, world.plan);
+                world.streamReader, new SampleProfiling.Profiled(wrappers), world.docs, world.eventVersions,
+                world.plan);
 
         final Map<String, Object> result = world.call(environment, Map.of("sample", TestSampleProfiling.FRAGMENTS,
                 "save_as", "ACME-WRAPPER", "build", "acme-v1"));
@@ -389,5 +439,10 @@ class TestBuildDataSplitterTool {
     @SuppressWarnings("unchecked")
     private static Map<String, String> firstRecord(final Map<String, Object> splitter) {
         return ((List<Map<String, String>>) splitter.get("first_records")).getFirst();
+    }
+
+    private static StreamReader.PartLengths lengths(final int longest, final boolean complete) {
+        return new StreamReader.PartLengths(List.of(new RecordLengths.Measured(10, longest, new RecordLengths.Span(
+                longest, 3), null, 0, complete)), 1);
     }
 }

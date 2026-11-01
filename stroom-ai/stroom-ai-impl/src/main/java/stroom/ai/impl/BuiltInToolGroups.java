@@ -63,6 +63,7 @@ public final class BuiltInToolGroups {
                     "check_xslt",
                     "check_events",
                     "build_data_splitter",
+                    "measure_records",
                     "save_text_converter",
                     "save_dictionary",
                     "create_pipeline",

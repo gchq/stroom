@@ -73,6 +73,7 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     private static final int MAX_DIFFERENCES = 5;
 
     private final SampleStreamTexts sampleStreamTexts;
+    private final StreamReader streamReader;
     private final SampleProfiling sampleProfiling;
     private final TranslationDocs translationDocs;
     private final EventVersions eventVersions;
@@ -80,11 +81,13 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
 
     @Inject
     BuildDataSplitterTool(final SampleStreamTexts sampleStreamTexts,
+                          final StreamReader streamReader,
                           final SampleProfiling sampleProfiling,
                           final TranslationDocs translationDocs,
                           final EventVersions eventVersions,
                           final BuildPlan plan) {
         this.sampleStreamTexts = sampleStreamTexts;
+        this.streamReader = streamReader;
         this.sampleProfiling = sampleProfiling;
         this.translationDocs = translationDocs;
         this.eventVersions = eventVersions;
@@ -225,8 +228,8 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         } else {
             chosen = given(spec, sample);
         }
-        final OptionalInt bufferSize = bufferSize(call, chosen, sample, others);
         final Map<String, Object> result = new LinkedHashMap<>();
+        final OptionalInt bufferSize = bufferSize(call, chosen, sample, others, streamIds, result);
         result.put("spec", chosen.toMap());
         result.put("inferred", spec == null);
         final String converter = SplitterXml.converter(chosen);
@@ -276,11 +279,14 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     // The Data Splitter's read buffer: the one given, else enough for the sample's longest record (its longest line,
     // or a record over several lines whole), else Stroom's default (empty). Seen in testing: CSV lines of about
     // 20,000 characters lost in processing, and the agent, told the DSParser element had no buffer property,
-    // couldn't go on.
+    // couldn't go on. Sample streams are measured whole (the text profiled is only their start): seen, records of
+    // over 105,000 characters further into a 159 MB stream lost, with a buffer sized from its start.
     private OptionalInt bufferSize(final ToolCall call,
                                    final SplitterSpec spec,
                                    final String sample,
-                                   final List<String> others) {
+                                   final List<String> others,
+                                   final List<Long> streamIds,
+                                   final Map<String, Object> result) {
         final Integer given = intArg(call, BUFFER_SIZE_ARG);
         if (given != null) {
             if (given < RootFactory.MIN_BUFFER_SIZE || given > RootFactory.MAX_BUFFER_SIZE) {
@@ -298,7 +304,43 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
             longest = Math.max(longest, Math.max(SplitterXml.longestLine(text),
                     SplitterDryRun.longestRecord(spec, text)));
         }
+        if (rawArg(call, SAMPLE_ARG) == null) {
+            longest = Math.max(longest, measuredLongest(streamIds, spec, result));
+        }
         return SplitterXml.bufferSizeFor(longest);
+    }
+
+    // The longest record of the sample streams read through whole (MeasureRecordsTool), said in the result; 0 when
+    // none can be measured. A spec making records of a marked line or a blank-line block is measured by its lines.
+    private int measuredLongest(final List<Long> streamIds,
+                                final SplitterSpec spec,
+                                final Map<String, Object> result) {
+        final Character quote = "delimited".equals(spec.kind()) && spec.quotedNewlines() && spec.quote() != null
+                                && spec.quote().length() == 1
+                ? spec.quote().charAt(0)
+                : null;
+        int longest = 0;
+        boolean complete = true;
+        for (final long streamId : streamIds) {
+            try {
+                final StreamReader.PartLengths lengths = streamReader.recordLengths(streamId, quote);
+                longest = Math.max(longest, lengths.longest());
+                complete = complete && lengths.complete();
+            } catch (final StreamReader.StreamReadException e) {
+                complete = false;
+            }
+            if (!complete) {
+                break;
+            }
+        }
+        if (longest > 0) {
+            result.put("longest_record", longest);
+        }
+        if (!complete) {
+            result.put("longest_record_note", "The sample streams weren't all read through, so a longer record may "
+                                              + "be further in: measure_records stream_ids= gives the longest.");
+        }
+        return longest;
     }
 
     // The spec run on the sample: every sample stream must parse, not just the first.
