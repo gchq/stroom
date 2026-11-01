@@ -2313,7 +2313,7 @@ Reads the content of a Stroom document given its UUID: the code of an XSLT, text
       "type" : "integer"
     },
     "element" : {
-      "description" : "XMLSchema of event-logging only: what this element takes, e.g. 'EventDetail' (the action elements), 'EventDetail/Authenticate' or 'EventSource/User': its children (required, repeatable, one of a choice), a leaf's type and allowed values, each described.",
+      "description" : "XMLSchema of event-logging only: what this element takes, e.g. 'EventDetail' (the action elements), 'EventDetail/Authenticate' or 'EventSource/User': its children (required, repeatable, one of a choice), a leaf's type and allowed values, each described. Up to 10 paths in one call, comma-separated (e.g. 'EventSource/Client, EventDetail/Network/Permit/Source'): each described under its path.",
       "type" : "string"
     },
     "find" : {
