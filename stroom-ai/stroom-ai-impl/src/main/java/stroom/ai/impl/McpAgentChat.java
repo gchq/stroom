@@ -250,6 +250,7 @@ class McpAgentChat {
     private final CurrentToolGrants currentToolGrants;
     // Null where it isn't injected (in tests), and responses are stored as written.
     private AnswerLinks answerLinks;
+    private TabSnapshots tabSnapshots;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -290,6 +291,12 @@ class McpAgentChat {
         this.answerLinks = answerLinks;
     }
 
+    /// @param tabSnapshots The tabs the user attached to questions, to tell whether their notes preview content.
+    @Inject
+    void setTabSnapshots(final TabSnapshots tabSnapshots) {
+        this.tabSnapshots = tabSnapshots;
+    }
+
     ChatResponse chat(final ChatModel chatModel,
                       final OpenAIModelDoc modelDoc,
                       final int chatId,
@@ -323,9 +330,11 @@ class McpAgentChat {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
         // What this run shortens is counted afresh, as it starts from the stored chat.
         usageTracker.resetShortened(chatId);
-        // Attachments, Stroom data and the results of tools that read untrusted content earlier in the chat could
-        // hold planted instructions. Results of tools that read only trusted content don't count.
-        if (UntrustedChatContent.isIn(aiService.getMessages(chatId), builtInTools::readsUntrustedContent)) {
+        // Attachments, Stroom data, previews of attached tabs and the results of tools that read untrusted content
+        // earlier in the chat could hold planted instructions. Results of tools that read only trusted content
+        // don't count.
+        if (UntrustedChatContent.isIn(aiService.getMessages(chatId), builtInTools::readsUntrustedContent,
+                this::tabPreviewed)) {
             runManager.markTainted(chatId);
         }
         // A call to an untrusted MCP server's tool earlier in the chat means its output may hold planted
@@ -895,6 +904,11 @@ class McpAgentChat {
 
     /// @return True if the tool is an untrusted MCP server's, or one of the resource tools while any server is
     /// untrusted (as they read from all of them).
+    // Whether a question's tab is previewed in its note. Without the snapshots to tell, any tab counts.
+    private boolean tabPreviewed(final Integer snapshotId) {
+        return tabSnapshots == null || tabSnapshots.previewsContent(snapshotId);
+    }
+
     private boolean isUntrustedServerTool(final McpToolset toolset, final String toolName) {
         if (toolset == null || toolName == null || isBuiltIn(toolName)) {
             return false;
