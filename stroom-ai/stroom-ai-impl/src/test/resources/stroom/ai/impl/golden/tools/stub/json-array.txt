@@ -32,7 +32,7 @@ The result was too large to show in full (7092 characters, 601 lines), so it has
   "id" : 9,
   "host" : "fw2"
 
-It is a JSON array of 200 items. Pick out the parts you need with the jq tool, e.g. `.[0]`, or `length`.
+It is a JSON array of 200 items, each an object with id, host. Pick out the parts you need with the jq tool, e.g. `.[0]`, or `length`.
 
 If you need more of it, read it from the workspace file with the workspace tools, if you have them.
 
