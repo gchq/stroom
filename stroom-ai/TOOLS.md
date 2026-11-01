@@ -5458,7 +5458,9 @@ The tools' working knowledge is bundled with Stroom in `stroom-mcp-impl`
 `stroom.ai.impl.tools.AgentKnowledge`). Without that module there is none, and the tools that use it say so.
 
 * **Working guides** (`guides/<name>.md`): `agent-instructions`, `cef`, `data-splitter`, `documentation`,
-  `event-logging`, `indexing`, `json-input`, `reference-data`, `visualisation` and `xslt`. Short, hand-written
+  `event-logging`, `indexing`, `json-input`, `mapping` (a compact reference of a translation mapping's keys, time
+  formats and how `changes=` merges, which the draft's hint names), `reference-data`, `visualisation` and `xslt`.
+  Short, hand-written
   summaries of the Stroom documentation for the work the tools do. The chat reads them with `get_instructions
   guide=<name>` (`guide=guides` lists them); `/mcp` serves them as resources.
 * **Field convention profiles** (`conventions/<name>.yaml`): `ecs` and `stroom-flat`, read by

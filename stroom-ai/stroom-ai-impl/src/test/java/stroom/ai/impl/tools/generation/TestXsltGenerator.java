@@ -425,6 +425,13 @@ class TestXsltGenerator extends XsltRuns {
         assertThat(XPathText.literal("o'neil")).isEqualTo("'o''neil'");
         assertThat(MappingFacts.patternProblem("yyyy-MM-dd'T'HH:mm:ss.SSSX")).isNull();
         assertThat(MappingFacts.patternProblem("dd/MMM/yyyy:HH:mm:ss Z")).isNull();
+        // Seen: 'epoch seconds' told to quote its letters, "ep'o'ch sec'o'nds", which isn't a time at all.
+        assertThat(MappingFacts.patternProblem("epoch seconds")).isEqualTo(
+                "time_format 'epoch seconds' describes an epoch time: write it as epoch_s (epoch_s, epoch_ms, "
+                + "epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds)");
+        assertThat(MappingFacts.patternProblem("Unix time in milliseconds")).contains("write it as epoch_ms");
+        assertThat(MappingFacts.patternProblem("epoch ns")).contains("write it as epoch_ns");
+        assertThat(MappingFacts.patternProblem("epoch microseconds")).contains("write it as epoch_us");
     }
 
     @Test

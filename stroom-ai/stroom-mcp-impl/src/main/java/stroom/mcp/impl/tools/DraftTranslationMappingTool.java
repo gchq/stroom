@@ -234,7 +234,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "stream_ids=the sample streams (or sample=the texts), splitter=this splitter): the "
                            + "server keeps this draft for the session, so it needn't be sent whole. A rule's data "
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
-                           + "element.");
+                           + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
+                           + "the time formats, and how changes= merges.");
         return result;
     }
 
