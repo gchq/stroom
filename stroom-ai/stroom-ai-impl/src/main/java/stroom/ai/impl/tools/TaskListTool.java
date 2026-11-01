@@ -28,6 +28,7 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalInt;
 
@@ -123,8 +124,8 @@ class TaskListTool extends AbstractBuiltInTool {
                 || title.isBlank()) {
                 throw new IllegalArgumentException("Each task needs a title.");
             }
-            final String status = String.valueOf(map.get(STATUS));
-            if (!List.of(NOT_STARTED, IN_PROGRESS, COMPLETED).contains(status)) {
+            final String status = status(String.valueOf(map.get(STATUS)));
+            if (status == null) {
                 throw new IllegalArgumentException("A task's status must be " + NOT_STARTED + ", " + IN_PROGRESS
                                                    + " or " + COMPLETED + ".");
             }
@@ -156,5 +157,16 @@ class TaskListTool extends AbstractBuiltInTool {
     public boolean readsUntrustedContent() {
         // It only repeats what the model gave it.
         return false;
+    }
+
+    // A status as given, or a common word for one (seen: "pending" refused, a call wasted): null if it is neither.
+    private static String status(final String given) {
+        final String word = given.strip().toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+        return switch (word) {
+            case NOT_STARTED, "pending", "todo", "to_do", "open", "planned", "not_done" -> NOT_STARTED;
+            case IN_PROGRESS, "started", "active", "doing", "running", "ongoing" -> IN_PROGRESS;
+            case COMPLETED, "complete", "done", "finished" -> COMPLETED;
+            default -> null;
+        };
     }
 }
