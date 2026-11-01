@@ -313,7 +313,7 @@ public final class TemplateCheck {
             notes.add(path + ": mapped as " + type + ", a type Stroom leaves out of the Elastic Index doc's fields, "
                       + "so Stroom can't search or show it");
             changes.add(change(path, "mapped as " + type + ", which Stroom can't search", "map '" + path + "' in the "
-                    + "template as " + ("match_only_text".equals(type) || "search_as_you_type".equals(type)
+                    + "template as " + ("search_as_you_type".equals(type)
                     ? "text"
                     : "keyword") + " (ahead of any component template), so Stroom lists it"));
         }

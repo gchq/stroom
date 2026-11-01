@@ -1482,9 +1482,9 @@ Planned, not started: repeated objects in a translation (an array of users in an
   define, or a known field given another type. A Data element whose name is an ECS field's, written in another case
   or with other separators, is drafted under that name (`ecs_data_elements`).
 * The template from an ECS plan composes Elasticsearch's built-in `ecs@mappings` with dynamic mapping on, and maps
-  only the rest. Fields the component maps as a type Stroom can't list (`match_only_text`, `flattened`, `geo_point`,
-  `search_as_you_type`) are mapped as the plan says (`message` as `text`; seen in production: every search on
-  `message` found nothing). A `composed_of` name starting `ecs@` other than `ecs@mappings` is refused. An AGENTS
+  only the rest. Fields the component maps as a type Stroom can't list (`flattened`, `geo_point`,
+  `search_as_you_type`) are mapped as the plan says. `message` (`match_only_text`) is left to the component: Stroom
+  lists it as text since #5878 (before then, every search on it found nothing). A `composed_of` name starting `ecs@` other than `ecs@mappings` is refused. An AGENTS
   exclusion of `ecs@mappings` wins over an example, but the user's own nomination wins over an AGENTS exclusion.
 
 ### Field plans (built)

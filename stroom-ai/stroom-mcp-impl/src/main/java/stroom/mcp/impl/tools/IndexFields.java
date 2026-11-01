@@ -384,7 +384,7 @@ class IndexFields {
         if (kind != null && EcsSchema.STROOM_UNLISTED.contains(kind)) {
             return field + " isn't among the index's fields in Stroom: " + EcsSchema.COMPONENT + " maps it as "
                    + kind + ", a type Stroom leaves out, so Stroom can't search or show it. Map it as "
-                   + ("match_only_text".equals(kind) || "search_as_you_type".equals(kind)
+                   + ("search_as_you_type".equals(kind)
                     ? "text"
                     : "keyword") + " in the index template (propose_index_template does, for a new index; an "
                    + "existing index keeps a field's type, so it takes a new index or a reindex), and leave it out "
