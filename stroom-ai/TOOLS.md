@@ -938,7 +938,9 @@ Runs up to 10 data tool steps one after another, each on the file the step befor
 never enter the conversation. A step is `{"tool", "args"}`, with tool one of `grep`, `jq`, `xpath`, `table`,
 `fetch_events`, `search_events` or `current_results`; each step is run as that tool's own call would be, with the
 same checks. A step's `path` defaults to (or `$prev` names) the previous step's output; intermediate files are
-written under `/outputs/pipeline/<id>/step-N.<ext>` and deleted at the end. Only the last step takes the pipeline's
+written under `/outputs/pipeline/<id>/step-N.<ext>` and deleted at the end (the log says "step N's input", not
+their names); a step that gives its own `out` keeps that file, which the next step reads. Only the last step takes the
+pipeline's
 `out`.
 
 * **Arguments**: `steps` (required); `out`.

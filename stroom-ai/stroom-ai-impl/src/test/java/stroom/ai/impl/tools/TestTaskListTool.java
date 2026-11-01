@@ -46,13 +46,23 @@ class TestTaskListTool {
     @Test
     void badListsAreRefusedAndNotKept() {
         assertThat(run("{\"tasks\":[]}")).startsWith("Error");
-        assertThat(run("{\"tasks\":[{\"title\":\"x\",\"status\":\"done\"}]}")).startsWith("Error")
+        assertThat(run("{\"tasks\":[{\"title\":\"x\",\"status\":\"nearly\"}]}")).startsWith("Error")
                 .contains("in_progress");
         assertThat(run("{\"tasks\":[{\"status\":\"completed\"}]}")).startsWith("Error").contains("title");
         assertThat(run("{\"tasks\":\"not a list\"}")).startsWith("Error");
         assertThat(run("{\"tasks\":[" + "{\"title\":\"x\",\"status\":\"completed\"},".repeat(20)
                        + "{\"title\":\"x\",\"status\":\"completed\"}]}")).contains("at most 20");
         Mockito.verifyNoInteractions(aiService);
+    }
+
+    @Test
+    void commonWordsForAStatusAreTakenAsIt() {
+        // Seen: "pending" refused, a call wasted.
+        assertThat(TaskListTool.tasks("{\"tasks\":[{\"title\":\"a\",\"status\":\"pending\"},"
+                                      + "{\"title\":\"b\",\"status\":\"In progress\"},"
+                                      + "{\"title\":\"c\",\"status\":\"done\"}]}"))
+                .extracting(task -> task.get("status"))
+                .containsExactly("not_started", "in_progress", "completed");
     }
 
     @Test

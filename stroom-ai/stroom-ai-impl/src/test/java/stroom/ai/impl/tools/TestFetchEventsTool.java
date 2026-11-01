@@ -122,7 +122,8 @@ class TestFetchEventsTool {
         assertThatThrownBy(() -> tool.run(ToolTestFixture.request(FetchEventsTool.NAME, "{\"streamId\":7}"),
                 ToolCalls.inChat(1, fixture.workspace)))
                 .isInstanceOf(WorkspaceException.class)
-                .hasMessage("Stroom could not read stream 7: You cannot view locked streams.");
+                .hasMessageStartingWith("Stroom could not read stream 7: You cannot view locked streams. It is most "
+                                        + "likely still being written");
     }
 
     @Test
