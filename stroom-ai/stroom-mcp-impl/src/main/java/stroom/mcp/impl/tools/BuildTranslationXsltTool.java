@@ -303,10 +303,13 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                 "Instead of mapping, to fix one: only what changes, merged into the mapping last "
                                 + "sent for this XSLT (the same uuid, or build and name; else the one saved with "
                                 + "it; else, for a build and name not saved yet, the draft "
-                                + "draft_translation_mapping made this session). events: rules, each replacing the "
-                                + "rule of that name whole (or added); common: entries, each replacing the one with "
-                                + "that path (and data_name); {name or path, \"remove\": true} removes one; any "
-                                + "other key replaces it. Much less to write than the whole mapping again."))
+                                + "draft_translation_mapping made this session). events: rules by name, a new one "
+                                + "added whole; for a rule already there, each key given replaces its own, and its "
+                                + "fields change entry by entry: each entry replaces the rule's entry with that path "
+                                + "(and data_name), or is added; \"replace\": true replaces the rule whole. common: "
+                                + "entries, each replacing the one with that path (and data_name). {name or path, "
+                                + "\"remove\": true} removes a rule or an entry; any other key replaces it. Send "
+                                + "only the entries that change, never the whole rule again."))
                         .addBooleanProperty(DISCARD_HAND_EDIT_ARG, "Save over an edit made by hand in Stroom's "
                                                                    + "editor since the server saved the XSLT, though "
                                                                    + "the new code undoes it. Only when the user has "

@@ -31,8 +31,11 @@ import java.util.Objects;
 /// changes.
 ///
 /// Seen (Gemma 4 31B in VS Code, about 22 tokens a second): each fix resent the whole mapping, some 800 tokens and
-/// 40 seconds of writing, five times over. A rule is replaced whole by name, a common entry by its path (and Data
-/// name), and any other key whole; `{"remove": true}` removes a rule or a common entry.
+/// 40 seconds of writing, five times over. A rule is changed by name: the keys given replace its own, except its
+/// `fields`, which are changed entry by entry, as common entries are, by path (and Data name); `"replace": true`
+/// replaces the rule whole. Any other key is replaced whole; `{"remove": true}` removes a rule, a rule's entry or a
+/// common entry. Seen: with a rule replaced whole, changing one entry of a rule of about 140 meant resending them
+/// all, so the agent edited the mapping file by hand instead, a dozen calls, and lost an entry it left out.
 public final class MappingChanges {
 
     private MappingChanges() {
@@ -40,15 +43,18 @@ public final class MappingChanges {
     }
 
     /// @param base    The mapping, as JSON-like values (left as it is).
-    /// @param changes What changes: `events` (rules, each replacing the rule of its name whole, added after the
-    ///                others, or removed with `remove: true`), `common` (entries, each replacing the entry with its
-    ///                path and Data name, added, or removed), any other key replacing that key whole.
+    /// @param changes What changes: `events` (rules by name: added after the others, removed with `remove: true`,
+    ///                replaced whole with `replace: true`, or else changed: each key given replaces the rule's own,
+    ///                and its `fields` entries are each replaced, added or removed by path and Data name),
+    ///                `common` (entries, each replacing the entry with its path and Data name, added, or removed),
+    ///                any other key replacing that key whole.
     /// @return The mapping with the changes merged in, and what each change did.
     /// @throws ToolRefusal if a change can't apply (no name, no path, removing what isn't there).
     public static Applied applyChanges(final Map<String, Object> base, final Object changes) {
         final Map<String, Object> given = changesOf(changes, "changes is an object holding only what changes, e.g. "
-                                                             + "{\"events\": [{the rule, whole}]} or {\"common\": "
-                                                             + "[{\"path\": ..., \"value\": ...}]}");
+                                                             + "{\"events\": [{\"name\": ..., \"fields\": [only the "
+                                                             + "entries that change]}]} or {\"common\": [{\"path\": "
+                                                             + "..., \"value\": ...}]}");
         final Map<String, Object> merged = copyMap(base);
         final List<String> done = new ArrayList<>();
         for (final Map.Entry<String, Object> change : given.entrySet()) {
@@ -115,8 +121,8 @@ public final class MappingChanges {
     private static void changeRules(final List<Object> rules, final Object value, final List<String> done) {
         for (final Object rule : each(value)) {
             if (!(rule instanceof final Map<?, ?> named) || !JsonValues.truthy(named.get("name"))) {
-                throw new ToolRefusal("Each rule in changes.events needs its name: a rule replaces the one "
-                                      + "of that name whole, or is added after the others");
+                throw new ToolRefusal("Each rule in changes.events needs its name: it changes the rule of that "
+                                      + "name, or is added after the others");
             }
             final Object name = named.get("name");
             final int at = indexOf(rules, "name", name);
@@ -128,43 +134,94 @@ public final class MappingChanges {
                 rules.remove(at);
                 done.add("rule '" + str(name) + "' removed");
             } else if (at < 0) {
-                rules.add(rule);
+                rules.add(withoutReplace(named));
                 done.add("rule '" + str(name) + "' added after the others");
+            } else if (JsonValues.truthy(named.get("replace"))) {
+                rules.set(at, withoutReplace(named));
+                done.add("rule '" + str(name) + "' replaced whole");
             } else {
-                rules.set(at, rule);
-                done.add("rule '" + str(name) + "' replaced");
+                rules.set(at, changedRule((Map<?, ?>) rules.get(at), named, done));
             }
         }
     }
 
+    // A rule with the keys given replacing its own, and its fields changed entry by entry.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> changedRule(final Map<?, ?> rule,
+                                                   final Map<?, ?> given,
+                                                   final List<String> done) {
+        final Map<String, Object> changed = (Map<String, Object>) copy(rule);
+        final String said = "rule '" + str(given.get("name")) + "'";
+        for (final Map.Entry<?, ?> key : given.entrySet()) {
+            final String name = String.valueOf(key.getKey());
+            if ("name".equals(name)) {
+                continue;
+            }
+            if ("fields".equals(name)) {
+                final List<Object> fields = listIn(changed, "fields");
+                for (final Object entry : each(key.getValue())) {
+                    changeEntry(fields, entry, "changes.events", said + " entry", "Each entry in a rule's fields "
+                                                                                + "needs its path (and data_name for "
+                                                                                + "a Data entry): it replaces the "
+                                                                                + "rule's entry with that path, or is "
+                                                                                + "added, or with remove: true is "
+                                                                                + "removed", done);
+                }
+            } else {
+                changed.put(name, key.getValue());
+                done.add(said + ": '" + name + "' replaced");
+            }
+        }
+        return changed;
+    }
+
+    // A rule as given, without the replace flag that only says how to apply it.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withoutReplace(final Map<?, ?> rule) {
+        final Map<String, Object> copy = (Map<String, Object>) copy(rule);
+        copy.remove("replace");
+        return copy;
+    }
+
     private static void changeCommon(final List<Object> entries, final Object value, final List<String> done) {
         for (final Object entry : each(value)) {
-            if (!(entry instanceof final Map<?, ?> given) || !JsonValues.truthy(given.get("path"))) {
-                throw new ToolRefusal("Each entry in changes.common needs its path (and data_name for a "
-                                      + "Data entry): it replaces the entry with that path, or is added");
+            changeEntry(entries, entry, "changes.common", "common", "Each entry in changes.common needs its path "
+                                                                    + "(and data_name for a Data entry): it "
+                                                                    + "replaces the entry with that path, or is "
+                                                                    + "added", done);
+        }
+    }
+
+    // One entry (of common, or of a rule's fields) replaced, added or removed by its path and Data name.
+    private static void changeEntry(final List<Object> entries,
+                                    final Object entry,
+                                    final String changes,
+                                    final String in,
+                                    final String needsPath,
+                                    final List<String> done) {
+        if (!(entry instanceof final Map<?, ?> given) || !JsonValues.truthy(given.get("path"))) {
+            throw new ToolRefusal(needsPath);
+        }
+        final List<String> found = commonKey(given);
+        int at = -1;
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i) instanceof final Map<?, ?> other && commonKey(other).equals(found)) {
+                at = i;
+                break;
             }
-            final List<String> found = commonKey(given);
-            int at = -1;
-            for (int i = 0; i < entries.size(); i++) {
-                if (entries.get(i) instanceof final Map<?, ?> other && commonKey(other).equals(found)) {
-                    at = i;
-                    break;
-                }
+        }
+        if (JsonValues.truthy(given.get("remove"))) {
+            if (at < 0) {
+                throw new ToolRefusal(changes + " removes " + said(in, found) + ", which the mapping does not have");
             }
-            if (JsonValues.truthy(given.get("remove"))) {
-                if (at < 0) {
-                    throw new ToolRefusal("changes.common removes " + said(found) + ", which the mapping "
-                                          + "does not have");
-                }
-                entries.remove(at);
-                done.add(said(found) + " removed");
-            } else if (at < 0) {
-                entries.add(entry);
-                done.add(said(found) + " added");
-            } else {
-                entries.set(at, entry);
-                done.add(said(found) + " replaced");
-            }
+            entries.remove(at);
+            done.add(said(in, found) + " removed");
+        } else if (at < 0) {
+            entries.add(entry);
+            done.add(said(in, found) + " added");
+        } else {
+            entries.set(at, entry);
+            done.add(said(in, found) + " replaced");
         }
     }
 
@@ -179,8 +236,8 @@ public final class MappingChanges {
                         : str(dataName));
     }
 
-    private static String said(final List<String> key) {
-        return "common '" + key.get(0) + "'" + (key.get(1).isEmpty()
+    private static String said(final String in, final List<String> key) {
+        return in + " '" + key.get(0) + "'" + (key.get(1).isEmpty()
                 ? ""
                 : " (Data '" + key.get(1) + "')");
     }

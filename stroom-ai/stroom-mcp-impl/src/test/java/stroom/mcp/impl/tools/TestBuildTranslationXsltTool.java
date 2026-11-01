@@ -685,13 +685,17 @@ class TestBuildTranslationXsltTool {
     // --- A fix sends only what changes. ---
 
     @Test
-    void aFixSendsOnlyTheRuleItChanges() {
+    @SuppressWarnings("unchecked")
+    void aFixSendsOnlyTheEntryItChanges() {
         // Seen (Gemma 4 31B, VS Code): four failed builds, each resending the whole mapping at ~40 s of writing
-        // apiece.
+        // apiece. And a rule of ~140 entries resent whole to change one, then edited by hand.
         final Map<String, Object> broken = TranslationWorld.mapping();
         final List<Object> events = new ArrayList<>(list(broken.get("events")));
-        final Object good = events.getFirst();
-        events.set(0, Map.of("name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "value", "x"))));
+        final Map<String, Object> logon = new LinkedHashMap<>((Map<String, Object>) events.getFirst());
+        final List<Object> fields = new ArrayList<>(list(logon.get("fields")));
+        fields.add(Map.of("path", "EventDetail/Nope", "value", "x"));
+        logon.put("fields", fields);
+        events.set(0, logon);
         broken.put("events", events);
 
         final Map<String, Object> failed = world.call(tool, Map.of("mapping", broken, "build", "acme-v1", "name",
@@ -699,9 +703,10 @@ class TestBuildTranslationXsltTool {
         assertThat(failed.get("ok")).isEqualTo(false);
         assertThat((String) failed.get("hint")).contains("changes=").contains("same build and name");
 
-        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("events", List.of(good)),
+        final Map<String, Object> fixed = world.call(tool, Map.of("changes", Map.of("events", List.of(Map.of(
+                        "name", "logon", "fields", List.of(Map.of("path", "EventDetail/Nope", "remove", true))))),
                 "build", "acme-v1", "name", "ACME-Events", "include_xslt", false));
-        assertThat(fixed.get("changes_applied")).isEqualTo(List.of("rule 'logon' replaced"));
+        assertThat(fixed.get("changes_applied")).isEqualTo(List.of("rule 'logon' entry 'EventDetail/Nope' removed"));
         assertThat(fixed.get("problems")).isEqualTo(List.of());
         assertThat(fixed.get("ok")).isEqualTo(true);
         final String uuid = String.valueOf(map(fixed.get("saved")).get("uuid"));

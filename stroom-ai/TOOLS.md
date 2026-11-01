@@ -5263,8 +5263,11 @@ function or wrong arity XPST0017, as in Stroom). Constant parts aren't evaluated
 functions and URI-qualified names (`Q{uri}name`) are errors, so such an expression is kept as written.
 
 **Mapping changes** (`MappingChanges.applyChanges`, `applyPlanChanges`): a fix sends only what changes, merged into
-the whole mapping (or index plan): a rule replaced whole by name, a common entry by its path (and Data name), any
-other key whole, `{"remove": true}` to remove one. The result is an `Applied` (the merged mapping and what each
+the whole mapping (or index plan): a rule changed by name (each key given replacing its own, and its `fields`
+changed entry by entry by path and Data name, as common entries are; `"replace": true` replaces it whole), a common
+entry by its path (and Data name), any other key whole, `{"remove": true}` to remove a rule or an entry. Seen: with
+rules replaced whole, changing one entry of a rule of about 140 meant resending them all, so the agent edited the
+mapping file by hand (a dozen calls) and lost the TypeId of a rule it resent. The result is an `Applied` (the merged mapping and what each
 change did); a change that can't apply is a `ToolRefusal`. Seen with a small local model at about 22 tokens a
 second: each fix resent the whole mapping, some 800 tokens and 40 seconds of writing, five times over.
 
