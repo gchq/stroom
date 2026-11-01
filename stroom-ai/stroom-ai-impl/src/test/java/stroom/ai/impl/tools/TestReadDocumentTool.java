@@ -62,6 +62,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -560,6 +561,37 @@ class TestReadDocumentTool {
                 "{\"type\":\"XMLSchema\",\"element\":\"EventDetail/Acess\"}"),
                 ToolCalls.inChat(1, workspace)).text())
                 .startsWith("Error: 'Event/EventDetail' has no child 'Acess'.");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void severalElementsAreDescribedInOneCallEachUnderItsPath() {
+        // Seen: the schema read one element a call, 22 calls over about 12 turns.
+        final ToolResult result = toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XMLSchema\",\"element\":\"EventSource/User, EventDetail/Authenticate, "
+                + "EventDetail/Acess\"}"),
+                ToolCalls.inChat(1, workspace));
+
+        final Map<String, Object> elements = (Map<String, Object>) result.structuredContent().get("elements");
+        assertThat(elements).containsOnlyKeys("EventSource/User", "EventDetail/Authenticate", "EventDetail/Acess");
+        assertThat((Map<String, Object>) elements.get("EventSource/User"))
+                .containsEntry("path", "Event/EventSource/User").containsKey("children");
+        assertThat((Map<String, Object>) elements.get("EventDetail/Authenticate")).containsKey("children");
+        assertThat((String) ((Map<String, Object>) elements.get("EventDetail/Acess")).get("error"))
+                .as("a wrong path says so in its place").startsWith("'Event/EventDetail' has no child 'Acess'.");
+    }
+
+    @Test
+    void moreElementsThanTheMostAreRefused() {
+        final List<String> paths = new ArrayList<>();
+        for (int n = 1; n <= 11; n++) {
+            paths.add("EventSource/Path" + n);
+        }
+
+        assertThat(toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XMLSchema\",\"element\":\"" + String.join(", ", paths) + "\"}"),
+                ToolCalls.inChat(1, workspace)).text())
+                .isEqualTo("Error: give at most 10 paths in element, not 11.");
     }
 
     @Test

@@ -68,6 +68,30 @@ class TestRecordSourceNotesTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void aPathTheSchemaDoesntHaveIsLeftOutAndSaysWhatIsAllowed() {
+        // Seen: EventSource/Client/Device/IpAddress taken as given into the draft, and each wrong path then cost
+        // schema lookups to put right.
+        final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme proxy\", "
+                                                    + "\"fields\": [{\"field\": \"usr\", \"meaning\": \"Account\", "
+                                                    + "\"event_logging_path\": \"EventSource/User/Id\"}, {\"field\": "
+                                                    + "\"cip\", \"meaning\": \"Client address\", "
+                                                    + "\"event_logging_path\": "
+                                                    + "\"EventSource/Client/Device/IpAddress\"}]}"));
+
+        assertThat((List<Map<String, Object>>) noted.get("path_problems")).singleElement().satisfies(problem -> {
+            assertThat(problem).containsEntry("field", "cip")
+                    .containsEntry("event_logging_path", "EventSource/Client/Device/IpAddress");
+            assertThat((String) problem.get("problem")).contains("Allowed here");
+        });
+        assertThat((String) noted.get("hint")).startsWith("1 event_logging_path(s) aren't in the event-logging "
+                                                          + "schema and were left out");
+        final String text = world.body(String.valueOf(noted.get("uuid")));
+        assertThat(text).contains("| usr | Account |  |  | EventSource/User/Id |")
+                .doesNotContain("Device/IpAddress");
+    }
+
+    @Test
     void theDocumentationAndTheNotesFromItAreKeptInTheBuild() {
         final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
                                                     + "\"summary\": \"The directory audit log.\", \"fields\": "
