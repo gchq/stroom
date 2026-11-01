@@ -2162,6 +2162,36 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void aQuestionWhoseTabNotePreviewsItsContentTaintsTheRun() {
+        // The note sent with the question previews the tab's small parts, e.g. a stream's data, which could hold
+        // planted instructions though no tool has read the tab.
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        Mockito.when(tabSnapshots.previewsContent(41)).thenReturn(true);
+        agentChat.setTabSnapshots(tabSnapshots);
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.USER_MESSAGE, 41, "What is this?", 1, null)));
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
+    void aQuestionWhoseTabNoteShowsNoContentDoesNotTaintTheRun() {
+        final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+        Mockito.when(tabSnapshots.previewsContent(42)).thenReturn(false);
+        agentChat.setTabSnapshots(tabSnapshots);
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.USER_MESSAGE, 42, "What is this?", 1, null)));
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager, Mockito.never()).markTainted(Mockito.anyInt());
+    }
+
+    @Test
     void aCleanChatIsNotTainted() {
         agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
                 new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);

@@ -394,7 +394,7 @@ public class TabSnapshots {
                       + "are in ").append(folder(snapshot)).append(SEARCHES_FILE).append(").");
         }
         for (final StoredPart part : parts) {
-            if (part.bytes() <= SMALL_PART_CHARS && !part.cut()) {
+            if (isPreviewed(part)) {
                 reader.apply(part)
                         .filter(text -> !text.isBlank())
                         .ifPresent(text -> sb.append("\nPreview of ").append(part.path()).append(":\n")
@@ -440,6 +440,30 @@ public class TabSnapshots {
     /// @return The workspace folder holding its files, e.g. `/tabs/7/`.
     static String folder(final StoredTabSnapshot snapshot) {
         return "/tabs/" + snapshot.number() + "/";
+    }
+
+    /// Whether the note the model is given about a question's tab shows any of the tab's content, which could
+    /// hold instructions planted by someone other than the user (a stream's data, a document someone else wrote).
+    /// The rest of the note (the document's name and path, its files' names and sizes, the columns of its tables)
+    /// is what any tool listing documents gives.
+    ///
+    /// @param snapshotId The id of a snapshot's record, as recorded on a question, or null.
+    /// @return True if the snapshot has a part small enough to be previewed in the note.
+    public boolean previewsContent(final Integer snapshotId) {
+        return read(snapshotId)
+                .map(TabSnapshots::previews)
+                .orElse(false);
+    }
+
+    /// @param snapshot A snapshot.
+    /// @return True if it has a part small enough to be previewed in the note the model is given about it.
+    static boolean previews(final StoredTabSnapshot snapshot) {
+        return NullSafe.list(snapshot.parts()).stream().anyMatch(TabSnapshots::isPreviewed);
+    }
+
+    // Small parts kept whole are previewed in the note.
+    private static boolean isPreviewed(final StoredPart part) {
+        return part.bytes() <= SMALL_PART_CHARS && !part.cut();
     }
 
     /// @param text A small part's text.
