@@ -155,6 +155,9 @@ final class TranslationWorld {
                     : versions.getFirst();
         });
         Mockito.when(heldSchemas.systemIds()).thenReturn(List.of());
+        // Sample streams measured whole: nothing longer than their text, unless a test says so.
+        Mockito.when(streamReader.recordLengths(Mockito.anyLong(), any()))
+                .thenReturn(new StreamReader.PartLengths(List.of(), 0));
         Mockito.when(compileCheck.compile(anyString())).thenReturn(new XsltCompileCheck.Compiled(List.of()));
         Mockito.when(securityContext.getUserIdentityForAudit()).thenReturn("jane");
         Mockito.when(agentInstructions.importsRequired(any(), anyString(), any(), any())).thenReturn(List.of());

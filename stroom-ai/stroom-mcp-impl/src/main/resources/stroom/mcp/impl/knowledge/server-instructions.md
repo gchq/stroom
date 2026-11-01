@@ -108,7 +108,8 @@ the parser's output in its namespace (records:2 for a Data Splitter; http://www.
 Text formats: write the Data Splitter with build_data_splitter from a spec (delimited, regex, key=value, syslog with a
 parsed body), which runs it on the sample and shows the records and field names; never by hand first. Records
 longer than the Data Splitter's read buffer (bufferSize on <dataSplitter>, 20,000 characters by default) are lost:
-build_data_splitter sets it from the sample, and buffer_size= raises it when the feed holds longer records
+build_data_splitter sets it from the sample streams read through whole, and buffer_size= raises it when the feed
+holds longer records: measure_records gives a stream's longest record and the buffer for it
 (stroom://guide/data-splitter). build_data_splitter also runs the converter through Stroom's own parser
 (stroom_check): fix the spec until it matches, as processing does what that parser does.
 

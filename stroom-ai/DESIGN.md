@@ -1312,7 +1312,12 @@ while any template for the stage exists, and are confirmed in a form (2026-10-27
 * `build_data_splitter` infers a Data Splitter from the sample. Things the tools enforce or say:
   * A record is held only up to half the buffer, as the reader refills only below half. With 2× the longest record
     within the default (20,000) no `bufferSize` is written; otherwise it is set to 4× the longest record, capped at
-    Stroom's maximum. `buffer_size=` raises it when the feed holds longer records.
+    Stroom's maximum. `buffer_size=` raises it when the feed holds longer records. Given `stream_ids`, the sample
+    streams are read through whole for the longest record (`StreamReader.recordLengths`), not only the first
+    1,000,000 characters it profiles (seen: records of over 105,000 characters lost further into a 159 MB stream).
+  * `measure_records` gives the longest record of whole raw streams and the `bufferSize` that holds it, read through
+    on the server a chunk at a time (`RecordLengths`). A record is a line, or with `quote` the lines a quoted value
+    spans joined; one of a marked start line or a blank-line block needs the converter's pattern and isn't measured.
   * The converter is run through Stroom's own parser (`stroom_check`); one Stroom loses records with isn't saved.
   * Element ids match Stroom's schema (`[a-z][a-zA-Z0-9]*`; seen in testing: `blank_line` was refused, so no record
     was read).
@@ -1792,6 +1797,11 @@ judging them:
   administrator's (`stroom.ai.errorTriage.rules`) are checked first.
 * Rules explain causes the agent can't see: a record lost to the Data Splitter's buffer; unmatched records with every
   tested value empty, likely pieces of a split record (2026-10-31).
+* A rule marked `cause: true` (the Data Splitter losing text: a record over half its buffer, content its
+  expressions don't match) puts its group first in its class, saying `cause`, and every other blocking and review
+  group says `may_follow_from`: what is read after lost text is misread. Seen: 58 schema errors from a lost record
+  came first, with advice about the mapping, and the agent chased a quoting fault for 10 minutes before reaching the
+  buffer group of 4 below them.
 * **Accepted errors.** An error the agent can't resolve that the user says is benign is recorded with
   `write_documentation accept_errors=[{element, example, reason, matches}]` (`*` for what varies), confirmed by the
   user, kept in the pipeline's Documentation doc, and then reported as benign for that pipeline. Events kept as
