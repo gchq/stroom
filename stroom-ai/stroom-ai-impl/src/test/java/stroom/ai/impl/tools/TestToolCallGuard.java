@@ -120,6 +120,42 @@ class TestToolCallGuard {
     }
 
     @Test
+    void aRunOfNewProblemsIsGettingOnAndIsToldOnlyLater() {
+        // Seen: five build_translation_xslt failures in a row, each a different problem fixed in turn (the last no
+        // name to save under), told to start again from a clean mapping.
+        final StroomTool tool = tool("build_translation_xslt", null, call -> ToolResult.text(
+                "{\"ok\":false,\"problems\":[\"" + JsonUtil.readValue(call.arguments(), Map.class).get("problem")
+                + "\"]}"));
+        final List<String> notes = new ArrayList<>();
+        for (int n = 0; n < 10; n++) {
+            notes.add(String.valueOf(JsonUtil.readValue(call(tool, "{\"problem\":\"problem " + (char) ('a' + n)
+                                                                   + "\"}").text(), Map.class).get("repeated")));
+        }
+
+        assertThat(notes.subList(0, 9)).containsOnly("null");
+        assertThat(notes.get(9)).startsWith("That is 10 failed build_translation_xslt calls in a row, each a new "
+                                            + "problem. Start again from a clean mapping");
+    }
+
+    @Test
+    void aProblemComingBackInTheRunIsToldAtTheFifth() {
+        // Its numbers and quoted values aside, as a regex's stopping place moves while it fails the same way.
+        final StroomTool tool = tool("build_translation_xslt", null, call -> ToolResult.text(
+                "{\"ok\":false,\"problems\":[\"" + JsonUtil.readValue(call.arguments(), Map.class).get("problem")
+                + "\"]}"));
+        final List<String> problems = List.of("when: not a list", "Purpose holds other elements",
+                "regex stops matching at 12", "no name to save", "regex stops matching at 40");
+        final List<String> notes = new ArrayList<>();
+        for (final String problem : problems) {
+            notes.add(String.valueOf(JsonUtil.readValue(call(tool, "{\"problem\":\"" + problem + "\"}").text(),
+                    Map.class).get("repeated")));
+        }
+
+        assertThat(notes.get(4)).startsWith("That is 5 failed build_translation_xslt calls in a row. Start again");
+        assertThat(ToolCallGuard.problem("'x-type' reads 3 values")).isEqualTo("'' reads # values");
+    }
+
+    @Test
     void theSameFailingCallIsAnsweredFromItsFailureAfterThree() {
         final StroomTool tool = translation();
         for (int n = 0; n < 3; n++) {
