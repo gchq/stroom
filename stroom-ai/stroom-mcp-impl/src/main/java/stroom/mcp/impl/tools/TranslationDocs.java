@@ -30,6 +30,8 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.sample.DataSplitterSchema;
+import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltSafety;
@@ -88,6 +90,14 @@ public class TranslationDocs {
     private static final Pattern FRAGMENT_ENTITY = Pattern.compile(
             "<!ENTITY\\s+fragment\\s+SYSTEM\\s+[\"']fragment[\"']");
 
+    // How a Data Splitter names its fields. Seen in testing: a hand-written converter with <entry> elements naming
+    // the fields under a <regex>, which Stroom ignores, so its records had no fields.
+    private static final String NAMING = "Each field is a <data name=\"field\" value=\"$1\"/> inside the <regex> or "
+                                         + "<split> that matches it ($1 its first group).";
+    private static final String PREFER_SPEC = "Prefer build_data_splitter with a spec and save_as: it writes a "
+                                              + "valid converter and runs it through Stroom's parser on the sample "
+                                              + "(stroom://guide/data-splitter).";
+
     private static final Pattern IGNORE_ERRORS = Pattern.compile("\\bignoreErrors\\s*=\\s*[\"']\\s*true",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern JSON = Pattern.compile("<\\s*json", Pattern.CASE_INSENSITIVE);
@@ -104,8 +114,9 @@ public class TranslationDocs {
     private final LookupAgreements lookups;
     private final Provider<AgentKnowledge> knowledgeProvider;
     private final SiblingSharedCalls siblingSharedCalls;
+    private final DataSplitterSchema dataSplitterSchema;
 
-    /// @param guard             Creates the documents in the build, and checks one is the tools' own.
+    /// @param guard            Creates the documents in the build, and checks one is the tools' own.
     /// @param documentAccess    Reads and writes them as the user.
     /// @param planProvider      The build's next step, for each result.
     /// @param checkXslt         Checks an XSLT before it is saved.
@@ -116,6 +127,7 @@ public class TranslationDocs {
     /// @param lookups           Asks the user to agree to the DNS lookups an XSLT calls.
     /// @param knowledgeProvider  The bundled ECS reference, for an index plan's convention.
     /// @param siblingSharedCalls The shared templates the stage's existing pipelines call.
+    /// @param dataSplitterSchema Checks a Data Splitter as Stroom's DSParser does.
     @Inject
     TranslationDocs(final WriteGuard guard,
                     final DocumentAccess documentAccess,
@@ -127,7 +139,8 @@ public class TranslationDocs {
                     final XsltHistory history,
                     final LookupAgreements lookups,
                     final Provider<AgentKnowledge> knowledgeProvider,
-                    final SiblingSharedCalls siblingSharedCalls) {
+                    final SiblingSharedCalls siblingSharedCalls,
+                    final DataSplitterSchema dataSplitterSchema) {
         this.guard = guard;
         this.documentAccess = documentAccess;
         this.planProvider = planProvider;
@@ -139,6 +152,7 @@ public class TranslationDocs {
         this.lookups = lookups;
         this.knowledgeProvider = knowledgeProvider;
         this.siblingSharedCalls = siblingSharedCalls;
+        this.dataSplitterSchema = dataSplitterSchema;
     }
 
     /// What an XSLT of a translation or an index leaves undone of how the environment writes its common elements:
@@ -190,6 +204,7 @@ public class TranslationDocs {
                                                    final String converterType,
                                                    final String code) {
         checkConverter(converterType, code, null);
+        checkDataSplitter(converterType, code);
         final TextConverterType type = converterType(converterType);
         final TextConverterDoc saved = guard.createFilled(TextConverterDoc.TYPE, name, build, ref ->
                 write(TextConverterDoc.TYPE, read(ref, TextConverterDoc.class).copy()
@@ -212,14 +227,41 @@ public class TranslationDocs {
                                                    final String code,
                                                    final String version) {
         final TextConverterDoc doc = read(new DocRef(TextConverterDoc.TYPE, uuid), TextConverterDoc.class);
-        checkConverter(doc.getConverterType() == null
-                ? TextConverterType.DATA_SPLITTER.name()
-                : doc.getConverterType().name(), code, doc.getData());
+        final String converterType = converterTypeOf(doc);
+        checkConverter(converterType, code, doc.getData());
+        checkDataSplitter(converterType, code);
         final DocRef ref = new DocRef(TextConverterDoc.TYPE, uuid, doc.getName());
         guard.checkManaged(context.session(), ref);
         checkVersion(doc, version);
         final Map<String, Object> saved = summary(write(TextConverterDoc.TYPE, doc.copy().data(code).build()));
         return planProvider.get().nextFor(context, ref, saved);
+    }
+
+    /// @param uuid A text converter's UUID.
+    /// @return Its type (`DATA_SPLITTER` when it has none).
+    /// @throws ToolRefusal if it can't be read.
+    String converterTypeOf(final String uuid) {
+        return converterTypeOf(read(new DocRef(TextConverterDoc.TYPE, uuid), TextConverterDoc.class));
+    }
+
+    /// The checks a text converter's save makes ([#checkConverter(String, String, String)] and
+    /// [#checkDataSplitter]), made before anything else is, so their refusal is the one given.
+    ///
+    /// @param converterType The converter's type.
+    /// @param code          Its definition.
+    /// @param uuid          The converter it replaces, or null for a new one.
+    /// @throws ToolRefusal if the save would be refused for its code.
+    void checkTextConverter(final String converterType, final String code, final String uuid) {
+        checkConverter(converterType, code, uuid == null
+                ? null
+                : read(new DocRef(TextConverterDoc.TYPE, uuid), TextConverterDoc.class).getData());
+        checkDataSplitter(converterType, code);
+    }
+
+    private static String converterTypeOf(final TextConverterDoc doc) {
+        return doc.getConverterType() == null
+                ? TextConverterType.DATA_SPLITTER.name()
+                : doc.getConverterType().name();
     }
 
     /// [#checkConverter(String, String, String)] for a new converter.
@@ -235,7 +277,7 @@ public class TranslationDocs {
     /// of a JSON translation template parses it, and a converter holding a `<jsonParser>` element parses nothing.
     /// A Data Splitter may not add `ignoreErrors`: it hides the errors Stroom raises for text no expression
     /// matches, and that text is lost without a word (validation is never weakened). One the converter replaced
-    /// already had is kept.
+    /// already had is kept. Checking it as Stroom's DSParser does is [#checkDataSplitter].
     ///
     /// @param converterType The converter's type.
     /// @param code          Its definition.
@@ -283,6 +325,41 @@ public class TranslationDocs {
         }
     }
 
+    /// A Data Splitter checked as Stroom's DSParser checks one before it runs it ([DataSplitterSchema]): declaring
+    /// the `data-splitter:3` namespace and its schema location, valid against the schema Stroom holds (without that
+    /// schema no Data Splitter runs, so none is saved), and read by Stroom's parser (e.g. each regex pattern
+    /// compiles). It must also have a `<data>` element: one with none is valid, but its records have no fields,
+    /// with no error.
+    ///
+    /// @param converterType The converter's type; only a Data Splitter is checked.
+    /// @param code          Its definition.
+    /// @throws ToolRefusal if Stroom's DSParser would refuse it or report errors reading it, or it names no field.
+    void checkDataSplitter(final String converterType, final String code) {
+        if (!TextConverterType.DATA_SPLITTER.name().equals(converterType)) {
+            return;
+        }
+        final DataSplitterSchema.Check check = dataSplitterSchema.check(code);
+        if (check.fatal()) {
+            throw new ToolRefusal("Not saved: " + check.problems().getFirst());
+        }
+        if (!check.valid()) {
+            final List<String> problems = check.problems();
+            throw new ToolRefusal("Not saved: Stroom's DSParser checks a Data Splitter against its schema ("
+                                  + DataSplitterSchema.NAMESPACE + ") before it runs it, and this one has "
+                                  + problems.size() + " schema error(s): "
+                                  + String.join("; ", problems.subList(0, Math.min(10, problems.size())))
+                                  + ". " + NAMING + " " + PREFER_SPEC);
+        }
+        if (XmlTrees.parse(code).getElementsByTagNameNS("*", "data").getLength() == 0) {
+            throw new ToolRefusal("Not saved: the Data Splitter has no <data> element, so its records would have no "
+                                  + "fields. " + NAMING + " " + PREFER_SPEC);
+        }
+        final Optional<String> unreadable = StroomSplitterRun.unreadable(code);
+        if (unreadable.isPresent()) {
+            throw new ToolRefusal("Not saved: " + unreadable.get() + ". " + PREFER_SPEC);
+        }
+    }
+
     // --------------------------------------------------------------------------------
     // XSLTs.
     // --------------------------------------------------------------------------------
@@ -322,7 +399,7 @@ public class TranslationDocs {
         final Map<String, Object> extra = new LinkedHashMap<>();
         final XsltDoc saved = guard.createFilled(XsltDoc.TYPE, name, build, ref -> {
             final XsltDoc made = read(ref, XsltDoc.class);
-            String description = described(made.getDescription(), code, source, extra);
+            String description = described(context, build, made.getDescription(), code, source, extra);
             description = history.pending(context.session(), description, null,
                     NullSafe.nonBlankStringElse(change, "Created"), code, !source.keeps());
             description = history.previewed(description, code);
@@ -389,7 +466,7 @@ public class TranslationDocs {
         String description = XsltVersionHistory.adopt(doc.getDescription(), doc.getData());
         final String data = XsltVersionHistory.strip(code);
         final Map<String, Object> extra = new LinkedHashMap<>();
-        description = described(description, code, source, extra);
+        description = described(context, build.orElse(null), description, code, source, extra);
         description = history.pending(context.session(), description, new XsltVersionHistory.Previous(doc.getData(),
                 doc.getUpdateUser(), doc.getUpdateTimeMs()), NullSafe.nonBlankStringElse(change, "Changed"), data,
                 !source.keeps());
@@ -460,7 +537,8 @@ public class TranslationDocs {
                 LOGGER.debug(() -> LogUtil.message("No sample format for build {}: {}", build, e.getMessage()));
             }
         }
-        List<String> errors = errors(checkXslt.check(xslt, null, inputNamespace));
+        List<String> errors = errors(checkXslt.check(xslt, null, inputNamespace,
+                eventVersions.chosenDocs(context, build)));
         if (NullSafe.isNonEmptyString(previous)) {
             final Set<String> allowed = XsltSafety.keptBy(XsltChecks.unescaped(xslt).text(), previous);
             errors = errors.stream().filter(error -> !allowed.contains(error)).toList();
@@ -530,7 +608,9 @@ public class TranslationDocs {
 
     // The description carrying the mapping or plan the code came from; whether the code is what the mapping
     // generates (a hand-edited XSLT is kept, but reported) goes in extra.
-    private String described(final String description,
+    private String described(final ToolCallContext context,
+                             final String build,
+                             final String description,
                              final String code,
                              final Source source,
                              final Map<String, Object> extra) {
@@ -539,11 +619,18 @@ public class TranslationDocs {
             final String version = eventVersions.translationVersion(null, code);
             final Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("schema_version", version);
+            // The document of the version the user chose, where this Stroom holds it in more than one; else the one
+            // kept with the XSLT before (a working copy of a production XSLT, say, has no build choice).
+            eventVersions.chosenDoc(context, build, version)
+                    .or(() -> eventVersions.keptDoc(KeptMapping.readMapping(description)
+                            .map(KeptMapping.Kept::payload)
+                            .orElse(null), version))
+                    .ifPresent(uuid -> payload.put(EventVersions.KEPT_SCHEMA_UUID, uuid));
             payload.put("mapping", source.mapping().toJson(DumpMode.COMPACT));
             final String withMapping = KeptMapping.withMapping(description, KeptMapping.TRANSLATION, payload);
             try {
                 final String regenerated = XsltGenerator.generate(source.mapping(),
-                        eventVersions.eventSchema(version), version).xslt();
+                        eventVersions.keptSchema(payload, version), version).xslt();
                 final boolean matches = XsltCode.normalise(NullSafe.string(regenerated))
                         .equals(XsltCode.normalise(code));
                 extra.put("matches_mapping", matches);

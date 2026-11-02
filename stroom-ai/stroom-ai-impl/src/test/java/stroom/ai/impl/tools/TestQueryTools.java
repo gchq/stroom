@@ -165,6 +165,9 @@ class TestQueryTools {
                 QueryField.createIpV4Address("source.ip"), QueryField.createText("message"))))
                 .contains("Elasticsearch): STARTS_WITH and CONTAINS find nothing")
                 .contains("IS_NULL and IS_NOT_NULL match every document")
+                .contains("EQUALS '*' finds any document holding the field, an empty string included")
+                .contains("MATCHES_REGEX '.+' a non-empty value on a string field")
+                .doesNotContain("for any value")
                 .contains("on an ip field (source.ip) a wildcard finds nothing: use a CIDR range");
     }
 

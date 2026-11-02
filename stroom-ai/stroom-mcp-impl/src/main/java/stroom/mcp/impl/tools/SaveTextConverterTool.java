@@ -24,14 +24,22 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.sample.DataSplitterSchema;
+import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.ai.shared.AiToolCategory;
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /// `save_text_converter` - saves a text converter: creates it in the build, or replaces the code of one the tools
 /// created (on [TranslationDocs]).
@@ -51,11 +59,23 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
                                          + "XMLFragmentParser. JSON and single-document XML sources take no text "
                                          + "converter: their template's parser reads them.";
 
+    /// The most of a build's sample streams a Data Splitter is run on before it is saved.
+    static final int SAMPLE_STREAMS = 3;
+
     private final TranslationDocs translationDocs;
+    private final BuildPlan plan;
+    private final SampleStreamTexts sampleStreamTexts;
+    private final DataSplitterSchema dataSplitterSchema;
 
     @Inject
-    SaveTextConverterTool(final TranslationDocs translationDocs) {
+    SaveTextConverterTool(final TranslationDocs translationDocs,
+                          final BuildPlan plan,
+                          final SampleStreamTexts sampleStreamTexts,
+                          final DataSplitterSchema dataSplitterSchema) {
         this.translationDocs = translationDocs;
+        this.plan = plan;
+        this.sampleStreamTexts = sampleStreamTexts;
+        this.dataSplitterSchema = dataSplitterSchema;
     }
 
     @Override
@@ -89,11 +109,14 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(BuildPlan.onboardingLabel(NAME)
-                             + "Save a text converter: create it in the build (see stroom://guide/data-splitter; "
-                             + "build_data_splitter writes one from a spec), or with uuid replace the code of one "
-                             + "the agent created. For templates whose parser needs one (DSParser.textConverter, "
-                             + "xmlFragmentParser.textConverter); not for JSON, which the JSONParser parses with no "
-                             + "converter.")
+                             + "Save a text converter: create it in the build (see stroom://guide/data-splitter), or "
+                             + "with uuid replace the code of one the agent created. For templates whose parser "
+                             + "needs one (DSParser.textConverter, xmlFragmentParser.textConverter); not for JSON, "
+                             + "which the JSONParser parses with no converter. For a Data Splitter prefer "
+                             + "build_data_splitter with a spec and save_as: it writes the converter and runs it "
+                             + "through Stroom's parser on the sample. Write one by hand only for what no spec "
+                             + "expresses: it gets the same checks (Stroom's data-splitter:3 schema, and Stroom's "
+                             + "parser on the build's sample streams), and isn't saved while they fail.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, TranslationArgs.BUILD)
                         .addStringProperty(NAME_ARG, TranslationArgs.NAME)
@@ -124,7 +147,11 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
         }
         final String uuid = stringArg(call, UUID_ARG);
         if (uuid != null) {
-            return translationDocs.updateTextConverter(context, uuid, code, stringArg(call, VERSION_ARG));
+            final String converterType = translationDocs.converterTypeOf(uuid);
+            final Optional<String> sampleRun = sampleRun(converterType, code, uuid,
+                    plan.buildOf(new DocRef(TextConverterDoc.TYPE, uuid)).orElse(null));
+            return withSampleRun(translationDocs.updateTextConverter(context, uuid, code,
+                    stringArg(call, VERSION_ARG)), sampleRun);
         }
         final String build = stringArg(call, BUILD_ARG);
         final String name = stringArg(call, NAME_ARG);
@@ -132,7 +159,69 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Give build and name for a new text converter (or uuid to change one the agent "
                                   + "created).");
         }
-        return translationDocs.createTextConverter(context, build, name, NullSafe.nonBlankStringElse(
-                stringArg(call, CONVERTER_TYPE_ARG), "DATA_SPLITTER"), code);
+        final String converterType = NullSafe.nonBlankStringElse(stringArg(call, CONVERTER_TYPE_ARG),
+                "DATA_SPLITTER");
+        final Optional<String> sampleRun = sampleRun(converterType, code, null, build);
+        return withSampleRun(translationDocs.createTextConverter(context, build, name, converterType, code),
+                sampleRun);
+    }
+
+    // A Data Splitter is checked as the DSParser checks it, then run by Stroom's parser on the build's newest sample
+    // streams: not saved if Stroom reports errors or writes no records. Seen in testing: a converter written by
+    // hand, its fields named with elements Stroom ignores, saved, and its records had no fields. Empty for another
+    // converter type; else what the run found, or why there was none.
+    private Optional<String> sampleRun(final String converterType,
+                                       final String code,
+                                       final String uuid,
+                                       final String build) {
+        if (!TextConverterType.DATA_SPLITTER.name().equals(converterType)) {
+            return Optional.empty();
+        }
+        // The code's own faults first: they say more than a failed run.
+        translationDocs.checkTextConverter(converterType, code, uuid);
+        final List<Long> streamIds = build == null
+                ? List.of()
+                : plan.rawSampleStreams(build, SAMPLE_STREAMS);
+        if (streamIds.isEmpty()) {
+            return Optional.of("Not run on a sample: the build has no raw sample stream of its own. Step the "
+                               + "pipeline on a raw stream before processing.");
+        }
+        final List<String> texts;
+        try {
+            texts = List.copyOf(sampleStreamTexts.read(streamIds).texts().values());
+        } catch (final ToolRefusal e) {
+            return Optional.of("Not run on the sample streams " + streamIds + ": " + e.getMessage());
+        }
+        final List<StroomSplitterRun.Result> runs = StroomSplitterRun.run(dataSplitterSchema, code, texts);
+        final List<String> errors = new ArrayList<>();
+        int records = 0;
+        for (int i = 0; i < runs.size(); i++) {
+            final long streamId = streamIds.get(i);
+            records += runs.get(i).records().size();
+            runs.get(i).errors().forEach(error -> errors.add("stream " + streamId + ": " + error));
+        }
+        if (!errors.isEmpty()) {
+            throw new ToolRefusal("Not saved: Stroom's parser reports " + errors.size() + " error(s) running the "
+                                  + "converter on the build's sample streams " + streamIds + ", e.g. "
+                                  + String.join("; ", errors.subList(0, Math.min(5, errors.size())))
+                                  + ". Processing would report the same. Prefer build_data_splitter with a spec and "
+                                  + "save_as, whose dry run shows the records and the lines that match nothing.");
+        }
+        if (records == 0) {
+            throw new ToolRefusal("Not saved: Stroom's parser wrote no records from the build's sample streams "
+                                  + streamIds + ". Prefer build_data_splitter with a spec and save_as.");
+        }
+        return Optional.of("Stroom's parser wrote " + records + " record(s) from the sample streams " + streamIds
+                           + " with no errors");
+    }
+
+    private static Map<String, Object> withSampleRun(final Map<String, Object> result,
+                                                     final Optional<String> sampleRun) {
+        if (sampleRun.isEmpty()) {
+            return result;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(result);
+        out.put("sample_run", sampleRun.get());
+        return out;
     }
 }

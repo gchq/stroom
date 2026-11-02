@@ -370,7 +370,7 @@ class FieldMappingSections {
         final String version = eventVersions.translationVersion(KeptCode.keptVersion(payload),
                 kept.xslt().getData());
         final TranslationMapping mapping = TranslationMapping.parse(payload.get("mapping"));
-        final EventSchema schema = eventVersions.eventSchema(version);
+        final EventSchema schema = eventVersions.keptSchema(context, null, payload, version);
         final XsltGenerator.Generated marked = XsltGenerator.generate(mapping, schema, version, true);
         if (!marked.ok()) {
             throw new ToolRefusal("The mapping kept with the XSLT no longer generates: " + ToolText.list(
@@ -487,7 +487,7 @@ class FieldMappingSections {
         }
         EventSchema schema;
         try {
-            schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+            schema = eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
             // Descriptions then come from the plan and the sample alone.
             LOGGER.debug(() -> LogUtil.message(

@@ -192,6 +192,26 @@ class TestRebuildMappingTool {
                 .isEqualTo("Pipeline q doesn't run XSLT 'ACME-Events'");
     }
 
+    @Test
+    void theMappingIsRebuiltAgainstTheSchemaDocumentKeptWithIt() {
+        // Saved once the user chose doc-b of the two documents holding 4.1.0: rebuilt against it, not the first.
+        world.twoSchemaDocuments();
+        world.eventVersions.remember(world.context(), BUILD, TranslationWorld.VERSION, EventVersions.GIVEN, "doc-b");
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Events-B",
+                generated(TranslationWorld.parsed()), TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+        uuid = String.valueOf(saved.get("uuid"));
+        PipelineLayers.given(world.world.pipelineService, "p", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p").property("translationFilter", "xslt",
+                        new DocRef(XsltDoc.TYPE, uuid, "ACME-Events-B"))));
+        Mockito.clearInvocations(world.heldSchemas);
+
+        assertThat(call(Map.of())).containsEntry("status", "in_step");
+        Mockito.verify(world.heldSchemas, Mockito.atLeastOnce()).eventSchema(TranslationWorld.VERSION, "doc-b");
+        Mockito.verify(world.heldSchemas, Mockito.never()).eventSchema(TranslationWorld.VERSION);
+    }
+
     private Map<String, Object> call(final Map<String, Object> more) {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("uuid", uuid);

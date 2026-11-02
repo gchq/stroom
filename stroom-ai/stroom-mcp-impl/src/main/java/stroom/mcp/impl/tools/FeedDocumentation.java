@@ -256,9 +256,10 @@ final class FeedDocumentation {
         final List<String> advice = new ArrayList<>();
         if (elastic) {
             advice.addAll(exact);
-            advice.add("Through Stroom on Elasticsearch, STARTS_WITH and CONTAINS find nothing, and IS_NULL and "
-                       + "IS_NOT_NULL match every document: use the wildcards above. A leading wildcard ('*x') reads "
-                       + "every value in the index, so narrow the time range first on a large index.");
+            advice.add("Through Stroom on Elasticsearch, STARTS_WITH and CONTAINS find nothing (or are refused), and "
+                       + "IS_NULL and IS_NOT_NULL match every document: use the wildcards above. EQUALS '*' also "
+                       + "finds an empty value; a value that isn't empty is MATCHES_REGEX '.+'. A leading wildcard "
+                       + "('*x') reads every value in the index, so narrow the time range first on a large index.");
             return advice;
         }
         if (Set.of("text", "text_field").contains(kind) && !analyzerName.isEmpty() && !"KEYWORD".equals(analyzerName)) {

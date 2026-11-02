@@ -161,38 +161,45 @@ class IndexChecks {
     // Searches that would mislead.
     // --------------------------------------------------------------------------------
 
-    /// IS_NOT_NULL and IS_NULL on Elasticsearch searched as EQUALS '*' and NOT_EQUALS '*', which is what they mean
-    /// there: Stroom matches every document with either on Elasticsearch. Seen: refused with that advice, the agent
-    /// sent IS_NOT_NULL again and again.
+    /// IS_NOT_NULL and IS_NULL on Elasticsearch searched as what they mean there
+    /// ([MisleadingSearches#elasticsearchNullAs]): Stroom matches every document with either on Elasticsearch.
+    /// IS_NOT_NULL on a string field is a non-empty value (MATCHES_REGEX '.+'), as EQUALS '*' finds an empty
+    /// string too. Seen: refused with advice, the agent sent IS_NOT_NULL again and again; told EQUALS '*' was any
+    /// value, it saw that passes on empty strings, and dropped checks of fields that were populated.
     ///
     /// @param backend  `elasticsearch` or `lucene`.
     /// @param searches The searches.
+    /// @param types    The index's fields' types (Elasticsearch's own, e.g. keyword, long), by name; a field not
+    ///                 in it is of a type not known.
     /// @return Them as they are searched.
-    static List<SearchCheck> asSearched(final String backend, final List<SearchCheck> searches) {
+    static List<SearchCheck> asSearched(final String backend,
+                                        final List<SearchCheck> searches,
+                                        final Map<String, String> types) {
         final List<SearchCheck> out = new ArrayList<>();
         for (final SearchCheck search : searches) {
             final Condition asked = Condition.valueOf(search.condition());
-            final Condition condition = MisleadingSearches.ELASTICSEARCH.equals(backend)
-                    ? MisleadingSearches.elasticsearchNullAs(asked).orElse(null)
+            final MisleadingSearches.NullSearch searched = MisleadingSearches.ELASTICSEARCH.equals(backend)
+                    ? MisleadingSearches.elasticsearchNullAs(asked, NullSafe.map(types).get(search.field()))
+                            .orElse(null)
                     : null;
-            if (condition == null) {
+            if (searched == null) {
                 out.add(search);
                 continue;
             }
-            final String said = condition == Condition.EQUALS
-                    ? "any value"
-                    : "no value";
-            out.add(new SearchCheck(search.field(), condition.name(), "*", search.expected(),
-                    search.field() + " " + condition.name() + " '*' (" + said + "), for " + asked.name()
-                    + ": Stroom matches every document with " + asked.name() + " on Elasticsearch"));
+            out.add(new SearchCheck(search.field(), searched.condition().name(), searched.value(),
+                    search.expected(),
+                    search.field() + " " + searched.condition().name() + " '" + searched.value() + "' ("
+                    + searched.said() + "), for " + asked.name() + ": Stroom matches every document with "
+                    + asked.name() + " on Elasticsearch"));
         }
         return out;
     }
 
-    /// Searches whose answer would mislead: on Elasticsearch, Stroom (7.13) finds nothing for STARTS_WITH and
-    /// CONTAINS, nor for a wildcard on an ip field, nor on a field it doesn't list, and matches every document for
-    /// IS_NULL and IS_NOT_NULL, without an error; on Lucene it finds nothing for STARTS_WITH and ENDS_WITH, for
-    /// CONTAINS on a keyword field, nor for a range on a text field; IN takes values separated by commas.
+    /// Searches whose answer would mislead: on Elasticsearch, Stroom finds nothing for STARTS_WITH and CONTAINS
+    /// (7.13; later versions refuse them), nor for a wildcard on an ip field, nor on a field it doesn't list, and
+    /// matches every document for IS_NULL and IS_NOT_NULL, without an error; on Lucene it finds nothing for
+    /// STARTS_WITH and ENDS_WITH, for CONTAINS on a keyword field, nor for a range on a text field; IN takes values
+    /// separated by commas.
     ///
     /// @param backend    `elasticsearch` or `lucene`.
     /// @param searches   The searches.

@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.sample.DataSplitterSchema;
 import stroom.ai.impl.tools.sample.RecordLengths;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
@@ -70,6 +71,16 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     static final String BUFFER_SIZE_ARG = "buffer_size";
 
     private static final String WHERE = "build_data_splitter save_as";
+    // What to try for fields the spec splits wrongly. Seen in testing: a space-delimited Citrix feed, its last field
+    // free text, wasn't saved, and the agent wrote a converter by hand that Stroom couldn't read.
+    private static final String REST_OF_LINE = "Where the first fields are delimited and the last is free text "
+                                               + "(e.g. a message holding the delimiter), give a regex spec with a "
+                                               + "name per group, its last group taking the rest of the line: "
+                                               + "{'kind': 'regex', 'pattern': '^(\\S+) (\\S+) (.*)$', 'names': "
+                                               + "['time', 'host', 'message']}.";
+    // That writing it by hand is no way round the checks.
+    private static final String HAND_WRITTEN = " A converter written by hand (save_text_converter) is checked the "
+                                               + "same way, against Stroom's schema and parser, so fix the spec here.";
     // The most differences between the dry run and Stroom's parser shown.
     private static final int MAX_DIFFERENCES = 5;
 
@@ -79,6 +90,7 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
     private final TranslationDocs translationDocs;
     private final EventVersions eventVersions;
     private final BuildPlan plan;
+    private final DataSplitterSchema dataSplitterSchema;
 
     @Inject
     BuildDataSplitterTool(final SampleStreamTexts sampleStreamTexts,
@@ -86,13 +98,15 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                           final SampleProfiling sampleProfiling,
                           final TranslationDocs translationDocs,
                           final EventVersions eventVersions,
-                          final BuildPlan plan) {
+                          final BuildPlan plan,
+                          final DataSplitterSchema dataSplitterSchema) {
         this.sampleStreamTexts = sampleStreamTexts;
         this.streamReader = streamReader;
         this.sampleProfiling = sampleProfiling;
         this.translationDocs = translationDocs;
         this.eventVersions = eventVersions;
         this.plan = plan;
+        this.dataSplitterSchema = dataSplitterSchema;
     }
 
     @Override
@@ -268,18 +282,20 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
         if (saveAs != null) {
             if (result.get("spans_lines") instanceof final Long spanning) {
                 result.put("not_saved", spanning + " record(s) span lines in a quoted value: add \"quoted_newlines\": "
-                                        + "true to the spec before saving");
+                                        + "true to the spec before saving." + HAND_WRITTEN);
             } else if (result.get("wider_than_header") instanceof final Long wider) {
                 result.put("not_saved", wider + " record(s) have more cells than the header: fix the spec (see the "
-                                        + "hint) before saving");
+                                        + "hint) before saving. " + REST_OF_LINE + HAND_WRITTEN);
             } else if (result.get("unmatched_count") instanceof final Integer unmatched && unmatched > 0) {
-                result.put("not_saved", unmatched + " line(s) match nothing: fix the spec (or confirm they are "
-                                        + "noise) before saving");
+                result.put("not_saved", unmatched + " line(s) match nothing: widen the spec until they parse (see "
+                                        + "unmatched_lines). " + REST_OF_LINE + " Lines the user agrees are to be "
+                                        + "kept unparsed: catch_all: true keeps each whole as 'unparsed'."
+                                        + HAND_WRITTEN);
             } else if (carriageReturns.isPresent()) {
                 result.put("not_saved", carriageReturns.get());
             } else if (stroomCheck != null && Boolean.TRUE.equals(stroomCheck.get("loses_records"))) {
-                result.put("not_saved", "Stroom's own parser " + stroomCheck.get("summary") + " Fix the spec first "
-                                        + "(stroom_check).");
+                result.put("not_saved", "Stroom's own parser " + stroomCheck.get("summary") + " Fix the spec until "
+                                        + "stroom_check matches (its errors give the lines and why)." + HAND_WRITTEN);
             } else {
                 result.put("saved", translationDocs.createTextConverter(context, plan.resolveBuild(context,
                         stringArg(call, BUILD_ARG), WHERE), saveAs, "DATA_SPLITTER", (String) result.get("converter")));
@@ -431,19 +447,21 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
 
     // The converter run by Stroom's own parser on each sample text, beside the dry run: what it reports, and the
     // records it writes differently. Seen in testing: the dry run parsed lines Stroom lost (over its read buffer,
-    // a key=value value holding a space), and kept white space Stroom trims.
-    private static Map<String, Object> stroomCheck(final String converter,
-                                                   final List<String> texts,
-                                                   final List<SplitterDryRun.DryRun> runs) {
+    // a key=value value holding a space), and kept white space Stroom trims. Checked against the Data Splitter
+    // schema first, as the DSParser element checks it.
+    private Map<String, Object> stroomCheck(final String converter,
+                                            final List<String> texts,
+                                            final List<SplitterDryRun.DryRun> runs) {
         final List<String> errors = new ArrayList<>();
         final List<Map<String, Object>> differences = new ArrayList<>();
         final List<String> counts = new ArrayList<>();
         int records = 0;
+        final List<StroomSplitterRun.Result> stroomRuns = StroomSplitterRun.run(dataSplitterSchema, converter, texts);
         for (int i = 0; i < texts.size(); i++) {
             final String which = texts.size() == 1
                     ? ""
                     : "sample " + (i + 1) + ": ";
-            final StroomSplitterRun.Result run = StroomSplitterRun.run(converter, texts.get(i));
+            final StroomSplitterRun.Result run = stroomRuns.get(i);
             records += run.records().size();
             run.errors().forEach(error -> errors.add(which + error));
             final List<Map<String, String>> dry = runs.get(i).records();

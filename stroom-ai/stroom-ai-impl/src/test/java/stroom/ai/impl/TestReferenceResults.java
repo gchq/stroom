@@ -45,13 +45,13 @@ class TestReferenceResults {
         }
 
         // Other results first, keeping the latest two.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        assertThat(ConversationShortening.shrink(conversation)).isEqualTo(1);
         assertThat(resultTexts(conversation)).containsExactly("read_document", "shortened", "kept", "kept");
         // Then the latest but one; the schema read still kept.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        assertThat(ConversationShortening.shrink(conversation)).isEqualTo(1);
         assertThat(resultTexts(conversation)).containsExactly("read_document", "shortened", "shortened", "kept");
         // Then results read for reference.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
+        assertThat(ConversationShortening.shrink(conversation)).isEqualTo(1);
         assertThat(resultTexts(conversation)).containsExactly("shortened", "shortened", "shortened", "kept");
 
         // A large result isn't kept for reference, nor is one from another tool.
@@ -59,7 +59,7 @@ class TestReferenceResults {
                 "x".repeat(ReferenceResults.MAX_CHARS + 1)))).isFalse();
         assertThat(ReferenceResults.isReference(ToolExecutionResultMessage.from("1", "search", "x"))).isFalse();
         assertThat(ReferenceResults.isReference(ToolExecutionResultMessage.from("1", "read_document",
-                McpAgentChat.SHORTENED_RESULT))).isFalse();
+                ConversationShortening.SHORTENED_RESULT))).isFalse();
     }
 
     @Test
@@ -73,11 +73,12 @@ class TestReferenceResults {
         }
         final int keptFrom = indexOfStep(conversation, "Step 5");
 
-        McpAgentChat.withTurnSummary(conversation, keptFrom, "First summary.");
+        ConversationShortening.withTurnSummary(conversation, keptFrom, "First summary.");
 
         final String note = ((UserMessage) conversation.get(1)).singleText();
         assertThat(note)
-                .startsWith(McpAgentChat.TURN_SUMMARY_NOTE + "\nFirst summary.\n\n" + ReferenceResults.KEPT_INTRO)
+                .startsWith(ConversationShortening.TURN_SUMMARY_NOTE + "\nFirst summary.\n\n"
+                            + ReferenceResults.KEPT_INTRO)
                 .contains("- read_document({\"element\":\"EventDetail/Network\"}):\nNetwork: Permit, Deny, Payload")
                 .doesNotContain("result 2");
 
@@ -87,12 +88,12 @@ class TestReferenceResults {
             conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "search", "result " + n));
         }
         final int keptFrom2 = indexOfStep(conversation, "Step 8");
-        assertThat(McpAgentChat.turnSummaryInput(conversation, keptFrom2))
+        assertThat(ConversationShortening.turnSummaryInput(conversation, keptFrom2))
                 .startsWith("Summary so far:\nFirst summary.\n\nSteps since:")
                 .doesNotContain("Permit");
-        McpAgentChat.withTurnSummary(conversation, keptFrom2, "Second summary.");
+        ConversationShortening.withTurnSummary(conversation, keptFrom2, "Second summary.");
         assertThat(((UserMessage) conversation.get(1)).singleText())
-                .startsWith(McpAgentChat.TURN_SUMMARY_NOTE + "\nSecond summary.")
+                .startsWith(ConversationShortening.TURN_SUMMARY_NOTE + "\nSecond summary.")
                 .containsOnlyOnce("Network: Permit, Deny, Payload");
     }
 
@@ -101,7 +102,7 @@ class TestReferenceResults {
         return conversation.stream()
                 .filter(ToolExecutionResultMessage.class::isInstance)
                 .map(m -> (ToolExecutionResultMessage) m)
-                .map(r -> McpAgentChat.SHORTENED_RESULT.equals(r.text())
+                .map(r -> ConversationShortening.SHORTENED_RESULT.equals(r.text())
                         ? "shortened"
                         : r.toolName().equals("read_document")
                                 ? "read_document"
