@@ -32,30 +32,32 @@ import java.util.List;
 @JsonPropertyOrder(alphabetic = true)
 public class ErrorTriageConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final List<String> rules;
+    private final List<ErrorTriageRuleConfig> rules;
 
     public ErrorTriageConfig() {
         rules = List.of();
     }
 
     @JsonCreator
-    public ErrorTriageConfig(@JsonProperty("rules") final List<String> rules) {
+    public ErrorTriageConfig(@JsonProperty("rules") final List<ErrorTriageRuleConfig> rules) {
         this.rules = List.copyOf(NullSafe.list(rules));
     }
 
-    /// @return Environment-specific triage rules, each a YAML or JSON mapping, checked in order before the bundled
-    /// ones.
+    /// @return Environment-specific triage rules, checked in order before the bundled ones.
     @JsonPropertyDescription("Environment-specific rules for triaging pipeline errors as blocking (must fix), "
                              + "review (may be caused by the pipeline's own content) or benign (report only), "
-                             + "checked in order before Stroom's own rules; the first match decides. Each is a "
-                             + "YAML or JSON mapping with any of severity (a list of FATAL, ERROR, WARNING, INFO), "
-                             + "element (a glob on the element id), own (true for an element the pipeline sets "
-                             + "itself, false for one it inherits), message (a regular expression), and the "
-                             + "required class and reason, e.g. {element: decorationFilter, severity: [WARNING, "
-                             + "INFO], message: 'lookup', class: benign, reason: 'User decoration miss for "
-                             + "accounts not in reference data'}.")
+                             + "checked in order before Stroom's own rules; the first match decides. Each rule has "
+                             + "any of severity (a list of FATAL, ERROR, WARNING, INFO), element (a glob on the "
+                             + "element id), own (true for an element the pipeline sets itself, false for one it "
+                             + "inherits), message (a regular expression found in the message) and cause (true "
+                             + "for an error that loses text, so the errors after it may follow from it), and the "
+                             + "required class (blocking, review or benign) and reason. In config.yml, a YAML "
+                             + "list of mappings, e.g. '- {element: decorationFilter, severity: [WARNING, INFO], "
+                             + "message: lookup, class: benign, reason: User decoration miss for accounts not in "
+                             + "reference data}'; in the Properties screen, a JSON array of objects with the same "
+                             + "fields.")
     @JsonProperty("rules")
-    public List<String> getRules() {
+    public List<ErrorTriageRuleConfig> getRules() {
         return rules;
     }
 

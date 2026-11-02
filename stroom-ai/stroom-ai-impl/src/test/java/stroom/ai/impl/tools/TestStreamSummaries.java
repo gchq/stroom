@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.ErrorTriageConfig;
+import stroom.ai.impl.ErrorTriageRuleConfig;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -140,10 +141,10 @@ class TestStreamSummaries {
 
     @Test
     void theEnvironmentsOwnRulesComeFirst() {
+        final ErrorTriageRuleConfig rule = new ErrorTriageRuleConfig(null, "decorationFilter", null, null,
+                "blocking", "Decoration must not fail here", null);
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, new ErrorTriageConfig(List.of(
-                "{element: decorationFilter, class: blocking, reason: 'Decoration must not fail here'}")), null, null,
-                null);
+                null, null, null, null, null, null, null, new ErrorTriageConfig(List.of(rule)), null, null, null);
         world.add(9, StreamTypeNames.ERROR, null, null, Map.of());
         world.bytes.put(9L, "[1:1 decorationFilter] WARN: No user found for \"a\"\n".getBytes(StandardCharsets.UTF_8));
 
