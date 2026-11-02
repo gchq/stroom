@@ -208,7 +208,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
                         final SteppedPipeline pipeline,
                         final List<Location> locations,
                         final Map<String, String> draftCode) {
-        final Walked walked = new Walked();
+        final Walked walked = new Walked(stepping.unvalidatedOutput(pipeline));
         final CallProgress progress = CallProgress.of(context);
         progress.say("Stepping " + locations.size() + " records through " + pipeline.name());
         int at = 0;
@@ -270,6 +270,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
         List<ErrorTriage.Marker> found = new ArrayList<>(SteppingWalks.markers(result, key));
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         final String output = SteppingWalks.output(result, outputElement);
+        found.addAll(walked.unvalidated.markers(output, key));
         final int events = EventXml.countEvents(output);
         if (SteppingVerdicts.writesUnknown(output)) {
             walked.unknown.add(key);
@@ -457,7 +458,13 @@ class StepRecordsTool extends AbstractBuiltInTool {
         private final List<Map<String, Object>> records = new ArrayList<>();
         private final List<String> unknown = new ArrayList<>();
         private final List<String> unknownOutputs = new ArrayList<>();
+        // Checks each record's output where no schema filter in the pipeline does.
+        private final UnvalidatedOutput unvalidated;
         // Stopped before the call's time ran out.
         private boolean cut;
+
+        private Walked(final UnvalidatedOutput unvalidated) {
+            this.unvalidated = unvalidated;
+        }
     }
 }

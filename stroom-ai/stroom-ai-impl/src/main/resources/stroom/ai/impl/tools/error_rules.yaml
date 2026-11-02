@@ -66,6 +66,11 @@ rules:
   - {element: '*schema*', severity: [ERROR], message: 'Invalid content was found starting with element .*One of .* is expected', class: blocking,
      reason: "Output fails schema validation: an element the schema requires here (one of those it names as expected) was left out, so the schema reports the element written after it, which is in its place. In a mapping its entry's input was empty in these records: give the entry a default (or any_of with a field that is filled), rather than moving the element named"}
   - {element: '*schema*', severity: [ERROR], class: blocking, reason: 'Output fails schema validation'}
+  # An XSLT's records:2, reference-data:2 or kafka-records:1 output checked by the step tools where no schema filter
+  # does (UnvalidatedOutput): the element after it drops what doesn't fit, with no error (Stroom's Indexing template
+  # has no schema filter).
+  - {message: 'no schema filter in this pipeline checks it', class: blocking,
+     reason: "Output fails the schema of its namespace, and nothing in the pipeline checks it: the element that reads it (IndexingFilter, ReferenceDataFilter or StandardKafkaProducer) takes only what fits the schema and drops the rest without an error, so this is lost in processing. Fix the XSLT so its output is valid (for an indexing XSLT, save it again from its plan; for reference data, build_reference_xslt), then step again"}
   - {own: true, severity: [ERROR], class: blocking, reason: "Error in this pipeline's own element"}
   - {own: false, severity: [ERROR], class: review, reason: 'Error in an inherited element; check whether our output causes it'}
   # Records no rule matched with every value the rules test empty: often pieces of a record (seen in testing: CSV

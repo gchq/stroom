@@ -3100,6 +3100,15 @@ Shared behaviour:
   hand-written XSLT once wrote every TRAFFIC record of a firewall sample as an empty Unknown, past both
   `build_translation_xslt`'s check and the user. Not applied to draft code. A failure of the check is logged and
   never fails the step.
+* **Output no schema filter checks.** Where no SchemaFilter comes after the pipeline's output element, each
+  record's output in records:2, reference-data:2 or kafka-records:1 is validated against the schema Stroom holds for
+  its namespace (`OutputSchemas`, by `UnvalidatedOutput`): the one its `xsi:schemaLocation` names if held for that
+  namespace, else the newest. A record that fails is an ERROR of the output element, blocking, with the schema's
+  first error. The IndexingFilter, ReferenceDataFilter and StandardKafkaProducer read only what fits and drop the
+  rest without an error, and Stroom's own Indexing template has no schema filter, so such output stepped clean and
+  was lost in processing. Event-logging Events are `check_events`'; a pipeline with a schema filter after its
+  output is left to it (its errors already block). Output that isn't well-formed, or whose schema Stroom doesn't
+  hold, isn't checked here.
 * **Recording a clean step.** A clean `step_sample` or `step_records` records the code stepped (the drafts' digest,
   or the saved code's) in the build record of the pipeline (`BuildRecords.recordPassed(..., STEPPED, ...)`), with up
   to 20 of the streams stepped for a saved-code run (`write_documentation`'s default sample). Only pipelines in a

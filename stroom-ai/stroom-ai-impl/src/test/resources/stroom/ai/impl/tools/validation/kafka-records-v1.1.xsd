@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UK Crown Copyright © 2019
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+      http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<xs:schema xmlns:krec="kafka-records:1" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="kafka-records:1" id="kafka-records-v1.1" version="1.1">
+  <xs:element name="kafkaRecords">
+    <xs:annotation>
+      <xs:documentation>An abstraction of a set of Kafka producer records. The XML records capture sufficient data to enable the generation of Kafka producer records that can be placed on a topic.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="krec:kafkaRecord"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="kafkaRecord" type="krec:RecordComplexType"/>
+  <xs:complexType name="RecordComplexType">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="header">
+        <xs:annotation>
+          <xs:documentation>Optional headers for the record that can be used to provide metadata alongside the key/value.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="key" type="xs:string">
+              <xs:annotation>
+                <xs:documentation>The key of the header item. Duplicate keys are permitted.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element minOccurs="0" name="value">
+              <xs:annotation>
+                <xs:documentation>The optional value of the header item.</xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:complexContent>
+                  <xs:extension base="xs:anyType"/>
+                </xs:complexContent>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:choice>
+        <xs:sequence>
+          <xs:element name="key" type="xs:anyType">
+            <xs:annotation>
+              <xs:documentation>The key of the producer record. The key will typically be a simple string value but could be a complex, e.g. JSON, or XML.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element minOccurs="0" name="value" type="xs:anyType">
+            <xs:annotation>
+              <xs:documentation>The value of the record. The value is optional to allow for 'tombstoning' in compacted topics. The value will typically be a string, e.g. JSON, or XML.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+        <xs:sequence>
+          <xs:element name="value" type="xs:anyType">
+            <xs:annotation>
+              <xs:documentation>The value of the record. The value will typically be a string, e.g. JSON, or XML.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="topic" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>Name of the topic to send the record to.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="partition">
+      <xs:annotation>
+        <xs:documentation>Optional partition number to send the record to. If one is not provided, Kafka will assign a partition based on the record key, or use a round-robin approach is there isn't a record key.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="xs:int">
+          <xs:minInclusive value="0"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="timestamp">
+      <xs:annotation>
+        <xs:documentation>The optional timestamp of the record. If one is not supplied then Kafka will assign a timestamp according to the configuration of the topic.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleType>
+        <xs:restriction base="krec:DateTimeSimpleType"> </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:simpleType name="DateTimeSimpleType">
+    <xs:annotation>
+      <xs:documentation>This type constrains the date time format further so that it is always represented as 'yyyy-MM-ddThh:mm:ss.sssZ'.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:dateTime">
+      <xs:pattern value="[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}Z"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
