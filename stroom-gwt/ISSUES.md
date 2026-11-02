@@ -1774,6 +1774,41 @@ message now wraps to the field's width, and "of N" is level with the number rath
 the field and the message (`item-selection.css`). A spinner elsewhere in a narrow space would need
 the same; making every spinner's message fit the space around it would need container queries.
 
+### Text buttons' colours in their states
+
+**Fixed** (2 November 2026): a green button (`button--contained-green`, e.g. a dialog's Accept and
+New) had the blue focus border and ring, as it had no focus rule of its own. It now has a green one
+(`--focus-border--green`, `--focus-shadow--green`: green-900 in the light theme, green-300 in the
+dark, as a secondary button's are pink-800 and pink-300). `Widgets/Buttons/ButtonStates` shows each
+colour enabled, disabled and loading, and hovered, pressed and with the keyboard focus (the real
+input checks in `test-runner/lib/real-input/buttons.mjs`), for the screenshot comparison.
+
+**Fixed** (2 November 2026, found by that sheet): a loading button (`Button.setLoading`,
+`button--loading`) was faded (`opacity: 0.8`), as a disabled one is, but could still be pressed, so
+its action could run again (e.g. Git Push, Test Connection, Send Test Email; only Sign In disabled
+itself too). The fade took its white text below 4.5:1 (primary and green in both themes, secondary
+in the light). A loading button now can't be pressed (a click, Enter or Space runs nothing, and a
+press shows no ripple), is `aria-disabled` as well as `aria-busy`, keeps the focus, and shows the
+progress cursor; being inactive, its faded text is exempt from the contrast rule. `Button`
+`Loading` shows it.
+
+**Fixed** (2 November 2026, the user's decision): in the dark theme hovering darkened the primary
+and green buttons but lightened the secondary and the neutral ones. The dark theme now has each
+colour's pair the other way round (blue-800 to blue-700, green-900 to green-800), so hover lightens
+every button there, as it darkens every button in the light theme; both colours of each pair keep
+4.5:1 for the white text (green-700, at 4.1:1, can't be used).
+
+**Fixed** (2 November 2026, the user's decision): pressed looked the same as hovered, the only press
+feedback being the ripple (`button--down` only took away a faint top highlight). A pressed button
+(`:active`, the mouse or a held Space) now has a 12% black layer over its colour, under its text
+(on the ripple's container), so it is a step darker than hovered in the light theme, and back
+towards its normal colour in the dark; its white text only gains contrast. The colours had no
+further shade to use (green-900 is the darkest green; blue-700 and green-800 the lightest with
+4.5:1). `ButtonStates` `PressedX` show it.
+
+**Kept** (2 November 2026): a loading button's fade (now that it can't be pressed) is lighter in the
+light theme and darker in the dark, as it shows the page through.
+
 ### GitHub issues loosely related to accessibility
 
 **Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,

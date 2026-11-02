@@ -28,6 +28,8 @@
     --focus-shadow--invalid: 0 0 0 4px rgba(var(--invalid-rgb), .3);
     --focus-border--secondary: var(--pink-300);
     --focus-shadow--secondary: 0 0 0 4px rgba(240, 98, 146, .3); /* pink-300 */
+    --focus-border--green: var(--green-300);
+    --focus-shadow--green: 0 0 0 4px rgba(129, 199, 132, .3); /* green-300 */
 
     /* Main body text colour in the app */
     --text-color: #dce4e5;

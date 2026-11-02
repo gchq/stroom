@@ -37,6 +37,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ButtonBase;
 
 /// A button (`button.css`) with an optional icon and a busy spinner. Its markup is `Button.ui.xml`.
+/// While it is busy ([#setLoading(boolean)]) it can't be pressed, so its action can't run twice.
 public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -51,6 +52,8 @@ public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
     private int taskCount;
     private Timer stopSpinning;
     private Runnable onClick;
+    // Whether its action is running (setLoading), so a press does nothing
+    private boolean loading;
 
     /// Makes a button captioned "Close", which callers usually change with `text="..."`.
     public Button() {
@@ -104,6 +107,17 @@ public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
 
     @Override
     public void onBrowserEvent(final Event event) {
+        if (loading && event.getTypeInt() == Event.ONCLICK) {
+            // Busy: a click (or Enter or Space, which click it) runs nothing, and goes no further
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+        if (loading && event.getTypeInt() == Event.ONMOUSEDOWN) {
+            // Busy: a press shows no ripple, as it does nothing
+            super.onBrowserEvent(event);
+            return;
+        }
         if (event.getTypeInt() == Event.ONCLICK) {
             if (event.getClientX() == 0 || event.getClientY() == 0) {
                 // If this is a click via a keypress then simulate mousedown in the center.
@@ -143,9 +157,12 @@ public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
 
     /// Shows the button's busy spinner, which grows in, or shrinks it away. The spinner spins only
     /// while it shows or shrinks away (`button--spinning`), so an idle button's spinner costs nothing.
+    /// While it is busy the button is faded, and can't be pressed (a click, Enter or Space runs
+    /// nothing): it is `aria-busy` and `aria-disabled`, and keeps the focus if it has it.
     ///
     /// @param loading Whether the button's action is running.
     public void setLoading(final boolean loading) {
+        this.loading = loading;
         if (stopSpinning != null) {
             stopSpinning.cancel();
             stopSpinning = null;
@@ -154,9 +171,11 @@ public class Button extends ButtonBase implements IsButton, TaskMonitorFactory {
             getElement().addClassName(SPINNING);
             getElement().addClassName("button--loading");
             getElement().setAttribute("aria-busy", "true");
+            getElement().setAttribute("aria-disabled", "true");
         } else {
             getElement().removeClassName("button--loading");
             getElement().removeAttribute("aria-busy");
+            getElement().removeAttribute("aria-disabled");
             if (getElement().hasClassName(SPINNING)) {
                 stopSpinning = new Timer() {
                     @Override
