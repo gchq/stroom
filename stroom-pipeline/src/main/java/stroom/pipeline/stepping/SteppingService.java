@@ -67,6 +67,7 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -104,6 +105,7 @@ public class SteppingService {
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
+    private final SavedElementCode savedElementCode;
     // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
     // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
     private final Provider<SteppingConfig> steppingConfigProvider;
@@ -134,6 +136,7 @@ public class SteppingService {
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
+                           final SavedElementCode savedElementCode,
                            final Provider<SteppingConfig> steppingConfigProvider,
                            final SessionStepResolver sessionStepResolver,
                            final SteppingSessionRegistry sessionRegistry,
@@ -148,6 +151,7 @@ public class SteppingService {
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
+        this.savedElementCode = savedElementCode;
         this.steppingConfigProvider = steppingConfigProvider;
         this.demandPlanner = new StepDemandPlanner(steppingConfigProvider);
         this.sessionStepResolver = sessionStepResolver;
@@ -334,9 +338,13 @@ public class SteppingService {
      * per session as they are the same for every stream.
      */
     public ElementFingerprints computeFingerprints(final PipelineStepRequest request) {
+        final PipelineData mergedPipelineData = pipelineDataHolderFactory.create(request.getPipelineDoc())
+                .getMergedPipelineData();
+        final Map<String, String> code = NullSafe.map(request.getCode());
         return elementFingerprinter.fingerprint(
-                pipelineDataHolderFactory.create(request.getPipelineDoc()).getMergedPipelineData(),
-                NullSafe.map(request.getCode()));
+                mergedPipelineData,
+                code,
+                savedElementCode.versions(mergedPipelineData, code));
     }
 
     public void deleteCaptureSession(final String sessionId) {

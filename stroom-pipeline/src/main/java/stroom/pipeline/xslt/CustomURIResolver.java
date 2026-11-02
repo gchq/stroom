@@ -17,15 +17,12 @@
 package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocFinder;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
@@ -44,14 +41,11 @@ import javax.xml.transform.stream.StreamSource;
  */
 class CustomURIResolver implements URIResolver {
 
-    private final DocFinder docFinder;
-    private final XsltStore xsltStore;
+    private final XsltImports xsltImports;
 
     @Inject
-    CustomURIResolver(final DocFinder docFinder,
-                      final XsltStore xsltStore) {
-        this.docFinder = docFinder;
-        this.xsltStore = xsltStore;
+    CustomURIResolver(final XsltImports xsltImports) {
+        this.xsltImports = xsltImports;
     }
 
     /**
@@ -66,39 +60,21 @@ class CustomURIResolver implements URIResolver {
      * @throws TransformerException Thrown if the referenced resource cannot be found.
      */
     public Source resolve(final String href, final String base) throws TransformerException {
-        try {
-            // Try and locate a translation by name
-            final List<DocRef> docRefs = docFinder.findByName(XsltDoc.TYPE, href, false);
-
-            if (docRefs == null || docRefs.size() == 0) {
-                // Try loading by UUID or doc ref string, e.g, `uuid='test-uuid', name='test-name'`.
-                final DocRef docRef = parseDocRef(href);
-                final XsltDoc document = xsltStore.readDocument(docRef);
-                if (document == null) {
-                    throw new IOException("Resource not found: \"" + href + "\"");
-                }
-                return new StreamSource(StreamUtil.stringToStream(document.getData()));
-            }
-
-            if (docRefs.size() > 1) {
-                throw new IOException("Found " + docRefs.size() + " resources for: \"" + href + "\"");
-            }
-
-            final XsltDoc document = xsltStore.readDocument(docRefs.get(0));
-            if (document == null) {
-                throw new IOException("Error reading: \"" + href + "\"");
-            }
-
-            return new StreamSource(StreamUtil.stringToStream(document.getData()));
-
-        } catch (final IOException e) {
-            throw new TransformerException(e);
+        final XsltImports.Resolution resolution = xsltImports.resolve(href);
+        if (resolution.isAmbiguous()) {
+            throw new TransformerException(LogUtil.message(
+                    "Found {} XSLTs named \"{}\"", resolution.matchCount(), href));
         }
+        if (!resolution.isFound()) {
+            throw new TransformerException(LogUtil.message(
+                    "No XSLT found with name or UUID \"{}\"", href));
+        }
+        return new StreamSource(StreamUtil.stringToStream(resolution.xsltDoc().getData()));
     }
 
     static DocRef parseDocRef(final String href) {
         return new DocRef(
-                getPart("type", href, PipelineDoc.TYPE),
+                getPart("type", href, XsltDoc.TYPE),
                 getPart("uuid", href, href),
                 getPart("name", href, null));
     }

@@ -167,6 +167,30 @@ class TestElementFingerprinter {
      * drives the fingerprinter AND the store together (the guarantee lives across both).
      */
     @Test
+    void testSavingCodeChangesTheElementAndDownstreamFingerprints() {
+        final PipelineData data = baseChain().build();
+        final ElementFingerprints before = fingerprinter.fingerprint(data, Map.of(), Map.of(XSLT, "{xslt=v1}"));
+        final ElementFingerprints after = fingerprinter.fingerprint(data, Map.of(), Map.of(XSLT, "{xslt=v2}"));
+
+        assertThat(after.getOwnFingerprint(XSLT)).isNotEqualTo(before.getOwnFingerprint(XSLT));
+        assertThat(after.getCumulativeFingerprint(WRITER)).isNotEqualTo(before.getCumulativeFingerprint(WRITER));
+        assertThat(after.getCumulativeFingerprint(PARSER)).isEqualTo(before.getCumulativeFingerprint(PARSER));
+        // Saving the same version again changes nothing.
+        assertThat(fingerprinter.fingerprint(data, Map.of(), Map.of(XSLT, "{xslt=v1}")).getCumulativeFingerprints())
+                .isEqualTo(before.getCumulativeFingerprints());
+    }
+
+    @Test
+    void testNoSavedCodeVersionsLeavesTheFingerprintsAsTheyWere() {
+        final PipelineData data = baseChain().build();
+
+        assertThat(fingerprinter.fingerprint(data, Map.of(), Map.of()).getCumulativeFingerprints())
+                .isEqualTo(fingerprinter.fingerprint(data, Map.of()).getCumulativeFingerprints());
+        assertThat(fingerprinter.fingerprint(data, Map.of(), null).getCumulativeFingerprints())
+                .isEqualTo(fingerprinter.fingerprint(data, Map.of()).getCumulativeFingerprints());
+    }
+
+    @Test
     void testRevertReusesPersistedIo(@TempDir final Path tempDir) {
         final ElementId writerId = new ElementId(WRITER);
         final StepLocation loc = new StepLocation(1L, 0L, 0L);

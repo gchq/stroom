@@ -160,6 +160,7 @@ class TestSteppingService {
                 stepDataStoreManager,
                 pipelineDataHolderFactory,
                 Mockito.mock(ElementFingerprinter.class),
+                Mockito.mock(SavedElementCode.class),
                 SteppingConfig::new,
                 sessionStepResolver,
                 sessionRegistry,
