@@ -33,7 +33,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -182,7 +181,6 @@ class TestStoreImpl {
             final S3Location s3Location = new S3Location("region", "bucket", "key");
             final FsVolume fsVolume = mock(FsVolume.class);
             final Meta meta = mock(Meta.class);
-            final DataVolume dataVolume = createDataVolume(meta, fsVolume);
 
             when(mockFsVolumeService.getS3Volume(s3Location))
                     .thenReturn(Optional.of(fsVolume));
@@ -198,26 +196,10 @@ class TestStoreImpl {
 
             // Then
             verify(mockDataVolumeService).createS3LocationDataVolume(
-                    meta.getId(),
+                    1L,
                     fsVolume,
                     Set.of(s3Location),
                     true);
-        }
-
-        private static @NonNull DataVolume createDataVolume(final Meta meta, final FsVolume fsVolume) {
-            final DataVolume dataVolume = new DataVolume() {
-
-                @Override
-                public long metaId() {
-                    return meta.getId();
-                }
-
-                @Override
-                public FsVolume volume() {
-                    return fsVolume;
-                }
-            };
-            return dataVolume;
         }
 
         @Test
