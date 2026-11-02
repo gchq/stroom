@@ -137,7 +137,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
             s3Location = deriveS3Location(dataVolume, meta);
             Objects.requireNonNull(s3Location, "S3Location cannot be null after derivation");
             if (storeLocation) {
-                // Store it in the db, so next time we can avoid deriving it
+                // Store it in the db, so next time we can avoid deriving it.
+                // Do tryCreate in case another node beat us to it.
                 dataVolumeService.tryCreateS3Location(meta, dataVolume, s3Location);
             }
         } else {
