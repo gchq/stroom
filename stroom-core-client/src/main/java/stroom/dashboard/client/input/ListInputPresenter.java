@@ -81,10 +81,22 @@ public class ListInputPresenter
     }
 
     @Override
+    public void onSelectedValuesChanged(final List<WordItem> values) {
+        final List<String> words = NullSafe.stream(values)
+                .map(WordItem::getWord)
+                .collect(Collectors.toList());
+        setSettings(getListInputSettings().copy().selectedValues(words).build());
+        ComponentChangeEvent.fire(this, this);
+        onChange();
+    }
+
+    @Override
     public List<Param> getParams() {
         final List<Param> list = new ArrayList<>();
         final String key = NullSafe.trim(getListInputSettings().getKey());
-        final String value = NullSafe.trim(getView().getSelectedValue());
+        final String value = getListInputSettings().isMultiSelect()
+                ? ListInputComponentSettings.joinSelectedValues(getView().getSelectedValues())
+                : NullSafe.trim(getView().getSelectedValue());
         if (!key.isEmpty() && !value.isEmpty()) {
             final Param param = new Param(key, value);
             list.add(param);
@@ -106,7 +118,9 @@ public class ListInputPresenter
 
     private void update(final ListInputComponentSettings settings) {
 
-        getView().setAllowTextEntry(settings.isAllowTextEntry());
+        getView().setMultiSelect(settings.isMultiSelect());
+        // Free text entry only makes sense when selecting a single value.
+        getView().setAllowTextEntry(settings.isAllowTextEntry() && !settings.isMultiSelect());
 
         if (settings.isUseDictionary() &&
             settings.getDictionary() != null) {
@@ -122,11 +136,16 @@ public class ListInputPresenter
                                     .collect(Collectors.toList());
 
                             final WordItem selectedValue = WordItem.sourcedWord(settings.getValue(), wordList);
+                            final List<WordItem> selectedValues = NullSafe.stream(settings.getSelectedValues())
+                                    .map(word -> WordItem.sourcedWord(word, wordList))
+                                    .collect(Collectors.toList());
                             getView().setValues(values);
                             getView().setSelectedValue(selectedValue);
+                            getView().setSelectedValues(selectedValues);
                         } else {
                             getView().setValues(Collections.emptyList());
                             getView().setSelectedValue(null);
+                            getView().setSelectedValues(Collections.emptyList());
                         }
                     })
                     .taskMonitorFactory(this)
@@ -137,6 +156,9 @@ public class ListInputPresenter
                     .collect(Collectors.toList());
             getView().setValues(simpleValues);
             getView().setSelectedValue(WordItem.simpleWord(settings.getValue()));
+            getView().setSelectedValues(NullSafe.stream(settings.getSelectedValues())
+                    .map(WordItem::simpleWord)
+                    .collect(Collectors.toList()));
         }
     }
 
@@ -180,7 +202,20 @@ public class ListInputPresenter
 
         String getSelectedValue();
 
+        /// Ticks the supplied values in multi-select mode and unticks all others.
+        ///
+        /// @param selected The values to tick.
+        void setSelectedValues(List<WordItem> selected);
+
+        /// @return The words of the values ticked in multi-select mode, in list order.
+        List<String> getSelectedValues();
+
         void setAllowTextEntry(boolean allowTextEntry);
+
+        /// Switches between a single value drop down and a multi-select drop down.
+        ///
+        /// @param multiSelect `true` to let the user tick more than one value.
+        void setMultiSelect(boolean multiSelect);
     }
 
 
@@ -241,6 +276,24 @@ public class ListInputPresenter
         @Override
         public String getDisplayValue() {
             return word;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final WordItem that = (WordItem) o;
+            return Objects.equals(word, that.word) &&
+                   Objects.equals(sourceDocRef, that.sourceDocRef);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(word, sourceDocRef);
         }
     }
 }
