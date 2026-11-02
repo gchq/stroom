@@ -631,7 +631,7 @@ class ServerTasksTool extends AbstractWorkspaceTool {
                 final List<List<String>> rows = matched.stream()
                         .map(task -> row(task, tree, snapshot.timeMs()))
                         .toList();
-                ToolTables.writeCsv(workspace, out, TASK_COLUMNS, rows, null);
+                ToolTables.write(workspace, out, TASK_COLUMNS, rows, null);
                 sb.append("Wrote ").append(rows.size()).append(" row(s) to ").append(out)
                         .append("; use the table tool on it to filter, group or sort. The first rows:\n\n")
                         .append(ToolTables.preview(TASK_COLUMNS, rows, PREVIEW_ROWS));

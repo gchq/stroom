@@ -837,7 +837,7 @@ class ProcessorTasksTool extends AbstractWorkspaceTool {
             final List<List<String>> rows = tasks.visible().stream()
                     .map(task -> row(task, errorStreams.of(task)))
                     .toList();
-            ToolTables.writeCsv(workspace, out, TASK_COLUMNS, rows, scope.pipelines().size() == 1
+            ToolTables.write(workspace, out, TASK_COLUMNS, rows, scope.pipelines().size() == 1
                     ? scope.pipelines().getFirst().getUuid()
                     : null);
             sb.append("Wrote ").append(rows.size()).append(" row(s) to ").append(out)

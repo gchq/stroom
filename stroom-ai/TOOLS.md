@@ -768,7 +768,9 @@ rows in the database, never files on disk, and only ever the workspace of the se
 holds its own; an MCP session's is held by a hidden chat of its user, made when a call first needs it and deleted
 when the session ends (`McpWorkspaces`). The areas are:
 
-* `/attachments/` - tables the user attached, each with a `.profile.md` summary; read-only.
+* `/attachments/` - tables the user attached, each with a `.profile.md` summary; read-only. A model with tools is
+  given a small table (at most 200 rows and 20,000 characters) in full with its path, and a larger one as its path
+  and profile (`ContextAssembler.profileMessage`).
 * `/outputs/` - large tool results, files tools write with `out`, and the agent's own files; the only area the
   agent can write.
 * `/documents/` - document content too large to give in full, saved by `read_document`,
@@ -907,7 +909,8 @@ description points at `grep` and `table`). Expressions are at most 2,000 charact
 Core · read-only · Classes: `TableTool`, `TableEngine`, `TableExpression`, `ExpressionFunctions`,
 `ColumnSummariser`
 
-Queries a table (an attachment in `/attachments/`, or a `.csv` or `.tsv` file) exactly, in code: `eval` adds columns
+Queries a table (an attachment in `/attachments/`, a tab's results that `current_results` saved in
+`/tabs/results/`, or a `.csv` or `.tsv` file) exactly, in code: `eval` adds columns
 worked out per row, `where` filters, `groupBy` with `aggregates` (or `distinct`, with counts) summarises, `orderBy`
 sorts and `limit` cuts. `mask` with `distinct` or `groupBy` counts free text as patterns, with numbers, IPs, dates
 and IDs masked (`ValueMasker`). The query is typed JSON, never code or a command. Expressions are Stroom's
@@ -917,18 +920,24 @@ category, and its examples are checked to work.
 
 * **Arguments**: `path`; `select`; `eval` (`as`, `expression`); `where` (`column`, `op`, `value`; ops `=`, `!=`,
   `<`, `<=`, `>`, `>=`, `contains`, `not_contains`, `starts_with`, `ends_with`, `matches`, `is_empty`,
-  `not_empty`); `groupBy`; `aggregates` (`function` count, count_distinct, sum, min, max or avg, or an
+  `not_empty`, `in`, `not_in`, the last two with their values as a list or separated by commas); `groupBy`; `aggregates` (`function` count, count_distinct, sum, min, max or avg, or an
   `expression`; `column`, `as`); `distinct`; `mask`; `orderBy` (`column`, `descending`); `limit` (at least 1);
-  `out` (a `.csv`); `help`.
+  `out` (`.csv`, `.tsv` or `.md`, written in the format its name gives, as for every tool that writes a table);
+  `help`. Loose shapes are taken as meant: a list given as JSON text (surrounding whitespace and
+  one stray trailing comma ignored) is read as that list, a single object where a list of objects is expected is a
+  list of one, and an `orderBy` item may be a column's name, `-` before it for largest first (unless a column of
+  the result is called that, `-` and all).
 * **Returns**: "N of M rows matched; the result has K row(s)." (and, for a `current_results` snapshot, how much of
   the search it holds, which the answer must say), then a Markdown table; with `out`, the file and the first 10
   rows.
 * **Refuses**: a file of a kind that is never a table (`json`, `jsonl`, `ndjson`, `xml`, `xsl`, `xslt`, `txt`,
   `log`, `yaml`, `yml`), pointing at `jq` or `read_file` (a survey's JSON was once read as CSV and refused for a
-  stray quote); malformed arguments; an expression that doesn't parse.
+  stray quote); arguments in a shape that can't be read, quoting what was given (up to 80 characters), e.g.
+  "aggregates was text that isn't a JSON list of objects: '…'"; an expression that doesn't parse.
 * **Notes**: after two failed queries of the same table in a run, the next failure summarises the column the query
-  was about (`ColumnSummariser`) rather than leaving the model trying query after query. An expression error is
-  never turned into a summary, as the model fixes its expression from the message.
+  was about (`ColumnSummariser`) rather than leaving the model trying query after query. Only queries that could be
+  read count (e.g. an unknown column or operator): an argument in the wrong shape is refused before the query runs,
+  and an expression error is never turned into a summary, as the model fixes either from the message.
 
 ### `pipeline`
 
@@ -1174,15 +1183,19 @@ This needs `refresh`. Without it, the model is told to ask the user first. The d
 and `EventId` fields; if it doesn't, the model is told to answer from the table's columns instead. This snapshot
 is kept under the table's path with `-events` added.
 
-* **Arguments**: `table` (the table's name, for a dashboard with several; matched ignoring case), `rows` (only the
-  first n, copied with their own profile), `refresh`, `withEventIds`. All optional.
+* **Arguments**: `table` (the table's name, for a dashboard with several; matched ignoring case; a name that matches
+  nothing when the tab has only one table uses that table, the result starting with a note saying so), `rows`
+  (only the first n, copied with their own profile), `refresh`, `withEventIds`. All optional.
 * **Returns**: text: what was taken (or reused), rows held of rows found, the time taken, the time range, the
   state with reasons and notes, the path, and the profile.
-* **Refuses**: no attached tab with results tables (`NO_TAB`); a dashboard with several tables and no `table`
-  (lists them); `rows` below 1, or over the global row limit (`stroom.askStroomAi.tableAnalysis.maxTotalRows`,
+* **Refuses**: no attached tab with results tables (`NO_TAB`); a dashboard with several tables and no `table`, or
+  a `table` that matches none of them (lists them); `rows` below 1, or over the global row limit (`stroom.askStroomAi.tableAnalysis.maxTotalRows`,
   default 50,000), when it offers that many instead; a data source the user can't use; a search not yet run
   (offers `refresh`); results Stroom no longer holds (offers `refresh`).
 * **Notes**: time limit is the query time limit. Each snapshot is audit-logged as a search of the data source.
+  The attached tab's note (`TabSnapshots.note`) lists its tables of results and tells the model their rows aren't
+  in the tab's snapshot (`searches.json` holds only the search requests), and to call this tool for them, naming
+  `table` when there are several.
   `CurrentResultsTool.coverage` lets other tools that work on a snapshot (e.g. `fetch_events`) say an answer
   covers "the first N of M". It can be a pipeline's first step.
 

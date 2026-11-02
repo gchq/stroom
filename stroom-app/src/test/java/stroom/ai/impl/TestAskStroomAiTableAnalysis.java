@@ -104,6 +104,9 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
     // The rows the user's tab shows, of all the search found.
     private static final long ROWS_SHOWN = 100;
     private static final String STROOM_QL = "from \"Stream Store\" select Feed, Type";
+    // A query whose table is small enough for the model to be given it in full: a row for each feed.
+    private static final String STROOM_QL_BY_FEED = "from \"Stream Store\" group by Feed select Feed, count() "
+                                                    + "as Streams";
     private static final String TABLE_ID = "table-1";
 
     @Inject
@@ -158,7 +161,7 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
     @Test
     void aLargeQueryTableIsTakenIntoTheWorkspaceAndCountedThereNotInTheContext() {
         final DocRef query = asUser(user, () -> create(QueryDoc.TYPE, "Streams"));
-        final QueryTableContext results = asUser(user, this::queryResults);
+        final QueryTableContext results = asUser(user, () -> queryResults(STROOM_QL));
         final String snapshot = snapshotPath(query, null);
         model.callTool("current_results", "{}")
                 .callTool("table", JsonUtil.writeValueAsString(Map.of("path", snapshot,
@@ -184,7 +187,7 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
     @Test
     void aSnapshotOfFewerRowsThanTheSearchFoundSaysSoAndOnlyThoseAreCounted() {
         final DocRef query = asUser(user, () -> create(QueryDoc.TYPE, "Streams"));
-        final QueryTableContext results = asUser(user, this::queryResults);
+        final QueryTableContext results = asUser(user, () -> queryResults(STROOM_QL));
         final String snapshot = snapshotPath(query, null);
         model.callTool("current_results", "{\"rows\": 1000}")
                 .callTool("table", JsonUtil.writeValueAsString(Map.of("path", snapshot,
@@ -229,6 +232,28 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
                 .contains("Coverage: all " + TOTAL_STREAMS + " row(s) the table's search found.");
         assertCounts(counted.text());
         assertRowsNotSentToTheModel();
+    }
+
+    @Test
+    void aSmallAttachedTableIsGivenToTheModelInFullSoItAnswersWithoutATool() {
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        final QueryTableContext results = asUser(user, () -> queryResults(STROOM_QL_BY_FEED));
+        model.answer("TABLE-A has the most streams (1500).");
+
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
+                AskStroomAiConfig.builder().modelRef(modelRef).build(), results,
+                "Which feed has the most streams?", AiAgentMode.AGENT)));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
+
+        // Answered from the table it was given, in one model call, with no tool call first.
+        assertThat(messages).noneMatch(message -> message.getMessageType() == AiMessageType.TOOL_CALL);
+        assertThat(model.agentRequests()).hasSize(1);
+        final String sent = JsonUtil.writeValueAsString(model.agentRequests().getFirst().get("messages"), false);
+        assertThat(sent)
+                .contains("The whole table is below, and is the workspace file /attachments/")
+                .contains("TABLE-A", "TABLE-B", "TABLE-C", "1500", "1000", "500")
+                .doesNotContain("its profile is below");
     }
 
     @Test
@@ -293,10 +318,10 @@ class TestAskStroomAiTableAnalysis extends AbstractAiIntegrationTest {
     }
 
     // The query's results, as the user's tab shows them: the search run as the user, with its key.
-    private QueryTableContext queryResults() {
+    private QueryTableContext queryResults(final String stroomQl) {
         final QuerySearchRequest request = QuerySearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.QUERY_UI).build())
-                .query(STROOM_QL)
+                .query(stroomQl)
                 .queryContext(QueryContext.builder().dateTimeSettings(DateTimeSettings.builder().build()).build())
                 .incremental(false)
                 .timeout(30_000L)

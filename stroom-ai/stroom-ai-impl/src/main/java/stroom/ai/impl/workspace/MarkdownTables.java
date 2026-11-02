@@ -70,6 +70,26 @@ public final class MarkdownTables {
         return cells;
     }
 
+    /// @param cells A row's cells; a null cell is written empty.
+    /// @return The row as a line of a Markdown table, without a line end, e.g. `| a | b \\| c |  |`, with each `|`
+    /// in a cell escaped and its line breaks made spaces, so [#parseRow(String)] reads the cells back.
+    public static String formatRow(final List<String> cells) {
+        final StringBuilder sb = new StringBuilder("|");
+        for (final String cell : cells) {
+            final String value = cell == null
+                    ? ""
+                    : cell;
+            sb.append(' ').append(value.replace("|", "\\|").replaceAll("\\R", " ")).append(" |");
+        }
+        return sb.toString();
+    }
+
+    /// @param columnCount How many columns the table has.
+    /// @return The separator row between a table's header and its rows, without a line end, e.g. `| --- | --- |`.
+    public static String separatorRow(final int columnCount) {
+        return "|" + " --- |".repeat(columnCount);
+    }
+
     /// @param line A table row.
     /// @return True if the row is the separator row between the header and the data, e.g. `| --- | :-: |`.
     public static boolean isSeparatorRow(final String line) {
@@ -148,7 +168,7 @@ public final class MarkdownTables {
                     final BufferedWriter writer = Files.newBufferedWriter(rewritten, StandardCharsets.UTF_8)) {
                 writer.write(row(without(parseRow(reader.readLine()), empty)));
                 reader.readLine();
-                writer.write("|" + " --- |".repeat(header.size() - empty.size()) + "\n");
+                writer.write(separatorRow(header.size() - empty.size()) + "\n");
                 String line;
                 while ((line = reader.readLine()) != null) {
                     writer.write(row(without(parseRow(line), empty)));
@@ -172,10 +192,6 @@ public final class MarkdownTables {
     }
 
     private static String row(final List<String> cells) {
-        final StringBuilder sb = new StringBuilder("|");
-        for (final String cell : cells) {
-            sb.append(' ').append(cell.replace("|", "\\|")).append(" |");
-        }
-        return sb.append('\n').toString();
+        return formatRow(cells) + "\n";
     }
 }

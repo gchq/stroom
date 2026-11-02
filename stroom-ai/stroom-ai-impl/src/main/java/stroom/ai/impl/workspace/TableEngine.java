@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -293,12 +294,30 @@ public final class TableEngine {
                 if (value == null && !op.equals("is_empty") && !op.equals("not_empty")) {
                     throw new WorkspaceException("Give a value for the condition on " + condition.column() + ".");
                 }
-                yield new CompiledCondition(index, op, value, number, pattern);
+                yield new CompiledCondition(index, op, value, number, pattern, List.of());
             }
+            // Seen: the agent asked for 'in' with comma-separated values, then wrote the same as a regular
+            // expression too long to be allowed.
+            case "in", "not_in" -> new CompiledCondition(index, op, value, null, null, inValues(condition));
             default -> throw new WorkspaceException("'" + condition.op() + "' is not a condition. Use one of =, "
                                                     + "!=, <, <=, >, >=, contains, not_contains, starts_with, "
-                                                    + "ends_with, matches, is_empty or not_empty.");
+                                                    + "ends_with, matches, is_empty, not_empty, in or not_in.");
         };
+    }
+
+    private static List<String> inValues(final Condition condition) {
+        final List<String> values = condition.values() != null
+                ? condition.values()
+                : condition.value() == null
+                        ? List.of()
+                        : Arrays.stream(condition.value().split(",", -1))
+                                .map(String::strip)
+                                .toList();
+        if (values.isEmpty()) {
+            throw new WorkspaceException("Give the values for the condition on " + condition.column() + ", as a "
+                                         + "list or separated by commas.");
+        }
+        return values;
     }
 
     private static void checkFunction(final Aggregate aggregate) {
@@ -395,10 +414,16 @@ public final class TableEngine {
     /// @param column The column.
     /// @param op     One of =, !=, <, <=, >, >= (compared as numbers when both are numbers), contains,
     ///               not_contains (ignoring case), starts_with, ends_with, matches (a regular expression),
-    ///               is_empty, not_empty.
-    /// @param value  The value to compare with.
-    public record Condition(String column, String op, String value) {
+    ///               is_empty, not_empty, in, not_in (equal to one of the values, or to none of them).
+    /// @param value  The value to compare with; for in and not_in, the values separated by commas, if values is
+    ///               null.
+    /// @param values For in and not_in, the values given as a list, or null.
+    public record Condition(String column, String op, String value, List<String> values) {
 
+        /// A condition with one value.
+        public Condition(final String column, final String op, final String value) {
+            this(column, op, value, null);
+        }
     }
 
     /// An aggregate over each group: of a column's values, with a function, or an expression in Stroom's expression
@@ -501,11 +526,25 @@ public final class TableEngine {
 
     }
 
-    private record CompiledCondition(int index, String op, String value, Double number, SafePattern pattern) {
+    private record CompiledCondition(int index,
+                                     String op,
+                                     String value,
+                                     Double number,
+                                     SafePattern pattern,
+                                     List<String> values) {
 
         /// A number is only compared with numbers, so e.g. an empty cell is neither more nor less than 20.
         private boolean comparable(final String cell) {
             return number == null || TableEngine.number(cell) != null;
+        }
+
+        /// @return True if the cell equals the value, as numbers when both are numbers.
+        private static boolean equal(final String cell, final String value) {
+            final Double number = TableEngine.number(value);
+            final Double cellNumber = TableEngine.number(cell);
+            return number != null && cellNumber != null
+                    ? number.equals(cellNumber)
+                    : cell.equals(value);
         }
 
         boolean test(final String cell) {
@@ -513,6 +552,8 @@ public final class TableEngine {
                 case "=" -> number != null && TableEngine.number(cell) != null
                         ? number.equals(TableEngine.number(cell))
                         : cell.equals(value);
+                case "in" -> values.stream().anyMatch(candidate -> equal(cell, candidate));
+                case "not_in" -> values.stream().noneMatch(candidate -> equal(cell, candidate));
                 case "!=" -> number != null && TableEngine.number(cell) != null
                         ? !number.equals(TableEngine.number(cell))
                         : !cell.equals(value);
