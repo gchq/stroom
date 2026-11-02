@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.ErrorTriageRuleConfig;
 import stroom.ai.impl.tools.ErrorTriage.Marker;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.DefaultLocation;
@@ -98,7 +99,7 @@ class TestErrorTriage {
     @Test
     void environmentRulesComeFirst() {
         final ErrorTriage rules = ErrorTriage.withEnvironmentRules(List.of(
-                "{element: decorationFilter, message: lookup, class: benign, reason: known miss}"));
+                rule(null, "decorationFilter", "lookup", "benign", "known miss")));
 
         assertThat(rules.classify("ERROR", "decorationFilter", false, "Failed lookup for user x"))
                 .isEqualTo(new ErrorTriage.Classified("benign", "known miss"));
@@ -107,21 +108,37 @@ class TestErrorTriage {
     }
 
     @Test
-    void anEnvironmentRuleAsJsonIsReadToo() {
+    void anEnvironmentRulesSeveritiesAreReadAsStroomSaysThem() {
         final ErrorTriage rules = ErrorTriage.withEnvironmentRules(List.of(
-                "{\"severity\": [\"WARN\"], \"class\": \"blocking\", \"reason\": \"no warnings here\"}"));
+                rule(List.of("WARN"), null, null, "blocking", "no warnings here")));
 
         assertThat(rules.classify("WARNING", "anything", false, "x").reason()).isEqualTo("no warnings here");
     }
 
     @Test
+    void anEnvironmentRuleThatLosesTextIsACause() {
+        final ErrorTriage rules = ErrorTriage.withEnvironmentRules(List.of(new ErrorTriageRuleConfig(
+                null, "splitFilter", null, "buffer", "blocking", "record lost", true)));
+
+        assertThat(rules.classify("ERROR", "splitFilter", true, "over the buffer").cause()).isTrue();
+    }
+
+    @Test
     void anEnvironmentRuleWithoutAValidClassIsRefused() {
-        assertThatThrownBy(() -> ErrorTriage.withEnvironmentRules(List.of("{class: fine, reason: x}")))
+        assertThatThrownBy(() -> ErrorTriage.withEnvironmentRules(List.of(rule(null, null, null, "fine", "x"))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("class must be one of");
-        assertThatThrownBy(() -> ErrorTriage.withEnvironmentRules(List.of("{class: benign}")))
+        assertThatThrownBy(() -> ErrorTriage.withEnvironmentRules(List.of(rule(null, null, null, "benign", null))))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("needs a reason");
+    }
+
+    private static ErrorTriageRuleConfig rule(final List<String> severity,
+                                              final String element,
+                                              final String message,
+                                              final String classification,
+                                              final String reason) {
+        return new ErrorTriageRuleConfig(severity, element, null, message, classification, reason, null);
     }
 
     @Test

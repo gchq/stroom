@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools;
 
+import stroom.ai.impl.ErrorTriageRuleConfig;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
@@ -83,15 +84,15 @@ public final class ErrorTriage {
         return new ErrorTriage(BUNDLED);
     }
 
-    /// @param environmentRules Rules from the config, each a YAML (or JSON) mapping with the bundled rules' fields,
-    ///                         e.g. `{element: decorationFilter, message: lookup, class: benign, reason: '...'}`.
+    /// @param environmentRules Rules from the config, with the bundled rules' fields.
     /// @return Triage by those rules, then the bundled ones.
-    /// @throws IllegalArgumentException if a rule can't be read.
-    public static ErrorTriage withEnvironmentRules(final List<String> environmentRules) {
+    /// @throws IllegalArgumentException if a rule has no valid class or no reason, or its message isn't a valid
+    /// regular expression.
+    public static ErrorTriage withEnvironmentRules(final List<ErrorTriageRuleConfig> environmentRules) {
         final List<Rule> all = new ArrayList<>();
-        for (final String text : NullSafe.list(environmentRules)) {
-            if (NullSafe.isNonBlankString(text)) {
-                all.add(Rule.of(readMap(text)));
+        for (final ErrorTriageRuleConfig rule : NullSafe.list(environmentRules)) {
+            if (rule != null) {
+                all.add(Rule.of(asMap(rule)));
             }
         }
         all.addAll(BUNDLED);
@@ -362,12 +363,22 @@ public final class ErrorTriage {
         }
     }
 
-    private static Map<?, ?> readMap(final String text) {
-        try {
-            return YamlUtil.getMapper().readValue(text, Map.class);
-        } catch (final RuntimeException e) {
-            throw new IllegalArgumentException("Unable to read the error triage rule " + text + ": "
-                                               + e.getMessage(), e);
+    // A config rule as the bundled YAML has it, so both are read alike. Fields left out are left out here too.
+    private static Map<String, Object> asMap(final ErrorTriageRuleConfig rule) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        putIfSet(map, "severity", rule.getSeverity());
+        putIfSet(map, "element", rule.getElement());
+        putIfSet(map, "own", rule.getOwn());
+        putIfSet(map, "message", rule.getMessage());
+        putIfSet(map, "class", rule.getClassification());
+        putIfSet(map, "reason", rule.getReason());
+        putIfSet(map, "cause", rule.getCause());
+        return map;
+    }
+
+    private static void putIfSet(final Map<String, Object> map, final String key, final Object value) {
+        if (value != null) {
+            map.put(key, value);
         }
     }
 
