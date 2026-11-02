@@ -1802,7 +1802,7 @@ judging them:
 
 * Rules match severity, element (a glob), `own` (the pipeline's own element, or one inherited from its template) and a
   message pattern; the first match wins; with none, review. Rules are bundled (`error_rules.yaml`), and an
-  administrator's (`stroom.ai.errorTriage.rules`) are checked first.
+  administrator's (`stroom.ai.errorTriage.rules`, a YAML list of mappings in `config.yml`) are checked first.
 * Rules explain causes the agent can't see: a record lost to the Data Splitter's buffer; unmatched records with every
   tested value empty, likely pieces of a split record (2026-10-31).
 * A rule marked `cause: true` (the Data Splitter losing text: a record over half its buffer, content its
@@ -2209,6 +2209,8 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-02 | The environment's error triage rules stay in config (`stroom.ai.errorTriage.rules`), not AGENTS: only administrators change them, and a rule marking errors benign could otherwise hide them from the build gates. Each rule is a structured value (`ErrorTriageRuleConfig`): a YAML list of mappings in `config.yml`, a JSON array in the Properties screen, with the bundled rules' fields including `cause` (asked for by the user). | Error triage |
+| 2026-11-02 | The pipeline stage defaults are the standard template-pipelines content pack's only (indexing: `System/Template Pipelines`, `Indexing`; discovery: none); an environment's own templates (e.g. Elasticsearch) are configured. | Pipeline stages |
 | 2026-10-31 | A CEF pipeline writing its lines as text (to a file or stream) is stage `forwarding`, backend `file`, told by its XSLTs and those they import (a CEF plan kept, or a CEF header literal, `CEF:0` or `CEF:1` and a bar), not by its writer; `write_documentation` and `evaluate_pipeline` treat it as they treat one to Kafka. | CEF output |
 | 2026-10-31 | Evaluating a pipeline has a tool of its own, `evaluate_pipeline`, the same sections every time for the pipeline's stage (events, indexing, CEF, reference, other) and the report's outline; it gathers facts, runs no follow-on checks, and saves nothing. `write_documentation` generates a Reference maps section for reference data pipelines from the same facts. | Further use cases |
 | 2026-10-31 | Promotion asks before writing a working copy over a production document changed since it was copied: who changed it and when, and how production differs from the copy; the user overwrites production (the change then only in the backup) or keeps it (the copy stays in the build). The user chose asking, with the difference explained, over refusing. | Builds |
