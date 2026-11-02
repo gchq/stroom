@@ -1734,6 +1734,42 @@ rows a custom text and background colour (`CustomRowStyleEditor`), and nothing w
 don't meet WCAG's contrast ratio. The baseline entry that showed it was the story's own fault (a
 background with no text colour) and is fixed; a warning in the custom style dialog isn't done.
 
+### A field's focus ring and its validation message
+
+**Fixed in part** (2 November 2026). A focused field's ring is a 4px `box-shadow`
+(`--focus-shadow`, `--focus-shadow--invalid`), which takes no space, so it drew over the top of the
+form group's message (`form-group__feedback`, `margin-top: 0`). That message, and a spinner's own
+(`value-spinner__feedback`), now have `margin-top: .25rem`. A group with a message is taller than
+one without (by the message's line); only `form-group--reserve-feedback` groups keep the same
+spacing, and that stays as it is.
+
+**Fixed** (2 November 2026) for a picker outside a form group, seen on the pipeline's Inherit From
+(its message shown in the browser as `DropDownBox.showProblem` shows it): its own message
+(`drop-down__feedback`) had `margin-top: 0.2rem`, a little less than the ring, and is now `.25rem`;
+an invalid picker's ring was blue and is now red, as an invalid text field's is. Inherit From itself
+was in the bar of element buttons, where the message made the bar taller (31px to 48px) and moved
+the centred label and buttons down 8.5px, and the pane (`split-pane__pane`, `overflow: hidden`) cut
+off the top of its ring. It is now a form group above that bar (`PipelineStructure.ui.xml`), so its
+message is the group's; `PipelineEditor` `InheritFromNotFound` shows it, with the keyboard focus.
+
+**Checked** (2 November 2026): the other pickers and spinners that show their own message outside a
+form group. Ask Stroom AI's model picker (`AskStroomAi.ui.xml`) is fine: its ring clears its message.
+The floor map's image pickers (`FloorMapLayerStyle.ui.xml`, `FloorMapObjectEdit.ui.xml`) and the
+dashboard list input's (`ListInput.ui.xml`) never show one (their controllers don't report a
+problem). Find in Content's pattern uses the form group's message class, so the fix above covers it.
+
+**Fixed** (2 November 2026, the user's design): the expression term's document and user pickers
+(`TermEditor.ui.xml`, in a row of the tree). The message went beside the picker in the row, where the
+tree cut it off, and the keyboard focus drew the blue focus border inside the red ring. The row has
+no room for a line, so a picker can now show its problem as its tooltip
+(`DropDownBox.setProblemInTooltip`, `problemInTooltip="true"`): the red border, a red focus border
+with the keyboard focus (`term-editor.css`), the message as its `title` and its description for
+screen readers. `FocusTooltip` shows it with the keyboard focus too, and now wraps long text (it cut
+it off with an ellipsis). `ExpressionBuilder` `DocumentNotFound` shows it.
+
+**Open**: the Select Record dialog's item number (`ItemSelection.ui.xml`): the dialog is too narrow
+for its spinner's message, which is cut off ("…a whole number from 1 to"); its ring clears it.
+
 ### GitHub issues loosely related to accessibility
 
 **Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,

@@ -580,6 +580,28 @@ public final class ExpressionEditorStories {
                     play.click(play.getByText(USER_ID, ".expression-item__label"));
                     play.waitFor(() -> play.expect(item(play, "Feed is TEST_FEED")).toBeInTheDocument());
                 })
+                // A term's document that can't be found: the picker is invalid, with the message as
+                // its tooltip (a row has no room for a line under it), shown with the keyboard focus
+                // too, and as its description for screen readers
+                .story("DocumentNotFound", context -> editor(context, complexExpression(), false,
+                        request -> RestReply.noContent()))
+                .withPlay(play -> {
+                    play.click(play.getByText("Feed is TEST_FEED", ".expression-item__label"));
+                    final Query picker = play.querySelector(".drop-down.term-editor__item--doc");
+                    play.waitFor(() -> play.expect(picker).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(picker).toHaveAccessibleDescription(TextMatch.containing("doesn't exist"));
+                    // No line under it: the feedback is for screen readers only
+                    play.expect(play.querySelector(".drop-down__feedback")).toHaveClass("sr-only");
+                    // Back to the condition and on again, so the focus is the keyboard's
+                    // (:focus-visible): the message (the picker's title) is shown beside it
+                    play.run("focus the picker", () -> picker.element().get().focus());
+                    play.tab(true);
+                    play.tab();
+                    play.expect(picker).toHaveFocus();
+                    final Query tooltip = play.screen().querySelector(".focus-tooltip");
+                    play.expect(tooltip).toBeVisible();
+                    play.expect(tooltip).toHaveTextContent(TextMatch.containing("doesn't exist"));
+                })
                 // A term's document is kept if the term is left before checking it is done
                 .story("DocumentKeptIfLeftBeforeItIsChecked", context -> editor(context, complexExpression(), false,
                         request -> ContentStorySupport.decorate(request).delayed(3000)))

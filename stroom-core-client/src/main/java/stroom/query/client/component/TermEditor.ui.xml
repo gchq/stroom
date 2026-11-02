@@ -28,9 +28,11 @@
             <dt:DateTimeBox ui:field="dateTo" expressionsAllowed="true"
                             addStyleNames="term-editor__item term-editor__item--narrow icon-box--fluid"
                             visible="false"/>
+            <!-- A problem with a picker's value is its tooltip, as a row has no room for a line under it -->
             <dd:DropDownBox ui:field="docRefBox" addStyleNames="term-editor__item term-editor__item--picker term-editor__item--doc"
-                            visible="false"/>
-            <dd:DropDownBox ui:field="userRefBox" addStyleNames="term-editor__item term-editor__item--picker" visible="false"/>
+                            problemInTooltip="true" visible="false"/>
+            <dd:DropDownBox ui:field="userRefBox" addStyleNames="term-editor__item term-editor__item--picker"
+                            problemInTooltip="true" visible="false"/>
         </g:FlowPanel>
         <tx:Label ui:field="fieldTypeLabel" addStyleNames="term-editor__label term-editor__label--field-type" wordWrap="false"
                  visible="false"/>

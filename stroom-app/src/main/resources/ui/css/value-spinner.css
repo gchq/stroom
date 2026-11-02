@@ -139,6 +139,7 @@
     display: block;
     width: max-content;
     max-width: 20rem;
+    margin-top: .25rem;
     font-size: 80%;
     color: var(--feedback);
 }

@@ -51,6 +51,14 @@
 	outline-offset: -2px;
 }
 
+/* A picker whose value has a problem (e.g. its document can't be found; its message is its tooltip):
+   the red border of an invalid field (drop-down.css), and with the keyboard focus a red focus border
+   in place of the blue one, inside the field as the blue one is, with no ring outside it */
+.term-editor__item.drop-down[aria-invalid="true"]:is(:focus-visible, :has(:focus-visible)) {
+	outline-color: var(--focus-border--invalid);
+	box-shadow: none;
+}
+
 .term-editor__fields input {
     border: none !important;
     border-radius: 0 !important;
@@ -90,6 +98,14 @@
 	width: 200px;
 	min-width: 200px;
 	margin-top: 1px;
+}
+
+/* A picker (drop-down.css) as a flex row again, as display above replaces it, with no padding above
+   or below, so its value is centred in the row's height as the other fields' are */
+.term-editor__item.term-editor__item--picker.drop-down {
+	display: flex;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 /* The document picker sits level with the other boxes, as its inline margin once put it */
