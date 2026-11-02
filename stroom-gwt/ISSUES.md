@@ -1767,8 +1767,12 @@ with the keyboard focus (`term-editor.css`), the message as its `title` and its 
 screen readers. `FocusTooltip` shows it with the keyboard focus too, and now wraps long text (it cut
 it off with an ellipsis). `ExpressionBuilder` `DocumentNotFound` shows it.
 
-**Open**: the Select Record dialog's item number (`ItemSelection.ui.xml`): the dialog is too narrow
-for its spinner's message, which is cut off ("…a whole number from 1 to"); its ring clears it.
+**Fixed** (2 November 2026): the Select Record dialog's item number (`ItemSelection.ui.xml`). A
+spinner's message is as wide as its text up to 20rem (`value-spinner.css`), and the dialog is little
+wider than the field, so it cut off the message ("…a whole number from 1 to"). In this dialog the
+message now wraps to the field's width, and "of N" is level with the number rather than centred on
+the field and the message (`item-selection.css`). A spinner elsewhere in a narrow space would need
+the same; making every spinner's message fit the space around it would need container queries.
 
 ### GitHub issues loosely related to accessibility
 

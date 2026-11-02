@@ -148,6 +148,12 @@
     display: none;
 }
 
+/* In the Select Record dialog (item-selection.css), wrapped to the field's width, as the dialog is
+   little wider than the field and would cut off a message wider than it */
+.item-selection .value-spinner__feedback {
+    width: auto;
+}
+
 /* The data grid's spinner (ValueSpinnerCell), a variant with no ARIA meaning: as wide as its cell,
    with a field as high as its arrows; the negative margin gives back the 2px it is taller than the
    grid's other cells' text, so its row is as high as theirs */
