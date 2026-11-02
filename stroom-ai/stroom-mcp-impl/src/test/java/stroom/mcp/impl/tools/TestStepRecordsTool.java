@@ -50,6 +50,20 @@ class TestStepRecordsTool {
     }
 
     @Test
+    void outputNoSchemaFilterChecksBlocksWhenItFailsItsSchema() {
+        world.withoutSchemaFilter();
+        world.records(1, "<records xmlns=\"records:2\"><record><entry/></record></records>");
+        world.outputFailsItsSchema();
+
+        final Map<String, Object> result = stepRecords("{\"pipeline_uuid\": \"p-1\", \"locations\": "
+                                                       + "[{\"stream\": 7, \"record\": 0}]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(TestStepSampleTool.firstMessage(TestStepSampleTool.groups(result).getFirst()))
+                .contains(UnvalidatedOutput.NOT_CHECKED);
+    }
+
+    @Test
     void aRecordPastTheStreamsEndIsNotFoundWithoutSpoilingTheVerdict() {
         // Seen in testing: record 12,000 of a stream of 10,000 turned a clean verdict into review, on stepping's
         // own complaint that it had nothing to replay.

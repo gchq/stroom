@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.validation.OutputSchemas;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltSafety;
@@ -123,6 +124,7 @@ class PipelineStepping {
     private final BuildPlan plan;
     private final AiAuditLog auditLog;
     private final LookupAgreements lookups;
+    private final OutputSchemas outputSchemas;
 
     @Inject
     PipelineStepping(final SteppingWalks steppingWalks,
@@ -139,7 +141,8 @@ class PipelineStepping {
                      final BuildRecords buildRecords,
                      final BuildPlan plan,
                      final AiAuditLog auditLog,
-                     final LookupAgreements lookups) {
+                     final LookupAgreements lookups,
+                     final OutputSchemas outputSchemas) {
         this.steppingWalks = steppingWalks;
         this.documentAccess = documentAccess;
         this.securityContextProvider = securityContextProvider;
@@ -155,6 +158,7 @@ class PipelineStepping {
         this.plan = plan;
         this.auditLog = auditLog;
         this.lookups = lookups;
+        this.outputSchemas = outputSchemas;
     }
 
     // --------------------------------------------------------------------------------
@@ -474,6 +478,13 @@ class PipelineStepping {
                                final Integer recordCount) {
         return streamSummaries.errorTriage().triage(markers, pipeline.own(), recordCount, EXAMPLES,
                 acceptedErrors.acceptedFor(pipeline.doc().getUuid()));
+    }
+
+    /// @param pipeline The pipeline about to be walked.
+    /// @return The check of its output against the schema of its namespace, for each record, when no schema filter
+    /// in it checks that output.
+    UnvalidatedOutput unvalidatedOutput(final SteppedPipeline pipeline) {
+        return UnvalidatedOutput.of(outputSchemas, pipeline);
     }
 
     /// A blocking group when a build's own pipeline writes EventDetail/Unknown from an XSLT saved without a
