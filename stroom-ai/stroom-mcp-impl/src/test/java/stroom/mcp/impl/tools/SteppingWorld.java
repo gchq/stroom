@@ -29,6 +29,8 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.validation.OutputSchemas;
+import stroom.ai.impl.tools.validation.SchemaErrors;
 import stroom.docref.DocRef;
 import stroom.pipeline.factory.ElementRegistry;
 import stroom.pipeline.factory.ElementRegistryFactory;
@@ -95,6 +97,8 @@ final class SteppingWorld {
     final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     final Consent consent = new Consent(() -> auditLog);
     final LookupAgreements lookups = new LookupAgreements(consent);
+    /// Checks output no schema filter checks: finds nothing wrong unless a test says otherwise.
+    final OutputSchemas outputSchemas = Mockito.mock(OutputSchemas.class);
     final List<String> said = new ArrayList<>();
     /// Each walk opened: the stream, and the code it was opened with.
     final List<Map.Entry<Long, Map<String, String>>> opened = new ArrayList<>();
@@ -137,11 +141,29 @@ final class SteppingWorld {
                 inv.getArgument(1), inv.getArgument(2)));
     }
 
+    /// Makes the template an indexing one with no schema filter, as Stroom's own Indexing template is: its XSLT
+    /// writes records:2 straight to the IndexingFilter.
+    void withoutSchemaFilter() {
+        pipeline(TEMPLATE, "Indexing", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("dsParser", "DSParser"))
+                .addElement(new PipelineElement("translationFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("indexingFilter", "IndexingFilter"))
+                .addLink("dsParser", "translationFilter")
+                .addLink("translationFilter", "indexingFilter"));
+    }
+
+    /// Makes [#outputSchemas] find every record's output in the wrong shape for records:2.
+    void outputFailsItsSchema() {
+        Mockito.when(outputSchemas.check(any())).thenReturn(Optional.of(new OutputSchemas.Failed("records:2",
+                "file://records-v2.0.xsd", List.of(new SchemaErrors.SchemaError(2, "/records/record/entry",
+                        "Invalid content was found starting with element 'entry'")))));
+    }
+
     /// @return The stepping the tools share, on this world.
     PipelineStepping stepping() {
         return new PipelineStepping(steppingWalks, documentAccess, () -> securityContext,
                 () -> elementRegistryFactory, streamSummaries, acceptedErrors, checkXslt, streamReader,
-                sampleStreamTexts, guard, keptMappings, buildRecords, plan, auditLog, lookups);
+                sampleStreamTexts, guard, keptMappings, buildRecords, plan, auditLog, lookups, outputSchemas);
     }
 
     /// @return A call's context from an MCP client, with its progress said to [#said].

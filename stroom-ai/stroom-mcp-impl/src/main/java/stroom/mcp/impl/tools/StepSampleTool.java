@@ -245,7 +245,7 @@ class StepSampleTool extends AbstractBuiltInTool {
                         final int cap,
                         final Integer perStreamLimit,
                         final boolean keepOutputs) {
-        final Walked walked = new Walked(keepOutputs);
+        final Walked walked = new Walked(keepOutputs, stepping.unvalidatedOutput(pipeline));
         final String outputElement = pipeline.outputElement();
         final CallProgress progress = CallProgress.of(context);
         int n = 0;
@@ -304,11 +304,12 @@ class StepSampleTool extends AbstractBuiltInTool {
                                final String outputElement,
                                final SteppingResult result,
                                final String key) {
+        final String output = SteppingWalks.output(result, outputElement);
         final List<ErrorTriage.Marker> found = new ArrayList<>(SteppingWalks.markers(result, key));
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
+        found.addAll(walked.unvalidated.markers(output, key));
         walked.markers.addAll(found);
         walked.records.add(new Stepped(key, found.size()));
-        final String output = SteppingWalks.output(result, outputElement);
         if (walked.keepOutputs) {
             walked.outputs.add(output);
         }
@@ -491,12 +492,15 @@ class StepSampleTool extends AbstractBuiltInTool {
         // Whether each record's output is kept, and the outputs kept.
         private final boolean keepOutputs;
         private final List<String> outputs = new ArrayList<>();
+        // Checks each record's output where no schema filter in the pipeline does.
+        private final UnvalidatedOutput unvalidated;
 
         // Stopped before the call's time ran out.
         private boolean cut;
 
-        private Walked(final boolean keepOutputs) {
+        private Walked(final boolean keepOutputs, final UnvalidatedOutput unvalidated) {
             this.keepOutputs = keepOutputs;
+            this.unvalidated = unvalidated;
         }
     }
 }
