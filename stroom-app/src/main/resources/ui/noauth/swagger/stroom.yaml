@@ -11911,6 +11911,8 @@ components:
     ColumnValue:
       type: object
       properties:
+        available:
+          type: boolean
         matchingRule:
           type: string
         value:
@@ -11928,6 +11930,9 @@ components:
     ColumnValues:
       type: object
       properties:
+        availableCount:
+          type: integer
+          format: int64
         pageResponse:
           $ref: "#/components/schemas/PageResponse"
         values:
@@ -11949,10 +11954,6 @@ components:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/DashboardSearchRequest"
-        selections:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ColumnValueSelection"
     CompletionItem:
       type: object
       discriminator:
@@ -18704,10 +18705,6 @@ components:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/QuerySearchRequest"
-        selections:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ColumnValueSelection"
     QueryComponentSettings:
       type: object
       allOf:
