@@ -32,10 +32,10 @@ import java.util.Map;
 import java.util.Set;
 
 /// The tool results the model reads for reference, to work from for the rest of a question (e.g. the schema's
-/// elements, a guide). When a run makes its conversation smaller (see [McpAgentChat#shrink]), they are kept as they
-/// are for longer than other results, and a summary of earlier steps keeps them word for word, after what the
-/// model wrote. Seen: an agent read an event type's elements, the result was shortened a few steps later, and it
-/// mapped fields to another type it remembered better.
+/// elements, a guide). When a run makes its conversation smaller (see [ConversationShortening#shrink]), they are kept
+/// as they are for longer than other results, and a summary of earlier steps keeps them word for word, after what the
+/// model wrote. Seen: an agent read an event type's elements, the result was shortened a few steps later, and it mapped
+/// fields to another type it remembered better.
 final class ReferenceResults {
 
     /// The tools whose results are read for reference.
@@ -66,7 +66,7 @@ final class ReferenceResults {
         final String text = NullSafe.string(result.text());
         return TOOLS.contains(result.toolName())
                && text.length() <= MAX_CHARS
-               && !text.equals(McpAgentChat.SHORTENED_RESULT);
+               && !text.equals(ConversationShortening.SHORTENED_RESULT);
     }
 
     /// @param conversation The conversation.
@@ -85,9 +85,9 @@ final class ReferenceResults {
                 final ToolExecutionRequest call = calls.get(result.id());
                 final String arguments = call == null
                         ? ""
-                        : McpAgentChat.oneLine(call.arguments(), McpAgentChat.COLLAPSED_LINE_CHARS);
+                        : ConversationShortening.oneLine(call.arguments(), ConversationShortening.COLLAPSED_LINE_CHARS);
                 found.add("- " + result.toolName() + "(" + arguments + "):\n" + result.text().strip());
-            } else if (McpAgentChat.isNote(message, McpAgentChat.TURN_SUMMARY_NOTE)) {
+            } else if (ConversationShortening.isNote(message, ConversationShortening.TURN_SUMMARY_NOTE)) {
                 keptBefore.addAll(keptIn(((UserMessage) message).singleText()));
             }
         }

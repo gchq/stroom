@@ -37,6 +37,7 @@ class TestStroomSplitterRun {
 
     private static final SplitterSpec CSV = SplitterSpec.builder("delimited").delimiter(",").header(true)
             .quote("\"").build();
+    private static final DataSplitterSchema SCHEMA = DataSplitterSchemas.held();
 
     static Stream<Arguments> dryRunAndStroomAgree() {
         return Stream.of(
@@ -89,11 +90,50 @@ class TestStroomSplitterRun {
     @ParameterizedTest(name = "{0}")
     @MethodSource
     void dryRunAndStroomAgree(final String name, final SplitterSpec spec, final String sample) {
-        final StroomSplitterRun.Result stroom = StroomSplitterRun.run(SplitterXml.converter(spec), sample);
+        // Checked against the schema first, as the DSParser element checks it: every converter written is valid.
+        final StroomSplitterRun.Result stroom = StroomSplitterRun.run(SCHEMA, SplitterXml.converter(spec),
+                List.of(sample)).getFirst();
 
         assertThat(stroom.errors()).as("Stroom's errors").isEmpty();
         assertThat(stroom.records()).isNotEmpty();
         assertThat(stroom.records()).isEqualTo(SplitterDryRun.dryRun(spec, sample).records());
+    }
+
+    @Test
+    void schemaErrorsComeBeforeTheRecordsOfTheFirstText() {
+        // As seen in testing: the fields named with <entry>, which Stroom's parser ignores, and group on the regex.
+        final String converter = DataSplitterSchema.ROOT + "<regex pattern=\"^(\\S+) (.*)$\" group=\"0\">"
+                                 + "<entry>ReceiveTime</entry><entry>Body</entry></regex></dataSplitter>";
+
+        final List<StroomSplitterRun.Result> runs = StroomSplitterRun.run(SCHEMA, converter,
+                List.of("a b\n", "c d\n"));
+
+        assertThat(runs.getFirst().errors()).anySatisfy(error -> assertThat(error).contains("group"))
+                .anySatisfy(error -> assertThat(error).contains("entry"));
+        assertThat(runs.getFirst().clean()).isFalse();
+        // Said once, with the first text.
+        assertThat(runs.get(1).errors()).noneSatisfy(error -> assertThat(error).contains("entry"));
+    }
+
+    @Test
+    void withNoSchemaHeldNothingRuns() {
+        final List<StroomSplitterRun.Result> runs = StroomSplitterRun.run(DataSplitterSchemas.none(),
+                SplitterXml.converter(CSV), List.of("a,b\n1,2\n"));
+
+        assertThat(runs).singleElement().satisfies(run -> {
+            assertThat(run.records()).isEmpty();
+            assertThat(run.errors()).containsExactly(DataSplitterSchema.NOT_HELD);
+        });
+    }
+
+    @Test
+    void aPatternThatDoesntCompileIsUnreadable() {
+        assertThat(StroomSplitterRun.unreadable(DataSplitterSchema.ROOT
+                                                + "<regex pattern=\"(unclosed\"><data value=\"$1\"/></regex>"
+                                                + "</dataSplitter>"))
+                .hasValueSatisfying(why -> assertThat(why).startsWith("Stroom can't read the converter: ")
+                        .contains("(unclosed"));
+        assertThat(StroomSplitterRun.unreadable(SplitterXml.converter(CSV))).isEmpty();
     }
 
     @Test

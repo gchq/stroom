@@ -78,10 +78,24 @@ public final class HeldSchemasWorld {
     /// @param xsd       Its text.
     /// @return This world.
     public HeldSchemasWorld hold(final String systemId, final String namespace, final String xsd) {
+        return hold(systemId, namespace, xsd, null);
+    }
+
+    /// Adds a schema the user may view, in a schema group.
+    ///
+    /// @param systemId    Its system id.
+    /// @param namespace   Its namespace.
+    /// @param xsd         Its text.
+    /// @param schemaGroup Its schema group, or null.
+    /// @return This world.
+    public HeldSchemasWorld hold(final String systemId,
+                                 final String namespace,
+                                 final String xsd,
+                                 final String schemaGroup) {
         final DocRef ref = new DocRef(XmlSchemaDoc.TYPE, "schema-" + refs.size(), systemId);
         refs.add(ref);
         final XmlSchemaDoc doc = XmlSchemaDoc.builder().uuid(ref.getUuid()).name(ref.getName()).systemId(systemId)
-                .namespaceURI(namespace).data(xsd).build();
+                .namespaceURI(namespace).data(xsd).schemaGroup(schemaGroup).build();
         Mockito.when(documentAccess.read(ref, XmlSchemaDoc.class)).thenReturn(Optional.of(doc));
         return this;
     }

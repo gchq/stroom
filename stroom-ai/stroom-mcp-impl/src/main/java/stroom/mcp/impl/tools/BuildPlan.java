@@ -39,6 +39,7 @@ import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -332,6 +333,24 @@ public class BuildPlan {
             return List.of();
         }
         return facts.sourceFeeds(build, facts.buildDocs(build));
+    }
+
+    /// @param build A build.
+    /// @param max   The most streams given.
+    /// @return The build's newest raw sample streams (its feeds' own Raw Events streams, else Raw Reference),
+    /// newest first; none for a build with none of its own.
+    public List<Long> rawSampleStreams(final String build, final int max) {
+        final Map<String, List<Map<String, Object>>> streams = facts.sampleStreams(build, facts.buildDocs(build));
+        List<Map<String, Object>> metas = NullSafe.list(streams.get(StreamTypeNames.RAW_EVENTS));
+        if (metas.isEmpty()) {
+            metas = NullSafe.list(streams.get(StreamTypeNames.RAW_REFERENCE));
+        }
+        return metas.stream()
+                .sorted(Comparator.comparingLong((Map<String, Object> meta) -> number(meta.get("createMs")))
+                        .reversed())
+                .map(meta -> number(meta.get("id")))
+                .limit(max)
+                .toList();
     }
 
     /// @param build A build.

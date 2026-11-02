@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.docref.DocRef;
@@ -33,6 +34,7 @@ import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -410,6 +412,42 @@ class TestCreatePipelineTool {
                         .build())
                 .build();
         pipelines.world.docs.put("v12", doc);
+    }
+
+    @Test
+    void theSchemaFilterIsGivenTheSchemaGroupOfTheEventLoggingDocumentTheUserChose() {
+        // Event-logging held in two documents of different content: only a schema group makes Stroom's schema
+        // filter take the one the user chose.
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("x1", "Acme-Events", Map.of());
+        Mockito.when(pipelines.eventVersions.schemaGroupFor(Mockito.any(), Mockito.eq(BUILD)))
+                .thenReturn(Optional.of("ACME"));
+        final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"template\": "
+                                 + "\"Event Data (Text)\"}";
+
+        final Map<String, Object> made = PipelineWorld.json(call(arguments,
+                BuildToolCalls.user(Map.of()).context()));
+
+        assertThat((List<?>) made.get("filled_from_build")).anySatisfy(filled -> assertThat(filled).asString()
+                .startsWith("schemaFilter.schemaGroup = ACME"));
+        assertThat(PipelineDocs.addedProperties(pipelines.pipelineNamed("Acme-V1-Events")))
+                .contains(new PipelineProperty("schemaFilter", "schemaGroup", new PipelinePropertyValue("ACME")));
+    }
+
+    @Test
+    void aChosenDocumentStroomCantTellApartIsRefusedBeforeThePipelineIsMade() {
+        textTemplate();
+        pipelines.textConverter("tc", "Acme-Splitter");
+        pipelines.xslt("x1", "Acme-Events", Map.of());
+        Mockito.when(pipelines.eventVersions.schemaGroupFor(Mockito.any(), Mockito.eq(BUILD)))
+                .thenThrow(new ToolRefusal("shares its schema group"));
+        final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"template\": "
+                                 + "\"Event Data (Text)\"}";
+
+        assertThat(call(arguments, BuildToolCalls.user(Map.of()).context()).text())
+                .contains("shares its schema group");
+        assertThat(pipelines.pipelineNamed("Acme-V1-Events")).isNull();
     }
 
     private void textTemplate() {

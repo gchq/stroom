@@ -266,7 +266,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                                    final List<Map<String, Object>> fields) {
         final EventSchema schema;
         try {
-            schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+            schema = eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No event-logging schema to check the paths against: {}",
                     e.getMessage()), e);
@@ -279,7 +279,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     // build (else the newest held); null when the schema is unreadable (the events are still checked for twins).
     private Function<String, String> detailCheck(final ToolCallContext context, final String build) {
         try {
-            final EventSchema schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+            final EventSchema schema = eventVersions.eventSchema(context, build,
+                    eventVersions.chosenOrLatest(context, build));
             return detail -> SourceNotes.detailProblem(schema, detail);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message(

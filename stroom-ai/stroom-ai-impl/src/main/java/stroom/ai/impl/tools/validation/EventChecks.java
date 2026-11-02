@@ -64,6 +64,22 @@ public class EventChecks {
     /// (the first [HeldSchemas#MAX_ERRORS], each `line`, `path` and `message`).
     /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
     public Map<String, Object> validateEvents(final String eventsXml, final String schemaVersion) {
+        return validateEvents(eventsXml, schemaVersion, Map.of());
+    }
+
+    /// As [#validateEvents(String, String)], against the document the user chose where a schema's system id is
+    /// held by more than one.
+    ///
+    /// @param eventsXml     An `<Events>` document, e.g. step output.
+    /// @param schemaVersion The event-logging version to validate against, or null (see
+    ///                      [#validateEvents(String, String)]).
+    /// @param chosenDocs    The UUID of the document chosen, by system id; a system id not in it is validated
+    ///                      against the first of its documents.
+    /// @return As [#validateEvents(String, String)].
+    /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
+    public Map<String, Object> validateEvents(final String eventsXml,
+                                              final String schemaVersion,
+                                              final Map<String, String> chosenDocs) {
         final Element root = XsltChecks.parse(eventsXml, "Events XML");
         final String namespace = root.getNamespaceURI();
         final String name = root.getLocalName();
@@ -86,7 +102,12 @@ public class EventChecks {
         final String systemId = systemId(eventsXml, root, schemaVersion);
         final List<SchemaError> errors;
         try {
-            errors = heldSchemas.validate(systemId, eventsXml);
+            final String uuid = systemId == null
+                    ? null
+                    : chosenDocs.get(systemId);
+            errors = uuid == null
+                    ? heldSchemas.validate(systemId, eventsXml)
+                    : heldSchemas.validate(systemId, uuid, eventsXml);
         } catch (final NotWellFormedException e) {
             throw new ToolRefusal("Events XML is not well-formed XML: " + e.getMessage());
         }

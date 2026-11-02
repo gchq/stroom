@@ -40,6 +40,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 
 /// check_events, the tool: the schema and quality checks together, the events of streams read by the tool, and
@@ -66,7 +67,7 @@ class TestCheckEventsTool {
     private final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
             new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
     private final CheckEventsTool tool = new CheckEventsTool(eventChecks, eventStreams, streamReader,
-            world.documentAccess, world.records(), plan);
+            world.documentAccess, world.records(), plan, Mockito.mock(EventVersions.class));
 
     @Test
     void itTakesARunSlotAsTheOtherToolsThatReadStreamsDo() {
@@ -118,7 +119,8 @@ class TestCheckEventsTool {
         read.put(42L, Map.of("checked", 3, "records", 3));
         Mockito.when(eventStreams.read(List.of(42L), CheckEventsTool.MAX_RECORDS))
                 .thenReturn(new EventStreams.Read(EVENT, read));
-        Mockito.when(eventChecks.validateEvents(anyString(), any())).thenReturn(schemaResult(false, SYSTEM_ID, 1));
+        Mockito.when(eventChecks.validateEvents(anyString(), any(), anyMap()))
+                .thenReturn(schemaResult(false, SYSTEM_ID, 1));
 
         final Map<String, Object> result = call(Map.of("stream_ids", List.of(42)));
 
@@ -175,7 +177,7 @@ class TestCheckEventsTool {
 
     @Test
     void eventsThatCantBeCheckedAreRefusedSayingWhy() {
-        Mockito.when(eventChecks.validateEvents(anyString(), any()))
+        Mockito.when(eventChecks.validateEvents(anyString(), any(), anyMap()))
                 .thenThrow(new ToolRefusal("Events XML is not well-formed XML: oops"));
 
         final ToolResult result = tool.execute(BuildToolCalls.call(CheckEventsTool.NAME,
@@ -195,7 +197,8 @@ class TestCheckEventsTool {
     }
 
     private void valid(final boolean valid, final String systemId) {
-        Mockito.when(eventChecks.validateEvents(anyString(), any())).thenReturn(schemaResult(valid, systemId, 0));
+        Mockito.when(eventChecks.validateEvents(anyString(), any(), anyMap()))
+                .thenReturn(schemaResult(valid, systemId, 0));
     }
 
     private static Map<String, Object> schemaResult(final boolean valid, final String systemId, final int errors) {

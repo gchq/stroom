@@ -71,20 +71,25 @@ class CheckXsltTool extends AbstractBuiltInTool {
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
     private final XsltCompileCheck compileCheck;
+    private final Provider<EventVersions> eventVersionsProvider;
 
-    /// @param heldSchemas       The XML schemas this Stroom holds.
-    /// @param docFinderProvider Finds the XSLTs an XSLT imports, by name.
-    /// @param documentAccess    Says which of them the user may view.
-    /// @param compileCheck      Compiles an XSLT as Stroom compiles it.
+    /// @param heldSchemas           The XML schemas this Stroom holds.
+    /// @param docFinderProvider     Finds the XSLTs an XSLT imports, by name.
+    /// @param documentAccess        Says which of them the user may view.
+    /// @param compileCheck          Compiles an XSLT as Stroom compiles it.
+    /// @param eventVersionsProvider The XML schema document chosen for the build, where a version is held in more
+    ///                              than one.
     @Inject
     CheckXsltTool(final HeldSchemas heldSchemas,
                   final Provider<DocFinder> docFinderProvider,
                   final DocumentAccess documentAccess,
-                  final XsltCompileCheck compileCheck) {
+                  final XsltCompileCheck compileCheck,
+                  final Provider<EventVersions> eventVersionsProvider) {
         this.heldSchemas = heldSchemas;
         this.docFinderProvider = docFinderProvider;
         this.documentAccess = documentAccess;
         this.compileCheck = compileCheck;
+        this.eventVersionsProvider = eventVersionsProvider;
     }
 
     @Override
@@ -140,7 +145,8 @@ class CheckXsltTool extends AbstractBuiltInTool {
         if (NullSafe.isBlankString(xslt)) {
             return JsonResults.refused("Give xslt: the full XSLT document text.");
         }
-        return JsonResults.of(check(xslt, stringArg(call, SCHEMA_VERSION_ARG), rawArg(call, INPUT_NAMESPACE_ARG)));
+        return JsonResults.of(check(xslt, stringArg(call, SCHEMA_VERSION_ARG), rawArg(call, INPUT_NAMESPACE_ARG),
+                eventVersionsProvider.get().chosenDocs(context, null)));
     }
 
     /// What check_xslt warns of a DNS lookup: it is not refused, but saving or stepping the XSLT asks the user to
@@ -159,6 +165,21 @@ class CheckXsltTool extends AbstractBuiltInTool {
     /// @param inputNamespace The namespace of its input when known ("" for none), or null.
     /// @return `ok`, `errors` and `warnings`, and for a well-formed XSLT `imports` and `stroom_functions`.
     Map<String, Object> check(final String text, final String schemaVersion, final String inputNamespace) {
+        return check(text, schemaVersion, inputNamespace, Map.of());
+    }
+
+    /// As [#check(String, String, String)], reading the event-logging schema from the XML schema document the
+    /// user chose where this Stroom holds the version in more than one.
+    ///
+    /// @param text           An XSLT's text, as sent.
+    /// @param schemaVersion  The event-logging version its output must follow, or null.
+    /// @param inputNamespace The namespace of its input when known ("" for none), or null.
+    /// @param chosenDocs     The UUID of the document chosen, by system id ([EventVersions#chosenDocs]).
+    /// @return As [#check(String, String, String)] gives it.
+    Map<String, Object> check(final String text,
+                              final String schemaVersion,
+                              final String inputNamespace,
+                              final Map<String, String> chosenDocs) {
         final XsltChecks.Unescaped unescaped = XsltChecks.unescaped(text);
         final String xslt = unescaped.text();
         final Element root;
@@ -192,7 +213,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
             }
         }
         warnings.addAll(XsltChecks.unguardedJson(root));
-        eventElementProblems(root, xslt, schemaVersion, errors, warnings);
+        eventElementProblems(root, xslt, schemaVersion, chosenDocs, errors, warnings);
         final List<String> imports = imports(root);
         final List<String> missing = imports.stream()
                 .filter(href -> !isXsltDocument(href))
@@ -219,6 +240,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
     private void eventElementProblems(final Element root,
                                       final String xslt,
                                       final String schemaVersion,
+                                      final Map<String, String> chosenDocs,
                                       final List<String> errors,
                                       final List<String> warnings) {
         final List<Element> written = XmlTrees.named(root, XsltChecks.EVT, "*");
@@ -235,7 +257,10 @@ class CheckXsltTool extends AbstractBuiltInTool {
                     : events.map(element -> XmlTrees.attribute(element, "Version"))
                             .filter(NullSafe::isNonEmptyString)
                             .orElseGet(() -> heldSchemas.translationVersion(null, xslt));
-            schema = heldSchemas.eventSchema(version);
+            final String chosen = chosenDocs.get(HeldSchemas.eventLoggingSystemId(version));
+            schema = chosen == null
+                    ? heldSchemas.eventSchema(version)
+                    : heldSchemas.eventSchema(version, chosen);
         } catch (final ToolRefusal e) {
             warnings.add("Event-logging element names not checked: " + e.getMessage());
             return;

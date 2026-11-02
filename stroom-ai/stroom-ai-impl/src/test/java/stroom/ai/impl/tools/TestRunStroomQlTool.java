@@ -54,7 +54,8 @@ class TestRunStroomQlTool {
 
         assertThat(RunStroomQlTool.misleading(queryService, "q", ELASTIC)).contains(MisleadingSearches.REFUSAL
                 + "tags IS_NULL: Stroom matches every document with IS_NULL on Elasticsearch; check EQUALS '*' (any "
-                + "value) with the expected count instead. In StroomQL, EQUALS is = and NOT_EQUALS is !=.");
+                + "document holding the field, an empty string included) with the expected count instead. In "
+                + "StroomQL, EQUALS is = and NOT_EQUALS is !=.");
     }
 
     @Test

@@ -158,7 +158,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                + "if the user has chosen one of those this Stroom "
                                                                + "holds. Left out, the user "
                                                                + "is asked which of the versions this Stroom holds "
-                                                               + "(the newest recommended).")
+                                                               + "(the newest recommended). Where it holds the "
+                                                               + "version in more than one XML schema document, "
+                                                               + "the UUID of the one the user chose.")
                         .build())
                 .build();
     }
@@ -198,7 +200,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> sourceNotes = build == null
                 ? null
                 : builds.notesInBuild(build);
-        final Map<String, Object> result = drafted(samples, call, sourceNotes, detailCheck(sourceNotes, version));
+        final Map<String, Object> result = drafted(samples, call, sourceNotes,
+                detailCheck(context, build, sourceNotes, version));
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = MappingCompaction.compactPairs(
                 MappingCompaction.compactRules((Map<String, Object>) result.get("mapping")));
         result.put("mapping", mapping);
@@ -216,7 +219,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             notes.addAll(sharedNotes);
             result.put("notes", notes);
         }
-        result.put("schema_check", schemaCheck(mapping, version));
+        result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
         settled.ifPresent(text -> result.put("schema_version_settled", text));
@@ -266,12 +269,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     // Why a catalogued event can't be its action element; the notes are followed unchecked rather than not at all
     // when the schema can't be read.
-    private Function<String, String> detailCheck(final Map<String, Object> sourceNotes, final String version) {
+    private Function<String, String> detailCheck(final ToolCallContext context,
+                                                 final String build,
+                                                 final Map<String, Object> sourceNotes,
+                                                 final String version) {
         if (sourceNotes == null || !(sourceNotes.get("events") instanceof final List<?> events) || events.isEmpty()) {
             return null;
         }
         try {
-            final EventSchema schema = eventVersions.eventSchema(version);
+            final EventSchema schema = eventVersions.eventSchema(context, build, version);
             return detail -> SourceNotes.detailProblem(schema, detail);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("The catalogue's event details not checked: {}", e.getMessage()));
@@ -288,11 +294,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     }
 
     // Each problem's first sentence: build_translation_xslt gives them whole, and the draft's notes say the rest.
-    private Map<String, Object> schemaCheck(final Map<String, Object> mapping, final String version) {
+    private Map<String, Object> schemaCheck(final ToolCallContext context,
+                                            final String build,
+                                            final Map<String, Object> mapping,
+                                            final String version) {
         final Map<String, Object> check = new LinkedHashMap<>();
         try {
             final XsltGenerator.Generated checked = XsltGenerator.generate(TranslationMapping.parse(mapping),
-                    eventVersions.eventSchema(version), version);
+                    eventVersions.eventSchema(context, build, version), version);
             check.put("ok", checked.ok());
             check.put("problems", MappingCompaction.grouped(checked.problems()).stream()
                     .map(DraftTranslationMappingTool::firstSentence)

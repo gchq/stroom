@@ -37,11 +37,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/// Searches through Stroom whose answer would mislead: on Elasticsearch, Stroom (7.13) finds nothing for
-/// STARTS_WITH and CONTAINS, nor for a wildcard on an ip field, and matches every document for IS_NULL and
-/// IS_NOT_NULL, without an error; on Lucene it finds nothing for STARTS_WITH and ENDS_WITH, for CONTAINS on a
-/// keyword field, nor for a range on a text field; IN takes values separated by commas. A field no search finds
-/// (not indexed) is refused too.
+/// Searches through Stroom whose answer would mislead: on Elasticsearch, Stroom finds nothing for STARTS_WITH and
+/// CONTAINS on a string field (7.13; later versions refuse them), nor for a wildcard on an ip field, and matches
+/// every document for IS_NULL and IS_NOT_NULL, without an error; on Lucene it finds nothing for STARTS_WITH and
+/// ENDS_WITH, for CONTAINS on a keyword field, nor for a range on a text field; IN takes values separated by
+/// commas. A field no search finds (not indexed) is refused too.
 ///
 /// search_events refuses such a search of an index, and run_stroomql such a StroomQL query, each saying what to
 /// use instead.
@@ -53,11 +53,19 @@ public final class MisleadingSearches {
     public static final String LUCENE = "lucene";
     /// What a refusal starts with.
     public static final String REFUSAL = "These searches would give a misleading answer: ";
+    /// What EQUALS '*' finds on Elasticsearch: Stroom searches it as `exists`.
+    public static final String EQUALS_ANY = "any document holding the field, an empty string included";
+    /// A regular expression that matches a non-empty value.
+    public static final String NON_EMPTY = ".+";
 
     /// The range conditions.
     static final Set<Condition> RANGES = EnumSet.of(Condition.BETWEEN, Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO, Condition.LESS_THAN, Condition.LESS_THAN_OR_EQUAL_TO);
     private static final Set<String> IP_TYPES = Set.of("ip", "ipv4_address");
+    // The types of field that hold strings, which may be empty: Elasticsearch's own (as an Elastic Index doc's
+    // native type) and Stroom's (TEXT, KEYWORD).
+    private static final Set<String> STRING_TYPES = Set.of("keyword", "constant_keyword", "wildcard", "text",
+            "match_only_text");
 
     private MisleadingSearches() {
         // Static only.
@@ -147,9 +155,9 @@ public final class MisleadingSearches {
             final String pattern = condition == Condition.STARTS_WITH
                     ? bare + "*"
                     : "*" + bare + "*";
-            problems.add(field + " " + condition.name() + " '" + value + "': Stroom finds nothing with "
-                         + condition.name() + " on Elasticsearch; use EQUALS '" + pattern + "' (a wildcard) or "
-                         + "MATCHES_REGEX");
+            problems.add(field + " " + condition.name() + " '" + value + "': Stroom can't search with "
+                         + condition.name() + " on Elasticsearch (it finds nothing, or refuses it); use EQUALS '"
+                         + pattern + "' (a wildcard) or MATCHES_REGEX");
         }
         // Seen on the local Stroom (eval case 22, Haiku): each of these found 0 where EQUALS with a wildcard found
         // them all, and the agent spent twenty turns on checks that could never pass.
@@ -173,11 +181,12 @@ public final class MisleadingSearches {
         }
         if (elastic && condition == Condition.IS_NOT_NULL) {
             problems.add(field + " IS_NOT_NULL: Stroom matches every document with IS_NOT_NULL on Elasticsearch; "
-                         + "use EQUALS '*' (any value) instead");
+                         + "use MATCHES_REGEX '" + NON_EMPTY + "' (a non-empty value) on a string field, or EQUALS "
+                         + "'*' on any other (" + EQUALS_ANY + ")");
         }
         if (elastic && condition == Condition.IS_NULL) {
             problems.add(field + " IS_NULL: Stroom matches every document with IS_NULL on Elasticsearch; check "
-                         + "EQUALS '*' (any value) with the expected count instead");
+                         + "EQUALS '*' (" + EQUALS_ANY + ") with the expected count instead");
         }
         return problems;
     }
@@ -208,16 +217,32 @@ public final class MisleadingSearches {
         return String.join(".", octets) + "/" + (8 * known.size());
     }
 
-    /// What IS_NOT_NULL and IS_NULL mean on Elasticsearch, where Stroom matches every document with either: any
-    /// value (EQUALS '*') and no value (NOT_EQUALS '*').
+    /// What IS_NOT_NULL and IS_NULL mean on Elasticsearch, where Stroom matches every document with either. Stroom
+    /// searches EQUALS '*' as Elasticsearch's `exists`, which an empty string meets, and an indexed event can hold
+    /// one in a string field. So IS_NOT_NULL is a non-empty value (MATCHES_REGEX '.+') on a string field, and any
+    /// value (EQUALS '*') on another, which can't be empty; IS_NULL is no value (NOT_EQUALS '*'), an empty string
+    /// counting as one (the conditions can't say "none or empty"). Seen in testing: told EQUALS '*' was any value,
+    /// the agent saw it would pass on empty strings, and gave up checking fields that were populated.
     ///
     /// @param condition A condition.
-    /// @return The condition it is searched as on Elasticsearch, or empty if it is searched as it is.
-    public static Optional<Condition> elasticsearchNullAs(final Condition condition) {
+    /// @param type      The field's type: Elasticsearch's own (keyword, text, long...) or Stroom's (TEXT, LONG...),
+    ///                  or null if not known.
+    /// @return What it is searched as on Elasticsearch, or empty if it is searched as it is.
+    public static Optional<NullSearch> elasticsearchNullAs(final Condition condition, final String type) {
+        final String kind = NullSafe.isBlankString(type)
+                ? null
+                : type.strip().toLowerCase(Locale.ROOT);
         if (condition == Condition.IS_NOT_NULL) {
-            return Optional.of(Condition.EQUALS);
+            if (kind == null) {
+                return Optional.of(new NullSearch(Condition.EQUALS, "*", EQUALS_ANY));
+            }
+            return Optional.of(STRING_TYPES.contains(kind)
+                    ? new NullSearch(Condition.MATCHES_REGEX, NON_EMPTY, "a non-empty value")
+                    : new NullSearch(Condition.EQUALS, "*", "any value"));
         } else if (condition == Condition.IS_NULL) {
-            return Optional.of(Condition.NOT_EQUALS);
+            return Optional.of(new NullSearch(Condition.NOT_EQUALS, "*", kind == null || STRING_TYPES.contains(kind)
+                    ? "no value; an empty string counts as a value"
+                    : "no value"));
         }
         return Optional.empty();
     }
@@ -316,6 +341,15 @@ public final class MisleadingSearches {
 
     // --------------------------------------------------------------------------------
 
+
+    /// What IS_NOT_NULL or IS_NULL is searched as on Elasticsearch.
+    ///
+    /// @param condition The condition searched.
+    /// @param value     Its value.
+    /// @param said      What it finds, for the agent.
+    public record NullSearch(Condition condition, String value, String said) {
+
+    }
 
     /// One search, as a person would make it on a dashboard.
     ///

@@ -693,7 +693,10 @@ sequenceDiagram
 * **Replies that only announce more work** (`UnfinishedReplies`) aren't taken as the answer: they are shown as
   interim words and the model is told to make the call, at most twice in a row (seen in testing: the run ended on
   "I'll now fix the field"). A question following one that ended so, or at the step limit, is given that question's
-  steps in full (2026-10-28).
+  steps in full (2026-10-28). "In a row" means with no tool call between: a step that calls a tool starts the count
+  again, as it does for replies cut off at the length limit. The count had run over the whole question, so a long
+  build ended on its third such reply; and an announcement with no "I" ("Now validating the Events", "Moving on to
+  the index", "Next: indexing") wasn't recognised (both seen in testing, 2026-11-02).
 * **Pausing for the user.** An approval card or a form throws `WaitingForUserException`: the thread and run slot are
   given up, and the run waits as WAITING_FOR_USER for as long as the user takes. When answered, `carryOn` starts a
   new run from the stored steps, and the same call is made again with the answer. **So a tool that asks must be safe
@@ -1328,6 +1331,14 @@ while any template for the stage exists, and are confirmed in a form (2026-10-27
   * Element ids match Stroom's schema (`[a-z][a-zA-Z0-9]*`; seen in testing: `blank_line` was refused, so no record
     was read).
   * Lines ended by a carriage return alone are refused. `save_text_converter` refuses an added `ignoreErrors`.
+  * A Data Splitter is checked as Stroom's DSParser checks it (`DataSplitterSchema`): the `data-splitter:3`
+    namespace and schema location, valid against the schema Stroom holds for the namespace (found as the pipeline
+    finds it, not among those the user may view). Stroom's parser fails every stream without that schema, so with
+    none held no Data Splitter is saved. `save_text_converter` also refuses one with no `<data>` element or one
+    Stroom's parser can't read, and runs it through Stroom's parser on the build's newest raw sample streams before
+    saving (seen in testing: a converter written by hand for a space-delimited feed named its fields with `<entry>`
+    elements Stroom ignores, saved, and its records had no fields). `build_data_splitter`'s `stroom_check` makes
+    the same schema check, and its `not_saved` replies say what to try next.
   * The CSV field limit is removed.
   * Quoted line breaks are noted by the survey (`quoted_newlines`); the generated splitter splits records on line
     breaks unless told otherwise. The quote-container default is left as it is: a stray quote would merge records
@@ -1538,7 +1549,10 @@ its time field, and each field's name, type and source in the Event.
   agent adds. Each stream's hits are traced back by stepping the indexing pipeline at their EventIds.
 * Searches that would give a misleading answer on Elasticsearch through Stroom are refused (`MisleadingSearches`):
   STARTS_WITH and CONTAINS, a wildcard on an ip field, IN with spaces instead of commas, fields not indexed or not
-  listed by the Elastic Index doc. IS_NULL and IS_NOT_NULL are rewritten as NOT_EQUALS `*` and EQUALS `*`.
+  listed by the Elastic Index doc. IS_NULL is rewritten as NOT_EQUALS `*`. IS_NOT_NULL is rewritten as
+  MATCHES_REGEX `.+` on a string field and EQUALS `*` on another: Stroom searches EQUALS `*` as Elasticsearch's
+  `exists`, which an empty string meets (seen in testing: told EQUALS `*` was any value, the agent saw it would pass
+  on empty strings and dropped checks of fields that were populated). `search_events` does the same.
 * Index fields are listed again a few times before a field counts as missing (seen in production: a minute later
   Stroom listed it).
 * With `pipeline_uuid`, it checks every field the pipeline writes is in the index. A pass is recorded by the code's
@@ -2210,7 +2224,11 @@ behaviour; the settled ones are listed here with the section that records them.
 | Date | Decision | Section |
 | --- | --- | --- |
 | 2026-11-02 | The environment's error triage rules stay in config (`stroom.ai.errorTriage.rules`), not AGENTS: only administrators change them, and a rule marking errors benign could otherwise hide them from the build gates. Each rule is a structured value (`ErrorTriageRuleConfig`): a YAML list of mappings in `config.yml`, a JSON array in the Properties screen, with the bundled rules' fields including `cause` (asked for by the user). | Error triage |
+| 2026-11-02 | The replies a run carries on from (cut off, or only saying what comes next) are counted in a row, starting again at each step that calls a tool; announcements with no "I" are recognised. `chatWithTools` split into a method per part of a step, over a per-run `Run`. | Agent loop |
 | 2026-11-02 | The pipeline stage defaults are the standard template-pipelines content pack's only (indexing: `System/Template Pipelines`, `Indexing`; discovery: none); an environment's own templates (e.g. Elasticsearch) are configured. | Pipeline stages |
+| 2026-11-02 | On Elasticsearch, IS_NOT_NULL on a string field is searched as MATCHES_REGEX `.+`, not EQUALS `*`: Stroom searches EQUALS `*` as `exists`, which an empty string meets, so it couldn't show a field is populated. | Indexing |
+| 2026-11-02 | An event-logging version held in more than one XML schema document (seen: imported twice, with different UUIDs) is a question: the user picks the document (form, or `schema_version=` its UUID), kept with the build's version and with a translation's kept mapping (`schema_uuid`, so regenerating, rebuilding and documenting it read that document); the checks read it, `evaluate_pipeline` validates with the document its pipeline's schema group names, and the translation pipeline's schema filter is given its schema group, since Stroom otherwise validates with whichever it lists first. Copies of identical content need no group; differing ones Stroom can't tell apart by group are refused until the user removes or regroups one. | Event-logging versions |
+| 2026-11-02 | A Data Splitter is checked against the `data-splitter:3` schema Stroom holds, as the DSParser checks it, in `save_text_converter` and `build_data_splitter`'s `stroom_check`; with none held none is saved (no Data Splitter can run). `save_text_converter` runs it through Stroom's parser on the build's sample streams before saving. | Builds |
 | 2026-10-31 | A CEF pipeline writing its lines as text (to a file or stream) is stage `forwarding`, backend `file`, told by its XSLTs and those they import (a CEF plan kept, or a CEF header literal, `CEF:0` or `CEF:1` and a bar), not by its writer; `write_documentation` and `evaluate_pipeline` treat it as they treat one to Kafka. | CEF output |
 | 2026-10-31 | Evaluating a pipeline has a tool of its own, `evaluate_pipeline`, the same sections every time for the pipeline's stage (events, indexing, CEF, reference, other) and the report's outline; it gathers facts, runs no follow-on checks, and saves nothing. `write_documentation` generates a Reference maps section for reference data pipelines from the same facts. | Further use cases |
 | 2026-10-31 | Promotion asks before writing a working copy over a production document changed since it was copied: who changed it and when, and how production differs from the copy; the user overwrites production (the change then only in the backup) or keeps it (the copy stays in the build). The user chose asking, with the difference explained, over refusing. | Builds |

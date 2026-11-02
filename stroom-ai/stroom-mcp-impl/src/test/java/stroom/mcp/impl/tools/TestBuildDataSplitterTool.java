@@ -48,7 +48,8 @@ class TestBuildDataSplitterTool {
 
     private final TranslationWorld world = new TranslationWorld();
     private final BuildDataSplitterTool tool = new BuildDataSplitterTool(world.sampleStreamTexts,
-            world.streamReader, world.sampleProfiling, world.docs, world.eventVersions, world.plan);
+            world.streamReader, world.sampleProfiling, world.docs, world.eventVersions, world.plan,
+            world.dataSplitterSchema);
 
     @Test
     void toolsReadTheSampleFromItsStreamsInsteadOfItsText() {
@@ -465,7 +466,7 @@ class TestBuildDataSplitterTool {
         Mockito.when(wrappers.version(any())).thenReturn(TranslationWorld.VERSION);
         final BuildDataSplitterTool environment = new BuildDataSplitterTool(world.sampleStreamTexts,
                 world.streamReader, new SampleProfiling.Profiled(wrappers), world.docs, world.eventVersions,
-                world.plan);
+                world.plan, world.dataSplitterSchema);
 
         final Map<String, Object> result = world.call(environment, Map.of("sample", TestSampleProfiling.FRAGMENTS,
                 "save_as", "ACME-WRAPPER", "build", "acme-v1"));

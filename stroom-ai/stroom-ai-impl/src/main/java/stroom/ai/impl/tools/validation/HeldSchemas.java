@@ -122,23 +122,49 @@ public class HeldSchemas {
         this.schemaPoolProvider = schemaPoolProvider;
     }
 
-    /// @return The XMLSchema documents the user may view, by system id (the first of a system id kept).
+    /// @return The XMLSchema documents the user may view, by system id (the first of a system id kept, as Stroom's
+    /// schema filter takes the first it lists; [#all()] gives them all).
     public Map<String, XmlSchemaDoc> index() {
         final Map<String, XmlSchemaDoc> index = new TreeMap<>();
+        all().forEach((systemId, docs) -> index.put(systemId, docs.getFirst()));
+        return index;
+    }
+
+    /// @return Every XMLSchema document the user may view, by system id, in the order Stroom lists them: a system
+    /// id may be held by more than one (seen: event-logging 4.1.0 imported twice, with different UUIDs).
+    public Map<String, List<XmlSchemaDoc>> all() {
+        final Map<String, List<XmlSchemaDoc>> all = new TreeMap<>();
         final List<DocRef> refs;
         try {
             refs = NullSafe.list(xmlSchemaStoreProvider.get().list());
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to list the XML schemas: {}", e.getMessage()), e);
-            return index;
+            return all;
         }
         for (final DocRef ref : refs) {
             // Deleted since it was listed, or not this user's to read: not one of them.
             documentAccess.read(ref, XmlSchemaDoc.class)
                     .filter(doc -> NullSafe.isNonBlankString(doc.getSystemId()))
-                    .ifPresent(doc -> index.putIfAbsent(doc.getSystemId().strip(), doc));
+                    .ifPresent(doc -> all.computeIfAbsent(doc.getSystemId().strip(), k -> new ArrayList<>())
+                            .add(doc));
         }
-        return index;
+        return all;
+    }
+
+    /// @param doc An XMLSchema document.
+    /// @return Its path in the Explorer tree (its folder's, then its name), to tell documents of one system id apart
+    /// for the user.
+    public String path(final XmlSchemaDoc doc) {
+        final String folder = NullSafe.nonBlankStringElse(documentAccess.path(doc.asDocRef()), "/");
+        return (folder.endsWith("/")
+                ? folder
+                : folder + "/") + doc.getName();
+    }
+
+    /// @param systemId A schema's system id.
+    /// @return Every XMLSchema document of that system id the user may view; empty if none.
+    public List<XmlSchemaDoc> documents(final String systemId) {
+        return List.copyOf(all().getOrDefault(systemId, List.of()));
     }
 
     /// @return The system ids of the schemas the user may view, sorted.
@@ -251,11 +277,36 @@ public class HeldSchemas {
                 : String.join(", ", versions)) + " (all in namespace event-logging:3, 4.x as much as 3.x)");
     }
 
+    /// One of the XMLSchema documents of a system id, by UUID, where a system id is held by more than one.
+    ///
+    /// @param systemId A schema's system id.
+    /// @param uuid     The UUID of the document chosen among those of the system id, or null for the first.
+    /// @return The XMLSchema document.
+    /// @throws ToolRefusal as [#document(String)], or if no document of that system id has that UUID.
+    public XmlSchemaDoc document(final String systemId, final String uuid) {
+        if (uuid == null) {
+            return document(systemId);
+        }
+        return documents(systemId).stream()
+                .filter(doc -> uuid.equals(doc.getUuid()))
+                .findFirst()
+                .orElseThrow(() -> new ToolRefusal("This Stroom holds no XML schema '" + systemId + "' with UUID "
+                                                   + uuid + " (that the user may view)"));
+    }
+
     /// @param systemId A schema's system id.
     /// @return The XSD text itself.
     /// @throws ToolRefusal as [#document(String)].
     public String source(final String systemId) {
-        return NullSafe.string(document(systemId).getData());
+        return source(systemId, null);
+    }
+
+    /// @param systemId A schema's system id.
+    /// @param uuid     The UUID of the document chosen among those of the system id, or null for the first.
+    /// @return The XSD text itself.
+    /// @throws ToolRefusal as [#document(String, String)].
+    public String source(final String systemId, final String uuid) {
+        return NullSafe.string(document(systemId, uuid).getData());
     }
 
     /// The model of an event-logging version's schema.
@@ -264,7 +315,18 @@ public class HeldSchemas {
     /// @return The model of what its schema allows.
     /// @throws ToolRefusal if this Stroom holds no such schema, or it can't be read as one.
     public EventSchema eventSchema(final String version) {
-        final String xsd = source(eventLoggingSystemId(version));
+        return eventSchema(version, null);
+    }
+
+    /// The model of an event-logging version's schema, read from the document chosen where the version is held by
+    /// more than one.
+    ///
+    /// @param version An event-logging version, e.g. `4.1.0`.
+    /// @param uuid    The UUID of the document chosen, or null for the first.
+    /// @return The model of what its schema allows.
+    /// @throws ToolRefusal if this Stroom holds no such schema, or it can't be read as one.
+    public EventSchema eventSchema(final String version, final String uuid) {
+        final String xsd = source(eventLoggingSystemId(version), uuid);
         try {
             final EventSchema known = eventSchemas.get(xsd);
             if (known != null) {
@@ -295,7 +357,19 @@ public class HeldSchemas {
     /// @throws ToolRefusal             if Stroom holds no such schema, or it doesn't compile.
     /// @throws XmlTrees.NotWellFormedException if the document is not well-formed.
     public List<SchemaErrors.SchemaError> validate(final String systemId, final String xml) {
-        final String xsd = source(systemId);
+        return validate(systemId, null, xml);
+    }
+
+    /// Validates XML against one of the documents of a system id, where it is held by more than one.
+    ///
+    /// @param systemId The schema's system id.
+    /// @param uuid     The UUID of the document chosen, or null for the first.
+    /// @param xml      The document's text.
+    /// @return Its errors; empty if it is valid.
+    /// @throws ToolRefusal             if Stroom holds no such schema, or it doesn't compile.
+    /// @throws XmlTrees.NotWellFormedException if the document is not well-formed.
+    public List<SchemaErrors.SchemaError> validate(final String systemId, final String uuid, final String xml) {
+        final String xsd = source(systemId, uuid);
         final SchemaPool pool = schemaPoolProvider.get();
         final SchemaKey key = new SchemaKey(XMLConstants.W3C_XML_SCHEMA_NS_URI, xsd, new FindXMLSchemaCriteria());
         final PoolItem<StoredSchema> item = pool.borrowObject(key, true);

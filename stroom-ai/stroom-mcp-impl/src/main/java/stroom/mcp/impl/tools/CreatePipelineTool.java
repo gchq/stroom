@@ -100,6 +100,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final BuildRecords records;
     private final PipelineTemplates templates;
+    private final EventVersions eventVersions;
 
     @Inject
     CreatePipelineTool(final PipelineWrites writes,
@@ -109,7 +110,8 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                        final Consent consent,
                        final BuildPlan plan,
                        final BuildRecords records,
-                       final PipelineTemplates templates) {
+                       final PipelineTemplates templates,
+                       final EventVersions eventVersions) {
         this.writes = writes;
         this.pipelineDocs = pipelineDocs;
         this.pipelineShapes = pipelineShapes;
@@ -118,6 +120,7 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.records = records;
         this.templates = templates;
+        this.eventVersions = eventVersions;
     }
 
     @Override
@@ -338,6 +341,13 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             kept.forEach(property -> filled.add(property.dotted() + " = " + ToolText.str(property.value()) + " (as "
                                                 + previous.getName() + " has it)"));
         }
+        if (WriteGuard.STAGE_ROLES.get("translation").equals(pipelineShapes.role(templateUuid))) {
+            schemaGroupProperties(context, build, merged.elements()).forEach(property -> {
+                properties.add(property);
+                filled.add(property.dotted() + " = " + property.value() + " (the schema group of the event-logging "
+                           + "XML schema document the user chose)");
+            });
+        }
         final Optional<PropertyValue> array = writes.jsonArrayParser(merged.elements(), properties,
                 writes.sampleIsArray(build));
         array.ifPresent(property -> {
@@ -444,6 +454,28 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             result.put("reference_data", references.stream().map(MergedPipeline::describe).toList());
         }
         return plan.withNext(context, build, result);
+    }
+
+    /// The schema group each schema filter of a translation pipeline needs, so that Stroom validates with the
+    /// event-logging XML schema document the user chose where it holds the version in more than one: its schema
+    /// filter otherwise takes whichever it lists first. Set by the tool, never by the agent (keepValidation).
+    ///
+    /// @param context  The call's context.
+    /// @param build    The build.
+    /// @param elements The pipeline's elements, id to type.
+    /// @return `schemaGroup` for each SchemaFilter; empty when there is nothing to tell apart.
+    /// @throws ToolRefusal if the documents can't be told apart by schema group ([EventVersions#schemaGroupFor]).
+    List<PropertyValue> schemaGroupProperties(final ToolCallContext context,
+                                              final String build,
+                                              final Map<String, String> elements) {
+        final Optional<String> group = eventVersions.schemaGroupFor(context, build);
+        if (group.isEmpty()) {
+            return List.of();
+        }
+        return elements.entrySet().stream()
+                .filter(element -> PipelineWrites.VALIDATION.contains(element.getValue()))
+                .map(element -> PropertyValue.plain(element.getKey(), "schemaGroup", group.get()))
+                .toList();
     }
 
     /// A pipeline of its own sending Events to Kafka, where the environment has no template for one.
@@ -587,7 +619,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         properties.add(PropertyValue.plain("writeRecordCountFilter", "countRead", false));
         properties.add(PropertyValue.plain("splitFilter", "splitDepth", 1L));
         properties.add(PropertyValue.plain("splitFilter", "splitCount", 100L));
-        properties.add(PropertyValue.plain("schemaFilter", "schemaGroup", "EVENTS"));
+        // The schema group of the event-logging document the user chose, where there are several of the version.
+        properties.add(PropertyValue.plain("schemaFilter", "schemaGroup", eventVersions.schemaGroupFor(context, build)
+                .orElse("EVENTS")));
         properties.add(PropertyValue.plain("streamAppender", "streamType", "Events"));
         given.stream()
                 .filter(property -> !fixed.contains(property.dotted()))
