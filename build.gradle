@@ -541,6 +541,8 @@ subprojects {
         configureEach {
             include("**/stroom/**/*.java")
             exclude("**/db/jooq/**/*.java")
+            // The worker's default heap (512 MB) runs out on the larger modules, e.g. stroom-ai-impl.
+            maxHeapSize = "1g"
         }
     }
 }

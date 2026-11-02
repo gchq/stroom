@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.embeddedquery;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.QueryTableContext;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
@@ -63,6 +65,7 @@ import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
@@ -504,6 +507,8 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.setQueryModel(queryModel);
             currentVisPresenter.setTaskMonitorFactory(this);
             currentVisPresenter.setVisSelectionModel(visSelectionModel);
+            // Saved under the pane's name.
+            currentVisPresenter.setFileName(() -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
 
             if (currentTablePresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
@@ -623,6 +628,13 @@ public class EmbeddedQueryPresenter
                     .build());
         }
 
+        if (getQuerySettings().getAutomate() == null) {
+            setSettings(getQuerySettings()
+                    .copy()
+                    .automate(Automate.builder().build())
+                    .build());
+        }
+
         // Fix legacy selection filters.
         setSettings(getQuerySettings()
                 .copy()
@@ -650,17 +662,80 @@ public class EmbeddedQueryPresenter
         } else if (!Objects.equals(settings.getEmbeddedQueryDoc().asDocRef(), loadedQueryRef)) {
             loadedQueryRef = settings.getEmbeddedQueryDoc().asDocRef();
             updateQueryDoc(settings.getEmbeddedQueryDoc(), settings);
+        } else if (initialised && !Objects.equals(settings.getEmbeddedQueryDoc().getQuery(), query)) {
+            // Its text was changed in its settings (e.g. by the AI chat, or undone): use it, and run it again.
+            query = settings.getEmbeddedQueryDoc().getQuery();
+            run(true, false);
         }
+    }
+
+    /// @return The StroomQL it runs, as it stands, or null if it hasn't been loaded.
+    public String getQueryText() {
+        return query;
+    }
+
+    /// @return The Query it shows by reference, or null if its StroomQL is embedded in the dashboard.
+    public DocRef getReferencedQuery() {
+        final EmbeddedQueryComponentSettings settings = getQuerySettings();
+        return settings != null && settings.reference()
+                ? settings.getQueryRef()
+                : null;
+    }
+
+    /// Changes its embedded StroomQL, unsaved, and runs it.
+    ///
+    /// @param text The new StroomQL.
+    /// @return Why it couldn't be changed (it shows a Query by reference), or null if it was.
+    public String setQueryText(final String text) {
+        final EmbeddedQueryComponentSettings settings = getQuerySettings();
+        if (settings == null || settings.reference() || settings.getEmbeddedQueryDoc() == null) {
+            return "its StroomQL is a Query it shows by reference, so it is changed in that Query.";
+        }
+        applySettings(settings.copy()
+                .embeddedQueryDoc(settings.getEmbeddedQueryDoc().copy().query(text).build())
+                .build());
+        return null;
+    }
+
+    /// @return Its results table for the AI chat, as a StroomQL query's: the search request behind the rows shown
+    /// (if it has been run), and the request a run would use now, from its StroomQL, the dashboard's parameters and
+    /// time range. Null if its StroomQL hasn't been loaded.
+    public AiTabSearch aiTabSearch() {
+        if (NullSafe.isBlankString(query)) {
+            return null;
+        }
+        final String name = NullSafe.get(getComponentConfig(), ComponentConfig::getName);
+        final DashboardContext dashboardContext = getDashboardContext();
+        final QuerySearchRequest liveRequest = queryModel.buildSearchRequest(getId(), name,
+                        ParamUtil.replaceParameters(query, dashboardContext, true),
+                        dashboardContext.getParams(),
+                        dashboardContext.getResolvedTimeRange(),
+                        true,
+                        NullSafe.get(queryInfo, QueryInfo::getMessage),
+                        null)
+                .copy()
+                .storeHistory(false)
+                .requestedRange(OffsetRange.UNBOUNDED)
+                .build();
+        return new AiTabSearch(name,
+                getId(),
+                NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getResultsContext),
+                new QueryTableContext("Embedded query '" + name + "'", null, liveRequest),
+                NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getCurrentColumnNames),
+                NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getCurrentTotalRows),
+                queryModel.isSearching());
     }
 
     private void updateQueryDoc(final QueryDoc queryDoc,
                                 final EmbeddedQueryComponentSettings settings) {
         if (queryDoc != null) {
-            if (settings.getQueryTablePreferences() == null &&
-                queryDoc.getQueryTablePreferences() != null) {
+            if (settings.getQueryTablePreferences() == null) {
+                // The query's own preferences, or the defaults if it has none.
                 setSettings(settings
                         .copy()
-                        .queryTablePreferences(queryDoc.getQueryTablePreferences())
+                        .queryTablePreferences(Objects.requireNonNullElseGet(
+                                queryDoc.getQueryTablePreferences(),
+                                () -> QueryTablePreferences.builder().build()))
                         .build());
             }
 

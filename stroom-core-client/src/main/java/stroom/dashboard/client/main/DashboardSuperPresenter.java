@@ -16,8 +16,16 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.ai.shared.AiTabSearch;
+import stroom.ai.shared.AiTabSnapshotPart;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
+import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.Search;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.HasMultipleInstances;
 import stroom.entity.client.presenter.DocTabPresenter;
@@ -28,6 +36,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.query.api.ResultStoreInfo;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -36,6 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javax.inject.Provider;
@@ -93,6 +103,47 @@ public class DashboardSuperPresenter
         if (context instanceof final DashboardContext dashboardContext) {
             dashboardPresenter.setParentContext(dashboardContext);
         }
+    }
+
+    /// Shares the dashboard's components as edited, and each table's search requests, so a tool can take a snapshot
+    /// of their rows.
+    @Override
+    protected String addAiSnapshotParts(final DashboardDoc edited,
+                                        final List<AiTabSnapshotPart> parts,
+                                        final List<AiTabSearch> searches) {
+        parts.add(new AiTabSnapshotPart(AiTabSnapshotPart.DASHBOARD, "text/markdown",
+                dashboardPresenter.getDescription()));
+        searches.addAll(aiTabSearches());
+        return null;
+    }
+
+    // Each table's search requests, and each embedded query's, for the AI chat to take snapshots of their rows.
+    private List<AiTabSearch> aiTabSearches() {
+        final Components components = dashboardPresenter.getComponents();
+        final List<AiTabSearch> searches = new ArrayList<>();
+        for (final Component component : components) {
+            if (component instanceof final TablePresenter tablePresenter) {
+                final String queryId = NullSafe.get(tablePresenter.getTableComponentSettings(),
+                        TableComponentSettings::getQueryId);
+                final Component query = queryId != null
+                        ? components.get(queryId)
+                        : null;
+                final Search liveSearch = query instanceof final QueryPresenter queryPresenter
+                        ? queryPresenter.buildLiveSearch()
+                        : null;
+                searches.add(new AiTabSearch(
+                        NullSafe.get(tablePresenter.getComponentConfig(), ComponentConfig::getName),
+                        tablePresenter.getId(),
+                        tablePresenter.getResultsContext(),
+                        tablePresenter.getContextFor(liveSearch),
+                        tablePresenter.getColumnNames(),
+                        tablePresenter.getTotalRows(),
+                        tablePresenter.isSearching()));
+            } else if (component instanceof final EmbeddedQueryPresenter embeddedQuery) {
+                NullSafe.consume(embeddedQuery.aiTabSearch(), searches::add);
+            }
+        }
+        return searches;
     }
 
     @Override

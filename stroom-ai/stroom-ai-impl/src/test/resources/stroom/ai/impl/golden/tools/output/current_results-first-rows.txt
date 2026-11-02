@@ -1,0 +1,52 @@
+Arguments: {"rows":10}
+
+=== Output ===
+Using the snapshot already taken of Logons in Query 'Logons': 25 row(s) of 25 found, taken <time of the call>.
+State: ok
+The first 10 row(s), as asked, are in /tabs/results/query-uuid/results-first-10.md; work on those only, and say so (e.g. "Of the first 10 of 25 rows…").
+The rows are in /tabs/results/query-uuid/results-first-10.md. Work out figures with the table tool (or summarise_column, fetch_events).
+
+Profile of The first 10 rows of Logons in Query 'Logons': 10 rows, 1 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| User | text | 0 | 4 | user0 | user3 | user0 (3), user1 (3), user2 (2), user3 (2) |
+
+First 3 rows:
+
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+
+=== Workspace file /tabs/results/query-uuid/results-first-10.md ===
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+| user2 |
+| user3 |
+| user0 |
+| user1 |
+
+
+=== Workspace file /tabs/results/query-uuid/results-first-10.profile.md ===
+Profile of The first 10 rows of Logons in Query 'Logons': 10 rows, 1 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| User | text | 0 | 4 | user0 | user3 | user0 (3), user1 (3), user2 (2), user3 (2) |
+
+First 3 rows:
+
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
+

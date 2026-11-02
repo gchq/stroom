@@ -1,0 +1,611 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.vis;
+
+import stroom.ai.impl.vis.ChartCheck.Result;
+import stroom.ai.impl.vis.ChartCheck.Sample;
+import stroom.ai.impl.vis.ChartCheck.TableColumn;
+
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestChartCheck {
+
+    private static final List<TableColumn> MESSAGE_COLUMNS = List.of(
+            new TableColumn("Sender", "TEXT"),
+            new TableColumn("Recipient", "TEXT"),
+            new TableColumn("Count", "NUMBER"),
+            new TableColumn("EventTime", "DATE_TIME"),
+            new TableColumn("Note", "GENERAL"));
+
+    private static final Sample MESSAGES = new Sample(
+            List.of("Sender", "Recipient", "Count", "EventTime", "Note"),
+            List.of(
+                    List.of("alice", "bob", "3", "2026-10-24T01:00:00.000Z", "hi"),
+                    List.of("bob", "carol", "5", "2026-10-24T02:00:00.000Z", "x"),
+                    List.of("alice", "carol", "1", "2026-10-24T03:00:00.000Z", "y")));
+
+    @Test
+    void networkGraphOfMessagesIsOk() {
+        final Result result = ChartCheck.check(ChartKind.GRAPH,
+                Map.of("source", "Sender", "target", "Recipient", "weight", "Count"), Map.of(),
+                MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).isEmpty();
+        assertThat(result.stats()).containsEntry("nodes", 3).containsEntry("links", 3).containsEntry("rows", 3);
+    }
+
+    @Test
+    void missingRequiredRoleIsAProblem() {
+        final Result result = ChartCheck.check(ChartKind.GRAPH, Map.of("source", "Sender"), Map.of(),
+                MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).singleElement().asString()
+                .startsWith("Map a column to target")
+                .contains("'Recipient'");
+    }
+
+    @Test
+    void unknownColumnSuggestsTheNearMiss() {
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "sender", "value", "Count"),
+                Map.of(), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.problems()).singleElement().asString()
+                .contains("no column 'sender'")
+                .contains("did you mean 'Sender'?");
+    }
+
+    @Test
+    void unknownRoleIsAProblem() {
+        final Result result = ChartCheck.check(ChartKind.PIE,
+                Map.of("name", "Sender", "value", "Count", "colour", "Note"), Map.of(), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.problems()).anySatisfy(problem -> assertThat(problem).contains("has no 'colour'"));
+    }
+
+    @Test
+    void textColumnCantBeAValue() {
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "Recipient", "value", "Sender"),
+                Map.of(), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).singleElement().asString()
+                .contains("'Sender' can't be value")
+                .contains("count()");
+    }
+
+    @Test
+    void generalColumnOfWordsCantBeAValue() {
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "Sender", "value", "Note"),
+                Map.of(), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.problems()).singleElement().asString().contains("only 0 of the 3 values sampled");
+    }
+
+    @Test
+    void aFewNonNumbersAreAWarning() {
+        final List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            rows.add(List.of("u" + i, Integer.toString(i)));
+        }
+        rows.add(List.of("u20", "n/a"));
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Total"),
+                Map.of(), List.of(new TableColumn("User", "GENERAL"), new TableColumn("Total", "GENERAL")),
+                new Sample(List.of("User", "Total"), rows));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).singleElement().asString().contains("1 of the 21 values sampled");
+    }
+
+    @Test
+    void aLongRawTimeSeriesIsAdvisedAnInterval() {
+        // A row per event over 30 days: more distinct times than a chart over time reads well.
+        final List<List<String>> rows = new ArrayList<>();
+        final Instant start = Instant.parse("2026-09-01T00:00:00Z");
+        for (int i = 0; i < 600; i++) {
+            rows.add(List.of(start.plus(Duration.ofMinutes(72L * i)).toString(), "1"));
+        }
+        final List<TableColumn> columns = List.of(new TableColumn("Time", "DATE_TIME", "${EventTime}", null),
+                new TableColumn("Bytes", "NUMBER", "${Bytes}", null));
+
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Time", "y", "Bytes"), Map.of(),
+                columns, new Sample(List.of("Time", "Bytes"), rows));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).anySatisfy(warning -> assertThat(warning)
+                .contains("'Time' is a raw time spanning about 29 days")
+                .contains("a column floorDay(${EventTime}), formatted as Date Time and grouped, with count()"));
+
+        // Already rounded to an interval: no advice.
+        final Result rounded = ChartCheck.check(ChartKind.LINE, Map.of("x", "Time", "y", "Bytes"), Map.of(),
+                List.of(new TableColumn("Time", "DATE_TIME", "floorHour(${EventTime})", 1),
+                        new TableColumn("Bytes", "NUMBER", "sum(${Bytes})", null)),
+                new Sample(List.of("Time", "Bytes"), rows));
+        assertThat(rounded.warnings()).noneSatisfy(warning -> assertThat(warning).contains("raw time"));
+    }
+
+    @Test
+    void aGaugeWithoutANameShowsOneRow() {
+        final List<TableColumn> columns = List.of(new TableColumn("Host", "TEXT"),
+                new TableColumn("Max Bytes", "NUMBER"));
+        final Sample sample = new Sample(List.of("Host", "Max Bytes"),
+                List.of(List.of("a", "10"), List.of("b", "20")));
+
+        final Result unnamed = ChartCheck.check(ChartKind.GAUGE, Map.of("value", "Max Bytes"), Map.of(), columns,
+                sample);
+        assertThat(unnamed.ok()).isTrue();
+        assertThat(unnamed.warnings()).anySatisfy(warning -> assertThat(warning)
+                .contains("A gauge without a name column shows only the first of the 2+ rows"));
+
+        // With a name column, a gauge each.
+        final Result named = ChartCheck.check(ChartKind.GAUGE, Map.of("value", "Max Bytes", "name", "Host"),
+                Map.of(), columns, sample);
+        assertThat(named.stats()).containsEntry("gauges", 2);
+        assertThat(named.warnings()).noneSatisfy(warning -> assertThat(warning).contains("gauge"));
+    }
+
+    @Test
+    void anIntervalGivesAFewDozenToAFewHundredPoints() {
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(6 * 365))).contains("floorMonth");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(400))).contains("floorWeek");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(90))).contains("floorDay");
+        assertThat(ChartCheck.intervalFunction(Duration.ofDays(3))).contains("floorHour");
+        assertThat(ChartCheck.intervalFunction(Duration.ofHours(2))).contains("floorMinute");
+        assertThat(ChartCheck.intervalFunction(Duration.ofMinutes(10))).isEmpty();
+    }
+
+    @Test
+    void sameSourceAndTargetIsAProblem() {
+        final Result result = ChartCheck.check(ChartKind.GRAPH, Map.of("source", "Sender", "target", "Sender"),
+                Map.of(), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.problems()).singleElement().asString().contains("join a node to itself");
+    }
+
+    @Test
+    void graphWithOnlySelfLinksIsAProblem() {
+        final Sample sample = new Sample(List.of("Sender", "Recipient"),
+                List.of(List.of("alice", "alice"), List.of("bob", "bob")));
+        final Result result = ChartCheck.check(ChartKind.GRAPH, Map.of("source", "Sender", "target", "Recipient"),
+                Map.of(), MESSAGE_COLUMNS, sample);
+
+        assertThat(result.ok()).isFalse();
+        assertThat(result.problems()).singleElement().asString().contains("no network to draw");
+    }
+
+    @Test
+    void tooManyNodesIsAWarning() {
+        final Result result = ChartCheck.check(ChartKind.GRAPH, Map.of("source", "Sender", "target", "Recipient"),
+                Map.of("maxNodes", "2"), MESSAGE_COLUMNS, MESSAGES);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).singleElement().asString().contains("only the 2 most connected");
+    }
+
+    @Test
+    void datesHeldAsTextAreAProblemForAScatterAxis() {
+        final Sample sample = new Sample(List.of("When", "Count"),
+                List.of(List.of("2026-10-24", "1"), List.of("2026-10-25", "2")));
+        final Result result = ChartCheck.check(ChartKind.SCATTER, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", "NUMBER"), new TableColumn("Count", "NUMBER")), sample);
+
+        assertThat(result.problems()).singleElement().asString()
+                .contains("holds dates as text")
+                .contains("Date Time");
+    }
+
+    @Test
+    void datesOfAGeneralColumnAreTakenAsDates() {
+        // Stroom gives the chart a General column's dates as dates.
+        final Sample sample = new Sample(List.of("When", "Count"),
+                List.of(List.of("2026-10-24T01:00:00.000Z", "1"), List.of("2026-10-24T02:00:00.000Z", "2")));
+        final Result scatter = ChartCheck.check(ChartKind.SCATTER, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", "GENERAL"), new TableColumn("Count", "NUMBER")), sample);
+        final Result line = ChartCheck.check(ChartKind.LINE, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", "GENERAL"), new TableColumn("Count", "NUMBER")), sample);
+
+        assertThat(scatter.ok()).isTrue();
+        assertThat(line.ok()).isTrue();
+        assertThat(line.warnings()).isEmpty();
+    }
+
+    @Test
+    void numbersWithThousandsSeparatorsAreNumbers() {
+        final Sample sample = new Sample(List.of("User", "Bytes"),
+                List.of(List.of("a", "1,234"), List.of("b", "12,345,678.5"), List.of("c", "7")));
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Bytes"),
+                Map.of(), List.of(new TableColumn("User", "TEXT"), new TableColumn("Bytes", "GENERAL")), sample);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).isEmpty();
+    }
+
+    @Test
+    void datesOfAStroomQlQueryAreTakenAsTheyAre() {
+        final Sample sample = new Sample(List.of("When", "Count"),
+                List.of(List.of("2026-10-24T00:00:00.000Z", "1"), List.of("2026-10-25T00:00:00.000Z", "2")));
+        final Result result = ChartCheck.check(ChartKind.SCATTER, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", null), new TableColumn("Count", null)), sample);
+
+        assertThat(result.ok()).isTrue();
+    }
+
+    @Test
+    void lineOverTextDatesWarnsAboutTheTimeAxis() {
+        final Sample sample = new Sample(List.of("When", "Count"),
+                List.of(List.of("2026-10-24", "1"), List.of("2026-10-25", "2")));
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", "TEXT"), new TableColumn("Count", "NUMBER")), sample);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).singleElement().asString().contains("time axis");
+    }
+
+    @Test
+    void aDateTimeColumnOfFormattedTextIsAProblemSayingToUseTheDateItself() {
+        // The chat's case: the format is Date Time, but formatDate() makes text, which a chart gets as no value.
+        final Sample sample = new Sample(List.of("Hour", "Count"),
+                List.of(List.of("2026-09-28 13:00", "37"), List.of("2026-09-28 14:00", "12")));
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Hour", "y", "Count"), Map.of(),
+                List.of(new TableColumn("Hour", "DATE_TIME",
+                                "formatDate(floorHour(${@timestamp}), 'yyyy-MM-dd HH:mm')"),
+                        new TableColumn("Count", "NUMBER", "count()")), sample);
+
+        assertThat(result.problems()).singleElement().asString()
+                .startsWith("'Hour' can't be x: its format is Date Time but its expression makes text "
+                            + "(formatDate())")
+                .contains("change the column's expression to the date itself, floorHour(${@timestamp}), and its "
+                          + "format to Date Time");
+    }
+
+    @Test
+    void aDateTimeColumnOfOtherTextIsAProblemSayingToParseIt() {
+        final Sample sample = new Sample(List.of("Day", "Count"),
+                List.of(List.of("24/10/2026", "1"), List.of("25/10/2026", "2")));
+        for (final ChartKind kind : List.of(ChartKind.LINE, ChartKind.SCATTER)) {
+            final Result result = ChartCheck.check(kind, Map.of("x", "Day", "y", "Count"), Map.of(),
+                    List.of(new TableColumn("Day", "DATE_TIME", "substringBefore(${Logged}, ' ')"),
+                            new TableColumn("Count", "NUMBER", "count()")), sample);
+
+            assertThat(result.problems()).as(kind.name()).singleElement().asString()
+                    .contains("its expression makes text (substringBefore())")
+                    .contains("parseDate(<the expression>, '<its pattern>')");
+        }
+    }
+
+    @Test
+    void aDateTimeColumnOfIsoTextFromFormatDateIsOk() {
+        // formatDate() with no pattern gives an ISO 8601 date, which a chart gets as a date.
+        final Sample sample = new Sample(List.of("Hour", "Count"),
+                List.of(List.of("2026-09-28T13:00:00.000Z", "37"), List.of("2026-09-28T14:00:00.000Z", "12")));
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Hour", "y", "Count"), Map.of(),
+                List.of(new TableColumn("Hour", "DATE_TIME", "formatDate(floorHour(${@timestamp}))"),
+                        new TableColumn("Count", "NUMBER", "count()")), sample);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).isEmpty();
+    }
+
+    @Test
+    void aDateTimeColumnOfADateIsOk() {
+        final Sample sample = new Sample(List.of("Hour", "Count"),
+                List.of(List.of("2026-09-28 13:00", "37"), List.of("2026-09-28 14:00", "12")));
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Hour", "y", "Count"), Map.of(),
+                List.of(new TableColumn("Hour", "DATE_TIME", "floorHour(${@timestamp})"),
+                        new TableColumn("Count", "NUMBER", "count()")), sample);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).isEmpty();
+    }
+
+    @Test
+    void aNumberColumnOfTextIsAProblemOnlyWhenTheTextIsntNumbers() {
+        final Result words = ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Total"),
+                Map.of(), List.of(new TableColumn("User", "TEXT", "${User}"),
+                        new TableColumn("Total", "NUMBER", "concat(sum(${Bytes}), ' bytes')")),
+                new Sample(List.of("User", "Total"), List.of(List.of("a", "10 bytes"), List.of("b", "20 bytes"))));
+        final Result numbers = ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Total"),
+                Map.of(), List.of(new TableColumn("User", "TEXT", "${User}"),
+                        new TableColumn("Total", "NUMBER", "toString(sum(${Bytes}))")),
+                new Sample(List.of("User", "Total"), List.of(List.of("a", "10"), List.of("b", "20"))));
+
+        assertThat(words.problems()).singleElement().asString()
+                .startsWith("'Total' can't be value: its format is Number but its expression makes text "
+                            + "(concat()), and 2 of the 2 values sampled aren't numbers");
+        assertThat(numbers.ok()).isTrue();
+    }
+
+    @Test
+    void aNumberColumnOfTextIsAProblemForAnyRole() {
+        // A category axis of a Number column gets no value for text that isn't a number, as a value axis does.
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "Code", "y", "Count"), Map.of(),
+                List.of(new TableColumn("Code", "NUMBER", "upperCase(${Code})"),
+                        new TableColumn("Count", "NUMBER", "count()")),
+                new Sample(List.of("Code", "Count"), List.of(List.of("ABC", "1"), List.of("DEF", "2"))));
+
+        assertThat(result.problems()).singleElement().asString().startsWith("'Code' can't be x: its format is "
+                                                                            + "Number");
+    }
+
+    @Test
+    void textDatesFromFormatDateAreAdvisedToUseTheDateNotJustTheFormat() {
+        // Setting the format to Date Time alone leaves formatDate()'s text as text, as the chat found.
+        final Sample sample = new Sample(List.of("Hour", "Count"),
+                List.of(List.of("2026-09-28 13:00", "37"), List.of("2026-09-28 14:00", "12")));
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Hour", "TEXT", "formatDate(floorHour(${@timestamp}), 'yyyy-MM-dd HH:mm')"),
+                new TableColumn("Count", "NUMBER", "count()"));
+        final Result line = ChartCheck.check(ChartKind.LINE, Map.of("x", "Hour", "y", "Count"), Map.of(),
+                columns, sample);
+        final Result scatter = ChartCheck.check(ChartKind.SCATTER, Map.of("x", "Hour", "y", "Count"), Map.of(),
+                columns, sample);
+
+        assertThat(line.ok()).isTrue();
+        assertThat(line.warnings()).singleElement().asString()
+                .contains("change the column's expression to the date itself, floorHour(${@timestamp}), and its "
+                          + "format to Date Time")
+                .doesNotContain("Set the column's format to Date Time");
+        assertThat(scatter.problems()).singleElement().asString()
+                .contains("Change the column's expression to the date itself, floorHour(${@timestamp})");
+    }
+
+    @Test
+    void textDatesOfAPlainFieldAreStillAdvisedToSetTheFormat() {
+        final Sample sample = new Sample(List.of("When", "Count"),
+                List.of(List.of("2026-10-24", "1"), List.of("2026-10-25", "2")));
+        final Result result = ChartCheck.check(ChartKind.LINE, Map.of("x", "When", "y", "Count"), Map.of(),
+                List.of(new TableColumn("When", "TEXT", "${When}"), new TableColumn("Count", "NUMBER", "count()")),
+                sample);
+
+        assertThat(result.warnings()).singleElement().asString()
+                .contains("set the column's format to Date Time (an edit_column change)");
+    }
+
+    @Test
+    void aColumnGroupedBelowTheTopLevelIsAProblem() {
+        // The chat's case: pairs grouped at two levels give a chart one row per User A, with User B blank.
+        final List<TableColumn> columns = List.of(
+                new TableColumn("User A", "TEXT", "${user.name}", 0),
+                new TableColumn("User B", "TEXT", "${user.target.id}", 1),
+                new TableColumn("Messages", "NUMBER", "count()", null));
+        final Result result = ChartCheck.check(ChartKind.GRAPH,
+                Map.of("source", "User A", "target", "User B", "weight", "Messages"), Map.of(), columns, null);
+
+        assertThat(result.problems()).singleElement().asString()
+                .isEqualTo("'User B' can't be target: it is grouped at level 2, but a network graph gets only the "
+                           + "table's top-level rows (one per 'User A', grouped at level 1), where 'User B' is "
+                           + "blank. Group 'User B' at level 1 too (a group change), so each row is one "
+                           + "combination of them.");
+    }
+
+    @Test
+    void columnsGroupedTogetherAtTheTopLevelAreOk() {
+        final Sample sample = new Sample(List.of("User A", "User B", "Messages"),
+                List.of(List.of("alice", "bob", "3"), List.of("bob", "carol", "2")));
+        final Result together = ChartCheck.check(ChartKind.GRAPH,
+                Map.of("source", "User A", "target", "User B", "weight", "Messages"), Map.of(), List.of(
+                        new TableColumn("User A", "TEXT", "${user.name}", 0),
+                        new TableColumn("User B", "TEXT", "${user.target.id}", 0),
+                        new TableColumn("Messages", "NUMBER", "count()", null)), sample);
+        // A deeper level the chart doesn't use doesn't matter.
+        final Result deeperUnused = ChartCheck.check(ChartKind.BAR,
+                Map.of("category", "User A", "value", "Messages"), Map.of(), List.of(
+                        new TableColumn("User A", "TEXT", "${user.name}", 0),
+                        new TableColumn("User B", "TEXT", "${user.target.id}", 1),
+                        new TableColumn("Messages", "NUMBER", "count()", null)),
+                new Sample(List.of("User A", "Messages"), List.of(List.of("alice", "5"))));
+
+        assertThat(together.ok()).isTrue();
+        assertThat(deeperUnused.ok()).isTrue();
+    }
+
+    @Test
+    void groupLevelsAreTakenFromTheTopmostGroupedLevel() {
+        // Levels needn't start at 0 for the check to find the top one.
+        final Result result = ChartCheck.check(ChartKind.BAR,
+                Map.of("category", "A", "value", "N", "series", "B"), Map.of(), List.of(
+                        new TableColumn("A", "TEXT", "${a}", 2),
+                        new TableColumn("B", "TEXT", "${b}", 3),
+                        new TableColumn("N", "NUMBER", "count()", null)), null);
+
+        assertThat(result.problems()).singleElement().asString()
+                .startsWith("'B' can't be series: it is grouped at level 4")
+                .contains("(one per 'A', grouped at level 3)");
+    }
+
+    @Test
+    void aCalendarNeedsDates() {
+        final Sample days = new Sample(List.of("Day", "Count"),
+                List.of(List.of("2026-10-24T00:00:00.000Z", "3"), List.of("2026-10-25T00:00:00.000Z", "5")));
+        final Result ok = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "Day", "value", "Count"), Map.of(),
+                List.of(new TableColumn("Day", "DATE_TIME"), new TableColumn("Count", "NUMBER")), days);
+        final Result text = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "Day", "value", "Count"),
+                Map.of(), List.of(new TableColumn("Day", "TEXT"), new TableColumn("Count", "NUMBER")), days);
+        final Result names = ChartCheck.check(ChartKind.CALENDAR, Map.of("date", "User", "value", "Count"),
+                Map.of(), List.of(new TableColumn("User", null), new TableColumn("Count", null)),
+                new Sample(List.of("User", "Count"), List.of(List.of("alice", "1"), List.of("bob", "2"))));
+
+        assertThat(ok.ok()).isTrue();
+        assertThat(ok.stats()).containsEntry("days", 2);
+        assertThat(text.problems()).singleElement().asString()
+                .contains("its format is TEXT and date needs dates. Set the column's format to Date Time");
+        assertThat(names.problems()).singleElement().asString()
+                .contains("only 0 of the 2 values sampled are dates");
+    }
+
+    @Test
+    void aHeatmapWithTooManyCellsWarns() {
+        final List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < 120; i++) {
+            rows.add(List.of("user" + i, "Mon", "1"));
+        }
+        final Result result = ChartCheck.check(ChartKind.HEATMAP, Map.of("x", "User", "y", "Day", "value", "N"),
+                Map.of(), List.of(new TableColumn("User", "TEXT"), new TableColumn("Day", "TEXT"),
+                        new TableColumn("N", "NUMBER")), new Sample(List.of("User", "Day", "N"), rows));
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.stats()).containsEntry("xValues", 120).containsEntry("yValues", 1);
+        assertThat(result.warnings()).singleElement().asString().contains("too many cells to read");
+    }
+
+    @Test
+    void aSankeyWithALoopWarnsTheFlowClosingItIsLeftOut() {
+        final Sample loop = new Sample(List.of("From", "To"),
+                List.of(List.of("a", "b"), List.of("b", "c"), List.of("c", "a")));
+        final Sample chain = new Sample(List.of("From", "To"), List.of(List.of("a", "b"), List.of("b", "c")));
+        final List<TableColumn> columns = List.of(new TableColumn("From", "TEXT"), new TableColumn("To", "TEXT"));
+
+        assertThat(ChartCheck.check(ChartKind.SANKEY, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                loop).warnings()).singleElement().asString().contains("a Sankey diagram can't draw a loop");
+        assertThat(ChartCheck.check(ChartKind.SANKEY, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                chain).warnings()).isEmpty();
+        // A chord diagram draws loops.
+        assertThat(ChartCheck.check(ChartKind.CHORD, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                loop).warnings()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.CHORD, Map.of("source", "From", "target", "To"), Map.of(), columns,
+                new Sample(List.of("From", "To"), List.of(List.of("a", "a")))).problems())
+                .singleElement().asString().endsWith("so there's no chord diagram to draw.");
+    }
+
+    @Test
+    void pieWithManyNamesWarnsAboutOther() {
+        final List<List<String>> rows = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            rows.add(List.of("type" + i, "1"));
+        }
+        final Result result = ChartCheck.check(ChartKind.PIE, Map.of("name", "Type", "value", "Count"), Map.of(),
+                List.of(new TableColumn("Type", "TEXT"), new TableColumn("Count", "NUMBER")),
+                new Sample(List.of("Type", "Count"), rows));
+
+        assertThat(result.warnings()).singleElement().asString().contains("combined as 'Other'");
+        assertThat(result.stats()).containsEntry("slices", 15);
+    }
+
+    @Test
+    void noSampleChecksOnlyTheColumns() {
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "Sender", "value", "Count"),
+                Map.of(), MESSAGE_COLUMNS, null);
+
+        assertThat(result.ok()).isTrue();
+        assertThat(result.warnings()).singleElement().asString().contains("no rows to check");
+    }
+
+    @Test
+    void blankRequiredColumnIsAProblem() {
+        final Sample sample = new Sample(List.of("Sender", "Count"),
+                List.of(List.of("", "1"), List.of("", "2")));
+        final Result result = ChartCheck.check(ChartKind.BAR, Map.of("category", "Sender", "value", "Count"),
+                Map.of(), MESSAGE_COLUMNS, sample);
+
+        assertThat(result.problems()).singleElement().asString().contains("is blank");
+    }
+
+    @Test
+    void autoIntervalCombinesAnIntervalsValuesAsTheMeasureColumnDoes() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Minute", "DATE_TIME", "floorMinute(${EventTime})"),
+                new TableColumn("Count", "NUMBER", "count()"),
+                new TableColumn("Peak", "NUMBER", "max(${Bytes})"),
+                new TableColumn("Low", "NUMBER", "Min(${Bytes})"),
+                new TableColumn("Mean", "NUMBER", "average(${Bytes})"),
+                new TableColumn("Raw", "NUMBER", "${Bytes}"));
+        final Map<String, String> on = Map.of("autoInterval", "true");
+
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), on, columns))
+                .containsEntry("intervalCombine", "Sum");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Peak"), on, columns))
+                .containsEntry("intervalCombine", "Max");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.BAR, Map.of("category", "Minute", "value", "Low"), on,
+                columns)).containsEntry("intervalCombine", "Min");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.BAR, Map.of("category", "Minute", "value", "Mean"), on,
+                columns)).containsEntry("intervalCombine", "Average");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Raw"), on, columns))
+                .containsEntry("intervalCombine", "Sum");
+        // As given, or off, or a kind without it: left alone.
+        final Map<String, String> given = Map.of("autoInterval", "true", "intervalCombine", "Average");
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), given,
+                columns)).isEqualTo(given);
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"), Map.of(),
+                columns)).isEmpty();
+        assertThat(ChartCheck.withIntervalCombine(ChartKind.PIE, Map.of("name", "Minute", "value", "Count"), on,
+                columns)).isEqualTo(on);
+    }
+
+    @Test
+    void autoIntervalNeedsDatesInTimeOrder() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Minute", "DATE_TIME", "floorMinute(${EventTime})"),
+                new TableColumn("User", "TEXT", "${User}"),
+                new TableColumn("Count", "NUMBER", "count()"));
+
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"),
+                Map.of("autoInterval", "true"), columns, null).warnings())
+                .contains("Auto Interval groups the rows over time, so it does nothing here: category 'User' isn't "
+                          + "a Date Time column.");
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Minute", "value", "Count"),
+                Map.of("autoInterval", "true", "sort", "Descending"), columns, null).warnings())
+                .anyMatch(warning -> warning.startsWith("Auto Interval does nothing while the bars are sorted"));
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "Minute", "y", "Count"),
+                Map.of("autoInterval", "true"), columns, null).warnings())
+                .noneMatch(warning -> warning.startsWith("Auto Interval"));
+    }
+
+    @Test
+    void aTrendLineNeedsAnXItCanFollow() {
+        final List<TableColumn> columns = List.of(
+                new TableColumn("Day", "DATE_TIME", "floorDay(${EventTime})"),
+                new TableColumn("Size", "NUMBER", "${Bytes}"),
+                new TableColumn("User", "TEXT", "${User}"),
+                new TableColumn("Count", "NUMBER", "count()"),
+                new TableColumn("Unknown", null, "${Other}"));
+        final Map<String, String> linear = Map.of("trendLine", "linear");
+
+        // Dates or numbers, in their own order: drawn.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Day", "value", "Count"), linear, columns,
+                null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "Size", "y", "Count"),
+                Map.of("trendLine", "moving average"), columns, null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.SCATTER, Map.of("x", "Size", "y", "Count"), linear, columns, null)
+                .problems()).isEmpty();
+        // Text, sorted bars, or a y of dates: none could be drawn, so refused.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"), linear, columns,
+                null).problems()).singleElement().asString()
+                .startsWith("Trend Line needs category to be dates or numbers")
+                .contains("'User' is formatted as TEXT");
+        assertThat(ChartCheck.check(ChartKind.LINE, Map.of("x", "User", "y", "Count"), linear, columns, null)
+                .problems()).singleElement().asString().startsWith("Trend Line needs x to be dates or numbers");
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Day", "value", "Count"),
+                Map.of("trendLine", "linear", "sort", "Descending"), columns, null).problems())
+                .singleElement().asString().startsWith("Trend Line needs the bars in their own order");
+        assertThat(ChartCheck.check(ChartKind.SCATTER, Map.of("x", "Size", "y", "Day"), linear, columns, null)
+                .problems()).singleElement().asString().startsWith("Trend Line needs a y of numbers");
+        // Off, or a format not known: let through.
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "User", "value", "Count"),
+                Map.of("trendLine", "none"), columns, null).problems()).isEmpty();
+        assertThat(ChartCheck.check(ChartKind.BAR, Map.of("category", "Unknown", "value", "Count"), linear, columns,
+                null).problems()).isEmpty();
+    }
+}

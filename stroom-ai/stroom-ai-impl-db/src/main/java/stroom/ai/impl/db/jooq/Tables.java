@@ -6,7 +6,16 @@ package stroom.ai.impl.db.jooq;
 
 import stroom.ai.impl.db.jooq.tables.AiChat;
 import stroom.ai.impl.db.jooq.tables.AiChatAttachment;
+import stroom.ai.impl.db.jooq.tables.AiChatFileChunk;
 import stroom.ai.impl.db.jooq.tables.AiChatMessage;
+import stroom.ai.impl.db.jooq.tables.AiChatRun;
+import stroom.ai.impl.db.jooq.tables.AiMemory;
+import stroom.ai.impl.db.jooq.tables.AiSampleUpload;
+import stroom.ai.impl.db.jooq.tables.AiSampleUploadFile;
+import stroom.ai.impl.db.jooq.tables.AiToolApproval;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicy;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyCategory;
+import stroom.ai.impl.db.jooq.tables.AiToolPolicyMember;
 
 
 /**
@@ -26,7 +35,52 @@ public class Tables {
     public static final AiChatAttachment AI_CHAT_ATTACHMENT = AiChatAttachment.AI_CHAT_ATTACHMENT;
 
     /**
+     * The table <code>stroom.ai_chat_file_chunk</code>.
+     */
+    public static final AiChatFileChunk AI_CHAT_FILE_CHUNK = AiChatFileChunk.AI_CHAT_FILE_CHUNK;
+
+    /**
      * The table <code>stroom.ai_chat_message</code>.
      */
     public static final AiChatMessage AI_CHAT_MESSAGE = AiChatMessage.AI_CHAT_MESSAGE;
+
+    /**
+     * The table <code>stroom.ai_chat_run</code>.
+     */
+    public static final AiChatRun AI_CHAT_RUN = AiChatRun.AI_CHAT_RUN;
+
+    /**
+     * The table <code>stroom.ai_memory</code>.
+     */
+    public static final AiMemory AI_MEMORY = AiMemory.AI_MEMORY;
+
+    /**
+     * The table <code>stroom.ai_sample_upload</code>.
+     */
+    public static final AiSampleUpload AI_SAMPLE_UPLOAD = AiSampleUpload.AI_SAMPLE_UPLOAD;
+
+    /**
+     * The table <code>stroom.ai_sample_upload_file</code>.
+     */
+    public static final AiSampleUploadFile AI_SAMPLE_UPLOAD_FILE = AiSampleUploadFile.AI_SAMPLE_UPLOAD_FILE;
+
+    /**
+     * The table <code>stroom.ai_tool_approval</code>.
+     */
+    public static final AiToolApproval AI_TOOL_APPROVAL = AiToolApproval.AI_TOOL_APPROVAL;
+
+    /**
+     * The table <code>stroom.ai_tool_policy</code>.
+     */
+    public static final AiToolPolicy AI_TOOL_POLICY = AiToolPolicy.AI_TOOL_POLICY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_category</code>.
+     */
+    public static final AiToolPolicyCategory AI_TOOL_POLICY_CATEGORY = AiToolPolicyCategory.AI_TOOL_POLICY_CATEGORY;
+
+    /**
+     * The table <code>stroom.ai_tool_policy_member</code>.
+     */
+    public static final AiToolPolicyMember AI_TOOL_POLICY_MEMBER = AiToolPolicyMember.AI_TOOL_POLICY_MEMBER;
 }

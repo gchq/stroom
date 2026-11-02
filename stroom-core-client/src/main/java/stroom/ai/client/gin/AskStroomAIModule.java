@@ -16,28 +16,46 @@
 
 package stroom.ai.client.gin;
 
-import stroom.ai.client.AiChatHistoryPresenter;
-import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
-import stroom.ai.client.AiChatHistoryViewImpl;
+import stroom.ai.client.AiCommandErrorPresenter;
+import stroom.ai.client.AiCommandErrorPresenter.AiCommandErrorView;
+import stroom.ai.client.AiCommandErrorViewImpl;
 import stroom.ai.client.AiConfigGeneralPresenter;
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AiConfigGeneralViewImpl;
 import stroom.ai.client.AiConfigTableAnalysisPresenter;
 import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
 import stroom.ai.client.AiConfigTableAnalysisViewImpl;
+import stroom.ai.client.AiMemoryPresenter;
+import stroom.ai.client.AiMemoryPresenter.AiMemoryView;
+import stroom.ai.client.AiMemoryViewImpl;
+import stroom.ai.client.AiToolApprovalsPresenter;
+import stroom.ai.client.AiToolApprovalsPresenter.AiToolApprovalsView;
+import stroom.ai.client.AiToolApprovalsViewImpl;
+import stroom.ai.client.AiToolPoliciesPlugin;
+import stroom.ai.client.AiToolPoliciesPresenter;
+import stroom.ai.client.AiToolPoliciesPresenter.AiToolPoliciesView;
+import stroom.ai.client.AiToolPoliciesViewImpl;
+import stroom.ai.client.AiToolPolicyEditPresenter;
+import stroom.ai.client.AiToolPolicyEditPresenter.AiToolPolicyEditView;
+import stroom.ai.client.AiToolPolicyEditViewImpl;
+import stroom.ai.client.AiToolPolicyMembersPresenter;
+import stroom.ai.client.AiToolPolicyMembersPresenter.AiToolPolicyMembersView;
+import stroom.ai.client.AiToolPolicyMembersViewImpl;
 import stroom.ai.client.AskStroomAiConfigPresenter;
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiTabPresenter;
+import stroom.ai.client.AskStroomAiTabPresenter.AskStroomAiTabView;
+import stroom.ai.client.AskStroomAiTabViewImpl;
 import stroom.ai.client.AskStroomAiViewImpl;
 import stroom.ai.client.DownloadChatPresenter;
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
 import stroom.ai.client.DownloadChatViewImpl;
+import stroom.core.client.gin.PluginModule;
 
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-
-public class AskStroomAIModule extends AbstractPresenterModule {
+public class AskStroomAIModule extends PluginModule {
 
     @Override
     protected void configure() {
@@ -59,12 +77,39 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AiConfigTableAnalysisView.class,
                 AiConfigTableAnalysisViewImpl.class);
         bindPresenterWidget(
-                AiChatHistoryPresenter.class,
-                AiChatHistoryView.class,
-                AiChatHistoryViewImpl.class);
+                AskStroomAiTabPresenter.class,
+                AskStroomAiTabView.class,
+                AskStroomAiTabViewImpl.class);
+        bindPresenterWidget(
+                AiCommandErrorPresenter.class,
+                AiCommandErrorView.class,
+                AiCommandErrorViewImpl.class);
         bindPresenterWidget(
                 DownloadChatPresenter.class,
                 DownloadChatView.class,
                 DownloadChatViewImpl.class);
+        bindPresenterWidget(
+                AiMemoryPresenter.class,
+                AiMemoryView.class,
+                AiMemoryViewImpl.class);
+        bindPresenterWidget(
+                AiToolApprovalsPresenter.class,
+                AiToolApprovalsView.class,
+                AiToolApprovalsViewImpl.class);
+
+        // Security > MCP Tool Policies
+        bindPlugin(AiToolPoliciesPlugin.class);
+        bindPresenterWidget(
+                AiToolPoliciesPresenter.class,
+                AiToolPoliciesView.class,
+                AiToolPoliciesViewImpl.class);
+        bindPresenterWidget(
+                AiToolPolicyEditPresenter.class,
+                AiToolPolicyEditView.class,
+                AiToolPolicyEditViewImpl.class);
+        bindPresenterWidget(
+                AiToolPolicyMembersPresenter.class,
+                AiToolPolicyMembersView.class,
+                AiToolPolicyMembersViewImpl.class);
     }
 }

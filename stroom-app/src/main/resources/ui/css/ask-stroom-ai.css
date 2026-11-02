@@ -23,10 +23,11 @@
     flex-grow: 1;
     align-items: center;
     flex-direction: row;
-    overflow: hidden;
+    min-width: 0;
 }
 
-.askStroomAiViewImpl-title div {
+/* The title, cut short with an ellipsis. Only the area's own children: not what is inside its buttons. */
+.askStroomAiViewImpl-title > div {
     text-overflow: ellipsis;
     width: 100%;
     overflow: hidden;
@@ -36,24 +37,121 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
+/* Room around the conversation, so text does not run up against the panel's edges. */
 .askStroomAiViewImpl-middle {
-    padding: 2px 5px;
+    padding: 8px 16px 24px;
+}
+
+/* Following the conversation glides to new content (the container's smooth scrolling), unless the user would
+   rather have less motion. */
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-middle.markdown-container {
+        scroll-behavior: auto;
+    }
 }
 
 .askStroomAiViewImpl-bottom {
     padding: 10px;
 }
 
+/* While a chat loads (once that has taken long enough to notice): a spinning circle in the middle of the
+   conversation, which is empty until the chat is shown, with what it is doing below it. */
+.askStroomAiViewImpl-middle--loading {
+    position: relative;
+}
+
+.askStroomAiViewImpl-middle--loading::before,
+.askStroomAiViewImpl-middle--loading::after {
+    position: absolute;
+    left: 50%;
+    pointer-events: none;
+}
+
+.askStroomAiViewImpl-middle--loading::before {
+    content: "";
+    top: calc(50% - 28px);
+    width: 28px;
+    height: 28px;
+    margin-left: -14px;
+    box-sizing: border-box;
+    border: 3px solid rgba(128, 128, 128, 0.3);
+    border-top-color: var(--blue-500, #1976d2);
+    border-radius: 50%;
+    animation: ai-stop-spin 0.9s linear infinite;
+}
+
+.askStroomAiViewImpl-middle--loading::after {
+    content: "Loading chat...";
+    top: calc(50% + 10px);
+    transform: translateX(-50%);
+    color: var(--control__text-color--disabled);
+    font-size: var(--ai-font-size--meta);
+    white-space: nowrap;
+}
+
+
+/* As rounded as the task list above it. */
 .askStroomAiViewImpl-bottom-inner {
     display: flex;
     gap: 5px;
     overflow: hidden;
     background-color: var(--page__background-color);
     border: 1px solid var(--splitter__background-color);
-    border-radius: .25rem;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+/* While a question is being worked on, the input box gets a glowing border in the app's blues, with a bright
+   highlight that travels round it, so it is clear the chat is busy. The border is a gradient behind the box, so the
+   box's own clipping does not hide it. */
+@property --ai-glow-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+
+.askStroomAiViewImpl-bottom-inner--working {
+    /* As thick in all as the border and padding it has otherwise, so the box doesn't change size. */
+    border: 2px solid transparent;
     padding: 5px;
+    background:
+        linear-gradient(var(--page__background-color), var(--page__background-color)) padding-box,
+        conic-gradient(from var(--ai-glow-angle),
+            rgba(var(--blue-500-rgb), 0.45) 0deg,
+            rgba(var(--blue-500-rgb), 0.45) 200deg,
+            var(--blue-300) 270deg,
+            #e3f2fd 310deg,
+            #4fc3f7 330deg,
+            rgba(var(--blue-500-rgb), 0.45) 360deg) border-box;
+    animation:
+        ai-glow-turn 3s linear infinite,
+        ai-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-glow-turn {
+    to {
+        --ai-glow-angle: 360deg;
+    }
+}
+
+@keyframes ai-glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 4px 0 rgba(var(--blue-500-rgb), 0.35);
+    }
+    50% {
+        box-shadow: 0 0 14px 2px rgba(var(--blue-500-rgb), 0.6);
+    }
+}
+
+/* For people who have asked for less motion: a steady glow instead. */
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-bottom-inner--working {
+        animation: none;
+        box-shadow: 0 0 8px 1px rgba(var(--blue-500-rgb), 0.5);
+    }
 }
 
 .askStroomAiViewImpl-messagePane {
@@ -63,7 +161,7 @@
 
 .askStroomAiViewImpl-contextChip {
     display: none;
-    font-size: 0.75rem;
+    font-size: var(--ai-font-size--meta);
     line-height: 1;
     padding: 3px 8px;
     border-radius: 10px;
@@ -72,6 +170,178 @@
     white-space: nowrap;
     align-self: center;
     flex-shrink: 0;
+}
+
+/* Tables attached since the last message was sent, listed above the input in its box. */
+.askStroomAiViewImpl-attachments {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 2px 4px;
+}
+
+.ai-attachment-chips {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* Between the tab's chips and the chips of the documents and tables attached. */
+.ai-attachment-chips-divider {
+    align-self: stretch;
+    width: 1px;
+    margin: 2px 3px;
+    background-color: var(--splitter__background-color);
+}
+
+/* On the right of the list, centred on its rows, removing all its tables after asking: a standard size icon button
+   (as the auto-approve shield is). */
+.ai-attachment-remove-all {
+    box-sizing: border-box;
+    border: thin solid transparent;
+}
+
+.ai-attachment-remove-all:hover:not([disabled]) {
+    background-color: var(--icon-button__background-color--hover);
+    border-color: var(--icon-button__border-color--hover);
+}
+
+.ai-attachment-remove-all:hover:not([disabled]) .face {
+    color: var(--icon-colour__red);
+}
+
+.ai-attachment-remove-all[disabled] {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* The tables a message was sent with, at the top of its bubble. */
+.ai-message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.ai-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 2px 4px 2px 2px;
+    border: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.35));
+    border-radius: 6px;
+    background-color: var(--control__background-color, transparent);
+    font-size: var(--ai-font-size--meta);
+    line-height: 16px;
+}
+
+/* Offers to attach the tab the user is on: dashed and muted until hovered, so it reads as an option, not as
+   something already shared. */
+.ai-attachment-chip--attach-tab {
+    border: 1.5px dashed rgba(var(--blue-500-rgb), 0.75);
+    background-color: transparent;
+    color: var(--text-color--secondary);
+    font: inherit;
+    font-size: var(--ai-font-size--meta);
+    cursor: pointer;
+}
+
+.ai-attachment-chip--attach-tab:hover,
+.ai-attachment-chip--attach-tab:focus-visible {
+    color: inherit;
+    border-color: var(--blue-300);
+    background-color: var(--curve-tab__background-color--hover);
+}
+
+.ai-attach-tab-plus {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    margin-left: 3px;
+    color: var(--blue-300);
+}
+
+/* The icon's own size is far larger than the chip, so it is made to fit its box. */
+.ai-attach-tab-plus svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* The chip's buttons are icon buttons, sized to the chip's line, with their icons centred in them. */
+.ai-attachment-chip-icon,
+.ai-attachment-chip-remove {
+    box-sizing: border-box;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.ai-attachment-chip-icon {
+    display: inline-flex;
+    align-items: center;
+    width: 18px;
+    height: 18px;
+}
+
+.ai-attachment-chip-icon .face {
+    width: 14px;
+    height: 14px;
+}
+
+.ai-attachment-chip-remove .face {
+    width: 10px;
+    height: 10px;
+}
+
+.ai-attachment-chip-icon .face svg,
+.ai-attachment-chip-remove .face svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.ai-attachment-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-attachment-chip--error .ai-attachment-chip-label {
+    color: #d32f2f;
+}
+
+/* While the table is downloaded. */
+.ai-attachment-chip-spinner {
+    width: 12px;
+    height: 12px;
+    margin: 0 2px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border: 2px solid rgba(128, 128, 128, 0.35);
+    border-top-color: #1976d2;
+    border-radius: 50%;
+    animation: ai-stop-spin 0.9s linear infinite;
+}
+
+/* In its place once downloaded, highlighted on hover as other icon buttons are. */
+.ai-attachment-chip-remove {
+    width: 16px;
+    height: 16px;
+    border: thin solid transparent;
+    border-radius: 4px;
+}
+
+.ai-attachment-chip-remove:hover {
+    background-color: var(--icon-button__background-color--hover);
+    border-color: var(--icon-button__border-color--hover);
+}
+
+.ai-attachment-chip-remove:hover .face {
+    color: var(--icon-colour__red);
 }
 
 .askStroomAiViewImpl-messagePane input,
@@ -86,6 +356,22 @@
     align-items: center;
 }
 
+/* In a narrow panel the model's name gives way (cut short with an ellipsis), so the context pill and the
+   Send/Stop button always stay in view. */
+.askStroomAiViewImpl-modelPane > .dock-max {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.askStroomAiViewImpl-modelPane > :not(.dock-max) {
+    flex-shrink: 0;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-label {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .askStroomAiViewImpl-modelPane .play svg {
     color: #4caf50;
 }
@@ -98,8 +384,73 @@
     color: #d32f2f;
 }
 
+/* Stops everything the chat is doing. Shown only while something is in progress: a red stop square in a
+   spinning red ring. */
+.askStroomAiViewImpl-stop {
+    display: none;
+}
+
+.askStroomAiViewImpl-stop.askStroomAiViewImpl-stop--shown {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    /* Close beside the Send button, as the two go together. */
+    margin-right: -2px;
+}
+
+.askStroomAiViewImpl-stop::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 50%;
+    border: 2px solid rgba(211, 47, 47, 0.25);
+    border-top-color: #d32f2f;
+    animation: ai-stop-spin 1s linear infinite;
+    pointer-events: none;
+}
+
+.askStroomAiViewImpl-modelPane .askStroomAiViewImpl-stop svg {
+    width: 10px;
+    height: 10px;
+    color: #d32f2f;
+}
+
+.askStroomAiViewImpl-stop:hover::after {
+    border-color: #d32f2f;
+}
+
+@keyframes ai-stop-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl-stop::after {
+        animation-duration: 3s;
+    }
+}
+
+/* The model picker is as wide as the model's name (up to the room there is), so its drop-down arrow sits
+   beside the name rather than at the far end of the row. */
 .askStroomAiViewImpl-modelPane .dropDownView-container {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    padding-right: 22px;
+    box-sizing: border-box;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-label {
+    text-overflow: ellipsis;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container {
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-modelPane .dropDownView-container:hover {
+    background: var(--curve-tab__background-color--hover);
 }
 
 .askStroomAiViewImpl-modelPane .dropDownView-button {
@@ -110,37 +461,285 @@
     min-width: 80px;
 }
 
-
+/* Text sizes in the chat: body text is 1em; these are the only smaller sizes, so text stays legible. */
+:root {
+    --ai-font-size--small: 0.9em;
+    --ai-font-size--meta: 0.85em;
+}
 
 /* ---- Message thread ---- */
 
 .ai-message {
-    padding: 8px 12px;
-    margin: 4px 0;
+    padding: 10px 14px;
+    margin: 6px 0;
     border-radius: 6px;
-    line-height: 1.5;
+    line-height: 1.6;
     word-wrap: break-word;
 }
 
+/* The user's own messages are bubbles on the right, as in most chat tools. */
 .ai-message--user {
-    background: var(--page__background-color);
+    /* A muted blue, so questions stand out from answers without glaring, in light and dark themes. */
+    background: rgba(25, 118, 210, 0.16);
+    border: 1px solid rgba(25, 118, 210, 0.35);
+    border-radius: 12px 12px 4px 12px;
+    width: fit-content;
+    max-width: 85%;
+    margin-left: auto;
+    /* A new question starts a new turn, so leave a clear gap above it. */
+    margin-top: 20px;
 }
 
-.ai-message--user blockquote {
-    border-left: 3px solid var(--control__border-color--focused);
-    margin: 0;
-    padding-left: 8px;
-    word-wrap: break-word;
+.ai-message--user > .ai-message-content > :first-child,
+.ai-message--assistant > .ai-message-content > :first-child {
+    margin-top: 0;
+}
+
+.ai-message--user > .ai-message-content > :last-child,
+.ai-message--assistant > .ai-message-content > :last-child {
+    margin-bottom: 0;
+}
+
+/* A message sent while the run works, waiting for its current step to finish: a prominent dashed outline and a
+   lighter fill set it apart from messages sent. Once the run picks it up it is shown as any other message. */
+.ai-message--queued {
+    background: rgba(25, 118, 210, 0.08);
+    border: 2px dashed rgba(25, 118, 210, 0.75);
+}
+
+.ai-queued-steer-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--text-color--secondary);
+}
+
+.ai-queued-steer-send {
+    flex-shrink: 0;
 }
 
 .ai-message--assistant {
-    /* default background — inherits from container */
+    padding: 6px 0 4px;
+    margin-top: 10px;
+}
+
+.ai-message-avatar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--ai-font-size--small);
+    font-weight: 600;
+    color: var(--control__text-color);
+    opacity: 0.8;
+    margin-bottom: 8px;
+}
+
+.ai-message-avatar .svgIcon,
+.ai-message-avatar svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ---- Editing a question ---- */
+
+.ai-message--editing {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.ai-edit-text {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 4em;
+    resize: vertical;
+    font: inherit;
+    color: inherit;
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color--focused);
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+.ai-edit-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* ---- Day dividers ---- */
+
+.ai-day-divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 4px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+}
+
+.ai-day-divider::before,
+.ai-day-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--control__border-color);
+}
+
+/* ---- What of each turn's activity is shown (the user's settings) ---- */
+
+.ai-hide-tool-calls .ai-message--tool,
+.ai-hide-reasoning .ai-message--thinking,
+.ai-hide-request-detail .ai-message--debug-detail {
+    display: none;
+}
+
+/* ---- Code blocks ---- */
+
+/* The language and Copy button sit in a bar joined to the top of the code, as one box. */
+.ai-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 4px 12px;
+    margin-top: 4px;
+    font-size: var(--ai-font-size--meta);
+    border: 1px solid var(--markdown-code__border-color, var(--control__border-color));
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: var(--markdown-code__background-color, var(--page__background-color));
+}
+
+.ai-code-header + pre,
+.ai-code-header + pre[class*=language-] {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top-style: dashed;
+}
+
+.ai-code-language {
+    color: var(--control__text-color--disabled);
+}
+
+/* ---- Jump to the latest message ---- */
+
+/* Floats over the bottom of the conversation, taking no room of its own. */
+.askStroomAiViewImpl-jumpToLatestBar {
+    position: relative;
+    height: 0;
+    overflow: visible;
+    z-index: 1;
+}
+
+.askStroomAiViewImpl-jumpToLatest {
+    position: absolute;
+    /* Above the suggestions, when there are any. */
+    bottom: calc(12px + var(--ai-follow-ups-height, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 18px;
+    color: #ffffff;
+    background: #1976d2;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.askStroomAiViewImpl-jumpToLatestArrow {
+    font-size: 1.3em;
+    font-weight: 700;
+    line-height: 1;
+    margin-right: 6px;
+    vertical-align: -0.1em;
+}
+
+.askStroomAiViewImpl-jumpToLatest:hover {
+    background: #1565c0;
 }
 
 .ai-message--error {
     background: rgba(211, 47, 47, 0.1);
     border-left: 3px solid #d32f2f;
     color: #d32f2f;
+}
+
+.ai-message--error .ai-message-content h4 {
+    margin: 0 0 4px;
+    font-size: inherit;
+    font-weight: 600;
+}
+
+.ai-message--error .ai-message-content ul {
+    margin: 4px 0 0;
+}
+
+.ai-message-error-retry {
+    cursor: pointer;
+    margin-top: 6px;
+}
+
+.ai-message--run-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-left: 3px solid var(--text-colour-disabled, #888);
+    opacity: 0.9;
+}
+
+.ai-run-resume {
+    cursor: pointer;
+}
+
+.ai-message--warning {
+    background: rgba(237, 108, 2, 0.1);
+    border-left: 3px solid #ed6c02;
+}
+
+.ai-message--approval {
+    background: rgba(25, 118, 210, 0.08);
+    border-left: 3px solid #1976d2;
+}
+
+.ai-approval-button {
+    margin-right: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    cursor: pointer;
+}
+
+.ai-approval-button--approve {
+    border-color: #1976d2;
+}
+
+.ai-approval-button:hover {
+    border-color: var(--control__border-color--focused);
+}
+
+/* Deny, Deny all and Reject, in red. */
+.ai-approval-button.ai-approval-button--deny {
+    border-color: #d32f2f;
+    color: #d32f2f;
+}
+
+.ai-approval-button.ai-approval-button--deny:hover {
+    background-color: rgba(211, 47, 47, 0.12);
+    border-color: #d32f2f;
+}
+
+/* The progress line lines up with the turns' steps, rather than being indented like a message. */
+.ai-message.ai-message--working {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .ai-message--working summary,
@@ -160,11 +759,45 @@
     background: var(--page__background-color);
 }
 
-.ai-message--working summary::marker,
-.ai-message--data summary::marker,
-.ai-message--thinking summary::marker,
-.ai-message--debug-detail summary::marker {
-    font-size: 0.8em;
+/* Expandable sections all use the same chevron, drawn with borders so it is bold enough to see. */
+.ai-message--working > summary,
+.ai-message--data > summary,
+.ai-message--thinking > summary,
+.ai-message--debug-detail > summary {
+    list-style: none;
+}
+
+.ai-message--working > summary::-webkit-details-marker,
+.ai-message--data > summary::-webkit-details-marker,
+.ai-message--thinking > summary::-webkit-details-marker,
+.ai-message--debug-detail > summary::-webkit-details-marker {
+    display: none;
+}
+
+.ai-message--working > summary::before,
+.ai-message--data > summary::before,
+.ai-message--thinking > summary::before,
+.ai-message--debug-detail > summary::before {
+    content: "";
+    display: inline-block;
+    flex: none;
+    align-self: center;
+    width: 7px;
+    height: 7px;
+    margin: 0 6px 0 2px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.15s;
+    vertical-align: 1px;
+}
+
+.ai-message--working[open] > summary::before,
+.ai-message--data[open] > summary::before,
+.ai-message--thinking[open] > summary::before,
+.ai-message--debug-detail[open] > summary::before {
+    transform: rotate(45deg);
+    vertical-align: 3px;
 }
 
 .ai-message--debug-detail .ai-details-content {
@@ -173,30 +806,12 @@
     overflow: auto;
 }
 
-/* ---- Empty state (centered input, ChatGPT-style) ---- */
-.askStroomAiViewImpl.empty .markdown-container {
-    display: none;
-}
-
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.askStroomAiViewImpl.empty .askStroomAiViewImpl-bottom-inner {
-    width: 100%;
-    max-width: 500px;
-}
-
+/* ---- Empty state: the input stays at the bottom, as in a chat with messages, with a prompt above it ---- */
 .askStroomAiViewImpl-emptyPrompt {
     display: none;
     font-size: 1.25em;
     color: var(--control__text-color--disabled);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     text-align: center;
     user-select: none;
 }
@@ -218,7 +833,7 @@
 }
 
 .ai-attachment-status {
-    font-size: 0.85em;
+    font-size: var(--ai-font-size--meta);
     opacity: 0.8;
     font-style: italic;
     display: flex;
@@ -238,7 +853,8 @@
 }
 
 .ai-message-timestamp {
-    font-size: 0.7em;
+    font-size: var(--ai-font-size--meta);
+    white-space: nowrap;
     color: var(--control__text-color--disabled);
     margin-left: auto;
     cursor: default;
@@ -260,23 +876,6 @@
     border-color: var(--control__text-color);
 }
 
-.aiChatHistoryCell {
-}
-
-.aiChatHistoryCell-row {
-    display: flex;
-    flex-direction: row;
-    padding: 5px;
-    gap: 5px;
-}
-
-.aiChatHistoryCell-title {
-    flex-grow: 1;
-}
-
-.aiChatHistoryCell-age {
-    opacity: 0.6;
-}
 
 /* ---- Delete button (visible on hover) ---- */
 
@@ -286,6 +885,21 @@
 
 .ai-message:hover > .ai-message-footer .ai-message-delete {
     opacity: 1;
+}
+
+/* Message actions show when the message is hovered over or focused, to keep the conversation uncluttered. */
+.ai-message > .ai-message-footer > button {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ai-message:hover > .ai-message-footer > button,
+.ai-message:focus-within > .ai-message-footer > button {
+    opacity: 1;
+}
+
+.ai-message-footer {
+    margin-top: 4px;
 }
 
 .ai-message-delete .face {
@@ -302,4 +916,1700 @@
 
 .ai-attachment-status-icon .face {
     color: var(--icon-colour__green);
+}
+
+/* The chat in a content tab (tab mode). */
+.askStroomAiTab {
+    width: 100%;
+    height: 100%;
+}
+
+.askStroomAiTab > .askStroomAiViewImpl {
+    width: 100%;
+    height: 100%;
+}
+
+/* The chat title opens the chat switcher. */
+/* The chat title, which opens the list of chats. It highlights on hover, as a tab does, and while the list is
+   open. */
+.askStroomAiViewImpl-switcher {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* A long title is cut short to fit on one line, keeping the arrow in view. */
+.askStroomAiViewImpl-title .askStroomAiViewImpl-switcher {
+    position: relative;
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-right: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.askStroomAiViewImpl-switcher:hover,
+.askStroomAiViewImpl-switcher--open {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.askStroomAiViewImpl-switcher::after {
+    content: "\25BE";
+    opacity: 0.6;
+    position: absolute;
+    right: 6px;
+}
+
+/* Badges on the toolbar's Ask Stroom AI button: a chat needs the user, is working, or has unread messages. */
+.ai-badge--needs-you,
+.ai-badge--busy,
+.ai-badge--unread {
+    position: relative;
+}
+
+/* Toolbar buttons are dimmed, which would dim the badge too, so a button with a badge is shown in full. */
+.navigation-menu-button.ai-badge--needs-you,
+.navigation-menu-button.ai-badge--busy,
+.navigation-menu-button.ai-badge--unread {
+    opacity: 1;
+}
+
+.ai-badge--needs-you::after,
+.ai-badge--busy::after,
+.ai-badge--unread::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #ffffff;
+    pointer-events: none;
+}
+
+.ai-badge--needs-you::after {
+    background-color: #ed6c02;
+}
+
+.ai-badge--busy::after {
+    background-color: #1976d2;
+    animation: ai-badge-pulse 1.5s ease-in-out infinite;
+}
+
+/* A bright green with a white ring, so it stands out from the blue button and the dark toolbar alike. */
+.ai-badge--unread::after {
+    background-color: #00e676;
+    box-shadow: 0 0 0 2px #ffffff;
+}
+
+@keyframes ai-badge-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* ---- A turn's reasoning, tool calls and request detail, shown as compact steps between what is said ---- */
+
+.ai-message.ai-message--tool,
+.ai-message.ai-message--memory,
+.ai-message.ai-message--thinking,
+.ai-message.ai-message--debug-detail {
+    margin: 0 0 0 5px;
+    padding: 2px 4px 2px 14px;
+    border-left: 2px solid var(--control__border-color);
+    font-size: var(--ai-font-size--small);
+}
+
+.ai-message--tool-error .ai-entry-title {
+    color: var(--icon-colour__red, #d32f2f);
+}
+
+.ai-entry-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-tool-result {
+    margin-top: 6px;
+    border-top: 1px dashed var(--control__border-color);
+    padding-top: 6px;
+}
+
+.ai-thinking-preview {
+    margin-left: 6px;
+    font-style: italic;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.ai-message--live-thinking > summary .ai-entry-title {
+    animation: ai-pulse 1.5s ease-in-out infinite;
+}
+
+/* ---- An answer being written ---- */
+
+.ai-message--streaming > .ai-message-content > :last-child::after {
+    content: "▍";
+    animation: ai-pulse 1s steps(2, start) infinite;
+    margin-left: 1px;
+}
+
+@keyframes ai-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+/* ---- Context meter, next to the model ---- */
+
+/* How full the model's context window is, as a pill: grey, then yellow from 75%, then red from 90%. */
+.askStroomAiViewImpl-contextMeter {
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: var(--ai-font-size--meta);
+    font-variant-numeric: tabular-nums;
+    padding: 1px 8px;
+    /* A little apart from the model's name before it and the Stop and Send buttons after it (the toolbar puts
+       a gap between its items). */
+    margin: 0 4px;
+    border-radius: 999px;
+    color: var(--control__text-color--disabled);
+    background: rgba(128, 128, 128, 0.15);
+    border: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.askStroomAiViewImpl-contextMeter:hover {
+    color: var(--control__text-color);
+}
+
+.askStroomAiViewImpl-contextMeter--warn,
+.askStroomAiViewImpl-contextMeter--warn:hover {
+    color: #b58105;
+    background: rgba(249, 168, 37, 0.18);
+    border-color: rgba(249, 168, 37, 0.7);
+}
+
+.askStroomAiViewImpl-contextMeter--over,
+.askStroomAiViewImpl-contextMeter--over:hover {
+    color: #d32f2f;
+    background: rgba(211, 47, 47, 0.15);
+    border-color: rgba(211, 47, 47, 0.7);
+}
+
+/* The pill's details, shown above it on hover. */
+.askStroomAiViewImpl-contextDetails {
+    position: fixed;
+    z-index: 1000;
+    min-width: 200px;
+    max-width: 320px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--control__border-color);
+    background: var(--page__background-color);
+    color: var(--control__text-color);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    font-size: var(--ai-font-size--small);
+    pointer-events: none;
+}
+
+.ai-context-details-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ai-context-details-parts {
+    margin: 6px 0;
+}
+
+.ai-context-details-part {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.ai-context-details-value {
+    font-variant-numeric: tabular-nums;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-context-details-note {
+    color: var(--control__text-color--disabled);
+    font-size: var(--ai-font-size--meta);
+}
+
+/* ---- Commands suggested as the user types "/" ---- */
+
+/* Things the user might ask next, offered above the input after an answer. They float over the bottom of the
+   conversation, in front of the bottom's shadow, without making the bottom any taller; the conversation has room
+   below its latest message as tall as they are (--ai-follow-ups-height, set by the view), so they never hide it. */
+.askStroomAiViewImpl-followUpsBar {
+    position: relative;
+    height: 0;
+    overflow: visible;
+    z-index: 3;
+}
+
+.askStroomAiViewImpl-followUps {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    /* Only the suggestions take clicks; the conversation can be scrolled and clicked between them. */
+    pointer-events: none;
+}
+
+.askStroomAiViewImpl-followUp {
+    max-width: 100%;
+    padding: 3px 10px;
+    border: 1px solid var(--splitter__background-color);
+    border-radius: 12px;
+    background: var(--page__background-color);
+    color: var(--link__text-color);
+    font: inherit;
+    font-size: var(--ai-font-size--small);
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.askStroomAiViewImpl-followUp:hover,
+.askStroomAiViewImpl-followUp:focus-visible {
+    background: var(--curve-tab__background-color--hover);
+}
+
+/* Up to ten commands high, then scrolls. */
+.askStroomAiViewImpl-commands {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    max-height: calc(10 * 28px);
+    overflow-y: auto;
+}
+
+.askStroomAiViewImpl-command {
+    flex: none;
+    box-sizing: border-box;
+    height: 26px;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    text-align: left;
+    padding: 3px 6px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    color: var(--control__text-color);
+    font-family: inherit;
+}
+
+.askStroomAiViewImpl-command:hover,
+.askStroomAiViewImpl-command:focus {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.askStroomAiViewImpl-command:hover .askStroomAiViewImpl-commandDescription,
+.askStroomAiViewImpl-command:focus .askStroomAiViewImpl-commandDescription {
+    color: var(--control__text-color);
+}
+
+.askStroomAiViewImpl-commandArgs {
+    color: var(--control__text-color--disabled);
+}
+
+.askStroomAiViewImpl-commandDescription {
+    margin-left: 8px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+}
+
+/* ---- Compaction divider ---- */
+
+.ai-compaction-divider > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+}
+
+.ai-compaction-divider > summary::-webkit-details-marker {
+    display: none;
+}
+
+.ai-compaction-divider > summary::before,
+.ai-compaction-divider > summary::after {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed var(--control__border-color);
+}
+
+.ai-compaction-divider > summary .ai-entry-title {
+    flex: 0 1 auto;
+    text-align: center;
+}
+
+.ai-compaction-divider > .ai-message-footer {
+    display: none;
+}
+
+.ai-compaction-divider[open] > .ai-message-footer {
+    display: flex;
+}
+
+/* ---- Requests for the user's approval ---- */
+
+.ai-message--needs-you {
+    border-left: 3px solid #ed6c02;
+    box-shadow: 0 0 0 1px rgba(237, 108, 2, 0.25);
+}
+
+.ai-approval-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ai-approval-reason {
+    font-size: var(--ai-font-size--small);
+    color: var(--control__text-color--disabled);
+    margin-bottom: 6px;
+}
+
+.ai-approval-call {
+    margin: 6px 0;
+    padding: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+}
+
+.ai-approval-call-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-approval-server {
+    color: var(--control__text-color--disabled);
+    font-size: var(--ai-font-size--small);
+}
+
+.ai-risk-badge {
+    font-size: var(--ai-font-size--meta);
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid #ed6c02;
+    color: #ed6c02;
+    white-space: nowrap;
+    cursor: help;
+}
+
+/* Whether the tool's server is trusted: a green tick, or a yellow warning triangle. */
+.ai-trust-icon {
+    display: inline-flex;
+    vertical-align: -2px;
+    margin: 0 6px 0 3px;
+    cursor: help;
+}
+
+.ai-trust-icon .svgIcon,
+.ai-trust-icon svg {
+    width: 13px;
+    height: 13px;
+}
+
+.ai-trust-icon--trusted svg path {
+    fill: #2e7d32 !important;
+}
+
+.ai-risk-badge.ai-risk-badge--safe {
+    border-color: var(--control__border-color);
+    color: var(--control__text-color--disabled);
+}
+
+.ai-approval-decision {
+    margin-left: auto;
+    font-size: var(--ai-font-size--meta);
+    font-style: italic;
+}
+
+.ai-approval-decision--allowed {
+    color: var(--icon-colour__green, #2e7d32);
+}
+
+.ai-approval-decision--denied {
+    color: var(--icon-colour__red, #d32f2f);
+}
+
+/* Arguments are shown in full, so they scroll rather than being cut short. */
+.ai-message--approval pre.ai-approval-args {
+    max-height: 240px;
+    overflow: auto;
+    margin: 6px 0 2px;
+    padding: 4px 6px;
+    font-size: var(--ai-font-size--small);
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--control__text-color);
+    background: var(--page__background-color);
+    border-radius: 4px;
+}
+
+
+.ai-approval-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* Approval buttons must always be visible, not only on hover. */
+.ai-message--approval > .ai-message-footer > button {
+    opacity: 1;
+}
+
+.ai-compaction-divider > .ai-message-footer > button {
+    opacity: 1;
+}
+
+/* ---- Memory and Tool Approvals dialogs ---- */
+
+.aiMemory-intro {
+    font-size: 0.9em;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 8px;
+}
+
+.aiMemory-main {
+    gap: 8px;
+    min-height: 200px;
+}
+
+.aiMemory-list {
+    width: 220px;
+    color: var(--control__text-color);
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.aiMemory-content {
+    resize: none;
+    align-self: stretch;
+    height: auto !important;
+    min-height: 200px;
+    font-family: monospace;
+    color: var(--control__text-color);
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.aiMemory-heading {
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.aiMemory-changes,
+.aiToolApprovals-list {
+    max-height: 160px;
+    overflow: auto;
+    font-size: 0.9em;
+}
+
+.aiToolApprovals-list {
+    max-height: none;
+}
+
+.aiMemory-changeRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiMemory-change {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aiMemory-undone {
+    font-style: italic;
+    color: var(--control__text-color--disabled);
+}
+
+.aiToolApprovals-everything {
+    margin-top: 8px;
+}
+
+/* ---- Forms from MCP tools ---- */
+
+/* What the server says, as Markdown. */
+.ai-elicitation-message {
+    word-break: break-word;
+    margin: 4px 0 6px;
+}
+
+.ai-elicitation-message > div > :first-child {
+    margin-top: 0;
+}
+
+.ai-elicitation-message > div > :last-child {
+    margin-bottom: 0;
+}
+
+.ai-elicitation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 6px 0 8px;
+}
+
+.ai-elicitation-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.ai-elicitation-description {
+    color: var(--text-color--secondary);
+    margin-bottom: 4px;
+}
+
+.ai-elicitation-input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 420px;
+    padding: 4px 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background: var(--control__background-color);
+    color: inherit;
+    font: inherit;
+}
+
+/* Questions from the agent (ask_user), one at a time. */
+.ai-questions {
+    margin: 6px 0 8px;
+}
+
+.ai-question--later {
+    display: none;
+}
+
+.ai-question-progress {
+    font-size: var(--ai-font-size--meta);
+    color: var(--text-color--secondary);
+    margin-bottom: 2px;
+}
+
+.ai-question-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 8px;
+}
+
+.ai-question-options {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.ai-question-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 5px 10px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.ai-question-option:hover,
+.ai-question-option:focus-visible {
+    background: var(--curve-tab__background-color--hover);
+    border-color: var(--blue-300);
+}
+
+.ai-question-option-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ai-question-option-description {
+    font-size: var(--ai-font-size--small);
+    color: var(--control__text-color--disabled);
+}
+
+.ai-question-option--recommended {
+    border-color: rgba(var(--blue-500-rgb), 0.7);
+}
+
+.ai-question-option--chosen {
+    background: rgba(var(--blue-500-rgb), 0.18);
+}
+
+.ai-question-recommended {
+    margin-left: auto;
+    font-size: var(--ai-font-size--meta);
+    padding: 0 6px;
+    border-radius: 999px;
+    color: var(--blue-300);
+    border: 1px solid rgba(var(--blue-500-rgb), 0.5);
+    white-space: nowrap;
+}
+
+.ai-question-custom {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.ai-question-nav {
+    display: flex;
+    margin-bottom: 6px;
+}
+
+.ai-question-back {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--link__text-color);
+    font: inherit;
+    cursor: pointer;
+}
+
+/* What the user answered, once a form has been submitted. */
+.ai-elicitation-answer {
+    margin: 4px 0 6px;
+    word-break: break-word;
+}
+
+.ai-elicitation-answer-title {
+    font-weight: 600;
+}
+
+/* What the model said alongside its tool calls, while the Working line shows it. */
+.ai-message--shown-as-progress {
+    display: none;
+}
+
+.ai-elicitation-answer-value {
+    margin: 0 0 6px;
+}
+
+.ai-elicitation-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+/* ---- Edit MCP Tool Server dialog ---- */
+
+.mcpToolServer-content {
+    overflow: auto;
+}
+
+.mcpToolServer-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--control__gap--horizontal);
+    margin-top: 8px;
+}
+
+/* A tool policy: its pattern, what to do, and a button to remove it. */
+.mcpToolServer-policy {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    margin-bottom: 4px;
+}
+
+.mcpToolServer-policyPattern {
+    flex: 1 1 0;
+    min-width: 0;
+    font-family: var(--monospace-font-family);
+}
+
+.mcpToolServer-policyValue {
+    flex: none;
+    width: 150px;
+}
+
+/* The "New chat" button in the chat's header: labelled, but compact enough for the header. */
+.askStroomAiViewImpl-newChat.Button {
+    min-width: 0;
+    height: 28px;
+    padding: 0 7px;
+    align-self: center;
+    white-space: nowrap;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__content {
+    gap: 6px;
+}
+
+/* The button is sized from its (hidden) label, so give the label room for the icon (16px, less the 1px it is
+   pulled left, as the "+" has blank space in its box) and the gap (6px). The icon and label are then centred,
+   with the same space either side. The button never shows its spinner, whose gap would push the icon right,
+   and the label's right padding would leave more space on the right. */
+.askStroomAiViewImpl-newChat.Button .Button__backgroundText {
+    padding-left: 21px;
+    padding-right: 0;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__icon {
+    margin-left: -1px;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__text {
+    padding-right: 0;
+}
+
+.askStroomAiViewImpl-newChat.Button .Button__spinner {
+    display: none;
+}
+
+/* ---- The list of chats, shown in place of the conversation ---- */
+
+.askStroomAiViewImpl-chatList {
+    overflow: auto;
+    padding: 8px 12px 16px;
+}
+
+.ai-chat-list-empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: var(--control__text-color--disabled);
+}
+
+.ai-chat-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.ai-chat-list-item:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.ai-chat-list-item--current {
+    background: rgba(var(--blue-500-rgb), 0.16);
+}
+
+.ai-chat-list-icon {
+    flex: none;
+    display: flex;
+}
+
+.ai-chat-list-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* A chat's state in colour, matching the badge on the Ask Stroom AI button. */
+.ai-chat-list-icon--needs-you svg {
+    color: #ed6c02;
+}
+
+.ai-chat-list-icon--busy svg {
+    color: #1976d2;
+}
+
+.ai-chat-list-icon--failed svg {
+    color: #d32f2f;
+}
+
+.ai-chat-list-icon--paused svg {
+    color: #f9a825;
+}
+
+/* The bright green of the button's unread badge. */
+.ai-chat-list-icon--unread svg {
+    color: #00e676;
+}
+
+.ai-chat-list-text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ai-chat-list-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ai-chat-list-when {
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+}
+
+/* Only shown on the item being pointed at, so the list stays calm. */
+.ai-chat-list-delete {
+    flex: none;
+    visibility: hidden;
+    color: var(--control__text-color--disabled);
+    background: none;
+    border: none;
+}
+
+.ai-chat-list-item:hover .ai-chat-list-delete,
+.ai-chat-list-delete:focus {
+    visibility: visible;
+}
+
+.ai-chat-list-delete:hover {
+    color: var(--text-color--red, #d32f2f);
+}
+
+/* ---- Agent mode and auto-approve, beside the model ---- */
+
+/* As compact as the model picker: no box until pointed at. */
+.askStroomAiViewImpl-agentMode.SelectionBox {
+    flex: none;
+    width: 84px;
+    border-color: transparent;
+    background: none;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-agentMode.SelectionBox:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.askStroomAiViewImpl-agentMode input,
+.askStroomAiViewImpl-agentMode .SelectionBox-renderBox {
+    background: transparent;
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-autoApprove {
+    flex: none;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.askStroomAiViewImpl-autoApprove:hover {
+    opacity: 1;
+    background: var(--curve-tab__background-color--hover);
+}
+
+/* On: the shield is filled with the app's blue, so it is plain that calls run without asking. */
+.askStroomAiViewImpl-autoApprove--on {
+    opacity: 1;
+    background: rgba(var(--blue-500-rgb), 0.2);
+    color: var(--blue-300);
+}
+
+.askStroomAiViewImpl-autoApprove--on svg {
+    color: var(--blue-300);
+}
+
+/* Steps an MCP tool's result left to the user, each with a button. */
+.ai-user-action {
+    padding: 8px 0;
+    border-top: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.25));
+}
+
+.ai-user-action:first-of-type {
+    border-top: none;
+}
+
+.ai-user-action-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+/* The label, as Markdown: its paragraph without the space round one. */
+.ai-user-action-label p {
+    margin: 0;
+}
+
+.ai-user-action-details,
+.ai-user-action-after {
+    font-size: var(--ai-font-size--small);
+    color: var(--control__text-color--disabled);
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.ai-user-action-after {
+    font-style: italic;
+}
+
+.ai-user-action-warning {
+    font-size: var(--ai-font-size--small);
+    color: #e65100;
+    margin-bottom: 4px;
+}
+
+.ai-user-action .ai-approval-button {
+    margin-top: 4px;
+}
+
+/* A proposed query or request, shown as the chat's code blocks are: the card isn't Markdown, so Stroom's own grey
+   code colour would apply, at a small size, on the card's tint. Long queries wrap, as they are often one line. */
+.ai-user-action pre {
+    margin: 4px 0;
+    padding: 0.6em 0.9em;
+    background-color: var(--markdown-code__background-color, var(--page__background-color));
+    border: 1px solid var(--markdown-code__border-color, var(--control__border-color));
+    border-radius: 6px;
+    max-height: 240px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Joined to its header (language and Copy), as the chat's code blocks are: the rule above would otherwise put
+   a gap and rounded corners between them. */
+.ai-user-action .ai-code-header + pre {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top-style: dashed;
+}
+
+.ai-user-action pre code {
+    color: var(--text-color);
+    font-family: var(--markdown-code__font-family, var(--monospace-font-family));
+    font-size: var(--font-size-13);
+    line-height: 1.5;
+    background: none;
+}
+
+/* The search box and buttons above the list of chats, kept in view as the list scrolls. */
+.ai-chat-list-header {
+    position: sticky;
+    top: -8px;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin: -8px -12px 6px;
+    padding: 8px 12px 6px;
+    background: var(--control__background-color);
+}
+
+/* The buttons go below the search box when there isn't room for both. */
+.ai-chat-list-search.allow-focus {
+    flex: 1 1 120px;
+    min-width: 120px;
+    max-width: 320px;
+    font-size: var(--ai-font-size--small);
+}
+
+.ai-chat-list-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex: none;
+}
+
+/* Part of the matching question, under a chat found by searching. */
+.ai-chat-list-snippet {
+    margin-top: 2px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* A match of the search. */
+mark.ai-chat-list-hit {
+    background: rgba(255, 200, 0, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0;
+}
+
+/* Chrome paints a cut-off match's background past a title's ellipsis; an inline block is hidden whole instead. */
+.ai-chat-list-title mark.ai-chat-list-hit {
+    display: inline-block;
+}
+
+.ai-chat-list-action {
+    background: none;
+    border: 1px solid var(--ai-border-color, rgba(128, 128, 128, 0.35));
+    border-radius: 4px;
+    color: inherit;
+    font: inherit;
+    font-size: var(--ai-font-size--small);
+    padding: 3px 10px;
+    cursor: pointer;
+}
+
+.ai-chat-list-action:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.aiConfigTableAnalysis-note {
+    margin-bottom: 10px;
+    color: var(--control__text-color--disabled);
+}
+
+/* ---- Smooth expanding and collapsing in the chat ---- */
+
+/* Sections that open and close (activity, reasoning, tool calls, details) slide rather than jump, where the
+   browser supports animating them; elsewhere they open at once. */
+.askStroomAiViewImpl {
+    interpolate-size: allow-keywords;
+}
+
+.askStroomAiViewImpl details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    opacity: 0;
+    transition: block-size 0.2s ease, opacity 0.2s ease, content-visibility 0.2s allow-discrete;
+}
+
+.askStroomAiViewImpl details[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .askStroomAiViewImpl details::details-content {
+        transition: none;
+    }
+}
+
+/* ---- A model's MCP Tool Servers tab: the selected server's tools ---- */
+
+.mcpToolList-toolbar {
+    align-items: center;
+    gap: 8px;
+    padding: 2px 6px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.mcpToolList-status {
+    font-size: var(--ai-font-size--small, 0.9em);
+    color: var(--control__text-color--disabled);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcpToolList-details {
+    overflow: auto;
+    padding: 8px 16px;
+    box-sizing: border-box;
+}
+
+.mcpToolList-details h2 {
+    margin-top: 0;
+}
+
+/* A link that opens a document or stream in Stroom, with a forward icon after it. */
+a.ai-stroom-link::after {
+    content: "";
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    margin-left: 0.2em;
+    vertical-align: -0.05em;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M17 17H3V3h5V1H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2z'/><path d='M19 1h-8l3.29 3.29-5.73 5.73 1.42 1.42 5.73-5.73L19 9V1z'/></svg>") no-repeat center / contain;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path d='M17 17H3V3h5V1H3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5h-2z'/><path d='M19 1h-8l3.29 3.29-5.73 5.73 1.42 1.42 5.73-5.73L19 9V1z'/></svg>") no-repeat center / contain;
+}
+
+.mcpToolList-filter {
+    width: 220px;
+}
+
+.mcpToolList-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mcpToolList-name {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+/* ---- A slash command's reference, above the input ---- */
+
+/* Shaded, scrolling, and taking its room from the messages above; its top edge can be dragged to resize it. */
+.askStroomAiViewImpl-commandReference {
+    position: relative;
+    box-sizing: border-box;
+    height: 180px;
+    min-height: 60px;
+    margin-bottom: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 6px;
+    background: rgba(128, 128, 128, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.askStroomAiViewImpl-commandReference-resize {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    cursor: ns-resize;
+    z-index: 1;
+}
+
+.askStroomAiViewImpl-commandReference-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+}
+
+.askStroomAiViewImpl-commandReference-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 8px 32px 8px 12px;
+    font-size: var(--ai-font-size--small);
+}
+
+.askStroomAiViewImpl-commandReference-content p:first-child {
+    margin-top: 0;
+}
+
+/* ---- The agent's task list, above the input ---- */
+
+.askStroomAiViewImpl-taskList {
+    margin-bottom: 6px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 6px;
+    background: rgba(128, 128, 128, 0.08);
+    font-size: var(--ai-font-size--small);
+}
+
+.askStroomAiViewImpl-taskList-header {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 4px 10px;
+    border: none;
+    background: none;
+    color: var(--control__text-color);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* A chevron, as on the chat's other sections: down while open, right while folded away. */
+.askStroomAiViewImpl-taskList-header::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 8px 2px 0;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.15s;
+}
+
+.askStroomAiViewImpl-taskList--collapsed .askStroomAiViewImpl-taskList-header::before {
+    transform: rotate(-45deg);
+}
+
+.askStroomAiViewImpl-taskList-items {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 0 10px 6px;
+}
+
+.ai-task {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 1px 0;
+}
+
+.ai-task-icon {
+    flex: none;
+    width: 1em;
+    text-align: center;
+}
+
+.ai-task-icon--completed {
+    color: #2e7d32;
+}
+
+.ai-task-icon--in_progress {
+    color: #1976d2;
+}
+
+.ai-task-icon--not_started {
+    color: var(--control__text-color--disabled);
+}
+
+.ai-task--completed .ai-task-title {
+    color: var(--control__text-color--disabled);
+    text-decoration: line-through;
+}
+
+.ai-task--in_progress .ai-task-title {
+    font-weight: 600;
+}
+
+/* ---- Chat overview: what the user did, joined by what the agent did in between, drawn as SVG ---- */
+
+/* A long title gives way, cut short, rather than pushing the buttons beside it out of view. */
+.askStroomAiViewImpl-title .askStroomAiViewImpl-switcher {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+/* While the overview is shown: in full, rather than dimmed as the panel's other buttons are, on solid blue with a
+   white icon in either theme. (Stroom's usual look for a button that is on draws the icon in the page's colour,
+   dark on blue with a black border in the dark theme.) */
+.navigation-menu-button.askStroomAiViewImpl-overviewToggle--on {
+    opacity: 1;
+}
+
+.askStroomAiViewImpl-overviewToggle--on .background,
+.askStroomAiViewImpl-overviewToggle--on:hover .background {
+    background-color: var(--blue-500);
+    border: none;
+}
+
+.askStroomAiViewImpl-overviewToggle--on svg {
+    color: #ffffff;
+}
+
+/* The overview takes the conversation's place, and no more: its height is what is left, never its chart's, so a
+   tall chart scrolls rather than growing the panel. */
+.askStroomAiViewImpl-overview {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* The room either side of the chart: the same on the left as on the right, where the zoom buttons sit over it.
+   And above it, for the search controls floating over its top. */
+.askStroomAiViewImpl-overview {
+    --ai-overview-margin: 48px;
+    --ai-overview-top: 60px;
+    /* How far the floating search and zoom controls are from the overview's edges. */
+    --ai-overview-inset: 12px;
+}
+
+/* The search controls float over the chart, which scrolls beneath them, so the shadow of the panel's top row of
+   buttons still falls on the chart. */
+.ai-overview-toolbar {
+    position: absolute;
+    /* At the top left, as far from the left as from the top. */
+    top: var(--ai-overview-inset);
+    left: var(--ai-overview-inset);
+    max-width: calc(100% - 2 * var(--ai-overview-inset) - 40px);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    background: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.ai-overview-search-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* The floating controls are as wide as what is in them, so the box has a width of its own. */
+.ai-overview-search {
+    flex: 0 1 220px;
+    min-width: 80px;
+    margin-right: 6px;
+}
+
+.ai-overview-search .quickFilter-textBox {
+    font-size: var(--ai-font-size--small);
+}
+
+/* There is no help button beside it, as there is in a Quick Filter. */
+.ai-overview-search button.clear {
+    right: 4px;
+}
+
+.ai-overview-search-count {
+    flex: none;
+    margin-right: 4px;
+    font-size: var(--ai-font-size--meta);
+    color: var(--control__text-color--disabled);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ai-overview-body {
+    flex: 1 1 0;
+    min-height: 0;
+    position: relative;
+}
+
+/* Filling the body exactly, whatever the chart's size, so what doesn't fit scrolls. */
+.ai-overview-content {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    padding: var(--ai-overview-top) var(--ai-overview-margin) 16px;
+}
+
+/* Inside the chart's right-hand margin, clear of its scroll bar at the very edge. */
+/* Its buttons level with the search button: at the same height, with the same padding. */
+.ai-overview-zoom-strip {
+    position: absolute;
+    top: var(--ai-overview-inset);
+    right: 20px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 6px;
+    background: var(--page__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.ai-overview-svg {
+    display: block;
+    margin: 0 auto;
+    font-family: inherit;
+    overflow: visible;
+}
+
+.ai-overview-node {
+    cursor: pointer;
+    outline: none;
+}
+
+.ai-overview-node-box {
+    fill: var(--page__background-color);
+    stroke: var(--control__border-color);
+    stroke-width: 1;
+    transition: fill 0.15s, stroke 0.15s;
+}
+
+/* While searching: what doesn't match fades, and only the match gone to is outlined, so it is plain which it is:
+   a step's box, or a line's label (an outline drawn round it by the view's backOverviewHits). */
+.ai-overview--dimmed {
+    opacity: 0.35;
+}
+
+.ai-overview--current .ai-overview-node-box {
+    stroke: var(--blue-500);
+    stroke-width: 3;
+}
+
+.ai-overview-link-outline {
+    fill: none;
+    stroke: none;
+}
+
+.ai-overview--current .ai-overview-link-outline {
+    fill: var(--page__background-color);
+    stroke: var(--blue-500);
+    stroke-width: 2;
+}
+
+/* Each place a word searched for is found: dark on a yellow box drawn behind it (see the view's
+   backOverviewHits), as SVG text has no background of its own. */
+.ai-overview-hit {
+    fill: #000000;
+}
+
+.ai-overview-hit-back {
+    fill: #ffd54f;
+}
+
+.ai-overview-node:hover .ai-overview-node-box,
+.ai-overview-node:focus-visible .ai-overview-node-box {
+    fill: var(--curve-tab__background-color--hover);
+    stroke: var(--blue-300);
+}
+
+.ai-overview-node:focus-visible .ai-overview-node-box {
+    stroke-width: 2;
+}
+
+.ai-overview-node-caption {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    fill: var(--control__text-color--disabled);
+}
+
+.ai-overview-node-text {
+    font-size: 13px;
+    fill: var(--control__text-color);
+}
+
+/* Each kind of step has a colour of its own, down its left edge. */
+.ai-overview-node--question .ai-overview-node-accent {
+    fill: #1976d2;
+}
+
+.ai-overview-node--steer .ai-overview-node-accent {
+    fill: #00897b;
+}
+
+.ai-overview-node--answer .ai-overview-node-accent {
+    fill: #43a047;
+}
+
+.ai-overview-node--approval .ai-overview-node-accent {
+    fill: #f9a825;
+}
+
+.ai-overview-node--rejection .ai-overview-node-accent {
+    fill: #d32f2f;
+}
+
+.ai-overview-link line {
+    stroke: var(--control__border-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.ai-overview-link-end {
+    fill: var(--control__border-color);
+}
+
+.ai-overview-link-tools {
+    font-size: 11px;
+    fill: var(--control__text-color);
+}
+
+.ai-overview-link-time {
+    font-size: 11px;
+    fill: var(--control__text-color--disabled);
+    font-variant-numeric: tabular-nums;
+}
+
+/* What the agent is doing now: a line that moves. */
+.ai-overview-link--live line {
+    stroke: var(--blue-300);
+    stroke-dasharray: 4 5;
+    animation: ai-overview-live 0.8s linear infinite;
+}
+
+.ai-overview-link--live .ai-overview-link-end {
+    fill: var(--blue-300);
+}
+
+@keyframes ai-overview-live {
+    to {
+        stroke-dashoffset: -9;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-overview-link--live line {
+        animation: none;
+    }
+}
+
+.ai-overview-empty {
+    font-size: 13px;
+    fill: var(--control__text-color--disabled);
+}
+
+/* A message gone to from the overview, picked out for a moment. */
+.ai-message--located {
+    animation: ai-message-located 2s ease-out;
+}
+
+@keyframes ai-message-located {
+    0%, 30% {
+        box-shadow: 0 0 0 3px rgba(var(--blue-500-rgb), 0.6);
+    }
+    100% {
+        box-shadow: 0 0 0 3px rgba(var(--blue-500-rgb), 0);
+    }
+}
+
+/* ---- Depth: what sits over the conversation and the overview casts a shadow on them as they scroll beneath it,
+   rather than cutting them off with a hard edge ---- */
+
+.askStroomAiViewImpl {
+    --ai-overlay-shadow: rgba(0, 0, 0, 1);
+    /* The shadow of a bar over the conversation, and how far it reaches into it. */
+    --ai-overlay-offset: 16px;
+    --ai-overlay-blur: 28px;
+    --ai-overlay-spread: -12px;
+    --ai-overlay-reach: calc(var(--ai-overlay-offset) + var(--ai-overlay-blur) + var(--ai-overlay-spread));
+}
+
+/* A message gone to (e.g. from the overview) stops below the top row's shadow, rather than under it. */
+.askStroomAiViewImpl-middle > * {
+    scroll-margin-top: var(--ai-overlay-reach);
+}
+
+/* Room at the ends of the conversation and the overview as deep as the shadows over them reach, so the first and
+   latest messages (e.g. a question asked, with the task list below) can always be scrolled clear of them. */
+.askStroomAiViewImpl-middle {
+    padding-top: calc(var(--ai-overlay-reach) + 8px);
+    padding-bottom: calc(var(--ai-overlay-reach) + 12px + var(--ai-follow-ups-height, 0px));
+}
+
+.ai-overview-content {
+    padding-bottom: calc(var(--ai-overlay-reach) + 16px);
+}
+
+/* A dark page needs a much darker shadow to show at all. */
+.stroom-theme-dark .askStroomAiViewImpl {
+    --ai-overlay-shadow: rgba(0, 0, 0, 1);
+}
+
+/* The button row along the top, over what is below it. */
+.askStroomAiViewImpl-top {
+    position: relative;
+    z-index: 2;
+    background-color: var(--control__background-color);
+    box-shadow: 0 var(--ai-overlay-offset) var(--ai-overlay-blur) var(--ai-overlay-spread) var(--ai-overlay-shadow);
+}
+
+/* The task list, suggestions and input box along the bottom, over what is above them. Not while the chat is
+   empty, when the input box sits in the middle with nothing beneath it. No shadow of its own: the input box's,
+   all round it, is the one (asked for by the user: the two overlapping left a line along the top). */
+.askStroomAiViewImpl:not(.empty) .askStroomAiViewImpl-bottom {
+    position: relative;
+    z-index: 1;
+    background-color: var(--control__background-color);
+    /* No gap above the task list and input box, so the shadow starts right at their top edge. */
+    padding-top: 0;
+}
+
+/* The input box (its border round the text, the mode and the other controls) and the task list, each with one
+   shadow the same all round it. (While the chat works, the input box's glow takes the place of its shadow.) */
+.askStroomAiViewImpl-bottom-inner,
+.askStroomAiViewImpl-taskList {
+    box-shadow: 0 0 16px -4px var(--ai-overlay-shadow);
+}
+
+/* The button to go back to the latest message stays over the bottom's shadow. */
+.askStroomAiViewImpl-jumpToLatestBar {
+    z-index: 3;
+}
+
+/* The overview's search controls and zoom buttons, set apart from the chart scrolling beneath them by an outer
+   border (asked for by the user, in place of a shadow): a ring just outside their own border, in the text's
+   colour, so it shows in either theme. */
+.ai-overview-toolbar,
+.ai-overview-zoom-strip {
+    box-shadow: 0 0 0 1px rgb(from var(--text-color) r g b / 0.3);
+}
+
+/* While the overview is shown, the task list is put away: it is about the conversation, not the overview. It comes
+   back as it was when the overview closes. */
+.askStroomAiViewImpl--showingOverview .askStroomAiViewImpl-taskList {
+    display: none !important;
+}
+
+/* The MCP Tool Policies screen: a heading above each panel. */
+.aiToolPolicies-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiToolPolicies-headingText {
+    flex: 1 1 auto;
+    font-weight: bold;
+}
+
+/* The tool search, in a panel's heading row. */
+.aiToolAccess-search {
+    flex: 0 1 260px;
+}
+
+/* A grid of tool access: a row per category, opening to a row per tool. */
+.aiToolAccess-category {
+    font-weight: bold;
+}
+
+.aiToolAccess-access {
+    color: var(--text-color--secondary);
+}
+
+.aiToolAccess-tool {
+    padding-left: 16px;
+}
+
+/* The effective access panel's row for looking up a user. */
+.aiToolAccess-lookUp {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiToolAccess-lookedUp {
+    color: var(--text-color--secondary);
+}
+
+/* A cross in the Read or Write column: not permitted. */
+.aiToolAccess-denied .svgCell-icon svg {
+    color: var(--icon-colour__red);
+}
+
+/* The tool policy dialog's categories: a row each, with the access boxes lined up. */
+.aiToolPolicyEdit-categories td {
+    padding: 2px 12px 2px 0;
+    vertical-align: middle;
 }

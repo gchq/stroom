@@ -1,0 +1,13 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+  <split delimiter="\n">
+    <group>
+      <regex pattern="^&lt;(\d+)&gt;1 (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) Accepted (\S+) for (\S+) from (\S+).*$">
+        <data name="pri" value="$1" /><data name="time" value="$2" /><data name="host" value="$3" />
+        <data name="app" value="$4" /><data name="method" value="$8" /><data name="user" value="$9" />
+        <data name="ip" value="$10" />
+      </regex>
+    </group>
+  </split>
+</dataSplitter>

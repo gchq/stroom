@@ -83,6 +83,7 @@ public class ElasticClientFactory {
 
         final HttpClientConfiguration httpClientConfiguration = connection.httpClientConfiguration();
         final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
+        restClientBuilder.setCompressionEnabled(connection.compressRequests());
 
         restClientBuilder.setRequestConfigCallback(requestConfig -> {
             setTimeout(httpClientConfiguration.getConnectionRequestTimeout(),

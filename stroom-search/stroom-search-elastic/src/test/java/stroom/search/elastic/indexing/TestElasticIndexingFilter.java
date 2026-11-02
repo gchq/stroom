@@ -38,6 +38,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -703,7 +704,8 @@ class TestElasticIndexingFilter {
 
     @Test
     void testOverloadedItemsAreRetried() throws IOException {
-        // One document was indexed and the other rejected, so the indexed one is deleted before retrying
+        // One document was indexed and the other rejected as Elasticsearch is overloaded, so only that one is
+        // retried
         final BulkResponse partialResponse = BulkResponse.of(b -> b
                 .errors(true)
                 .took(1L)
@@ -722,25 +724,20 @@ class TestElasticIndexingFilter {
         Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
                 .thenAnswer(invocation -> {
                     requests.add(snapshot(invocation.getArgument(0)));
-                    return switch (requests.size()) {
-                        case 1 -> partialResponse;
-                        case 2 -> successResponse(1);
-                        default -> successResponse(2);
-                    };
+                    return requests.size() == 1
+                            ? partialResponse
+                            : successResponse(1);
                 });
         final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
 
         harness.process(filter, jsonXml(documents(2)));
 
         assertThat(harness.getErrors()).isEmpty();
-        assertThat(requests).hasSize(3);
-        final BulkOperation deleteOperation = requests.get(1).operations().getFirst();
-        assertThat(requests.get(1).operations()).hasSize(1);
-        assertThat(deleteOperation.isDelete()).isTrue();
-        assertThat(deleteOperation.delete().index()).isEqualTo(INDEX_NAME);
-        assertThat(deleteOperation.delete().id()).isEqualTo("doc-1");
-        // The whole batch is resent
-        assertThat(requests.get(2).operations()).hasSize(2);
+        assertThat(requests).hasSize(2);
+        // Only the rejected document is resent (trimmed of the space Jackson writes between root values)
+        assertThat(ElasticIndexingFilterTestHarness.documentJsons(List.of(requests.get(1))))
+                .extracting(String::trim)
+                .containsExactly("{\"n\":1}");
     }
 
     @Test
@@ -763,11 +760,11 @@ class TestElasticIndexingFilter {
 
         // Not retried
         Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
+        assertThat(harness.getMessages(Severity.ERROR))
+                .containsExactly("Elasticsearch rejected document 1 of the stream (mapper_parsing_exception): " +
+                                 "bad field");
         assertThat(harness.getMessages(Severity.FATAL_ERROR))
-                .singleElement()
-                .asString()
-                .startsWith("Bulk indexing request failed: ")
-                .contains("mapper_parsing_exception");
+                .containsExactly("Bulk indexing request failed: 1 of 1 documents rejected by Elasticsearch");
     }
 
     @Test
@@ -856,6 +853,93 @@ class TestElasticIndexingFilter {
         Mockito.verify(elasticClient, Mockito.times(1)).bulk(ArgumentMatchers.any(BulkRequest.class));
     }
 
+    /// Control case: with no failures, a document from each of two stream parts is sent to Elasticsearch.
+    @Test
+    void testDocumentFromEachStreamPartIsIndexed() {
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        filter.startProcessing();
+        parsePart(filter, documents(1));
+        parsePart(filter, documents(1));
+        filter.endProcessing();
+
+        assertThat(harness.getErrors()).isEmpty();
+        assertThat(bulkSizesWhenSent).containsExactly(1, 1);
+    }
+
+    /// A bulk request rejected with a 403 (e.g. the account lacks `create_index`/`auto_configure` on the target
+    /// data stream) aborts the current stream part with a fatal error, and the pipeline goes on to the stream's
+    /// next part with the same filter. The filter resets its parsing state at each part, so later parts are still
+    /// indexed (seen: every later part silently dropped, with no request and no error).
+    @Test
+    void testDocumentsInLaterStreamPartsAreIndexedAfterABulkFailure() throws IOException {
+        Mockito.when(elasticClient.bulk(ArgumentMatchers.any(BulkRequest.class)))
+                .thenAnswer(invocation -> {
+                    final BulkRequest bulkRequest = invocation.getArgument(0);
+                    recordBulkRequest(bulkRequest);
+                    return bulkSizesWhenSent.size() == 1
+                            ? forbiddenResponse()
+                            : successResponse(bulkRequest.operations().size());
+                });
+        final ElasticIndexingFilter filter = createFilter(INDEX_NAME);
+        filter.setBatchSize(1);
+
+        filter.startProcessing();
+        // What AbstractProcessorTaskExecutor.processNestedStreams sees, before it moves on to the next part.
+        assertThatThrownBy(() -> parsePart(filter, documents(1)))
+                .isInstanceOf(LoggedException.class);
+        assertThat(harness.getMessages(Severity.FATAL_ERROR)).isNotEmpty();
+        parsePart(filter, documents(1));
+        filter.endProcessing();
+
+        // One request for the rejected part 1 document and one for the part 2 document.
+        assertThat(bulkSizesWhenSent).containsExactly(1, 1);
+    }
+
+    // One part of a stream, as the pipeline gives each part to the filter.
+    private void parsePart(final ElasticIndexingFilter filter, final String content) {
+        filter.startStream();
+        try {
+            harness.parse(filter, jsonXml(content));
+        } finally {
+            filter.endStream();
+        }
+    }
+
+    @Test
+    void testRetryBackoffDoubles() {
+        // The lowest wait is half the delay for each retry, the highest just under all of it
+        assertThat(IntStream.range(0, 5)
+                .mapToLong(retry -> ElasticIndexingFilter.retryBackoffMs(1000, retry, 0)))
+                .containsExactly(500L, 1000L, 2000L, 4000L, 8000L);
+        assertThat(IntStream.range(0, 5)
+                .mapToLong(retry -> ElasticIndexingFilter.retryBackoffMs(1000, retry, 0.999999)))
+                .containsExactly(999L, 1999L, 3999L, 7999L, 15999L);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 2, 0.5))
+                .isEqualTo(3000);
+    }
+
+    @Test
+    void testRetryBackoffCapped() {
+        // 1,000 x 2^10 is over the 60 second cap
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 10, 0))
+                .isEqualTo(30_000);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 10, 0.999999))
+                .isEqualTo(59_999);
+        // A retry count big enough to overflow is still capped
+        assertThat(ElasticIndexingFilter.retryBackoffMs(1000, 5000, 0.999999))
+                .isEqualTo(59_999);
+        assertThat(ElasticIndexingFilter.retryBackoffMs(Integer.MAX_VALUE, 0, 0))
+                .isEqualTo(30_000);
+    }
+
+    @Test
+    void testRetryBackoffWithNoInitialDelay() {
+        assertThat(ElasticIndexingFilter.retryBackoffMs(0, 3, 0.5))
+                .isZero();
+    }
+
     private ElasticIndexingFilter createFilter(final String indexName) {
         return harness.createFilter(
                 elasticClient,
@@ -900,6 +984,18 @@ class TestElasticIndexingFilter {
                 .errors(false)
                 .took(1L)
                 .items(items));
+    }
+
+    private static BulkResponse forbiddenResponse() {
+        return BulkResponse.of(b -> b
+                .errors(true)
+                .took(1L)
+                .items(BulkResponseItem.of(i -> i
+                        .operationType(OperationType.Create)
+                        .index(INDEX_NAME)
+                        .status(403)
+                        .error(e -> e.type("security_exception")
+                                .reason("action [indices:admin/auto_create] is unauthorized")))));
     }
 
     private static ElasticsearchException elasticsearchException(final int status) {

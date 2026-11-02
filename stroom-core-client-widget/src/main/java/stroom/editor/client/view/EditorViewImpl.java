@@ -27,6 +27,7 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
+import stroom.util.shared.diff.LineReplacement;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
@@ -424,6 +425,36 @@ public class EditorViewImpl
         getViewAsHexOption().setToDefaultAvailability();
     }
 
+
+    @Override
+    public boolean applyLineReplacements(final List<LineReplacement> replacements) {
+        return editor.applyLineReplacements(replacements);
+    }
+
+    @Override
+    public void addScrollListener(final Runnable listener) {
+        editor.addScrollListener(listener);
+    }
+
+    @Override
+    public int getScrollTop() {
+        return editor.getScrollTop();
+    }
+
+    @Override
+    public void setScrollTop(final int scrollTop) {
+        editor.setScrollTop(scrollTop);
+    }
+
+    @Override
+    public void setLineNumberLabels(final List<String> labels) {
+        editor.setLineNumberLabels(labels);
+    }
+
+    @Override
+    public void gotoLine(final int lineNo) {
+        editor.gotoLine(lineNo);
+    }
 
     @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {

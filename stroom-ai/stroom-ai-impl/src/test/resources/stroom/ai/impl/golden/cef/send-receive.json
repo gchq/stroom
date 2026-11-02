@@ -1,0 +1,157 @@
+{
+ "plan": {
+  "output": "text",
+  "topic": null,
+  "kafka_key": null,
+  "custom_keys": false,
+  "vendor": {
+   "value": "Acme",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "product": {
+   "value": "Mail",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "version": {
+   "value": "1",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "signature": {
+   "value": null,
+   "source": "EventDetail/TypeId",
+   "map": {},
+   "default": null
+  },
+  "name": {
+   "value": null,
+   "source": "EventDetail/Description",
+   "map": {},
+   "default": null
+  },
+  "severity": {
+   "value": "3",
+   "source": null,
+   "map": {},
+   "default": null
+  },
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "label": null,
+    "transform": "epoch_ms"
+   }
+  ],
+  "events": {
+   "Send": [
+    {
+     "path": "EventDetail/Send/Source/User/Id",
+     "key": "suser",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Send/Destination/User/Id",
+     "key": "duser",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "Receive": [
+    {
+     "path": "EventDetail/Receive/Source/User/Id",
+     "key": "suser",
+     "label": null,
+     "transform": "text"
+    },
+    {
+     "path": "EventDetail/Receive/Destination/User/Id",
+     "key": "duser",
+     "label": null,
+     "transform": "text"
+    }
+   ],
+   "View": [
+    {
+     "path": "EventDetail/View/Document/Title",
+     "key": "fname",
+     "label": null,
+     "transform": "text"
+    }
+   ]
+  },
+  "not_sent": [],
+  "imports": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "compact": {
+  "output": "text",
+  "vendor": {
+   "value": "Acme"
+  },
+  "product": {
+   "value": "Mail"
+  },
+  "version": {
+   "value": "1"
+  },
+  "signature": {
+   "source": "EventDetail/TypeId"
+  },
+  "name": {
+   "source": "EventDetail/Description"
+  },
+  "common": [
+   {
+    "path": "EventTime/TimeCreated",
+    "key": "rt",
+    "transform": "epoch_ms"
+   }
+  ],
+  "events": {
+   "Send": [
+    {
+     "path": "EventDetail/Send/Source/User/Id",
+     "key": "suser"
+    },
+    {
+     "path": "EventDetail/Send/Destination/User/Id",
+     "key": "duser"
+    }
+   ],
+   "Receive": [
+    {
+     "path": "EventDetail/Receive/Source/User/Id",
+     "key": "suser"
+    },
+    {
+     "path": "EventDetail/Receive/Destination/User/Id",
+     "key": "duser"
+    }
+   ],
+   "View": [
+    {
+     "path": "EventDetail/View/Document/Title",
+     "key": "fname"
+    }
+   ]
+  }
+ }
+}

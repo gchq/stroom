@@ -819,7 +819,7 @@ class TestElasticSearchProvider {
     private static ElasticClusterDoc createCluster() {
         return ElasticClusterDoc.builder()
                 .uuid(CLUSTER_REF.getUuid())
-                .connection(new ElasticConnectionConfig(List.of("http://localhost:9200"), null, null))
+                .connection(new ElasticConnectionConfig(List.of("http://localhost:9200"), null, null, null))
                 .build();
     }
 

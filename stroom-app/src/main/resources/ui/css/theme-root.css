@@ -145,6 +145,16 @@
     --code-editor__border-color--fatal: #444444;
     --code-editor__background-color--fatal: #000000;
     --code-editor__background-color--highlight: yellow;
+    --code-diff__background-color--removed: rgba(244, 67, 54, 0.18);
+    --code-diff__background-color--removed--strong: rgba(244, 67, 54, 0.45);
+    --code-diff__background-color--added: rgba(76, 175, 80, 0.20);
+    --code-diff__background-color--added--strong: rgba(76, 175, 80, 0.50);
+    --code-diff__background-color--changed: rgba(255, 193, 7, 0.22);
+    --code-diff__background-color--filler: rgba(128, 128, 128, 0.12);
+    --code-diff__border-color--filler: rgba(128, 128, 128, 0.25);
+    --code-diff__background-color--applied: rgba(255, 193, 7, 0.25);
+    --code-diff__text-color--removed: var(--red-800);
+    --code-diff__text-color--added: var(--green-800);
     --code-editor-menu-option__color--on: green;
     --code-editor-menu-option__color--on--selected: #00e500;
     --code-editor-menu-option__color--off: red;

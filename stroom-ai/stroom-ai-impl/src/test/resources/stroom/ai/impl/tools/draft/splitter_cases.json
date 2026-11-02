@@ -1,0 +1,637 @@
+[
+ {
+  "name": "01_csv_vpn inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "06_syslog5424_ssh inferred 0",
+  "spec": {
+   "kind": "syslog",
+   "rfc": "rfc5424"
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\]) ?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"msgid\" value=\"$6\" />\n        <data name=\"structured\" value=\"$7\" />\n        <data name=\"message\" value=\"$8\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "07_syslog3164_sudo inferred 0",
+  "spec": {
+   "kind": "syslog",
+   "body": {
+    "kind": "key_value",
+    "delimiter": " "
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+) (?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"message\" value=\"$6\" />\n        <group value=\"$6\">\n          <regex pattern=\"\\s*([^=\\s]+)=([^\\s]*)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "08_kv_firewall inferred 0",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " "
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=([^\\s]*)\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "09_csv_noheader_copy inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2",
+    "col3",
+    "col4",
+    "col5"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n        <data name=\"col3\" value=\"$3\" />\n        <data name=\"col4\" value=\"$4\" />\n        <data name=\"col5\" value=\"$5\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "14_csv_two_files_variants reference",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": ",",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "14_csv_two_files_variants inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "14_csv_two_files_variants inferred 1",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "15_csv_lookup_reference_data inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "17_csv_firewall_mixed inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "20_csv_coded_with_docs inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "21_csv_connections_odd_fields inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "22_syslog_cef_gateway inferred 0",
+  "spec": {
+   "kind": "cef",
+   "body": {
+    "kind": "regex",
+    "pattern": "^(?:<(\\d+)>)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$",
+    "names": [
+     "pri",
+     "time",
+     "host"
+    ]
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(.*?)CEF:(\\d+)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|(.*)$\">\n        <group value=\"$1\">\n          <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$\">\n            <data name=\"pri\" value=\"$1\" />\n            <data name=\"time\" value=\"$2\" />\n            <data name=\"host\" value=\"$3\" />\n          </regex>\n        </group>\n        <data name=\"cef_version\" value=\"$2\" />\n        <data name=\"cef_vendor\" value=\"$3\" />\n        <data name=\"cef_product\" value=\"$4\" />\n        <data name=\"cef_device_version\" value=\"$5\" />\n        <data name=\"cef_signature_id\" value=\"$6\" />\n        <data name=\"cef_name\" value=\"$7\" />\n        <data name=\"cef_severity\" value=\"$8\" />\n        <group value=\"$9\">\n          <regex pattern=\"\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s]+=|\\s*$)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "23_pipe_quoted_helpdesk inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": "|",
+   "header": true,
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\"|\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\"|\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "24_csv_noheader_quoted_print reference",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": ",",
+   "quote": "\"",
+   "header": [
+    "time",
+    "user",
+    "printer",
+    "document",
+    "pages",
+    "location"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"user\" value=\"$2\" />\n        <data name=\"printer\" value=\"$3\" />\n        <data name=\"document\" value=\"$4\" />\n        <data name=\"pages\" value=\"$5\" />\n        <data name=\"location\" value=\"$6\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "24_csv_noheader_quoted_print inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2",
+    "col3",
+    "col4",
+    "col5",
+    "col6"
+   ],
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n        <data name=\"col3\" value=\"$3\" />\n        <data name=\"col4\" value=\"$4\" />\n        <data name=\"col5\" value=\"$5\" />\n        <data name=\"col6\" value=\"$6\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "25_syslog_kv_nil_proxy inferred 0",
+  "spec": {
+   "kind": "syslog",
+   "rfc": "rfc5424",
+   "body": {
+    "kind": "key_value",
+    "delimiter": " "
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\]) ?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"msgid\" value=\"$6\" />\n        <data name=\"structured\" value=\"$7\" />\n        <data name=\"message\" value=\"$8\" />\n        <group value=\"$8\">\n          <regex pattern=\"\\s*([^=\\s]+)=([^\\s]*)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "27_endash_auth_messages reference",
+  "spec": {
+   "kind": "regex",
+   "pattern": "^(\\S+ \\S+) (\\S+)\\s+\\[([^\\]]+)\\] [–-] (.*)$",
+   "names": [
+    "time",
+    "level",
+    "component",
+    "message"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(\\S+ \\S+) (\\S+)\\s+\\[([^\\]]+)\\] [–-] (.*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"level\" value=\"$2\" />\n        <data name=\"component\" value=\"$3\" />\n        <data name=\"message\" value=\"$4\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "27_endash_auth_messages inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^([^,]*),([^,]*)$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "29_csv_large_files_proxy inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "29_csv_large_files_proxy inferred 1",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "31_kv_awkward_times_fortigate inferred 0",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " ",
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=&quot;?((?&lt;=&quot;)[^&quot;]*(?=&quot;)|(?&lt;!&quot;)[^\\s&quot;]*)&quot;?\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "33_csv_cp1252_hr inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "37_cef_gateway_whole_day inferred 0",
+  "spec": {
+   "kind": "cef",
+   "body": {
+    "kind": "regex",
+    "pattern": "^(?:<(\\d+)>)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$",
+    "names": [
+     "pri",
+     "time",
+     "host"
+    ]
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(.*?)CEF:(\\d+)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|(.*)$\">\n        <group value=\"$1\">\n          <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$\">\n            <data name=\"pri\" value=\"$1\" />\n            <data name=\"time\" value=\"$2\" />\n            <data name=\"host\" value=\"$3\" />\n          </regex>\n        </group>\n        <data name=\"cef_version\" value=\"$2\" />\n        <data name=\"cef_vendor\" value=\"$3\" />\n        <data name=\"cef_product\" value=\"$4\" />\n        <data name=\"cef_device_version\" value=\"$5\" />\n        <data name=\"cef_signature_id\" value=\"$6\" />\n        <data name=\"cef_name\" value=\"$7\" />\n        <data name=\"cef_severity\" value=\"$8\" />\n        <group value=\"$9\">\n          <regex pattern=\"\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s]+=|\\s*$)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "41_java_multiline_app reference",
+  "spec": {
+   "kind": "regex",
+   "record_start": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
+   "pattern": "(?s)^(\\S+ \\S+) +(\\w+) +\\[([^\\]]*)\\] (\\S+) - (.*)$",
+   "names": [
+    "time",
+    "level",
+    "thread",
+    "logger",
+    "message"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}).*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})|\\z)\">\n    <group value=\"$1\">\n      <regex pattern=\"(?s)^(\\S+ \\S+) +(\\w+) +\\[([^\\]]*)\\] (\\S+) - (.*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"level\" value=\"$2\" />\n        <data name=\"thread\" value=\"$3\" />\n        <data name=\"logger\" value=\"$4\" />\n        <data name=\"message\" value=\"$5\" />\n      </regex>\n    </group>\n  </regex>\n</dataSplitter>\n"
+ },
+ {
+  "name": "41_java_multiline_app inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^([^,]*),([^,]*)$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "42_csv_quoted_newlines_tickets inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "header": true,
+   "quote": "\"",
+   "quoted_newlines": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n    <group>\n      <split delimiter=\",\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n    <group>\n      <split delimiter=\",\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "43_syslog_csv_palo_alto_traffic reference",
+  "spec": {
+   "kind": "syslog",
+   "rfc": "rfc3164",
+   "body": {
+    "kind": "delimited",
+    "delimiter": ",",
+    "header": [
+     "future_use1",
+     "receive_time",
+     "serial",
+     "type",
+     "subtype",
+     "future_use2",
+     "generated_time",
+     "src",
+     "dst",
+     "natsrc",
+     "natdst",
+     "rule",
+     "srcuser",
+     "dstuser",
+     "app",
+     "vsys",
+     "from",
+     "to",
+     "inbound_if",
+     "outbound_if",
+     "logset",
+     "future_use3",
+     "sessionid",
+     "repeatcnt",
+     "sport",
+     "dport",
+     "natsport",
+     "natdport",
+     "flags",
+     "proto",
+     "action",
+     "bytes",
+     "bytes_sent",
+     "bytes_received",
+     "packets",
+     "start",
+     "elapsed",
+     "category",
+     "future_use4",
+     "seqno",
+     "actionflags",
+     "srcloc",
+     "dstloc",
+     "future_use5",
+     "pkts_sent",
+     "pkts_received",
+     "session_end_reason"
+    ]
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+) (?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"message\" value=\"$6\" />\n        <group value=\"$6\">\n          <regex pattern=\"^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)$\">\n            <data name=\"future_use1\" value=\"$1\" />\n            <data name=\"receive_time\" value=\"$2\" />\n            <data name=\"serial\" value=\"$3\" />\n            <data name=\"type\" value=\"$4\" />\n            <data name=\"subtype\" value=\"$5\" />\n            <data name=\"future_use2\" value=\"$6\" />\n            <data name=\"generated_time\" value=\"$7\" />\n            <data name=\"src\" value=\"$8\" />\n            <data name=\"dst\" value=\"$9\" />\n            <data name=\"natsrc\" value=\"$10\" />\n            <data name=\"natdst\" value=\"$11\" />\n            <data name=\"rule\" value=\"$12\" />\n            <data name=\"srcuser\" value=\"$13\" />\n            <data name=\"dstuser\" value=\"$14\" />\n            <data name=\"app\" value=\"$15\" />\n            <data name=\"vsys\" value=\"$16\" />\n            <data name=\"from\" value=\"$17\" />\n            <data name=\"to\" value=\"$18\" />\n            <data name=\"inbound_if\" value=\"$19\" />\n            <data name=\"outbound_if\" value=\"$20\" />\n            <data name=\"logset\" value=\"$21\" />\n            <data name=\"future_use3\" value=\"$22\" />\n            <data name=\"sessionid\" value=\"$23\" />\n            <data name=\"repeatcnt\" value=\"$24\" />\n            <data name=\"sport\" value=\"$25\" />\n            <data name=\"dport\" value=\"$26\" />\n            <data name=\"natsport\" value=\"$27\" />\n            <data name=\"natdport\" value=\"$28\" />\n            <data name=\"flags\" value=\"$29\" />\n            <data name=\"proto\" value=\"$30\" />\n            <data name=\"action\" value=\"$31\" />\n            <data name=\"bytes\" value=\"$32\" />\n            <data name=\"bytes_sent\" value=\"$33\" />\n            <data name=\"bytes_received\" value=\"$34\" />\n            <data name=\"packets\" value=\"$35\" />\n            <data name=\"start\" value=\"$36\" />\n            <data name=\"elapsed\" value=\"$37\" />\n            <data name=\"category\" value=\"$38\" />\n            <data name=\"future_use4\" value=\"$39\" />\n            <data name=\"seqno\" value=\"$40\" />\n            <data name=\"actionflags\" value=\"$41\" />\n            <data name=\"srcloc\" value=\"$42\" />\n            <data name=\"dstloc\" value=\"$43\" />\n            <data name=\"future_use5\" value=\"$44\" />\n            <data name=\"pkts_sent\" value=\"$45\" />\n            <data name=\"pkts_received\" value=\"$46\" />\n            <data name=\"session_end_reason\" value=\"$47\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "43_syslog_csv_palo_alto_traffic inferred 0",
+  "spec": {
+   "kind": "syslog",
+   "body": {
+    "kind": "delimited",
+    "header": [
+     "col1",
+     "col2",
+     "col3",
+     "col4",
+     "col5",
+     "col6",
+     "col7",
+     "col8",
+     "col9",
+     "col10",
+     "col11",
+     "col12",
+     "col13",
+     "col14",
+     "col15",
+     "col16",
+     "col17",
+     "col18",
+     "col19",
+     "col20",
+     "col21",
+     "col22",
+     "col23",
+     "col24",
+     "col25",
+     "col26",
+     "col27",
+     "col28",
+     "col29",
+     "col30",
+     "col31",
+     "col32",
+     "col33",
+     "col34",
+     "col35",
+     "col36",
+     "col37",
+     "col38",
+     "col39",
+     "col40",
+     "col41",
+     "col42",
+     "col43",
+     "col44",
+     "col45",
+     "col46",
+     "col47"
+    ]
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+) (?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"message\" value=\"$6\" />\n        <group value=\"$6\">\n          <regex pattern=\"^([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)$\">\n            <data name=\"col1\" value=\"$1\" />\n            <data name=\"col2\" value=\"$2\" />\n            <data name=\"col3\" value=\"$3\" />\n            <data name=\"col4\" value=\"$4\" />\n            <data name=\"col5\" value=\"$5\" />\n            <data name=\"col6\" value=\"$6\" />\n            <data name=\"col7\" value=\"$7\" />\n            <data name=\"col8\" value=\"$8\" />\n            <data name=\"col9\" value=\"$9\" />\n            <data name=\"col10\" value=\"$10\" />\n            <data name=\"col11\" value=\"$11\" />\n            <data name=\"col12\" value=\"$12\" />\n            <data name=\"col13\" value=\"$13\" />\n            <data name=\"col14\" value=\"$14\" />\n            <data name=\"col15\" value=\"$15\" />\n            <data name=\"col16\" value=\"$16\" />\n            <data name=\"col17\" value=\"$17\" />\n            <data name=\"col18\" value=\"$18\" />\n            <data name=\"col19\" value=\"$19\" />\n            <data name=\"col20\" value=\"$20\" />\n            <data name=\"col21\" value=\"$21\" />\n            <data name=\"col22\" value=\"$22\" />\n            <data name=\"col23\" value=\"$23\" />\n            <data name=\"col24\" value=\"$24\" />\n            <data name=\"col25\" value=\"$25\" />\n            <data name=\"col26\" value=\"$26\" />\n            <data name=\"col27\" value=\"$27\" />\n            <data name=\"col28\" value=\"$28\" />\n            <data name=\"col29\" value=\"$29\" />\n            <data name=\"col30\" value=\"$30\" />\n            <data name=\"col31\" value=\"$31\" />\n            <data name=\"col32\" value=\"$32\" />\n            <data name=\"col33\" value=\"$33\" />\n            <data name=\"col34\" value=\"$34\" />\n            <data name=\"col35\" value=\"$35\" />\n            <data name=\"col36\" value=\"$36\" />\n            <data name=\"col37\" value=\"$37\" />\n            <data name=\"col38\" value=\"$38\" />\n            <data name=\"col39\" value=\"$39\" />\n            <data name=\"col40\" value=\"$40\" />\n            <data name=\"col41\" value=\"$41\" />\n            <data name=\"col42\" value=\"$42\" />\n            <data name=\"col43\" value=\"$43\" />\n            <data name=\"col44\" value=\"$44\" />\n            <data name=\"col45\" value=\"$45\" />\n            <data name=\"col46\" value=\"$46\" />\n            <data name=\"col47\" value=\"$47\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "44_custom_tilde_delimited reference",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": " ~ ",
+   "header": [
+    "time",
+    "user",
+    "action",
+    "result",
+    "ip"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"user\" value=\"$2\" />\n        <data name=\"action\" value=\"$3\" />\n        <data name=\"result\" value=\"$4\" />\n        <data name=\"ip\" value=\"$5\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "44_custom_tilde_delimited inferred 0",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": " ~ ",
+   "header": [
+    "col1",
+    "col2",
+    "col3",
+    "col4",
+    "col5"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)\\ \\~\\ ((?:(?!\\ \\~\\ ).)*)$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n        <data name=\"col3\" value=\"$3\" />\n        <data name=\"col4\" value=\"$4\" />\n        <data name=\"col5\" value=\"$5\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "47_kv_fortios_native inferred 0",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " ",
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=&quot;?((?&lt;=&quot;)[^&quot;]*(?=&quot;)|(?&lt;!&quot;)[^\\s&quot;]*)&quot;?\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "48_jsonl_damaged_lines reference",
+  "spec": {
+   "kind": "regex",
+   "pattern": "^(.*)$",
+   "names": [
+    "json"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(.*)$\">\n        <data name=\"json\" value=\"$1\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "50_kv_mail_repeated_keys inferred 0",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " ",
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=&quot;?((?&lt;=&quot;)[^&quot;]*(?=&quot;)|(?&lt;!&quot;)[^\\s&quot;]*)&quot;?\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "51_kv_unicode_ansi inferred 0",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " ",
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=&quot;?((?&lt;=&quot;)[^&quot;]*(?=&quot;)|(?&lt;!&quot;)[^\\s&quot;]*)&quot;?\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "52_postgres_multiline_sql reference",
+  "spec": {
+   "kind": "regex",
+   "record_start": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
+   "pattern": "(?s)^(\\S+ \\S+) (\\S+) \\[(\\d+)\\] ([^@\\s]+)@(\\S+) (\\w+):  (.*)$",
+   "names": [
+    "time",
+    "zone",
+    "pid",
+    "user",
+    "database",
+    "level",
+    "message"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}).*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})|\\z)\">\n    <group value=\"$1\">\n      <regex pattern=\"(?s)^(\\S+ \\S+) (\\S+) \\[(\\d+)\\] ([^@\\s]+)@(\\S+) (\\w+):  (.*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"zone\" value=\"$2\" />\n        <data name=\"pid\" value=\"$3\" />\n        <data name=\"user\" value=\"$4\" />\n        <data name=\"database\" value=\"$5\" />\n        <data name=\"level\" value=\"$6\" />\n        <data name=\"message\" value=\"$7\" />\n      </regex>\n    </group>\n  </regex>\n</dataSplitter>\n"
+ },
+ {
+  "name": "52_postgres_multiline_sql inferred 0",
+  "spec": {
+   "kind": "regex",
+   "pattern": "(?s)^(\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}\\S*)\\s+(.*)$",
+   "names": [
+    "time",
+    "message"
+   ],
+   "record_start": "\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}"
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}).*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2})|\\z)\">\n    <group value=\"$1\">\n      <regex pattern=\"(?s)^(\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}\\S*)\\s+(.*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"message\" value=\"$2\" />\n      </regex>\n    </group>\n  </regex>\n</dataSplitter>\n"
+ },
+ {
+  "name": "53_cri_container_partial_lines inferred 0",
+  "spec": {
+   "kind": "regex",
+   "pattern": "(?s)^(\\S+) (stdout|stderr) [PF] (.*)$",
+   "names": [
+    "time",
+    "stream",
+    "message"
+   ],
+   "record_end": "\\S+ (?:stdout|stderr) F "
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <regex pattern=\"(?m)^((?:(?!(?:\\S+ (?:stdout|stderr) F ))[^\\n]*\\n)*(?:\\S+ (?:stdout|stderr) F )[^\\n]*)\\n?\">\n    <group value=\"$1\">\n      <regex pattern=\"(?s)^(\\S+) (stdout|stderr) [PF] (.*)$\">\n        <data name=\"time\" value=\"$1\" />\n        <data name=\"stream\" value=\"$2\" />\n        <data name=\"message\" value=\"$3\" />\n      </regex>\n    </group>\n  </regex>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format csv_quoted inferred",
+  "spec": {
+   "kind": "delimited",
+   "header": true,
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\" containerStart=\"&quot;\" containerEnd=\"&quot;\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format tsv inferred",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": "\t",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\"\\t\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\"\\t\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format pipe inferred",
+  "spec": {
+   "kind": "delimited",
+   "delimiter": "|",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\"|\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\"|\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format csv_noheader inferred",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2",
+    "col3",
+    "col4"
+   ]
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^([^,]*),([^,]*),([^,]*),([^,]*)$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n        <data name=\"col3\" value=\"$3\" />\n        <data name=\"col4\" value=\"$4\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format csv_noheader_quoted inferred",
+  "spec": {
+   "kind": "delimited",
+   "header": [
+    "col1",
+    "col2",
+    "col3",
+    "col4",
+    "col5"
+   ],
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?,&quot;?((?&lt;=&quot;)(?:[^&quot;]|&quot;&quot;)*(?=&quot;)|(?&lt;!&quot;)[^,&quot;]*)&quot;?$\">\n        <data name=\"col1\" value=\"$1\" />\n        <data name=\"col2\" value=\"$2\" />\n        <data name=\"col3\" value=\"$3\" />\n        <data name=\"col4\" value=\"$4\" />\n        <data name=\"col5\" value=\"$5\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format syslog3164_freeform inferred",
+  "spec": {
+   "kind": "syslog"
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+) (?:([^:\\[ ]+)(?:\\[(\\d+)\\])?: ?)?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"message\" value=\"$6\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format syslog5424_kv inferred",
+  "spec": {
+   "kind": "syslog",
+   "rfc": "rfc5424",
+   "body": {
+    "kind": "key_value",
+    "delimiter": " "
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(?:&lt;(\\d+)&gt;)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\]) ?(.*)$\">\n        <data name=\"pri\" value=\"$1\" />\n        <data name=\"time\" value=\"$2\" />\n        <data name=\"host\" value=\"$3\" />\n        <data name=\"app\" value=\"$4\" />\n        <data name=\"pid\" value=\"$5\" />\n        <data name=\"msgid\" value=\"$6\" />\n        <data name=\"structured\" value=\"$7\" />\n        <data name=\"message\" value=\"$8\" />\n        <group value=\"$8\">\n          <regex pattern=\"\\s*([^=\\s]+)=([^\\s]*)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format cef inferred",
+  "spec": {
+   "kind": "cef"
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(.*?)CEF:(\\d+)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|(.*)$\">\n        <data name=\"cef_version\" value=\"$2\" />\n        <data name=\"cef_vendor\" value=\"$3\" />\n        <data name=\"cef_product\" value=\"$4\" />\n        <data name=\"cef_device_version\" value=\"$5\" />\n        <data name=\"cef_signature_id\" value=\"$6\" />\n        <data name=\"cef_name\" value=\"$7\" />\n        <data name=\"cef_severity\" value=\"$8\" />\n        <group value=\"$9\">\n          <regex pattern=\"\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s]+=|\\s*$)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format syslog_cef inferred",
+  "spec": {
+   "kind": "cef",
+   "body": {
+    "kind": "regex",
+    "pattern": "^(?:<(\\d+)>)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$",
+    "names": [
+     "pri",
+     "time",
+     "host"
+    ]
+   }
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"^(.*?)CEF:(\\d+)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|(.*)$\">\n        <group value=\"$1\">\n          <regex pattern=\"^(?:&lt;(\\d+)&gt;)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$\">\n            <data name=\"pri\" value=\"$1\" />\n            <data name=\"time\" value=\"$2\" />\n            <data name=\"host\" value=\"$3\" />\n          </regex>\n        </group>\n        <data name=\"cef_version\" value=\"$2\" />\n        <data name=\"cef_vendor\" value=\"$3\" />\n        <data name=\"cef_product\" value=\"$4\" />\n        <data name=\"cef_device_version\" value=\"$5\" />\n        <data name=\"cef_signature_id\" value=\"$6\" />\n        <data name=\"cef_name\" value=\"$7\" />\n        <data name=\"cef_severity\" value=\"$8\" />\n        <group value=\"$9\">\n          <regex pattern=\"\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s]+=|\\s*$)\">\n            <data name=\"$1\" value=\"$2\" />\n          </regex>\n        </group>\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format kv_quoted inferred",
+  "spec": {
+   "kind": "key_value",
+   "delimiter": " ",
+   "quote": "\""
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\">\n    <group>\n      <regex pattern=\"\\s*([^=\\s]+)=&quot;?((?&lt;=&quot;)[^&quot;]*(?=&quot;)|(?&lt;!&quot;)[^\\s&quot;]*)&quot;?\">\n        <data name=\"$1\" value=\"$2\" />\n      </regex>\n    </group>\n  </split>\n</dataSplitter>\n"
+ },
+ {
+  "name": "format csv_zone_names inferred",
+  "spec": {
+   "kind": "delimited",
+   "header": true
+  },
+  "xml": "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<dataSplitter xmlns=\"data-splitter:3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n              xsi:schemaLocation=\"data-splitter:3 file://data-splitter-v3.0.xsd\" version=\"3.0\">\n  <regex pattern=\"^\\uFEFF\" maxMatch=\"1\" />\n  <split delimiter=\"\\n\" maxMatch=\"1\">\n    <group>\n      <split delimiter=\",\">\n        <var id=\"heading\" />\n      </split>\n    </group>\n  </split>\n  <split delimiter=\"\\n\">\n    <group>\n      <split delimiter=\",\">\n        <data name=\"$heading$1\" value=\"$1\" />\n      </split>\n    </group>\n  </split>\n</dataSplitter>\n"
+ }
+]

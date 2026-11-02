@@ -1,0 +1,166 @@
+{
+ "test": "tests/test_indexing.py::test_an_object_repeated_across_actions_is_written_by_one_template",
+ "plan": {
+  "backend": "elasticsearch",
+  "index_name": "x",
+  "time_field": "@timestamp",
+  "fields": [
+   {
+    "name": "Copy.Source.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/Copy/Source/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Copy.Source.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/Copy/Source/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Copy.Destination.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/Copy/Destination/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Copy.Destination.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/Copy/Destination/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Copy.Outcome.Success",
+    "type": "boolean",
+    "source": "EventDetail/Copy/Outcome/Success",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Move.Source.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/Move/Source/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Move.Source.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/Move/Source/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Move.Destination.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/Move/Destination/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Move.Destination.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/Move/Destination/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Move.Outcome.Success",
+    "type": "boolean",
+    "source": "EventDetail/Move/Outcome/Success",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "View.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/View/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "View.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/View/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "View.Outcome.Success",
+    "type": "boolean",
+    "source": "EventDetail/View/Outcome/Success",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Delete.Resource.Id",
+    "type": "keyword",
+    "source": "EventDetail/Delete/Resource/Id",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Delete.Resource.Type",
+    "type": "keyword",
+    "source": "EventDetail/Delete/Resource/Type",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Delete.Outcome.Success",
+    "type": "boolean",
+    "source": "EventDetail/Delete/Outcome/Success",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "Alert.Severity",
+    "type": "keyword",
+    "source": "EventDetail/Alert/Severity",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

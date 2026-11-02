@@ -64,6 +64,7 @@ public final class ElasticWireMock {
                 new ResolvedElasticConnection(
                         List.of(server.baseUrl()),
                         null,
+                        false,
                         HttpClientConfiguration.builder().build()),
                 new ElasticClientConfig());
     }

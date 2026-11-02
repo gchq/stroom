@@ -1,0 +1,105 @@
+{
+ "@timestamp": {
+  "field": "@timestamp",
+  "from": "EventTime/TimeCreated",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "Time the event was created.",
+   "ECS": "Date/time when the event originated."
+  }
+ },
+ "event.code": {
+  "field": "event.code",
+  "from": "EventDetail/TypeId",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "A name/code/ID to uniquely identify the logical event type within the service providing the events.",
+   "ECS": "Identification code for this event."
+  }
+ },
+ "email.from": {
+  "field": "email.from",
+  "from": "EventDetail/Send/Source/User/Id",
+  "values": [
+   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ],
+  "schemas_say": {
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "email.to": {
+  "field": "email.to",
+  "from": "EventDetail/Send/Destination/User/Id",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "inbox.from": {
+  "field": "inbox.from",
+  "from": "EventDetail/Receive/Source/User/Id",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "inbox.to": {
+  "field": "inbox.to",
+  "from": "EventDetail/Receive/Destination/User/Id",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "An identifier for the user."
+  }
+ },
+ "file.name": {
+  "field": "file.name",
+  "from": "EventDetail/View/Document/Title",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The title or name of the document.",
+   "ECS": "Name of the file including the extension, without the directory."
+  }
+ },
+ "net.src": {
+  "field": "net.src",
+  "from": "EventDetail/Network/*/Source/Device/IPAddress",
+  "values": [
+   "1.2.3.4"
+  ],
+  "schemas_say": {
+   "event-logging": "The network IP address of the device, e.g. 192.168.0.3."
+  }
+ },
+ "user.id": {
+  "field": "user.id",
+  "from": "EventSource/User/Id",
+  "values": [
+   "alice",
+   "bob",
+   "carol"
+  ],
+  "schemas_say": {
+   "event-logging": "An identifier for the user.",
+   "ECS": "Unique identifier of the user."
+  }
+ },
+ "host.ip": {
+  "field": "host.ip",
+  "from": "EventSource/Device/IPAddress",
+  "values": [
+   "10.0.0.1"
+  ],
+  "schemas_say": {
+   "event-logging": "The network IP address of the device, e.g. 192.168.0.3.",
+   "ECS": "Host ip addresses."
+  }
+ },
+ "agent": {
+  "field": "agent",
+  "from": "EventDetail/Authenticate/Data[@Name='agent']/@Value",
+  "values": [],
+  "schemas_say": {
+   "event-logging": "The `agent` value recorded in a Data element of Authenticate."
+  }
+ }
+}

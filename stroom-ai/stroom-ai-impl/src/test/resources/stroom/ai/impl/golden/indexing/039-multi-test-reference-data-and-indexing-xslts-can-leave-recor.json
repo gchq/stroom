@@ -1,0 +1,57 @@
+{
+ "test": "tests/test_multi.py::test_reference_data_and_indexing_xslts_can_leave_records_out",
+ "plan": {
+  "backend": "lucene",
+  "index_name": "x",
+  "time_field": "EventTime",
+  "fields": [
+   {
+    "name": "StreamId",
+    "type": "id",
+    "source": "@StreamId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventId",
+    "type": "id",
+    "source": "@EventId",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   },
+   {
+    "name": "EventTime",
+    "type": "date",
+    "source": "EventTime/TimeCreated",
+    "description": "",
+    "transform": null,
+    "multiple": false
+   }
+  ],
+  "drop_when": [
+   "EventDetail/TypeId = 'Heartbeat'",
+   "EventSource/User/Id = 'monitor'"
+  ],
+  "discovery": null,
+  "imports": [],
+  "shared": [],
+  "subobjects": true,
+  "convention": null,
+  "custom_namespaces": [],
+  "style": {
+   "naming": "snake_case",
+   "variable_min_reads": 3,
+   "inline_map_max_keys": 3,
+   "function_min_uses": 2,
+   "data_values": "interpolated",
+   "data_entries": "function",
+   "data_run_min": 4,
+   "variables": "just_in_time",
+   "data_names": "as_given",
+   "layout": "modes"
+  }
+ },
+ "version": "3.0"
+}

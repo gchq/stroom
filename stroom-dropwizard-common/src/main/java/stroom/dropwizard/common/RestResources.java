@@ -66,13 +66,17 @@ public class RestResources {
      * That constraint is expected to be temporary. If the UI moves off GWT then csvSearch can go back on
      * QueryResource, QueryCsvResource can be deleted, and this exception should go with it.
      * <p>
-     * Note that this has to repeat QueryResource's path rather than reference the constant, as this
-     * module does not depend on stroom-core-shared, so it must be kept in step with it by hand. A stale
-     * entry here is not silently wrong though, it just means the shared path is reported as a duplicate
-     * again and the application refuses to start.
+     * ElasticIndexTemplatesResource shares ElasticIndexResource's base path for the same reason. Its
+     * response carries Elasticsearch's own JSON bodies, which GWT cannot compile.
+     * <p>
+     * Note that this has to repeat the shared resources' paths rather than reference their constants, as
+     * this module does not depend on stroom-core-shared, so it must be kept in step with them by hand. A
+     * stale entry here is not silently wrong though, it just means the shared path is reported as a
+     * duplicate again and the application refuses to start.
      */
     private static final Set<String> SHAREABLE_RESOURCE_PATHS = Set.of(
-            ResourcePaths.buildAuthenticatedApiPath("/query" + ResourcePaths.V1));
+            ResourcePaths.buildAuthenticatedApiPath("/query" + ResourcePaths.V1),
+            ResourcePaths.buildAuthenticatedApiPath("/elasticIndex" + ResourcePaths.V1));
 
     private final Environment environment;
     private final Map<RestResourcesBinder.ResourceType, Provider<RestResource>> providerMap;

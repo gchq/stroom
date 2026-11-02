@@ -16,6 +16,8 @@
 
 package stroom.search.elastic;
 
+import stroom.ai.api.ElasticClusterTests;
+import stroom.ai.api.ElasticIndexTemplates;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
@@ -27,6 +29,8 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandler;
 import stroom.search.elastic.suggest.ElasticSuggestionsQueryHandlerImpl;
+import stroom.search.elastic.template.AiElasticIndexTemplates;
+import stroom.search.elastic.template.ElasticIndexTemplatesResourceImpl;
 import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -45,6 +49,9 @@ public class ElasticSearchModule extends AbstractModule {
 
         bind(ElasticIndexService.class).to(ElasticSearchProvider.class);
         bind(ElasticSuggestionsQueryHandler.class).to(ElasticSuggestionsQueryHandlerImpl.class);
+
+        bind(ElasticIndexTemplates.class).to(AiElasticIndexTemplates.class);
+        bind(ElasticClusterTests.class).to(AiElasticClusterTests.class);
 
         SuggestionsServiceBinder.create(binder())
                 .bind(ElasticIndexDoc.TYPE, ElasticSuggestionsQueryHandler.class);
@@ -72,7 +79,8 @@ public class ElasticSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(ElasticIndexResourceImpl.class)
-                .bind(ElasticIndexQueryResourceImpl.class);
+                .bind(ElasticIndexQueryResourceImpl.class)
+                .bind(ElasticIndexTemplatesResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(ElasticSearchProvider.class);

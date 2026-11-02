@@ -310,6 +310,47 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
+  /ai/v1/answerApproval:
+    post:
+      operationId: answerAiApproval
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerAiApprovalRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Approve or reject something the agent asked the user's approval for
+      tags:
+      - AI
+  /ai/v1/answerElicitation:
+    post:
+      operationId: answerAiElicitation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerAiElicitationRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Answer a form an MCP tool asked the user to fill in. The answer goes\
+        \ to the MCP server, never to the model"
+      tags:
+      - AI
   /ai/v1/askStroomAi:
     post:
       operationId: askStroomAi
@@ -350,6 +391,49 @@ paths:
       summary: Cancel in-progress AI batch analysis for a chat
       tags:
       - AI
+  /ai/v1/clearChat/{chatId}:
+    post:
+      operationId: clearAiChat
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Clear a chat so it starts afresh: its messages, attached data, workspace\
+        \ files and memory are deleted, and its title is reset. The chat, its mode\
+        \ and its tool approvals are kept."
+      tags:
+      - AI
+  /ai/v1/compactChat:
+    post:
+      operationId: compactChat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompactAiChatRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Compact a chat now: earlier turns are replaced, in what the model\
+        \ sees, by short digests and a summary. Nothing is deleted"
+      tags:
+      - AI
   /ai/v1/createChat:
     post:
       operationId: createChat
@@ -360,7 +444,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChat"
           description: default response
-      summary: Create a new AI chat conversation
+      summary: Create a new AI chat
+      tags:
+      - AI
+  /ai/v1/deleteAllChats:
+    post:
+      operationId: deleteAllAiChats
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: "Delete all the user's chats, with their messages, attached data, workspace\
+        \ files, chat memory and tool approvals. The user's own memory is kept."
       tags:
       - AI
   /ai/v1/deleteAllMessages/{chatId}:
@@ -380,7 +479,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete all messages and attachments from an AI chat conversation
+      summary: Delete all messages and attachments from an AI chat
       tags:
       - AI
   /ai/v1/deleteChat/{chatId}:
@@ -400,7 +499,27 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete an AI chat conversation
+      summary: Delete an AI chat
+      tags:
+      - AI
+  /ai/v1/deleteMemory:
+    post:
+      operationId: deleteAiMemory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAiMemoryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Delete a piece of memory, or all memory in a folder"
       tags:
       - AI
   /ai/v1/deleteMessage/{chatId}/{messageId}:
@@ -426,7 +545,7 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete a message from an AI chat conversation
+      summary: Delete a message from an AI chat
       tags:
       - AI
   /ai/v1/downloadChatHistory:
@@ -446,7 +565,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResourceGeneration"
           description: default response
-      summary: Download the chat history for a conversation as a Markdown file
+      summary: Download the chat history for a chat as a Markdown file
+      tags:
+      - AI
+  /ai/v1/editMessage:
+    post:
+      operationId: editMessage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditAiMessageRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Edit one of the user's earlier questions (or ask it again unchanged).\
+        \ The question and everything after it are removed from the chat, and the\
+        \ new text is answered"
       tags:
       - AI
   /ai/v1/getAttachmentData:
@@ -486,7 +627,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChat"
           description: default response
-      summary: Get an AI chat conversation by ID
+      summary: Get an AI chat by ID
+      tags:
+      - AI
+  /ai/v1/getChatStatuses/{sinceVersion}:
+    get:
+      operationId: getAiChatStatuses
+      parameters:
+      - in: path
+        name: sinceVersion
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatStatusResponse"
+          description: default response
+      summary: "Get the statuses of the user's chats, for the switcher and badges,\
+        \ or nothing if none has changed since the given version"
       tags:
       - AI
   /ai/v1/getDefaultConfig:
@@ -500,6 +662,27 @@ paths:
                 $ref: "#/components/schemas/AskStroomAiConfig"
           description: default response
       summary: Get the default config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/getMcpPrompt:
+    post:
+      operationId: getAiMcpPrompt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetAiMcpPromptRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMcpPromptText"
+          description: default response
+      summary: "Get an MCP server's prompt, filled in, for the user to check before\
+        \ sending it"
       tags:
       - AI
   /ai/v1/getMessages/{chatId}:
@@ -521,7 +704,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AiChatMessage"
           description: default response
-      summary: Get messages for an AI chat conversation
+      summary: Get messages for an AI chat
       tags:
       - AI
   /ai/v1/listChats:
@@ -541,7 +724,86 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResultPageAiChat"
           description: default response
-      summary: List all AI chat conversations for the current user
+      summary: List all AI chats for the current user
+      tags:
+      - AI
+  /ai/v1/listMcpPrompts:
+    post:
+      operationId: listAiMcpPrompts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiMcpPrompt"
+          description: default response
+      summary: "List the prompts the model's MCP servers offer, as slash commands"
+      tags:
+      - AI
+  /ai/v1/listMemory/{chatId}:
+    post:
+      operationId: listAiMemory
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMemoryListResponse"
+          description: default response
+      summary: "List the memory a chat can see, and the changes the agent has made\
+        \ to memory in it"
+      tags:
+      - AI
+  /ai/v1/listToolApprovals/{chatId}:
+    post:
+      operationId: listAiToolApprovals
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolApprovalsResponse"
+          description: default response
+      summary: "List the decisions the user has made about tools in a chat, and whether\
+        \ 'approve everything' is on for it"
+      tags:
+      - AI
+  /ai/v1/markAllChatsRead:
+    post:
+      operationId: markAllAiChatsRead
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: "Mark everything in all the user's chats as read, clearing their unread\
+        \ marks"
       tags:
       - AI
   /ai/v1/pollMessages/{chatId}:
@@ -568,8 +830,211 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiChatPollResponse"
           description: default response
-      summary: Poll for new messages in an AI chat conversation since a given message
-        ID
+      summary: Poll for new messages in an AI chat since a given message ID
+      tags:
+      - AI
+  /ai/v1/removeToolApproval/{chatId}/{approvalId}:
+    post:
+      operationId: removeAiToolApproval
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: approvalId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Remove a decision the user made about a tool in a chat, so they are\
+        \ asked again"
+      tags:
+      - AI
+  /ai/v1/resetAllUsersConfig:
+    post:
+      operationId: resetAllUsersAskStroomAiConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: "Reset every user's Ask Stroom AI settings (model, prompts, dock position\
+        \ and so on) to the configured defaults"
+      tags:
+      - AI
+  /ai/v1/resetToolApprovals/{chatId}:
+    post:
+      operationId: resetAiToolApprovals
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Remove every decision the user made about tools in a chat, so they\
+        \ are asked again"
+      tags:
+      - AI
+  /ai/v1/resumeRun:
+    post:
+      operationId: resumeRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: "Resume a chat whose last agent run stopped before finishing, by answering\
+        \ its last question again"
+      tags:
+      - AI
+  /ai/v1/saveMemory:
+    post:
+      operationId: saveAiMemory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveAiMemoryRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiMemory"
+          description: default response
+      summary: Save a piece of memory the user has written or edited
+      tags:
+      - AI
+  /ai/v1/searchChats:
+    post:
+      operationId: searchAiChats
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchAiChatsRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiChatSearchHit"
+          description: default response
+      summary: "Search the user's chats by their titles and the user's questions in\
+        \ them, most recently active first"
+      tags:
+      - AI
+  /ai/v1/sendSteerNow/{chatId}/{messageId}:
+    post:
+      operationId: sendSteerNow
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Send a message waiting for an AI chat's run to finish its current step
+        now
+      tags:
+      - AI
+  /ai/v1/setAgentMode/{chatId}/{mode}:
+    put:
+      operationId: setAiAgentMode
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: mode
+        required: true
+        schema:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Set how the agent works in a chat: Agent, Ask or Plan"
+      tags:
+      - AI
+  /ai/v1/setApproveEverything:
+    post:
+      operationId: setAiApproveEverything
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAiApproveEverythingRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Turn 'approve everything' on or off for a chat, if an administrator\
+        \ has enabled it"
       tags:
       - AI
   /ai/v1/setDefaultAskStroomAIConfig:
@@ -590,6 +1055,124 @@ paths:
                 type: boolean
           description: default response
       summary: Set the default Stroom AI config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/setTableAnalysisConfig:
+    post:
+      operationId: setAiTableAnalysisConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableAnalysisConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Set the table analysis settings, which apply to everyone"
+      tags:
+      - AI
+  /ai/v1/suggestPrompts:
+    post:
+      operationId: suggestAiPrompts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestAiPromptsRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: default response
+      summary: "Suggest what the user might ask about what they have just attached\
+        \ to an AI chat, given the conversation so far"
+      tags:
+      - AI
+  /ai/v1/undoCompaction:
+    post:
+      operationId: undoCompaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UndoAiCompactionRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiContextUsage"
+          description: default response
+      summary: "Undo a chat's latest compaction, so the model sees the turns it covered\
+        \ as they were. Returns how much of the context window the chat now uses"
+      tags:
+      - AI
+  /ai/v1/undoMemoryChange:
+    post:
+      operationId: undoAiMemoryChange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UndoAiMemoryChangeRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Undo a change the agent made to memory, if the memory has not changed\
+        \ since"
+      tags:
+      - AI
+  /ai/v1/undoUserAction/{chatId}/{messageId}/{actionId}:
+    post:
+      operationId: undoAiUserAction
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: actionId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUserActionResult"
+          description: default response
+      summary: "Record that the user undid a proposed code change they applied to\
+        \ a stepping editor with a button in the chat, after checking they may still\
+        \ edit the document"
       tags:
       - AI
   /ai/v1/updateChatTitle/{chatId}:
@@ -616,9 +1199,161 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Update the title of an AI chat conversation
+      summary: Update the title of an AI chat
       tags:
       - AI
+  /ai/v1/userAction/{chatId}/{messageId}/{actionId}:
+    post:
+      operationId: doAiUserAction
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: actionId
+        required: true
+        schema:
+          type: string
+      - description: "For a proposed code change, the parts of it the user rejected,\
+          \ by their number from 0, comma separated"
+        in: query
+        name: rejectedChanges
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUserActionResult"
+          description: default response
+      summary: "Do what a button that an MCP tool's result offered does, e.g. enable\
+        \ a processor filter, after checking it can still be done"
+      tags:
+      - AI
+  /aiToolPolicy/v1:
+    get:
+      operationId: listAiToolPolicies
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: "Lists the tool policies, by name"
+      tags:
+      - AI Tool Policies
+    post:
+      operationId: createAiToolPolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiToolPolicy"
+        description: policy
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Creates a tool policy
+      tags:
+      - AI Tool Policies
+  /aiToolPolicy/v1/tools:
+    get:
+      operationId: listAiTools
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AiToolSummary"
+          description: default response
+      summary: "Lists Stroom's own tools, with their categories"
+      tags:
+      - AI Tool Policies
+  /aiToolPolicy/v1/{id}:
+    delete:
+      operationId: deleteAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes a tool policy
+      tags:
+      - AI Tool Policies
+    get:
+      operationId: fetchAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Fetches a tool policy by its id
+      tags:
+      - AI Tool Policies
+    put:
+      operationId: updateAiToolPolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiToolPolicy"
+        description: policy
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiToolPolicy"
+          description: default response
+      summary: Updates a tool policy
+      tags:
+      - AI Tool Policies
   /analyticDataShard/v1/find:
     post:
       operationId: findAnalyticDataShards
@@ -2867,6 +3602,33 @@ paths:
       summary: Update an Elasticsearch cluster doc
       tags:
       - Elastic Clusters
+  /elasticIndex/v1/templates:
+    post:
+      description: "Resolves the doc's index name to the newest index or data stream\
+        \ it stands for, then reads the index template Elasticsearch would apply to\
+        \ it and each of that template's component templates, using the doc's cluster\
+        \ connection. Each part reports its own status (OK, NOT_FOUND, FORBIDDEN or\
+        \ ERROR), so a part that Elasticsearch refused does not fail the request.\
+        \ Requires READ on the doc."
+      operationId: fetchElasticIndexTemplates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ElasticIndexTemplatesRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElasticIndexTemplatesResponse"
+          description: default response
+      summary: Read the index template and component templates that apply to an Elasticsearch
+        index
+      tags:
+      - Elastic Indices
   /elasticIndex/v1/testIndex:
     post:
       operationId: testElasticIndex
@@ -5662,6 +6424,47 @@ paths:
                 $ref: "#/components/schemas/HttpClientConfig"
           description: default response
       summary: Get default HTTP client configuration
+      tags:
+      - OpenAI Model
+  /openAIModel/v1/listMcpTools:
+    post:
+      operationId: listMcpTools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestMcpToolServerRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListMcpToolsResponse"
+          description: default response
+      summary: "Connect to an MCP tool server and list all its tools, with their documentation\
+        \ and whether its tool policies enable them"
+      tags:
+      - OpenAI Model
+  /openAIModel/v1/testMcpToolServer:
+    post:
+      operationId: testMcpToolServer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestMcpToolServerRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIModelTestResponse"
+          description: default response
+      summary: Connect to an MCP tool server and list the tools it would offer
       tags:
       - OpenAI Model
   /openAIModel/v1/validate:
@@ -10240,6 +11043,8 @@ components:
           - MANAGE_CONTENT_TEMPLATES_PERMISSION
           - MANAGE_DATA_RECEIPT_RULES_PERMISSION
           - MANAGE_JOBS_PERMISSION
+          - USE_MCP_TOOLS
+          - MANAGE_MCP_TOOL_POLICIES
           - MANAGE_PROPERTIES_PERMISSION
           - MANAGE_POLICIES_PERMISSION
           - MANAGE_NODES_PERMISSION
@@ -10668,6 +11473,10 @@ components:
           - DASHBOARD
           - QUERY
           - GENERAL
+          - TOOL_OUTPUT
+          - WORKSPACE_FILE
+          - DOCUMENT
+          - TAB_SNAPSHOT
         chatId:
           type: integer
           format: int32
@@ -10676,6 +11485,10 @@ components:
           format: int64
         description:
           type: string
+        docPath:
+          type: string
+        docRef:
+          $ref: "#/components/schemas/DocRef"
         errorMessage:
           type: string
         id:
@@ -10691,6 +11504,7 @@ components:
           - DOWNLOADING
           - READY
           - ERROR
+          - UNAVAILABLE
         truncated:
           type: boolean
         updateTimeMs:
@@ -10726,12 +11540,41 @@ components:
           - ATTACHMENT
           - DEBUG_DETAIL
           - THINKING
+          - WARNING
+          - STEER_MESSAGE
+          - TOOL_CALL
+          - TOOL_RESULT
+          - TURN_DIGEST
+          - COMPACTION_SUMMARY
+          - MEMORY_UPDATE
+          - APPROVAL_REQUEST
+          - STREAMING_ANSWER
+          - STREAMING_THINKING
+          - ELICITATION
+          - SUGGESTIONS
+          - TASK_LIST
+          - INTERIM_RESPONSE
+          - QUEUED_STEER_MESSAGE
+          - SEND_NOW_STEER_MESSAGE
+        tokenCount:
+          type: integer
+          format: int32
+        turnId:
+          type: integer
+          format: int32
     AiChatPollRequest:
       type: object
       properties:
         lastSeenMessageId:
           type: integer
           format: int32
+        markRead:
+          type: boolean
+        watchedMessageIds:
+          type: array
+          items:
+            type: integer
+            format: int32
     AiChatPollResponse:
       type: object
       properties:
@@ -10741,12 +11584,448 @@ components:
             $ref: "#/components/schemas/AiChatAttachment"
         complete:
           type: boolean
+        contextUsage:
+          $ref: "#/components/schemas/AiContextUsage"
         newMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatMessage"
+        run:
+          $ref: "#/components/schemas/AiChatRun"
+        shareActiveTab:
+          type: boolean
+        streamingMessages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatMessage"
+        watchedMessages:
           type: array
           items:
             $ref: "#/components/schemas/AiChatMessage"
         workingMessage:
           $ref: "#/components/schemas/AiChatMessage"
+    AiChatRun:
+      type: object
+      properties:
+        chatId:
+          type: integer
+          format: int32
+        endTimeMs:
+          type: integer
+          format: int64
+        errorMessage:
+          type: string
+        id:
+          type: integer
+          format: int32
+        startTimeMs:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - WAITING_FOR_USER
+          - STOPPING
+          - STOPPED
+          - INTERRUPTED
+          - FAILED
+          - DONE
+        stopReason:
+          type: string
+          enum:
+          - USER
+          - SIGN_OUT
+          - SESSION_EXPIRED
+          - TOKEN_EXPIRED
+          - RUN_LIMIT
+          - NODE_LOST
+          - TERMINATED
+          - ACCOUNT_DISABLED
+          - EDITED
+          - NEEDS_APPROVAL
+          - APPROVAL_EXPIRED
+          - NEEDS_INPUT
+          - NEEDS_ANSWERS
+        unattended:
+          type: boolean
+    AiChatSearchHit:
+      type: object
+      properties:
+        chatId:
+          type: integer
+          format: int32
+        snippet:
+          type: string
+        title:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+    AiChatStatus:
+      type: object
+      properties:
+        agentMode:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
+        approveEverything:
+          type: boolean
+        chatId:
+          type: integer
+          format: int32
+        lastOpenedMs:
+          type: integer
+          format: int64
+        runStatus:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - WAITING_FOR_USER
+          - STOPPING
+          - STOPPED
+          - INTERRUPTED
+          - FAILED
+          - DONE
+        title:
+          type: string
+        unread:
+          type: boolean
+        updateTimeMs:
+          type: integer
+          format: int64
+    AiChatStatusResponse:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatStatus"
+        version:
+          type: integer
+          format: int64
+    AiContextUsage:
+      type: object
+      properties:
+        compactAtPercent:
+          type: integer
+          format: int32
+        contextWindowTokens:
+          type: integer
+          format: int32
+        estimated:
+          type: boolean
+        parts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        shortenedParts:
+          type: integer
+          format: int32
+        usedTokens:
+          type: integer
+          format: int64
+    AiMcpPrompt:
+      type: object
+      properties:
+        arguments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiMcpPromptArgument"
+        command:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        server:
+          type: string
+    AiMcpPromptArgument:
+      type: object
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        required:
+          type: boolean
+    AiMcpPromptText:
+      type: object
+      properties:
+        text:
+          type: string
+    AiMemory:
+      type: object
+      properties:
+        content:
+          type: string
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        scope:
+          type: string
+          enum:
+          - USER
+          - CHAT
+          - DOC
+        scopeKey:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
+    AiMemoryListResponse:
+      type: object
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatMessage"
+        memories:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiMemory"
+    AiSteppingContext:
+      type: object
+      properties:
+        childStreamType:
+          type: string
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSteppingElement"
+        feedName:
+          type: string
+        generalErrors:
+          type: array
+          items:
+            type: string
+        metaId:
+          type: integer
+          format: int64
+        partNo:
+          type: integer
+          format: int64
+        recordNo:
+          type: integer
+          format: int64
+        selectedElementId:
+          type: string
+        streamType:
+          type: string
+    AiSteppingElement:
+      type: object
+      properties:
+        dirty:
+          type: boolean
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        errorCount:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiSteppingError"
+        hasCode:
+          type: boolean
+        id:
+          type: string
+        type:
+          type: string
+        warningCount:
+          type: integer
+          format: int32
+    AiSteppingError:
+      type: object
+      properties:
+        colNo:
+          type: integer
+          format: int32
+        lineNo:
+          type: integer
+          format: int32
+        message:
+          type: string
+        pane:
+          type: string
+        severity:
+          type: string
+    AiTabSearch:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: string
+        componentId:
+          type: string
+        live:
+          $ref: "#/components/schemas/AskStroomAiContext"
+        name:
+          type: string
+        results:
+          $ref: "#/components/schemas/AskStroomAiContext"
+        searching:
+          type: boolean
+        visibleRows:
+          type: integer
+          format: int64
+    AiTabSnapshot:
+      type: object
+      properties:
+        dirty:
+          type: boolean
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        hash:
+          type: string
+        innerTab:
+          type: string
+        note:
+          type: string
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiTabSnapshotPart"
+        searches:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiTabSearch"
+        stepping:
+          $ref: "#/components/schemas/AiSteppingContext"
+        tabLabel:
+          type: string
+    AiTabSnapshotPart:
+      type: object
+      properties:
+        mediaType:
+          type: string
+        name:
+          type: string
+        text:
+          type: string
+    AiToolApproval:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+          - ALLOW
+          - DENY
+        id:
+          type: integer
+          format: int32
+        serverKey:
+          type: string
+        toolName:
+          type: string
+    AiToolApprovalsResponse:
+      type: object
+      properties:
+        approvals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiToolApproval"
+        approveEverything:
+          type: boolean
+        approveEverythingAllowed:
+          type: boolean
+    AiToolPolicy:
+      type: object
+      properties:
+        access:
+          type: string
+          enum:
+          - READ_ONLY
+          - READ_WRITE
+        allUsers:
+          type: boolean
+        categories:
+          type: array
+          items:
+            type: string
+            enum:
+            - CORE
+            - SEARCH
+            - CONTENT
+            - INDEXING
+            - PROCESSING
+            - ADMINISTRATION
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: integer
+          format: int32
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRef"
+        name:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
+    AiToolSummary:
+      type: object
+      properties:
+        category:
+          type: string
+          enum:
+          - CORE
+          - SEARCH
+          - CONTENT
+          - INDEXING
+          - PROCESSING
+          - ADMINISTRATION
+        description:
+          type: string
+        name:
+          type: string
+        readOnly:
+          type: boolean
+        readOnlyCalls:
+          type: boolean
+    AiUserActionResult:
+      type: object
+      properties:
+        createDashboardConfig:
+          $ref: "#/components/schemas/DashboardConfig"
+        createDashboardName:
+          type: string
+        createQueryName:
+          type: string
+        createQueryText:
+          type: string
+        done:
+          type: boolean
+        message:
+          type: string
+        openDocument:
+          $ref: "#/components/schemas/DocRef"
     AnalyticDataShard:
       type: object
       properties:
@@ -11041,6 +12320,42 @@ components:
           - COMMENT
         uuid:
           type: string
+    AnswerAiApprovalRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        approved:
+          type: boolean
+        callIds:
+          type: array
+          items:
+            type: string
+        messageId:
+          type: integer
+          format: int32
+        reason:
+          type: string
+        scope:
+          type: string
+          enum:
+          - ONCE
+          - CHAT
+          - SERVER_READ_ONLY
+    AnswerAiElicitationRequest:
+      type: object
+      properties:
+        action:
+          type: string
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        answer:
+          type: object
+          additionalProperties:
+            type: string
+        messageId:
+          type: integer
+          format: int32
     AnyBoolean:
       type: object
       allOf:
@@ -11111,6 +12426,8 @@ components:
               - MANAGE_CONTENT_TEMPLATES_PERMISSION
               - MANAGE_DATA_RECEIPT_RULES_PERMISSION
               - MANAGE_JOBS_PERMISSION
+              - USE_MCP_TOOLS
+              - MANAGE_MCP_TOOL_POLICIES
               - MANAGE_PROPERTIES_PERMISSION
               - MANAGE_POLICIES_PERMISSION
               - MANAGE_NODES_PERMISSION
@@ -11159,6 +12476,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -11197,6 +12516,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -11240,6 +12561,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -11319,6 +12642,8 @@ components:
         attachmentDownloadTimeoutMs:
           type: integer
           format: int64
+        browserNotifications:
+          type: boolean
         chatSystemPrompt:
           type: string
         dockLocation:
@@ -11347,6 +12672,10 @@ components:
           format: int32
         modelRef:
           $ref: "#/components/schemas/DocRef"
+        showReasoning:
+          type: boolean
+        showToolCalls:
+          type: boolean
         tableAnalysis:
           $ref: "#/components/schemas/TableAnalysisConfig"
     AskStroomAiContext:
@@ -11354,6 +12683,7 @@ components:
       discriminator:
         mapping:
           dashboardTable: "#/components/schemas/DashboardTableContext"
+          documentReference: "#/components/schemas/DocumentReferenceContext"
           generalTable: "#/components/schemas/GeneralTableContext"
           queryTable: "#/components/schemas/QueryTableContext"
         propertyName: type
@@ -11375,11 +12705,21 @@ components:
           $ref: "#/components/schemas/AskStroomAiContext"
         message:
           type: string
+        mode:
+          type: string
+          enum:
+          - AGENT
+          - ASK
+          - PLAN
+        tabSnapshot:
+          $ref: "#/components/schemas/AiTabSnapshot"
     AskStroomAiResponse:
       type: object
       properties:
         message:
           type: string
+        tabSnapshotNeeded:
+          type: boolean
     AssignTasksRequest:
       type: object
       properties:
@@ -11953,6 +13293,15 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/ColumnValueSelection"
+    CompactAiChatRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        instructions:
+          type: string
     CompletionItem:
       type: object
       discriminator:
@@ -12951,6 +14300,16 @@ components:
       type: object
       allOf:
       - $ref: "#/components/schemas/Location"
+    DeleteAiMemoryRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        path:
+          type: string
+        version:
+          type: integer
+          format: int32
     DeleteAnnotationEntryRequest:
       type: object
       properties:
@@ -13300,6 +14659,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaFieldSort"
+    DocumentReference:
+      type: object
+      properties:
+        docRef:
+          $ref: "#/components/schemas/DocRef"
+        path:
+          type: string
+    DocumentReferenceContext:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AskStroomAiContext"
+      - type: object
+        properties:
+          documents:
+            type: array
+            items:
+              $ref: "#/components/schemas/DocumentReference"
     DocumentType:
       type: object
       properties:
@@ -13344,6 +14720,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - COPY_TEXT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -13400,6 +14777,7 @@ components:
           - EXCLAMATION
           - EXPAND_ALL
           - EXPAND_DOWN
+          - EXPLORE
           - EXPLORER
           - EYE
           - EYE_OFF
@@ -13425,6 +14803,7 @@ components:
           - FILE_SCRIPT
           - FILTER
           - FIND
+          - FIT_WIDTH
           - FOLDER
           - FOLDER_TREE
           - FORMAT
@@ -13536,6 +14915,8 @@ components:
           - VALUE_FILTER
           - VOLUMES
           - WARNING
+          - ZOOM_IN
+          - ZOOM_OUT
         type:
           type: string
     DocumentTypes:
@@ -13684,6 +15065,8 @@ components:
         chatId:
           type: integer
           format: int32
+        includeActivity:
+          type: boolean
         includeDataContexts:
           type: boolean
     DownloadQueryResultsRequest:
@@ -13696,6 +15079,8 @@ components:
           - CSV
           - TSV
           - MARKDOWN
+        includeSourceIds:
+          type: boolean
         percent:
           type: integer
           format: int32
@@ -13717,6 +15102,8 @@ components:
           - CSV
           - TSV
           - MARKDOWN
+        includeSourceIds:
+          type: boolean
         percent:
           type: integer
           format: int32
@@ -13762,6 +15149,20 @@ components:
           $ref: "#/components/schemas/SimpleDuration"
         enabled:
           type: boolean
+    EditAiMessageRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        message:
+          type: string
+        messageId:
+          type: integer
+          format: int32
+        tabSnapshot:
+          $ref: "#/components/schemas/AiTabSnapshot"
     ElasticClusterDoc:
       type: object
       properties:
@@ -13794,6 +15195,23 @@ components:
           type: string
         ok:
           type: boolean
+    ElasticComponentTemplate:
+      type: object
+      properties:
+        body:
+          type: object
+          description: The component template as GET _component_template returns it
+        message:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - OK
+          - NOT_FOUND
+          - FORBIDDEN
+          - ERROR
     ElasticConnectionConfig:
       type: object
       properties:
@@ -13916,6 +15334,47 @@ components:
           type: boolean
         nativeType:
           type: string
+    ElasticIndexTemplate:
+      type: object
+      properties:
+        body:
+          type: object
+          description: The template as GET _index_template returns it
+        message:
+          type: string
+        name:
+          type: string
+        overlapping:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticOverlappingIndexTemplate"
+        status:
+          type: string
+          enum:
+          - OK
+          - NOT_FOUND
+          - FORBIDDEN
+          - ERROR
+    ElasticIndexTemplatesRequest:
+      type: object
+      properties:
+        indexDocRef:
+          $ref: "#/components/schemas/DocRef"
+    ElasticIndexTemplatesResponse:
+      type: object
+      properties:
+        componentTemplates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ElasticComponentTemplate"
+        indexName:
+          type: string
+        indexTemplate:
+          $ref: "#/components/schemas/ElasticIndexTemplate"
+        resolveMessage:
+          type: string
+        resolvedName:
+          type: string
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -13923,6 +15382,18 @@ components:
           type: string
         ok:
           type: boolean
+    ElasticOverlappingIndexTemplate:
+      type: object
+      properties:
+        index_patterns:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        priority:
+          type: integer
+          format: int64
     ElementId:
       type: object
       properties:
@@ -15717,6 +17188,19 @@ components:
               type: array
               items:
                 type: string
+    GetAiMcpPromptRequest:
+      type: object
+      properties:
+        arguments:
+          type: object
+          additionalProperties:
+            type: string
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        name:
+          type: string
+        server:
+          type: string
     GetAnalyticShardDataRequest:
       type: object
       properties:
@@ -16154,6 +17638,10 @@ components:
           type: boolean
         followRedirects:
           type: boolean
+        headers:
+          type: array
+          items:
+            $ref: "#/components/schemas/HttpHeader"
         keepAlive:
           $ref: "#/components/schemas/SimpleDuration"
         maxConnections:
@@ -16190,6 +17678,13 @@ components:
       - timeToLive
       - timeout
       - validateAfterInactivityPeriod
+    HttpHeader:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
     HttpProxyConfig:
       type: object
       properties:
@@ -16851,6 +18346,15 @@ components:
             type: array
             items:
               type: string
+    ListMcpToolsResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolDescription"
     Location:
       type: object
       discriminator:
@@ -17054,6 +18558,74 @@ components:
           type: string
       required:
       - type
+    McpToolDescription:
+      type: object
+      properties:
+        classifications:
+          type: array
+          items:
+            type: string
+        documentation:
+          type: string
+        enabled:
+          type: boolean
+        group:
+          type: string
+        name:
+          type: string
+    McpToolPolicyRule:
+      type: object
+      properties:
+        policy:
+          type: string
+          enum:
+          - ALLOW
+          - ASK_ALWAYS
+          - DENY
+        toolPattern:
+          type: string
+    McpToolServerConfig:
+      type: object
+      properties:
+        apiKeyHeaderName:
+          type: string
+        apiKeyValuePrefix:
+          type: string
+        audience:
+          type: string
+        authMode:
+          type: string
+          enum:
+          - NONE
+          - BEARER_TOKEN
+          - API_KEY
+          - BASIC
+          - STROOM_SESSION_TOKEN
+        credentialName:
+          type: string
+        enabled:
+          type: boolean
+        endpoint:
+          type: string
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
+        name:
+          type: string
+        toolCategory:
+          type: string
+          enum:
+          - CORE
+          - SEARCH
+          - CONTENT
+          - INDEXING
+          - PROCESSING
+          - ADMINISTRATION
+        toolPolicies:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolPolicyRule"
+        trusted:
+          type: boolean
     Message:
       type: object
       properties:
@@ -17521,12 +19093,23 @@ components:
         maxContextWindowTokens:
           type: integer
           format: int32
+        maxToolDefinitions:
+          type: integer
+          format: int32
+        mcpToolServers:
+          type: array
+          items:
+            $ref: "#/components/schemas/McpToolServerConfig"
         modelId:
           type: string
         name:
           type: string
         reasoningEffort:
           type: string
+        showReasoning:
+          type: boolean
+        toolsEnabled:
+          type: boolean
         type:
           type: string
         updateTimeMs:
@@ -17806,6 +19389,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - COPY_TEXT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -17862,6 +19446,7 @@ components:
           - EXCLAMATION
           - EXPAND_ALL
           - EXPAND_DOWN
+          - EXPLORE
           - EXPLORER
           - EYE
           - EYE_OFF
@@ -17887,6 +19472,7 @@ components:
           - FILE_SCRIPT
           - FILTER
           - FIND
+          - FIT_WIDTH
           - FOLDER
           - FOLDER_TREE
           - FORMAT
@@ -17998,6 +19584,8 @@ components:
           - VALUE_FILTER
           - VOLUMES
           - WARNING
+          - ZOOM_IN
+          - ZOOM_OUT
         roles:
           type: array
           items:
@@ -20183,6 +21771,18 @@ components:
           type: string
         regionName:
           type: string
+    SaveAiMemoryRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        content:
+          type: string
+        path:
+          type: string
+        version:
+          type: integer
+          format: int32
     SavePipelineJsonRequest:
       type: object
       properties:
@@ -20316,6 +21916,11 @@ components:
           type: string
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+    SearchAiChatsRequest:
+      type: object
+      properties:
+        text:
+          type: string
     SearchRequest:
       type: object
       description: A request for new search or a follow up request for more data for
@@ -20656,6 +22261,13 @@ components:
             $ref: "#/components/schemas/SnapshotSettings"
           synchroniseMerge:
             type: boolean
+    SetAiApproveEverythingRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        enabled:
+          type: boolean
     SetAllPermissionsFrom:
       type: object
       allOf:
@@ -20831,6 +22443,8 @@ components:
             - MANAGE_CONTENT_TEMPLATES_PERMISSION
             - MANAGE_DATA_RECEIPT_RULES_PERMISSION
             - MANAGE_JOBS_PERMISSION
+            - USE_MCP_TOOLS
+            - MANAGE_MCP_TOOL_POLICIES
             - MANAGE_PROPERTIES_PERMISSION
             - MANAGE_POLICIES_PERMISSION
             - MANAGE_NODES_PERMISSION
@@ -21675,6 +23289,20 @@ components:
       properties:
         string:
           type: string
+    SuggestAiPromptsRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        attachmentIds:
+          type: array
+          items:
+            type: integer
+            format: int32
+        config:
+          $ref: "#/components/schemas/AskStroomAiConfig"
+        tab:
+          $ref: "#/components/schemas/AiTabSnapshot"
     Suggestions:
       type: object
       properties:
@@ -21774,6 +23402,9 @@ components:
           type: integer
           format: int32
         maxRowsPerBatch:
+          type: integer
+          format: int32
+        maxRowsWithoutTools:
           type: integer
           format: int32
         maxTotalRows:
@@ -22262,6 +23893,13 @@ components:
       properties:
         criteria:
           $ref: "#/components/schemas/FindTaskCriteria"
+    TestMcpToolServerRequest:
+      type: object
+      properties:
+        mcpToolServer:
+          $ref: "#/components/schemas/McpToolServerConfig"
+        modelUuid:
+          type: string
     TextAttributes:
       type: object
       properties:
@@ -22705,6 +24343,22 @@ components:
           $ref: "#/components/schemas/ThemeConfig"
         welcomeHtml:
           type: string
+    UndoAiCompactionRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        messageId:
+          type: integer
+          format: int32
+    UndoAiMemoryChangeRequest:
+      type: object
+      properties:
+        aiChat:
+          $ref: "#/components/schemas/AiChat"
+        messageId:
+          type: integer
+          format: int32
     UnlinkAnnotations:
       type: object
       allOf:

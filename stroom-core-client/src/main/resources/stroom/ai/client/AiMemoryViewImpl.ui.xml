@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="max dock-container-vertical form aiMemory">
+        <g:Label styleName="dock-min aiMemory-intro"
+                 text="Your memory is loaded into every chat you have. This chat's memory is loaded only into this chat. The agent treats memory as notes, not instructions. Don't keep secrets here."/>
+        <g:FlowPanel styleName="dock-max dock-container-horizontal aiMemory-main">
+            <g:ListBox ui:field="memories" visibleItemCount="12" styleName="dock-min aiMemory-list"/>
+            <g:TextArea ui:field="content" styleName="dock-max aiMemory-content"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="button-group dock-min">
+            <b:Button ui:field="newMemory" text="New…" addStyleNames="allow-focus"/>
+            <b:Button ui:field="save" text="Save" addStyleNames="allow-focus"/>
+            <b:Button ui:field="delete" text="Delete" addStyleNames="allow-focus"/>
+            <b:Button ui:field="clearUser" text="Clear My Memory…" addStyleNames="allow-focus"/>
+        </g:FlowPanel>
+        <g:Label styleName="dock-min aiMemory-heading" text="Changes the agent made to your memory in this chat"/>
+        <g:HTML ui:field="changes" styleName="dock-min aiMemory-changes"/>
+    </g:FlowPanel>
+</ui:UiBinder>

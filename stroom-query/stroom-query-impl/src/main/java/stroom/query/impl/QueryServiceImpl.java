@@ -293,7 +293,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                                         new SampleGenerator(request.isSample(), request.getPercent());
                                 final SearchResultWriter searchResultWriter = new SearchResultWriter(
                                         sampleGenerator,
-                                        target);
+                                        target,
+                                        request.isIncludeSourceIds());
                                 final TableResultCreator tableResultCreator =
                                         new TableResultCreator(formatterFactory,
                                                 expressionPredicateFactory) {
@@ -562,9 +563,16 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             });
                     return CompletableFuture.supplyAsync(supplier, executor).get();
 
-                } catch (final InterruptedException | ExecutionException e) {
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     LOGGER.debug(e.getMessage(), e);
-                    return null;
+                    return errorResponse(request, "The search was interrupted.");
+                } catch (final ExecutionException e) {
+                    // Not an error the search itself reports (see processRequest), so one to look into. The caller
+                    // is told what it was, rather than given no response.
+                    final Throwable cause = Objects.requireNonNullElse(e.getCause(), e);
+                    LOGGER.error(() -> "Error processing search " + request.getQueryKey(), cause);
+                    return errorResponse(request, ExceptionStringUtil.getMessage(cause));
                 }
             });
         });
@@ -649,6 +657,19 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         }
 
         return mappedRequest;
+    }
+
+    // A response that says the search failed, and is complete, so the caller stops polling.
+    private DashboardSearchResponse errorResponse(final QuerySearchRequest searchRequest, final String message) {
+        return new DashboardSearchResponse(
+                nodeInfo.getThisNodeName(),
+                searchRequest.getQueryKey(),
+                null,
+                null,
+                null,
+                true,
+                null,
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, message)));
     }
 
     private DashboardSearchResponse processRequest(final QuerySearchRequest searchRequest) {

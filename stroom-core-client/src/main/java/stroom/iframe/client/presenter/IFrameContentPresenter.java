@@ -19,7 +19,9 @@ package stroom.iframe.client.presenter;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.GlobalKeyHandler;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -34,9 +36,14 @@ public class IFrameContentPresenter
 
     private SvgImage icon = SvgImage.DEPENDENCIES;
 
+    private final GlobalKeyHandler globalKeyHandler;
+
     @Inject
-    public IFrameContentPresenter(final EventBus eventBus, final IFrameContentView view) {
+    public IFrameContentPresenter(final EventBus eventBus,
+                                  final IFrameContentView view,
+                                  final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view);
+        this.globalKeyHandler = globalKeyHandler;
         view.setUiHandlers(this);
     }
 
@@ -71,6 +78,17 @@ public class IFrameContentPresenter
     @Override
     public boolean isCloseable() {
         return true;
+    }
+
+    @Override
+    public void onFrameKeyDown(final NativeEvent nativeEvent) {
+        globalKeyHandler.onKeyDown(nativeEvent);
+    }
+
+    @Override
+    public boolean onFrameLinkClick(final String href) {
+        // A page shown in a tab follows its own links.
+        return false;
     }
 
     @Override

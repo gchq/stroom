@@ -1,0 +1,188 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.mcp.impl.tools;
+
+import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolResult;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+
+/// get_field_conventions, the tool.
+class TestGetFieldConventionsTool {
+
+    private final IndexingWorld world = new IndexingWorld();
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void elasticsearchAsksForTheUsersExampleFirstOfferingExistingIndexes() {
+        world.elasticIndex("k", "Keycloak", "ecs-keycloak-v1", null, false);
+        final Map<String, Object> asked = call("{\"backend\": \"elasticsearch\"}", IndexingWorld.noForms());
+        final List<Map<String, Object>> options = (List<Map<String, Object>>) asked.get("options");
+        assertThat(asked.get("status")).isEqualTo("needs_guidance");
+        assertThat(String.valueOf(options.getFirst().get("option"))).startsWith("example index template");
+        assertThat(options.get(1).get("option")).isEqualTo("follow an existing index in Stroom");
+        assertThat(((List<Map<String, Object>>) options.get(1).get("existing_indexes")).getFirst().get("uuid"))
+                .isEqualTo("k");
+        // One choice per option, labelled, the template first (an agent offered the rest and dropped the template).
+        assertThat(options.stream().map(o -> o.get("choice")).toList()).containsExactly("From an index template",
+                "Follow an existing index in Stroom", "ECS (Elastic Common Schema) convention",
+                "Stroom flat convention");
+        assertThat(String.valueOf(options.get(2).get("how"))).contains("convention=ecs without_example=true");
+        assertThat(String.valueOf(asked.get("hint"))).contains("exactly these 4 choices, in this order")
+                .contains("From an index template;");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void withoutABackendTheOnlyIndexingBackendIsTaken() {
+        // Seen: asked without the backend, the agent got the profiles, looked the backend up and asked again.
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "path",
+                "System", "backend", "elasticsearch");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic)));
+        Map<String, Object> asked = call("{}", IndexingWorld.noForms());
+        assertThat(((List<Map<String, Object>>) asked.get("options")).getFirst().get("choice"))
+                .isEqualTo("From an index template");
+        assertThat(String.valueOf(asked.get("backend"))).startsWith("elasticsearch");
+        assertThat(((List<Map<String, Object>>) asked.get("indexing_templates")).getFirst().get("uuid"))
+                .isEqualTo("t1");
+
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+        asked = call("{}", IndexingWorld.noForms());
+        // Both backends: the backend alone is asked first. Seen in Ask Stroom AI: given the profiles before the
+        // backend, the agent asked the naming in the chat, and draft_index_mapping asked it again in its form.
+        assertThat(asked).doesNotContainKey("profiles");
+        assertThat(asked.get("question")).isEqualTo("Which backend should the new index use?");
+        assertThat(String.valueOf(asked.get("hint"))).contains("Don't ask how fields are named yet");
+
+        // With forms: the backend, then the naming, each asked once, in the tools' forms.
+        final ToolCallContext forms = world.forms(question -> Map.of("choice", question.contains("backend")
+                ? "Elasticsearch"
+                : "ECS (Elastic Common Schema) convention"));
+        final Map<String, Object> chosen = call("{}", forms);
+        assertThat(chosen.get("status")).isEqualTo("chosen");
+        // Remembered: draft_index_mapping convention=ecs doesn't ask again.
+        assertThat(world.memory.namingChosen()).containsEntry("convention", "ecs");
+        assertThat(world.asked).containsExactly("Which backend should the new index use?",
+                "How should the new index's fields be named?");
+        // What is settled comes back, so the agent asks none of it again (seen: told only the naming, it asked the
+        // backend again, with an example template to follow, in its own form), with the backend's templates.
+        assertThat(chosen.get("backend")).isEqualTo("elasticsearch");
+        assertThat(String.valueOf(chosen.get("settled"))).startsWith("The user chose the backend (Elasticsearch) "
+                                                                     + "and how fields are named (ECS")
+                .contains("don't ask about either again, nor offer the other naming choices (From an index "
+                          + "template; Follow an existing index in Stroom; Stroom flat convention)");
+        assertThat((List<Map<String, Object>>) chosen.get("indexing_templates"))
+                .extracting(template -> template.get("uuid"))
+                .containsExactly("t1");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theBackendIsNotAskedWhileTheBuildIsOnItsEventsPipeline() {
+        // Seen in testing: onboarding a CSV source, the agent's first question was the indexing backend.
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
+                "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+        final ToolCallContext context = IndexingWorld.noForms();
+        // A new source's build, nothing made yet: its next step is the feed.
+        world.processing.feeds.plan.rememberBuild(context, "onboard-acme");
+
+        final Map<String, Object> result = call("{}", context);
+
+        assertThat(result.get("status")).isEqualTo("not_yet");
+        assertThat(((Map<String, Object>) result.get("next")).get("step")).isEqualTo("feed");
+        assertThat(String.valueOf(result.get("hint"))).contains("Don't ask the user about indexing now");
+        assertThat(result).doesNotContainKey("question");
+        // The user has chosen the backend already: it goes on.
+        assertThat(call("{\"backend\": \"lucene\"}", context).get("status")).isNotEqualTo("not_yet");
+    }
+
+    @Test
+    void withNoBuildTheBackendIsAskedAsBefore() {
+        final Map<String, Object> elastic = Map.of("uuid", "t1", "name", "Events to Elasticsearch", "backend",
+                "elasticsearch");
+        final Map<String, Object> lucene = Map.of("uuid", "t2", "name", "Indexing", "backend", "lucene");
+        Mockito.when(world.pipelineTemplates.find(anyString())).thenReturn(Map.of("candidates", List.of(elastic,
+                lucene)));
+
+        assertThat(call("{}", IndexingWorld.noForms()).get("question"))
+                .isEqualTo("Which backend should the new index use?");
+    }
+
+    @Test
+    void followingAnExistingIndexChosenInTheFormIsRemembered() {
+        world.elasticIndex("k", "Keycloak", "ecs-keycloak-v1", null, false);
+        final Map<String, Object> chosen = call("{\"backend\": \"elasticsearch\"}", world.forms(question ->
+                Map.of("choice", "Follow an existing index in Stroom")));
+        assertThat(chosen.get("like_index")).isEqualTo("k");
+        assertThat(String.valueOf(chosen.get("hint"))).contains("draft_index_mapping like_index=k");
+        assertThat(world.memory.namingChosen()).containsEntry("like_index", "k");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aProfileGivesItsFieldMapAndForEcsTheSchema() {
+        final Map<String, Object> ecs = call("{\"name\": \"ecs\", \"ecs_fields\": \"process\"}",
+                IndexingWorld.noForms());
+        assertThat(((Map<String, Object>) ecs.get("profile")).get("field_map")).isNotNull();
+        assertThat(((Map<String, Object>) ecs.get("ecs")).get("version")).isNotNull();
+        assertThat((Map<String, Object>) ecs.get("ecs_fields")).containsKey("process.command_line");
+        final ToolResult unknown = world.conventionsTool().execute(BuildToolCalls.call(
+                GetFieldConventionsTool.NAME, "{\"name\": \"nope\"}"), IndexingWorld.noForms());
+        assertThat(unknown.isError()).isTrue();
+        assertThat(unknown.text()).isEqualTo("No convention profile 'nope'. Profiles: ecs, stroom-flat");
+    }
+
+    @Test
+    void aLuceneNamingChosenInTheFormIsSettledAndRemembered() {
+        // As for Elasticsearch: what the user settled comes back, and draft_index_mapping doesn't ask it again.
+        final Map<String, Object> chosen = call("{\"backend\": \"lucene\"}", world.forms(question ->
+                Map.of("choice", "Stroom flat convention")));
+        assertThat(chosen.get("status")).isEqualTo("chosen");
+        assertThat(chosen.get("backend")).isEqualTo("lucene");
+        assertThat(String.valueOf(chosen.get("settled"))).startsWith("The user chose the backend (Lucene) and how "
+                                                                     + "fields are named (Stroom flat convention)")
+                .contains("no cluster to choose");
+        assertThat(world.memory.namingChosen()).containsEntry("convention", "stroom-flat");
+    }
+
+    @Test
+    void luceneWithoutFormsListsTheProfiles() {
+        final Map<String, Object> asked = call("{\"backend\": \"lucene\"}", IndexingWorld.noForms());
+        assertThat(asked.get("status")).isEqualTo("needs_guidance");
+        assertThat(asked).containsKey("profiles");
+        assertThat(String.valueOf(asked.get("hint"))).startsWith("Ask the user which convention to use");
+    }
+
+    private Map<String, Object> call(final String arguments, final ToolCallContext context) {
+        final ToolResult result = world.conventionsTool().execute(BuildToolCalls.call(GetFieldConventionsTool.NAME,
+                arguments), context);
+        assertThat(result.isError()).as(result.text()).isFalse();
+        return BuildToolCalls.json(result.text());
+    }
+}

@@ -1,0 +1,8 @@
+Arguments: {"mode":"get","paths":["stroom.ui.maxResults"]}
+
+=== Output ===
+No property stroom.ui.maxResults. Did you mean: stroom.ui.defaultMaxResults, stroom.ui.process.defaultRecordLimit, stroom.statistics.sql.search.maxResults, stroom.search.resultStore.maxSortedItems, stroom.search.resultStore.lmdb.maxStoreSize?
+
+How a property's value is set (as Stroom works it out: YAML, then database, then default): on each node, the effective value is that node's YAML value if its config.yml sets the property to something other than the default; otherwise the database value, if one is set; otherwise the default. So on a node whose YAML sets a property, a database value for it has no effect.
+- Database value: set on the Properties screen (Administration > Properties, open the property and set its Database Value). It needs the Manage Properties permission, and only editable properties can be set there. It applies to every node (each picks it up within about a minute), without a restart unless the property needs one (a restart of every node, or of the nodes serving the UI).
+- YAML value: set in a node's config.yml under appConfig, by the path without its leading 'stroom' (e.g. stroom.ui.defaultMaxResults is appConfig: ui: defaultMaxResults). It applies only to that node, and it is the only way to set a property that isn't editable. Stroom notices changes to the file and applies them, but a property that needs a restart takes effect only once the node restarts.

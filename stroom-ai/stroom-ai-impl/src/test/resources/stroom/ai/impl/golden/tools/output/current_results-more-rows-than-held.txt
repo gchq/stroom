@@ -1,0 +1,21 @@
+Arguments: {"rows":5000}
+
+=== Output ===
+Using the snapshot already taken of Logons in Query 'Logons': 25 row(s) of 25 found, taken <time of the call>.
+State: ok
+The table has only 25 row(s), fewer than the 5000 asked for, so all of them are used.
+The rows are in /tabs/results/query-uuid/results.md. Work out figures with the table tool (or summarise_column, fetch_events).
+
+Profile of 'Logons' in Query 'Logons': 25 rows, 1 columns.
+
+| Column | Type | Empty | Distinct | Min | Max | Most common |
+| --- | --- | --- | --- | --- | --- | --- |
+| User | text | 0 | 4 | user0 | user3 | user0 (7), user1 (6), user2 (6), user3 (6) |
+
+First 3 rows:
+
+| User |
+| --- |
+| user0 |
+| user1 |
+| user2 |
