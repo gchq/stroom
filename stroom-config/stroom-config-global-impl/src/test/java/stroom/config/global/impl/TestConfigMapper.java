@@ -18,6 +18,7 @@ package stroom.config.global.impl;
 
 import stroom.activity.impl.dao.ActivityConfig;
 import stroom.ai.impl.AiConfig;
+import stroom.ai.impl.ErrorTriageRuleConfig;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.KeyStoreType;
 import stroom.analytics.impl.AnalyticsConfig;
@@ -359,6 +360,24 @@ class TestConfigMapper {
 
 //        assertThat(configProperty.getValue()).isEqualTo(initialValue);
 //        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
+    }
+
+    @Test
+    void testErrorTriageRulesAreSetAsAJsonArrayInThePropertiesScreen() {
+        final ConfigMapper configMapper = new ConfigMapper(getAppConfig());
+        final PropertyPath path = PropertyPath.fromPathString("stroom.ai.errorTriage.rules");
+        final ErrorTriageRuleConfig rule = new ErrorTriageRuleConfig(List.of("WARNING"), "decorationFilter", null,
+                "lookup", "benign", "known miss", null);
+
+        final Object value = configMapper.convertValue(path,
+                "[{\"element\": \"decorationFilter\", \"severity\": [\"WARNING\"], \"message\": \"lookup\", "
+                + "\"class\": \"benign\", \"reason\": \"known miss\"}]");
+
+        assertThat(value).isEqualTo(List.of(rule));
+        // Shown with its class as class, unset fields left out, and read back as it was.
+        final String shown = ConfigMapper.convertToString(List.of(rule));
+        assertThat(shown).contains("\"class\" : \"benign\"").doesNotContain("\"own\"").doesNotContain("\"cause\"");
+        assertThat(configMapper.convertValue(path, shown)).isEqualTo(List.of(rule));
     }
 
 
