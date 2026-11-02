@@ -760,6 +760,26 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testHasMoreThanOne() {
+        final List<String> emptyList = Collections.emptyList();
+        final List<String> singleItemList = List.of("foo");
+        final List<String> multiItemList = List.of("foo", "bar");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasMoreThanOneItem(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyList, false)
+                .addCase(singleItemList, false)
+                .addCase(multiItemList, true)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testHasOneItem() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {

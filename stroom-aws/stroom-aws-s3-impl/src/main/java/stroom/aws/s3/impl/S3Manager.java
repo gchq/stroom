@@ -165,11 +165,12 @@ public class S3Manager {
      * combination with {@link SimpleMeta}.
      */
     public S3Location deriveS3Location(final SimpleMeta meta, final TimeBasis timeBasis) {
-        final String region = s3ClientConfig.getRegion();
-        final String key = createKey(meta, timeBasis);
-        final String bucket = createBucketName(meta, timeBasis);
+        final String region = Objects.requireNonNull(s3ClientConfig.getRegion(),
+                "'region' not configured in S3 client configuration");
+        final String key = createKey(null, meta, timeBasis);
+        final String bucket = createBucketName(null, meta, timeBasis);
         final S3Location s3Location = new S3Location(region, bucket, key);
-        LOGGER.debug("createS3Location() - meta: {}, s3Location: {}", meta, s3Location);
+        LOGGER.debug("createS3Location() - meta: {}, timeBasis: {}, s3Location: {}", meta, timeBasis, s3Location);
         return s3Location;
     }
 
