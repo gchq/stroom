@@ -34,7 +34,15 @@ class TestUnfinishedReplies {
             "Found it.\n\n- **Next, I need to** step the Connect events too.",
             "I’m going to reprocess the streams now.",
             "Okay, let me look at the Connect events…",
-            "Time to step the sample again."
+            "Time to step the sample again.",
+            // Seen in testing: the run ended there, and the user had to say "continue".
+            "Processed clean: input 12 -> Events stream 13, no Error stream. Now validating the Events",
+            "Next: indexing the Events.",
+            "Next up: the index template.",
+            "Moving on to the index template.",
+            "On to the reference data.",
+            "Proceeding to step the Connect events.",
+            "Checking field population next."
     })
     void aReplyThatOnlySaysWhatComesNextIsUnfinished(final String reply) {
         assertThat(UnfinishedReplies.announcesMoreWork(reply)).isTrue();
@@ -49,7 +57,13 @@ class TestUnfinishedReplies {
             "Let me check the XSLT, or would you rather review it first?",
             "I'll do that if you'd like.",
             // An earlier sentence says what it would do, but the reply ends with the answer.
-            "Let me sum up. Three pipelines fork to more than one translation."
+            "Let me sum up. Three pipelines fork to more than one translation.",
+            "Now validated: 1,000 events, all pass.",
+            "Next, you can enable the filter.",
+            "Validating finished with no errors.",
+            "Now processing is complete for all three streams.",
+            "Now nothing is left to do.",
+            "Next up: you can enable the filter."
     })
     void anAnswerQuestionOrOfferIsFinished(final String reply) {
         assertThat(UnfinishedReplies.announcesMoreWork(reply)).isFalse();

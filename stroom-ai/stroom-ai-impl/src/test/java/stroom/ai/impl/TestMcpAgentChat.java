@@ -577,7 +577,8 @@ class TestMcpAgentChat {
                 AiMessage.from(List.of(ToolExecutionRequest.builder()
                         .id("1")
                         .name("search")
-                        .arguments("{\"" + McpAgentChat.SHORTENED_ARGUMENTS_KEY + "\": \"{\\\"query\\\": \\\"err…\"}")
+                        .arguments("{\"" + ConversationShortening.SHORTENED_ARGUMENTS_KEY
+                                    + "\": \"{\\\"query\\\": \\\"err…\"}")
                         .build())),
                 AiMessage.from("I'll send them in full."));
 
@@ -1596,46 +1597,6 @@ class TestMcpAgentChat {
     }
 
     @Test
-    void shortenToolResultsKeepsTheLatestAndShortOnes() {
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(
-                UserMessage.from("q"),
-                ToolExecutionResultMessage.from("1", "t", "x".repeat(1_000)),
-                ToolExecutionResultMessage.from("2", "t", "short"),
-                ToolExecutionResultMessage.from("3", "t", "y".repeat(1_000)),
-                ToolExecutionResultMessage.from("4", "t", "z".repeat(1_000))));
-
-        assertThat(McpAgentChat.shortenToolResults(conversation, 2, true)).isEqualTo(1);
-        assertThat(((ToolExecutionResultMessage) conversation.get(1)).text())
-                .isEqualTo(McpAgentChat.SHORTENED_RESULT);
-        assertThat(((ToolExecutionResultMessage) conversation.get(1)).id())
-                .isEqualTo("1");
-        assertThat(((ToolExecutionResultMessage) conversation.get(2)).text())
-                .isEqualTo("short");
-        assertThat(((ToolExecutionResultMessage) conversation.get(3)).text())
-                .startsWith("y");
-
-        assertThat(McpAgentChat.shortenToolResults(conversation, 0, true)).isEqualTo(2);
-        assertThat(McpAgentChat.shortenToolResults(conversation, 0, true)).isZero();
-    }
-
-    @Test
-    void whatIsGivenToBeSummarisedIsLimitedToTheLatestStepsThatFit() {
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
-        for (int n = 1; n <= 100; n++) {
-            conversation.add(AiMessage.from("Step " + n, List.of(request(String.valueOf(n), "{}", "search"))));
-            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "search", "r".repeat(2_000)));
-        }
-
-        final String input = McpAgentChat.turnSummaryInput(conversation, conversation.size());
-
-        assertThat(input.length()).isLessThanOrEqualTo(McpAgentChat.SUMMARY_INPUT_MAX_CHARS + 200);
-        assertThat(input)
-                .contains("earliest part(s) are left out")
-                .contains("You said: Step 100")
-                .doesNotContain("You said: Step 1\n");
-    }
-
-    @Test
     void afterASummaryTheStepsSinceAreShortenedRatherThanSummarisedAgain() {
         // Each summary loses detail and costs a call: the steps since are made smaller first.
         final List<ChatRequest> requests = new ArrayList<>();
@@ -1645,7 +1606,7 @@ class TestMcpAgentChat {
         Mockito.when(usageTracker.estimateCautiously(Mockito.anyInt(), Mockito.anyList(), Mockito.any()))
                 .thenAnswer(invocation -> ((List<?>) invocation.getArgument(1)).stream()
                         .mapToLong(m -> m instanceof final ToolExecutionResultMessage r
-                                        && !McpAgentChat.SHORTENED_RESULT.equals(r.text())
+                                        && !ConversationShortening.SHORTENED_RESULT.equals(r.text())
                                 ? 100
                                 : m instanceof final AiMessage ai && ai.hasToolExecutionRequests()
                                         ? 20
@@ -1670,11 +1631,11 @@ class TestMcpAgentChat {
         final List<ChatMessage> last = requests.getLast().messages();
         assertThat(last).filteredOn(ToolExecutionResultMessage.class::isInstance)
                 .extracting(m -> ((ToolExecutionResultMessage) m).text())
-                .contains(McpAgentChat.SHORTENED_RESULT);
+                .contains(ConversationShortening.SHORTENED_RESULT);
         // The steps are still there, not put as a line or two each.
         assertThat(last).filteredOn(UserMessage.class::isInstance)
                 .extracting(m -> ((UserMessage) m).singleText())
-                .noneMatch(text -> text.startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+                .noneMatch(text -> text.startsWith(ConversationShortening.COLLAPSED_STEPS_NOTE));
     }
 
     @Test
@@ -1712,7 +1673,7 @@ class TestMcpAgentChat {
                 .filter(m -> m instanceof ToolExecutionResultMessage)
                 .map(m -> ((ToolExecutionResultMessage) m).text())
                 .toList())
-                .containsExactly(McpAgentChat.SHORTENED_RESULT, "r".repeat(1_000));
+                .containsExactly(ConversationShortening.SHORTENED_RESULT, "r".repeat(1_000));
     }
 
     @Test
@@ -1737,7 +1698,7 @@ class TestMcpAgentChat {
                 // Too large until the earlier steps are put in a note.
                 final boolean collapsed = chatRequest.messages().stream()
                         .anyMatch(m -> m instanceof final UserMessage user
-                                       && user.singleText().startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+                                       && user.singleText().startsWith(ConversationShortening.COLLAPSED_STEPS_NOTE));
                 if (!collapsed) {
                     throw new RuntimeException("This model's maximum context length is 131072 tokens. However, "
                                                + "you requested 140000 tokens (135904 in the messages, 4096 in "
@@ -1797,7 +1758,8 @@ class TestMcpAgentChat {
         final List<ChatMessage> last = requests.getLast().messages();
         assertThat(last).filteredOn(UserMessage.class::isInstance)
                 .extracting(m -> ((UserMessage) m).singleText())
-                .containsOnlyOnce(McpAgentChat.TURN_SUMMARY_NOTE + "\nRead files a and b; wrote /outputs/x.json.");
+                .containsOnlyOnce(ConversationShortening.TURN_SUMMARY_NOTE
+                                  + "\nRead files a and b; wrote /outputs/x.json.");
         // The steps after the summary are kept whole, their results too.
         assertThat(last.stream().filter(AiMessage.class::isInstance).map(m -> ((AiMessage) m).text()).toList())
                 .containsExactly("Step 8", "Step 9", "Step 10", "Step 11", "Step 12", "Step 13", "Step 14", "Step 15",
@@ -1805,7 +1767,7 @@ class TestMcpAgentChat {
         assertThat(last).filteredOn(ToolExecutionResultMessage.class::isInstance)
                 .extracting(m -> ((ToolExecutionResultMessage) m).text())
                 .hasSize(9)
-                .doesNotContain(McpAgentChat.SHORTENED_RESULT);
+                .doesNotContain(ConversationShortening.SHORTENED_RESULT);
         // The user sees what the run is doing while the summary is written.
         Mockito.verify(aiService).updateMessageText(Mockito.anyInt(),
                 Mockito.eq(McpAgentChat.SUMMARISING_PROGRESS + "…"));
@@ -1842,7 +1804,7 @@ class TestMcpAgentChat {
         final List<ChatMessage> sent = carriedOn.getFirst().messages();
         assertThat(sent).filteredOn(UserMessage.class::isInstance)
                 .extracting(m -> ((UserMessage) m).singleText())
-                .containsOnlyOnce(McpAgentChat.TURN_SUMMARY_NOTE + "\nRead files a and b.");
+                .containsOnlyOnce(ConversationShortening.TURN_SUMMARY_NOTE + "\nRead files a and b.");
         // The steps the summary covers are in it; those it left as they were follow it.
         assertThat(sent.stream().filter(AiMessage.class::isInstance).map(m -> ((AiMessage) m).text()).toList())
                 .containsExactly("Step 8", "Step 9", "Step 10", "Step 11", "Step 12");
@@ -1864,11 +1826,11 @@ class TestMcpAgentChat {
         final List<ChatMessage> last = requests.getLast().messages();
         assertThat(last).filteredOn(UserMessage.class::isInstance)
                 .extracting(m -> ((UserMessage) m).singleText())
-                .noneMatch(text -> text.startsWith(McpAgentChat.TURN_SUMMARY_NOTE));
+                .noneMatch(text -> text.startsWith(ConversationShortening.TURN_SUMMARY_NOTE));
         // Made smaller as before: the earlier steps put in a note.
         assertThat(last).filteredOn(UserMessage.class::isInstance)
                 .extracting(m -> ((UserMessage) m).singleText())
-                .anyMatch(text -> text.startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+                .anyMatch(text -> text.startsWith(ConversationShortening.COLLAPSED_STEPS_NOTE));
     }
 
     @Test
@@ -1908,69 +1870,6 @@ class TestMcpAgentChat {
 
         assertThat(requests.stream().filter(TestMcpAgentChat::isSummaryRequest)).isEmpty();
         assertThat(requests).hasSize(13);
-    }
-
-    @Test
-    void aSecondSummaryFoldsInTheFirstAndKeepsWhatTheUserSent() {
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
-        conversation.add(UserMessage.from(McpAgentChat.TURN_SUMMARY_NOTE + "\nFirst summary."));
-        for (int n = 1; n <= 8; n++) {
-            conversation.add(AiMessage.from("Step " + n, List.of(request(String.valueOf(n), "{\"n\":" + n + "}"))));
-            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "t", "result " + n));
-            if (n == 2) {
-                conversation.add(UserMessage.from(McpAgentChat.STEER_PREFIX + "also fw2"));
-            }
-        }
-        final int keptFrom = conversation.indexOf(conversation.stream()
-                .filter(m -> m instanceof final AiMessage ai && "Step 5".equals(ai.text()))
-                .findFirst()
-                .orElseThrow());
-
-        final String input = McpAgentChat.turnSummaryInput(conversation, keptFrom);
-        assertThat(input)
-                .startsWith("Summary so far:\nFirst summary.\n\nSteps since:")
-                .contains("You said: Step 4")
-                .doesNotContain("Step 5")
-                .contains("Called t with {\"n\":1}")
-                .contains("Result of t: result 4");
-
-        assertThat(McpAgentChat.withTurnSummary(conversation, keptFrom, "Second summary.")).isEqualTo(4);
-        assertThat(conversation).hasSize(1 + 1 + 1 + 8);
-        assertThat(((UserMessage) conversation.get(1)).singleText())
-                .isEqualTo(McpAgentChat.TURN_SUMMARY_NOTE + "\nSecond summary.");
-        // What the user sent while the run went on stays, as it was.
-        assertThat(((UserMessage) conversation.get(2)).singleText()).isEqualTo(McpAgentChat.STEER_PREFIX + "also fw2");
-        assertThat(((AiMessage) conversation.get(3)).text()).isEqualTo("Step 5");
-    }
-
-    @Test
-    void aSummaryLeavesWhatToDoNextToTheStepsKeptAfterIt() {
-        // Seen: a summary of the steps before the latest few said the next step was to reprocess a stream, which a
-        // step kept after it had done, and the model did it again.
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
-        for (int n = 1; n <= 6; n++) {
-            conversation.add(AiMessage.from("Step " + n, List.of(request(String.valueOf(n), "{\"n\":" + n + "}"))));
-            conversation.add(ToolExecutionResultMessage.from(String.valueOf(n), "t", "result " + n));
-        }
-        final int keptFrom = conversation.indexOf(conversation.stream()
-                .filter(m -> m instanceof final AiMessage ai && "Step 3".equals(ai.text()))
-                .findFirst()
-                .orElseThrow());
-
-        McpAgentChat.withTurnSummary(conversation, keptFrom, "Next: reprocess the stream.");
-
-        // The note says the kept steps came later and win over the summary, and they follow it.
-        assertThat(((UserMessage) conversation.get(1)).singleText())
-                .startsWith(McpAgentChat.TURN_SUMMARY_NOTE)
-                .contains("The steps after this note came later")
-                .contains("what they did is done even if the summary says it is still to do")
-                .contains("Carry on from the latest of them");
-        assertThat(((AiMessage) conversation.get(2)).text()).isEqualTo("Step 3");
-        // The summary is asked for what was left when its steps ended, not for the next step.
-        assertThat(McpAgentChat.TURN_SUMMARY_PROMPT)
-                .contains("what was left to do when these steps ended")
-                .contains("don't say what to do next")
-                .doesNotContain("and the next step");
     }
 
     // A model that takes the given number of steps, each a search, then says "done"; a request to summarise is
@@ -2022,42 +1921,6 @@ class TestMcpAgentChat {
     }
 
     @Test
-    void shrinkTakesTheLeastLossyStepFirstAndKeepsTheLatestStep() {
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(
-                UserMessage.from("q"),
-                AiMessage.from("Looking", List.of(request("1", "{\"code\":\"" + "c".repeat(1_000) + "\"}"))),
-                ToolExecutionResultMessage.from("1", "t", "x".repeat(1_000)),
-                AiMessage.from(List.of(request("2", "{}"))),
-                ToolExecutionResultMessage.from("2", "t", "y".repeat(1_000)),
-                UserMessage.from(McpAgentChat.STEER_PREFIX + "also fw2"),
-                AiMessage.from(List.of(request("3", "{\"code\":\"" + "d".repeat(1_000) + "\"}"))),
-                ToolExecutionResultMessage.from("3", "t", "z".repeat(1_000))));
-
-        // 1: results but the latest two.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
-        // 2: the arguments of all but the latest step, still as JSON.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
-        final String arguments = ((AiMessage) conversation.get(1)).toolExecutionRequests().getFirst().arguments();
-        assertThat(JsonUtil.readValue(arguments, Map.class)).containsKey(McpAgentChat.SHORTENED_ARGUMENTS_KEY);
-        assertThat(((AiMessage) conversation.get(6)).toolExecutionRequests().getFirst().arguments())
-                .hasSizeGreaterThan(1_000);
-        // 3: results but the latest.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(1);
-        // 4: the earlier steps, next to each other, put in one note, before what the user said.
-        assertThat(McpAgentChat.shrink(conversation)).isEqualTo(2);
-        assertThat(conversation).hasSize(5);
-        assertThat(((UserMessage) conversation.get(1)).singleText())
-                .startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE)
-                .contains("- You said: Looking")
-                .contains("- t(");
-        assertThat(((UserMessage) conversation.get(2)).singleText()).startsWith(McpAgentChat.STEER_PREFIX);
-        assertThat(conversation.get(3)).isInstanceOf(AiMessage.class);
-        assertThat(((ToolExecutionResultMessage) conversation.get(4)).text()).isEqualTo("z".repeat(1_000));
-        // Nothing more to shorten.
-        assertThat(McpAgentChat.shrink(conversation)).isZero();
-    }
-
-    @Test
     void aReplyCutOffAtTheLengthLimitIsCarriedOnFrom() {
         Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
                 ToolSpecification.builder().name("noop").build(), (request, memoryId) -> "ok"));
@@ -2081,12 +1944,102 @@ class TestMcpAgentChat {
         assertThat(requests.get(1).messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.CUT_OFF_NOTE));
     }
 
-    private static ToolExecutionRequest request(final String id, final String arguments) {
-        return ToolExecutionRequest.builder().id(id).name("t").arguments(arguments).build();
+    @Test
+    void repliesThatOnlySayWhatComesNextAreCarriedOnFromEachTimeTheModelActsBetweenThem() {
+        // Seen in testing: in a long build, two earlier such replies used up the nudges for the whole question, and
+        // the run ended on the third ("Now validating the Events") with check_events not yet called.
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = scriptedModel(requests,
+                text("Let me profile the sample."), noopCall("1"),
+                text("Let me build the converter."), noopCall("2"),
+                text("Now validating the Events"), noopCall("3"),
+                text("The feed is set up."));
+
+        final ChatResponse response = chatWithNoop(model);
+
+        assertThat(response.aiMessage().text()).isEqualTo("The feed is set up.");
+        assertThat(requests).hasSize(7);
+        // The third was carried on from too.
+        assertThat(requests.get(5).messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.ANNOUNCED_NOTE));
     }
 
-    private static ToolExecutionRequest request(final String id, final String arguments, final String name) {
-        return ToolExecutionRequest.builder().id(id).name(name).arguments(arguments).build();
+    @Test
+    void repliesThatOnlySayWhatComesNextAreCarriedOnFromAtMostTwiceInARow() {
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = scriptedModel(requests,
+                text("Let me profile the sample."),
+                text("Let me profile the sample."),
+                text("Let me profile the sample."),
+                text("The feed is set up."));
+
+        final ChatResponse response = chatWithNoop(model);
+
+        assertThat(response.aiMessage().text()).isEqualTo("Let me profile the sample.");
+        assertThat(requests).hasSize(3);
+        assertThat(requests.get(2).messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.ANNOUNCED_NOTE));
+    }
+
+    @Test
+    void repliesCutOffAtTheLengthLimitAreCarriedOnFromEachTimeTheModelActsBetweenThem() {
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = scriptedModel(requests,
+                cutOff("The feed"), noopCall("1"),
+                cutOff("The converter"), noopCall("2"),
+                cutOff("The index"), noopCall("3"),
+                text("The feed is set up."));
+
+        final ChatResponse response = chatWithNoop(model);
+
+        assertThat(response.aiMessage().text()).isEqualTo("The feed is set up.");
+        assertThat(requests).hasSize(7);
+    }
+
+    @Test
+    void repliesCutOffAtTheLengthLimitAreCarriedOnFromAtMostTwiceInARow() {
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = scriptedModel(requests,
+                cutOff("The feed"), cutOff("The feed"), cutOff("The feed"), text("The feed is set up."));
+
+        final ChatResponse response = chatWithNoop(model);
+
+        assertThat(response.aiMessage().text()).isEqualTo("The feed");
+        assertThat(requests).hasSize(3);
+    }
+
+    private ChatResponse chatWithNoop(final ChatModel model) {
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(
+                ToolSpecification.builder().name("noop").build(), (request, memoryId) -> "ok"));
+        return agentChat.chat(model, null, 7, messages, McpToolset.EMPTY, 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 100, ContextBudget.UNKNOWN);
+    }
+
+    // A model that gives these responses in turn, keeping the requests it was sent.
+    private static ChatModel scriptedModel(final List<ChatRequest> requests, final ChatResponse... responses) {
+        return new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                requests.add(chatRequest);
+                return responses[requests.size() - 1];
+            }
+        };
+    }
+
+    private static ChatResponse text(final String text) {
+        return ChatResponse.builder().aiMessage(AiMessage.from(text)).build();
+    }
+
+    private static ChatResponse cutOff(final String text) {
+        return ChatResponse.builder().aiMessage(AiMessage.from(text)).finishReason(FinishReason.LENGTH).build();
+    }
+
+    private static ChatResponse noopCall(final String id) {
+        return ChatResponse.builder()
+                .aiMessage(AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id(id)
+                        .name("noop")
+                        .arguments("{}")
+                        .build())))
+                .build();
     }
 
     @Test

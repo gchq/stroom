@@ -63,8 +63,9 @@ class TestCheckXsltTool {
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final XsltCompileCheck compileCheck = Mockito.mock(XsltCompileCheck.class);
+    private final EventVersions eventVersions = Mockito.mock(EventVersions.class);
     private final CheckXsltTool tool = new CheckXsltTool(heldSchemas, () -> docFinder, documentAccess,
-            compileCheck);
+            compileCheck, () -> eventVersions);
 
     @BeforeEach
     void setUp() {
@@ -228,6 +229,21 @@ class TestCheckXsltTool {
         BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME, JsonUtil.writeValueAsString(
                 Map.of("xslt", XSLT, "schema_version", "3.5.2"), false)), BuildToolCalls.context()).text());
         Mockito.verify(heldSchemas).eventSchema("3.5.2");
+    }
+
+    @Test
+    void theEventLoggingSchemaIsReadFromTheDocumentTheUserChoseForTheBuild() {
+        // Two documents hold 4.1.0: the elements are checked against the one the user picked, not the first.
+        Mockito.when(eventVersions.chosenDocs(any(), any()))
+                .thenReturn(Map.of(HeldSchemas.eventLoggingSystemId("4.1.0"), "doc-b"));
+        Mockito.when(heldSchemas.eventSchema("4.1.0", "doc-b"))
+                .thenThrow(new ToolRefusal(HeldSchemas.NO_EVENT_LOGGING));
+
+        BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME, JsonUtil.writeValueAsString(
+                Map.of("xslt", XSLT, "schema_version", "4.1.0"), false)), BuildToolCalls.context()).text());
+
+        Mockito.verify(heldSchemas).eventSchema("4.1.0", "doc-b");
+        Mockito.verify(heldSchemas, Mockito.never()).eventSchema("4.1.0");
     }
 
     @Test

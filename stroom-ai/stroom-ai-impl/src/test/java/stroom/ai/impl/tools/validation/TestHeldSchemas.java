@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// The schemas a Stroom holds, and a schema location naming a system id it doesn't hold. Seen on Stroom 7.13:
 /// file:///event-logging-v4.1.0.xsd (three slashes) was not refused as unknown; the schema filter validated against
@@ -172,6 +173,32 @@ class TestHeldSchemas {
                                                                         + "Version=\"4.1.0\"/>");
         Mockito.verify(world.pool()).borrowObject(Mockito.any(), Mockito.eq(true));
         Mockito.verify(world.pool()).returnObject(Mockito.any(), Mockito.eq(true));
+    }
+
+    @Test
+    void testEveryDocumentOfASystemIdIsHeldAndEachIsReadByItsUuid() {
+        // Seen in testing: event-logging 4.1.0 imported twice, with different UUIDs; only the first listed was
+        // kept, and the agent never asked which to use.
+        final String systemId = "file://event-logging-v4.1.0.xsd";
+        final String copy = HeldSchemasWorld.XSD_4_1_0 + "<!-- edited copy -->";
+        final HeldSchemas schemas = new HeldSchemasWorld()
+                .hold(systemId, "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(systemId, "event-logging:3", copy, "ACME")
+                .heldSchemas();
+
+        assertThat(schemas.documents(systemId)).extracting(doc -> doc.getUuid(), doc -> doc.getSchemaGroup())
+                .containsExactly(tuple("schema-0", "EVENTS"), tuple("schema-1", "ACME"));
+        // One version, still listed once.
+        assertThat(schemas.heldEventVersions()).containsExactly("4.1.0");
+        // Without a choice, the first, as Stroom's schema filter takes it.
+        assertThat(schemas.source(systemId)).isEqualTo(HeldSchemasWorld.XSD_4_1_0);
+        assertThat(schemas.source(systemId, "schema-1")).isEqualTo(copy);
+        assertThat(schemas.eventSchema("4.1.0", "schema-1")).isNotNull();
+        assertThat(schemas.validate(systemId, "schema-1", "<Events xmlns=\"event-logging:3\" Version=\"4.1.0\"/>"))
+                .isEmpty();
+        assertThatThrownBy(() -> schemas.source(systemId, "gone"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("no XML schema '" + systemId + "' with UUID gone");
     }
 
     private List<String> problems(final String location) {

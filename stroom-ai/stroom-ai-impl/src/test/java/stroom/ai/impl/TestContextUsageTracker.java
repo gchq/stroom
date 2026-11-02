@@ -134,7 +134,7 @@ class TestContextUsageTracker {
                 UserMessage.from("q".repeat(4_000)),
                 AiMessage.from("looking", List.of(call)),
                 ToolExecutionResultMessage.from(call, "r".repeat(400)),
-                UserMessage.from(McpAgentChat.COLLAPSED_STEPS_NOTE + "\n- small({}) -> r"));
+                UserMessage.from(ConversationShortening.COLLAPSED_STEPS_NOTE + "\n- small({}) -> r"));
 
         tracker.record(1, null, sent, tools, ChatResponse.builder()
                 .aiMessage(AiMessage.from("ok"))

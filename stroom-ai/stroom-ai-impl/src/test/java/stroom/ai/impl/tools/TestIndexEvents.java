@@ -51,6 +51,7 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// search_events with an index: an event the user describes, found in an index through Stroom (asked for by the
 /// user: one rare event among many indexed streams, which sampling would miss).
@@ -160,9 +161,11 @@ class TestIndexEvents {
     }
 
     @Test
-    void isNullAndIsNotNullAreSearchedAsNoValueAndAnyValueOnElasticsearch() {
+    void isNotNullIsSearchedAsANonEmptyValueOnAnElasticsearchStringField() {
+        // EQUALS '*' is Elasticsearch's exists, which an empty string meets: on a string field IS_NOT_NULL is a
+        // non-empty value, on a number any value (it can't be empty).
         fields(QueryField.createKeyword("StreamId"), QueryField.createKeyword("EventId"),
-                QueryField.createKeyword("tags"));
+                QueryField.createKeyword("tags"), QueryField.createLong("bytes"));
         final List<Probe> probes = new ArrayList<>();
         Mockito.when(indexSearches.search(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.anyString()))
                 .thenAnswer(invocation -> {
@@ -172,11 +175,16 @@ class TestIndexEvents {
         Mockito.when(indexSearches.count(Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(new Counted(null, List.of("Too slow"), false));
 
-        final Map<String, Object> found = find(List.of(new Term("tags", Condition.IS_NOT_NULL, "")), null, false);
+        final Map<String, Object> found = find(List.of(new Term("tags", Condition.IS_NOT_NULL, ""),
+                new Term("bytes", Condition.IS_NOT_NULL, "")), null, false);
 
-        assertThat(found.get("searched")).isEqualTo(List.of("tags EQUALS *"));
-        assertThat(((ExpressionTerm) probes.getFirst().expression().getChildren().getFirst()).getCondition())
-                .isEqualTo(Condition.EQUALS);
+        final List<ExpressionTerm> searched = probes.getFirst().expression().getChildren().stream()
+                .map(ExpressionTerm.class::cast)
+                .toList();
+        assertThat(searched).extracting(ExpressionTerm::getField, ExpressionTerm::getCondition,
+                        ExpressionTerm::getValue)
+                .containsExactly(tuple("tags", Condition.MATCHES_REGEX, ".+"),
+                        tuple("bytes", Condition.EQUALS, "*"));
         // No count: the hits are the total, and Stroom's error is given.
         assertThat(found.get("total")).isEqualTo(0L);
         assertThat(found.get("errors")).isEqualTo(List.of("Too slow"));

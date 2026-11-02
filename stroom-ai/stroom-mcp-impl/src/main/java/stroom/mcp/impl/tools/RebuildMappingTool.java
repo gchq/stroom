@@ -217,7 +217,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         }
         final String version = eventVersions.translationVersion(kept.map(k -> KeptCode.keptVersion(k.payload()))
                 .orElse(null), code);
-        final EventSchema schema = eventVersions.eventSchema(version);
+        final EventSchema schema = eventVersions.keptSchema(context, null,
+                kept.map(KeptMapping.Kept::payload).orElse(null), version);
         final TranslationMapping base = kept.map(k -> TranslationMapping.parse(k.payload().get("mapping")))
                 .orElse(null);
         final String baseCode = base == null

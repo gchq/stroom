@@ -255,14 +255,15 @@ Shard or document counts are not a reliable signal until the index is flushed.
 
 ## Searching an Elasticsearch index through Stroom
 
-Dashboard conditions behave as Elasticsearch would for: EQUALS (case-sensitive on keywords, with `*` wildcards:
-`ca*`, `*aro*`), NOT_EQUALS, MATCHES_REGEX, IN (values separated by commas: `alice,bob`), ranges on numbers and
-dates (GREATER_THAN, LESS_THAN, BETWEEN `from,to`), booleans (`true`), EQUALS `*` for any value, array values (a document whose
-`tags` hold `retry` matches `tags = retry`), and fields inside objects (`user.name`, `message_json.error.code`).
-Found against Stroom 7.13 and Elasticsearch 9, and not to be relied on: STARTS_WITH and CONTAINS find nothing (use
-EQUALS with wildcards), IS_NULL and IS_NOT_NULL match every document (use EQUALS `*` and compare counts; `verify_index` and
-`search_events` (given an index) search IS_NOT_NULL as EQUALS `*` and IS_NULL as NOT_EQUALS `*` themselves, and say so), and IN
-with spaces
+Dashboard conditions behave as Elasticsearch would for: EQUALS (case-sensitive on keywords, with `*` wildcards: `ca*`,
+`*aro*`), NOT_EQUALS, MATCHES_REGEX, IN (values separated by commas: `alice,bob`), ranges on numbers and dates
+(GREATER_THAN, LESS_THAN, BETWEEN `from,to`), booleans (`true`), EQUALS `*` for a document holding the field (an empty
+string included: Stroom searches it as `exists`), MATCHES_REGEX `.+` for a non-empty value on a string field, array
+values (a document whose `tags` hold `retry` matches `tags = retry`), and fields inside objects (`user.name`,
+`message_json.error.code`). Found against Stroom 7.13 and Elasticsearch 9, and not to be relied on: STARTS_WITH and
+CONTAINS find nothing, and later Stroom versions refuse them (use EQUALS with wildcards), IS_NULL and IS_NOT_NULL
+match every document (`verify_index` and `search_events` (given an index) search IS_NOT_NULL as MATCHES_REGEX `.+` on
+a string field, EQUALS `*` on another, and IS_NULL as NOT_EQUALS `*` themselves, and say so), and IN with spaces
 between the values finds nothing. `verify_index` refuses those searches.
 
 ## Searching a Lucene index through Stroom

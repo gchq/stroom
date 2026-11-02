@@ -312,7 +312,7 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
         switch (checks) {
             case EVENTS_CHECKS -> {
                 result.put("events", events(context, written, unreadable, NullSafe.get(sampled,
-                        StepSampleTool.Sampled::result), schemaVersion));
+                        StepSampleTool.Sampled::result), schemaVersion, merged));
                 result.put("coverage", coverage(written, unreadable, pipelineUuid));
             }
             case INDEX_CHECKS -> result.put("index", indexEvaluation.index(merged, merged.doc(), outputs,
@@ -517,15 +517,31 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
         return stepping;
     }
 
-    // The events section: the newest Events stream checked and profiled, or what stepping wrote checked.
+    // The schema group the pipeline's schema filter validates with, or null: where this Stroom holds an
+    // event-logging version in more than one XML schema document, it tells Stroom which.
+    private static String schemaGroup(final MergedPipeline merged) {
+        final Map<String, String> elements = merged.elements();
+        return merged.properties().entrySet().stream()
+                .filter(entry -> "schemaGroup".equals(entry.getKey().name())
+                                 && "SchemaFilter".equals(elements.get(entry.getKey().element()))
+                                 && entry.getValue() != null)
+                .map(entry -> String.valueOf(entry.getValue()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // The events section: the newest Events stream checked and profiled, or what stepping wrote checked; validated
+    // with the XML schema documents the pipeline's schema group names, as Stroom does.
     private Map<String, Object> events(final ToolCallContext context,
                                        final Written written,
                                        final String unreadable,
                                        final Map<String, Object> stepped,
-                                       final String schemaVersion) {
+                                       final String schemaVersion,
+                                       final MergedPipeline merged) {
         if (written == null) {
             return unavailable(unreadable);
         }
+        final Map<String, String> schemaDocs = checkEvents.docsForSchemaGroup(schemaGroup(merged));
         final Map<String, Object> events = new LinkedHashMap<>();
         if (written.events().isEmpty()) {
             final String output = steppedEvents(stepped);
@@ -538,7 +554,7 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
             events.put("status", "checked");
             events.put("source", "the first record stepped (the pipeline has written no Events stream)");
             try {
-                events.putAll(checked(checkEvents.check(output, schemaVersion)));
+                events.putAll(checked(checkEvents.check(output, schemaVersion, schemaDocs)));
             } catch (final ToolRefusal e) {
                 events.put("status", "not_checked");
                 events.put("reason", e.getMessage());
@@ -552,7 +568,7 @@ class EvaluatePipelineTool extends AbstractBuiltInTool {
         events.put("source", "Events stream " + newest + ", the newest the pipeline wrote");
         events.put("stream_id", newest);
         try {
-            events.putAll(checked(checkEvents.checkRead(List.of(newest), schemaVersion, EVENTS)));
+            events.putAll(checked(checkEvents.checkRead(List.of(newest), schemaVersion, EVENTS, schemaDocs)));
             events.putAll(population(streamSummaries.summariseEvents(List.of(newest), EVENTS)));
         } catch (final ToolRefusal | StreamReader.StreamReadException e) {
             events.put("status", "not_checked");

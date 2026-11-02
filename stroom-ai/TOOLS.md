@@ -1047,9 +1047,11 @@ apply to the data source's folder are appended.
 For a Lucene or Elastic index, a paragraph says which searches through Stroom would mislead and what to use
 instead (`DescribeDataSourceTool.searchingNote`):
 
-* **Elasticsearch**: STARTS_WITH and CONTAINS find nothing (use EQUALS with a `*` wildcard, or MATCHES_REGEX).
-  IS_NULL and IS_NOT_NULL match every document (use EQUALS `*` for any value, NOT_EQUALS `*` for none). A wildcard
-  on an ip field finds nothing (use a CIDR range). The index's ip fields are named.
+* **Elasticsearch**: STARTS_WITH and CONTAINS find nothing, or are refused by later Stroom versions (use EQUALS with
+  a `*` wildcard, or MATCHES_REGEX). IS_NULL and IS_NOT_NULL match every document. EQUALS `*` finds any document
+  holding the field, an empty string included (Stroom searches it as Elasticsearch's `exists`), and NOT_EQUALS `*`
+  none; MATCHES_REGEX `.+` finds a non-empty value on a string field. A wildcard on an ip field finds nothing (use a
+  CIDR range). The index's ip fields are named.
 * **Lucene**: STARTS_WITH and ENDS_WITH find nothing. CONTAINS finds nothing on a keyword field, and a range finds
   nothing on a text field. IN finds nothing when a value holds a space.
 * **Either**: IN takes values separated by commas, and a field that isn't queryable is found by no search.
@@ -1269,8 +1271,11 @@ at, such as one rare event among many indexed streams, which sampling would miss
    An ambiguous name is refused with the list.
 2. Up to 2,000 of its fields are read. A field in `where` or `fields` that the index doesn't have is refused as
    "Not fields of index '<name>': ...", with the closest names (`CloseMatches`) and up to 60 of its fields.
-3. On Elasticsearch, IS_NOT_NULL and IS_NULL are searched as EQUALS `*` and NOT_EQUALS `*`, because Stroom matches
-   every document with either.
+3. On Elasticsearch, IS_NOT_NULL and IS_NULL are searched for what they mean, because Stroom matches every document
+   with either (`MisleadingSearches.elasticsearchNullAs`, by the field's type): IS_NOT_NULL as MATCHES_REGEX `.+` (a
+   non-empty value) on a string field, and EQUALS `*` on any other (which can't hold an empty string) or one whose
+   type isn't known; IS_NULL as NOT_EQUALS `*`. EQUALS `*` is Elasticsearch's `exists`, which an empty string
+   meets.
 4. The terms are checked with `MisleadingSearches.refusal` (as for `run_stroomql`, including fields that aren't
    queryable) and refused with what to search instead.
 5. `timeFrom`/`timeTo` become a BETWEEN on the data source's own time field (`DataSourceProvider.getTimeField`).
@@ -3709,7 +3714,8 @@ generated without them.
 
 * **Arguments**: `samples` (pasted text, by name or a list) or `stream_ids` (uploaded sample streams, read by the
   tool); `source_name`, `system_name`, `environment`; `splitter` (a build_data_splitter spec, else inferred);
-  `build` (for source notes, the chosen version, the current translation); `schema_version`.
+  `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
+  this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
 * **Returns**: `mapping`, `source_notes`, `splitter`, `format`, `records`, `kinds`, `notes`, `unmapped_fields`,
   `fields_seen`; `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
   `ok: null` and `note` when the schema can't be read); `schema_version` and `schema_version_settled`;
@@ -3771,7 +3777,8 @@ through the model. A call runs in this order:
 8. **The save**, through `TranslationDocs.createXslt` / `updateXslt` (see save_xslt for the checks). Rules kept as
    Unknown are agreed with the user first (below).
 
-* **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version`; `feeds` (for standing
+* **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version` (a version, or the UUID of the
+  XML schema document the user chose where several hold it); `feeds` (for standing
   instructions); `sample` (text or list) or `stream_ids`; `splitter`; `build` and `name`, or `uuid`; `change` (the
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
@@ -3993,6 +4000,11 @@ a space) and kept white space Stroom trims.
     2,000 records is compared record by record.
   * `error_hints` come from the bundled error triage rules, for errors classed as blocking (the buffer exhausted,
     unmatched content).
+  * `stroom_check` checks the converter against the `data-splitter:3` schema first, as the DSParser element does
+    (`DataSplitterSchema`): its schema errors come first among the errors, and with no schema held nothing is run.
+  * `not_saved` says what to try next: for records wider than the header or lines that match nothing, a regex spec
+    with a name per group, its last group taking the rest of the line (fields delimited, then free text); and that
+    a converter written by hand (`save_text_converter`) gets the same checks.
   * The save goes through `TranslationDocs.createTextConverter`, with save_text_converter's checks.
 
 ### `measure_records`
@@ -4025,21 +4037,39 @@ longest line understates it.
 ### `save_text_converter`
 
 content · write · checks View and Edit; the converter is created in the build folder (Create) or changed (Edit) ·
-changes only its build · Classes: `SaveTextConverterTool`, `TranslationDocs`
+changes only its build · Classes: `SaveTextConverterTool`, `TranslationDocs`, `DataSplitterSchema`,
+`StroomSplitterRun`
 
 Creates a text converter in the build (in its Events folder, until create_pipeline moves it), or with `uuid`
 replaces the code of one the tools created. For templates whose parser needs one (`DSParser.textConverter`,
-`xmlFragmentParser.textConverter`).
+`xmlFragmentParser.textConverter`). Its description says to prefer `build_data_splitter` with a spec and
+`save_as` for a Data Splitter, and that one written by hand gets the same checks. Seen in testing: for a
+space-delimited Citrix feed the agent wrote one by hand naming its fields with `<entry>` elements under a `<regex
+group="0">`; Stroom's parser ignores both, so the converter saved and its records had no fields.
+
+A Data Splitter is checked as Stroom's DSParser checks it before running it (`DataSplitterSchema`, as
+`DS3ParserFactory.configure` does through its schema filter): the `data-splitter:3` namespace and an
+`xsi:schemaLocation` for it, and valid against the schema Stroom holds for that namespace, found as the pipeline
+finds it (by namespace, as the processing user, not among the schemas the user may view). Then it is run through
+Stroom's parser (`StroomSplitterRun`) on the build's newest raw sample streams (at most 3; Raw Events, else Raw
+Reference).
 
 * **Arguments**: `code` (the only one required by the schema); `build` and `name` for a new converter, or `uuid` to
   replace one; `converter_type` (`DATA_SPLITTER` or `XML_FRAGMENT`; default `DATA_SPLITTER`); `version`.
-* **Returns**: `type`, `uuid`, `name`, `version`, with the build's next step.
-* **Refuses** (`TranslationDocs.checkConverter`): blank code; an XML_FRAGMENT that isn't a wrapper (no `<!ENTITY
-  fragment SYSTEM "fragment">` and `&fragment;`); a Data Splitter holding a JSON element ("a text converter cannot
-  parse JSON": the template's JSONParser does, with no converter); one that isn't well-formed, or whose root isn't
-  `<dataSplitter>`; one that adds `ignoreErrors="true"`, which hides the errors for text no expression matches so
-  that text is lost without a word (one the replaced converter already had is kept); a new converter without
-  `build` and `name`; an update of a converter that isn't the tools' own, or that changed since `version`.
+* **Returns**: `type`, `uuid`, `name`, `version`, with the build's next step; for a Data Splitter, `sample_run`:
+  the records Stroom's parser wrote from the sample streams, or why it wasn't run (no raw sample stream of the
+  build's own, or one that can't be read).
+* **Refuses** (`TranslationDocs.checkConverter` and `checkDataSplitter`): blank code; an XML_FRAGMENT that isn't a
+  wrapper (no `<!ENTITY fragment SYSTEM "fragment">` and `&fragment;`); a Data Splitter holding a JSON element ("a
+  text converter cannot parse JSON": the template's JSONParser does, with no converter); one that isn't
+  well-formed, or whose root isn't `<dataSplitter>`; one that adds `ignoreErrors="true"`, which hides the errors for
+  text no expression matches so that text is lost without a word (one the replaced converter already had is kept);
+  one with no namespace or no `xsi:schemaLocation` (saying the root element to start it with); one with schema
+  errors, each with its line and element; any Data Splitter when Stroom holds no `data-splitter:3` schema (no Data
+  Splitter can run there: the core XML schemas content pack must be installed); one with no `<data>` element (its
+  records would have no fields, with no error); one Stroom's parser can't read (e.g. a regex that doesn't compile);
+  one Stroom's parser reports errors for, or writes no records from, on the build's sample streams; a new converter
+  without `build` and `name`; an update of a converter that isn't the tools' own, or that changed since `version`.
 
 ### `save_dictionary`
 
@@ -4759,7 +4789,8 @@ with no searches; nothing is marked verified.
   in range; malformed `exact` or `time_range`; a search with no field or a condition dashboards don't take; an
   index doc that can't be read; searches that would mislead (`MisleadingSearches`: on Elasticsearch, Stroom finds
   nothing for STARTS_WITH and CONTAINS, nor a wildcard on an ip field, nor a field it doesn't list, and IS_NULL /
-  IS_NOT_NULL match every document, so those are searched as EQUALS / NOT_EQUALS `*`; on Lucene, STARTS_WITH,
+  IS_NOT_NULL match every document, so those are searched as MATCHES_REGEX `.+` on a string field (EQUALS `*` on
+  another) / NOT_EQUALS `*`, by the index's field types, `searched_as` saying so; on Lucene, STARTS_WITH,
   ENDS_WITH, CONTAINS on a keyword and a range on a text field find nothing); a field no search finds (not indexed,
   not queryable, or not indexed by the agreed template); a column Stroom doesn't list for the index, with the field
   an Events path became (seen in Ask Stroom AI: `EventSource.User.Id` chosen in place of `user.name`, verification
