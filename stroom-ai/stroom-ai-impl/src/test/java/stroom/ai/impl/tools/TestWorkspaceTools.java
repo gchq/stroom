@@ -475,7 +475,7 @@ class TestWorkspaceTools {
                                                 + "\"op\":\"=\",\"value\":\"1\"}]}"))
                 .startsWith("Error: There is no column 'x'");
         assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"where\":\"host = fw1\"}"))
-                .startsWith("Error: where must be a list of objects.");
+                .isEqualTo("Error: where was text that isn't a JSON list of objects: 'host = fw1'.");
     }
 
     @Test

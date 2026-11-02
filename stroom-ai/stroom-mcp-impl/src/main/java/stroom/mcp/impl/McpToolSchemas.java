@@ -54,8 +54,10 @@ final class McpToolSchemas {
                 .annotations(new ToolAnnotations(
                         null,
                         readOnly,
-                        // A tool that changes things may also overwrite or delete them.
-                        !readOnly && !tool.hasReadOnlyCalls(),
+                        // Whether its calls that change things may overwrite or delete them. Not whether it also
+                        // has calls that only read: those don't make its other calls any less destructive (they
+                        // were said not to be, e.g. build_translation_xslt, which saves over an XSLT by its uuid).
+                        !readOnly && tool.isDestructive(),
                         null,
                         tool.readsUntrustedContent(),
                         null))

@@ -286,7 +286,28 @@ class TestTabSnapshots {
                 assertThat(search.getResults()).isInstanceOf(QueryTableContext.class));
         assertThat(tabSnapshots.note(CHAT, snapshot))
                 .contains("- 'Logons' (12 row(s); still searching; columns: User)")
-                .contains("current_results");
+                // The snapshot doesn't hold the rows: the model is sent to current_results for them, not to
+                // the search requests.
+                .contains("The rows aren't in this snapshot. To get them, call current_results: it saves them as "
+                          + "a workspace table under /tabs/results/")
+                .contains("/tabs/1/searches.json holds only the search requests behind the tables, not their rows")
+                .doesNotContain("with the table's name as table");
+    }
+
+    @Test
+    void theModelIsToldToNameTheTableForATabWithSeveral() {
+        viewable.add(QUERY.getUuid());
+        final QueryTableContext results = new QueryTableContext("Query 'Logons'", null,
+                QuerySearchRequest.builder().query("from Logons select User").build());
+        final AiTabSnapshot tab = new AiTabSnapshot(QUERY, "Logons", "Query", false, List.of(),
+                List.of(new AiTabSearch("Logons", null, results, results, List.of("User"), 12L, false),
+                        new AiTabSearch("Hosts", null, results, results, List.of("Host"), 3L, false)),
+                null, "h1");
+
+        final TabSnapshots.Stored stored = tabSnapshots.store(CHAT, tab);
+
+        assertThat(tabSnapshots.note(CHAT, tabSnapshots.read(stored.snapshotId()).orElseThrow()))
+                .contains("call current_results with the table's name as table:");
     }
 
     @Test

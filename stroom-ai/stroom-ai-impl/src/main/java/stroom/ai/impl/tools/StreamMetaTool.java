@@ -322,7 +322,7 @@ class StreamMetaTool extends AbstractWorkspaceTool {
                     .map(record -> columns.stream().map(column -> record.getOrDefault(column, "")).toList())
                     .toList();
         }
-        ToolTables.writeCsv(workspace, out, columns, rows, criteria.sourceDocUuid());
+        ToolTables.write(workspace, out, columns, rows, criteria.sourceDocUuid());
         logSearch(context, criteria, metaRows, reader);
         return ToolResult.text(summary(out, metaRows.size(), more, rows, columns, reader, parts)
                                + unknownFeeds(metaRows, stringListArg(request, FEEDS_ARG)));

@@ -68,6 +68,17 @@ public interface StroomTool {
         return isReadOnly();
     }
 
+    /// Whether a call of the tool that changes something may overwrite or delete what is already there, rather than
+    /// only add to it. It maps to MCP's `destructiveHint` tool annotation, which clients use to decide how strongly
+    /// to warn before a call; it is not used for a tool that only reads.
+    ///
+    /// @return True if a call that changes something may overwrite or delete. Defaults to true for any tool that
+    /// can change something, including one with some calls that only read (e.g. build_translation_xslt saves over
+    /// an XSLT by its uuid); override with false only for a tool whose every change adds something new.
+    default boolean isDestructive() {
+        return !isReadOnly();
+    }
+
     /// Whether the tool's output could hold instructions planted by someone else. It maps to MCP's
     /// `openWorldHint` tool annotation.
     ///

@@ -64,6 +64,7 @@ import io.modelcontextprotocol.spec.McpSchema.ResourceTemplate;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
+import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Server;
@@ -224,7 +225,15 @@ class TestStroomMcpServer {
                     .findFirst()
                     .orElseThrow();
             assertThat(write.annotations().readOnlyHint()).isFalse();
+            assertThat(write.annotations().destructiveHint()).isTrue();
             assertThat(write.inputSchema()).containsEntry("type", "object");
+            // A tool with some calls that only read is still destructive: its other calls may overwrite.
+            assertThat(annotations(client, "dry_write"))
+                    .satisfies(dry -> assertThat(List.of(dry.readOnlyHint(), dry.destructiveHint()))
+                            .containsExactly(false, true));
+            assertThat(annotations(client, "read_thing"))
+                    .satisfies(read -> assertThat(List.of(read.readOnlyHint(), read.destructiveHint()))
+                            .containsExactly(true, false));
         }
     }
 
@@ -904,6 +913,14 @@ class TestStroomMcpServer {
                 return tool.execute(call, context);
             }
         };
+    }
+
+    private static ToolAnnotations annotations(final McpSyncClient client, final String name) {
+        return client.listTools().tools().stream()
+                .filter(tool -> tool.name().equals(name))
+                .findFirst()
+                .orElseThrow()
+                .annotations();
     }
 
     // A tool that writes, whose calls with q=dry only read.

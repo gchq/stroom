@@ -228,14 +228,33 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
                     : "The tab the user attached, " + ReadDocumentTool.describe(tab.docRef())
                       + ", shows no tables of results.");
         }
-        final AiTabSearch search = chooseTable(tab.searches(), stringArg(request, TABLE_ARG));
-        if (search == null) {
-            final StringBuilder sb = new StringBuilder("Say which table: ");
+        final String table = stringArg(request, TABLE_ARG);
+        final AiTabSearch chosen = chooseTable(tab.searches(), table);
+        if (chosen == null && (table == null || tab.searches().size() > 1)) {
+            final StringBuilder sb = new StringBuilder(table == null
+                    ? "Say which table: "
+                    : "No table is called '" + table + "'. Say which table: ");
             for (final AiTabSearch each : tab.searches()) {
                 sb.append("'").append(name(each)).append("' ");
             }
             return Outcome.problem(sb.toString().strip() + ".");
         }
+        if (chosen == null) {
+            // The tab has only one table, so it is the one meant, whatever it was called; refusing only costs the
+            // model a round trip to ask for it again by the right name.
+            final AiTabSearch only = tab.searches().getFirst();
+            return outcome(request, context, tab, only).withNote("No table is called '" + table + "', so the "
+                                                                 + "tab's only table, '" + name(only)
+                                                                 + "', was used.");
+        }
+        return outcome(request, context, tab, chosen);
+    }
+
+    // The outcome for the table chosen.
+    private Outcome outcome(final ToolCall request,
+                            final ToolCallContext context,
+                            final StoredTabSnapshot tab,
+                            final AiTabSearch search) {
         final int limit = Math.max(1, NullSafe.getOrElse(tableAnalysisConfigProvider.get(),
                 TableAnalysisConfig::getMaxTotalRows, TableAnalysisConfig.DEFAULT_MAX_TOTAL_ROWS));
         final Integer rows = intArg(request, ROWS_ARG);
@@ -1007,6 +1026,12 @@ class CurrentResultsTool extends AbstractWorkspaceTool {
 
         static Outcome problem(final String text) {
             return new Outcome(text, null);
+        }
+
+        /// @param note Something the model should know about how the result was got.
+        /// @return This outcome, its text starting with the note.
+        Outcome withNote(final String note) {
+            return new Outcome(note + "\n\n" + text, path);
         }
     }
 

@@ -96,9 +96,13 @@ class TestPromptInjection {
             assertThat(systemPrompt).contains(DATA_RULE).doesNotContain(INJECTION);
             assertThat(messages.stream().filter(m -> m instanceof SystemMessage))
                     .allSatisfy(m -> assertThat(((SystemMessage) m).text()).doesNotContain(INJECTION));
-            // The table reaches the model labelled as an attached table.
+            // The table reaches the model labelled as an attached table (a small one in full, with its path, for
+            // a model with tools).
+            final String label = withTools
+                    ? "[Attached table: Events"
+                    : "[Attached Table: Events";
             assertThat(messages).anySatisfy(m -> assertThat(m).isInstanceOfSatisfying(UserMessage.class,
-                    user -> assertThat(user.singleText()).startsWith("[Attached Table: Events").contains(INJECTION)));
+                    user -> assertThat(user.singleText()).startsWith(label).contains(INJECTION)));
         }
     }
 

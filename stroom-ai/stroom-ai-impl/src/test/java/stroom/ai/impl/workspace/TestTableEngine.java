@@ -113,6 +113,24 @@ class TestTableEngine {
         assertThatThrownBy(() -> count(new Condition("host", "=", null))).hasMessageContaining("Give a value");
     }
 
+    /// Seen in chat 141: 'in' with comma-separated values refused, then the same values as a regular expression
+    /// refused for its length.
+    @Test
+    void testInConditions() {
+        assertThat(count(new Condition("host", "in", "fw1, fw3"))).isEqualTo(4);
+        assertThat(count(new Condition("host", "not_in", "fw1,fw3"))).isEqualTo(1);
+        // As numbers when both are numbers, as with =.
+        assertThat(count(new Condition("bytes", "in", "100.0,7"))).isEqualTo(2);
+        // Given as a list, a value may have a comma in it.
+        assertThat(count(new Condition("message", "in", null,
+                List.of("Login failed for 10.0.0.2, again", "Started")))).isEqualTo(2);
+        assertThat(count(new Condition("message", "IN", "Login failed for 10.0.0.2, again"))).isZero();
+        assertThatThrownBy(() -> count(new Condition("host", "in", null)))
+                .hasMessage("Give the values for the condition on host, as a list or separated by commas.");
+        assertThatThrownBy(() -> count(new Condition("host", "like", "x")))
+                .hasMessageEndingWith("is_empty, not_empty, in or not_in.");
+    }
+
     @Test
     void testGroupAndAggregate() {
         final Result result = TableEngine.run(csv, Format.CSV, query()

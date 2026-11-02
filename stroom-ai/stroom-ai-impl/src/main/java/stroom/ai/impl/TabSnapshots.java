@@ -390,8 +390,16 @@ public class TabSnapshots {
                     sb.append(" (").append(String.join("; ", details)).append(')');
                 }
             }
-            sb.append("\nTo work with the rows, take a snapshot of them with current_results (the search requests "
-                      + "are in ").append(folder(snapshot)).append(SEARCHES_FILE).append(").");
+            // The snapshot holds only the search requests, not the rows, so the model is sent to current_results
+            // for them rather than to the requests file.
+            sb.append("\nThe rows aren't in this snapshot. To get them, call current_results")
+                    .append(searches.size() > 1
+                            ? " with the table's name as table"
+                            : "")
+                    .append(": it saves them as a workspace table under /tabs/results/")
+                    .append(" and gives its path and a profile, for the table tool. (")
+                    .append(folder(snapshot)).append(SEARCHES_FILE)
+                    .append(" holds only the search requests behind the tables, not their rows.)");
         }
         for (final StoredPart part : parts) {
             if (isPreviewed(part)) {
