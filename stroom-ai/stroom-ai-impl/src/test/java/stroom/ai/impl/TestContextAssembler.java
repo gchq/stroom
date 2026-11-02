@@ -498,9 +498,10 @@ class TestContextAssembler {
         final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
                 AiAttachmentType.DASHBOARD, "Firewall events", 2, false, null);
         final Path table = tempDir.resolve("50.md");
-        Files.writeString(table, "| host |\n| --- |\n| fw1 |\n| fw2 |\n");
+        // Too many rows to be given in full.
+        Files.writeString(table, tableOf(ContextAssembler.MAX_FULL_TABLE_ROWS + 1));
         final Path profile = tempDir.resolve("51.md");
-        Files.writeString(profile, "Profile of Firewall events: 2 rows, 1 columns.");
+        Files.writeString(profile, "Profile of Firewall events: 201 rows, 1 columns.");
         Mockito.when(workspaceStore.localFile(50)).thenReturn(table);
         Mockito.when(workspaceStore.localFile(51)).thenReturn(profile);
         Mockito.when(workspaceDao.findFile(1, "/attachments/50.profile.md")).thenReturn(java.util.Optional.of(51));
@@ -519,6 +520,112 @@ class TestContextAssembler {
                 .contains("Profile of Firewall events")
                 .doesNotContain("| fw2 |");
         assertThat(withoutTools).contains("| fw2 |").doesNotContain("Profile of");
+    }
+
+    @Test
+    void testSmallTablesAreGivenInFullToModelsWithTools(@TempDir final Path tempDir) throws IOException {
+        final WorkspaceStore workspaceStore = Mockito.mock(WorkspaceStore.class);
+        final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
+        final ContextAssembler assembler = new ContextAssembler(() -> null, AiConfig::new, workspaceStore,
+                Mockito.mock(stroom.ai.api.AiService.class), null, workspaceDao,
+                Mockito.mock(ContextUsageTracker.class), null, null);
+        final AiChatAttachment attachment = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DASHBOARD, "PowerShell events", 3, false, null);
+        final Path table = tempDir.resolve("50.md");
+        Files.writeString(table, "| Command | StreamId | EventId |\n| --- | --- | --- |\n| Get-Process | 1 | 1 |\n"
+                                 + "| Get-Item | 1 | 2 |\n| Set-Item | 1 | 3 |\n");
+        final Path profile = tempDir.resolve("51.md");
+        Files.writeString(profile, "Profile of PowerShell events: 3 rows, 3 columns.");
+        Mockito.when(workspaceStore.localFile(50)).thenReturn(table);
+        Mockito.when(workspaceStore.localFile(51)).thenReturn(profile);
+        Mockito.when(workspaceDao.findFile(1, "/attachments/50.profile.md")).thenReturn(java.util.Optional.of(51));
+        final List<AiChatMessage> history = List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "PowerShell events", 0, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 2, null));
+
+        final String text = ((UserMessage) assembler.assemble(new AskStroomAiRequest(null, null, null, "q"), 1,
+                java.util.Map.of(50, attachment), history, CompactionRecord.NONE, true).get(1)).singleText();
+
+        // The rows, so the model can answer without a tool call first, and the path, for the table tool.
+        assertThat(text)
+                .startsWith("[Attached table: PowerShell events. The whole table is below, and is the workspace "
+                            + "file /attachments/50.md.")
+                .contains("with the table tool")
+                .contains("use fetch_events")
+                .endsWith("| Get-Process | 1 | 1 |\n| Get-Item | 1 | 2 |\n| Set-Item | 1 | 3 |\n")
+                .doesNotContain("Profile of");
+    }
+
+    @Test
+    void testATableIsSmallUpToTheRowAndCharacterLimits(@TempDir final Path tempDir) throws IOException {
+        final Path table = tempDir.resolve("t.md");
+
+        Files.writeString(table, tableOf(ContextAssembler.MAX_FULL_TABLE_ROWS));
+        assertThat(ContextAssembler.smallTable(table)).isEqualTo(Files.readString(table));
+        Files.writeString(table, tableOf(ContextAssembler.MAX_FULL_TABLE_ROWS + 1));
+        assertThat(ContextAssembler.smallTable(table)).isNull();
+
+        // At most so many characters, whatever the rows.
+        final String header = "| x |\n| --- |\n";
+        final String row = "| " + "a".repeat(ContextAssembler.MAX_FULL_TABLE_CHARS - header.length() - 5) + " |\n";
+        Files.writeString(table, header + row);
+        assertThat(Files.readString(table)).hasSize(ContextAssembler.MAX_FULL_TABLE_CHARS);
+        assertThat(ContextAssembler.smallTable(table)).isNotNull();
+        Files.writeString(table, header + "| a" + row.substring(2));
+        assertThat(ContextAssembler.smallTable(table)).isNull();
+
+        // Characters, not bytes, are counted.
+        Files.writeString(table, header + "| " + "é".repeat(ContextAssembler.MAX_FULL_TABLE_CHARS - 20) + " |\n");
+        assertThat(ContextAssembler.smallTable(table)).isNotNull();
+
+        // Nothing to give.
+        Files.writeString(table, "");
+        assertThat(ContextAssembler.smallTable(table)).isNull();
+        assertThat(ContextAssembler.smallTable(tempDir.resolve("missing.md"))).isNull();
+        assertThat(ContextAssembler.smallTable(null)).isNull();
+    }
+
+    @Test
+    void testTheEstimateCountsASmallTableInFullAndALargeOneAsItsProfile() {
+        final stroom.ai.api.AiService aiService = Mockito.mock(stroom.ai.api.AiService.class);
+        final AiWorkspaceDao workspaceDao = Mockito.mock(AiWorkspaceDao.class);
+        final ContextUsageTracker tracker = Mockito.mock(ContextUsageTracker.class);
+        final ContextAssembler assembler = new ContextAssembler(
+                () -> null, AiConfig::new, null, aiService, Mockito.mock(AiDao.class), workspaceDao, tracker,
+                null, null);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                new AiChatMessage(1, 1, 0L, AiMessageType.ATTACHMENT, 50, "table", 1, null),
+                new AiChatMessage(2, 1, 0L, AiMessageType.USER_MESSAGE, null, "q", 1, 1)));
+        Mockito.when(tracker.getCorrection(1)).thenReturn(java.util.Optional.empty());
+        Mockito.when(workspaceDao.findFile(1, "/attachments/50.profile.md")).thenReturn(java.util.Optional.of(51));
+        Mockito.when(workspaceDao.getSize(51)).thenReturn(400L);
+        final AiChatAttachment small = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DASHBOARD, "table", ContextAssembler.MAX_FULL_TABLE_ROWS, false, null);
+        Mockito.when(aiService.getAttachment(50)).thenReturn(java.util.Optional.of(small));
+
+        Mockito.when(workspaceDao.getSize(50)).thenReturn((long) ContextAssembler.MAX_FULL_TABLE_CHARS);
+        assertThat(assembler.estimateUsage(1).getParts())
+                .containsEntry(ContextAssembler.PART_ATTACHMENTS, ContextAssembler.MAX_FULL_TABLE_CHARS / 4L);
+
+        Mockito.when(workspaceDao.getSize(50)).thenReturn(ContextAssembler.MAX_FULL_TABLE_CHARS + 1L);
+        assertThat(assembler.estimateUsage(1).getParts())
+                .containsEntry(ContextAssembler.PART_ATTACHMENTS, 100L);
+
+        final AiChatAttachment manyRows = new AiChatAttachment(50, 1, 0L, 0L, AiAttachmentStatus.READY,
+                AiAttachmentType.DASHBOARD, "table", ContextAssembler.MAX_FULL_TABLE_ROWS + 1, false, null);
+        Mockito.when(aiService.getAttachment(50)).thenReturn(java.util.Optional.of(manyRows));
+        Mockito.when(workspaceDao.getSize(50)).thenReturn(1_000L);
+        assertThat(assembler.estimateUsage(1).getParts())
+                .containsEntry(ContextAssembler.PART_ATTACHMENTS, 100L);
+    }
+
+    // A one-column markdown table of so many rows.
+    private static String tableOf(final int rows) {
+        final StringBuilder sb = new StringBuilder("| host |\n| --- |\n");
+        for (int i = 1; i <= rows; i++) {
+            sb.append("| fw").append(i).append(" |\n");
+        }
+        return sb.toString();
     }
 
     @Test

@@ -313,7 +313,7 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         final Result table = joinArg != null && !joinArg.isBlank()
                 ? join(workspace, WorkspacePath.parse(joinArg), column, results)
                 : asTable(column, results);
-        writeCsv(workspace, out, table, workspace.sourceDocUuid(path));
+        writeTable(workspace, out, table, workspace.sourceDocUuid(path));
         final String found = pattern != null || query != null
                 ? results.size() + " of " + events.size() + " event(s) " + (query != null
                 ? "gave a jq result"
@@ -571,9 +571,9 @@ class SearchEventsTool extends AbstractWorkspaceTool {
         return -1;
     }
 
-    private void writeCsv(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
+    private void writeTable(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
             final String source) {
-        ToolTables.writeCsv(workspace, out, result.columns(), result.rows(), source);
+        ToolTables.write(workspace, out, result.columns(), result.rows(), source);
     }
 
     private static String markdown(final Result result) {

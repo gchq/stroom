@@ -359,6 +359,12 @@ public class ContextAssembler {
     public static final String PART_ATTACHMENTS = "Attached tables";
     public static final String PART_TOOL_RESULTS = "Tool calls and results";
 
+    /// The most data rows an attached table may have for a model with tools to be given it in full, rather than
+    /// only its profile, so it can answer about a small table without first spending a round trip on a tool call.
+    static final int MAX_FULL_TABLE_ROWS = 200;
+    /// The most characters an attached table's file may have for a model with tools to be given it in full.
+    static final int MAX_FULL_TABLE_CHARS = 20_000;
+
     /// How much of a tool call's arguments, and of its result, the record of an earlier answer's tools shows.
     static final int TOOL_LOG_ARGS_LIMIT = 200;
     static final int TOOL_LOG_RESULT_LIMIT = 200;
@@ -765,8 +771,10 @@ public class ContextAssembler {
     }
 
     /**
-     * @return The attached table as a short stub: what it is, where the whole table is in the workspace, and its
-     * profile. Null if it has no profile (e.g. it was attached before tables were profiled).
+     * @return For a model with tools, the attached table: a small one (see {@link #MAX_FULL_TABLE_ROWS} and
+     * {@link #MAX_FULL_TABLE_CHARS}) in full with where it is in the workspace; a larger one as a short stub of
+     * what it is, where the whole table is in the workspace, and its profile. Null if a larger one has no profile
+     * (e.g. it was attached before tables were profiled).
      */
     private UserMessage profileMessage(final int chatId,
                                        final AiChatMessage msg,
@@ -776,6 +784,23 @@ public class ContextAssembler {
             return null;
         }
         final String tablePath = AskStroomAIService.attachmentPath(attachment.getId());
+        final String smallTable;
+        try {
+            smallTable = workspaceStore != null
+                    ? smallTable(workspaceStore.localFile(attachment.getId()))
+                    : null;
+        } catch (final WorkspaceFileUnavailableException e) {
+            return unavailableNote(attachment.getDescription(), e.getMessage());
+        }
+        if (smallTable != null) {
+            final String header = smallTable.lines().findFirst().orElse("");
+            return new UserMessage("[Attached table: " + NullSafe.nonBlankStringElse(attachment.getDescription(),
+                    "Attachment " + attachment.getId()) + ". The whole table is below, and is the workspace file "
+                                   + tablePath + ". Work out figures (counts, sums, etc.) from that file with the "
+                                   + "table tool, not by counting or adding up the rows yourself."
+                                   + eventsNote(header) + "]\n"
+                                   + smallTable);
+        }
         final Integer profileId = workspaceDao.findFile(chatId, AskStroomAIService.profilePath(attachment.getId()))
                 .orElse(null);
         if (profileId == null) {
@@ -795,6 +820,43 @@ public class ContextAssembler {
             LOGGER.warn(() -> "Failed to read the profile of attachment " + attachment.getId(), e);
             return null;
         }
+    }
+
+    /// @param tableFile An attached table's markdown file: a header line, its separator, then a line for each row.
+    /// @return The whole table, if it is small enough for a model with tools to be given it in full (at most
+    /// [#MAX_FULL_TABLE_ROWS] rows and [#MAX_FULL_TABLE_CHARS] characters); otherwise, or if it cannot be read,
+    /// null.
+    static String smallTable(final Path tableFile) {
+        try {
+            // A file of more bytes than this has more characters than are allowed, however they are encoded.
+            if (tableFile == null
+                || !Files.exists(tableFile)
+                || Files.size(tableFile) > (long) MAX_FULL_TABLE_CHARS * 4) {
+                return null;
+            }
+            final String table = Files.readString(tableFile, StandardCharsets.UTF_8);
+            if (table.isBlank() || table.length() > MAX_FULL_TABLE_CHARS) {
+                return null;
+            }
+            // The first two lines are the header and its separator.
+            final long rows = table.lines().skip(2).filter(line -> !line.isEmpty()).count();
+            return rows <= MAX_FULL_TABLE_ROWS
+                    ? table
+                    : null;
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read attached table " + tableFile + ": " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /// @param tableBytes The size of an attached table's file, in bytes.
+    /// @param rowCount   How many rows it has, or null if not known.
+    /// @return Whether a model with tools is likely to be given the table in full (see [#smallTable]), for
+    /// estimating what a chat uses without reading the table. A table whose row count is not known is taken to be
+    /// given in full if its size allows.
+    static boolean likelyGivenInFull(final long tableBytes, final Integer rowCount) {
+        return tableBytes <= MAX_FULL_TABLE_CHARS
+               && (rowCount == null || rowCount <= MAX_FULL_TABLE_ROWS);
     }
 
     /// @return A note that the rows' source events can be looked into, if the table has their ids (its profile
@@ -967,6 +1029,21 @@ public class ContextAssembler {
                 .orElse(ContextUsageTracker.UNMEASURED_SAFETY_FACTOR));
     }
 
+    // Roughly how many bytes of an attached table a model with tools is sent: a small table in full (see
+    // #profileMessage), a larger one as its profile, or the table itself if it has no profile.
+    private long attachmentBytes(final int chatId, final int attachmentId) {
+        final long tableBytes = workspaceDao.getSize(attachmentId);
+        final Integer rowCount = aiService.getAttachment(attachmentId)
+                .map(AiChatAttachment::getRowCount)
+                .orElse(null);
+        if (likelyGivenInFull(tableBytes, rowCount)) {
+            return tableBytes;
+        }
+        return workspaceDao.findFile(chatId, AskStroomAIService.profilePath(attachmentId))
+                .map(workspaceDao::getSize)
+                .orElse(tableBytes);
+    }
+
     /**
      * Estimates how much of the model's context window the chat would use if a question were asked now, using
      * the same rules as {@link #assemble}, and corrected by how far off the estimate was for the chat's last
@@ -999,12 +1076,7 @@ public class ContextAssembler {
         long attachments = 0;
         for (final AiChatMessage message : relevantHistory) {
             if (message.getMessageType() == AiMessageType.ATTACHMENT && message.getAttachmentId() != null) {
-                // A model with tools is sent the table's profile rather than the table.
-                final long size = workspaceDao.findFile(chatId, AskStroomAIService.profilePath(
-                                message.getAttachmentId()))
-                        .map(workspaceDao::getSize)
-                        .orElseGet(() -> workspaceDao.getSize(message.getAttachmentId()));
-                attachments += size / 4;
+                attachments += attachmentBytes(chatId, message.getAttachmentId()) / 4;
             } else if (!compaction.covers(message.getTurnId())) {
                 conversation += tokens(message);
                 // The calls of the question being answered are counted in full below, not as the one-line record
