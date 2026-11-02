@@ -34,20 +34,28 @@ import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.util.concurrent.LazyValue;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * {@code table} - filters, groups, aggregates and sorts a table in the workspace (an attached table, or a CSV or
  * TSV file), in code, so figures are exact. The query is typed JSON, never code or a command.
  */
 class TableTool extends AbstractWorkspaceTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableTool.class);
 
     static final String NAME = "table";
     static final String HELP_ARG = "help";
@@ -62,9 +70,15 @@ class TableTool extends AbstractWorkspaceTool {
     private static final Set<String> NOT_TABLES = Set.of("json", "jsonl", "ndjson", "xml", "xsl", "xslt", "txt",
             "log", "yaml", "yml");
     static final int PREVIEW_ROWS = 10;
+    // What list arguments hold, for errors.
+    private static final String OBJECTS = "objects";
+    private static final String COLUMN_NAMES = "column names";
+    // The most of a wrongly shaped argument quoted back in its error.
+    private static final int MAX_QUOTED = 80;
 
     /**
-     * After this many failed queries of the same table in a run, its column is summarised instead.
+     * After this many failed queries of the same table in a run, its column is summarised instead. Only queries that
+     * could be read count: arguments in a shape that can't be read are refused without counting.
      */
     static final int FAILURES_BEFORE_FALLBACK = 2;
 
@@ -86,9 +100,11 @@ class TableTool extends AbstractWorkspaceTool {
         final ObjectSchema condition = ObjectSchema.builder()
                 .addStringProperty("column", "The column.")
                 .addEnumProperty("op", List.of("=", "!=", "<", "<=", ">", ">=", "contains", "not_contains",
-                        "starts_with", "ends_with", "matches", "is_empty", "not_empty"), "The comparison. "
-                        + "contains ignores case; matches takes a regular expression.")
-                .addStringProperty("value", "The value to compare with.")
+                        "starts_with", "ends_with", "matches", "is_empty", "not_empty", "in", "not_in"),
+                        "The comparison. contains ignores case; matches takes a regular expression; in and "
+                        + "not_in take several values.")
+                .addStringProperty("value", "The value to compare with; for in and not_in, the values "
+                                            + "separated by commas.")
                 .required("column", "op")
                 .build();
         final ObjectSchema aggregate = ObjectSchema.builder()
@@ -134,7 +150,7 @@ class TableTool extends AbstractWorkspaceTool {
                                 .description("How to sort the result.").build())
                         .addIntegerProperty("limit", "The most rows to return.")
                         .addStringProperty(OUT_ARG, ToolDescription.builder()
-                                .chatOnly("A .csv file in /outputs/ to write the result to.")
+                                .chatOnly("A file in /outputs/ to write the result to: .csv, .tsv or .md.")
                                 .build())
                         .addProperty(HELP_ARG, stringArraySchema("Expression functions to describe (what each "
                                                                  + "takes and does), instead of querying a "
@@ -148,13 +164,14 @@ class TableTool extends AbstractWorkspaceTool {
     private static ToolDescription description() {
         return ToolDescription.builder()
                 .general("Queries a table")
-                .chatOnly(" in the workspace (an attached table in /attachments/, or a .csv or .tsv file)")
+                .chatOnly(" in the workspace (an attached table in /attachments/, a tab's results that current_results "
+                          + "saved in /tabs/results/, or a .csv or .tsv file)")
                 .general(" exactly, in code: eval adds columns worked out for each row, where filters rows, then "
                          + "groupBy and aggregates (or distinct, for each distinct value with its count) summarise "
                          + "them, orderBy sorts and limit cuts the result. Use mask with distinct or groupBy to count "
                          + "free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this "
                          + "for any figures; never count rows or work figures out by reading them.")
-                .chatOnly(" Give out to write the result to a CSV file.")
+                .chatOnly(" Give out to write the result to a file.")
                 .general("\n\n" + expressionsHelp())
                 .build();
     }
@@ -178,14 +195,20 @@ class TableTool extends AbstractWorkspaceTool {
 
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
-        final List<String> help = strings(argsMap(request).get(HELP_ARG), HELP_ARG);
+        final Map<?, ?> args = argsMap(request);
+        final List<String> help = strings(args.get(HELP_ARG), HELP_ARG);
         if (!help.isEmpty()) {
             return ToolResult.text(ExpressionFunctions.help(help));
         }
         final WorkspacePath path = pathArg(request, PATH_ARG);
         refuseUnlessATable(path);
+        // Arguments in a shape that can't be read are refused here, before the query is run, so they don't count
+        // as failures of the query towards the fallback (seen: aggregates given as a JSON string in two parallel
+        // calls, the second refusal coming with an unasked-for summary of a column).
+        final Query query = query(args, () -> columns(sessionWorkspace(context), path));
+        final WorkspacePath out = outArg(request);
         try {
-            return ToolResult.text(query(request, context, path));
+            return ToolResult.text(run(context, path, query, out));
         } catch (final ExpressionException e) {
             // The model fixes its expression from the message; a column's summary wouldn't help.
             throw e;
@@ -243,8 +266,7 @@ class TableTool extends AbstractWorkspaceTool {
     private String referencedColumn(final ToolCall request,
                                     final SessionWorkspace workspace,
                                     final WorkspacePath path) {
-        final List<String> columns = TableEngine.run(workspace.localFile(path), Format.forPath(path),
-                new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), 1)).columns();
+        final List<String> columns = columns(workspace, path);
         final Map<?, ?> args = argsMap(request);
         final List<String> referenced = new ArrayList<>();
         try {
@@ -264,21 +286,63 @@ class TableTool extends AbstractWorkspaceTool {
         return null;
     }
 
-    private String query(final ToolCall request, final ToolCallContext context, final WorkspacePath path) {
-        final SessionWorkspace workspace = sessionWorkspace(context);
-        final WorkspacePath out = outArg(request);
-        final Map<?, ?> args = argsMap(request);
-        final Query query = new Query(
-                evals(args.get("eval")),
+    // The table's columns, read from its header.
+    private static List<String> columns(final SessionWorkspace workspace, final WorkspacePath path) {
+        return TableEngine.run(workspace.localFile(path), Format.forPath(path),
+                new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), 1)).columns();
+    }
+
+    /// Reads the query from a call's arguments, taking each as the model meant it where that can be told (see
+    /// [#loose]).
+    ///
+    /// @param args         The call's arguments.
+    /// @param tableColumns The table's columns, read only if an orderBy column starting with '-' needs them.
+    /// @return The query.
+    /// @throws WorkspaceException if an argument is in a shape that can't be read, saying what was given.
+    static Query query(final Map<?, ?> args, final Supplier<List<String>> tableColumns) {
+        final List<Eval> evals = evals(args.get("eval"));
+        final List<Aggregate> aggregates = aggregates(args.get("aggregates"));
+        final LazyValue<Set<String>> resultColumns = LazyValue.initialisedBy(() ->
+                resultColumns(tableColumns, evals, aggregates));
+        return new Query(
+                evals,
                 strings(args.get("select"), "select"),
                 conditions(args.get("where")),
                 strings(args.get("groupBy"), "groupBy"),
-                aggregates(args.get("aggregates")),
+                aggregates,
                 Boolean.TRUE.equals(args.get("distinct")) || "true".equals(String.valueOf(args.get("distinct"))),
                 Boolean.TRUE.equals(args.get("mask")) || "true".equals(String.valueOf(args.get("mask"))),
-                orders(args.get("orderBy")),
+                orders(args.get("orderBy"), resultColumns::getValueWithLocks),
                 limit(args.get("limit")));
+    }
 
+    // The columns a result may have: the table's, and those eval and aggregates name. The table's are left out if
+    // it can't be read, which running the query then reports.
+    private static Set<String> resultColumns(final Supplier<List<String>> tableColumns,
+                                             final List<Eval> evals,
+                                             final List<Aggregate> aggregates) {
+        final Set<String> columns = new HashSet<>();
+        try {
+            columns.addAll(tableColumns.get());
+        } catch (final WorkspaceException e) {
+            LOGGER.debug("Unable to read the table's columns: {}", e.getMessage());
+        }
+        evals.stream()
+                .map(Eval::as)
+                .filter(Objects::nonNull)
+                .forEach(columns::add);
+        aggregates.stream()
+                .map(Aggregate::as)
+                .filter(Objects::nonNull)
+                .forEach(columns::add);
+        return columns;
+    }
+
+    private String run(final ToolCallContext context,
+                       final WorkspacePath path,
+                       final Query query,
+                       final WorkspacePath out) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
         final Result result = TableEngine.run(workspace.localFile(path), Format.forPath(path), query);
         // A snapshot of a table's results may hold only some of the rows its search found, which the answer must say.
         final String summary = result.rowsMatched() + " of " + result.rowsRead() + " rows matched; the result has "
@@ -287,7 +351,7 @@ class TableTool extends AbstractWorkspaceTool {
                                        .map(coverage -> " " + coverage)
                                        .orElse("");
         if (out != null) {
-            writeCsv(workspace, out, result, workspace.sourceDocUuid(path));
+            writeTable(workspace, out, result, workspace.sourceDocUuid(path));
             return "Wrote the result to " + out + ". " + summary + " The first rows:\n\n"
                    + markdown(context, result.columns(), result.rows(), PREVIEW_ROWS);
         }
@@ -323,29 +387,35 @@ class TableTool extends AbstractWorkspaceTool {
         return sb.append('\n').toString();
     }
 
-    private void writeCsv(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
+    private void writeTable(final SessionWorkspace workspace, final WorkspacePath out, final Result result,
             final String source) {
-        ToolTables.writeCsv(workspace, out, result.columns(), result.rows(), source);
+        ToolTables.write(workspace, out, result.columns(), result.rows(), source);
     }
 
     private static List<String> strings(final Object value, final String name) {
-        if (value == null) {
+        final Object loose = loose(value, name, COLUMN_NAMES);
+        if (loose == null) {
             return List.of();
         }
-        if (value instanceof final List<?> list) {
+        if (loose instanceof final List<?> list) {
             return list.stream().map(String::valueOf).toList();
         }
-        if (value instanceof final String string) {
+        if (loose instanceof final String string) {
             return List.of(string);
         }
-        throw new WorkspaceException(name + " must be a list of column names.");
+        throw new WorkspaceException(name + " must be a list of " + COLUMN_NAMES + ", but was " + quote(loose)
+                                     + ".");
     }
 
     private static List<Condition> conditions(final Object value) {
         final List<Condition> conditions = new ArrayList<>();
         for (final Map<?, ?> map : maps(value, "where")) {
-            conditions.add(new Condition(string(map.get("column")), string(map.get("op")),
-                    string(map.get("value"))));
+            final Object conditionValue = map.get("value");
+            // in and not_in also take their values as a list, which keeps a value with a comma in it whole.
+            conditions.add(conditionValue instanceof final List<?> list
+                    ? new Condition(string(map.get("column")), string(map.get("op")), null,
+                            list.stream().map(item -> Objects.requireNonNullElse(string(item), "")).toList())
+                    : new Condition(string(map.get("column")), string(map.get("op")), string(conditionValue)));
         }
         return conditions;
     }
@@ -371,31 +441,104 @@ class TableTool extends AbstractWorkspaceTool {
         return evals;
     }
 
-    private static List<Order> orders(final Object value) {
+    // Each item is an object, {"column": ..., "descending": ...}, or a column's name, "-" before it for largest
+    // first.
+    private static List<Order> orders(final Object value, final Supplier<Set<String>> resultColumns) {
         final List<Order> orders = new ArrayList<>();
-        for (final Map<?, ?> map : maps(value, "orderBy")) {
-            orders.add(new Order(string(map.get("column")), Boolean.TRUE.equals(map.get("descending"))
-                                                            || "true".equals(string(map.get("descending")))));
+        for (final Object item : items(value, "orderBy", "objects or column names")) {
+            if (item instanceof final Map<?, ?> map) {
+                orders.add(new Order(string(map.get("column")), Boolean.TRUE.equals(map.get("descending"))
+                                                                || "true".equals(string(map.get("descending")))));
+            } else if (item instanceof final String name) {
+                orders.add(order(name.strip(), resultColumns));
+            } else {
+                throw new WorkspaceException("Each item of orderBy must be an object or a column's name, but one "
+                                             + "was " + quote(item) + ".");
+            }
         }
         return orders;
     }
 
+    /// @param name          A column's name given as an item of orderBy.
+    /// @param resultColumns The columns the result may have.
+    /// @return Sorting by the column, smallest first, or largest first if the name starts with '-' (unless a
+    /// column has that name, '-' and all).
+    static Order order(final String name, final Supplier<Set<String>> resultColumns) {
+        if (name.length() > 1 && name.startsWith("-") && !resultColumns.get().contains(name)) {
+            return new Order(name.substring(1).strip(), true);
+        }
+        return new Order(name, false);
+    }
+
     private static List<Map<?, ?>> maps(final Object value, final String name) {
-        if (value == null) {
+        final List<Map<?, ?>> maps = new ArrayList<>();
+        for (final Object item : items(value, name, OBJECTS)) {
+            if (item instanceof final Map<?, ?> map) {
+                maps.add(map);
+            } else if (item == value && value instanceof final String text) {
+                // Text that isn't JSON at all.
+                throw new WorkspaceException(name + " was text that isn't a JSON list of " + OBJECTS + ": "
+                                             + quote(text) + ".");
+            } else {
+                throw new WorkspaceException(name + " must be a list of " + OBJECTS + ", but one item was "
+                                             + quote(item) + ".");
+            }
+        }
+        return maps;
+    }
+
+    // The items of a list argument, as the model meant it (see loose): one item given instead of a list is a list
+    // of that item.
+    private static List<?> items(final Object value, final String name, final String what) {
+        final Object loose = loose(value, name, what);
+        if (loose == null) {
             return List.of();
         }
-        if (value instanceof final List<?> list) {
-            final List<Map<?, ?>> maps = new ArrayList<>();
-            for (final Object item : list) {
-                if (item instanceof final Map<?, ?> map) {
-                    maps.add(map);
-                } else {
-                    throw new WorkspaceException(name + " must be a list of objects.");
-                }
-            }
-            return maps;
+        if (loose instanceof final List<?> list) {
+            return list;
         }
-        throw new WorkspaceException(name + " must be a list of objects.");
+        return List.of(loose);
+    }
+
+    /// An argument as the model meant it. A JSON list or object given as text (seen: aggregates given as
+    /// "[{\"as\": \"n\", \"function\": \"count\"}],", with a stray trailing comma) is read as that list or object;
+    /// surrounding whitespace and one trailing comma are ignored. Any other value is returned as it is.
+    ///
+    /// @param value The argument's value.
+    /// @param name  The argument's name.
+    /// @param what  What the argument is a list of, for the error.
+    /// @return The value meant.
+    /// @throws WorkspaceException if the value is text that starts as JSON but isn't, quoting it.
+    static Object loose(final Object value, final String name, final String what) {
+        if (!(value instanceof final String text)) {
+            return value;
+        }
+        final String json = withoutTrailingComma(text.strip());
+        if (!json.startsWith("[") && !json.startsWith("{")) {
+            return value;
+        }
+        try {
+            return JsonUtil.readValue(json, Object.class);
+        } catch (final RuntimeException e) {
+            throw new WorkspaceException(name + " was text that isn't a JSON list of " + what + ": " + quote(text)
+                                         + ".");
+        }
+    }
+
+    private static String withoutTrailingComma(final String text) {
+        return text.endsWith(",")
+                ? text.substring(0, text.length() - 1).strip()
+                : text;
+    }
+
+    // A value given, quoted (shortened if long) in an error, so the model can see what it sent.
+    private static String quote(final Object value) {
+        final String text = value instanceof String
+                ? (String) value
+                : JsonUtil.writeValueAsString(value, false);
+        return "'" + (text.length() > MAX_QUOTED
+                ? text.substring(0, MAX_QUOTED) + "…"
+                : text) + "'";
     }
 
     private static Integer limit(final Object value) {

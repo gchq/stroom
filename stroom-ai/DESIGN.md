@@ -182,6 +182,11 @@ These run on what the user has open, and apply changes unsaved (see
   `propose_extraction_pipeline` (see [Dashboards, charts and analytics](#dashboards-charts-and-analytics)).
 * **Tables.** `current_results` snapshots the attached tab's results; `table`, `jq` and `summarise_column` work them
   out in the workspace; a table too large for the context is summarised in batches (`TableSummariserImpl`).
+  `table` takes loosely shaped arguments as meant (a list as JSON text, with a stray trailing comma; one object for
+  a list; `"-col"` in `orderBy`), and quotes what it was given when it can't. Only failures of a query it could read
+  count towards summarising a column instead after two (seen in chat 140: a list given as text in two parallel
+  calls brought an unasked-for column summary). `current_results` given a table name that matches nothing uses a
+  tab's only table, saying so; with several it still refuses, listing them (2026-11-03).
 * **Documentation.** `propose_documentation_change` gives a diff card and _Review and apply_, applied as an unsaved
   edit in the document's Documentation tab.
 
@@ -634,6 +639,7 @@ The contract has nothing of the chat or of LangChain4j in it.
 | `category()` | | Which tool-policy category grants it (`AiToolCategory`). |
 | `execute(call, context)` | | The work. Bad input returns an explanatory result rather than throwing, so the model can correct itself. |
 | `isReadOnly()`, `isReadOnly(call)`, `hasReadOnlyCalls()` | true | Read-only or write, per tool or per call. Unattended runs, Ask and Plan modes, and read-only policies use it. MCP `readOnlyHint`. |
+| `isDestructive()` | true for a tool that writes | Whether its writes may overwrite or delete, not only add. MCP `destructiveHint`; false only for a tool whose every change adds something new. |
 | `readsUntrustedContent()` | true | Whether a result taints the chat. MCP `openWorldHint`. Override with false only for output that is Stroom's fixed text, the model's own input or the user's answers. |
 | `usesRunSlot()` | false | Heavy calls over `/mcp` take one of the user's run slots. |
 | `isChatOnly()` | false | Never listed or callable over `/mcp`. |
@@ -753,9 +759,10 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
   `resources/read`, and the `initialized` and `cancelled` notifications. Capabilities: tools (with
   `listChanged`) and resources. There are no prompts.
 * Each tool's `ToolDefinition.general()` becomes an MCP tool. Annotations: `readOnlyHint` from `isReadOnly()`,
-  `destructiveHint` for a write tool with no read-only calls, `openWorldHint` from `readsUntrustedContent()` (it
-  carries "may return content someone else wrote", not "reaches outside"). No `_meta` group is set: groups are the
-  chat's.
+  `destructiveHint` from `isDestructive()` for a tool that writes (true by default, including one with some
+  read-only calls), `openWorldHint` from `readsUntrustedContent()` (it carries "may return content someone else
+  wrote", not "reaches outside"). `title` and `idempotentHint` are not set. No `_meta` group is set: groups are
+  the chat's.
 * Chat-only tools are never listed and are refused if called: the chat's `propose_*` tools (not
   `propose_index_template`), `preview_extraction`, `instruction_evidence`, `task_list`, `memory`, `read_turn`,
   `search_history`, `current_results`.
@@ -1145,6 +1152,12 @@ It stays attached until the user removes it, and only its changes are re-sent.
 Switching tabs used to pollute the context silently, so the agent is never given the active tab automatically.
 Editing a question, or _Ask again_, sends the attached tab as it is now.
 
+The snapshot holds the tab's search requests (`searches.json`), not its rows: no search is run when the question is
+asked. The note on the tab lists each table of results with its row count and columns, and tells the model the rows
+aren't in the snapshot and to call `current_results` (with `table` naming the table when the tab shows several) to
+take them as a workspace table under `/tabs/results/`. Seen in testing: the note used to point at `searches.json`
+for the rows (2026-11-03).
+
 Table snapshots (`current_results`) can be scoped to the first n rows.
 If the tab's query has changed since the snapshot, the tool says the snapshot is stale and the agent offers to
 re-run; it never refreshes without the user's yes.
@@ -1157,6 +1170,23 @@ that chat.
 Memory is small and capped: the user's 16 KiB and 200 lines, a chat's 64 KiB, at most 20 names each.
 Approval rules are under [Consent](#consent-built).
 User's view: `how-it-works/memory.md`.
+
+### Attached tables (built)
+
+A table the user attaches ("Ask about this table") is stored in the chat's workspace as `/attachments/<id>.md`, with
+a profile made in code beside it (`TableProfiler`, `/attachments/<id>.profile.md`). A model without tools is given
+the table itself, up to `maxRowsWithoutTools` rows. A model with tools (`ContextAssembler.profileMessage`) is given:
+
+* a **small table** (at most 200 data rows and 20,000 characters: `MAX_FULL_TABLE_ROWS`, `MAX_FULL_TABLE_CHARS`) in
+  full, with its workspace path and the note to work figures out from that file with the `table` tool, so it can
+  answer without spending a model round trip on a tool call first (seen in testing: about 85 PowerShell events took
+  some 45 seconds, each model call 3 to 8 seconds, as the model had only the profile and had to read the rows with
+  tools; 2026-11-03);
+* a **larger table** as its path and profile only, to be queried with `table` and `summarise_column`.
+
+The context estimate (`ContextAssembler.estimateUsage`) counts a table that is likely given in full (by its file size
+and stored row count) at its size, and a larger one at its profile's. Compaction and a run's own shortening work on
+the assembled messages, so they see what is sent.
 
 ### Context management (built, 2026-10-29 to 2026-10-30)
 
@@ -2227,6 +2257,10 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-03 | A table a tool writes (`table`, `search_events`, `stream_meta`, `processor_tasks`, `server_tasks`) is in the format its file's name gives (`.md` Markdown, `.tsv` TSV, otherwise CSV), as `table` and `fetch_events` read it back: CSV written to a `.md` file was read as one column, and `fetch_events` said it had no `StreamId` and `EventId` (chat 141). `table`'s `where` takes `in` and `not_in` (values as a list or separated by commas), after a refused `in` was rewritten as a regular expression too long to be allowed. | Chat-only workflows |
+| 2026-11-03 | Whether to look into the events behind an attached table stays the model's judgement: no nudge to answer from the table first. Tried on chat 141 (events fetched unasked, most of a turn), it saved the calls (chat 142) but the model then said where a value came from without looking, wrongly (quoted secret names put down to the translation, though the source log has them). | Sessions, workspace, memory and context |
+| 2026-11-03 | `table` reads loosely shaped arguments as meant (a list as JSON text, whitespace and one trailing comma ignored; a single object as a list of one; `orderBy` items as column names, `-` for descending unless a result column has that exact name) and otherwise refuses quoting what was given; argument-shape errors are refused before the query runs, so only failures of a readable query count towards the column-summary fallback (seen in chat 140). `current_results` uses a tab's only table when the name given matches nothing, with a note; with several tables it refuses, listing them. | Chat-only workflows |
+| 2026-11-03 | A model with tools is given a small attached table (at most 200 rows and 20,000 characters) in full with its path, not only its profile, so a question about it needs no tool call first; larger tables are unchanged. An attached tab's note no longer points at `searches.json` for rows (it holds only the search requests, and no search is run at question time): it says to call `current_results`. The `table` tool's description names the tables `current_results` writes (`/tabs/results/`). | Sessions, workspace, memory and context |
 | 2026-11-02 | The environment's error triage rules stay in config (`stroom.ai.errorTriage.rules`), not AGENTS: only administrators change them, and a rule marking errors benign could otherwise hide them from the build gates. Each rule is a structured value (`ErrorTriageRuleConfig`): a YAML list of mappings in `config.yml`, a JSON array in the Properties screen, with the bundled rules' fields including `cause` (asked for by the user). | Error triage |
 | 2026-11-02 | The replies a run carries on from (cut off, or only saying what comes next) are counted in a row, starting again at each step that calls a tool; announcements with no "I" are recognised. `chatWithTools` split into a method per part of a step, over a per-run `Run`. | Agent loop |
 | 2026-11-02 | The pipeline stage defaults are the standard template-pipelines content pack's only (indexing: `System/Template Pipelines`, `Indexing`; discovery: none); an environment's own templates (e.g. Elasticsearch) are configured. | Pipeline stages |
@@ -2234,6 +2268,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | 2026-11-02 | An event-logging version held in more than one XML schema document (seen: imported twice, with different UUIDs) is a question: the user picks the document (form, or `schema_version=` its UUID), kept with the build's version and with a translation's kept mapping (`schema_uuid`, so regenerating, rebuilding and documenting it read that document); the checks read it, `evaluate_pipeline` validates with the document its pipeline's schema group names, and the translation pipeline's schema filter is given its schema group, since Stroom otherwise validates with whichever it lists first. Copies of identical content need no group; differing ones Stroom can't tell apart by group are refused until the user removes or regroups one. | Event-logging versions |
 | 2026-11-02 | A Data Splitter is checked against the `data-splitter:3` schema Stroom holds, as the DSParser checks it, in `save_text_converter` and `build_data_splitter`'s `stroom_check`; with none held none is saved (no Data Splitter can run). `save_text_converter` runs it through Stroom's parser on the build's sample streams before saving. | Builds |
 | 2026-11-02 | Stepping checks an XSLT's records:2, reference-data:2 and kafka-records:1 output against the schema Stroom holds where no schema filter in the pipeline does, a failure blocking a clean step: the elements reading that output drop what doesn't fit silently, and Stroom's Indexing template has no schema filter (asked for by the user, after the Data Splitter schema gap). | Builds |
+| 2026-11-03 | MCP `destructiveHint` comes from `StroomTool.isDestructive()`, true for any tool that writes: a tool with some read-only calls was advertised as not destructive, though its writes may overwrite (e.g. `build_translation_xslt` by uuid). `title` and `idempotentHint` stay unset: `title` is cosmetic, and whether a write repeats safely depends on the call. | MCP endpoint |
 | 2026-10-31 | A CEF pipeline writing its lines as text (to a file or stream) is stage `forwarding`, backend `file`, told by its XSLTs and those they import (a CEF plan kept, or a CEF header literal, `CEF:0` or `CEF:1` and a bar), not by its writer; `write_documentation` and `evaluate_pipeline` treat it as they treat one to Kafka. | CEF output |
 | 2026-10-31 | Evaluating a pipeline has a tool of its own, `evaluate_pipeline`, the same sections every time for the pipeline's stage (events, indexing, CEF, reference, other) and the report's outline; it gathers facts, runs no follow-on checks, and saves nothing. `write_documentation` generates a Reference maps section for reference data pipelines from the same facts. | Further use cases |
 | 2026-10-31 | Promotion asks before writing a working copy over a production document changed since it was copied: who changed it and when, and how production differs from the copy; the user overwrites production (the change then only in the backup) or keeps it (the copy stays in the build). The user chose asking, with the difference explained, over refusing. | Builds |

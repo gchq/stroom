@@ -2833,7 +2833,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Queries a table in the workspace (an attached table in /attachments/, or a .csv or .tsv file) exactly, in code: eval adds columns worked out for each row, where filters rows, then groupBy and aggregates (or distinct, for each distinct value with its count) summarise them, orderBy sorts and limit cuts the result. Use mask with distinct or groupBy to count free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this for any figures; never count rows or work figures out by reading them. Give out to write the result to a CSV file.
+Queries a table in the workspace (an attached table in /attachments/, a tab's results that current_results saved in /tabs/results/, or a .csv or .tsv file) exactly, in code: eval adds columns worked out for each row, where filters rows, then groupBy and aggregates (or distinct, for each distinct value with its count) summarise them, orderBy sorts and limit cuts the result. Use mask with distinct or groupBy to count free text (e.g. messages) as patterns, with numbers, IPs, dates and IDs masked. Use this for any figures; never count rows or work figures out by reading them. Give out to write the result to a file.
 
 Expressions (eval, and aggregates given as expression) are in Stroom's expression language, as in dashboards: ${column} is a column's value, 'text' or "text" a string, operators are + - * / % ^ and = != < <= > >=, and functions are called as name(arguments). The names are Stroom's, not SQL's: the mean is average(), not avg(). A cell that is a number is a number (except one with a leading zero, e.g. 007, which is text); others are text, which date functions read as dates. An empty cell is no value, and a failure (e.g. arithmetic on text) gives ERR: in its cell. In aggregates, min and max take an empty cell as the least value, so filter with not_empty first. For example: eval {"as": "rate", "expression": "round(${bytes} / ${seconds}, 1)"}, {"as": "site", "expression": "upperCase(substring(${host}, 0, 3))"}, {"as": "hour", "expression": "formatDate(floorHour(${time}), 'yyyy-MM-dd HH:00')"}; aggregates {"as": "error %", "expression": "round(sum(if(${status} = 'ERROR', 1, 0)) / count() * 100, 1)"}. An expression in aggregates is worked out over each group, so may use aggregate functions; one in eval is worked out for each row, so may not. Give help with function names for what each takes, before using one you haven't used.
 
@@ -2942,7 +2942,7 @@ Value: err(), false(), formatIECByteSize, formatMetricByteSize, null(), true()
       "type" : "array"
     },
     "out" : {
-      "description" : "A .csv file in /outputs/ to write the result to.",
+      "description" : "A file in /outputs/ to write the result to: .csv, .tsv or .md.",
       "type" : "string"
     },
     "path" : {
@@ -2965,12 +2965,12 @@ Value: err(), false(), formatIECByteSize, formatMetricByteSize, null(), true()
             "type" : "string"
           },
           "op" : {
-            "description" : "The comparison. contains ignores case; matches takes a regular expression.",
-            "enum" : [ "=", "!=", "<", "<=", ">", ">=", "contains", "not_contains", "starts_with", "ends_with", "matches", "is_empty", "not_empty" ],
+            "description" : "The comparison. contains ignores case; matches takes a regular expression; in and not_in take several values.",
+            "enum" : [ "=", "!=", "<", "<=", ">", ">=", "contains", "not_contains", "starts_with", "ends_with", "matches", "is_empty", "not_empty", "in", "not_in" ],
             "type" : "string"
           },
           "value" : {
-            "description" : "The value to compare with.",
+            "description" : "The value to compare with; for in and not_in, the values separated by commas.",
             "type" : "string"
           }
         },

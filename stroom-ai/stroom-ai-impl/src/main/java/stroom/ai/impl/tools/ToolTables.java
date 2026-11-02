@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.MarkdownTables;
 import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.TableEngine.Format;
 import stroom.ai.impl.workspace.WorkspacePath;
 
 import org.apache.commons.csv.CSVFormat;
@@ -31,8 +33,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/// Writes the tables the stream tools make to the workspace as CSV, for the table tool to work on, and shows the
-/// model their first rows.
+/// Writes the tables the stream tools make to the workspace (CSV, TSV or Markdown, by the file's name), for the
+/// table tool to work on, and shows the model their first rows.
 final class ToolTables {
 
     /// The longest a cell is shown in a preview.
@@ -42,7 +44,10 @@ final class ToolTables {
         // Static only.
     }
 
-    /// Writes a table to a workspace file as CSV.
+    /// Writes a table to a workspace file, in the format its name gives (see [Format#forPath(WorkspacePath)]):
+    /// Markdown for .md, TSV for .tsv, otherwise CSV. The table tool and fetch_events read a file by its name, so
+    /// a file written in another format than its name gives can't be read back (seen: CSV written to a .md file,
+    /// which fetch_events then read as a table of one column).
     ///
     /// @param workspace     The session's workspace.
     /// @param out           The file to write.
@@ -50,18 +55,21 @@ final class ToolTables {
     /// @param rows          The rows, each with a cell per column.
     /// @param sourceDocUuid The document the table came from, so access to it is checked again when the file is
     ///                      used, or null.
-    static void writeCsv(final SessionWorkspace workspace,
-                         final WorkspacePath out,
-                         final List<String> columns,
-                         final List<List<String>> rows,
-                         final String sourceDocUuid) {
+    static void write(final SessionWorkspace workspace,
+                      final WorkspacePath out,
+                      final List<String> columns,
+                      final List<List<String>> rows,
+                      final String sourceDocUuid) {
         final Path temp = workspace.tempFile();
         try {
-            try (final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8);
-                    final CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
-                printer.printRecord(columns);
-                for (final List<String> row : rows) {
-                    printer.printRecord(row);
+            try (final BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+                final Format format = Format.forPath(out);
+                if (format == Format.MARKDOWN) {
+                    writeMarkdown(writer, columns, rows);
+                } else {
+                    writeDelimited(writer, format == Format.TSV
+                            ? CSVFormat.TDF
+                            : CSVFormat.DEFAULT, columns, rows);
                 }
             }
             workspace.write(out, temp, sourceDocUuid);
@@ -100,5 +108,30 @@ final class ToolTables {
             sb.append(' ').append(shortened.replace("|", "\\|").replaceAll("\\s+", " ")).append(" |");
         }
         return sb.append('\n').toString();
+    }
+
+    private static void writeMarkdown(final BufferedWriter writer,
+                                      final List<String> columns,
+                                      final List<List<String>> rows) throws IOException {
+        writer.write(MarkdownTables.formatRow(columns));
+        writer.newLine();
+        writer.write(MarkdownTables.separatorRow(columns.size()));
+        writer.newLine();
+        for (final List<String> row : rows) {
+            writer.write(MarkdownTables.formatRow(row));
+            writer.newLine();
+        }
+    }
+
+    private static void writeDelimited(final BufferedWriter writer,
+                                       final CSVFormat csvFormat,
+                                       final List<String> columns,
+                                       final List<List<String>> rows) throws IOException {
+        final CSVPrinter printer = new CSVPrinter(writer, csvFormat);
+        printer.printRecord(columns);
+        for (final List<String> row : rows) {
+            printer.printRecord(row);
+        }
+        printer.flush();
     }
 }

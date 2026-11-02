@@ -76,8 +76,8 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             something fills up or fails) only from tool results, Stroom's documents and the conversation, never \
             from how other products work: Stroom often differs from Splunk, Elasticsearch, Kafka and the like. If \
             nothing you have says what Stroom does, say you don't know and what would tell you.
-            - Tables the user attaches are labelled [Attached Table: ...], or [Attached table: ...] with a profile \
-            of the table and where its full data is. When you use more than one, say which table each finding \
+            - Tables the user attaches are labelled [Attached Table: ...], or [Attached table: ...] with the table \
+            or its profile, and where its full data is. When you use more than one, say which table each finding \
             comes from.
             - Lead with the answer, then the evidence. Keep it short. Use markdown tables for tabular results and \
             code blocks for queries.

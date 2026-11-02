@@ -415,6 +415,33 @@ class TestCurrentResultsTool {
                 .contains("extraction pipeline");
     }
 
+    @Test
+    void aTabsOnlyTableIsUsedWhateverItIsCalled() {
+        tab(RAN, RAN);
+
+        final String result = run("{\"table\":\"user.name\"}");
+
+        assertThat(result)
+                .startsWith("No table is called 'user.name', so the tab's only table, 'Logons', was used.\n\n"
+                            + "Took a snapshot of Logons")
+                .contains("The rows are in /tabs/results/query-uuid/results.md");
+    }
+
+    @Test
+    void aTableThatIsntOneOfSeveralIsRefusedListingThem() {
+        final AiTabSearch logons = new AiTabSearch("Logons", "t1", context(RAN, TAB_KEY), context(RAN, null),
+                List.of("User"), available, false);
+        final AiTabSearch hosts = new AiTabSearch("Hosts", "t2", context(RAN, TAB_KEY), context(RAN, null),
+                List.of("User"), available, false);
+        Mockito.when(tabSnapshots.forLatestQuestion(CHAT)).thenReturn(Optional.of(new StoredTabSnapshot(5, 1,
+                QUERY_DOC, "/", "Logons", "Query", false, null, "h", 0L, List.of(), List.of(logons, hosts), null)));
+
+        assertThat(run("{\"table\":\"user.name\"}"))
+                .isEqualTo("No table is called 'user.name'. Say which table: 'Logons' 'Hosts'.");
+        assertThat(run("{}")).isEqualTo("Say which table: 'Logons' 'Hosts'.");
+        Mockito.verifyNoInteractions(tableDownloader);
+    }
+
     private String run(final String arguments) {
         return tool.execute(new ToolCall("c1", CurrentResultsTool.NAME, arguments),
                 ToolCalls.inChat(CHAT, files.workspace())).text();

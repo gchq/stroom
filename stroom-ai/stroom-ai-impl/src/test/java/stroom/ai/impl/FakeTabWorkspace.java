@@ -70,6 +70,13 @@ public final class FakeTabWorkspace {
                 Mockito.any(Path.class), Mockito.any())).thenAnswer(invocation -> write(
                 ((WorkspacePath) invocation.getArgument(1)).path(),
                 Files.readString(invocation.getArgument(2), StandardCharsets.UTF_8), invocation.getArgument(3)));
+        // Files the tools write, e.g. a result given out, are kept as tab files are.
+        Mockito.when(workspace.write(Mockito.anyInt(), Mockito.any(WorkspacePath.class), Mockito.anyString(),
+                Mockito.any())).thenAnswer(invocation -> write(((WorkspacePath) invocation.getArgument(1)).path(),
+                invocation.getArgument(2), invocation.getArgument(3)));
+        Mockito.when(workspace.write(Mockito.anyInt(), Mockito.any(WorkspacePath.class), Mockito.any(Path.class),
+                Mockito.any())).thenAnswer(invocation -> write(((WorkspacePath) invocation.getArgument(1)).path(),
+                Files.readString(invocation.getArgument(2), StandardCharsets.UTF_8), invocation.getArgument(3)));
         Mockito.when(workspace.find(Mockito.anyInt(), Mockito.any(WorkspacePath.class))).thenAnswer(invocation ->
                 find(((WorkspacePath) invocation.getArgument(1)).path()));
         Mockito.when(workspace.localFile(Mockito.anyInt(), Mockito.any(WorkspacePath.class))).thenAnswer(invocation ->

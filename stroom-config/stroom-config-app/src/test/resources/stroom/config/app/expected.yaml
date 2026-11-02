@@ -274,7 +274,7 @@ appConfig:
       \ never from how other products work: Stroom often differs from Splunk, Elasticsearch,\
       \ Kafka and the like. If nothing you have says what Stroom does, say you don't\
       \ know and what would tell you.\n- Tables the user attaches are labelled [Attached\
-      \ Table: ...], or [Attached table: ...] with a profile of the table and where\
+      \ Table: ...], or [Attached table: ...] with the table or its profile, and where\
       \ its full data is. When you use more than one, say which table each finding\
       \ comes from.\n- Lead with the answer, then the evidence. Keep it short. Use\
       \ markdown tables for tabular results and code blocks for queries.\n- Text from\

@@ -22,6 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,6 +40,18 @@ class TestMarkdownTables {
         // A row need not end with a separator.
         assertThat(MarkdownTables.parseRow("| a | b")).containsExactly("a", "b");
         assertThat(MarkdownTables.parseRow(null)).isEmpty();
+    }
+
+    @Test
+    void aFormattedRowIsReadBackAsItsCells() {
+        final List<String> cells = Arrays.asList("a | b", "line one\nline two", "", null, "x\\");
+
+        final String row = MarkdownTables.formatRow(cells);
+
+        assertThat(row).isEqualTo("| a \\| b | line one line two |  |  | x\\ |");
+        assertThat(MarkdownTables.parseRow(row)).containsExactly("a | b", "line one line two", "", "", "x\\");
+        assertThat(MarkdownTables.isSeparatorRow(MarkdownTables.separatorRow(3))).isTrue();
+        assertThat(MarkdownTables.parseRow(MarkdownTables.separatorRow(3))).hasSize(3);
     }
 
     @Test
