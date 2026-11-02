@@ -24,9 +24,12 @@ import stroom.pipeline.stepping.store.StepDataStore;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -368,14 +371,47 @@ public class StreamSweep {
     /**
      * Take another sweep's per-stream facts. A materialisation runs no whole-stream capture, so it never
      * learns whether a part is segmented or what indicators the pipeline raised while starting up - but the
-     * capture that swept this same stream did, and stream-level facts do not change with the code being
-     * edited. Without this, every record served from a materialisation reports its part unsegmented and its
-     * startup indicators absent.
+     * capture that swept this same stream did. Without this, every record served from a materialisation
+     * reports its part unsegmented and its startup indicators absent.
+     * <p>
+     * Whether a part is segmented is a fact about the stream. Startup indicators are not: they include an
+     * element's compile errors, which change with its code (or the code of an XSLT it imports). So an
+     * element's startup indicators are only taken from a sweep that ran it under the same cumulative
+     * fingerprint as this one, and never replace indicators this sweep raised itself.
      */
-    public void copyStreamMetadataFrom(final StreamSweep source) {
+    public synchronized void copyStreamMetadataFrom(final StreamSweep source) {
         segmentedByPart.putAll(source.segmentedByPart);
-        if (!source.startProcessIndicators.isEmpty()) {
-            startProcessIndicators = source.startProcessIndicators;
+        final Map<ElementId, Indicators> merged = new HashMap<>(startProcessIndicators);
+        source.startProcessIndicators.forEach((elementId, indicators) -> {
+            if (ranUnderSameCode(source, elementId)) {
+                merged.putIfAbsent(elementId, indicators);
+            }
+        });
+        startProcessIndicators = Map.copyOf(merged);
+    }
+
+    /**
+     * Add indicators raised while this sweep started the elements it runs, replacing any taken from another
+     * sweep for the same elements (see {@link #copyStreamMetadataFrom(StreamSweep)}).
+     *
+     * @param indicators Element to the indicators it raised while starting up.
+     */
+    public synchronized void addStartProcessIndicators(final Map<ElementId, Indicators> indicators) {
+        if (NullSafe.hasEntries(indicators)) {
+            final Map<ElementId, Indicators> merged = new HashMap<>(startProcessIndicators);
+            merged.putAll(indicators);
+            startProcessIndicators = Map.copyOf(merged);
         }
+    }
+
+    // True if the source sweep ran the element under the same code as this one. Without fingerprints on both
+    // sweeps that can't be known, so the indicators are taken as before.
+    private boolean ranUnderSameCode(final StreamSweep source, final ElementId elementId) {
+        if (fingerprints == null || source.fingerprints == null) {
+            return true;
+        }
+        return Objects.equals(
+                fingerprints.getCumulativeFingerprint(elementId.getId()),
+                source.fingerprints.getCumulativeFingerprint(elementId.getId()));
     }
 }
