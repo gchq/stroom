@@ -97,13 +97,11 @@ import com.gwtplatform.mvp.client.View;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -570,9 +568,13 @@ public class SteppingPresenter
 
                     updateToggleConsoleBtnVisibility(indicators, elementId);
                 } else {
+                    // The step has data, but none for this element, e.g. stepping stopped at an earlier
+                    // element. Don't leave the previous record's input/output on show as if it were this one's.
                     clearIndicators(elementPresenter, elementId);
+                    clearEditorIO(elementPresenter);
                 }
             } else {
+                // No step data, e.g. stepped past the last record, so keep showing the last record's IO.
                 clearIndicators(elementPresenter, elementId);
             }
         });
@@ -669,6 +671,11 @@ public class SteppingPresenter
         if (isButtonVisible) {
             toggleLogPaneButton.setState(isLogPaneVisible);
         }
+    }
+
+    private void clearEditorIO(final ElementPresenter elementPresenter) {
+        elementPresenter.setInput("", 1, false);
+        elementPresenter.setOutput("", 1, false);
     }
 
     private void refreshEditorIO(final ElementPresenter elementPresenter, final SharedElementData elementData) {
@@ -1039,7 +1046,6 @@ public class SteppingPresenter
     }
 
     private void readResult(final SteppingResult result) {
-        Optional<String> fatalErrors = Optional.empty();
         try {
             currentResult = result;
             foundRecord = result.isFoundRecord();
@@ -1104,16 +1110,15 @@ public class SteppingPresenter
             // Sync step filters.
             pipelineModel.setStepFilterMap(result.getStepFilterMap());
 
-            if (result.getGeneralErrors() != null && !result.getGeneralErrors().isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                for (final String err : result.getGeneralErrors()) {
-                    sb.append(err);
-                    sb.append("\n");
-                }
-            } else {
-                fatalErrors = getFatalErrors(result);
-                fatalErrors.ifPresent(errorText -> {
-                });
+            // Errors raised by an element are shown in that element's log pane and on the pipeline tree.
+            // General errors belong to no element (e.g. the stream could not be captured), so they have
+            // nowhere else to be seen.
+            if (NullSafe.hasItems(result.getGeneralErrors())) {
+                AlertEvent.fireError(
+                        this,
+                        "Some errors occurred during stepping",
+                        String.join("\n", result.getGeneralErrors()),
+                        null);
             }
         } finally {
             updateStepControlButtons();
@@ -1137,31 +1142,6 @@ public class SteppingPresenter
                     currentResult.getFoundLocation(),
                     isFirstStream,
                     isLastStream);
-        }
-    }
-
-    private Optional<String> getFatalErrors(final SteppingResult steppingResult) {
-        if (steppingResult.getStepData() != null
-            && steppingResult.getStepData().getElementMap() != null) {
-            final String txt = steppingResult.getStepData().getElementMap()
-                    .values()
-                    .stream()
-                    .flatMap(sharedElementData -> {
-                        final Set<StoredError> errors = NullSafe.getOrElseGet(
-                                sharedElementData.getIndicators(),
-                                Indicators::getUniqueErrorSet,
-                                HashSet::new);
-                        return errors.stream();
-                    })
-                    .filter(error -> Severity.FATAL_ERROR.equals(error.getSeverity()))
-                    .map(StoredError::toString)
-                    .collect(Collectors.joining("\n"));
-
-            return !txt.isEmpty()
-                    ? Optional.of(txt)
-                    : Optional.empty();
-        } else {
-            return Optional.empty();
         }
     }
 

@@ -428,7 +428,7 @@ public class SteppingService {
                     // resolver just needs a sweep signalling the records so it navigates them as usual.
                     // Signalled for the record the DEMAND named, not for the request's reference location -
                     // navigation demands the record next to its reference, and FIRST has no reference at all.
-                    return applyStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded)),
+                    return applyStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded), fingerprints),
                             priorSweeps);
                 }
                 if (!decision.fullSweep()) {
@@ -692,7 +692,7 @@ public class SteppingService {
                 return null;
             }
         }
-        return signalledSweep(metaId, store, range);
+        return signalledSweep(metaId, store, range, fingerprints);
     }
 
     /**
@@ -700,8 +700,13 @@ public class SteppingService {
      * just signalled into the watermark so the resolver navigates them exactly as it would a fresh
      * materialisation's.
      */
-    private StreamSweep signalledSweep(final long metaId, final StepDataStore store, final RecordRange range) {
-        final StreamSweep sweep = new StreamSweep(metaId, store);
+    private StreamSweep signalledSweep(final long metaId,
+                                       final StepDataStore store,
+                                       final RecordRange range,
+                                       final ElementFingerprints fingerprints) {
+        // The fingerprints say which code the signalled records were produced under, so the startup
+        // indicators taken from another sweep are only those of elements that ran the same code.
+        final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         sweep.markOnDemand();
         sweep.setDemand(range);
         for (long record = range.firstRecord(); record <= range.lastRecord(); record++) {
@@ -894,6 +899,14 @@ public class SteppingService {
                 // answer as an unfinished step, which a client that has stopped simply drops.
                 LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
                         session.getSessionId(), LogUtil.exceptionMessage(e)));
+                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+            }
+
+            if (sessionResult.generalError() != null && session.isClosed()) {
+                // As above: a capture that failed because the session was terminated reports the termination
+                // (e.g. "... was terminated"), which is not an error to show the user.
+                LOGGER.debug(() -> LogUtil.message("step() - session {} closed, dropping capture error: {}",
+                        session.getSessionId(), sessionResult.generalError()));
                 return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
             }
 
