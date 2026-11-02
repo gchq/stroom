@@ -21,8 +21,11 @@ import stroom.dashboard.client.main.PaneRegistry.ComponentUse;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextInputComponentSettings;
+import stroom.dashboard.shared.TextInputFormat;
+import stroom.dashboard.shared.TextInputValidator;
 import stroom.query.api.Param;
 import stroom.query.client.result.table.HasParams;
+import stroom.widget.datepicker.client.component.DateTimeBoxController;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -32,7 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// A dashboard's Text Input pane ([TextInput]): its text, with the key from its settings, is a
-/// query parameter of the dashboard.
+/// query parameter of the dashboard. Its settings can say what the text must be (a number, a date
+/// and time, which gets a calendar, or a match of a pattern); text that isn't is marked invalid,
+/// kept, and not passed to queries.
 public class TextInputController extends DashboardPaneController implements HasParams {
 
     /// The tab type of the pane.
@@ -50,15 +55,19 @@ public class TextInputController extends DashboardPaneController implements HasP
     ///
     /// @param eventBus                   The application's event bus.
     /// @param view                       The content.
-    /// @param settingsControllerProvider Makes the pane's settings dialog.
+    /// @param settingsControllerProvider     Makes the pane's settings dialog.
+    /// @param dateTimeBoxControllerProvider Makes what opens the date-time box's calendar.
     @Inject
     public TextInputController(final EventBus eventBus,
                                final TextInput view,
-                               final Provider<TextInputSettingsController> settingsControllerProvider) {
+                               final Provider<TextInputSettingsController> settingsControllerProvider,
+                               final Provider<DateTimeBoxController> dateTimeBoxControllerProvider) {
         super(eventBus, settingsControllerProvider);
         this.view = view;
         initWidget(view);
+        make(dateTimeBoxControllerProvider).attach(view.getDateTimeBox());
         view.setOnChange(this::onValueChanged);
+        view.setMarkInvalid(this::getInvalidReason);
     }
 
     private void onValueChanged(final String value) {
@@ -71,7 +80,10 @@ public class TextInputController extends DashboardPaneController implements HasP
         final List<Param> list = new ArrayList<>();
         final String key = getTextInputSettings().getKey();
         final String value = view.getValue();
-        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
+        // Text that isn't what the settings say it must be is not passed on to queries
+        if (key != null && key.trim().length() > 0
+            && value != null && value.trim().length() > 0
+            && getInvalidReason(value) == null) {
             final Param param = new Param(key.trim(), value.trim());
             list.add(param);
         }
@@ -93,7 +105,18 @@ public class TextInputController extends DashboardPaneController implements HasP
     private void update(final TextInputComponentSettings settings) {
         // Named for the component (e.g. "Feed"), so a rename renames it too
         view.setAccessibleName(getComponentConfig().getName());
+        view.setDateTime(settings.getFormat() == TextInputFormat.DATE_TIME);
         view.setValue(settings.getValue());
+    }
+
+    // What is wrong with the text, as the settings' format says, or null if nothing is
+    private String getInvalidReason(final String value) {
+        // Nothing is wrong before the settings are read
+        if (getComponentConfig() == null
+            || !(getSettings() instanceof final TextInputComponentSettings settings)) {
+            return null;
+        }
+        return TextInputValidator.getInvalidReason(settings.getFormat(), settings.getPattern(), value);
     }
 
     private TextInputComponentSettings getTextInputSettings() {

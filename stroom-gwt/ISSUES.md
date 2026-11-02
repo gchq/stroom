@@ -2529,6 +2529,15 @@ to delete them by hand.~~
 
 These were found by the review and fixed in the same change:
 
+* **7.14 merge** (2026-11-02): a time chosen with the calendar of a `DateTimeBox` (a query's time
+  range, an expression term's date, a dashboard Text Input) was written with an offset without a
+  colon, e.g. `2026-01-31T13:45:00.000+1000`, for any user whose time zone isn't UTC. The server
+  parses times with `ZonedDateTime.parse`, which refuses that form, so the term or time range
+  failed. **Confirmed** (in the code: `DateTimeModel.formatIso` dropped the colon that
+  `getOffsetString` takes out for its own use; 7.14's Text Input patched the picker's output in its
+  view). `formatIso` writes `+10:00` now. Master has it too; changelog entry. Not covered by a JVM
+  test (`UTCDate` is a JavaScript overlay).
+
 * **Wave 30** (2026-10-29): `ElementUtil`'s `hasClassName`, `findParent` and `findChild` matched a
   class by substring, so once the class names were BEM, a block matched its own elements: finding
   a document link (`doc-ref-link`) from its open icon (`doc-ref-link__open`) stopped at the icon,

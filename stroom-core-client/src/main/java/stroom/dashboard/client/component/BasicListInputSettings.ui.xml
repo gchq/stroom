@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A List Input pane's Basic settings: its id, name and key, and the values it offers, typed or a
-     dictionary's -->
+<!-- A List Input pane's Basic settings: its id, name and key, the values it offers, typed or a
+     dictionary's, and whether several can be chosen -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.tickbox.client"
@@ -36,7 +36,11 @@
                 <dd:DropDownBox ui:field="dictionary"/>
             </g:SimplePanel>
         </form:FormGroup>
-        <form:FormGroup helpText="Lets users type their own value as well as pick one from the list. When not ticked, only values in the list can be chosen. Default is not ticked.">
+        <form:FormGroup helpText="Lets users tick several values in the list, rather than choose one. The values ticked are given to the key joined with commas, e.g. red,blue. Allow Text Entry can't be used with it. Default is not ticked.">
+            <v:TickBox ui:field="multiSelect" identity="basicListInputSettingsMultiSelect"
+                              label="Multi-Select"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Lets users type their own value as well as pick one from the list. When not ticked, only values in the list can be chosen. Not available with Multi-Select. Default is not ticked.">
             <v:TickBox ui:field="allowTextEntry" identity="basicListInputSettingsAllowTextEntry"
                               label="Allow Text Entry"/>
         </form:FormGroup>

@@ -95,6 +95,7 @@
     <inherits name='stroom.ai.AI'/>
     <inherits name='stroom.receive.rules.RuleSet'/>
     <inherits name='stroom.annotation.Annotation'/>
+    <inherits name='stroom.widget.chooser.Chooser'/>
     <inherits name="stroom.widget.datepicker.DatePicker"/>
     <inherits name="stroom.widget.duration.Duration"/>
     <inherits name="stroom.widget.tab.Tab"/>

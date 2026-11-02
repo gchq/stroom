@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
+import stroom.widget.dropdowntree.client.DropDownBox;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.selection.client.SelectionBox;
 import stroom.widget.util.client.HtmlBuilder;
@@ -28,6 +29,7 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,7 +40,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /// A dashboard's List Input pane: a list of values, typed in its settings or from a dictionary
-/// (each shown with the dictionary it came from), and, if allowed, any value typed.
+/// (each shown with the dictionary it came from), and, if allowed, any value typed. When several
+/// values can be chosen ([#setMultiSelect(boolean)]) it is a picker showing those ticked, which asks
+/// its controller to open a chooser of them ([#setOnOpenValues(Runnable)]).
 public class ListInput extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -50,8 +54,12 @@ public class ListInput extends Component {
 
     @UiField
     SelectionBox<WordItem> valueSelectionBox;
+    @UiField
+    DropDownBox valuesBox;
 
     private boolean allowTextEntry;
+    private String accessibleName;
+    private String valuesText = "";
     private Consumer<WordItem> onValueChange = value -> {
     };
 
@@ -68,8 +76,12 @@ public class ListInput extends Component {
         });
     }
 
-    // A value, with the dictionary it came from, if any
-    private static SafeHtml render(final WordItem wordItem) {
+    /// Shows a value, with the dictionary it came from, if any, as the list and the chooser of
+    /// several values do.
+    ///
+    /// @param wordItem The value.
+    /// @return The value, as HTML.
+    static SafeHtml render(final WordItem wordItem) {
         final String word = wordItem.getWord();
 
         return wordItem.getSourceDocRef()
@@ -124,16 +136,57 @@ public class ListInput extends Component {
         this.valueSelectionBox.setAllowTextEntry(allowTextEntry);
     }
 
-    /// Names the list for screen readers.
+    /// Shows one list to choose a value from, or a picker of several values.
+    ///
+    /// @param multiSelect Whether several values can be chosen.
+    public void setMultiSelect(final boolean multiSelect) {
+        valueSelectionBox.setVisible(!multiSelect);
+        valuesBox.setVisible(multiSelect);
+    }
+
+    /// Shows the values ticked when several can be chosen, joined with commas.
+    ///
+    /// @param words The values, in the list's order.
+    public void setSelectedValues(final List<String> words) {
+        valuesText = String.join(", ", NullSafe.list(words));
+        valuesBox.setText(valuesText);
+        updateValuesName();
+    }
+
+    /// @return The picker of several values, for the chooser to open below.
+    public Element getValuesElement() {
+        return valuesBox.getButtonElement();
+    }
+
+    /// Names the list, and the picker of several values, for screen readers.
     ///
     /// @param name The list's name: the pane's name.
     public void setAccessibleName(final String name) {
+        accessibleName = name;
         AccessibleName.set(valueSelectionBox, name);
+        updateValuesName();
     }
 
     /// @param onValueChange Given the value the user chooses or types.
     public void setOnValueChange(final Consumer<WordItem> onValueChange) {
         this.onValueChange = onValueChange;
+    }
+
+    /// @param onOpenValues Run when the user asks to choose several values (a click, Enter or
+    ///                     Space on the picker).
+    public void setOnOpenValues(final Runnable onOpenValues) {
+        valuesBox.setOnOpen(onOpenValues);
+    }
+
+    // The picker's name replaces its text, so it says the values too, e.g. "Colour, red, blue"
+    private void updateValuesName() {
+        if (NullSafe.isBlankString(accessibleName)) {
+            valuesBox.setAriaLabel(null);
+        } else if (valuesText.isEmpty()) {
+            valuesBox.setAriaLabel(accessibleName);
+        } else {
+            valuesBox.setAriaLabel(accessibleName + ", " + valuesText);
+        }
     }
 
 

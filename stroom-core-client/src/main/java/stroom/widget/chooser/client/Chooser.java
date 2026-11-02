@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client.component;
+package stroom.widget.chooser.client;
 
+import stroom.widget.button.client.LinkButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.quickfilter.client.QuickFilter;
@@ -24,15 +25,17 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/// A chooser popup's content (BEM block `chooser`, `chooser.css`): a quick filter above a list of
-/// values (a [DataGrid] with the list box profile, as high as its values up to the chooser's
-/// height). Its controller ([ChooserController], or [MultiChooserController] for ticked values)
+/// A chooser popup's content (BEM block `chooser`, `chooser.css`): Select All and Select None, shown
+/// only when asked for ([#setSelectAllShown(boolean)]), then a quick filter above a list of values
+/// (a [DataGrid] with the list box profile, as high as its values up to the chooser's height). Its
+/// controller ([ChooserController], or [MultiChooserController] for ticked values)
 /// adds the list's columns, fills it and shows it.
 ///
 /// @param <T> The type of the values.
@@ -41,11 +44,21 @@ public class Chooser<T> extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
+    FlowPanel selectBar;
+    @UiField
+    LinkButton selectAllLink;
+    @UiField
+    LinkButton selectNoneLink;
+    @UiField
     QuickFilter nameFilter;
     @UiField
     DataGrid<T> list;
 
     private Consumer<String> onFilterChange = filter -> {
+    };
+    private Runnable onSelectAll = () -> {
+    };
+    private Runnable onSelectNone = () -> {
     };
 
     /// Makes an empty chooser.
@@ -53,6 +66,8 @@ public class Chooser<T> extends Component {
         initWidget(BINDER.createAndBindUi(this));
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
         nameFilter.setOnChange(text -> onFilterChange.accept(text));
+        selectAllLink.setOnClick(() -> onSelectAll.run());
+        selectNoneLink.setOnClick(() -> onSelectNone.run());
     }
 
     /// @return The list of values, for the controller to add its columns and selection to.
@@ -81,6 +96,27 @@ public class Chooser<T> extends Component {
     /// @param multiSelect Whether they are.
     public void setMultiSelect(final boolean multiSelect) {
         setStyleName("chooser--multi", multiSelect);
+    }
+
+    /// Shows or hides Select All and Select None, above the filter; they are hidden at first.
+    ///
+    /// @param shown Whether they are shown.
+    public void setSelectAllShown(final boolean shown) {
+        selectBar.setVisible(shown);
+    }
+
+    /// Sets what Select All does, e.g. ticks every value shown.
+    ///
+    /// @param onSelectAll Run when it is pressed.
+    public void setOnSelectAll(final Runnable onSelectAll) {
+        this.onSelectAll = onSelectAll;
+    }
+
+    /// Sets what Select None does, e.g. unticks every value shown.
+    ///
+    /// @param onSelectNone Run when it is pressed.
+    public void setOnSelectNone(final Runnable onSelectNone) {
+        this.onSelectNone = onSelectNone;
     }
 
     /// Sets the help the quick filter shows, e.g. how to write a filter.

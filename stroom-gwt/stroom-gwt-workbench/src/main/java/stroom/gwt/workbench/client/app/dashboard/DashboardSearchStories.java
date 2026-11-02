@@ -368,6 +368,145 @@ public final class DashboardSearchStories {
                             .toHaveValue("teal"));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // A List Input that takes several values shows those ticked in a picker, and its
+                // parameter is them joined with commas; Select All, in the picker's chooser, ticks
+                // every value, which the picker shows in the list's order
+                .story("ListInputMultiSelect", DashboardSupport.story(DashboardDocs.MULTI_LIST_INPUT_DASHBOARD,
+                        routes -> paramRoutes(routes, "colour")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    final Query picker = play.querySelector(".dashboard-input .drop-down");
+                    play.expect(picker).toHaveTextContent("blue");
+                    play.expect(picker).toHaveAttribute("aria-label", "Colour, blue");
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("param colour = blue")).toBeInTheDocument());
+
+                    // The chooser opens below the picker, its list named for the pane
+                    play.click(picker);
+                    final Query list = screen.findByRole("listbox", "Colour");
+                    play.expect(screen.within(list).getByRole("option", "blue"))
+                            .toHaveAttribute("aria-checked", "true");
+                    play.waitFor(() -> play.expect(screen.getByText("Select All")).toBeVisible());
+                    play.click(screen.getByText("Select All"));
+                    play.waitFor(() -> play.expect(picker).toHaveTextContent("red, green, blue"));
+                    // A second press on the picker closes its chooser
+                    play.click(picker);
+                    play.waitFor(() -> play.expect(screen.queryByRole("listbox", "Colour")).toBeNull());
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("param colour = red,green,blue"))
+                            .toBeInTheDocument());
+
+                    // Select None unticks them all, and the parameter goes
+                    play.click(picker);
+                    screen.findByRole("listbox", "Colour");
+                    play.click(screen.getByText("Select None"));
+                    play.waitFor(() -> play.expect(picker).toHaveTextContent(""));
+                    play.keyboard("{Escape}");
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.queryByText(TextMatch.startingWith("param colour")))
+                            .toBeNull());
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Ticking Multi-Select in a List Input's settings disables Allow Text Entry, as a
+                // value can only be typed when one is chosen
+                .story("ListInputSettingsMultiSelectDisablesTextEntry", DashboardSupport.story(
+                        DashboardDocs.LIST_INPUT_DASHBOARD,
+                        routes -> {
+                            wordListRoutes(routes);
+                            DocEditors.docSelectionRoutes(routes);
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "Colour");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    final Query multiSelect = settings.findByRole("checkbox", "Multi-Select");
+                    final Query allowTextEntry = settings.getByRole("checkbox", "Allow Text Entry");
+                    play.expect(multiSelect).not().toBeChecked();
+                    play.expect(allowTextEntry).toBeEnabled();
+                    play.click(multiSelect);
+                    play.expect(allowTextEntry).toBeDisabled();
+                    play.click(multiSelect);
+                    play.expect(allowTextEntry).toBeEnabled();
+                    play.click(settings.getByRole("button", StroomDom.button("Cancel")));
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A Text Input whose value must be a number marks `abc` invalid, keeps it, and
+                // doesn't pass it to the query until it is a number
+                .story("TextInputNumberInvalidNotPassed", DashboardSupport.story(
+                        DashboardDocs.NUMBER_INPUT_DASHBOARD, routes -> paramRoutes(routes, "name")))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    final Query input = play.querySelector(".dashboard-input input");
+                    play.expect(input).toHaveValue("abc");
+                    play.expect(input).toHaveAttribute("aria-invalid", "true");
+                    play.expect(input).toHaveAttribute("title", "Must be a number");
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            DashboardSupport.SEARCH.toSpyMatcher()));
+                    play.expect(play.queryByText(TextMatch.startingWith("param name"))).toBeNull();
+
+                    play.clear(input);
+                    play.type(input, "12");
+                    play.waitFor(() -> play.expect(input).not().toHaveAttribute("aria-invalid", "true"));
+                    play.tab();
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("param name = 12")).toBeInTheDocument());
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A Text Input whose value is a date and time is a date-time box with a calendar,
+                // which takes an expression such as now()-1d, passed to the query as it is
+                .story("TextInputDateTime", DashboardSupport.story(
+                        DashboardDocs.DATE_TIME_INPUT_DASHBOARD, routes -> paramRoutes(routes, "name")))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    final Query input = play.querySelector(".dashboard-input .date-time-box input");
+                    play.expect(input).toHaveValue("now()-1d");
+                    play.expect(input).not().toHaveAttribute("aria-invalid", "true");
+                    play.expect(input).toHaveAttribute("aria-haspopup", "dialog");
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("param name = now()-1d")).toBeInTheDocument());
+
+                    // Text that is neither is marked invalid when the box is left
+                    play.clear(input);
+                    play.type(input, "yesterday");
+                    play.tab();
+                    play.waitFor(() -> play.expect(input).toHaveAttribute("aria-invalid", "true"));
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // A Text Input's settings refuse OK while the format is Regex Pattern and the
+                // pattern isn't a regular expression, saying why under it
+                .story("TextInputSettingsPatternRefused", DashboardSupport.story(
+                        DashboardDocs.INPUT_DRIVEN_DASHBOARD, routes -> paramRoutes(routes, "name")))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.openTabMenu(play, "Name Filter");
+                    play.click(DashboardPlays.menuItem(screen, "Settings"));
+                    final Play settings = DashboardPlays.dialog(screen, "Settings");
+                    final Query pattern = settings.findByLabelText("Regex Pattern");
+                    play.expect(pattern).toBeDisabled();
+                    play.click(settings.getByLabelText("Format"));
+                    play.click(screen.findByRole("option", "Regex Pattern"));
+                    play.waitFor(() -> play.expect(pattern).toBeEnabled());
+                    play.click(settings.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(pattern).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(pattern).toHaveAccessibleDescription(
+                            TextMatch.containing("Must be a regular expression"));
+                    play.expect(screen.getByText("Settings", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+
+                    // Not [a-z]+, as typing reads [...] as a key's name
+                    play.type(pattern, "al.*");
+                    play.click(settings.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Settings", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // alpha matches the pattern, so is still passed on
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("param name = alpha")).toBeInTheDocument());
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A table's column expressions have the dashboard's parameters replaced before they
                 // are sent
                 .story("TableColumnParamSubstitution", DashboardSupport.story(DashboardDocs.PARAM_COLUMN_DASHBOARD,
@@ -513,6 +652,20 @@ public final class DashboardSearchStories {
     }
 
     // WordListResource: the dictionary's words
+    // A search replies with a row naming the parameter's value, or with no rows if there is none
+    private static void paramRoutes(final RestFixtures.Builder routes, final String key) {
+        routes.route(DashboardSupport.SEARCH, request -> {
+            final String value = DashboardPlays.param(request.getBody(), key);
+            return RestReply.json(DashboardSupport.tableResponse("t1", "[" + DashboardDocs.NAME_FIELD + "]",
+                    value != null
+                            ? "[{\"values\": [\"param " + key + " = " + value + "\"], \"depth\": 0}]"
+                            : "[]",
+                    value != null
+                            ? 1
+                            : 0));
+        });
+    }
+
     private static void wordListRoutes(final RestFixtures.Builder routes) {
         routes.get("/wordList/v1/d1", RestReply.json("{\"wordList\": [{\"word\": \"red\", \"sourceUuid\": \"d1\"}, "
                                                      + "{\"word\": \"green\", \"sourceUuid\": \"d1\"}, "

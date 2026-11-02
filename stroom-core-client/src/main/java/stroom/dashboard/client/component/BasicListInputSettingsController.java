@@ -29,7 +29,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Objects;
 
 /// A List Input pane's Basic settings tab ([BasicListInputSettings]): its name, key and values, and
-/// the dictionary whose words it can offer instead.
+/// the dictionary whose words it can offer instead, and whether several values can be chosen.
 public class BasicListInputSettingsController extends BasicSettingsTabController<BasicListInputSettings> {
 
     private final DocSelectionController dictionary;
@@ -65,6 +65,7 @@ public class BasicListInputSettingsController extends BasicSettingsTabController
             dictionary.setEnabled(settings.isUseDictionary());
             dictionary.setSelectedEntityReference(settings.getDictionary(), true);
             getView().setAllowTextEntry(settings.isAllowTextEntry());
+            getView().setMultiSelect(settings.isMultiSelect());
         }
     }
 
@@ -84,6 +85,7 @@ public class BasicListInputSettingsController extends BasicSettingsTabController
                 .useDictionary(getView().isUseDictionary())
                 .dictionary(dictionary.getSelectedEntityReference())
                 .allowTextEntry(getView().isAllowTextEntry())
+                .multiSelect(getView().isMultiSelect())
                 .build();
     }
 
@@ -100,7 +102,8 @@ public class BasicListInputSettingsController extends BasicSettingsTabController
                               Objects.equals(oldSettings.getValues(), newSettings.getValues()) &&
                               Objects.equals(oldSettings.isUseDictionary(), newSettings.isUseDictionary()) &&
                               Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary()) &&
-                              Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry());
+                              Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry()) &&
+                              Objects.equals(oldSettings.isMultiSelect(), newSettings.isMultiSelect());
 
         return !equal;
     }

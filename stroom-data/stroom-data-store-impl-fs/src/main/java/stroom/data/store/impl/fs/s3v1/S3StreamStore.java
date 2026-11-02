@@ -263,6 +263,45 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return new S3PhysicalDeleteOutcome(true, dataVolume, simpleMeta, deletedLocations);
     }
 
+//    /// Deletes the locally cached source for a stream.
+//    ///
+//    /// @param metaId the ID of the stream whose cache should be deleted
+//    /// @return {@code true} if the cache was deleted or was not present
+//    boolean delete(final long metaId) {
+//        final boolean[] success = {true};
+//        cache.compute(metaId, (k, v) -> {
+//            if (v == null) {
+//                return null;
+//            }
+//
+//            if (deleteDirAndReport("Physical delete: ", v.getPath())) {
+//                synchronized (S3Store.this) {
+//                    evictable.remove(v);
+//                }
+//                return null;
+//            } else {
+//                success[0] = false;
+//                return v;
+//            }
+//        });
+//        return success[0];
+//    }
+//
+//    private boolean deleteDirAndReport(final String message, final Path dir) {
+//        if (dir == null) {
+//            return true;
+//        }
+//        try {
+//            LOGGER.debug(() -> message + FileUtil.getCanonicalPath(dir));
+//            FileUtil.deleteDir(dir);
+//            return true;
+//        } catch (final RuntimeException e) {
+//            LOGGER.debug(e::getMessage, e);
+//            return false;
+//        }
+//    }
+
+
     @Override
     public ValidationResult validateVolume(final FsVolume volume,
                                            final List<FsVolume> otherVolumesInGroup,

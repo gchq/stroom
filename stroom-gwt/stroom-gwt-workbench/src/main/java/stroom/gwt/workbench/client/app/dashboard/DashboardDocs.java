@@ -172,6 +172,38 @@ public final class DashboardDocs {
     public static final String STALE_LIST_INPUT_DASHBOARD = listInput("dash-13b", "Stale List Input",
             ", \"value\": \"purple\"");
 
+    /// A List Input of the values `red`, `green` and `blue`, several of which can be ticked
+    /// (`blue` is), a Query and a Table.
+    public static final String MULTI_LIST_INPUT_DASHBOARD = doc("dash-13c", "Multi List Input", null,
+            "\"designMode\": false",
+            split(0, sized(tabs(0, "li1"), 250, 100), sized(tabs(0, "q1"), 250, 100),
+                    sized(tabs(0, "t1"), 300, 100)),
+            component("list-input", "li1", "Colour", "\"key\": \"colour\", "
+                    + "\"values\": [\"red\", \"green\", \"blue\"], \"multiSelect\": true, "
+                    + "\"selectedValues\": [\"blue\"]"),
+            THE_QUERY,
+            THE_TABLE);
+
+    /// As [#INPUT_DRIVEN_DASHBOARD], but its Text Input's value must be a number and is `abc`.
+    public static final String NUMBER_INPUT_DASHBOARD = doc("dash-7b", "Number Input", null,
+            "\"designMode\": false",
+            split(0, sized(tabs(0, "in1"), 250, 100), sized(tabs(0, "q1"), 250, 100),
+                    sized(tabs(0, "t1"), 300, 100)),
+            component("text-input", "in1", "Name Filter",
+                    "\"key\": \"name\", \"value\": \"abc\", \"format\": \"NUMBER\""),
+            THE_QUERY,
+            THE_TABLE);
+
+    /// As [#INPUT_DRIVEN_DASHBOARD], but its Text Input's value is a date and time, `now()-1d`.
+    public static final String DATE_TIME_INPUT_DASHBOARD = doc("dash-7c", "Date Time Input", null,
+            "\"designMode\": false",
+            split(0, sized(tabs(0, "in1"), 250, 100), sized(tabs(0, "q1"), 250, 100),
+                    sized(tabs(0, "t1"), 300, 100)),
+            component("text-input", "in1", "Name Filter",
+                    "\"key\": \"name\", \"value\": \"now()-1d\", \"format\": \"DATE_TIME\""),
+            THE_QUERY,
+            THE_TABLE);
+
     /// A Table Filter of the table's `Colour` column, a Query whose
     /// expression uses the filter's values, and the Table.
     public static final String TABLE_FILTER_DASHBOARD = doc("dash-14", "Table Filter", null, null,

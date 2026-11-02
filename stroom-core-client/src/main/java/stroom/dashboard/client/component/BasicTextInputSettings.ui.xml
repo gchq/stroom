@@ -1,8 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<!-- A Text Input pane's Basic settings: its id, its name and its parameter's key -->
+<!-- A Text Input pane's Basic settings: its id, its name, its parameter's key and what its value
+     must be -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.widget.selection.client"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicTextInputSettingsId" label="Id"
@@ -17,6 +19,14 @@
                         helpText="Parameter name that the entered value is given. Use it in queries and expressions as ${{key}, e.g. a key of user is used as ${{user}."
                         screenReaderText="Parameter name, used in queries as ${{key}.">
             <form:TextBox ui:field="key" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsFormat" label="Format"
+                        helpText="What the entered value must be. A value that isn't is marked invalid and isn't passed to queries. Date/Time takes an ISO 8601 date and time or an expression such as now()-1d, and has a calendar. Default is Text, which takes any value.">
+            <l:SelectionBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsPattern" label="Regex Pattern"
+                        helpText="The regular expression the entered value must match in full, e.g. [A-Z]{{3}\d+. Only used, and only editable, when Format is Regex Pattern.">
+            <form:TextBox ui:field="pattern" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

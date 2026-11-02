@@ -34,8 +34,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /// A List Input pane's Basic settings: its id, name and key, the values typed (one a line), whether
-/// to offer a dictionary's words instead (a picker its controller attaches), and whether a value
-/// can be typed.
+/// to offer a dictionary's words instead (a picker its controller attaches), whether several values
+/// can be chosen, and whether a value can be typed (only when one value is chosen).
 public class BasicListInputSettings extends Component implements BasicSettingsFields {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -53,6 +53,8 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
     @UiField
     DropDownBox dictionary;
     @UiField
+    TickBox multiSelect;
+    @UiField
     TickBox allowTextEntry;
 
     private Consumer<Boolean> onUseDictionaryChange = useDictionary -> {
@@ -62,6 +64,7 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
     public BasicListInputSettings() {
         initWidget(BINDER.createAndBindUi(this));
         useDictionary.addValueChangeHandler(event -> onUseDictionaryChange.accept(isUseDictionary()));
+        multiSelect.addValueChangeHandler(event -> updateAllowTextEntryEnabled());
     }
 
     @Override
@@ -127,6 +130,17 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
         return dictionary;
     }
 
+    /// @return Whether several values can be chosen.
+    public boolean isMultiSelect() {
+        return multiSelect.getValue();
+    }
+
+    /// @param multiSelect Whether several values can be chosen.
+    public void setMultiSelect(final boolean multiSelect) {
+        this.multiSelect.setValue(multiSelect);
+        updateAllowTextEntryEnabled();
+    }
+
     /// @return Whether a value not in the list can be typed.
     public boolean isAllowTextEntry() {
         return allowTextEntry.getValue();
@@ -135,6 +149,11 @@ public class BasicListInputSettings extends Component implements BasicSettingsFi
     /// @param allowTextEntry Whether a value not in the list can be typed.
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry.setValue(allowTextEntry);
+    }
+
+    // A value can't be typed when several are chosen
+    private void updateAllowTextEntryEnabled() {
+        allowTextEntry.setEnabled(!isMultiSelect());
     }
 
 

@@ -25,6 +25,8 @@ import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SetTag;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.widget.chooser.client.ChooserController;
+import stroom.widget.chooser.client.OpenChooser;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;

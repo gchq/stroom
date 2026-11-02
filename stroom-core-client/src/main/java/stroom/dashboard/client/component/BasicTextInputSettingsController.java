@@ -24,8 +24,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
 
-/// A Text Input pane's Basic settings tab ([BasicTextInputSettings]): its name and its parameter's
-/// key.
+/// A Text Input pane's Basic settings tab ([BasicTextInputSettings]): its name, its parameter's
+/// key, and what its value must be. A pattern that isn't a regular expression is refused by the
+/// settings dialog, as its field says why.
 public class BasicTextInputSettingsController extends BasicSettingsTabController<BasicTextInputSettings> {
 
     /// Made by GIN, with its content.
@@ -45,6 +46,8 @@ public class BasicTextInputSettingsController extends BasicSettingsTabController
         final TextInputComponentSettings settings = (TextInputComponentSettings) componentConfig.getSettings();
         if (settings != null) {
             getView().setKey(settings.getKey());
+            getView().setFormat(settings.getFormat());
+            getView().setPattern(settings.getPattern());
         }
     }
 
@@ -60,6 +63,8 @@ public class BasicTextInputSettingsController extends BasicSettingsTabController
         return settings
                 .copy()
                 .key(getView().getKey())
+                .format(getView().getFormat())
+                .pattern(getView().getPattern())
                 .build();
     }
 
@@ -72,6 +77,10 @@ public class BasicTextInputSettingsController extends BasicSettingsTabController
         final TextInputComponentSettings oldSettings = (TextInputComponentSettings) componentConfig.getSettings();
         final TextInputComponentSettings newSettings = writeSettings(oldSettings);
 
-        return !Objects.equals(oldSettings.getKey(), newSettings.getKey());
+        final boolean equal = Objects.equals(oldSettings.getKey(), newSettings.getKey()) &&
+                              Objects.equals(oldSettings.getFormat(), newSettings.getFormat()) &&
+                              Objects.equals(oldSettings.getPattern(), newSettings.getPattern());
+
+        return !equal;
     }
 }

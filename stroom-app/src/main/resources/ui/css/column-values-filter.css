@@ -24,6 +24,8 @@
 
 .column-values-filter .column-values-filter__bar {
     display: flex;
+    /* The separator between the links in line with their text, not at the top of the bar */
+    align-items: center;
     gap: var(--control__padding--horizontal);
 }
 

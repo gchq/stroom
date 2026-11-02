@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client.component;
+package stroom.widget.chooser.client;
 
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;

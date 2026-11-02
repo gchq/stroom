@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client.component;
+package stroom.widget.chooser.client;
 
-import stroom.annotation.client.component.ChooserController.DataSupplier;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.client.TickBoxState;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.chooser.client.ChooserController.DataSupplier;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -30,6 +30,7 @@ import stroom.widget.popup.client.PopupType;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.dom.client.Element;
@@ -40,6 +41,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -47,7 +49,8 @@ import java.util.function.Function;
 
 /// Shows a chooser ([Chooser]) of ticked values as a popup below what opens it, for one use, e.g.
 /// an annotation's labels: the arrows move, and Space, Enter or a press ticks or unticks the value
-/// with the focus. Escape closes the popup.
+/// with the focus. Escape closes the popup. It can also show Select All and Select None
+/// ([#setSelectAllShown(boolean)]), which tick or untick every value the filter shows.
 ///
 /// ```java
 /// final MultiChooserController<AnnotationTag> chooser = multiChooserProvider.get();
@@ -66,6 +69,9 @@ public class MultiChooserController<T> extends Controller {
     private final Chooser<T> view;
     private final MultiSelectionModel<T> selectionModel = new MultiSelectionModelImpl<>();
     private DataSupplier<T> dataSupplier;
+    private List<T> values = Collections.emptyList();
+    private Consumer<List<T>> onChange = selected -> {
+    };
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     /// Made by GIN for one use, with the popup's content.
@@ -82,6 +88,8 @@ public class MultiChooserController<T> extends Controller {
         initWidget(view);
         view.setMultiSelect(true);
         view.setOnFilterChange(this::fetch);
+        view.setOnSelectAll(() -> setAllShownSelected(true));
+        view.setOnSelectNone(() -> setAllShownSelected(false));
 
         final DataGrid<T> list = view.getList();
         list.setRowChecked(this::getState);
@@ -133,6 +141,14 @@ public class MultiChooserController<T> extends Controller {
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
     }
 
+    /// Shows or hides Select All and Select None, which tick or untick every value the filter
+    /// shows; they are hidden unless asked for.
+    ///
+    /// @param shown Whether they are shown.
+    public void setSelectAllShown(final boolean shown) {
+        view.setSelectAllShown(shown);
+    }
+
     /// Sets where the values come from; they are asked for when the popup is shown, and again
     /// whenever the filter changes.
     ///
@@ -160,7 +176,7 @@ public class MultiChooserController<T> extends Controller {
                      final Element relativeTo,
                      final String caption,
                      final Consumer<List<T>> onChange) {
-        Objects.requireNonNull(onChange, "onChange");
+        this.onChange = Objects.requireNonNull(onChange, "onChange");
         own(selectionModel.addSelectionHandler(e -> onChange.accept(selectionModel.getSelectedItems())));
         ControllerDialog.showOnce(opener, this)
                 .popupType(PopupType.POPUP)
@@ -182,12 +198,22 @@ public class MultiChooserController<T> extends Controller {
         view.getList().redraw();
     }
 
+    // Ticks or unticks every value the filter shows, then tells the chooser's opener once
+    private void setAllShownSelected(final boolean selected) {
+        for (final T value : values) {
+            selectionModel.setSelected(value, selected, new SelectionType(), false);
+        }
+        view.getList().redraw();
+        onChange.accept(selectionModel.getSelectedItems());
+    }
+
     private void fetch(final String filter) {
         if (dataSupplier != null) {
-            dataSupplier.onChange(filter, values -> {
+            dataSupplier.onChange(filter, fetched -> {
                 // The values may come after the popup is closed
-                if (values != null && !isDisposed()) {
-                    view.setValues(values);
+                if (fetched != null && !isDisposed()) {
+                    values = fetched;
+                    view.setValues(fetched);
                 }
             });
         }

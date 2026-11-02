@@ -22,8 +22,11 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.NullSafe;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /// A value a List Input offers: a word, and the dictionary it came from, if any.
 public class WordItem implements HasDisplayValue {
@@ -78,6 +81,22 @@ public class WordItem implements HasDisplayValue {
         }
     }
 
+    /// The values whose words contain a filter's text, ignoring case, e.g. for a chooser's quick
+    /// filter.
+    ///
+    /// @param values The values, in the list's order.
+    /// @param filter The filter's text, or null or blank for all.
+    /// @return The values that match, in the same order.
+    public static List<WordItem> matching(final List<WordItem> values, final String filter) {
+        if (NullSafe.isBlankString(filter)) {
+            return values;
+        }
+        final String lowerFilter = filter.trim().toLowerCase(Locale.ROOT);
+        return NullSafe.stream(values)
+                .filter(value -> NullSafe.string(value.getWord()).toLowerCase(Locale.ROOT).contains(lowerFilter))
+                .collect(Collectors.toList());
+    }
+
     /// @return The word.
     public String getWord() {
         return word;
@@ -91,5 +110,23 @@ public class WordItem implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return word;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final WordItem that = (WordItem) o;
+        return Objects.equals(word, that.word) &&
+               Objects.equals(sourceDocRef, that.sourceDocRef);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(word, sourceDocRef);
     }
 }

@@ -15,16 +15,35 @@
  */
 
 /*
-   A chooser popup's content (stroom.annotation.client.component.Chooser, e.g. an annotation's
-   status, labels or standard comments), named BEM style (block, block__element, block--modifier): a
-   quick filter (chooser__filter) above a list of values (chooser__values), as high as its values up
-   to 400px, then scrolling. Each value's text is a chooser__item. Ticked values (chooser--multi)
+   A chooser popup's content (stroom.widget.chooser.client.Chooser, e.g. an annotation's status,
+   labels or standard comments, or a list input's values), named BEM style (block, block__element,
+   block--modifier): Select All and Select None (chooser__bar, each a chooser__link), shown only when
+   asked for, then a quick filter (chooser__filter) above a list of values (chooser__values), as high
+   as its values up to 400px, then scrolling. Each value's text is a chooser__item. Ticked values (chooser--multi)
    have tick boxes that can be pressed.
 */
 
 .chooser {
     display: flex;
     flex-flow: column;
+}
+
+.chooser__bar {
+    display: flex;
+    /* The separator between the links in line with their text, not at the top of the bar */
+    align-items: center;
+    flex-shrink: 0;
+    gap: var(--control__padding--horizontal);
+}
+
+.chooser__link {
+    display: inline-flex;
+    align-items: center;
+    /* At least 24px high, the minimum target size (WCAG 2.5.8) */
+    min-height: 24px;
+    cursor: pointer;
+    padding: 2px 5px;
+    text-decoration: underline;
 }
 
 .chooser__filter {

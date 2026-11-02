@@ -37,6 +37,8 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Focus;
 
+import java.util.function.Function;
+
 /// A text field for a date and time, in ISO 8601 (e.g. `2024-01-15T09:50:00.000Z`), with a
 /// calendar icon at its end. Enter or Alt+Down in the field, or a click on the icon, asks to open
 /// the Set Date And Time dialog ([#setOnOpenPicker(Runnable)]), which a [DateTimeBoxController]
@@ -76,6 +78,9 @@ public class DateTimeBox
     private boolean optional = false;
     // Allows text that isn't a plain time, e.g. now()-1d
     private boolean expressionsAllowed = false;
+    // What is wrong with the text, only to mark the field (it is kept, and nothing refuses), or
+    // null for no such check
+    private Function<String, String> markInvalid;
 
     /// Makes an empty box.
     public DateTimeBox() {
@@ -254,6 +259,14 @@ public class DateTimeBox
         return parse(stringValue) != null;
     }
 
+    // What the box's mark-only check finds wrong with the text, or null if it has none or the
+    // text passes it
+    private String getMarkReason() {
+        return markInvalid == null || stringValue == null
+                ? null
+                : markInvalid.apply(stringValue);
+    }
+
     private boolean isEmpty() {
         return stringValue == null || stringValue.isEmpty();
     }
@@ -270,8 +283,18 @@ public class DateTimeBox
         final boolean valid = isEmpty() && optional
                               || !isEnabled()
                               || isValid();
-        FieldValidity.setInvalid(textBox.getElement(), !valid);
+        final String markReason = isEnabled()
+                ? getMarkReason()
+                : null;
+        FieldValidity.setInvalid(textBox.getElement(), !valid || markReason != null);
+        textBox.setTitle(markReason);
         InvalidInputs.showReason(this);
+    }
+
+    /// Marks the field invalid now if its text can't be kept or fails the mark-only check
+    /// ([#setMarkInvalid(Function)]), as leaving the field does, e.g. for text the screen put in it.
+    public void showValidity() {
+        updateInvalidState();
     }
 
     /// @return Why the box's text can't be kept (it isn't a time, or the box is empty and may not
@@ -288,6 +311,18 @@ public class DateTimeBox
         return isValid()
                 ? null
                 : NOT_A_TIME;
+    }
+
+    /// Checks the box's text as well, only to mark it: while the text fails the check, the field is
+    /// marked invalid when it is left (or [#showValidity()] is called), with the reason as its
+    /// tooltip, but the text is kept and a dialog's OK or a document's Save don't refuse. For a box
+    /// whose text, when wrong, is kept but not used, e.g. a dashboard's Text Input, whose value is
+    /// only passed to queries when it is right.
+    ///
+    /// @param markInvalid Given the text, says what is wrong with it, or gives null if nothing is;
+    ///                    null for no check.
+    public void setMarkInvalid(final Function<String, String> markInvalid) {
+        this.markInvalid = markInvalid;
     }
 
     @Override

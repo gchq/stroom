@@ -272,7 +272,12 @@ public class DateTimeModel {
         if (offsetMillis == 0) {
             sb.append("Z");
         } else {
-            sb.append(getOffsetString(value));
+            // ISO 8601's extended form, +10:00, as the server's ZonedDateTime.parse needs; +1000
+            // fails there
+            final String offset = getOffsetString(value);
+            sb.append(offset.substring(0, 3));
+            sb.append(":");
+            sb.append(offset.substring(3, 5));
         }
         return sb.toString();
     }

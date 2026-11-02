@@ -121,6 +121,21 @@ public class DropDownBox extends Component {
         label.setTitle(text);
     }
 
+    /// @return The button, whose box is the picker's (the root is a wrapper with no box of its own),
+    /// e.g. for a popup to open below.
+    public Element getButtonElement() {
+        return button.getElement();
+    }
+
+    /// Names the picker for screen readers where no form group's label names it, e.g. a dashboard
+    /// pane's picker, named for the pane. The name replaces the button's own text, so it should say
+    /// the chosen value too, e.g. `Colour, red, blue`.
+    ///
+    /// @param ariaLabel The name, or null or blank for none.
+    public void setAriaLabel(final String ariaLabel) {
+        button.setAriaLabel(ariaLabel);
+    }
+
     /// Shows a problem with the chosen value (e.g. the document can't be found), as a form shows
     /// what is wrong with a field: under the picker (in its form group's feedback, or a line of its
     /// own), with the picker marked invalid (`aria-invalid`) and described by the message.
