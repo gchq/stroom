@@ -109,7 +109,7 @@ public class S3Manager {
      * {@link Meta} is used to provide values for the templated bucket name.
      */
     public String createBucketName(final SimpleMeta meta, final TimeBasis timeBasis) {
-        return createBucketName(null, timeBasis);
+        return createBucketName(null, meta, timeBasis);
     }
 
     /**
@@ -168,7 +168,7 @@ public class S3Manager {
         final String region = s3ClientConfig.getRegion();
         final String key = createKey(meta, timeBasis);
         final String bucket = createBucketName(meta, timeBasis);
-        final S3Location s3Location = new S3Location(region, key, bucket);
+        final S3Location s3Location = new S3Location(region, bucket, key);
         LOGGER.debug("createS3Location() - meta: {}, s3Location: {}", meta, s3Location);
         return s3Location;
     }
@@ -770,28 +770,32 @@ public class S3Manager {
                                  final AtomicLong sequenceNumber,
                                  final TimeBasis timeBasis) {
         final Template template = templateCache.getTemplate(templateStr);
-        ExecutorBuilder executorBuilder = template.buildExecutor();
+        final String output;
+        if (template.isStatic()) {
+            output = templateStr;
+        } else {
+            ExecutorBuilder executorBuilder = template.buildExecutor();
 
-        executorBuilder = executorBuilder
-                .addUuidReplacement(false)
-                .addLazyReplacement(FEED_VAR, meta::getFeedName)
-                .addLazyReplacement(TYPE_VAR, meta::getTypeName)
-                .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
-                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
-                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
-                .addStandardTimeReplacements(() ->
-                        getTimeForVariableReplacement(timeBasis, meta));
+            executorBuilder = executorBuilder
+                    .addUuidReplacement(false)
+                    .addLazyReplacement(FEED_VAR, meta::getFeedName)
+                    .addLazyReplacement(TYPE_VAR, meta::getTypeName)
+                    .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
+                    .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
+                    .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
+                    .addStandardTimeReplacements(() ->
+                            getTimeForVariableReplacement(timeBasis, meta));
 
-        if (contextVariableResolver != null) {
-            contextVariableResolver.addContextReplacements(executorBuilder);
+            if (contextVariableResolver != null) {
+                contextVariableResolver.addContextReplacements(executorBuilder);
+            }
+
+            if (sequenceNumber != null) {
+                executorBuilder = executorBuilder.addSequenceNumberReplacement(
+                        SEQUENCE_NO_VAR, sequenceNumber, true);
+            }
+            output = executorBuilder.execute();
         }
-
-        if (sequenceNumber != null) {
-            executorBuilder = executorBuilder.addSequenceNumberReplacement(
-                    SEQUENCE_NO_VAR, sequenceNumber, true);
-        }
-        final String output = executorBuilder.execute();
-
         LOGGER.debug("applyTemplate() - template: '{}', timeBasis: {}, output: '{}", template, timeBasis, output);
         return output;
     }

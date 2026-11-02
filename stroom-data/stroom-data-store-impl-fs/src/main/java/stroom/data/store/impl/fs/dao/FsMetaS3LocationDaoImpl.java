@@ -66,8 +66,11 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
 
         Objects.requireNonNull(fsVolume);
         return JooqUtil.transactionResult(fsDataStoreDbConnProvider, txnContext -> {
-            // Create the link to the volume
-            final DataVolume dataVolume = dataVolumeDaoImpl.createDataVolume(txnContext, metaId, fsVolume);
+            // Ensure the link to the volume
+            DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(metaId);
+            if (dataVolume == null) {
+                dataVolume = dataVolumeDaoImpl.createDataVolume(txnContext, metaId, fsVolume);
+            }
 
             if (NullSafe.hasItems(s3Locations)) {
                 final List<S3Location> s3LocationList = List.copyOf(s3Locations);
