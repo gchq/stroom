@@ -493,6 +493,20 @@ public class S3StreamStore extends AbstractS3StreamStore {
         return keyName;
     }
 
+    public void shutdown() {
+        synchronized (S3StreamStore.this) {
+            LOGGER.debug("shutdown() - Deleting {} cached items", cacheByMetaId.size());
+            cacheByMetaId.forEach((ignored, trackedSource) -> {
+                deleteDir("Shutdown deleting: ", trackedSource.getPath());
+                try {
+                    Files.delete(trackedSource.getPath());
+                } catch (final IOException e) {
+                    LOGGER.error("Failed to delete file {}", trackedSource.getPath(), e);
+                }
+            });
+        }
+    }
+
 
     // --------------------------------------------------------------------------------
 

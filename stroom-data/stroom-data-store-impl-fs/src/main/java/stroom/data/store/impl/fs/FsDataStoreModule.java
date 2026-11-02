@@ -29,6 +29,8 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.EchoServlet;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
@@ -36,6 +38,7 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class FsDataStoreModule extends AbstractModule {
 
@@ -71,6 +74,10 @@ public class FsDataStoreModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(FsVolumeServiceImpl.class);
+
+        // Low priority so we don't remove any temp files while other tasks are still using them.
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(S3StreamStoreShutdown.class, 1);
     }
 
     @Override
@@ -85,4 +92,17 @@ public class FsDataStoreModule extends AbstractModule {
     public int hashCode() {
         return 0;
     }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class S3StreamStoreShutdown extends RunnableWrapper {
+
+        @Inject
+        public S3StreamStoreShutdown(final S3StreamStore s3StreamStore) {
+            super(s3StreamStore::shutdown);
+        }
+    }
+
 }
