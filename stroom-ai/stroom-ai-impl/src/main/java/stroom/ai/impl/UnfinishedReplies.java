@@ -39,6 +39,19 @@ final class UnfinishedReplies {
             "^(?:(?:ok|okay|now|next|so|first|then|right|good|great)[,:]?\\s+)*"
             + "(?:let me|let's|i'll|i will|i'm going to|i am going to|i need to|i'm now going to|i now need to"
             + "|i should now|i'll now|i will now|time to)\\b.*");
+    // Words ending in "ing" that aren't something being done.
+    private static final String NOT_DOING = "(?!(?:no|some|any|every)?thing\\b|during\\b|string\\b|morning\\b"
+                                            + "|evening\\b)";
+    // A sentence that says what the model is doing next, with no "I": "Now validating the Events" (seen in
+    // testing, after which the run ended), "Moving on to the index", "Checking the fields next". Not one saying
+    // how something is ("Now processing is complete").
+    private static final Pattern ANNOUNCES_DOING = Pattern.compile(
+            "^(?:(?:ok|okay|so|right|good|great)[,:]?\\s+)*"
+            + "(?:(?:now|next)[,:]?\\s+" + NOT_DOING + "[a-z]+ing\\b(?!.*\\b(?:is|are|was|were|has|have|had)\\b).*"
+            + "|(?:now\\s+)?(?:moving on to|on to|onto|proceeding to|next up)\\b.*"
+            + "|" + NOT_DOING + "[a-z]+ing\\b.*\\bnext[.…]?)");
+    // A lead-in that the last sentence, after its colon, is what comes next: "Next up: the index template."
+    private static final Pattern NEXT_LEAD_IN = Pattern.compile("^(?:next|next up|up next|next step):$");
     // Words that make it an offer or a question for the user, which ends a turn properly.
     private static final Pattern FOR_THE_USER = Pattern.compile(
             "\\b(?:if you|once you|when you|let me know|would you|shall i|should i|do you|you can|you could"
@@ -61,11 +74,22 @@ final class UnfinishedReplies {
                 .toLowerCase(Locale.ROOT);
         final String[] sentences = SENTENCE_BREAK.split(tail);
         String last = "";
-        for (int i = sentences.length - 1; i >= 0 && last.isEmpty(); i--) {
-            last = LEADING_MARKUP.matcher(sentences[i]).replaceFirst("").strip();
+        int i = sentences.length - 1;
+        for (; i >= 0 && last.isEmpty(); i--) {
+            last = sentence(sentences[i]);
+        }
+        String leadIn = "";
+        for (; i >= 0 && leadIn.isEmpty(); i--) {
+            leadIn = sentence(sentences[i]);
         }
         return !last.endsWith("?")
-               && ANNOUNCES.matcher(last).matches()
+               && (ANNOUNCES.matcher(last).matches()
+                   || ANNOUNCES_DOING.matcher(last).matches()
+                   || NEXT_LEAD_IN.matcher(leadIn).matches())
                && !FOR_THE_USER.matcher(last).find();
+    }
+
+    private static String sentence(final String text) {
+        return LEADING_MARKUP.matcher(text).replaceFirst("").strip();
     }
 }

@@ -303,7 +303,7 @@ class IndexDocumentation {
 
     private EventSchema schema(final ToolCallContext context, final String build) {
         try {
-            return eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+            return eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
         } catch (final RuntimeException e) {
             // Descriptions then come from the plan and the sample alone.
             LOGGER.debug(() -> LogUtil.message(

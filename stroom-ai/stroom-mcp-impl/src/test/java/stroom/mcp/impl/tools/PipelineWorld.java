@@ -54,6 +54,7 @@ final class PipelineWorld {
     final PipelinePropertyTypes propertyTypes = Mockito.mock(PipelinePropertyTypes.class);
     final ReferenceData referenceData = Mockito.mock(ReferenceData.class);
     final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
+    final EventVersions eventVersions = Mockito.mock(EventVersions.class);
     final PipelineDocs pipelineDocs = new PipelineDocs(world.documentAccess);
     final BuildIndexes buildIndexes = new BuildIndexes(world.guard(), world.pipelineShapes, world.documentAccess,
             pipelineDocs, new PipelineIndex(() -> feeds.docFinder, world.documentAccess), feeds.plan);
@@ -74,7 +75,7 @@ final class PipelineWorld {
     /// @return create_pipeline, on this world.
     CreatePipelineTool createTool() {
         return new CreatePipelineTool(writes, pipelineDocs, world.pipelineShapes, world.guard(), feeds.consent,
-                feeds.plan, world.records(), templates);
+                feeds.plan, world.records(), templates, eventVersions);
     }
 
     /// @return copy_pipeline, on this world.

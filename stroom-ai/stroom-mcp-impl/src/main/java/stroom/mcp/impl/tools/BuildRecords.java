@@ -213,11 +213,29 @@ public class BuildRecords {
     public Map<String, Object> rememberEventLoggingVersion(final String build,
                                                            final String version,
                                                            final String how) {
+        return rememberEventLoggingVersion(build, version, how, null);
+    }
+
+    /// As [#rememberEventLoggingVersion(String, String, String)], with the XML schema document chosen where this
+    /// Stroom holds the version in more than one.
+    ///
+    /// @param build   A build's name.
+    /// @param version The version.
+    /// @param how     How it was settled: `given`, `form` or `only`.
+    /// @param uuid    The UUID of the document chosen (kept as `uuid`), or null.
+    /// @return The record as saved.
+    public Map<String, Object> rememberEventLoggingVersion(final String build,
+                                                           final String version,
+                                                           final String how,
+                                                           final String uuid) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> {
             final Map<String, Object> chosen = new LinkedHashMap<>();
             chosen.put("version", version);
             chosen.put("how", how);
+            if (uuid != null) {
+                chosen.put("uuid", uuid);
+            }
             state.put(EVENT_LOGGING_VERSION, chosen);
         });
     }

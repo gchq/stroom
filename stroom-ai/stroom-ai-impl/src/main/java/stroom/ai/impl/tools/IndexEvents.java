@@ -147,11 +147,13 @@ public class IndexEvents {
                 terms.stream().map(Term::field).toList());
         refuseUnknown(ref, listed, terms, find.fields());
         if (MisleadingSearches.ELASTICSEARCH.equals(backend)) {
-            // Any value or none, which IS_NOT_NULL and IS_NULL mean: Stroom matches every document with them on
-            // Elasticsearch.
+            // A value or none, which IS_NOT_NULL and IS_NULL mean: Stroom matches every document with them on
+            // Elasticsearch. A non-empty value on a string field, as EQUALS '*' finds an empty string too.
+            final Map<String, String> types = new LinkedHashMap<>();
+            info.forEach(field -> types.put(field.getFldName(), NullSafe.get(field.getFldType(), Enum::name)));
             terms = terms.stream()
-                    .map(term -> MisleadingSearches.elasticsearchNullAs(term.condition())
-                            .map(condition -> new Term(term.field(), condition, "*"))
+                    .map(term -> MisleadingSearches.elasticsearchNullAs(term.condition(), types.get(term.field()))
+                            .map(search -> new Term(term.field(), search.condition(), search.value()))
                             .orElse(term))
                     .toList();
         }

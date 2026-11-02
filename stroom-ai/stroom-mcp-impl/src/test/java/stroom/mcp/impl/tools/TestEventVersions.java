@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -31,6 +32,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// The event-logging version a translation writes: the user's choice from those Stroom holds, the newest
 /// recommended. Seen in testing: a default of 3.5.2 on a Stroom that didn't hold it.
@@ -215,6 +217,154 @@ class TestEventVersions {
         final EventVersions later = new EventVersions(world.heldSchemas, world.consent, new BuildMemory(),
                 world.world::guard, world.world::records);
         assertThat(later.chosen(context, "b9")).isEmpty();
+    }
+
+    @Test
+    void aVersionHeldInTwoDocumentsIsAskedAboutEvenAsTheOnlyVersion() {
+        // Seen in testing: event-logging 4.1.0 imported twice, with different UUIDs; the agent was told there was
+        // nothing to ask, and Stroom validated with whichever it listed first.
+        holding("4.1.0");
+        twoDocuments("EVENTS", "ACME", "<xs:schema/>", "<xs:schema><!-- edited --></xs:schema>");
+
+        final EventVersions.Target asked = world.eventVersions.target(CALL, context, null, "b1");
+
+        assertThat(asked.version()).isNull();
+        assertThat(asked.question()).containsEntry("status", "needs_guidance");
+        assertThat(asked.question().get("options")).asList()
+                .extracting(option -> ((Map<?, ?>) option).get("uuid"), option -> ((Map<?, ?>) option).get("path"),
+                        option -> ((Map<?, ?>) option).get("schema_group"))
+                .containsExactly(tuple("doc-a", "/XML Schemas/doc-a", "EVENTS"),
+                        tuple("doc-b", "/XML Schemas/doc-b", "ACME"));
+        assertThat((String) asked.question().get("hint")).contains(EventVersions.DUPLICATES)
+                .contains("schema_version= the UUID");
+        assertThat(world.eventVersions.settled(context, "b1", "4.1.0")).hasValueSatisfying(said ->
+                assertThat(said).doesNotContain("no version to ask about"));
+
+        // Answered with the UUID: settled, remembered, and read from that document.
+        assertThat(world.eventVersions.target(CALL, context, "doc-b", "b1").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.chosenDoc(context, "b1", "4.1.0")).contains("doc-b");
+        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.settled(context, "b1", "4.1.0")).hasValueSatisfying(said ->
+                assertThat(said).contains("chose its XML schema document /XML Schemas/doc-b")
+                        .doesNotContain("no version to ask about"));
+        world.eventVersions.eventSchema(context, "b1", "4.1.0");
+        Mockito.verify(world.heldSchemas).eventSchema("4.1.0", "doc-b");
+        assertThat(world.eventVersions.chosenDocs(context, "b1"))
+                .isEqualTo(Map.of("file://event-logging-v4.1.0.xsd", "doc-b"));
+    }
+
+    @Test
+    void aVersionGivenThatTwoDocumentsHoldIsAskedWhichInTheFormAndRemembered() {
+        holding("4.1.0", "3.5.2");
+        twoDocuments("EVENTS", "ACME", "<xs:schema/>", "<xs:schema><!-- edited --></xs:schema>");
+        world.forms = true;
+        final String label = "/XML Schemas/doc-b (UUID doc-b, schema group ACME)";
+        world.answers.put(EventVersions.docQuestion("4.1.0", 2), label);
+
+        assertThat(world.eventVersions.target(CALL, context, "4.1.0", "b1").version()).isEqualTo("4.1.0");
+
+        assertThat(world.eventVersions.chosenDoc(context, "b1", "4.1.0")).contains("doc-b");
+        // Not asked again (no answer is left to give).
+        world.answers.clear();
+        assertThat(world.eventVersions.target(CALL, context, "4.1.0", "b1").version()).isEqualTo("4.1.0");
+        // Another version has no document to choose.
+        assertThat(world.eventVersions.chosenDoc(context, "b1", "3.5.2")).isEmpty();
+    }
+
+    @Test
+    void thePipelineIsGivenTheChosenDocumentsSchemaGroupWhenTheGroupsTellThemApart() {
+        holding("4.1.0");
+        twoDocuments("EVENTS", "ACME", "<xs:schema/>", "<xs:schema><!-- edited --></xs:schema>");
+        world.eventVersions.remember(context, "b1", "4.1.0", EventVersions.GIVEN, "doc-b");
+
+        assertThat(world.eventVersions.schemaGroupFor(context, "b1")).contains("ACME");
+    }
+
+    @Test
+    void twoDocumentsInOneSchemaGroupWithDifferentContentAreRefusedForThePipeline() {
+        // Stroom's schema filter can't be told which to take: refused rather than validate with either.
+        holding("4.1.0");
+        twoDocuments("EVENTS", "EVENTS", "<xs:schema/>", "<xs:schema><!-- edited --></xs:schema>");
+        world.eventVersions.remember(context, "b1", "4.1.0", EventVersions.GIVEN, "doc-b");
+
+        assertThatThrownBy(() -> world.eventVersions.schemaGroupFor(context, "b1"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("shares its schema group")
+                .hasMessageContaining("delete the one not wanted, or give the chosen one a schema group");
+    }
+
+    @Test
+    void identicalCopiesNeedNoSchemaGroup() {
+        // Whichever Stroom takes validates alike.
+        holding("4.1.0");
+        twoDocuments("EVENTS", "EVENTS", "<xs:schema/>", "<xs:schema/>");
+        world.eventVersions.remember(context, "b1", "4.1.0", EventVersions.GIVEN, "doc-b");
+
+        assertThat(world.eventVersions.schemaGroupFor(context, "b1")).isEmpty();
+    }
+
+    @Test
+    void aSavedTranslationKeepsTheDocumentChosenAndIsRegeneratedFromIt() {
+        holding("4.1.0");
+        world.twoSchemaDocuments();
+        world.eventVersions.remember(context, "acme-v1", "4.1.0", EventVersions.GIVEN, "doc-b");
+        final String code = XsltGenerator.generate(TranslationWorld.parsed(), TranslationWorld.SCHEMA, "4.1.0")
+                .xslt();
+
+        final Map<String, Object> saved = world.docs.createXslt(new ToolCall("1", SaveXsltTool.NAME, "{}"), context,
+                "acme-v1", "ACME-Events", code, TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+
+        final Map<String, Object> payload = KeptMapping.readMapping(world.xslt(String.valueOf(saved.get("uuid")))
+                .getDescription()).orElseThrow().payload();
+        assertThat(payload).containsEntry("schema_version", "4.1.0")
+                .containsEntry(EventVersions.KEPT_SCHEMA_UUID, "doc-b");
+        // Regenerated (e.g. for a hand-edit check) with no build to hand: from the kept document, not the first.
+        Mockito.clearInvocations(world.heldSchemas);
+        world.keptCode.regenerate(payload, code);
+        Mockito.verify(world.heldSchemas).eventSchema("4.1.0", "doc-b");
+        Mockito.verify(world.heldSchemas, Mockito.never()).eventSchema("4.1.0");
+    }
+
+    @Test
+    void theKeptDocumentComesBeforeTheBuildsChoiceAndOneNoLongerHeldIsPassedOver() {
+        holding("4.1.0");
+        world.twoSchemaDocuments();
+        world.eventVersions.remember(context, "b1", "4.1.0", EventVersions.GIVEN, "doc-b");
+
+        world.eventVersions.keptSchema(context, "b1", Map.of(EventVersions.KEPT_SCHEMA_UUID, "doc-a"), "4.1.0");
+        Mockito.verify(world.heldSchemas).eventSchema("4.1.0", "doc-a");
+        // Kept before that document was deleted: the build's choice.
+        world.eventVersions.keptSchema(context, "b1", Map.of(EventVersions.KEPT_SCHEMA_UUID, "gone"), "4.1.0");
+        Mockito.verify(world.heldSchemas).eventSchema("4.1.0", "doc-b");
+        assertThat(world.eventVersions.keptDoc(Map.of(EventVersions.KEPT_SCHEMA_UUID, "gone"), "4.1.0")).isEmpty();
+        // Nothing kept and no build choice: the first, as Stroom takes.
+        world.eventVersions.keptSchema(Map.of(), "4.1.0");
+        Mockito.verify(world.heldSchemas).eventSchema("4.1.0");
+    }
+
+    @Test
+    void aSchemaGroupNamesTheDocumentStroomValidatesWith() {
+        world.twoSchemaDocuments();
+
+        assertThat(world.eventVersions.docsInGroup("ACME"))
+                .isEqualTo(Map.of("file://event-logging-v4.1.0.xsd", "doc-b"));
+        assertThat(world.eventVersions.docsInGroup(" EVENTS ")).containsValue("doc-a");
+        assertThat(world.eventVersions.docsInGroup("OTHER")).isEmpty();
+        assertThat(world.eventVersions.docsInGroup(null)).isEmpty();
+    }
+
+    // Event-logging 4.1.0 held in two XML schema documents, doc-a and doc-b.
+    private void twoDocuments(final String groupA, final String groupB, final String xsdA, final String xsdB) {
+        final String systemId = "file://event-logging-v4.1.0.xsd";
+        final List<XmlSchemaDoc> docs = List.of(
+                XmlSchemaDoc.builder().uuid("doc-a").name("doc-a").systemId(systemId).schemaGroup(groupA).data(xsdA)
+                        .build(),
+                XmlSchemaDoc.builder().uuid("doc-b").name("doc-b").systemId(systemId).schemaGroup(groupB).data(xsdB)
+                        .build());
+        Mockito.when(world.heldSchemas.documents(systemId)).thenReturn(docs);
+        Mockito.when(world.heldSchemas.all()).thenReturn(Map.of(systemId, docs));
+        Mockito.when(world.heldSchemas.path(Mockito.any())).thenAnswer(inv ->
+                "/XML Schemas/" + ((XmlSchemaDoc) inv.getArgument(0)).getName());
     }
 
     private void holding(final String... versions) {

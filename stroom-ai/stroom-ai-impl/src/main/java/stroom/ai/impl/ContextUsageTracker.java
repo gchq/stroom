@@ -292,8 +292,8 @@ public class ContextUsageTracker {
     private static boolean isStepsNote(final ChatMessage message) {
         return message instanceof final UserMessage user
                && user.hasSingleText()
-               && (user.singleText().startsWith(McpAgentChat.TURN_SUMMARY_NOTE)
-                   || user.singleText().startsWith(McpAgentChat.COLLAPSED_STEPS_NOTE));
+               && (user.singleText().startsWith(ConversationShortening.TURN_SUMMARY_NOTE)
+                   || user.singleText().startsWith(ConversationShortening.COLLAPSED_STEPS_NOTE));
     }
 
     /// @param chatId The chat.
@@ -315,8 +315,8 @@ public class ContextUsageTracker {
         return Optional.ofNullable(lastCalls.get(chatId));
     }
 
-    /// Records that a run made its conversation smaller to fit the context window (see `McpAgentChat#shrink`), so
-    /// the context meter can say what it sends is less than the chat holds.
+    /// Records that a run made its conversation smaller to fit the context window (see
+    /// `ConversationShortening#shrink`), so the context meter can say what it sends is less than the chat holds.
     ///
     /// @param chatId The chat.
     /// @param parts  How many parts (tool results, tool call arguments or earlier steps) were shortened.

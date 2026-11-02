@@ -58,6 +58,11 @@ What Stroom does that is easy to miss (each seen in Stroom):
 * `ignoreErrors` is never added (save_text_converter refuses it): it hides the errors for text no expression
   matches, which is then lost without a word. `catch_all` keeps such records instead, as `unparsed`, for the
   mapping to keep as Unknown and review_coverage to find; agree it with the user.
+* A converter written by hand (`save_text_converter`) gets the checks Stroom's DSParser makes: the
+  `data-splitter:3` namespace and `xsi:schemaLocation`, valid against Stroom's Data Splitter schema (each field a
+  `<data name="..." value="$1"/>` inside the `<regex>` or `<split>` that matches it), and run through Stroom's
+  parser on the build's sample streams. When `build_data_splitter` won't save, fix the spec (its `not_saved` says
+  what to try): writing the XML by hand is no way round the checks.
 
 ## Long records: the read buffer
 
@@ -70,9 +75,10 @@ longest record (a record over several lines counts whole), at four times that, w
 room; given `stream_ids`, it reads those streams through whole for it, not just the start it profiles. When
 records are lost for their length in other streams, `measure_records` with those streams gives their longest
 record and the `buffer_size` that holds it (a line, or with `quote`, the lines a quoted value spans joined; a
-record of a marked line or a blank-line block is measured only by its lines). Build the converter again with that
-`buffer_size` and replace the saved one (`save_text_converter` with its `uuid`), then step and process those
-streams again.
+record of a marked line or a blank-line block is measured only by its lines). Build the converter again with
+`build_data_splitter`, the same spec and that `buffer_size` (without `save_as`), and replace the saved one with
+the `converter` it returns (`save_text_converter` with its `uuid`): don't edit the XML by hand. Then step and
+process those streams again.
 Tell the user the size chosen and why.
 
 ## Delimited with a header row

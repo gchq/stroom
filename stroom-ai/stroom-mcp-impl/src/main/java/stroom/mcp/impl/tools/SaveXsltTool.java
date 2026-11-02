@@ -304,7 +304,8 @@ class SaveXsltTool extends AbstractBuiltInTool {
             return indexPlan;
         }
         try {
-            final EventSchema schema = eventVersions.eventSchema(eventVersions.chosenOrLatest(context, build));
+            final EventSchema schema = eventVersions.eventSchema(context, build,
+                    eventVersions.chosenOrLatest(context, build));
             return IndexingHelpers.withCardinality(indexPlan, schema);
         } catch (final RuntimeException e) {
             // A Stroom without the schema: nothing marked.

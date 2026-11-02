@@ -60,11 +60,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -135,11 +132,6 @@ class McpAgentChat {
                                          + "changes you propose, use it now.]";
 
     /**
-     * How many of the latest tool results are kept as they are when the conversation is getting too large.
-     */
-    static final int RECENT_RESULTS_KEPT = 2;
-
-    /**
      * How often a running MCP tool call looks to see if the run has been stopped.
      */
     private static final Duration STOP_CHECK_INTERVAL = Duration.ofMillis(200);
@@ -149,51 +141,24 @@ class McpAgentChat {
                                            + "given up on before it returned. Whatever it started (e.g. on its "
                                            + "server) may still be going on: check before running it again.";
     static final String SKIPPED_FOR_MESSAGE = "Not run: the user sent a message to be read first.";
-    /**
-     * Tool results shorter than this are never shortened.
-     */
-    static final int SHORTENED_MIN_CHARS = 300;
     /// How many times a call the model says is too large is made smaller and made again: one for each of
-    /// [#shrink]'s steps, at most.
+    /// [ConversationShortening#shrink]'s steps, at most.
     static final int MAX_OVERFLOW_RETRIES = 5;
-    /// Put in place of the arguments of an earlier tool call that have been shortened, with how they started.
-    static final String SHORTENED_ARGUMENTS_KEY = "shortenedToSaveSpace";
-    static final int SHORTENED_PREVIEW_CHARS = 200;
     /// Told to the model when it sends a call's shortened arguments as its arguments.
-    static final String SHORTENED_ARGUMENTS_SENT = "Not run: these arguments are the '" + SHORTENED_ARGUMENTS_KEY
+    static final String SHORTENED_ARGUMENTS_SENT = "Not run: these arguments are the '"
+                                                   + ConversationShortening.SHORTENED_ARGUMENTS_KEY
                                                    + "' note that an earlier call's arguments were put as to save "
                                                    + "space in the context window, not arguments to send. Send the "
                                                    + "call's arguments in full (a large value can be put in a "
                                                    + "workspace file and given as {\"$workspace\": \"<path>\"}).";
-    /// The most characters of each part of an earlier step put in a note.
-    static final int COLLAPSED_LINE_CHARS = 160;
-    static final String COLLAPSED_STEPS_NOTE = "[Earlier steps of your answer, put briefly to save space in the "
-                                               + "context window. Their calls and results are stored: call "
-                                               + "read_turn (with no turn id, for this turn) to read them again if "
-                                               + "you need them.]";
     /// How many of the latest steps a summary of the question's steps so far leaves as they are.
     static final int SUMMARY_KEPT_STEPS = 4;
-    /// The fewest earlier steps worth a summary: with fewer, the conversation is only made smaller (see [#shrink]).
+    /// The fewest earlier steps worth a summary: with fewer, the conversation is only made smaller (see
+    /// [ConversationShortening#shrink]).
     static final int SUMMARY_MIN_STEPS = 6;
     /// The fewest steps since the last summary worth another: each summary loses detail and costs a call, so the
-    /// steps since are made smaller (see [#shrink]) for longer first.
+    /// steps since are made smaller (see [ConversationShortening#shrink]) for longer first.
     static final int SUMMARY_MIN_STEPS_AGAIN = 12;
-    /// The most characters given to be summarised: the summary so far and the latest steps that fit, so a first
-    /// summary of a very long question is neither slow nor too large for the model itself.
-    static final int SUMMARY_INPUT_MAX_CHARS = 60_000;
-    /// The most characters of each part of a step (what was said, a call's arguments, a result) given to be
-    /// summarised.
-    static final int SUMMARY_PART_CHARS = 1_500;
-    // The summary is of the steps before the latest few, which follow it as they were. Seen: a summary said the
-    // next step was to reprocess a stream, which a step kept after it had done, and the model did it again.
-    static final String TURN_SUMMARY_NOTE = "[Your earlier progress on this question, summarised to save space "
-                                            + "in the context window. The steps after this note came later and "
-                                            + "are kept as they were: where they and the summary differ, they "
-                                            + "are right, and what they did is done even if the summary says it "
-                                            + "is still to do. Carry on from the latest of them, and don't redo "
-                                            + "what they or the summary show is done. Every call and result is "
-                                            + "stored: call read_turn (with no turn id, for this turn) to read "
-                                            + "one again exactly if you need it.]";
     static final String TURN_SUMMARY_PROMPT = """
             You are summarising your own progress on the user's latest question, part way through answering it, \
             so that you can carry on from the summary with less in the context window. Write, briefly:
@@ -221,13 +186,6 @@ class McpAgentChat {
                                        + "steps have been shortened to make room. Carry on with the task from where "
                                        + "you were; if you were writing your answer, write it again in full, more "
                                        + "briefly.]";
-    /**
-     * Put in place of a tool result that has been shortened.
-     */
-    static final String SHORTENED_RESULT = "[This result has been removed to save space in the context window. "
-                                           + "It is stored: call read_turn (with no turn id, for this turn) to "
-                                           + "read it again if you need it.]";
-
     /**
      * How many times the model may be asked again because the user sent a message just as it finished.
      */
@@ -327,9 +285,56 @@ class McpAgentChat {
                                        final StringBuilder debugLog,
                                        final int steerAfterMessageId,
                                        final ContextBudget budget) {
-        final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
+        final Run run = new Run(chatModel, modelDoc, chatId, toolset, workingMessageId, cancelled, taskContext,
+                attempt, debugLog, budget, new SteerFeed(chatId, steerAfterMessageId));
         // What this run shortens is counted afresh, as it starts from the stored chat.
         usageTracker.resetShortened(chatId);
+        markWhatTheChatHasRead(chatId, toolset);
+        offerTools(run, messages);
+        if (run.tools.isEmpty()) {
+            LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
+            return plainCall(run);
+        }
+
+        // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
+        resumePending(chatId, run.conversation, run.tools, toolset, workingMessageId, taskContext, debugLog);
+
+        final int maxIterations = maxToolIterations();
+        // From the question's list so far, as one kept before the run stopped for the user's approval is still to be
+        // kept up to date.
+        final TaskListReminder taskListReminder = TaskListReminder.continuing(
+                latestTaskList(aiService.getMessages(chatId)));
+        ChatResponse response = null;
+        for (int iteration = 1; iteration <= maxIterations; iteration++) {
+            checkNotStopped(run);
+            // Pick up anything the user has added since the last model call, and any group of tools the model has
+            // turned on.
+            if (iteration > 1) {
+                refreshTools(run);
+            }
+            response = callModel(run, iteration, maxIterations);
+            if (!response.aiMessage().hasToolExecutionRequests()) {
+                if (iteration < maxIterations && carriesOnFrom(run, response)) {
+                    continue;
+                }
+                if (iteration == maxIterations) {
+                    noteStepLimit(chatId, maxIterations);
+                }
+                return response;
+            }
+            runToolCalls(run, response.aiMessage(), iteration, taskListReminder);
+        }
+
+        // Loop cap hit. Make one final call with no tools so the model has to answer in words.
+        noteStepLimit(chatId, maxIterations);
+        if (response != null && response.aiMessage().hasToolExecutionRequests()) {
+            return call(chatModel, run.conversation, null, chatId, modelDoc, budget, workingMessageId);
+        }
+        return response;
+    }
+
+    // Marks the run for what the chat has already read that could hold planted instructions.
+    private void markWhatTheChatHasRead(final int chatId, final McpToolset toolset) {
         // Attachments, Stroom data, previews of attached tabs and the results of tools that read untrusted content
         // earlier in the chat could hold planted instructions. Results of tools that read only trusted content
         // don't count.
@@ -346,268 +351,300 @@ class McpAgentChat {
                 .anyMatch(call -> isUntrustedServerTool(toolset, call.tool()))) {
             runManager.markReadUntrustedServer(chatId);
         }
+    }
+
+    // Works out the tools the run offers, and starts its conversation, with the instructions for those tools.
+    private void offerTools(final Run run, final List<ChatMessage> messages) {
+        final int chatId = run.chatId;
+        final McpToolset toolset = run.toolset;
+        run.toolsEnabled = run.modelDoc == null || run.modelDoc.isToolsEnabled();
+        // In Ask and Plan modes, the model may only use the tools that cannot change anything.
+        run.readOnlyMode = Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT).isReadOnly();
+        run.grants = currentToolGrants.forCurrentUser();
+        run.builtIns = builtInsOffered(run.toolsEnabled, run.readOnlyMode, run.grants);
+        run.mcpTools = mcpTools(toolset, run.toolsEnabled, run.readOnlyMode, run.grants);
+        // Large sets of tools are offered as groups the model turns on when it needs them: those built-in tools
+        // only some questions need, and a large set of MCP tools.
+        run.toolGroups = ToolGroups.of(run.builtIns, run.mcpTools, toolset, toolGroupThreshold());
+        run.conversation = withUnavailableServersNote(messages, toolset.getWarnings());
+        // A run carrying on with the question (e.g. once the user has filled in a form) has its steps from the
+        // store: the summary an earlier run wrote of them goes back in, rather than being written again.
+        turnSummaries.putBack(chatId, run.conversation);
+        // On are the groups the chat used in its latest questions, and those the question's guidance needs.
+        final ToolGroups groupsAtStart = run.toolGroups;
+        toolGroupActivations.startRun(chatId, groupsAtStart::groupOf,
+                BuiltInToolGroups.neededBy(systemPrompt(run.conversation)));
+        run.tools = offeredTools(chatId, run.toolGroups, run.modelDoc);
+        // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
+        final String serverInstructions = joined(toolset.serverInstructions(run.mcpTools.keySet().stream()
+                .map(specification -> toolset.toolInfo(specification.name()).map(McpToolInfo::serverKey))
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet())));
+        withServerInstructions(run.conversation, serverInstructions);
+        // With the build tools' instructions, once they are offered.
+        run.buildInstructions = new BuildInstructions(chatId, serverInstructions);
+        run.buildInstructions.addIfOffered(run.conversation, run.tools);
+    }
+
+    // The built-in tools the run may offer: those the model, the chat's mode and the user's tool policies allow.
+    private Map<ToolSpecification, ToolExecutor> builtInsOffered(final boolean toolsEnabled,
+                                                                 final boolean readOnlyMode,
+                                                                 final ToolGrants grants) {
         final Map<ToolSpecification, ToolExecutor> builtIns = new LinkedHashMap<>();
-        final boolean toolsEnabled = modelDoc == null || modelDoc.isToolsEnabled();
         if (toolsEnabled) {
             builtIns.putAll(builtInTools.toolMap());
         }
-        // In Ask and Plan modes, the model may only use the tools that cannot change anything.
-        final boolean readOnlyMode = Objects.requireNonNullElse(aiDao.getAgentMode(chatId), AiAgentMode.AGENT)
-                .isReadOnly();
         if (readOnlyMode) {
             builtIns.keySet().removeIf(specification -> !builtInTools.isReadOnly(specification.name()));
         }
         // What the user's tool policies grant: none of a category's tools unless it is granted, and with a
         // read-only grant only the tools (and calls) that cannot change anything.
-        final ToolGrants grants = currentToolGrants.forCurrentUser();
         builtIns.keySet().removeIf(specification -> !builtInTools.category(specification.name())
                 .map(category -> grants.offers(category, builtInTools.isReadOnly(specification.name()),
                         builtInTools.hasReadOnlyCalls(specification.name())))
                 .orElse(true));
-        Map<ToolSpecification, ToolExecutor> mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode, grants);
-        // Large sets of tools are offered as groups the model turns on when it needs them: those built-in tools
-        // only some questions need, and a large set of MCP tools.
-        ToolGroups toolGroups = ToolGroups.of(builtIns, mcpTools, toolset, toolGroupThreshold());
-        final List<ChatMessage> conversation = withUnavailableServersNote(messages, toolset.getWarnings());
-        // A run carrying on with the question (e.g. once the user has filled in a form) has its steps from the
-        // store: the summary an earlier run wrote of them goes back in, rather than being written again.
-        turnSummaries.putBack(chatId, conversation);
-        // On are the groups the chat used in its latest questions, and those the question's guidance needs.
-        final ToolGroups groupsAtStart = toolGroups;
-        toolGroupActivations.startRun(chatId, groupsAtStart::groupOf,
-                BuiltInToolGroups.neededBy(systemPrompt(conversation)));
-        Map<ToolSpecification, ToolExecutor> tools = offeredTools(chatId, toolGroups, modelDoc);
-        // Trusted servers' instructions on how to use their tools, for the servers whose tools are offered.
-        final String serverInstructions = joined(toolset.serverInstructions(mcpTools.keySet().stream()
-                .map(specification -> toolset.toolInfo(specification.name()).map(McpToolInfo::serverKey))
-                .flatMap(Optional::stream)
-                .collect(Collectors.toSet())));
-        withServerInstructions(conversation, serverInstructions);
-        // With the build tools' instructions, once they are offered.
-        final BuildInstructions buildInstructions = new BuildInstructions(chatId, serverInstructions);
-        buildInstructions.addIfOffered(conversation, tools);
-        if (tools.isEmpty()) {
-            LOGGER.debug(() -> "chat: no tools available for chatId=" + chatId + ", making a plain call");
-            ChatResponse response = call(chatModel, conversation, null, chatId, modelDoc, budget, workingMessageId);
-            // If the user added something while the model worked, answer again with it.
-            for (int i = 0; i < MAX_STEER_FOLLOW_UPS && steerFeed.addTo(conversation, response.aiMessage()); i++) {
-                response = call(chatModel, conversation, null, chatId, modelDoc, budget, workingMessageId);
-            }
-            return response;
-        }
+        return builtIns;
+    }
 
-        // Carry on from calls waiting for approval when the run last stopped, now they have been answered.
-        resumePending(chatId, conversation, tools, toolset, workingMessageId, taskContext, debugLog);
-
-
-        final int maxIterations = maxToolIterations();
-        // From the question's list so far, as one kept before the run stopped for the user's approval is still to be
-        // kept up to date.
-        final TaskListReminder taskListReminder = TaskListReminder.continuing(
-                latestTaskList(aiService.getMessages(chatId)));
-        ChatResponse response = null;
-        int cutOffs = 0;
-        int announced = 0;
-        for (int iteration = 1; iteration <= maxIterations; iteration++) {
-            if (cancelled.get() || taskContext.isTerminated()) {
-                throw new TaskTerminatedException();
-            }
-            // Pick up anything the user has added since the last model call, and any group of tools the model has
-            // turned on.
-            if (iteration > 1) {
-                conversation.addAll(steerFeed.poll());
-                // A server that has said its tools changed while the run worked has them listed again, so the
-                // model is offered what the server has now, not what it had when the run started.
-                final List<String> changed = toolset.serversWithChangedTools();
-                if (!changed.isEmpty()) {
-                    LOGGER.debug(() -> "chat: chatId=" + chatId + " the tools of " + changed + " have changed");
-                    mcpTools = mcpTools(toolset, toolsEnabled, readOnlyMode, grants);
-                    toolGroups = ToolGroups.of(builtIns, mcpTools, toolset, toolGroupThreshold());
-                    noteToolsChanged(conversation, changed);
-                }
-                tools = offeredTools(chatId, toolGroups, modelDoc);
-                buildInstructions.addIfOffered(conversation, tools);
-            }
-            final List<ToolSpecification> toolSpecifications = List.copyOf(tools.keySet());
-            LOGGER.debug(() -> "chat: chatId=" + chatId + " offering " + toolSpecifications.size()
-                               + " tool(s): " + toolSpecifications.stream()
-                                       .map(ToolSpecification::name)
-                                       .collect(Collectors.joining(", ")));
-
-            // On the last step no tools are offered, so the model has to answer in words. It is told why, so
-            // that it sums up rather than saying what it will do next.
-            final List<ToolSpecification> offered;
-            if (iteration < maxIterations) {
-                offered = toolSpecifications;
-            } else {
-                offered = null;
-                conversation.add(UserMessage.from(LAST_STEP_NOTE));
-            }
-
-            final int currentIteration = iteration;
-            response = LOGGER.logDurationIfDebugEnabled(
-                    () -> call(chatModel, conversation, offered, chatId, modelDoc, budget, workingMessageId),
-                    r -> "chat chatId=" + chatId + " iteration=" + currentIteration
-                         + " toolCalls=" + r.aiMessage().toolExecutionRequests().size());
-
-            final AiMessage aiMessage = response.aiMessage();
-            if (!aiMessage.hasToolExecutionRequests()) {
-                // A reply cut off as the context window filled up isn't the answer: carry on with more room.
-                if (response.finishReason() == FinishReason.LENGTH && iteration < maxIterations
-                    && cutOffs < MAX_CUT_OFF_CONTINUATIONS) {
-                    cutOffs++;
-                    LOGGER.info(() -> "The model's reply for chatId=" + chatId + " was cut off at the length limit; "
-                                      + "making room and carrying on");
-                    if (NullSafe.isNonBlankString(aiMessage.text())) {
-                        conversation.add(AiMessage.from(aiMessage.text()));
-                    }
-                    conversation.add(UserMessage.from(CUT_OFF_NOTE));
-                    usageTracker.recordShortened(chatId, shrink(conversation));
-                    continue;
-                }
-                // If the user added something while the model worked, carry on with it.
-                if (iteration < maxIterations && steerFeed.addTo(conversation, aiMessage)) {
-                    continue;
-                }
-                // A reply that only says what the model will do next isn't the answer: carry on, so it does it.
-                if (iteration < maxIterations && announced < MAX_ANNOUNCED_CONTINUATIONS
-                    && UnfinishedReplies.announcesMoreWork(aiMessage.text())) {
-                    announced++;
-                    LOGGER.info(() -> "The model's reply for chatId=" + chatId + " only said what it would do next; "
-                                      + "carrying on");
-                    final String interim = aiMessage.text().strip();
-                    // Shown in its place, as what the model says with its tool calls is.
-                    aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, answerLinks == null
-                            ? interim
-                            : answerLinks.link(chatId, interim));
-                    conversation.add(AiMessage.from(interim));
-                    conversation.add(UserMessage.from(ANNOUNCED_NOTE));
-                    continue;
-                }
-                if (iteration == maxIterations) {
-                    noteStepLimit(chatId, maxIterations);
-                }
-                return response;
-            }
-
-            // Whatever the model said alongside its tool calls is its own explanation of what it is
-            // trying to find out - the best "why" to show the user and to record.
-            final String rationale = concise(aiMessage.text(), PROGRESS_MESSAGE_LIMIT);
-            appendDebugRationale(debugLog, attempt, currentIteration, aiMessage.text());
-
-            conversation.add(aiMessage);
-            // Shown in its place, before anything the tools then ask the user (e.g. a form), rather than only
-            // while it streams.
-            if (NullSafe.isNonBlankString(aiMessage.text())) {
-                final String interim = aiMessage.text().strip();
-                aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, answerLinks == null
-                        ? interim
-                        : answerLinks.link(chatId, interim));
-            }
-            final List<ToolExecutionRequest> toolRequests = aiMessage.toolExecutionRequests();
-            final List<PendingCall> pending = new ArrayList<>();
-            final List<ToolConsent.Verdict> askVerdicts = new ArrayList<>();
-            for (int t = 0; t < toolRequests.size(); t++) {
-                if (cancelled.get() || taskContext.isTerminated()) {
-                    throw new TaskTerminatedException();
-                }
-                final ToolExecutionRequest toolRequest = toolRequests.get(t);
-
-                final String progress = toolCallProgressMessage(rationale, toolRequest);
-                taskContext.info(() -> progress);
-                aiService.updateMessageText(workingMessageId, progress + "…");
-
-                final AiChatMessage callMessage = aiService.storeMessage(chatId, AiMessageType.TOOL_CALL,
-                        JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
-                                toolRequest.arguments(), aiMessage.text()), false));
-                final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
-                // A tool that isn't offered (e.g. a name the model made up) can't run, so the user isn't asked
-                // about it, and the model is told at once. One of a group that is off (e.g. named by the
-                // guidance) turns its group on, for the model to call it again once it has seen its definition.
-                if (!isOffered(tools, toolRequest.name())) {
-                    final Optional<String> group = toolGroups.groupOf(toolRequest.name());
-                    group.ifPresent(name -> toolGroupActivations.activate(chatId, name));
-                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            recordNotRun(chatId, toolRequest, notOfferedReason(toolRequest.name(), toolGroups),
-                                    unattended, group.isPresent()
-                                            ? "Its tools turned on"
-                                            : "No such tool")));
-                    continue;
-                }
-                // Seen: a call made again with the note an earlier one's arguments were shortened to, which the
-                // tool would only say lacks its arguments.
-                if (sendsShortenedArguments(toolRequest.arguments())) {
-                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            recordNotRun(chatId, toolRequest, SHORTENED_ARGUMENTS_SENT, unattended,
-                                    "Shortened arguments sent")));
-                    continue;
-                }
-                // A call that changes something, of a tool the user's policies grant only for reading (e.g.
-                // memory's write).
-                final String policyRefusal = policyRefusal(grants, builtInTools, toolset, toolRequest);
-                if (policyRefusal != null) {
-                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            recordNotRun(chatId, toolRequest, policyRefusal, unattended,
-                                    "Not allowed by tool policy")));
-                    continue;
-                }
-                // Turning on a group of tools changes nothing, so needs no approval.
-                final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
-                                                    && toolGroups.isGrouped()
-                        ? ToolConsent.Verdict.RUN
-                        : consentGate.checkCall(ToolSession.chat(chatId), toolRequest.name(),
-                                toolRequest.arguments(), builtInTools, toolset, unattended);
-                // The user has asked for their message to be read now, so the step's other calls wait for it.
-                if (verdict.kind() == ToolConsent.Kind.RUN
-                    && aiService.hasMessageOfType(chatId, AiMessageType.SEND_NOW_STEER_MESSAGE)) {
-                    conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            recordNotRun(chatId, toolRequest, SKIPPED_FOR_MESSAGE, unattended,
-                                    "Skipped for the user's message")));
-                    continue;
-                }
-                switch (verdict.kind()) {
-                    case RUN -> {
-                        final int callNo = t + 1;
-                        final Map<ToolSpecification, ToolExecutor> toolsNow = tools;
-                        conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                                runShowingProgress(toolset, toolRequest, workingMessageId, progress, () ->
-                                        runAndRecord(chatId, callMessage, toolRequest, toolsNow, toolset, debugLog,
-                                                callNo, unattended))));
-                    }
-                    case DENY -> conversation.add(ToolExecutionResultMessage.from(toolRequest,
-                            recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
-                                    "Not allowed in this chat")));
-                    case ASK -> {
-                        LOGGER.debug(() -> "Tool '" + toolRequest.name() + "' in chatId=" + chatId
-                                           + " needs approval: " + verdict.reason());
-                        pending.add(pendingCall(toolRequest, toolset, verdict));
-                        askVerdicts.add(verdict);
-                    }
-                }
-            }
-            if (taskListReminder.afterStep(toolRequests)) {
-                remindAboutTaskList(conversation);
-            }
-            if (!pending.isEmpty()) {
-                // Stop here, giving up the thread and the slot, until the user answers on the card the chat shows.
-                // The run carries on from the stored calls (see resumePending).
-                final ApprovalOutcome outcome = consentGate.requestCallApproval(ToolSession.chat(chatId),
-                        approvalRequest(pending, askVerdicts));
-                if (!outcome.isPending()) {
-                    // A chat's gate always asks on a card; only another session's could answer at once.
-                    throw new IllegalStateException("A chat's tool approvals are answered on the chat's card");
-                }
-                throw new AiChatRunManager.WaitingForUserException(pending.size() + " tool call(s) in chat "
-                                                                   + chatId + " need approval");
-            }
-        }
-
-        // Loop cap hit. Make one final call with no tools so the model has to answer in words.
-        noteStepLimit(chatId, maxIterations);
-        if (response != null && response.aiMessage().hasToolExecutionRequests()) {
-            return call(chatModel, conversation, null, chatId, modelDoc, budget, workingMessageId);
+    // A call with no tools offered, for a run that has none.
+    private ChatResponse plainCall(final Run run) {
+        ChatResponse response = call(run.chatModel, run.conversation, null, run.chatId, run.modelDoc, run.budget,
+                run.workingMessageId);
+        // If the user added something while the model worked, answer again with it.
+        for (int i = 0; i < MAX_STEER_FOLLOW_UPS && run.steerFeed.addTo(run.conversation, response.aiMessage());
+             i++) {
+            response = call(run.chatModel, run.conversation, null, run.chatId, run.modelDoc, run.budget,
+                    run.workingMessageId);
         }
         return response;
+    }
+
+    private static void checkNotStopped(final Run run) {
+        if (run.cancelled.get() || run.taskContext.isTerminated()) {
+            throw new TaskTerminatedException();
+        }
+    }
+
+    // Between steps: what the user has added, and the tools offered now.
+    private void refreshTools(final Run run) {
+        final int chatId = run.chatId;
+        run.conversation.addAll(run.steerFeed.poll());
+        // A server that has said its tools changed while the run worked has them listed again, so the
+        // model is offered what the server has now, not what it had when the run started.
+        final List<String> changed = run.toolset.serversWithChangedTools();
+        if (!changed.isEmpty()) {
+            LOGGER.debug(() -> "chat: chatId=" + chatId + " the tools of " + changed + " have changed");
+            run.mcpTools = mcpTools(run.toolset, run.toolsEnabled, run.readOnlyMode, run.grants);
+            run.toolGroups = ToolGroups.of(run.builtIns, run.mcpTools, run.toolset, toolGroupThreshold());
+            noteToolsChanged(run.conversation, changed);
+        }
+        run.tools = offeredTools(chatId, run.toolGroups, run.modelDoc);
+        run.buildInstructions.addIfOffered(run.conversation, run.tools);
+    }
+
+    // Asks the model for one step, offering the tools; on the last step none.
+    private ChatResponse callModel(final Run run, final int iteration, final int maxIterations) {
+        final int chatId = run.chatId;
+        final List<ToolSpecification> toolSpecifications = List.copyOf(run.tools.keySet());
+        LOGGER.debug(() -> "chat: chatId=" + chatId + " offering " + toolSpecifications.size()
+                           + " tool(s): " + toolSpecifications.stream()
+                                   .map(ToolSpecification::name)
+                                   .collect(Collectors.joining(", ")));
+
+        // On the last step no tools are offered, so the model has to answer in words. It is told why, so
+        // that it sums up rather than saying what it will do next.
+        final List<ToolSpecification> offered;
+        if (iteration < maxIterations) {
+            offered = toolSpecifications;
+        } else {
+            offered = null;
+            run.conversation.add(UserMessage.from(LAST_STEP_NOTE));
+        }
+
+        return LOGGER.logDurationIfDebugEnabled(
+                () -> call(run.chatModel, run.conversation, offered, chatId, run.modelDoc, run.budget,
+                        run.workingMessageId),
+                r -> "chat chatId=" + chatId + " iteration=" + iteration
+                     + " toolCalls=" + r.aiMessage().toolExecutionRequests().size());
+    }
+
+    // For a reply with no tool calls, on a step before the last: whether it isn't the answer, so the run carries on
+    // (it was cut off, the user added something, or it only said what the model would do next).
+    private boolean carriesOnFrom(final Run run, final ChatResponse response) {
+        final int chatId = run.chatId;
+        final AiMessage aiMessage = response.aiMessage();
+        // A reply cut off as the context window filled up isn't the answer: carry on with more room.
+        if (response.finishReason() == FinishReason.LENGTH && run.cutOffs < MAX_CUT_OFF_CONTINUATIONS) {
+            run.cutOffs++;
+            LOGGER.info(() -> "The model's reply for chatId=" + chatId + " was cut off at the length limit; "
+                              + "making room and carrying on");
+            if (NullSafe.isNonBlankString(aiMessage.text())) {
+                run.conversation.add(AiMessage.from(aiMessage.text()));
+            }
+            run.conversation.add(UserMessage.from(CUT_OFF_NOTE));
+            usageTracker.recordShortened(chatId, ConversationShortening.shrink(run.conversation));
+            return true;
+        }
+        // If the user added something while the model worked, carry on with it.
+        if (run.steerFeed.addTo(run.conversation, aiMessage)) {
+            return true;
+        }
+        // A reply that only says what the model will do next isn't the answer: carry on, so it does it.
+        if (run.announced < MAX_ANNOUNCED_CONTINUATIONS && UnfinishedReplies.announcesMoreWork(aiMessage.text())) {
+            run.announced++;
+            LOGGER.info(() -> "The model's reply for chatId=" + chatId + " only said what it would do next; "
+                              + "carrying on");
+            final String interim = aiMessage.text().strip();
+            // Shown in its place, as what the model says with its tool calls is.
+            storeInterim(chatId, interim);
+            run.conversation.add(AiMessage.from(interim));
+            run.conversation.add(UserMessage.from(ANNOUNCED_NOTE));
+            return true;
+        }
+        return false;
+    }
+
+    private void storeInterim(final int chatId, final String interim) {
+        aiService.storeMessage(chatId, AiMessageType.INTERIM_RESPONSE, answerLinks == null
+                ? interim
+                : answerLinks.link(chatId, interim));
+    }
+
+    // Runs the tool calls of a step, stopping the run for the user's approval if any need it.
+    private void runToolCalls(final Run run,
+                              final AiMessage aiMessage,
+                              final int iteration,
+                              final TaskListReminder taskListReminder) {
+        // The model acted, so the replies cut off or only saying what comes next that the run carries on from are
+        // counted in a row afresh.
+        run.cutOffs = 0;
+        run.announced = 0;
+        // Whatever the model said alongside its tool calls is its own explanation of what it is
+        // trying to find out - the best "why" to show the user and to record.
+        final String rationale = concise(aiMessage.text(), PROGRESS_MESSAGE_LIMIT);
+        appendDebugRationale(run.debugLog, run.attempt, iteration, aiMessage.text());
+
+        run.conversation.add(aiMessage);
+        // Shown in its place, before anything the tools then ask the user (e.g. a form), rather than only
+        // while it streams.
+        if (NullSafe.isNonBlankString(aiMessage.text())) {
+            storeInterim(run.chatId, aiMessage.text().strip());
+        }
+        final List<ToolExecutionRequest> toolRequests = aiMessage.toolExecutionRequests();
+        final List<PendingCall> pending = new ArrayList<>();
+        final List<ToolConsent.Verdict> askVerdicts = new ArrayList<>();
+        for (int t = 0; t < toolRequests.size(); t++) {
+            checkNotStopped(run);
+            runToolCall(run, aiMessage, toolRequests.get(t), t + 1, rationale, pending, askVerdicts);
+        }
+        if (taskListReminder.afterStep(toolRequests)) {
+            remindAboutTaskList(run.conversation);
+        }
+        if (!pending.isEmpty()) {
+            waitForApproval(run.chatId, pending, askVerdicts);
+        }
+    }
+
+    // Runs one of a step's tool calls, or records why it wasn't run, or adds it to those waiting for approval.
+    private void runToolCall(final Run run,
+                             final AiMessage aiMessage,
+                             final ToolExecutionRequest toolRequest,
+                             final int callNo,
+                             final String rationale,
+                             final List<PendingCall> pending,
+                             final List<ToolConsent.Verdict> askVerdicts) {
+        final int chatId = run.chatId;
+        final String progress = toolCallProgressMessage(rationale, toolRequest);
+        run.taskContext.info(() -> progress);
+        aiService.updateMessageText(run.workingMessageId, progress + "…");
+
+        final AiChatMessage callMessage = aiService.storeMessage(chatId, AiMessageType.TOOL_CALL,
+                JsonUtil.writeValueAsString(new ToolCallRecord(toolRequest.id(), toolRequest.name(),
+                        toolRequest.arguments(), aiMessage.text()), false));
+        final boolean unattended = consentGate.isUserAway(ToolSession.chat(chatId));
+        final String notRun = notRunBeforeConsent(run, toolRequest, unattended);
+        if (notRun != null) {
+            run.conversation.add(ToolExecutionResultMessage.from(toolRequest, notRun));
+            return;
+        }
+        // Turning on a group of tools changes nothing, so needs no approval.
+        final ToolConsent.Verdict verdict = ToolGroups.isActivationTool(toolRequest.name())
+                                            && run.toolGroups.isGrouped()
+                ? ToolConsent.Verdict.RUN
+                : consentGate.checkCall(ToolSession.chat(chatId), toolRequest.name(),
+                        toolRequest.arguments(), builtInTools, run.toolset, unattended);
+        // The user has asked for their message to be read now, so the step's other calls wait for it.
+        if (verdict.kind() == ToolConsent.Kind.RUN
+            && aiService.hasMessageOfType(chatId, AiMessageType.SEND_NOW_STEER_MESSAGE)) {
+            run.conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                    recordNotRun(chatId, toolRequest, SKIPPED_FOR_MESSAGE, unattended,
+                            "Skipped for the user's message")));
+            return;
+        }
+        switch (verdict.kind()) {
+            case RUN -> {
+                final Map<ToolSpecification, ToolExecutor> toolsNow = run.tools;
+                run.conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                        runShowingProgress(run.toolset, toolRequest, run.workingMessageId, progress, () ->
+                                runAndRecord(chatId, callMessage, toolRequest, toolsNow, run.toolset,
+                                        run.debugLog, callNo, unattended))));
+            }
+            case DENY -> run.conversation.add(ToolExecutionResultMessage.from(toolRequest,
+                    recordNotRun(chatId, toolRequest, "Not run: " + verdict.reason(), unattended,
+                            "Not allowed in this chat")));
+            case ASK -> {
+                LOGGER.debug(() -> "Tool '" + toolRequest.name() + "' in chatId=" + chatId
+                                   + " needs approval: " + verdict.reason());
+                pending.add(pendingCall(toolRequest, run.toolset, verdict));
+                askVerdicts.add(verdict);
+            }
+        }
+    }
+
+    // A call that can't run whatever the user would say, recorded as not run: what the model is told, or null.
+    private String notRunBeforeConsent(final Run run,
+                                       final ToolExecutionRequest toolRequest,
+                                       final boolean unattended) {
+        final int chatId = run.chatId;
+        // A tool that isn't offered (e.g. a name the model made up) can't run, so the user isn't asked
+        // about it, and the model is told at once. One of a group that is off (e.g. named by the
+        // guidance) turns its group on, for the model to call it again once it has seen its definition.
+        if (!isOffered(run.tools, toolRequest.name())) {
+            final Optional<String> group = run.toolGroups.groupOf(toolRequest.name());
+            group.ifPresent(name -> toolGroupActivations.activate(chatId, name));
+            return recordNotRun(chatId, toolRequest, notOfferedReason(toolRequest.name(), run.toolGroups),
+                    unattended, group.isPresent()
+                            ? "Its tools turned on"
+                            : "No such tool");
+        }
+        // Seen: a call made again with the note an earlier one's arguments were shortened to, which the
+        // tool would only say lacks its arguments.
+        if (sendsShortenedArguments(toolRequest.arguments())) {
+            return recordNotRun(chatId, toolRequest, SHORTENED_ARGUMENTS_SENT, unattended,
+                    "Shortened arguments sent");
+        }
+        // A call that changes something, of a tool the user's policies grant only for reading (e.g.
+        // memory's write).
+        final String policyRefusal = policyRefusal(run.grants, builtInTools, run.toolset, toolRequest);
+        if (policyRefusal != null) {
+            return recordNotRun(chatId, toolRequest, policyRefusal, unattended, "Not allowed by tool policy");
+        }
+        return null;
+    }
+
+    // Stops the run here, giving up the thread and the slot, until the user answers on the card the chat shows.
+    // The run carries on from the stored calls (see resumePending).
+    private void waitForApproval(final int chatId,
+                                 final List<PendingCall> pending,
+                                 final List<ToolConsent.Verdict> askVerdicts) {
+        final ApprovalOutcome outcome = consentGate.requestCallApproval(ToolSession.chat(chatId),
+                approvalRequest(pending, askVerdicts));
+        if (!outcome.isPending()) {
+            // A chat's gate always asks on a card; only another session's could answer at once.
+            throw new IllegalStateException("A chat's tool approvals are answered on the chat's card");
+        }
+        throw new AiChatRunManager.WaitingForUserException(pending.size() + " tool call(s) in chat "
+                                                           + chatId + " need approval");
     }
 
     /// Runs a tool call, showing on the working line what it has got to while it runs, as its MCP server reports
@@ -935,10 +972,10 @@ class McpAgentChat {
 
     /**
      * Calls the model, recording the tokens it reports using. If the conversation is getting too large for the
-     * model's context window, it is made smaller first, a step at a time (see [#shrink]), until it fits: everything
-     * is stored, and the model can read it again with read_turn. If the model says the request is too large
-     * anyway, the chat's estimates are corrected from what it said, the conversation is made smaller again, and
-     * the call is made again, so the run carries on where it was rather than starting again.
+     * model's context window, it is made smaller first, a step at a time (see [ConversationShortening#shrink]), until
+     * it fits: everything is stored, and the model can read it again with read_turn. If the model says the request is
+     * too large anyway, the chat's estimates are corrected from what it said, the conversation is made smaller again,
+     * and the call is made again, so the run carries on where it was rather than starting again.
      *
      * @param tools            The tools to offer, or null for none.
      * @param workingMessageId The message showing what the run is doing.
@@ -967,7 +1004,7 @@ class McpAgentChat {
                 final OptionalLong size = usageTracker.recordOverflow(chatId, conversation, tools, e,
                         NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxContextWindowTokens, 0));
                 // At least one more step, as the estimate was wrong, then as many as the corrected estimate needs.
-                final int shortened = shrink(conversation);
+                final int shortened = ConversationShortening.shrink(conversation);
                 if (shortened == 0) {
                     throw e;
                 }
@@ -983,8 +1020,8 @@ class McpAgentChat {
 
     /// Makes the conversation smaller until the chat's estimate of it is within the budget, or there is nothing
     /// more to shorten: first by a summary of the question's earlier steps, when there are enough of them since the
-    /// last (see [#summariseEarlierSteps]), then a step at a time (see [#shrink]), with a summary rather than the
-    /// earlier steps put as a line or two each, once nothing else is left to shorten.
+    /// last (see [#summariseEarlierSteps]), then a step at a time (see [ConversationShortening#shrink]), with a summary
+    /// rather than the earlier steps put as a line or two each, once nothing else is left to shorten.
     private void fitToBudget(final ChatModel chatModel,
                              final OpenAIModelDoc modelDoc,
                              final List<ChatMessage> conversation,
@@ -998,7 +1035,7 @@ class McpAgentChat {
         }
         int shortened = 0;
         while (budget.isOver(usageTracker.estimateCautiously(chatId, conversation, tools))) {
-            int step = shrinkKeepingSteps(conversation);
+            int step = ConversationShortening.shrinkKeepingSteps(conversation);
             // A summary loses less than putting each earlier step as a line or two. It is tried once at most, so a
             // model that can't write one isn't asked again and again.
             if (step == 0 && !summaryTried) {
@@ -1008,7 +1045,7 @@ class McpAgentChat {
                 }
             }
             if (step == 0) {
-                step = collapseEarlierSteps(conversation, 1);
+                step = ConversationShortening.collapseEarlierSteps(conversation, 1);
             }
             if (step == 0) {
                 break;
@@ -1025,9 +1062,9 @@ class McpAgentChat {
 
     /// Puts the question's earlier steps (all but the latest [#SUMMARY_KEPT_STEPS]) in a summary the model writes,
     /// in their place, when there are at least [#SUMMARY_MIN_STEPS] of them. Seen: a long question's context kept
-    /// full by [#shrink] alone, results removed a step or two after they were read, and the agent reading them
-    /// again and again until it hit the step limit. A summary that can't be written leaves the conversation as it
-    /// was, to be made smaller as before. The run can be stopped while the summary is being written.
+    /// full by [ConversationShortening#shrink] alone, results removed a step or two after they were read, and the agent
+    /// reading them again and again until it hit the step limit. A summary that can't be written leaves the
+    /// conversation as it was, to be made smaller as before. The run can be stopped while the summary is being written.
     ///
     /// @param needed True if nothing else is left to shorten, so [#SUMMARY_MIN_STEPS] steps are enough even
     ///               since an earlier summary, rather than [#SUMMARY_MIN_STEPS_AGAIN].
@@ -1039,8 +1076,10 @@ class McpAgentChat {
                                           final int chatId,
                                           final int workingMessageId,
                                           final boolean needed) {
-        final List<Integer> steps = stepIndexes(conversation);
-        final int minSteps = !needed && conversation.stream().anyMatch(message -> isNote(message, TURN_SUMMARY_NOTE))
+        final List<Integer> steps = ConversationShortening.stepIndexes(conversation);
+        final boolean summarisedBefore = conversation.stream()
+                .anyMatch(message -> ConversationShortening.isNote(message, ConversationShortening.TURN_SUMMARY_NOTE));
+        final int minSteps = !needed && summarisedBefore
                 ? SUMMARY_MIN_STEPS_AGAIN
                 : SUMMARY_MIN_STEPS;
         if (steps.size() - SUMMARY_KEPT_STEPS < minSteps) {
@@ -1051,7 +1090,7 @@ class McpAgentChat {
         try {
             final ChatRequest request = ChatRequest.builder()
                     .messages(SystemMessage.from(TURN_SUMMARY_PROMPT),
-                            UserMessage.from(turnSummaryInput(conversation, keptFrom)))
+                            UserMessage.from(ConversationShortening.turnSummaryInput(conversation, keptFrom)))
                     .build();
             final String summary = modelStreamer.callUnseen(chatModel, streamingModel(modelDoc), request, chatId,
                             McpAgentChat::isCancelled)
@@ -1060,9 +1099,9 @@ class McpAgentChat {
             if (NullSafe.isBlankString(summary)) {
                 throw new IllegalStateException("the model gave an empty summary");
             }
-            final String note = turnSummaryNote(conversation, keptFrom, summary.strip());
+            final String note = ConversationShortening.turnSummaryNote(conversation, keptFrom, summary.strip());
             turnSummaries.remember(chatId, conversation, keptFrom, note);
-            final int summarised = withNote(conversation, keptFrom, note);
+            final int summarised = ConversationShortening.withNote(conversation, keptFrom, note);
             LOGGER.info(() -> LogUtil.message("Summarised {} earlier step(s) of chatId={} to keep within the "
                                               + "context window", summarised, chatId));
             return true;
@@ -1074,264 +1113,6 @@ class McpAgentChat {
                                               + "shortened instead: {}", chatId, e.getMessage()));
             return false;
         }
-    }
-
-    /// @param conversation The conversation.
-    /// @param keptFrom     The index of the first step left as it is.
-    /// @return What is given to be summarised: the summary so far, if the question has one, then each step before
-    /// `keptFrom`, each part of it cut to [#SUMMARY_PART_CHARS], and only the latest steps that fit within
-    /// [#SUMMARY_INPUT_MAX_CHARS]. What the summary so far kept for reference isn't given, as that is kept as it
-    /// is.
-    static String turnSummaryInput(final List<ChatMessage> conversation, final int keptFrom) {
-        final StringBuilder soFar = new StringBuilder();
-        final List<String> parts = new ArrayList<>();
-        for (int i = 0; i < keptFrom; i++) {
-            final ChatMessage message = conversation.get(i);
-            if (message instanceof final AiMessage step && step.hasToolExecutionRequests()) {
-                final StringBuilder part = new StringBuilder();
-                if (NullSafe.isNonBlankString(step.text())) {
-                    part.append("You said: ").append(truncate(step.text().strip(), SUMMARY_PART_CHARS))
-                            .append('\n');
-                }
-                step.toolExecutionRequests().forEach(request -> part.append("Called ").append(request.name())
-                        .append(" with ").append(truncate(NullSafe.string(request.arguments()), SUMMARY_PART_CHARS))
-                        .append('\n'));
-                parts.add(part.toString());
-            } else if (message instanceof final ToolExecutionResultMessage result) {
-                parts.add("Result of " + result.toolName() + ": "
-                          + truncate(NullSafe.string(result.text()), SUMMARY_PART_CHARS) + "\n\n");
-            } else if (isNote(message, TURN_SUMMARY_NOTE)) {
-                soFar.append(ReferenceResults.withoutKept(
-                        ((UserMessage) message).singleText().substring(TURN_SUMMARY_NOTE.length())));
-            } else if (isNote(message, COLLAPSED_STEPS_NOTE)) {
-                parts.add(((UserMessage) message).singleText().substring(COLLAPSED_STEPS_NOTE.length()).strip()
-                          + "\n\n");
-            }
-        }
-        final String start = soFar.isEmpty()
-                ? ""
-                : "Summary so far:\n" + soFar + "\n\n";
-        // The latest steps that fit, as the summary so far stands for what came before them.
-        final Deque<String> since = new ArrayDeque<>();
-        int length = start.length();
-        int left = parts.size();
-        while (left > 0 && length + parts.get(left - 1).length() <= SUMMARY_INPUT_MAX_CHARS) {
-            left--;
-            since.addFirst(parts.get(left));
-            length += parts.get(left).length();
-        }
-        final String omitted = left > 0
-                ? "(The " + left + " earliest part(s) are left out, to keep this short.)\n\n"
-                : "";
-        return start + "Steps since:\n\n" + omitted + String.join("", since).strip();
-    }
-
-    /// Puts the steps before `keptFrom` (with their results, and any summary or note of steps before them) in
-    /// one note holding the summary, and the results read for reference as they were (see [ReferenceResults]),
-    /// where the first of them was. Everything else, e.g. what the user sent while the run went on, stays as it is.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @param keptFrom     The index of the first step left as it is.
-    /// @param summary      The summary.
-    /// @return How many steps were put in the summary.
-    static int withTurnSummary(final List<ChatMessage> conversation, final int keptFrom, final String summary) {
-        return withNote(conversation, keptFrom, turnSummaryNote(conversation, keptFrom, summary));
-    }
-
-    /// @param conversation The conversation.
-    /// @param keptFrom     The index of the first step left as it is.
-    /// @param summary      The summary.
-    /// @return The note that holds the summary in place of the steps before `keptFrom`, with the results they read
-    /// for reference.
-    static String turnSummaryNote(final List<ChatMessage> conversation, final int keptFrom, final String summary) {
-        return TURN_SUMMARY_NOTE + "\n" + summary
-               + ReferenceResults.toKeep(ReferenceResults.before(conversation, keptFrom));
-    }
-
-    /// Puts the steps before `keptFrom` in a note, as [#withTurnSummary] does.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @param keptFrom     The index of the first step left as it is.
-    /// @param note         The note, as [#turnSummaryNote] gives it.
-    /// @return How many steps were put in the note.
-    static int withNote(final List<ChatMessage> conversation, final int keptFrom, final String note) {
-        final List<ChatMessage> result = new ArrayList<>();
-        boolean noted = false;
-        int summarised = 0;
-        for (int i = 0; i < conversation.size(); i++) {
-            final ChatMessage message = conversation.get(i);
-            final boolean step = message instanceof final AiMessage ai && ai.hasToolExecutionRequests();
-            final boolean inSummary = i < keptFrom
-                                      && (step
-                                          || message instanceof ToolExecutionResultMessage
-                                          || isNote(message, TURN_SUMMARY_NOTE)
-                                          || isNote(message, COLLAPSED_STEPS_NOTE));
-            if (!inSummary) {
-                result.add(message);
-                continue;
-            }
-            if (!noted) {
-                result.add(UserMessage.from(note));
-                noted = true;
-            }
-            if (step) {
-                summarised++;
-            }
-        }
-        conversation.clear();
-        conversation.addAll(result);
-        return summarised;
-    }
-
-    static boolean isNote(final ChatMessage message, final String note) {
-        return message instanceof final UserMessage user && user.hasSingleText()
-               && user.singleText().startsWith(note);
-    }
-
-    /// Takes the first step that makes the conversation smaller, least lossy first:
-    ///
-    /// 1. earlier tool results, keeping the latest [#RECENT_RESULTS_KEPT] and those read for reference (see
-    ///    [ReferenceResults#isReference]);
-    /// 2. the arguments of earlier steps' tool calls (e.g. whole code proposed), keeping the latest step's;
-    /// 3. earlier tool results, keeping only the latest and those read for reference;
-    /// 4. earlier tool results read for reference, keeping only the latest result;
-    /// 5. earlier steps, each put as a line or two in a note.
-    ///
-    /// The latest step, and its latest result, are always kept, so the model can carry on from it.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @return How many parts were shortened, or 0 if there was nothing more to shorten.
-    static int shrink(final List<ChatMessage> conversation) {
-        final int shortened = shrinkKeepingSteps(conversation);
-        return shortened > 0
-                ? shortened
-                : collapseEarlierSteps(conversation, 1);
-    }
-
-    /// As [#shrink], without its last step: the earlier steps are kept, with their results shortened.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @return How many parts were shortened, or 0 if there was nothing more to shorten that way.
-    static int shrinkKeepingSteps(final List<ChatMessage> conversation) {
-        int shortened = shortenToolResults(conversation, RECENT_RESULTS_KEPT, true);
-        if (shortened == 0) {
-            shortened = shortenToolCallArguments(conversation, 1);
-        }
-        if (shortened == 0) {
-            shortened = shortenToolResults(conversation, 1, true);
-        }
-        if (shortened == 0) {
-            shortened = shortenToolResults(conversation, 1, false);
-        }
-        return shortened;
-    }
-
-    /// Replaces long arguments of earlier steps' tool calls with a short note of how they started. The arguments
-    /// stay valid JSON, as some model servers read them.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @param keepSteps    How many of the latest steps to leave as they are.
-    /// @return How many calls' arguments were shortened.
-    static int shortenToolCallArguments(final List<ChatMessage> conversation, final int keepSteps) {
-        final List<Integer> steps = stepIndexes(conversation);
-        int shortened = 0;
-        for (int i = 0; i < steps.size() - keepSteps; i++) {
-            final int index = steps.get(i);
-            final AiMessage step = (AiMessage) conversation.get(index);
-            boolean changed = false;
-            final List<ToolExecutionRequest> requests = new ArrayList<>();
-            for (final ToolExecutionRequest request : step.toolExecutionRequests()) {
-                final String arguments = NullSafe.string(request.arguments());
-                if (arguments.length() > SHORTENED_MIN_CHARS && !arguments.contains(SHORTENED_ARGUMENTS_KEY)) {
-                    requests.add(request.toBuilder()
-                            .arguments(JsonUtil.writeValueAsString(Map.of(SHORTENED_ARGUMENTS_KEY,
-                                    truncate(arguments, SHORTENED_PREVIEW_CHARS)), false))
-                            .build());
-                    changed = true;
-                    shortened++;
-                } else {
-                    requests.add(request);
-                }
-            }
-            if (changed) {
-                conversation.set(index, AiMessage.builder()
-                        .text(step.text())
-                        .toolExecutionRequests(requests)
-                        .build());
-            }
-        }
-        return shortened;
-    }
-
-    /// Puts earlier steps (the model's tool calls and their results) as a line or two each in a note, in their
-    /// place. Steps next to each other share a note.
-    ///
-    /// @param conversation The conversation, changed in place.
-    /// @param keepSteps    How many of the latest steps to leave as they are.
-    /// @return How many steps were put in notes.
-    static int collapseEarlierSteps(final List<ChatMessage> conversation, final int keepSteps) {
-        final List<Integer> steps = stepIndexes(conversation);
-        if (steps.size() <= keepSteps) {
-            return 0;
-        }
-        final Set<Integer> collapse = new HashSet<>(steps.subList(0, steps.size() - keepSteps));
-        final List<ChatMessage> result = new ArrayList<>();
-        StringBuilder note = null;
-        int collapsed = 0;
-        int i = 0;
-        while (i < conversation.size()) {
-            final ChatMessage message = conversation.get(i);
-            if (!collapse.contains(i)) {
-                if (note != null) {
-                    result.add(UserMessage.from(note.toString().stripTrailing()));
-                    note = null;
-                }
-                result.add(message);
-                i++;
-                continue;
-            }
-            if (note == null) {
-                note = new StringBuilder(COLLAPSED_STEPS_NOTE).append('\n');
-            }
-            final AiMessage step = (AiMessage) message;
-            if (NullSafe.isNonBlankString(step.text())) {
-                note.append("- You said: ").append(oneLine(step.text(), COLLAPSED_LINE_CHARS)).append('\n');
-            }
-            final Map<String, String> results = new HashMap<>();
-            i++;
-            while (i < conversation.size() && conversation.get(i) instanceof final ToolExecutionResultMessage r) {
-                results.put(r.id(), r.text());
-                i++;
-            }
-            for (final ToolExecutionRequest request : step.toolExecutionRequests()) {
-                note.append("- ").append(request.name()).append('(')
-                        .append(oneLine(request.arguments(), COLLAPSED_LINE_CHARS)).append(") → ")
-                        .append(oneLine(results.getOrDefault(request.id(), "no result"), COLLAPSED_LINE_CHARS))
-                        .append('\n');
-            }
-            collapsed++;
-        }
-        if (note != null) {
-            result.add(UserMessage.from(note.toString().stripTrailing()));
-        }
-        conversation.clear();
-        conversation.addAll(result);
-        return collapsed;
-    }
-
-    /// @return Where the model's steps (its messages with tool calls) are in the conversation, in order.
-    private static List<Integer> stepIndexes(final List<ChatMessage> conversation) {
-        final List<Integer> steps = new ArrayList<>();
-        for (int i = 0; i < conversation.size(); i++) {
-            if (conversation.get(i) instanceof final AiMessage aiMessage && aiMessage.hasToolExecutionRequests()) {
-                steps.add(i);
-            }
-        }
-        return steps;
-    }
-
-    static String oneLine(final String text, final int maxChars) {
-        return truncate(NullSafe.string(text).replaceAll("\\s+", " ").strip(), maxChars);
     }
 
     private StreamingChatModel streamingModel(final OpenAIModelDoc modelDoc) {
@@ -1395,39 +1176,6 @@ class McpAgentChat {
         } catch (final RuntimeException e) {
             LOGGER.warn(() -> "Unable to store the model's reasoning for chatId=" + chatId, e);
         }
-    }
-
-    /**
-     * Replaces the text of the tool results in the conversation, except the latest ones, with a note saying
-     * how to read them again. Short results are left as they are.
-     *
-     * @param conversation   The conversation, changed in place.
-     * @param keep           How many of the latest tool results to leave as they are.
-     * @param spareReference True to leave the results read for reference as they are (see
-     *                       {@link ReferenceResults#isReference}).
-     * @return How many results were shortened.
-     */
-    static int shortenToolResults(final List<ChatMessage> conversation,
-                                  final int keep,
-                                  final boolean spareReference) {
-        final List<Integer> resultIndexes = new ArrayList<>();
-        for (int i = 0; i < conversation.size(); i++) {
-            if (conversation.get(i) instanceof ToolExecutionResultMessage) {
-                resultIndexes.add(i);
-            }
-        }
-        int shortened = 0;
-        for (int i = 0; i < resultIndexes.size() - keep; i++) {
-            final int index = resultIndexes.get(i);
-            final ToolExecutionResultMessage result = (ToolExecutionResultMessage) conversation.get(index);
-            if (NullSafe.string(result.text()).length() > SHORTENED_MIN_CHARS
-                && !(spareReference && ReferenceResults.isReference(result))) {
-                conversation.set(index, ToolExecutionResultMessage.from(result.id(), result.toolName(),
-                        SHORTENED_RESULT));
-                shortened++;
-            }
-        }
-        return shortened;
     }
 
     /**
@@ -1582,11 +1330,11 @@ class McpAgentChat {
     /// @param arguments A tool call's arguments, as the model sent them.
     /// @return True if they are (or hold) the note an earlier call's arguments were shortened to.
     static boolean sendsShortenedArguments(final String arguments) {
-        if (NullSafe.isBlankString(arguments) || !arguments.contains(SHORTENED_ARGUMENTS_KEY)) {
+        if (NullSafe.isBlankString(arguments) || !arguments.contains(ConversationShortening.SHORTENED_ARGUMENTS_KEY)) {
             return false;
         }
         try {
-            return JsonUtil.readValue(arguments, Map.class).containsKey(SHORTENED_ARGUMENTS_KEY);
+            return JsonUtil.readValue(arguments, Map.class).containsKey(ConversationShortening.SHORTENED_ARGUMENTS_KEY);
         } catch (final RuntimeException e) {
             return false;
         }
@@ -1986,6 +1734,63 @@ class McpAgentChat {
                 usageTracker.recordServerInstructions(chatId, joined(serverInstructions, instructions.get()));
                 given = true;
             }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What one run of the agent loop works with: what it was given, the tools it offers, its conversation, and how
+    /// many replies in a row it has carried on from.
+    private static final class Run {
+
+        private final ChatModel chatModel;
+        private final OpenAIModelDoc modelDoc;
+        private final int chatId;
+        private final McpToolset toolset;
+        private final int workingMessageId;
+        private final AtomicBoolean cancelled;
+        private final TaskContext taskContext;
+        private final int attempt;
+        private final StringBuilder debugLog;
+        private final ContextBudget budget;
+        private final SteerFeed steerFeed;
+        private boolean toolsEnabled;
+        private boolean readOnlyMode;
+        private ToolGrants grants;
+        private Map<ToolSpecification, ToolExecutor> builtIns;
+        private Map<ToolSpecification, ToolExecutor> mcpTools;
+        private ToolGroups toolGroups;
+        private List<ChatMessage> conversation;
+        private Map<ToolSpecification, ToolExecutor> tools;
+        private BuildInstructions buildInstructions;
+        // Replies cut off at the length limit, and replies only saying what comes next, carried on from in a row.
+        private int cutOffs;
+        private int announced;
+
+        private Run(final ChatModel chatModel,
+                    final OpenAIModelDoc modelDoc,
+                    final int chatId,
+                    final McpToolset toolset,
+                    final int workingMessageId,
+                    final AtomicBoolean cancelled,
+                    final TaskContext taskContext,
+                    final int attempt,
+                    final StringBuilder debugLog,
+                    final ContextBudget budget,
+                    final SteerFeed steerFeed) {
+            this.chatModel = chatModel;
+            this.modelDoc = modelDoc;
+            this.chatId = chatId;
+            this.toolset = toolset;
+            this.workingMessageId = workingMessageId;
+            this.cancelled = cancelled;
+            this.taskContext = taskContext;
+            this.attempt = attempt;
+            this.debugLog = debugLog;
+            this.budget = budget;
+            this.steerFeed = steerFeed;
         }
     }
 }

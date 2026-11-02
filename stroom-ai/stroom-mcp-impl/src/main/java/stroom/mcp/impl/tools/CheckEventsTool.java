@@ -71,6 +71,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final BuildRecords buildRecords;
     private final BuildPlan plan;
+    private final EventVersions eventVersions;
 
     /// @param eventChecks    Validates events against the schemas this Stroom holds.
     /// @param eventStreams   Reads the events of streams.
@@ -78,19 +79,22 @@ class CheckEventsTool extends AbstractBuiltInTool {
     /// @param documentAccess Finds the pipelines.
     /// @param buildRecords   Records the pipelines' Events as validated.
     /// @param plan           Gives the plan's next step.
+    /// @param eventVersions  The XML schema document the user chose, where a version is held in more than one.
     @Inject
     CheckEventsTool(final EventChecks eventChecks,
                     final EventStreams eventStreams,
                     final StreamReader streamReader,
                     final DocumentAccess documentAccess,
                     final BuildRecords buildRecords,
-                    final BuildPlan plan) {
+                    final BuildPlan plan,
+                    final EventVersions eventVersions) {
         this.eventChecks = eventChecks;
         this.eventStreams = eventStreams;
         this.streamReader = streamReader;
         this.documentAccess = documentAccess;
         this.buildRecords = buildRecords;
         this.plan = plan;
+        this.eventVersions = eventVersions;
     }
 
     @Override
@@ -165,7 +169,7 @@ class CheckEventsTool extends AbstractBuiltInTool {
                                            + "not both");
             }
             return JsonResults.of(streamIds.isEmpty()
-                    ? check(eventsXml, schemaVersion)
+                    ? check(eventsXml, schemaVersion, eventVersions.chosenDocs(context, null))
                     : checkStreams(context, streamIds, schemaVersion));
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
@@ -181,13 +185,28 @@ class CheckEventsTool extends AbstractBuiltInTool {
     /// and `note` if it came HTML-escaped.
     /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
     Map<String, Object> check(final String eventsXml, final String schemaVersion) {
+        return check(eventsXml, schemaVersion, Map.of());
+    }
+
+    /// As [#check(String, String)], validating against the XML schema document the user chose where this Stroom
+    /// holds the version in more than one.
+    ///
+    /// @param eventsXml     An `<Events>` document, as sent.
+    /// @param schemaVersion The event-logging version to validate against, or null.
+    /// @param chosenDocs    The UUID of the document chosen, by system id ([EventVersions#chosenDocs]).
+    /// @return As [#check(String, String)] gives it.
+    /// @throws ToolRefusal if it is not well-formed, or Stroom holds no such schema.
+    Map<String, Object> check(final String eventsXml,
+                              final String schemaVersion,
+                              final Map<String, String> chosenDocs) {
         final XsltChecks.Unescaped unescaped = XsltChecks.unescaped(eventsXml);
         if (!unescaped.warnings().isEmpty()) {
-            final Map<String, Object> result = new LinkedHashMap<>(check(unescaped.text(), schemaVersion));
+            final Map<String, Object> result = new LinkedHashMap<>(check(unescaped.text(), schemaVersion,
+                    chosenDocs));
             result.put("note", XsltChecks.ESCAPED);
             return result;
         }
-        final Map<String, Object> schema = eventChecks.validateEvents(eventsXml, schemaVersion);
+        final Map<String, Object> schema = eventChecks.validateEvents(eventsXml, schemaVersion, chosenDocs);
         final boolean valid = Boolean.TRUE.equals(schema.get("valid"));
         final Object which = schema.get("schema");
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -212,7 +231,8 @@ class CheckEventsTool extends AbstractBuiltInTool {
     private Map<String, Object> checkStreams(final ToolCallContext context,
                                              final List<Long> streamIds,
                                              final String schemaVersion) {
-        final Map<String, Object> result = checkRead(streamIds, schemaVersion, MAX_RECORDS);
+        final Map<String, Object> result = checkRead(streamIds, schemaVersion, MAX_RECORDS,
+                eventVersions.chosenDocs(context, null));
         if (Boolean.TRUE.equals(result.get("ok"))) {
             final List<DocRef> recorded = recordValidated(streamIds);
             result.put("recorded_for", recorded.stream().map(DocRef::getName).toList());
@@ -234,10 +254,34 @@ class CheckEventsTool extends AbstractBuiltInTool {
     /// @throws ToolRefusal                      if a stream can't be read or is not Events.
     /// @throws StreamReader.StreamReadException if the user may not read a stream.
     Map<String, Object> checkRead(final List<Long> streamIds, final String schemaVersion, final int cap) {
+        return checkRead(streamIds, schemaVersion, cap, Map.of());
+    }
+
+    /// As [#checkRead(List, String, int)], against the XML schema documents chosen where this Stroom holds a
+    /// version in more than one.
+    ///
+    /// @param streamIds     Events streams.
+    /// @param schemaVersion The event-logging version to validate against, or null.
+    /// @param cap           The most records read in all.
+    /// @param chosenDocs    The UUID of the document to validate with, by system id.
+    /// @return As [#checkRead(List, String, int)] gives it.
+    /// @throws ToolRefusal                      if a stream can't be read or is not Events.
+    /// @throws StreamReader.StreamReadException if the user may not read a stream.
+    Map<String, Object> checkRead(final List<Long> streamIds,
+                                          final String schemaVersion,
+                                          final int cap,
+                                          final Map<String, String> chosenDocs) {
         final EventStreams.Read read = eventStreams.read(streamIds, cap);
-        final Map<String, Object> result = new LinkedHashMap<>(check(read.eventsXml(), schemaVersion));
+        final Map<String, Object> result = new LinkedHashMap<>(check(read.eventsXml(), schemaVersion, chosenDocs));
         result.put("read", read.read());
         return result;
+    }
+
+    /// @param schemaGroup A pipeline's schema filter schema group, or null.
+    /// @return The XML schema documents Stroom validates that pipeline's Events with, by system id, where this
+    /// Stroom holds a version in more than one ([EventVersions#docsInGroup]).
+    Map<String, String> docsForSchemaGroup(final String schemaGroup) {
+        return eventVersions.docsInGroup(schemaGroup);
     }
 
     /// The pipelines that wrote these Events streams, recorded as validated (the plan's `validated` step). Only

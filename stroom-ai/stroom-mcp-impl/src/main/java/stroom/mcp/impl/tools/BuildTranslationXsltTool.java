@@ -258,7 +258,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                + "draft_translation_mapping returned it). Left out: "
                                                                + "a saved XSLT's own, else the user is asked which "
                                                                + "of the versions this Stroom holds (the newest "
-                                                               + "recommended).")
+                                                               + "recommended). Where it holds the version in more "
+                                                               + "than one XML schema document, the UUID of the one "
+                                                               + "the user chose.")
                         .addProperty(FEEDS_ARG, stringArraySchema("Feeds the translation is for, so the standing "
                                                                   + "instructions for their folders are included."))
                         .addStringProperty(PIPELINE_UUID_ARG, "Only with field_mapping=true: the pipeline to step "
@@ -548,7 +550,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // The XSLT generated, with the imports standing instructions require.
     private void generate(final ToolCallContext context, final Build b) {
         final Request request = b.request;
-        b.schema = eventVersions.eventSchema(b.version);
+        b.schema = eventVersions.eventSchema(context, request.build(), b.version);
         final List<RequiredImport> required = requiredImports.requiredFor(context.session(),
                 InstructionRules.TRANSLATION, request.build(), request.feeds());
         final Set<String> have = new LinkedHashSet<>(b.mapping.imports());

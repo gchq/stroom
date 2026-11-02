@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.indexing.FieldPlan;
+import stroom.ai.impl.tools.sample.DataSplitterSchema;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
@@ -45,6 +46,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.BuildInfo;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.mockito.Mockito;
@@ -95,7 +97,7 @@ final class TranslationWorld {
     final BuildMemory memory = new BuildMemory();
     final BuildPlan plan = new BuildPlan(facts, world.guard(), consent, memory);
     final CheckXsltTool checkXslt = new CheckXsltTool(heldSchemas, () -> docFinder, world.documentAccess,
-            compileCheck);
+            compileCheck, () -> this.eventVersions);
     final EventVersions eventVersions = new EventVersions(heldSchemas, consent, memory, world::guard,
             world::records);
     final KeptCode keptCode = new KeptCode(eventVersions);
@@ -110,9 +112,12 @@ final class TranslationWorld {
     // The stage's existing pipelines: none calling shared templates unless a test says so.
     final PipelineTemplates pipelineTemplates = Mockito.mock(PipelineTemplates.class);
     final SiblingSharedCalls siblingSharedCalls = new SiblingSharedCalls(pipelineTemplates);
+    // The Data Splitter schema Stroom holds: the test resource, unless a test says another or none (null).
+    String dataSplitterXsd = DataSplitterSchemas.XSD;
+    final DataSplitterSchema dataSplitterSchema = DataSplitterSchemas.of(() -> dataSplitterXsd);
     final TranslationDocs docs = new TranslationDocs(world.guard(), world.documentAccess, () -> plan, checkXslt,
             requiredImports, eventVersions, handEditGate, history, lookups, () -> Mockito.mock(AgentKnowledge.class),
-            siblingSharedCalls);
+            siblingSharedCalls, dataSplitterSchema);
     final TranslationBuilds builds = new TranslationBuilds(world.guard(), world.documentAccess, docs, compileCheck,
             streamReader);
     final SampleProfiling sampleProfiling = new SampleProfiling.Profiled();
@@ -256,6 +261,20 @@ final class TranslationWorld {
     /// @return The XSLT as it is now.
     XsltDoc xslt(final String uuid) {
         return (XsltDoc) world.docs.get(uuid);
+    }
+
+    /// Event-logging [#VERSION] held in two XML schema documents, doc-a (group EVENTS) and doc-b (group ACME),
+    /// each read as [#SCHEMA].
+    void twoSchemaDocuments() {
+        final String systemId = HeldSchemas.eventLoggingSystemId(VERSION);
+        final List<XmlSchemaDoc> docs = List.of(
+                XmlSchemaDoc.builder().uuid("doc-a").name("doc-a").systemId(systemId).schemaGroup("EVENTS")
+                        .data("<xs:schema/>").build(),
+                XmlSchemaDoc.builder().uuid("doc-b").name("doc-b").systemId(systemId).schemaGroup("ACME")
+                        .data("<xs:schema><!-- edited --></xs:schema>").build());
+        Mockito.when(heldSchemas.documents(systemId)).thenReturn(docs);
+        Mockito.when(heldSchemas.all()).thenReturn(Map.of(systemId, docs));
+        Mockito.when(heldSchemas.eventSchema(eq(VERSION), anyString())).thenReturn(SCHEMA);
     }
 
     /// Changes an XSLT's code as a person does in Stroom's editor.

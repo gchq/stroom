@@ -22,9 +22,14 @@ import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -40,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.isNull;
 
 /// evaluate_pipeline on [SteppingWorld]'s pipeline ACME (`p-1`), built from template `Event Data (Text)`, whose own
@@ -71,7 +77,7 @@ class TestEvaluatePipelineTool {
         Mockito.when(stepSample.sampled(any(), any(), any(), anyList(), isNull(), any(), isNull(), anyBoolean()))
                 .thenAnswer(inv -> new StepSampleTool.Sampled(stepped("clean", List.of()), List.of()));
         Mockito.when(pipelineShapes.shape(any())).thenReturn(shape("translation", null));
-        Mockito.when(checkEvents.checkRead(anyList(), any(), anyInt())).thenReturn(checked());
+        Mockito.when(checkEvents.checkRead(anyList(), any(), anyInt(), anyMap())).thenReturn(checked());
         Mockito.when(summaries.summariseEvents(anyList(), anyInt())).thenReturn(profile());
     }
 
@@ -122,7 +128,7 @@ class TestEvaluatePipelineTool {
         // Least filled first.
         assertThat(map(events, "field_population").keySet()).containsExactly("EventSource/Device/IPAddress",
                 "EventDetail/TypeId", "EventSource/User/Id");
-        Mockito.verify(checkEvents).checkRead(List.of(31L), null, EvaluatePipelineTool.EVENTS);
+        Mockito.verify(checkEvents).checkRead(List.of(31L), null, EvaluatePipelineTool.EVENTS, Map.of());
 
         final Map<String, Object> coverage = map(result, "coverage");
         assertThat(coverage.get("status")).isEqualTo("records_missed");
@@ -145,6 +151,22 @@ class TestEvaluatePipelineTool {
         assertThat(world.said).contains("Evaluating ACME: reading its newest Error streams",
                 "Evaluating ACME: stepping 2 input stream(s)",
                 "Evaluating ACME: the checks for its stage (translation)");
+    }
+
+    @Test
+    void theEventsAreValidatedWithTheSchemaDocumentThePipelinesSchemaGroupNames() {
+        // Two XML schema documents hold the version; the pipeline's schema filter names group ACME, so Stroom
+        // validates with that group's document, and so does the evaluation.
+        world.pipeline(SteppingWorld.UUID, "ACME", SteppingWorld.TEMPLATE, new PipelineDataBuilder()
+                .addProperty(new PipelineProperty("translationFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "x", "ACME"))))
+                .addProperty(new PipelineProperty("schemaFilter", "schemaGroup", new PipelinePropertyValue("ACME"))));
+        final Map<String, String> docs = Map.of("file://event-logging-v4.1.0.xsd", "doc-b");
+        Mockito.when(checkEvents.docsForSchemaGroup("ACME")).thenReturn(docs);
+
+        evaluate("{\"pipeline_uuid\": \"p-1\"}");
+
+        Mockito.verify(checkEvents).checkRead(List.of(31L), null, EvaluatePipelineTool.EVENTS, docs);
     }
 
     @Test
@@ -207,7 +229,7 @@ class TestEvaluatePipelineTool {
         blocking.put("first_record_output", Map.of("translationFilter", EVENTS_XML));
         Mockito.when(stepSample.sampled(any(), any(), any(), anyList(), isNull(), any(), isNull(), anyBoolean()))
                 .thenReturn(new StepSampleTool.Sampled(blocking, List.of()));
-        Mockito.when(checkEvents.check(EVENTS_XML, "4.1.0")).thenReturn(checked());
+        Mockito.when(checkEvents.check(EVENTS_XML, "4.1.0", Map.of())).thenReturn(checked());
 
         final Map<String, Object> result = evaluate("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [4, 5], "
                                                     + "\"schema_version\": \"4.1.0\"}");

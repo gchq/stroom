@@ -271,15 +271,21 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final List<Map<String, String>> exact = exact(call);
         final Map<String, Object> timeRange = timeRange(call);
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
-        final List<IndexChecks.SearchCheck> searches = IndexChecks.asSearched(backend,
-                ToolArgs.oneOrMore(call, SEARCHES_ARG).stream().map(IndexChecks.SearchCheck::of).toList());
-        IndexChecks.searchable(backend, searches, Set.of(), List.of(), Map.of(), null, Map.of(), null);
+        final List<IndexChecks.SearchCheck> given = ToolArgs.oneOrMore(call, SEARCHES_ARG).stream()
+                .map(IndexChecks.SearchCheck::of)
+                .toList();
 
         final String docType = IndexingHelpers.INDEX_TYPE.get(backend);
         final DocRef asked = new DocRef(docType, indexUuid);
         final Index index = read(asked);
         final DocRef source = new DocRef(docType, indexUuid, index.name());
-        checkSearches(backend, searches, exact, index, source);
+        // The fields' types, as IS_NOT_NULL is searched for a non-empty value on an Elasticsearch string field.
+        final Map<String, String> typed = index.elastic() == null
+                ? Map.of()
+                : indexFields.elasticTypes(index.elastic());
+        final List<IndexChecks.SearchCheck> searches = IndexChecks.asSearched(backend, given, typed);
+        IndexChecks.searchable(backend, searches, Set.of(), List.of(), Map.of(), null, Map.of(), null);
+        checkSearches(backend, searches, exact, typed, source);
         final List<String> searched = new ArrayList<>();
         searches.forEach(search -> searched.add(search.field()));
         exact.forEach(item -> {
@@ -407,12 +413,9 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     private void checkSearches(final String backend,
                                final List<IndexChecks.SearchCheck> searches,
                                final List<Map<String, String>> exact,
-                               final Index index,
+                               final Map<String, String> typed,
                                final DocRef source) {
         if (MisleadingSearches.ELASTICSEARCH.equals(backend)) {
-            final Map<String, String> typed = index.elastic() == null
-                    ? Map.of()
-                    : indexFields.elasticTypes(index.elastic());
             final Set<String> ips = new LinkedHashSet<>();
             typed.forEach((field, type) -> {
                 if ("ip".equals(type) || "ipv4_address".equals(type)) {

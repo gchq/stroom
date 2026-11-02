@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /// The latest summary of each chat's earlier steps on the question being answered (see
-/// [McpAgentChat#withTurnSummary]), kept on this node so that a run carrying on with the question puts it back in
-/// place of the steps it covers, rather than summarising them all again. Seen: a run stops for each form one of
-/// Stroom AI's own tools asks the user to fill in, and carries on in a new run from the question's stored steps,
-/// so each form was followed by a summary of every step so far, a minute or so each, and once they no longer fit
-/// the summary's input, without the earliest of them.
+/// [ConversationShortening#withTurnSummary]), kept on this node so that a run carrying on with the question puts it
+/// back in place of the steps it covers, rather than summarising them all again. Seen: a run stops for each form one of
+/// Stroom AI's own tools asks the user to fill in, and carries on in a new run from the question's stored steps, so
+/// each form was followed by a summary of every step so far, a minute or so each, and once they no longer fit the
+/// summary's input, without the earliest of them.
 ///
 /// A summary is found by the id of the last call it covers, so one for another question (or one the chat no
 /// longer has, e.g. the question was edited or the chat cleared) is never put back, and is dropped when a run
@@ -89,7 +89,7 @@ class TurnSummaries {
             keptByChat.remove(chatId);
             return 0;
         }
-        final int summarised = McpAgentChat.withNote(conversation, keptFrom, kept.note());
+        final int summarised = ConversationShortening.withNote(conversation, keptFrom, kept.note());
         LOGGER.info(() -> LogUtil.message("Put back the summary of {} earlier step(s) of chatId={}",
                 summarised, chatId));
         return summarised;

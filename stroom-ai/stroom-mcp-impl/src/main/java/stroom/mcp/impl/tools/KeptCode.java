@@ -77,7 +77,7 @@ class KeptCode {
     XsltGenerator.Generated regenerate(final Map<String, Object> payload, final String code) {
         final String version = eventVersions.translationVersion(keptVersion(payload), code);
         return XsltGenerator.generate(TranslationMapping.parse(payload.get("mapping")),
-                eventVersions.eventSchema(version), version);
+                eventVersions.keptSchema(payload, version), version);
     }
 
     /// @param payload What is kept with a translation XSLT.

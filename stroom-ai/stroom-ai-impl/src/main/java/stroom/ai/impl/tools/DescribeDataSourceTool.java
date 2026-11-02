@@ -169,9 +169,11 @@ class DescribeDataSourceTool extends AbstractWorkspaceTool {
     static String searchingNote(final String backend, final List<QueryField> fields) {
         final StringBuilder sb = new StringBuilder("\nSearching it through Stroom (");
         if (MisleadingSearches.ELASTICSEARCH.equals(backend)) {
-            sb.append("Elasticsearch): STARTS_WITH and CONTAINS find nothing (use EQUALS with a * wildcard, e.g. "
-                      + "'adm*' or '*err*', or MATCHES_REGEX); IS_NULL and IS_NOT_NULL match every document (use "
-                      + "EQUALS '*' for any value, NOT_EQUALS '*' for none)");
+            sb.append("Elasticsearch): STARTS_WITH and CONTAINS find nothing, or are refused (use EQUALS with a * "
+                      + "wildcard, e.g. 'adm*' or '*err*', or MATCHES_REGEX); IS_NULL and IS_NOT_NULL match every "
+                      + "document (EQUALS '*' finds " + MisleadingSearches.EQUALS_ANY + ", NOT_EQUALS '*' none; "
+                      + "MATCHES_REGEX '" + MisleadingSearches.NON_EMPTY + "' a non-empty value on a string "
+                      + "field)");
             final Set<String> ipFields = MisleadingSearches.ipFields(fields);
             if (!ipFields.isEmpty()) {
                 sb.append("; on an ip field (")

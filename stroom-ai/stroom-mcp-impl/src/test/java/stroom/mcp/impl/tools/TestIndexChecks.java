@@ -55,6 +55,7 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -154,22 +155,40 @@ class TestIndexChecks {
     }
 
     @Test
-    void isNotNullIsSearchedAsAnyValueOnElasticsearch() {
+    void isNotNullIsSearchedAsANonEmptyValueOnAnElasticsearchStringField() {
         // Seen in testing: refused with the advice to use EQUALS '*', the agent sent IS_NOT_NULL again and again.
+        // Then, told EQUALS '*' was any value, it saw that passes on empty strings (Stroom searches it as exists),
+        // and dropped three checks of fields that were populated.
+        final Map<String, String> types = Map.of("tags", "keyword", "message", "text", "bytes", "long",
+                "source.ip", "ip");
         final List<SearchCheck> searched = IndexChecks.asSearched("elasticsearch", List.of(
-                search("tags", "IS_NOT_NULL", ""), search("user.name", "EQUALS", "bob")));
-        assertThat(searched.getFirst().condition()).isEqualTo("EQUALS");
-        assertThat(searched.getFirst().value()).isEqualTo("*");
-        assertThat(searched.getFirst().searchedAs()).contains("IS_NOT_NULL");
-        assertThat(searched.get(1).condition()).isEqualTo("EQUALS");
-        assertThat(searched.get(1).searchedAs()).isNull();
-        // Nothing left to refuse.
+                search("tags", "IS_NOT_NULL", ""), search("message", "IS_NOT_NULL", ""),
+                search("bytes", "IS_NOT_NULL", ""), search("source.ip", "IS_NOT_NULL", ""),
+                search("unknown", "IS_NOT_NULL", ""), search("user.name", "EQUALS", "bob")), types);
+
+        assertThat(searched).extracting(SearchCheck::field, SearchCheck::condition, SearchCheck::value)
+                .containsExactly(
+                        tuple("tags", "MATCHES_REGEX", ".+"),
+                        tuple("message", "MATCHES_REGEX", ".+"),
+                        tuple("bytes", "EQUALS", "*"),
+                        tuple("source.ip", "EQUALS", "*"),
+                        tuple("unknown", "EQUALS", "*"),
+                        tuple("user.name", "EQUALS", "bob"));
+        assertThat(searched.getFirst().searchedAs())
+                .isEqualTo("tags MATCHES_REGEX '.+' (a non-empty value), for IS_NOT_NULL: Stroom matches every "
+                           + "document with IS_NOT_NULL on Elasticsearch");
+        assertThat(searched.get(2).searchedAs()).contains("(any value)");
+        // A field whose type isn't known: said honestly.
+        assertThat(searched.get(4).searchedAs())
+                .contains("(any document holding the field, an empty string included)");
+        assertThat(searched.get(5).searchedAs()).isNull();
+        // Nothing left to refuse, the ip field included (no wildcard but '*').
         IndexChecks.searchable("elasticsearch", searched, Set.of(), List.of(), Map.of(), null, Map.of(), null);
         final SearchCheck none = IndexChecks.asSearched("elasticsearch",
-                List.of(new SearchCheck("tags", "IS_NULL", "", 0L, null))).getFirst();
+                List.of(new SearchCheck("tags", "IS_NULL", "", 0L, null)), types).getFirst();
         assertThat(List.of(none.condition(), none.value(), none.expected())).containsExactly("NOT_EQUALS", "*", 0L);
-        assertThat(none.searchedAs()).contains("IS_NULL");
-        assertThat(IndexChecks.asSearched("lucene", List.of(search("tags", "IS_NOT_NULL", ""))).getFirst()
+        assertThat(none.searchedAs()).contains("IS_NULL").contains("an empty string counts as a value");
+        assertThat(IndexChecks.asSearched("lucene", List.of(search("tags", "IS_NOT_NULL", "")), types).getFirst()
                 .condition()).isEqualTo("IS_NOT_NULL");
     }
 
@@ -208,6 +227,9 @@ class TestIndexChecks {
                 Map.of("field", "user.name", "condition", "EQUALS", "value", "bob"), stepper, "xsltFilter");
         final Map<String, Object> wrongValue = IndexChecks.traced(Map.of("StreamId", "9", "EventId", "2"),
                 Map.of("field", "user.name", "condition", "EQUALS", "value", "alice"), stepper, "xsltFilter");
+        // IS_NOT_NULL searched as MATCHES_REGEX '.+': the hit's document holds a value, which is what was asked.
+        final Map<String, Object> present = IndexChecks.traced(Map.of("StreamId", "9", "EventId", "2"),
+                Map.of("field", "user.name", "condition", "MATCHES_REGEX", "value", ".+"), stepper, "xsltFilter");
         final Map<String, String> carol = new LinkedHashMap<>();
         carol.put("StreamId", "9");
         carol.put("EventId", "5");
@@ -218,6 +240,7 @@ class TestIndexChecks {
                 stepper, "xsltFilter");
 
         assertThat(ok).isEqualTo(Map.of("traced", true, "stream", 9L, "event", 2L));
+        assertThat(present).isEqualTo(Map.of("traced", true, "stream", 9L, "event", 2L));
         // EventId 2 is the second record, index 1.
         assertThat(steps.getFirst()).containsExactly(9L, 1L);
         assertThat(wrongValue.get("traced")).isEqualTo(false);

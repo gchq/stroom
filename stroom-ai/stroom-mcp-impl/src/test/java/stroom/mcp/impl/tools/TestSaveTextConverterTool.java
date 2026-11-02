@@ -17,11 +17,15 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.draft.SplitterXml;
+import stroom.ai.impl.tools.sample.DataSplitterSchema;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
@@ -32,10 +36,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /// save_text_converter, and the converter checks.
 class TestSaveTextConverterTool {
 
-    private static final String SPLITTER = "<dataSplitter xmlns=\"data-splitter:3\" version=\"3.0\"/>";
+    // One field: the whole line.
+    private static final String SPLITTER = DataSplitterSchema.ROOT
+                                           + "<regex pattern=\"^(.*)$\"><data name=\"line\" value=\"$1\"/></regex>"
+                                           + "</dataSplitter>";
+    // As seen in testing, written by hand for a space-delimited Citrix feed: the fields named with <entry>, which
+    // Stroom's parser ignores, and group on the regex, so its records had no fields.
+    private static final String CITRIX = DataSplitterSchema.ROOT + "\n"
+                                         + "  <regex pattern=\"^(\\S+) (\\S+) (.*)$\" group=\"0\">\n"
+                                         + "    <entry>ReceiveTime</entry>\n"
+                                         + "    <entry>EventTime</entry>\n"
+                                         + "    <entry>Body</entry>\n"
+                                         + "  </regex>\n"
+                                         + "</dataSplitter>";
 
     private final TranslationWorld world = new TranslationWorld();
-    private final SaveTextConverterTool tool = new SaveTextConverterTool(world.docs);
+    private final SaveTextConverterTool tool = new SaveTextConverterTool(world.docs, world.plan,
+            world.sampleStreamTexts, world.dataSplitterSchema);
 
     @Test
     void aDataSplitterMayNotAddIgnoreErrors() {
@@ -81,7 +98,7 @@ class TestSaveTextConverterTool {
         // In the build's Events folder until a pipeline writing Records runs it.
         assertThat(world.world.guard().folderContents("acme-v1").getFirst().role()).isEqualTo("Events");
 
-        final String changed = SPLITTER.replace("/>", "><regex pattern=\"x\"/></dataSplitter>");
+        final String changed = SPLITTER.replace("name=\"line\"", "name=\"text\"");
         assertThat(world.call(tool, Map.of("build", "acme-v1", "name", "ACME-SPLITTER", "converter_type",
                 "DATA_SPLITTER", "code", changed, "uuid", uuid))).containsEntry("uuid", uuid);
         assertThat(((TextConverterDoc) world.world.docs.get(uuid)).getData()).isEqualTo(changed);
@@ -108,5 +125,108 @@ class TestSaveTextConverterTool {
         final List<String> required = tool.definition().parameters().required();
 
         assertThat(required).containsExactly("code");
+    }
+
+    @Test
+    void aConverterStroomsSchemaRefusesIsNotSaved() {
+        final String error = error(CITRIX);
+
+        assertThat(error).startsWith("Not saved: ").contains("schema error(s)")
+                .contains("line 2 ").contains("group")
+                .contains("line 3 ").contains("entry")
+                // What to write instead, and the tool that writes it.
+                .contains("<data name=\"field\" value=\"$1\"/>").contains("build_data_splitter");
+        assertThat(world.world.docs.values()).noneMatch(TextConverterDoc.class::isInstance);
+    }
+
+    @Test
+    void aConverterWithNoDataElementIsNotSaved() {
+        // Valid against the schema, but its records would have no fields, with no error.
+        final String noData = DataSplitterSchema.ROOT + "<regex pattern=\"^(.*)$\"/></dataSplitter>";
+
+        assertThat(error(noData)).contains("has no <data> element").contains("build_data_splitter");
+    }
+
+    @Test
+    void aConverterWithNoSchemaLocationIsNotSaved() {
+        final String bare = "<dataSplitter xmlns=\"data-splitter:3\" version=\"3.0\"><regex pattern=\"^(.*)$\">"
+                            + "<data name=\"line\" value=\"$1\"/></regex></dataSplitter>";
+
+        assertThat(error(bare)).contains("no xsi:schemaLocation").contains(DataSplitterSchema.ROOT);
+    }
+
+    @Test
+    void aPatternThatDoesntCompileIsNotSaved() {
+        final String bad = SPLITTER.replace("^(.*)$", "(unclosed");
+
+        assertThat(error(bad)).contains("Stroom can't read the converter").contains("(unclosed");
+    }
+
+    @Test
+    void withNoDataSplitterSchemaHeldNoneIsSaved() {
+        // Stroom's DSParser fails every stream without it.
+        world.dataSplitterXsd = null;
+
+        assertThat(error(SPLITTER)).isEqualTo("Not saved: " + DataSplitterSchema.NOT_HELD);
+    }
+
+    @Test
+    void theConvertersBuildDataSplitterWritesAreSaved() {
+        int n = 0;
+        for (final Map<String, Object> example : SplitterXml.EXAMPLES.values()) {
+            final Map<String, Object> saved = world.call(tool, Map.of("build", "acme-v1", "name", "SPLITTER-" + n++,
+                    "converter_type", "DATA_SPLITTER", "code", SplitterXml.converter(SplitterSpec.fromMap(example))));
+
+            assertThat(saved).as(String.valueOf(example)).doesNotContainKey("error").containsKey("uuid");
+        }
+    }
+
+    @Test
+    void withNoSampleStreamTheResultSaysItWasntRun() {
+        final Map<String, Object> saved = world.call(tool, Map.of("build", "acme-v1", "name", "ACME-SPLITTER",
+                "converter_type", "DATA_SPLITTER", "code", SPLITTER));
+
+        assertThat(String.valueOf(saved.get("sample_run"))).startsWith("Not run on a sample");
+    }
+
+    @Test
+    void itIsRunOnTheBuildsSampleStreamsBeforeItIsSaved() {
+        world.facts.ownRaw = List.of(7L);
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", "2026-11-02 host1 user logged on\n2026-11-02 host2 user logged off\n"),
+                List.of()));
+        final String spaced = DataSplitterSchema.ROOT
+                              + "<regex pattern=\"^(\\S+) (\\S+) (.*)\\n\">"
+                              + "<data name=\"time\" value=\"$1\"/><data name=\"host\" value=\"$2\"/>"
+                              + "<data name=\"message\" value=\"$3\"/></regex></dataSplitter>";
+
+        final Map<String, Object> saved = world.call(tool, Map.of("build", "acme-v1", "name", "ACME-SPLITTER",
+                "converter_type", "DATA_SPLITTER", "code", spaced));
+
+        assertThat(saved).containsKey("uuid");
+        assertThat(String.valueOf(saved.get("sample_run"))).contains("wrote 2 record(s)").contains("[7]");
+    }
+
+    @Test
+    void aConverterStroomsParserReportsErrorsForOnTheSampleIsNotSaved() {
+        world.facts.ownRaw = List.of(7L);
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", "2026-11-02 host1 user logged on\nnot a line it matches\n"), List.of()));
+        // Two fields then the rest, each line to its new line: the second line has no two fields.
+        final String strict = DataSplitterSchema.ROOT
+                              + "<regex pattern=\"^(\\d{4}-\\d{2}-\\d{2}) (\\S+) (.*)\\n\">"
+                              + "<data name=\"time\" value=\"$1\"/><data name=\"host\" value=\"$2\"/>"
+                              + "<data name=\"message\" value=\"$3\"/></regex></dataSplitter>";
+
+        assertThat(error(strict)).startsWith("Not saved: Stroom's parser reports").contains("stream 7")
+                .contains("build_data_splitter");
+        assertThat(world.world.docs.values()).noneMatch(TextConverterDoc.class::isInstance);
+    }
+
+    private String error(final String code) {
+        final Map<String, Object> result = world.call(tool, Map.of("build", "acme-v1", "name", "ACME-SPLITTER",
+                "converter_type", "DATA_SPLITTER", "code", code));
+        assertThat(result).containsKey("error");
+        return String.valueOf(result.get("error"));
     }
 }

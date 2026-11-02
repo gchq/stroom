@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTurnSummaries {
 
-    private static final String NOTE = McpAgentChat.TURN_SUMMARY_NOTE + "\nDid steps 1 to 3.";
+    private static final String NOTE = ConversationShortening.TURN_SUMMARY_NOTE + "\nDid steps 1 to 3.";
 
     private final TurnSummaries turnSummaries = new TurnSummaries();
 
@@ -99,7 +99,7 @@ class TestTurnSummaries {
     void theLatestSummaryIsPutBack() {
         rememberStepsOneToThree(1, conversation("a", 6));
         final List<ChatMessage> later = conversation("a", 9);
-        final String laterNote = McpAgentChat.TURN_SUMMARY_NOTE + "\nDid steps 1 to 5.";
+        final String laterNote = ConversationShortening.TURN_SUMMARY_NOTE + "\nDid steps 1 to 5.";
         turnSummaries.remember(1, later, stepIndex(later, 6), laterNote);
 
         final List<ChatMessage> rebuilt = conversation("a", 9);

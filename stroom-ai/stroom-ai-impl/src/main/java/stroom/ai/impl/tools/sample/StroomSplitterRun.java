@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,8 +56,9 @@ import javax.xml.parsers.SAXParserFactory;
 /// A Data Splitter run by Stroom's own parser (the DSParser element's [DS3Parser]) on sample text: the records it
 /// writes and the errors it reports. [SplitterDryRun] re-implements the subset of Data Splitter the generator
 /// writes, and differs from Stroom where it hasn't followed it (seen in testing: records over the read buffer lost
-/// in processing, and cells Stroom trims kept untrimmed); this is what processing will do. The converter is read
-/// without the schema check the pipeline also makes: the tools write it, and save_text_converter checks it.
+/// in processing, and cells Stroom trims kept untrimmed); this is what processing will do. [#run(String, String)]
+/// reads the converter without the schema check the pipeline also makes; [#run(DataSplitterSchema, String, List)]
+/// makes it first, as the DSParser element does ([DataSplitterSchema]).
 public final class StroomSplitterRun {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSplitterRun.class);
@@ -114,12 +116,64 @@ public final class StroomSplitterRun {
         }
     }
 
-    private static Result parse(final String converter, final String text) throws Exception {
+    /// The converter checked against the Data Splitter schema, as the DSParser element checks it, then run on each
+    /// text. A converter Stroom would not run at all (no namespace or schema location, no schema held) is not run:
+    /// each text's result is that problem, with no records, as processing fails the stream. Schema errors that
+    /// don't stop it come first among the first text's errors, as processing reports them before the records.
+    ///
+    /// @param schema    The Data Splitter schema.
+    /// @param converter The Data Splitter's XML.
+    /// @param texts     The texts to parse.
+    /// @return What Stroom's parser made of each text, in order.
+    public static List<Result> run(final DataSplitterSchema schema,
+                                   final String converter,
+                                   final List<String> texts) {
+        final DataSplitterSchema.Check check = schema.check(converter);
+        final List<Result> results = new ArrayList<>();
+        for (final String text : texts) {
+            if (check.fatal()) {
+                results.add(new Result(List.of(), check.problems(), check.problems().size()));
+                continue;
+            }
+            final Result run = run(converter, text);
+            if (results.isEmpty() && !check.valid()) {
+                final List<String> errors = new ArrayList<>(check.problems());
+                errors.addAll(run.errors());
+                results.add(new Result(run.records(), errors.subList(0, Math.min(MAX_ERRORS, errors.size())),
+                        run.total() + check.problems().size()));
+            } else {
+                results.add(run);
+            }
+        }
+        return results;
+    }
+
+    /// Reads the converter as Stroom's parser does before it runs it: what it can't make of it (e.g. a regex
+    /// pattern that doesn't compile, an unknown root element) without any text to run it on.
+    ///
+    /// @param converter The Data Splitter's XML.
+    /// @return Why Stroom couldn't read it, or empty.
+    public static Optional<String> unreadable(final String converter) {
+        try {
+            configure(converter);
+            return Optional.empty();
+        } catch (final Exception e) {
+            LOGGER.debug(() -> LogUtil.message("Stroom can't read the converter: {}", e.getMessage()), e);
+            return Optional.of("Stroom can't read the converter: " + e.getMessage());
+        }
+    }
+
+    private static RootFactory configure(final String converter) throws Exception {
         final RootFactory factory = new RootFactory();
         final XMLReader configReader = PARSER_FACTORY.newSAXParser().getXMLReader();
         configReader.setContentHandler(new ConfigFilter(factory));
         configReader.parse(new InputSource(new StringReader(converter)));
         factory.compile();
+        return factory;
+    }
+
+    private static Result parse(final String converter, final String text) throws Exception {
+        final RootFactory factory = configure(converter);
 
         final Errors errors = new Errors();
         final Records records = new Records();

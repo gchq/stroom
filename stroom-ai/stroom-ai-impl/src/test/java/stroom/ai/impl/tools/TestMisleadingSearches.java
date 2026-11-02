@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.tools.MisleadingSearches.Exact;
+import stroom.ai.impl.tools.MisleadingSearches.NullSearch;
 import stroom.ai.impl.tools.MisleadingSearches.Search;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
@@ -112,8 +113,9 @@ class TestMisleadingSearches {
     @Test
     void aContainsOnElasticsearchIsAMisleadingSearch() {
         assertThat(refusal(ELASTIC, List.of(new Search("User.Id", Condition.CONTAINS, "ali")), Set.of(), Map.of()))
-                .isEqualTo(MisleadingSearches.REFUSAL + "User.Id CONTAINS 'ali': Stroom finds nothing with CONTAINS "
-                           + "on Elasticsearch; use EQUALS '*ali*' (a wildcard) or MATCHES_REGEX");
+                .isEqualTo(MisleadingSearches.REFUSAL + "User.Id CONTAINS 'ali': Stroom can't search with CONTAINS "
+                           + "on Elasticsearch (it finds nothing, or refuses it); use EQUALS '*ali*' (a wildcard) or "
+                           + "MATCHES_REGEX");
     }
 
     @Test
@@ -144,11 +146,33 @@ class TestMisleadingSearches {
     }
 
     @Test
-    void isNotNullIsSearchedAsAnyValueOnElasticsearch() {
-        // Seen in testing: refused with the advice to use EQUALS '*', the agent sent IS_NOT_NULL again and again.
-        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NOT_NULL)).contains(Condition.EQUALS);
-        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NULL)).contains(Condition.NOT_EQUALS);
-        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.EQUALS)).isEmpty();
+    void isNotNullIsSearchedAsANonEmptyValueOnAStringFieldAndAnyValueOnAnother() {
+        // Seen in testing: refused with the advice to use EQUALS '*', the agent sent IS_NOT_NULL again and again;
+        // told EQUALS '*' was any value, it saw that passes on empty strings (exists), and dropped checks of fields
+        // that were populated.
+        for (final String type : List.of("keyword", "text", "wildcard", "match_only_text", "KEYWORD", "TEXT")) {
+            assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NOT_NULL, type))
+                    .contains(new NullSearch(Condition.MATCHES_REGEX, ".+", "a non-empty value"));
+        }
+        for (final String type : List.of("long", "date", "ip", "boolean", "IPV4_ADDRESS")) {
+            assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NOT_NULL, type))
+                    .contains(new NullSearch(Condition.EQUALS, "*", "any value"));
+        }
+        // A type not known: EQUALS '*', saying an empty string is found too.
+        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NOT_NULL, null))
+                .contains(new NullSearch(Condition.EQUALS, "*", MisleadingSearches.EQUALS_ANY));
+        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NULL, "keyword"))
+                .contains(new NullSearch(Condition.NOT_EQUALS, "*", "no value; an empty string counts as a value"));
+        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.IS_NULL, "long"))
+                .contains(new NullSearch(Condition.NOT_EQUALS, "*", "no value"));
+        assertThat(MisleadingSearches.elasticsearchNullAs(Condition.EQUALS, "keyword")).isEmpty();
+        // The refusal says the same.
+        assertThat(MisleadingSearches.refusal(ELASTIC, List.of(new Search("tags", Condition.IS_NOT_NULL, "")),
+                Set.of(), List.of(), Map.of(), Map.of()))
+                .hasValueSatisfying(text -> assertThat(text)
+                        .contains("MATCHES_REGEX '.+' (a non-empty value) on a string field")
+                        .contains(MisleadingSearches.EQUALS_ANY)
+                        .doesNotContain("(any value)"));
         // Nothing left to refuse once searched as what it means.
         assertThat(MisleadingSearches.refusal(ELASTIC, List.of(new Search("tags", Condition.EQUALS, "*"),
                 new Search("user.name", Condition.EQUALS, "bob")), Set.of(), List.of(), Map.of(), Map.of())).isEmpty();
