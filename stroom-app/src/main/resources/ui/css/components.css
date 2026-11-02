@@ -2574,6 +2574,16 @@ button.main-menu svg {
 	min-width: 200px;
 }
 
+/* A value that no row in the table currently has, given the other filters. It can still be ticked. */
+.columnValueCell-unavailable .columnValueCell-text {
+	opacity: 0.5;
+}
+
+/* Separates the values the table currently has from the rest. */
+.columnValueCell-firstUnavailable {
+	border-top: 1px solid var(--menu-separator__color);
+}
+
 .durationSetting {
     display: flex;
 }

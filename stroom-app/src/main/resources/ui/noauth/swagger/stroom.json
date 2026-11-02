@@ -16925,6 +16925,9 @@
       "ColumnValue" : {
         "type" : "object",
         "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
           "matchingRule" : {
             "type" : "string"
           },
@@ -16951,6 +16954,10 @@
       "ColumnValues" : {
         "type" : "object",
         "properties" : {
+          "availableCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
@@ -16982,12 +16989,6 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
-          },
-          "selections" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "$ref" : "#/components/schemas/ColumnValueSelection"
-            }
           }
         }
       },
@@ -25323,12 +25324,6 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/QuerySearchRequest"
-          },
-          "selections" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "$ref" : "#/components/schemas/ColumnValueSelection"
-            }
           }
         }
       },

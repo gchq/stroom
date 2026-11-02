@@ -30,12 +30,16 @@ public class ColumnValue {
     private final String value;
     @JsonProperty
     private final String matchingRule;
+    @JsonProperty
+    private final boolean available;
 
     @JsonCreator
     public ColumnValue(@JsonProperty("value") final String value,
-                       @JsonProperty("matchingRule") final String matchingRule) {
+                       @JsonProperty("matchingRule") final String matchingRule,
+                       @JsonProperty("available") final boolean available) {
         this.value = value;
         this.matchingRule = matchingRule;
+        this.available = available;
     }
 
     public String getValue() {
@@ -44,6 +48,12 @@ public class ColumnValue {
 
     public String getMatchingRule() {
         return matchingRule;
+    }
+
+    /// @return True if at least one row with this value passes all of the table's filters, ignoring this
+    /// column's own ticks, i.e. the value can currently appear in the table.
+    public boolean isAvailable() {
+        return available;
     }
 
     @Override
@@ -55,12 +65,14 @@ public class ColumnValue {
             return false;
         }
         final ColumnValue that = (ColumnValue) o;
-        return Objects.equals(value, that.value) && Objects.equals(matchingRule, that.matchingRule);
+        return available == that.available &&
+               Objects.equals(value, that.value) &&
+               Objects.equals(matchingRule, that.matchingRule);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, matchingRule);
+        return Objects.hash(value, matchingRule, available);
     }
 
     @Override
@@ -68,6 +80,7 @@ public class ColumnValue {
         return "ColumnValue{" +
                "value='" + value + '\'' +
                ", matchingRule='" + matchingRule + '\'' +
+               ", available=" + available +
                '}';
     }
 }

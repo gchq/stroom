@@ -21,7 +21,6 @@ import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.MarkdownTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
-import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -40,9 +39,6 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.Column;
-import stroom.query.api.ConditionalFormattingRule;
-import stroom.query.api.DateTimeSettings;
-import stroom.query.api.OffsetRange;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
 import stroom.query.api.QueryNodeResolver;
@@ -53,28 +49,18 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
-import stroom.query.api.TimeFilter;
-import stroom.query.common.v2.ConditionalFormattingMapper.RuleAndMatcher;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.Item;
-import stroom.query.common.v2.OpenGroups;
-import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
-import stroom.query.common.v2.RowUtil;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.Values;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -84,7 +70,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.collections.TrimmedSortedList;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -95,7 +80,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
@@ -111,19 +95,15 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
@@ -146,7 +126,7 @@ class DashboardServiceImpl implements DashboardService {
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final ValPredicateFactory valPredicateFactory;
+    private final ColumnValuesFinder columnValuesFinder;
     private final QueryNodeResolver queryNodeResolver;
     private final DocFinder docFinder;
 
@@ -164,7 +144,7 @@ class DashboardServiceImpl implements DashboardService {
                          final ResultStoreManager searchResponseCreatorManager,
                          final NodeInfo nodeInfo,
                          final ExpressionPredicateFactory expressionPredicateFactory,
-                         final ValPredicateFactory valPredicateFactory,
+                         final ColumnValuesFinder columnValuesFinder,
                          final QueryNodeResolver queryNodeResolver,
                          final DocFinder docFinder) {
         this.dashboardStore = dashboardStore;
@@ -180,7 +160,7 @@ class DashboardServiceImpl implements DashboardService {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.valPredicateFactory = valPredicateFactory;
+        this.columnValuesFinder = columnValuesFinder;
         this.queryNodeResolver = queryNodeResolver;
         this.docFinder = docFinder;
     }
@@ -584,132 +564,29 @@ class DashboardServiceImpl implements DashboardService {
                     .toList();
 
             if (resultRequests.isEmpty()) {
-                throw new EntityServiceException("No tables specified for download");
+                throw new EntityServiceException("No table specified");
             }
 
-            final Set<String> dedupe = new HashSet<>();
-            final ColumnValueComparator comparator = new ColumnValueComparator();
-            final TrimmedSortedList<ColumnValue> list = new TrimmedSortedList<>(
-                    request.getPageRequest(), comparator);
-            for (final ResultRequest resultRequest : resultRequests) {
-                try {
-                    final RequestAndStore requestAndStore = searchResponseCreatorManager
-                            .getResultStore(mappedRequest);
-                    final DataStore dataStore = requestAndStore
-                            .resultStore()
-                            .getData(resultRequest.getComponentId());
+            // The client only asks for the table whose column is being filtered.
+            final ResultRequest resultRequest = resultRequests.getFirst();
+            final RequestAndStore requestAndStore = searchResponseCreatorManager
+                    .getResultStore(mappedRequest);
+            final DataStore dataStore = requestAndStore
+                    .resultStore()
+                    .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
-//                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
-//                        timeFilter = DateExpressionParser.getTimeFilter(
-//                                mappedRequest.getQuery().getTimeRange(),
-//                                mappedRequest.getDateTimeSettings());
-//                    }
-
-                    final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
-                            request.getColumn(),
-                            request.getFilter(),
-                            searchRequest.getDateTimeSettings());
-
-                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
-                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
-
-                    final List<String> columnIdList = dataStore
-                            .getColumns()
-                            .stream()
-                            .map(Column::getId)
-                            .toList();
-                    final int primaryColumnIndex = columnIdList
-                            .indexOf(request.getColumn().getId());
-                    if (primaryColumnIndex != -1) {
-                        // Get rules.
-                        final List<RuleAndMatcher> ruleAndMatchers = getRules(
-                                request.getColumn(),
-                                request.getSearchRequest().getDateTimeSettings(),
-                                request.getConditionalFormattingRules());
-
-                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
-                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
-
-                        dataStore.fetch(
-                                dataStore.getColumns(),
-                                OffsetRange.UNBOUNDED,
-                                openGroups,
-                                timeFilter,
-                                item -> {
-                                    final Val val = item.getValue(primaryColumnIndex);
-                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
-                                        final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
-                                                .stream()
-                                                .filter(ruleAndMatcher ->
-                                                        ruleAndMatcher.matcher().test(Values.of(val)))
-                                                .findFirst();
-
-                                        final String value = val.toString();
-                                        if (value != null && dedupe.add(value)) {
-                                            final ColumnValue columnValue = new ColumnValue(value,
-                                                    matchingRule
-                                                            .map(RuleAndMatcher::rule)
-                                                            .map(ConditionalFormattingRule::getId)
-                                                            .orElse(null));
-                                            list.add(columnValue);
-                                        }
-                                    }
-                                    return Stream.empty();
-                                },
-                                row -> {
-
-                                },
-                                count -> {
-
-                                });
-                    }
-                } catch (final Exception e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                }
-            }
-
-            final ResultPage<ColumnValue> resultPage = list.getResultPage();
-            return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
+            return columnValuesFinder.find(
+                    dataStore,
+                    resultRequest,
+                    request.getColumn(),
+                    request.getFilter(),
+                    request.getConditionalFormattingRules(),
+                    request.getPageRequest(),
+                    searchRequest.getDateTimeSettings());
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
-    }
-
-    private List<RuleAndMatcher> getRules(final Column column,
-                                          final DateTimeSettings dateTimeSettings,
-                                          final List<ConditionalFormattingRule> rules) {
-        final List<ConditionalFormattingRule> activeRules = NullSafe.list(rules)
-                .stream()
-                .filter(ConditionalFormattingRule::isEnabled)
-                .toList();
-        final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
-        if (!activeRules.isEmpty()) {
-            final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
-                    .createColumnNameValExtractor(Collections.singletonList(column));
-            for (final ConditionalFormattingRule rule : activeRules) {
-                try {
-                    final Optional<Predicate<Values>> optionalValuesPredicate =
-                            expressionPredicateFactory.createOptional(
-                                    rule.getExpression(),
-                                    queryFieldIndex,
-                                    dateTimeSettings);
-                    final Predicate<Values> conditionalFormattingPredicate =
-                            optionalValuesPredicate.orElse(t -> true);
-                    ruleAndMatchers.add(new RuleAndMatcher(rule, conditionalFormattingPredicate));
-                } catch (final RuntimeException e) {
-                    throw new RuntimeException("Error evaluating conditional formatting rule: " +
-                                               rule.getExpression() +
-                                               " (" +
-                                               e.getMessage() +
-                                               ")", e);
-                }
-            }
-        }
-
-        return ruleAndMatchers;
     }
 
     @Override
