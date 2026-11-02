@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
@@ -37,16 +38,16 @@ public class ColumnValues extends ResultPage<ColumnValue> {
     @JsonCreator
     public ColumnValues(@JsonProperty("values") final List<ColumnValue> values,
                         @JsonProperty("pageResponse") final PageResponse pageResponse,
-                        @JsonProperty("availableCount") final long availableCount) {
+                        @JsonProperty("availableCount") final Long availableCount) {
         super(values, pageResponse);
-        this.availableCount = availableCount;
+        this.availableCount = NullSafe.getLong(availableCount);
     }
 
     /// Creates an empty page with no values.
     ///
     /// @return An empty page.
     public static ColumnValues empty() {
-        return new ColumnValues(Collections.emptyList(), PageResponse.empty(), 0);
+        return new ColumnValues(Collections.emptyList(), PageResponse.empty(), 0L);
     }
 
     /// @return The number of available values across all pages, i.e. values that can currently appear in the

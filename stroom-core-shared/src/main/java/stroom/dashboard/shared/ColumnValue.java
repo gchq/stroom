@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -36,10 +38,10 @@ public class ColumnValue {
     @JsonCreator
     public ColumnValue(@JsonProperty("value") final String value,
                        @JsonProperty("matchingRule") final String matchingRule,
-                       @JsonProperty("available") final boolean available) {
+                       @JsonProperty("available") final Boolean available) {
         this.value = value;
         this.matchingRule = matchingRule;
-        this.available = available;
+        this.available = NullSafe.isTrue(available);
     }
 
     public String getValue() {
