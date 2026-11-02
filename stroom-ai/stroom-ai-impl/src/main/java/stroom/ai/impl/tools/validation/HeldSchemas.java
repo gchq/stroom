@@ -425,6 +425,14 @@ public class HeldSchemas {
                 .toList();
     }
 
+    /// @param systemIds System ids, e.g. `file://records-v2.0.xsd`.
+    /// @return Them once each, newest first by the numbers they hold.
+    public static List<String> newestSystemIdsFirst(final Collection<String> systemIds) {
+        return new LinkedHashSet<>(systemIds).stream()
+                .sorted(Comparator.comparing(HeldSchemas::numbersIn, HeldSchemas::compareNumbers).reversed())
+                .toList();
+    }
+
     /// Why a schema location naming a system id Stroom doesn't hold fails, and what to write instead.
     ///
     /// @param systemId The system id named.

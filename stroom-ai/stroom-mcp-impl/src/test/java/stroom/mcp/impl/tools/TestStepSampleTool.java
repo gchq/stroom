@@ -113,6 +113,23 @@ class TestStepSampleTool {
     }
 
     @Test
+    void outputNoSchemaFilterChecksBlocksWhenItFailsItsSchema() {
+        // Stroom's Indexing template has no schema filter, and the IndexingFilter drops what isn't records:2's
+        // shape without an error: stepping said clean for records that indexed no fields.
+        world.withoutSchemaFilter();
+        world.records(2, "<records xmlns=\"records:2\"><record><entry/></record></records>");
+        world.outputFailsItsSchema();
+
+        final Map<String, Object> result = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(groups(result).getFirst().get("reason")).asString()
+                .startsWith("Output fails the schema of its namespace, and nothing in the pipeline checks it");
+        assertThat(groups(result).getFirst().get("count")).isEqualTo(2);
+        assertThat(firstMessage(groups(result).getFirst())).contains(UnvalidatedOutput.NOT_CHECKED);
+    }
+
+    @Test
     void nothingSteppedIsNeverClean() {
         // An XSLT that doesn't compile: Stroom finds no record and reports the error on the element.
         world.stepper = (stream, at) -> SteppingWorld.none("XsltPool - Variable user has not been declared");
