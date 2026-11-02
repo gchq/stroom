@@ -17,9 +17,15 @@
 package stroom.pipeline.stepping.capture;
 
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.util.shared.ElementId;
+import stroom.util.shared.Indicators;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestStreamSweep {
 
     private static final long META = 7L;
+    private static final ElementId PARSER = new ElementId("parser");
+    private static final ElementId XSLT = new ElementId("translationFilter");
 
     private StreamSweep newSweep() {
         return new StreamSweep(META, null);
@@ -123,5 +131,67 @@ class TestStreamSweep {
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    @Test
+    void copiesStartupIndicatorsOnlyForElementsThatRanTheSameCode() {
+        final StreamSweep capture = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v1"));
+        capture.setStartProcessIndicators(Map.of(
+                PARSER, indicators(PARSER, "parser warning"),
+                XSLT, indicators(XSLT, "No XSLT found with name or UUID \"Later\"")));
+        // The XSLT's code (or an XSLT it imports) has changed since the capture; the parser's hasn't.
+        final StreamSweep materialisation = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v2"));
+
+        materialisation.copyStreamMetadataFrom(capture);
+
+        assertThat(materialisation.getStartProcessIndicators()).containsOnlyKeys(PARSER);
+    }
+
+    @Test
+    void indicatorsASweepRaisedItselfAreNotReplacedByCopiedOnes() {
+        final StreamSweep capture = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v1"));
+        capture.setStartProcessIndicators(Map.of(PARSER, indicators(PARSER, "from the capture")));
+        final StreamSweep reprocess = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v1"));
+        final Indicators own = indicators(PARSER, "from the reprocess");
+        reprocess.addStartProcessIndicators(Map.of(PARSER, own));
+
+        reprocess.copyStreamMetadataFrom(capture);
+
+        assertThat(reprocess.getStartProcessIndicators()).containsExactlyEntriesOf(Map.of(PARSER, own));
+    }
+
+    @Test
+    void addedIndicatorsReplaceCopiedOnesForTheSameElement() {
+        final StreamSweep capture = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v1"));
+        capture.setStartProcessIndicators(Map.of(XSLT, indicators(XSLT, "from the capture")));
+        final StreamSweep reprocess = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v1"));
+        reprocess.copyStreamMetadataFrom(capture);
+        final Indicators own = indicators(XSLT, "from the reprocess");
+
+        reprocess.addStartProcessIndicators(Map.of(XSLT, own));
+
+        assertThat(reprocess.getStartProcessIndicators()).containsExactlyEntriesOf(Map.of(XSLT, own));
+    }
+
+    @Test
+    void withoutFingerprintsEveryStartupIndicatorIsCopied() {
+        final StreamSweep capture = new StreamSweep(META, null);
+        capture.setStartProcessIndicators(Map.of(XSLT, indicators(XSLT, "error")));
+        final StreamSweep materialisation = new StreamSweep(META, null, fingerprints("parser-v1", "xslt-v2"));
+
+        materialisation.copyStreamMetadataFrom(capture);
+
+        assertThat(materialisation.getStartProcessIndicators()).containsOnlyKeys(XSLT);
+    }
+
+    private static ElementFingerprints fingerprints(final String parser, final String xslt) {
+        final Map<String, String> cumulative = Map.of(PARSER.getId(), parser, XSLT.getId(), xslt);
+        return new ElementFingerprints(cumulative, cumulative);
+    }
+
+    private static Indicators indicators(final ElementId elementId, final String message) {
+        final Indicators indicators = new Indicators();
+        indicators.add(new StoredError(Severity.FATAL_ERROR, null, elementId, message));
+        return indicators;
     }
 }
