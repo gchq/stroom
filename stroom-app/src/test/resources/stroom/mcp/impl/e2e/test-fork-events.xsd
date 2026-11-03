@@ -15,16 +15,17 @@
   ~ limitations under the License.
 -->
 <!--
-  A test fork of event-logging 4.1.0, versioned 1.2.0 (a fork versions itself): the same schema in a namespace of its own, with one extra EventDetail activity
-  (Charge), as environments' own forks have a few additions to the generally available schema.
+  A test fork of event-logging 4.1.0, as environments fork it: event-logging:3 replaced by a namespace of its own
+  wherever it appears, the version and id kept (4.1.0), and one extra EventDetail activity (Charge), as environments'
+  own forks have a few additions to the generally available schema.
 -->
 <xs:schema xmlns:evt="file://xml/schema/test-fork/events"
            xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="file://xml/schema/test-fork/events"
            elementFormDefault="qualified"
            attributeFormDefault="unqualified"
-           version="1.2.0"
-           id="test-fork-events-v1.2.0">
+           version="4.1.0"
+           id="event-logging-v4.1.0">
    <xs:annotation>
       <xs:documentation>This schema describes the allowed element structure for event logging. Please refer to the documentation and examples for a description of how to use this schema in addition to the descriptions given for each element within this schema.</xs:documentation>
    </xs:annotation>
@@ -4673,7 +4674,7 @@
          <xs:documentation>Type for specifying the version numbers of XML documents that are supported by this version of the XMLSchema.</xs:documentation>
       </xs:annotation>
       <xs:restriction base="xs:string">
-         <xs:enumeration value="1.2.0"/>
+         <xs:enumeration value="4.1.0"/>
       </xs:restriction>
    </xs:simpleType>
    <xs:simpleType name="VirtualSessionSessionStateSimpleType">

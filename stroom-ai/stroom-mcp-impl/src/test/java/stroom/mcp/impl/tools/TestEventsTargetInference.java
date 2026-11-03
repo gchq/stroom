@@ -94,6 +94,28 @@ class TestEventsTargetInference {
     }
 
     @Test
+    void aTemplateThatWritesNoEventsIsPassedOverForTheNextCandidate() {
+        // Seen in testing: the configured standard template (no XSLT of its own) ranked first, ahead of the
+        // environment's template, inherited by its pipelines, whose XSLT writes the fork; only the first was read.
+        holdingFork();
+        Mockito.when(pipelineTemplates.find(InstructionRules.TRANSLATION)).thenReturn(Map.of("candidates",
+                List.of(Map.of("uuid", "standard"), Map.of("uuid", "environment"))));
+        final DocRef ref = new DocRef(XsltDoc.TYPE, "x1", "Fork-Header");
+        Mockito.when(pipelineIndex.read()).thenReturn(Map.of(
+                "standard", new PipelineIndex.Entry("standard", "Event Data (Text)", "/Template Pipelines", null,
+                        null),
+                "environment", new PipelineIndex.Entry("environment", "Fork Events Template", "/T", "standard",
+                        settingXslt(ref))));
+        Mockito.when(documentAccess.read(ref, XsltDoc.class)).thenReturn(Optional.of(xslt("Fork-Header",
+                WRITES_FORK)));
+
+        assertThat(inference.infer(null, "b1")).hasValueSatisfying(inferred -> {
+            assertThat(inferred.namespace()).isEqualTo(FORK_NS);
+            assertThat(inferred.why()).contains("'Fork-Header'").contains("'Fork Events Template'");
+        });
+    }
+
+    @Test
     void anImportWritingEventLoggingSettlesItToo() {
         holdingFork();
         Mockito.when(requiredImports.requiredFor(null, InstructionRules.TRANSLATION, "b1", List.of()))
@@ -116,7 +138,7 @@ class TestEventsTargetInference {
 
     private void holdingFork() {
         Mockito.when(heldSchemas.forks()).thenReturn(List.of(XmlSchemaDoc.builder().uuid("fork-1").name("Fork")
-                .systemId("file://test-fork-events-v1.2.0.xsd").namespaceURI(FORK_NS).schemaGroup("EVENTS")
+                .systemId("file://xml/schema/test-fork/events").namespaceURI(FORK_NS).schemaGroup("EVENTS")
                 .build()));
     }
 

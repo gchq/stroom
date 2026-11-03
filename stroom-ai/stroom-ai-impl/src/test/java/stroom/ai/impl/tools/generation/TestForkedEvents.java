@@ -39,8 +39,8 @@ class TestForkedEvents extends XsltRuns {
         assertThat(FORK.namespace()).isEqualTo(FORK_NS);
         assertThat(FORK.isFork()).isTrue();
         assertThat(FORK.systemId()).isEqualTo(HeldSchemasWorld.FORK_SYSTEM_ID);
-        // Its own version, not event-logging's.
-        assertThat(FORK.version()).isEqualTo("1.2.0");
+        // Event-logging's version, kept by the fork.
+        assertThat(FORK.version()).isEqualTo("4.1.0");
         assertThat(FORK.hasPath("EventDetail/Charge/Account")).isTrue();
         // The standard schema has no Charge, and is not a fork.
         assertThat(SCHEMA.namespace()).isEqualTo("event-logging:3");
@@ -54,7 +54,7 @@ class TestForkedEvents extends XsltRuns {
 
     @Test
     void aTranslationForAForkWritesValidEventsInItsNamespace() {
-        final XsltGenerator.Generated result = XsltGenerator.generate(mapping(), FORK, "1.2.0");
+        final XsltGenerator.Generated result = XsltGenerator.generate(mapping(), FORK, "4.1.0");
 
         assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
         assertThat(result.xslt()).contains("xmlns=\"" + FORK_NS + "\"")
@@ -75,7 +75,7 @@ class TestForkedEvents extends XsltRuns {
                  {"path": "EventDetail/Charge/Account", "field": "user"}]"""));
         final TranslationMapping mapping = mapping(with("events", List.of(charge, otherRule())));
 
-        final XsltGenerator.Generated forked = XsltGenerator.generate(mapping, FORK, "1.2.0");
+        final XsltGenerator.Generated forked = XsltGenerator.generate(mapping, FORK, "4.1.0");
 
         assertThat(forked.ok()).as(String.valueOf(forked.problems())).isTrue();
         final XmlElement events = transform(forked.xslt(), RECORDS);
@@ -93,7 +93,7 @@ class TestForkedEvents extends XsltRuns {
     @Test
     void aForksTranslationIsReadBackAsAStandardOneIs() {
         final String standard = XsltGenerator.generate(mapping(), SCHEMA, "4.1.0").xslt();
-        final String forked = XsltGenerator.generate(mapping(), FORK, "1.2.0").xslt();
+        final String forked = XsltGenerator.generate(mapping(), FORK, "4.1.0").xslt();
 
         assertThat(XsltReader.rebuild(forked, null, null).mapping())
                 .isEqualTo(XsltReader.rebuild(standard, null, null).mapping());
