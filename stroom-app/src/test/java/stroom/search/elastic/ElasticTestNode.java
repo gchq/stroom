@@ -348,15 +348,16 @@ public final class ElasticTestNode {
         return readJson(response.body());
     }
 
-    /// @return The number of search contexts (e.g. scrolls) currently open across the node.
-    public long getOpenSearchContexts() {
-        final HttpResponse<String> response = send("GET", "/_nodes/stats/indices/search", null);
-        assertSuccess(response, "get node search stats");
-        long total = 0;
-        for (final JsonNode node : readJson(response.body()).get("nodes")) {
-            total += node.at("/indices/search/open_contexts").asLong();
-        }
-        return total;
+    /// Get the number of search contexts (e.g. scrolls) currently open on the indices matching a name or pattern.
+    /// This is counted per index, rather than across the node, as other test classes may be searching the same
+    /// node at the same time in parallel test forks.
+    ///
+    /// @param indexPattern The index name or pattern.
+    /// @return The number of search contexts open on the matching indices.
+    public long getOpenSearchContexts(final String indexPattern) {
+        final HttpResponse<String> response = send("GET", "/" + indexPattern + "/_stats/search", null);
+        assertSuccess(response, "get search stats for " + indexPattern);
+        return readJson(response.body()).at("/_all/total/search/open_contexts").asLong();
     }
 
     private String getUnavailableReason() {
