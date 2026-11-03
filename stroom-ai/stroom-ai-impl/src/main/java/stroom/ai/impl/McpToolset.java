@@ -81,8 +81,9 @@ public final class McpToolset implements AutoCloseable {
     static final String META_GROUP = "group";
     static final String META_CONFIRMS = "confirms";
     static final String USER_ACTIONS = "user_actions";
-    /// The most of one server's instructions given to the model, so that a server cannot fill the context.
-    static final int MAX_SERVER_INSTRUCTIONS_CHARS = 20_000;
+    /// The most of one server's instructions given to the model, so that a server cannot fill the context. Stroom's
+    /// own server's instructions are held to it by a test, so they are never cut.
+    public static final int MAX_SERVER_INSTRUCTIONS_CHARS = 20_000;
 
     static final String LIST_RESOURCES_TOOL = "list_resources";
     static final String GET_RESOURCE_TOOL = "get_resource";
