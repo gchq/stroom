@@ -75,6 +75,8 @@ public class ElasticFieldInfoViewImpl
                                                     "its start but not its end, except the last, which includes " +
                                                     "the largest value. For a random sample, both are estimated " +
                                                     "from the sample.";
+    // Labels longer than this need the wider label column
+    private static final int WIDE_LABEL_LENGTH = 30;
     private static final String MODE_RANDOM = "Random sample";
     private static final String MODE_EXACT = "Exact (all documents)";
 
@@ -282,12 +284,22 @@ public class ElasticFieldInfoViewImpl
 
         if (NullSafe.hasItems(stats.getHistogram())) {
             final FlowPanel histogram = createBlock("Distribution", DISTRIBUTION_HELP);
+            // Ranges of timestamps are long, so need a wider label column to show in full
+            int longestLabel = 0;
+            for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
+                longestLabel = Math.max(longestLabel, NullSafe.string(bucket.getValue()).length());
+            }
+            final boolean wideLabels = longestLabel > WIDE_LABEL_LENGTH;
             for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
                 final long count = Objects.requireNonNullElse(bucket.getCount(), 0L);
-                histogram.add(createBarRow(bucket.getValue(), false,
+                final Widget row = createBarRow(bucket.getValue(), false,
                         ElasticFieldStatsSupport.getPercent(count, totalDocs),
                         ElasticFieldStatsSupport.formatCount(count) + " (" +
-                        ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
+                        ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")");
+                if (wideLabels) {
+                    row.addStyleName(style.barRowWide());
+                }
+                histogram.add(row);
             }
             statsContent.add(histogram);
         }
@@ -486,6 +498,9 @@ public class ElasticFieldInfoViewImpl
 
         /// @return the style of the line holding a statistics block heading and its info button
         String statsHeader();
+
+        /// @return the style of a labelled bar whose label is long, such as a range of timestamps
+        String barRowWide();
 
         /// @return the style of a labelled bar
         String barRow();

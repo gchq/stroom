@@ -32,7 +32,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -54,8 +53,6 @@ public class ElasticFieldSettingsViewImpl
 
     private final Widget widget;
 
-    @UiField
-    HTML fieldName;
     @UiField
     FlowPanel enabledRow;
     @UiField
@@ -118,15 +115,6 @@ public class ElasticFieldSettingsViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setFieldName(final String fieldName) {
-        this.fieldName.setHTML(new SafeHtmlBuilder()
-                .appendHtmlConstant("<h2>")
-                .appendEscaped(NullSafe.string(fieldName))
-                .appendHtmlConstant("</h2>")
-                .toSafeHtml());
     }
 
     @Override

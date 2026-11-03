@@ -64,6 +64,8 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,6 +87,8 @@ public class ElasticFieldStatsService {
     private static final int TOP_VALUES_COUNT = 10;
     private static final int HISTOGRAM_BUCKETS = 10;
     private static final String RANGE_SEPARATOR = " – ";
+    private static final int MAX_DECIMAL_PLACES = 10;
+    private static final Set<FieldType> WHOLE_NUMBER_TYPES = Set.of(FieldType.ID, FieldType.INTEGER, FieldType.LONG);
     private static final String SAMPLE_AGG = "sample";
     // Elasticsearch only accepts a random sampler probability of up to 0.5 (or exactly 1)
     private static final double MAX_SAMPLE_PROBABILITY = 0.5;
@@ -307,7 +311,8 @@ public class ElasticFieldStatsService {
                     ? null
                     : getStatValue(stats.maxAsString(), stats.max()));
         } else if (numeric && stats != null && stats.count() > 0) {
-            histogram = getNumericHistogram(elasticClient, indexDoc, sampling, fieldName, stats);
+            final boolean wholeNumbers = WHOLE_NUMBER_TYPES.contains(type);
+            histogram = getNumericHistogram(elasticClient, indexDoc, sampling, fieldName, stats, wholeNumbers);
         }
 
         return new ElasticFieldStats(
@@ -342,16 +347,21 @@ public class ElasticFieldStatsService {
 
     /// Gets the distribution of a numeric field over [#HISTOGRAM_BUCKETS] even ranges between its smallest and
     /// largest values, which a second request needs, as the range width depends on them.
+    ///
+    /// For whole number fields the ranges are whole numbers wide, so they start and end on whole numbers. Other
+    /// ranges are shown to as many decimal places as their width needs.
     private List<ElasticFieldValueCount> getNumericHistogram(final ElasticsearchClient elasticClient,
                                                              final ElasticIndexDoc indexDoc,
                                                              final Sampling sampling,
                                                              final String fieldName,
-                                                             final StatsAggregate stats) {
+                                                             final StatsAggregate stats,
+                                                             final boolean wholeNumbers) {
         final double min = stats.min();
         final double max = stats.max();
-        final double interval = max > min
-                ? (max - min) / HISTOGRAM_BUCKETS
-                : 1;
+        final double interval = getHistogramInterval(min, max, wholeNumbers);
+        final int decimalPlaces = wholeNumbers
+                ? 0
+                : getDecimalPlaces(interval);
         final Sample sample = search(elasticClient, indexDoc, sampling, Map.of(
                 HISTOGRAM_AGG, Aggregation.of(a -> a.histogram(h -> h
                         .field(fieldName)
@@ -361,10 +371,36 @@ public class ElasticFieldStatsService {
         final List<String> starts = new ArrayList<>();
         final List<Long> counts = new ArrayList<>();
         sample.aggregations().get(HISTOGRAM_AGG).histogram().buckets().array().forEach(bucket -> {
-            starts.add(formatNumber(bucket.key()));
+            starts.add(formatNumber(bucket.key(), decimalPlaces));
             counts.add(bucket.docCount());
         });
-        return toRanges(starts, counts, formatNumber(max));
+        return toRanges(starts, counts, formatNumber(max, decimalPlaces));
+    }
+
+    /// @param min          the smallest value
+    /// @param max          the largest value
+    /// @param wholeNumbers `true` if the values are whole numbers
+    /// @return the width of each of [#HISTOGRAM_BUCKETS] ranges covering the values; a whole number of at least 1
+    /// for whole numbers
+    static double getHistogramInterval(final double min, final double max, final boolean wholeNumbers) {
+        if (max <= min) {
+            return 1;
+        }
+        final double interval = (max - min) / HISTOGRAM_BUCKETS;
+        return wholeNumbers
+                ? Math.max(1, Math.ceil(interval))
+                : interval;
+    }
+
+    /// @param interval the width of each range
+    /// @return enough decimal places to tell apart the ends of ranges this wide: two significant figures of the
+    /// width, and none for widths of 10 or more
+    static int getDecimalPlaces(final double interval) {
+        if (interval <= 0 || Double.isInfinite(interval) || Double.isNaN(interval)) {
+            return 0;
+        }
+        final int places = 1 - (int) Math.floor(Math.log10(interval));
+        return Math.clamp(places, 0, MAX_DECIMAL_PLACES);
     }
 
     /// Labels each bucket with the range of values it holds, from its start to the next bucket's start, and the
@@ -601,6 +637,19 @@ public class ElasticFieldStatsService {
         return value == null
                 ? null
                 : formatNumber(value);
+    }
+
+    /// @param value         the number
+    /// @param decimalPlaces the number of decimal places to round to
+    /// @return the number rounded, without trailing zeros after the decimal point
+    static String formatNumber(final double value, final int decimalPlaces) {
+        if (Double.isInfinite(value) || Double.isNaN(value)) {
+            return String.valueOf(value);
+        }
+        return BigDecimal.valueOf(value)
+                .setScale(decimalPlaces, RoundingMode.HALF_UP)
+                .stripTrailingZeros()
+                .toPlainString();
     }
 
     /// @return the number without a trailing `.0` when it is whole

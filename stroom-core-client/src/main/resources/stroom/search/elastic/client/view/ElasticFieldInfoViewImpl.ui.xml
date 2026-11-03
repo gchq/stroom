@@ -23,11 +23,13 @@
              xmlns:spinner="urn:import:stroom.widget.spinner.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
     <ui:style type="stroom.search.elastic.client.view.ElasticFieldInfoViewImpl.Style">
+        /* A heading and its buttons, centred on one line */
         .sectionHeader {
             display: flex;
             flex-direction: row;
             align-items: center;
             gap: 4px;
+            margin-bottom: 0.4em;
         }
 
         @external docRefLinkContainer, docRefLinkText;
@@ -37,7 +39,7 @@
             color: var(--heading-color);
             font-weight: bold;
             font-size: 125%;
-            padding-bottom: 0.3em;
+            line-height: 1.2;
         }
 
         .laterSection {
@@ -106,10 +108,16 @@
             color: var(--heading-color);
             font-weight: bold;
             font-size: 110%;
+            line-height: 1.2;
         }
 
         .statsHeader {
             margin-bottom: 4px;
+        }
+
+        /* Wide enough for a range of two timestamps */
+        .barRow.barRowWide {
+            grid-template-columns: 420px 240px 160px;
         }
 
         .barRow {

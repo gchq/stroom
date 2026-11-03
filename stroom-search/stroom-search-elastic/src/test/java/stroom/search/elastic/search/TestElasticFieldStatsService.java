@@ -192,6 +192,10 @@ class TestElasticFieldStatsService {
         assertThat(stats.getHistogram())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                 .containsExactly(tuple("0 – 5", 4L), tuple("5 – 100", 6L));
+        // A whole number field is split into whole number ranges: (100 - 0) / 10
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))
+                .getLast().getBodyAsString())
+                .contains("\"interval\":10.0");
         // Every document is included, with no time range
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
                 .hasSize(2)
@@ -288,6 +292,32 @@ class TestElasticFieldStatsService {
 
         assertThat(stats.getMessage()).isEqualTo("No documents were found in the index");
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))).isEmpty();
+    }
+
+    @Test
+    void testHistogramInterval() {
+        // Whole numbers are split into whole number ranges
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 95, true)).isEqualTo(10.0);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 3, true)).isEqualTo(1.0);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 95, false)).isEqualTo(9.5);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(5, 5, false)).isEqualTo(1.0);
+    }
+
+    @Test
+    void testDecimalPlaces() {
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(25)).isZero();
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(9.5)).isEqualTo(1);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0.25)).isEqualTo(2);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0.0004)).isEqualTo(5);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0)).isZero();
+    }
+
+    @Test
+    void testFormatNumberToDecimalPlaces() {
+        assertThat(ElasticFieldStatsService.formatNumber(12.3456, 2)).isEqualTo("12.35");
+        assertThat(ElasticFieldStatsService.formatNumber(12.5, 0)).isEqualTo("13");
+        assertThat(ElasticFieldStatsService.formatNumber(3.10, 2)).isEqualTo("3.1");
+        assertThat(ElasticFieldStatsService.formatNumber(1200.0, 0)).isEqualTo("1200");
     }
 
     @Test

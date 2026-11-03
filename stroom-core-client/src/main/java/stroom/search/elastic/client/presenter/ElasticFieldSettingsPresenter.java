@@ -293,13 +293,11 @@ public class ElasticFieldSettingsPresenter
         try {
             final ElasticFieldSettingsView view = getView();
             if (row == null || model == null) {
-                view.setFieldName("");
                 view.setDenseVectorVisible(false);
                 view.setVirtualVisible(false);
                 view.setEnabled(false, false, null);
                 return;
             }
-            view.setFieldName(row.getName());
             view.setEnabled(row.isEnabled(), !readOnly && row.isEnabledEditable(), getEnabledNote(row));
             showDenseVector();
             showVirtual();
@@ -517,9 +515,6 @@ public class ElasticFieldSettingsPresenter
 
     /// The view of the Settings tab.
     public interface ElasticFieldSettingsView extends View, HasUiHandlers<ElasticFieldSettingsUiHandlers> {
-
-        /// @param fieldName the name of the field whose settings are shown
-        void setFieldName(String fieldName);
 
         /// @param ticked   whether the Enabled checkbox is ticked
         /// @param editable whether the user may change it
