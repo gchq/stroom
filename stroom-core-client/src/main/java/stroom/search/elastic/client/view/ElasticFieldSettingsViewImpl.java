@@ -17,7 +17,8 @@
 package stroom.search.elastic.client.view;
 
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.item.client.SelectionBox;
+import stroom.item.client.BaseSelectionBox;
+import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter.ElasticFieldSettingsView;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsUiHandlers;
 import stroom.util.shared.NullSafe;
@@ -51,6 +52,7 @@ public class ElasticFieldSettingsViewImpl
                                                "Disabling a field also disables its subfields.";
 
     private final Widget widget;
+    private final FieldNameSelectionListModel rerankTextFieldModel = new FieldNameSelectionListModel();
 
     @UiField
     Label fieldName;
@@ -71,7 +73,7 @@ public class ElasticFieldSettingsViewImpl
     @UiField
     ValueSpinner rerankBatchSize;
     @UiField
-    SelectionBox<String> rerankTextField;
+    BaseSelectionBox<String, SimpleSelectionItemWrapper<String>> rerankTextField;
     @UiField
     TextBox rerankScoreField;
     @UiField
@@ -90,7 +92,9 @@ public class ElasticFieldSettingsViewImpl
         nearestNeighbourCount.setMax(10_000L);
         rerankBatchSize.setMin(1L);
         rerankBatchSize.setMax(100_000L);
-        rerankTextField.setNonSelectString(DocSelectionBoxPresenter.NONE_DISPLAY_VALUE);
+        // Filterable and paged, as an index can have many text fields
+        rerankTextField.setModel(rerankTextFieldModel);
+        rerankTextFieldModel.setNonSelectString(DocSelectionBoxPresenter.NONE_DISPLAY_VALUE);
 
         final HelpButton enabledHelp = HelpButton.create();
         enabledHelp.setHelpContent("Enabled", new SafeHtmlBuilder()
@@ -140,10 +144,10 @@ public class ElasticFieldSettingsViewImpl
 
     @Override
     public void setRerankTextFieldOptions(final List<String> fieldNames) {
-        rerankTextField.clear();
+        rerankTextFieldModel.clear();
         // Clearing removes the 'None' item too, so add it back first
-        rerankTextField.setNonSelectString(DocSelectionBoxPresenter.NONE_DISPLAY_VALUE);
-        rerankTextField.addItems(fieldNames);
+        rerankTextFieldModel.setNonSelectString(DocSelectionBoxPresenter.NONE_DISPLAY_VALUE);
+        rerankTextFieldModel.addItems(fieldNames);
     }
 
     @Override

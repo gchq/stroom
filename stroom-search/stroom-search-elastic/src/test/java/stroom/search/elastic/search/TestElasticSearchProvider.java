@@ -46,6 +46,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -938,6 +939,57 @@ class TestElasticSearchProvider {
                 .containsEntry("similarity", "cosine")
                 .doesNotContainKey("type");
         assertThat(fieldsMap.get("Vector").getSourceIndices()).containsExactly(INDEX_NAME);
+    }
+
+    @Test
+    void testGetFieldsMap_nestedMappingParametersAreListedByPath() throws IOException {
+        givenMapping("""
+                {
+                  "Vector": {
+                    "type": "dense_vector",
+                    "dims": 3,
+                    "index_options": {
+                      "type": "int8_hnsw",
+                      "m": 16,
+                      "rescore_vector": { "oversample": 3.0 }
+                    }
+                  },
+                  "Name": { "type": "keyword", "copy_to": ["all", "names"], "meta": {} }
+                }""");
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        assertThat(fieldsMap.get("Vector").getMappingParameters())
+                .containsEntry("dims", "3")
+                .containsEntry("index_options.type", "int8_hnsw")
+                .containsEntry("index_options.m", "16")
+                .containsEntry("index_options.rescore_vector.oversample", "3.0")
+                .doesNotContainKey("index_options");
+        assertThat(fieldsMap.get("Name").getMappingParameters())
+                .containsEntry("copy_to", "all, names");
+    }
+
+    @Test
+    void testFlattenMappingParameter() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final Map<String, String> parameters = new TreeMap<>();
+
+        ElasticSearchProvider.flattenMappingParameter("a",
+                objectMapper.readTree("""
+                        {
+                          "empty": {},
+                          "scalars": [1, "two", true],
+                          "objects": [{"x": "y"}, ["z"]],
+                          "none": null
+                        }"""),
+                parameters);
+
+        assertThat(parameters).containsExactly(
+                Map.entry("a.empty", "{}"),
+                Map.entry("a.none", "null"),
+                Map.entry("a.objects[0].x", "y"),
+                Map.entry("a.objects[1]", "z"),
+                Map.entry("a.scalars", "1, two, true"));
     }
 
     @Test

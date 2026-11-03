@@ -93,7 +93,7 @@
                 </form:FormGroup>
                 <form:FormGroup identity="elasticFieldSettingsRerankTextField" label="Rerank text field"
                                 helpText="Text field whose values are sent to the rerank model.">
-                    <l:SelectionBox ui:field="rerankTextField" width="400px"/>
+                    <l:BaseSelectionBox ui:field="rerankTextField" width="400px"/>
                 </form:FormGroup>
                 <form:FormGroup identity="elasticFieldSettingsRerankScoreField" label="Score field name"
                                 helpText="Name of the field that holds each hit's rerank score in search results.">
