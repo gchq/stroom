@@ -26,6 +26,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
@@ -236,7 +237,8 @@ class TestElasticSearchProviderWireMock {
                 null,
                 null,
                 null,
-                null);
+                null,
+                ElasticSuggestConfig::new);
     }
 
     @AfterEach

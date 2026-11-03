@@ -164,7 +164,21 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         // dragging items due to not catching the mouse up event.
         return !"SELECT".equalsIgnoreCase(tagName) &&
                 !"OPTION".equalsIgnoreCase(tagName) &&
-                !"INPUT".equalsIgnoreCase(tagName);
+                !"INPUT".equalsIgnoreCase(tagName) &&
+                !isWithinButton(element);
+    }
+
+    // Capturing mouse events on mouse down would stop a button in an item, e.g. the term editor's query options
+    // button, from receiving its click. The event target may be the button's icon rather than the button itself.
+    private boolean isWithinButton(final Element element) {
+        Element current = element;
+        while (current != null && current != getElement()) {
+            if ("BUTTON".equalsIgnoreCase(current.getTagName())) {
+                return true;
+            }
+            current = current.getParentElement();
+        }
+        return false;
     }
 
     private void onMouseMove(final Event event) {
