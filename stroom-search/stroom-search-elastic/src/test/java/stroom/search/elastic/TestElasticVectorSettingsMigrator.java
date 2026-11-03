@@ -98,6 +98,22 @@ class TestElasticVectorSettingsMigrator {
     }
 
     @Test
+    void testMigrate_noModelsOnlyClearsLegacySettings() {
+        // Older docs stored the default suffixes and minimum even without any models
+        final ElasticIndexDoc doc = ElasticIndexDoc.builder()
+                .uuid("uuid")
+                .rerankTextFieldSuffix(".text")
+                .rerankScoreFieldSuffix(".score")
+                .rerankScoreMinimum(0.8F)
+                .build();
+
+        final ElasticIndexDoc migrated = ElasticVectorSettingsMigrator.migrate(doc, FIELDS);
+
+        assertThat(migrated.hasLegacyVectorSettings()).isFalse();
+        assertThat(migrated.getFieldSettings()).isEmpty();
+    }
+
+    @Test
     void testMigrate_noLegacySettings() {
         final ElasticIndexDoc doc = ElasticIndexDoc.builder().uuid("uuid").build();
 

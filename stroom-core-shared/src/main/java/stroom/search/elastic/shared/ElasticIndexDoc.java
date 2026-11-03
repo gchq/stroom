@@ -106,10 +106,8 @@ public class ElasticIndexDoc extends AbstractDoc {
     @JsonProperty
     private final Integer searchScrollSize;
 
-    /**
-     * Legacy reference to the `OpenAIModel` used to generate vector embeddings from search query expressions.
-     * Replaced by per-field `dense_vector` settings in {@link #fieldSettings}, to which it is migrated on read.
-     */
+    /// Legacy reference to the `OpenAIModel` used to generate vector embeddings from search query expressions.
+    /// Replaced by per-field `dense_vector` settings in [#fieldSettings], to which it is migrated on read.
     @Deprecated
     @JsonProperty
     private final DocRef vectorGenerationModelRef;
@@ -158,9 +156,7 @@ public class ElasticIndexDoc extends AbstractDoc {
     @JsonProperty
     private final DocRef defaultExtractionPipeline;
 
-    /**
-     * User-defined settings for individual fields, including virtual fields
-     */
+    /// User-defined settings for individual fields, including virtual fields
     @JsonProperty
     private final List<ElasticIndexFieldSettings> fieldSettings;
 

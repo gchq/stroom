@@ -81,6 +81,9 @@ public final class ElasticFieldSettingsValidator {
             throw new EntityServiceException("Virtual field '" + fieldName + "' has the same name as a field of " +
                                              "the index");
         }
+        if (settings.getVirtualGroups().isEmpty()) {
+            throw new EntityServiceException("Virtual field '" + fieldName + "' has no groups");
+        }
         final Set<String> groupNames = new HashSet<>();
         for (final ElasticVirtualFieldGroup group : settings.getVirtualGroups()) {
             final String groupName = group.getName();

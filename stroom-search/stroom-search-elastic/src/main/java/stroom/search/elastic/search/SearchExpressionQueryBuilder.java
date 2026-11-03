@@ -56,6 +56,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,10 @@ public class SearchExpressionQueryBuilder {
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
     private final ElasticQueryParams elasticQueryParams;
+    // The doc's mapped fields by name, built when first needed
+    private Map<String, ElasticIndexField> mappedFields;
+    // How many virtual field groups are being built, whose fields need not be enabled
+    private int virtualGroupDepth;
 
     public SearchExpressionQueryBuilder(
             final Provider<AiService> aiServiceProvider,
@@ -233,7 +238,7 @@ public class SearchExpressionQueryBuilder {
             if (field == null) {
                 return null;
             }
-            final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), field.trim());
+            final IndexField indexField = resolveField(field.trim());
             if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
                 return null;
             }
@@ -289,7 +294,7 @@ public class SearchExpressionQueryBuilder {
         if (field == null || field.isEmpty()) {
             throw new IllegalArgumentException("Field not set");
         }
-        final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), field);
+        final IndexField indexField = resolveField(field);
         if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
             throw new SearchException("Field not found in index: " + field);
         }
@@ -474,13 +479,50 @@ public class SearchExpressionQueryBuilder {
                 .caseInsensitive(caseInsensitive));
     }
 
+    /// Finds a field by name. The index doc's own fields and settings come first, as they are read afresh with the
+    /// doc, whereas the field cache may hold a field for some time after the mapping or settings change. A mapped
+    /// field takes precedence over a virtual field of the same name.
+    ///
+    /// @param fieldName the name of the field
+    /// @return the field, or `null` if there is no such field
+    private IndexField resolveField(final String fieldName) {
+        final Map<String, ElasticIndexField> fields = getMappedFields();
+        final ElasticIndexField mappedField = fields.get(fieldName);
+        if (mappedField != null) {
+            return mappedField;
+        }
+        final IndexField cachedField = indexFieldCache.get(indexDoc.asDocRef(), fieldName);
+        final boolean cachedIsVirtual = cachedField instanceof final ElasticIndexField elasticField
+                                        && elasticField.isVirtual();
+        if (cachedField != null && !cachedIsVirtual && fields.isEmpty()) {
+            // The doc holds no fields, so rely on the cache for mapped fields
+            return cachedField;
+        }
+        final ElasticIndexFieldSettings settings = indexDoc.findFieldSettings(fieldName);
+        if (settings != null && settings.isVirtual()) {
+            return ElasticSearchProvider.createVirtualField(fieldName);
+        }
+        return cachedIsVirtual
+                ? null
+                : cachedField;
+    }
+
+    private Map<String, ElasticIndexField> getMappedFields() {
+        if (mappedFields == null) {
+            mappedFields = new HashMap<>();
+            NullSafe.list(indexDoc.getFields()).forEach(field -> mappedFields.put(field.getFldName(), field));
+        }
+        return mappedFields;
+    }
+
     /// Throws if a field can't be used in a query, because it is disabled or its source indices disagree on its type.
     private void checkFieldUsable(final ElasticIndexField field) {
         if (field.hasTypeConflict()) {
             throw new SearchException("Field '" + field.getFldName() + "' has conflicting types across the source " +
                                       "indices of " + indexDoc.getName() + ", so can't be queried");
         }
-        if (!ElasticSearchProvider.isFieldEnabled(indexDoc, field)) {
+        // A virtual field's groups may use fields that are disabled, so that users see only the virtual field
+        if (virtualGroupDepth == 0 && !ElasticSearchProvider.isFieldEnabled(indexDoc, field)) {
             throw new SearchException("Field '" + field.getFldName() + "' is disabled in " + indexDoc.getName());
         }
     }
@@ -587,9 +629,15 @@ public class SearchExpressionQueryBuilder {
         if (expression != null) {
             checkVirtualGroupFields(fieldName, group, expression);
         }
-        final Query query = expression == null
-                ? null
-                : getQuery(expression, enclosingPaths);
+        Query query = null;
+        if (expression != null) {
+            virtualGroupDepth++;
+            try {
+                query = getQuery(expression, enclosingPaths);
+            } finally {
+                virtualGroupDepth--;
+            }
+        }
         if (query == null) {
             throw new SearchException("Group '" + group.getName() + "' of virtual field '" + fieldName +
                                       "' has no conditions");
@@ -610,7 +658,7 @@ public class SearchExpressionQueryBuilder {
             final String termField = NullSafe.get(term.getField(), String::trim);
             final IndexField indexField = termField == null
                     ? null
-                    : indexFieldCache.get(indexDoc.asDocRef(), termField);
+                    : resolveField(termField);
             if (!(indexField instanceof final ElasticIndexField elasticIndexField)
                 || elasticIndexField.isVirtual()
                 || !Kind.Keyword.jsonValue().equals(elasticIndexField.getNativeType())) {
@@ -905,7 +953,7 @@ public class SearchExpressionQueryBuilder {
      * @return true if the field at the given path is mapped in Elasticsearch as a `nested` type.
      */
     private boolean isNestedField(final String path) {
-        final IndexField indexField = indexFieldCache.get(indexDoc.asDocRef(), path);
+        final IndexField indexField = resolveField(path);
         return indexField instanceof final ElasticIndexField elasticIndexField &&
                Kind.Nested.jsonValue().equals(elasticIndexField.getNativeType());
     }

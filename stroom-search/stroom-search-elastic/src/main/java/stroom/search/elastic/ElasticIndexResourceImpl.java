@@ -28,8 +28,12 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.PermissionException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
@@ -50,6 +54,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     private final Provider<ElasticClientFactory> elasticClientFactoryProvider;
     private final Provider<ElasticIndexService> elasticIndexServiceProvider;
     private final Provider<ElasticFieldStatsService> elasticFieldStatsServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ElasticIndexResourceImpl(
@@ -60,7 +65,8 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider,
             final Provider<ElasticClientFactory> elasticClientFactoryProvider,
             final Provider<ElasticIndexService> elasticIndexServiceProvider,
-            final Provider<ElasticFieldStatsService> elasticFieldStatsServiceProvider
+            final Provider<ElasticFieldStatsService> elasticFieldStatsServiceProvider,
+            final Provider<SecurityContext> securityContextProvider
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
@@ -70,6 +76,7 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
         this.elasticClientFactoryProvider = elasticClientFactoryProvider;
         this.elasticIndexServiceProvider = elasticIndexServiceProvider;
         this.elasticFieldStatsServiceProvider = elasticFieldStatsServiceProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -126,11 +133,18 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
         }
     }
 
-    /// Reads the index doc first, so only users who may view it can read its fields.
+    /// The fields are read using the cluster and index name as given, which may not be saved, so only users who
+    /// may edit the doc can read them.
     @Override
     @AutoLogged(OperationType.VIEW)
     public List<ElasticIndexField> fetchFields(final ElasticIndexDoc elasticIndexDoc) {
-        documentResourceHelperProvider.get().read(elasticIndexStoreProvider.get(), elasticIndexDoc.asDocRef());
+        final DocRef docRef = elasticIndexDoc.asDocRef();
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            throw new PermissionException(
+                    securityContext.getUserRef(),
+                    LogUtil.message("You are not authorised to edit {}", docRef));
+        }
         return elasticIndexServiceProvider.get().getFields(elasticIndexDoc);
     }
 

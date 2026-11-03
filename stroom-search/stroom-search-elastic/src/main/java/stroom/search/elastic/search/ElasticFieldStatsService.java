@@ -60,6 +60,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,10 @@ public class ElasticFieldStatsService {
                     securityContext.getUserRef(),
                     LogUtil.message("You are not authorised to search {}", docRef));
         }
-        final ElasticIndexDoc indexDoc = elasticIndexStore.readDocument(docRef);
+        // As for a search, permission to use the index is enough to read it, its cluster and its connection. Other
+        // docs a virtual field's groups refer to, such as dictionaries, are still read as the user.
+        final ElasticIndexDoc indexDoc = securityContext.useAsReadResult(() ->
+                elasticIndexStore.readDocument(docRef));
         if (indexDoc == null) {
             throw new IllegalArgumentException("Elasticsearch index " + docRef + " was not found");
         }
@@ -166,13 +170,38 @@ public class ElasticFieldStatsService {
             return emptyStats(fieldName, sampleSize, maxSampleSize, message);
         }
 
-        final ElasticClusterDoc cluster = elasticClusterStore.readDocument(indexDoc.getClusterRef());
-        if (cluster == null) {
-            throw new IllegalArgumentException("Elasticsearch cluster for " + indexDoc.getName() + " was not found");
+        final Map<String, Query> groupQueries = field == null
+                ? buildGroupQueries(indexDoc, fieldName, virtualGroups)
+                : null;
+        return securityContext.useAsReadResult(() -> {
+            final ElasticClusterDoc cluster = elasticClusterStore.readDocument(indexDoc.getClusterRef());
+            if (cluster == null) {
+                throw new IllegalArgumentException("Elasticsearch cluster for " + indexDoc.getName() +
+                                                   " was not found");
+            }
+            return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> field == null
+                    ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampleSize, maxSampleSize)
+                    : getMappedFieldStats(elasticClient, indexDoc, request, field, sampleSize, maxSampleSize));
+        });
+    }
+
+    /// Builds each group's query as a search would.
+    ///
+    /// @return the queries keyed by group name, in group order
+    private Map<String, Query> buildGroupQueries(final ElasticIndexDoc indexDoc,
+                                                 final String fieldName,
+                                                 final List<ElasticVirtualFieldGroup> groups) {
+        final SearchExpressionQueryBuilder queryBuilder = new SearchExpressionQueryBuilder(
+                aiServiceProvider,
+                indexDoc,
+                indexFieldCache,
+                wordListProvider,
+                DateTimeSettings.builder().build());
+        final Map<String, Query> groupQueries = new LinkedHashMap<>();
+        for (final ElasticVirtualFieldGroup group : groups) {
+            groupQueries.put(group.getName(), queryBuilder.buildVirtualGroupQuery(fieldName, group, List.of()));
         }
-        return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> field == null
-                ? getVirtualFieldStats(elasticClient, indexDoc, request, virtualGroups, sampleSize, maxSampleSize)
-                : getMappedFieldStats(elasticClient, indexDoc, request, field, sampleSize, maxSampleSize));
+        return groupQueries;
     }
 
     /// @return the groups of the requested field if it is a virtual field, preferring the groups as edited in the
@@ -186,12 +215,26 @@ public class ElasticFieldStatsService {
             return null;
         }
         if (request.getVirtualGroups() != null) {
+            checkGroupNames(request.getVirtualGroups());
             return request.getVirtualGroups();
         }
         final ElasticIndexFieldSettings settings = indexDoc.findFieldSettings(request.getFieldName());
         return settings != null && settings.isVirtual()
                 ? settings.getVirtualGroups()
                 : null;
+    }
+
+    private static void checkGroupNames(final List<ElasticVirtualFieldGroup> groups) {
+        final Set<String> names = new HashSet<>();
+        for (final ElasticVirtualFieldGroup group : groups) {
+            if (NullSafe.isBlankString(group.getName())) {
+                throw new IllegalArgumentException("A group of the virtual field has no name");
+            }
+            if (!names.add(group.getName())) {
+                throw new IllegalArgumentException("The virtual field has more than one group named '" +
+                                                   group.getName() + "'");
+            }
+        }
     }
 
     private ElasticFieldStats getMappedFieldStats(final ElasticsearchClient elasticClient,
@@ -306,21 +349,9 @@ public class ElasticFieldStatsService {
     private ElasticFieldStats getVirtualFieldStats(final ElasticsearchClient elasticClient,
                                                    final ElasticIndexDoc indexDoc,
                                                    final ElasticFieldStatsRequest request,
-                                                   final List<ElasticVirtualFieldGroup> groups,
+                                                   final Map<String, Query> groupQueries,
                                                    final int sampleSize,
                                                    final int maxSampleSize) {
-        // Build each group's query as a search would, from the groups as edited
-        final SearchExpressionQueryBuilder queryBuilder = new SearchExpressionQueryBuilder(
-                aiServiceProvider,
-                indexDoc,
-                indexFieldCache,
-                wordListProvider,
-                DateTimeSettings.builder().build());
-        final Map<String, Query> groupQueries = new LinkedHashMap<>();
-        for (final ElasticVirtualFieldGroup group : groups) {
-            groupQueries.put(group.getName(),
-                    queryBuilder.buildVirtualGroupQuery(request.getFieldName(), group, List.of()));
-        }
         final Query anyGroup = QueryBuilders.bool(b -> b.should(new ArrayList<>(groupQueries.values())));
 
         final Map<String, Aggregation> subAggs = Map.of(

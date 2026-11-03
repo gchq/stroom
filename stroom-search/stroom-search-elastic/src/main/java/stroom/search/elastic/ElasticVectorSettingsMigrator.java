@@ -44,7 +44,8 @@ public final class ElasticVectorSettingsMigrator {
     }
 
     /// Copies the doc's legacy vector settings onto every `dense_vector` field that has no vector settings of its
-    /// own, then removes the legacy settings from the doc.
+    /// own, then removes the legacy settings from the doc. If the doc has no embedding or rerank model, the legacy
+    /// settings are simply removed.
     ///
     /// If the doc has no legacy settings, or none of the given fields is a `dense_vector` field (for example because
     /// the index mapping could not be read), the doc is returned unchanged, so the legacy settings are not lost.
@@ -56,6 +57,13 @@ public final class ElasticVectorSettingsMigrator {
     public static ElasticIndexDoc migrate(final ElasticIndexDoc doc, final List<ElasticIndexField> fields) {
         if (doc == null || !doc.hasLegacyVectorSettings()) {
             return doc;
+        }
+        if (doc.getVectorGenerationModelRef() == null && doc.getRerankModelRef() == null) {
+            // Older docs stored the default suffixes and score minimum even without any vector search models, so
+            // there is nothing worth moving to the fields
+            return doc.copy()
+                    .clearLegacyVectorSettings()
+                    .build();
         }
         final List<ElasticIndexField> vectorFields = NullSafe.list(fields)
                 .stream()
