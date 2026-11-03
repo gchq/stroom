@@ -2233,6 +2233,37 @@ this extends it to every handler. When counted (wave 13), the converted componen
   converted are moved by their waves).
 * Until then, new and converted components already follow this.
 
+### Sample data installs the old visualisations, with no assets
+
+**Fixed** (3 November 2026), not yet run against a database: `SetupSampleData` now leaves the
+Content Store's `stroom-visualisations` entry out (`ContentStoreTestSetup.installSampleDataPacks`
+takes the packs to leave out) and imports the zip that `content-packs.json` names instead, downloaded
+into `~/.stroom/contentPackDownload` unless it is there already, through `ImportExportService`, so
+with its assets (`ReleasedContentPacks`, `TestReleasedContentPacks`). The in-app Content Store still
+offers the old pack, as `stroom-content` lists it.
+
+**Confirmed** (3 November 2026). A database made with `./gradlew setupSampleData` has the legacy
+visualisations, not the 8.0 pack that `content-packs.json` names (`v8.0-beta.3`), and no asset
+files. `SetupSampleData` never reads `content-packs.json` (its `downloadContent` is never called):
+`ContentStoreTestSetup.installSampleDataPacks` installs every pack listed in `stroom-content`'s
+remote `source/content-store.yml` and `sample-source/content-store.yml`, from git, and their
+`stroom-visualisations` entry is `stroom-visualisations-dev` branch `main`, `war/stroom_content/`,
+the old pack (the 8.0 pack is on the `8.0` branch, released as zips). Seen by the user as dashboards
+in the sample data drawing old visualisations, which also hid some splitter lines beside them (see
+below). Possible fixes: have `SetupSampleData` install the visualisations from `content-packs.json`'s
+release zip (the dead `downloadContent` and `ContentPackZipDownloader` already do this for the
+Docker and zip builds) in place of the content store's git entry; or point `stroom-content`'s entry
+at the `8.0` branch, which would change the in-app Content Store for every Stroom too. The first
+was chosen.
+
+Related, **Reported**: a splitter's 1px line is drawn on the first pixel of the panel after it
+(`LayoutSizes` puts it at the end of the panel before, where the next starts), and a visualisation's
+frame covers that panel's content on the page's body. In the workbench the splitter is above the
+frame (`SplitterAboveVisualisation`), but only for a vertical splitter, with nothing around the
+dashboard; a visualisation that paints its own background could still hide a line where that
+doesn't hold, e.g. a horizontal splitter, nested splits, or a stacking context around the dashboard
+in the app. Not yet checked with the old visualisations.
+
 ## Smaller oddities
 
 **Reported** (30 October 2026, found fixing the processor profile periods' Remove): lists that
