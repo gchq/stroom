@@ -40,6 +40,7 @@ import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -53,6 +54,10 @@ import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.ElasticTestNode;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractAiIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -167,6 +172,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     private IndexShardManager indexShardManager;
     @Inject
     private ProcessorService processorService;
+    @Inject
+    private ElasticClusterStore elasticClusterStore;
 
     /// The administrator's client, which shows forms: the user answers them (see [McpTestClient#agree]).
     McpTestClient client;
@@ -821,6 +828,81 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                     .build());
         });
         return node.getUuid();
+    }
+
+    /// An indexing template reading Events into Elasticsearch: the content pack's Indexing, its Lucene filter swapped
+    /// for Elasticsearch's, with a JSON schema filter before it, as the live one has.
+    ///
+    /// @param name        Its name, beside the standard templates.
+    /// @param description Its description (the suite it is a fixture for).
+    /// @return Its UUID.
+    @SuppressWarnings("unchecked")
+    String elasticEventsTemplate(final String name, final String description) {
+        final String lucene = templateUuid("indexing", "Indexing");
+        final ExplorerNode created = create(PipelineDoc.TYPE, name, templateFolder());
+        asUser(admin, () -> {
+            final PipelineDoc source = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, lucene));
+            final String json = JsonUtil.writeValueAsString(source.getPipelineData(), false)
+                    .replace("\"indexingFilter\"", "\"elasticIndexingFilter\"")
+                    .replace("\"IndexingFilter\"", "\"ElasticIndexingFilter\"");
+            final Map<String, Object> data = JsonUtil.readValue(json, Map.class);
+            final List<Map<String, Object>> elements = (List<Map<String, Object>>) ((Map<String, Object>)
+                    data.computeIfAbsent("elements", key -> new LinkedHashMap<>()))
+                    .computeIfAbsent("add", key -> new ArrayList<>());
+            elements.add(Map.of("id", "schemaFilter", "type", "SchemaFilter"));
+            ((List<Map<String, Object>>) ((Map<String, Object>) data.computeIfAbsent("properties",
+                    key -> new LinkedHashMap<>())).computeIfAbsent("add", key -> new ArrayList<>()))
+                    .add(Map.of("element", "schemaFilter", "name", "schemaGroup", "value", Map.of("string", "JSON")));
+            final List<Map<String, Object>> links = (List<Map<String, Object>>) ((Map<String, Object>)
+                    data.computeIfAbsent("links", key -> new LinkedHashMap<>()))
+                    .computeIfAbsent("add", key -> new ArrayList<>());
+            for (final Map<String, Object> link : links) {
+                if ("xsltFilter".equals(link.get("from")) && "elasticIndexingFilter".equals(link.get("to"))) {
+                    link.put("to", "schemaFilter");
+                }
+            }
+            links.add(Map.of("from", "schemaFilter", "to", "elasticIndexingFilter"));
+            pipelineStore.writeDocument(pipelineStore.readDocument(created.getDocRef()).copy()
+                    .description(description)
+                    .pipelineData(JsonUtil.readValue(JsonUtil.writeValueAsString(data, false), PipelineData.class))
+                    .build());
+        });
+        return created.getUuid();
+    }
+
+    /// An Elastic Cluster document for a live test node, beside the standard templates.
+    ///
+    /// @param node The test node.
+    /// @param name The document's name.
+    /// @return The document.
+    DocRef liveElasticCluster(final ElasticTestNode node, final String name) {
+        final ExplorerNode created = create(ElasticClusterDoc.TYPE, name, templateFolder());
+        final ElasticConnectionConfig connection = new ElasticConnectionConfig();
+        connection.setConnectionUrls(List.of(node.getUrl()));
+        asUser(admin, () -> elasticClusterStore.writeDocument(elasticClusterStore.readDocument(created.getDocRef())
+                .copy()
+                .connection(connection)
+                .build()));
+        return created.getDocRef();
+    }
+
+    /// The cluster admin applies a Dev Tools request the user was given (its first line the method and path, the
+    /// rest the body).
+    ///
+    /// @param node     The test node.
+    /// @param devTools The request.
+    /// @return The index template it puts, for the test to remove; null for any other request.
+    static String applyDevTools(final ElasticTestNode node, final String devTools) {
+        final int newline = devTools.indexOf('\n');
+        final String[] line = devTools.substring(0, newline).strip().split(" ", 2);
+        final String path = line[1].strip();
+        final ElasticTestNode.Response response = node.request(line[0], "/" + path,
+                devTools.substring(newline + 1));
+        assertThat(response.isSuccess()).as("%s %s: %s %s", line[0], path, response.status(), response.body())
+                .isTrue();
+        return path.startsWith("_index_template/")
+                ? path.substring("_index_template/".length())
+                : null;
     }
 
     /// A template made directly in Stroom of a pipeline writing lines of text to a file, as a CEF pipeline in an

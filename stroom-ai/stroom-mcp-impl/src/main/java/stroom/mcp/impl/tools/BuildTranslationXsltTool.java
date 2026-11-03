@@ -573,7 +573,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         b.result = builds.generated(b.mapping, b.schema, b.version);
         b.result.put("schema_version", b.version);
-        if (request.schemaVersion() == null) {
+        // A version given still needs telling where the user chose the variant in a form the agent didn't see.
+        if (request.schemaVersion() == null || eventVersions.variantChosenInForm(context, request.build())) {
             eventVersions.settled(context, request.build(), b.version)
                     .ifPresent(settled -> b.result.put("schema_version_settled", settled));
         }

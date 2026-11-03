@@ -439,6 +439,25 @@ public class EventVersions {
                 : Optional.of(doc.strip());
     }
 
+    /// @return The Events namespaces this Stroom's schemas define: event-logging:3, and each fork's.
+    public Set<String> eventsNamespaces() {
+        final Set<String> namespaces = new LinkedHashSet<>();
+        namespaces.add(EventsNamespaces.STANDARD);
+        namespaces.addAll(forkNamespaces().keySet());
+        return namespaces;
+    }
+
+    /// @param context The call's context.
+    /// @param build   The build the call names, or null.
+    /// @return Whether the user chose the build's variant (its Events namespace) in the server's form, in this
+    /// session: the agent, which didn't see the form, is to be told.
+    public boolean variantChosenInForm(final ToolCallContext context, final String build) {
+        final Variant variant = variants.get(sessionKey(context == null
+                ? null
+                : context.session(), buildKey(context, build)));
+        return variant != null && FORM.equals(variant.how());
+    }
+
     /// Remembers the version for the build, and how it was settled.
     ///
     /// @param context The call's context.

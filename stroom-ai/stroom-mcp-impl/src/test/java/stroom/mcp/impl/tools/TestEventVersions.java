@@ -419,6 +419,8 @@ class TestEventVersions {
                 .containsEntry("options", List.of("4.1.0", "3.5.2"));
         // The version given next is event-logging's, not asked about the variant again.
         assertThat(world.eventVersions.target(CALL, context, "4.1.0", "b1").version()).isEqualTo("4.1.0");
+        // Given by the agent: nothing it didn't see.
+        assertThat(world.eventVersions.variantChosenInForm(context, "b1")).isFalse();
         assertThat(world.eventVersions.chosenFork(context, "b1")).isEmpty();
     }
 
@@ -465,6 +467,9 @@ class TestEventVersions {
         assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("3.5.2");
 
         assertThat(world.eventVersions.chosenFork(context, "b1")).isEmpty();
+        // Chosen in a form the agent didn't see: it is told, even where it gave the version.
+        assertThat(world.eventVersions.variantChosenInForm(context, "b1")).isTrue();
+        assertThat(world.eventVersions.variantChosenInForm(context, "b2")).isFalse();
         assertThat(world.eventVersions.settled(context, "b1", "3.5.2")).hasValueSatisfying(said ->
                 assertThat(said).startsWith("The user chose event-logging (namespace event-logging:3) over the "
                                             + "environment's fork").contains("The user chose event-logging 3.5.2"));
