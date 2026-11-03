@@ -241,7 +241,6 @@ public class ElasticIndexField implements IndexField {
     }
 
     /// @return `true` if source indices map this field to different types
-    @JsonIgnore
     public boolean hasTypeConflict() {
         return conflictingTypes != null;
     }
