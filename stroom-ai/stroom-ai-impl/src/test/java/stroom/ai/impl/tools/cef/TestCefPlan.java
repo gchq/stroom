@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.cef;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocFixtures;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
+import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -167,6 +168,31 @@ class TestCefPlan {
             assertThat(plan.header("version")).isEqualTo(CefValue.from("EventSource/System/Version"));
             assertThat(plan.problems()).isEmpty();
         }
+    }
+
+    @Test
+    void eventsInAForkedNamespaceAreDraftedAndReadInIt() {
+        // An environment's fork of the event-logging schema: its Events in a namespace of their own.
+        final String fork = "file://xml/schema/test-fork/events";
+        final String forked = CefFixtures.EVENTS.replace("event-logging:3", fork);
+
+        final List<XmlElement> events = CefEvents.eventsOf(forked);
+        final CefPlan plan = CefDraft.draft(events, false, List.of(), null, CefPlan.KAFKA, "t", null).plan();
+
+        assertThat(events).hasSameSizeAs(CefEvents.eventsOf(CefFixtures.EVENTS));
+        assertThat(plan.eventsNamespace()).isEqualTo(fork);
+        assertThat(plan.xslt()).contains("xpath-default-namespace=\"" + fork + "\"");
+        // Its lines are the standard Events' lines.
+        final CefPlan standard = CefDraft.draft(CefEvents.eventsOf(CefFixtures.EVENTS), false, List.of(), null,
+                CefPlan.KAFKA, "t", null).plan();
+        assertThat(CefSample.lines(plan, events, 10)).isNotEmpty()
+                .isEqualTo(CefSample.lines(standard, CefEvents.eventsOf(CefFixtures.EVENTS), 10));
+        // Kept with the plan, read back, and carried by its changes; a standard plan keeps none.
+        assertThat(plan.toJson(DumpMode.COMPACT)).containsEntry("events_namespace", fork);
+        assertThat(CefPlan.fromJson(plan.toJson(DumpMode.ALL)).eventsNamespace()).isEqualTo(fork);
+        assertThat(plan.withTopic("u").eventsNamespace()).isEqualTo(fork);
+        assertThat(standard.eventsNamespace()).isNull();
+        assertThat(standard.toJson(DumpMode.ALL)).doesNotContainKey("events_namespace");
     }
 
     @Test

@@ -47,6 +47,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -621,10 +622,12 @@ public class TranslationDocs {
             payload.put("schema_version", version);
             // The document of the version the user chose, where this Stroom holds it in more than one; else the one
             // kept with the XSLT before (a working copy of a production XSLT, say, has no build choice).
+            // A fork's code: the fork it writes, so the mapping regenerates in the fork, whatever its version.
             eventVersions.chosenDoc(context, build, version)
                     .or(() -> eventVersions.keptDoc(KeptMapping.readMapping(description)
                             .map(KeptMapping.Kept::payload)
                             .orElse(null), version))
+                    .or(() -> eventVersions.forkWrittenBy(code).map(XmlSchemaDoc::getUuid))
                     .ifPresent(uuid -> payload.put(EventVersions.KEPT_SCHEMA_UUID, uuid));
             payload.put("mapping", source.mapping().toJson(DumpMode.COMPACT));
             final String withMapping = KeptMapping.withMapping(description, KeptMapping.TRANSLATION, payload);

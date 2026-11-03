@@ -287,7 +287,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     private Optional<String> fragmentNamespace(final ToolCallContext context, final String build, final String text) {
         final Map<String, Object> setup = sampleProfiling.withFragmentSetup(sampleProfiling.profile(text),
-                eventVersions.chosen(context, build).orElse(null));
+                eventVersions.chosen(context, build).orElse(null),
+                eventVersions.chosenFork(context, build).orElse(null));
         return setup.get("xslt_input") instanceof final Map<?, ?> input && input.get("namespace") != null
                 ? Optional.of(String.valueOf(input.get("namespace")))
                 : Optional.empty();

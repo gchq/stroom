@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.util.shared.NullSafe;
 
 import org.w3c.dom.Element;
 
@@ -56,6 +57,9 @@ public final class EventSchema {
     private static final Pattern PREDICATE = Pattern.compile("\\[[^\\]]*]");
 
     private final String version;
+    private final String namespace;
+    // The system id of the XML schema document it was read from, or null if not known.
+    private final String systemId;
     private final Element event;
     // Read only under its own lock, for a declaration that isn't one of the schema's own.
     private final Reader reader;
@@ -67,6 +71,9 @@ public final class EventSchema {
     private EventSchema(final Element root) {
         reader = new Reader(root);
         version = reader.version;
+        namespace = NullSafe.nonBlankStringElse(XmlTrees.attribute(root, "targetNamespace"),
+                HeldSchemas.EVENT_LOGGING_NS);
+        systemId = null;
         event = reader.event;
         decls = Collections.unmodifiableMap(reader.everyDecl(event));
         requiredChoices = copied(reader.requiredChoices);
@@ -75,6 +82,20 @@ public final class EventSchema {
         index(foundPaths, foundValues);
         paths = copied(foundPaths);
         values = copied(foundValues);
+    }
+
+    // A copy of another, read from a document of the given system id: everything it worked out is shared, as none
+    // of it is ever changed.
+    private EventSchema(final EventSchema other, final String systemId) {
+        reader = other.reader;
+        version = other.version;
+        namespace = other.namespace;
+        this.systemId = systemId;
+        event = other.event;
+        decls = other.decls;
+        requiredChoices = other.requiredChoices;
+        paths = other.paths;
+        values = other.values;
     }
 
     /// @param xsd The event-logging XSD's text.
@@ -88,6 +109,31 @@ public final class EventSchema {
     /// @return The schema's version attribute, e.g. `4.1.0`, or null.
     public String version() {
         return version;
+    }
+
+    /// @return The namespace its Events are in (the XSD's targetNamespace): `event-logging:3`, or an environment's
+    /// fork's own (seen: `file://xml/schema/accounting/events`).
+    public String namespace() {
+        return namespace;
+    }
+
+    /// @return The system id of the XML schema document it was read from (what an Events document names in its
+    /// xsi:schemaLocation), or null if not known.
+    public String systemId() {
+        return systemId;
+    }
+
+    /// @param systemId The system id of the XML schema document it was read from.
+    /// @return It, knowing that system id; this one if it already does.
+    public EventSchema withSystemId(final String systemId) {
+        return Objects.equals(this.systemId, systemId)
+                ? this
+                : new EventSchema(this, systemId);
+    }
+
+    /// @return True if its Events are in an environment's fork of the event-logging schema, not `event-logging:3`.
+    public boolean isFork() {
+        return !HeldSchemas.EVENT_LOGGING_NS.equals(namespace);
     }
 
     /// @return The declaration of Event.
@@ -244,6 +290,38 @@ public final class EventSchema {
             current = children.stream().map(Child::decl).toList();
         }
         return false;
+    }
+
+    /// Whether the schema has an element at a path below Event: predicates are ignored, a wildcard step stands for
+    /// any child, and a trailing attribute step is not judged (attributes aren't modelled). Seen in testing: an
+    /// index plan written by hand named sources no Event has, and nothing said so.
+    ///
+    /// @param path A plain path below Event, e.g. `EventDetail/Network/*/Data[@Name='App']/@Value`.
+    /// @return False only for a plain path one of whose element steps the schema has no place for; an expression
+    /// rather than a path counts as known.
+    public boolean hasPath(final String path) {
+        final List<String> steps = segments(PREDICATE.matcher(path.split(" ! ", -1)[0]).replaceAll(""));
+        if (steps.isEmpty() || steps.stream().anyMatch(step -> !WILD_STEP.matcher(step).matches())) {
+            return true;
+        }
+        List<Element> current = List.of(event);
+        for (final String step : steps) {
+            if ("Event".equals(step) && current.size() == 1 && current.getFirst() == event) {
+                continue;
+            }
+            if (step.startsWith("@")) {
+                return true;
+            }
+            current = current.stream()
+                    .flatMap(decl -> children(decl).stream())
+                    .filter(child -> "*".equals(step) || child.name().equals(step))
+                    .map(Child::decl)
+                    .toList();
+            if (current.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// @param name An element's name.

@@ -24,6 +24,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.textconverter.TextConverterStore;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -141,6 +142,23 @@ class TestSampleProfiling {
         assertThat((String) ((Map<?, ?>) environment().withFragmentSetup(profiled, "3.5.2").get("text_converter"))
                 .get("code")).contains("event-logging-v3.5.2.xsd");
         assertThat(((Map<?, ?>) setup.get("xslt_input")).get("namespace")).isEqualTo("event-logging:3");
+    }
+
+    @Test
+    void eventFragmentsForABuildWritingAForkAreWrappedInTheFork() {
+        // Fragments that declare no namespace take the wrapper's: for a build writing an environment's fork, the
+        // fork's, else the XSLT reads them in event-logging:3 and the schema filter refuses its output.
+        final String fork = "file://xml/schema/test-fork/events";
+        final XmlSchemaDoc forkDoc = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
+                .systemId("file://test-fork-events-v1.2.0.xsd").namespaceURI(fork).schemaGroup("EVENTS").build();
+
+        final Map<String, Object> setup = environment().withFragmentSetup(SampleProfiler.profile(EVENTS), "1.2.0",
+                forkDoc);
+
+        assertThat((String) ((Map<?, ?>) setup.get("text_converter")).get("code"))
+                .contains("xmlns=\"" + fork + "\"", fork + " file://test-fork-events-v1.2.0.xsd", "Version=\"1.2.0\"")
+                .doesNotContain("event-logging");
+        assertThat(((Map<?, ?>) setup.get("xslt_input")).get("namespace")).isEqualTo(fork);
     }
 
     @Test

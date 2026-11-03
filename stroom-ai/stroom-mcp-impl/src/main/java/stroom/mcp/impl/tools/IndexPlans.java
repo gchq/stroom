@@ -30,6 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 
@@ -121,16 +122,28 @@ class IndexPlans {
         if (plan.discovery() != null) {
             return plan;
         }
-        final EventSchema schema;
+        final EventSchema schema = eventSchema(plan);
+        return schema == null
+                ? plan
+                : IndexingHelpers.withCardinality(plan, schema);
+    }
+
+    // The schema of the Events a plan reads: for a fork's namespace, the fork's own (it may add elements, e.g. an
+    // activity of its own); else the newest event-logging version held, not yet the build's chosen one (which the
+    // translation tools keep). Null for a Stroom without it.
+    private EventSchema eventSchema(final FieldPlan plan) {
         try {
-            // The newest version held, not yet the build's chosen one (which the translation tools keep).
-            schema = heldSchemas.eventSchema(heldSchemas.chosenOrLatest(null));
+            if (plan.eventsNamespace() != null) {
+                final List<XmlSchemaDoc> forks = heldSchemas.forksIn(plan.eventsNamespace());
+                return forks.isEmpty()
+                        ? null
+                        : heldSchemas.eventSchema(forks.getFirst());
+            }
+            return heldSchemas.eventSchema(heldSchemas.chosenOrLatest(null));
         } catch (final RuntimeException e) {
-            // A Stroom without the schema: nothing marked.
-            LOGGER.info(() -> LogUtil.message("Fields not checked for several values: {}", e.getMessage()));
-            return plan;
+            LOGGER.info(() -> LogUtil.message("Plan's fields not checked against the schema: {}", e.getMessage()));
+            return null;
         }
-        return IndexingHelpers.withCardinality(plan, schema);
     }
 
     /// The plan with the convention it was drafted under, when the agent's copy left it out (it decides whether the
@@ -196,6 +209,12 @@ class IndexPlans {
             reply.put("field_mapping", IndexFieldDocs.indexFieldMappingMarkdown(plan, populated, null, null,
                     FieldDocs.BY_EVENT_TYPE, null));
         }
+        if (plan.discovery() == null) {
+            final List<String> unknown = IndexingHelpers.plannedNotInSchema(plan, eventSchema(plan));
+            if (!unknown.isEmpty()) {
+                reply.put("fields_not_in_schema", unknown);
+            }
+        }
         final List<String> departures = conventionProblems(plan, ecs);
         if (!departures.isEmpty()) {
             reply.put("ecs_check", departures);
@@ -204,6 +223,10 @@ class IndexPlans {
                 ? " fields_not_in_sample: no event of the sample has their source, so the index never gets them as "
                   + "the Events stand: leave each out (changes= with remove), or, if the events should carry it, "
                   + "have the translation write it first."
+                : "") + (reply.containsKey("fields_not_in_schema")
+                ? " fields_not_in_schema: the Events schema has no element at their source, so no Event can "
+                  + "hold it: correct the source to a path the Events have (summarise_streams' path_population), or "
+                  + "leave the field out."
                 : ""));
         return reply;
     }

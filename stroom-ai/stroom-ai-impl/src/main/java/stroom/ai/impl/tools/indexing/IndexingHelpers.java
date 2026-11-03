@@ -194,6 +194,28 @@ public final class IndexingHelpers {
         return out;
     }
 
+    /// @param plan   A plan.
+    /// @param schema The event-logging schema the Events follow, or null if it can't be read.
+    /// @return Each planned field whose source the schema has no element for, as `name <- source`; none for a
+    /// discovery plan or without the schema. The ids, shared templates' fields and expressions are left out.
+    public static List<String> plannedNotInSchema(final FieldPlan plan, final EventSchema schema) {
+        if (plan.discovery() != null || schema == null) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        for (final PlannedField field : plan.leafFields()) {
+            final String source = field.source();
+            if (source == null || source.isEmpty() || source.startsWith("@") || source.startsWith("shared:")
+                || plan.writtenBy(field.name()) != null) {
+                continue;
+            }
+            if (!schema.hasPath(source)) {
+                out.add(field.name() + " <- " + source);
+            }
+        }
+        return out;
+    }
+
     /// @param knowledge The bundled knowledge.
     /// @return The field convention profiles, by name (a profile's own `name`, else its file's).
     @SuppressWarnings("unchecked")

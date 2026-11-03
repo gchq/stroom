@@ -488,6 +488,18 @@ class TestDraftIndexMappingTool {
     // --------------------------------------------------------------------------------
 
     @Test
+    void theDraftReadsEventsInTheNamespaceTheSampleIsIn() {
+        // Seen in testing: Events in an environment's fork of the schema, and an indexing draft that found no
+        // populated paths. The plan now takes the namespace summarise_events found.
+        final String fork = "file://xml/schema/accounting/events";
+
+        assertThat(DraftIndexMappingTool.eventsNamespace(Map.of(stroom.ai.impl.tools.StreamSummaries.EVENTS_NAMESPACE,
+                fork))).isEqualTo(fork);
+        // Standard Events: no namespace said, none kept.
+        assertThat(DraftIndexMappingTool.eventsNamespace(Map.of("events", 2))).isNull();
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void aDraftSaysWhatTheIndexItReplacesWroteThatItDoesnt() {
         // Written by hand, as the FortiOS index was: nested maps, the field names in their keys.

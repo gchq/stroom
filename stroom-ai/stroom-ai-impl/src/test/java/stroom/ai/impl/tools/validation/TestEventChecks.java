@@ -52,6 +52,8 @@ class TestEventChecks {
              </xs:sequence><xs:anyAttribute processContents="skip"/></xs:complexType></xs:element>
             </xs:schema>""";
 
+    private static final String FORK = "file://xml/schema/accounting/events";
+
     private final EventChecks checks = new EventChecks(new HeldSchemasWorld()
             .hold("file://event-logging-v9.9.9.xsd", "event-logging:3", XSD)
             .heldSchemas());
@@ -97,6 +99,75 @@ class TestEventChecks {
         assertThat(result.get("schema")).isNull();
         assertThat((String) ((List<Map<String, Object>>) result.get("errors")).getFirst().get("message"))
                 .startsWith("Not an Events document: its root is <records> in no namespace");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testEventsInAForkedNamespaceAreValidatedAgainstTheirOwnSchema() {
+        // Seen in testing: check_events refused Events in an environment's fork of the schema as "not an Events
+        // document", so the agent couldn't validate them.
+        final EventChecks forkChecks = new EventChecks(new HeldSchemasWorld()
+                .hold("file://event-logging-v9.9.9.xsd", "event-logging:3", XSD)
+                .hold("file://accounting-events-v1.0.xsd", FORK, XSD.replace("event-logging:3", FORK))
+                .heldSchemas());
+        final String declared = EVENT.replace("event-logging:3 file://event-logging-v9.9.9.xsd",
+                FORK + " file://accounting-events-v1.0.xsd").replace("event-logging:3", FORK);
+
+        final Map<String, Object> result = forkChecks.validateEvents(declared, null);
+
+        assertThat(result.get("valid")).isEqualTo(true);
+        assertThat(result.get("schema")).isEqualTo("file://accounting-events-v1.0.xsd");
+        assertThat(result.get("namespace")).isEqualTo(FORK);
+        assertThat((String) result.get("namespace_note")).contains("needs no change to the schema filter");
+        // An event-logging version given names none of the fork's schemas: its own is used.
+        assertThat(forkChecks.validateEvents(declared, "9.9.9").get("schema"))
+                .isEqualTo("file://accounting-events-v1.0.xsd");
+        // A fault is found as in standard Events.
+        final Map<String, Object> bad = forkChecks.validateEvents(declared.replace("2026-09-28T10:00:00.000Z",
+                "not-a-date"), null);
+        assertThat(bad.get("valid")).isEqualTo(false);
+        assertThat(((List<Map<String, Object>>) bad.get("errors")).getFirst().get("path"))
+                .isEqualTo("/Events/Event/EventTime/TimeCreated");
+    }
+
+    @Test
+    void testForkedEventsWithoutASchemaLocationUseTheOneSchemaOfTheirNamespace() {
+        final EventChecks forkChecks = new EventChecks(new HeldSchemasWorld()
+                .hold("file://accounting-events-v1.0.xsd", FORK, XSD.replace("event-logging:3", FORK))
+                .heldSchemas());
+        final String undeclared = EVENT.replace(" xsi:schemaLocation=\"event-logging:3 "
+                                                + "file://event-logging-v9.9.9.xsd\"", "")
+                .replace("event-logging:3", FORK);
+
+        assertThat(forkChecks.validateEvents(undeclared, null).get("schema"))
+                .isEqualTo("file://accounting-events-v1.0.xsd");
+        // With no schema for the namespace, the agent is told what to do.
+        assertThatThrownBy(() -> checks.validateEvents(undeclared, null))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("namespace " + FORK)
+                .hasMessageContaining("no XML schema for that namespace")
+                .hasMessageContaining("xsi:schemaLocation");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testEventsInNoNamespaceAreStillSaidNotToBeEvents() {
+        final Map<String, Object> result = checks.validateEvents("<Events><Event/></Events>", null);
+
+        assertThat(result.get("valid")).isEqualTo(false);
+        assertThat((String) ((List<Map<String, Object>>) result.get("errors")).getFirst().get("message"))
+                .startsWith("Not an Events document: its root is <Events> in no namespace");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testQualityRulesApplyToEventsInAForkedNamespace() {
+        final String forked = EVENT.replace("event-logging:3", FORK);
+        assertThat(EventChecks.checkEventQuality(forked).get("ok")).isEqualTo(true);
+        assertThat(EventChecks.checkEventQuality(forked).get("events_checked")).isEqualTo(1);
+        final Map<String, Object> rules = (Map<String, Object>) EventChecks.checkEventQuality(
+                forked.replace("<Generator>g</Generator>", "")).get("rules");
+        assertThat(rules).containsOnlyKeys("generator");
     }
 
     @Test

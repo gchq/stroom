@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.SchemaErrors.SchemaError;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.w3c.dom.Element;
@@ -41,7 +42,6 @@ public class EventChecks {
     private static final Pattern ISO_TIME = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$");
     // EventDetail children that describe the event rather than being its action.
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
-    private static final String EVT = XsltChecks.EVT;
 
     private final HeldSchemas heldSchemas;
 
@@ -84,13 +84,16 @@ public class EventChecks {
         final String namespace = root.getNamespaceURI();
         final String name = root.getLocalName();
         final Map<String, Object> result = new LinkedHashMap<>();
-        if (!HeldSchemas.EVENT_LOGGING_NS.equals(namespace) && !HeldSchemas.RECORDS_NS.equals(namespace)) {
+        // Events in no namespace are refused as before: the translation has left out its xmlns.
+        final boolean events = EventsNamespaces.isEvents(root) && namespace != null;
+        if (!events && !HeldSchemas.RECORDS_NS.equals(namespace)) {
             final Map<String, Object> error = new LinkedHashMap<>();
             error.put("line", null);
             error.put("path", "/" + name);
             error.put("message", "Not an Events document: its root is <" + name + "> in " + (namespace != null
                     ? "namespace " + namespace
-                    : "no namespace") + ", neither event-logging:3 Events nor records:2 records. A source's own "
+                    : "no namespace") + ", neither Events (event-logging:3, or an environment's fork of it) nor "
+                                 + "records:2 records. A source's own "
                                  + "XML (records of its own, say) is the input to a translation: validate what the "
                                  + "translation writes (step_pipeline's output).");
             result.put("valid", false);
@@ -113,6 +116,12 @@ public class EventChecks {
         }
         result.put("valid", errors.isEmpty());
         result.put("schema", systemId);
+        if (events && !EventsNamespaces.isStandard(namespace)) {
+            // An environment's fork of the event-logging schema: validated against its own schema.
+            result.put("namespace", namespace);
+            result.put("namespace_note", "Validated against " + systemId + ", the schema this Stroom holds for "
+                                         + "namespace " + namespace + ". " + EventsNamespaces.SCHEMA_GROUP_NOTE);
+        }
         result.put("error_count", errors.size());
         result.put("errors", errors.stream()
                 .limit(HeldSchemas.MAX_ERRORS)
@@ -133,7 +142,8 @@ public class EventChecks {
         final Element root = XsltChecks.parse(eventsXml, "Events XML");
         final List<Element> events = "Events".equals(root.getLocalName())
                 ? XmlTrees.children(root).stream()
-                        .filter(child -> EVT.equals(child.getNamespaceURI()) && "Event".equals(child.getLocalName()))
+                        .filter(child -> EventsNamespaces.sameNamespace(child, root)
+                                         && "Event".equals(child.getLocalName()))
                         .toList()
                 : List.of(root);
         final Map<String, Set<Integer>> failing = new TreeMap<>();
@@ -230,6 +240,13 @@ public class EventChecks {
                     ? declared
                     : HeldSchemas.RECORDS_SYSTEM_ID;
         }
+        if (!EventsNamespaces.isStandard(root.getNamespaceURI())) {
+            // An environment's fork of the event-logging schema: the schema it declares, else the one this Stroom
+            // holds for its namespace. An event-logging version names none of its schemas.
+            return declared != null
+                    ? declared
+                    : forkSystemId(root.getNamespaceURI());
+        }
         if (schemaVersion != null && !schemaVersion.isBlank()) {
             return HeldSchemas.eventLoggingSystemId(schemaVersion);
         }
@@ -242,12 +259,25 @@ public class EventChecks {
                 : version);
     }
 
-    // The element at a path of event-logging children below node, or null.
+    // The system id of the one schema this Stroom holds for a forked Events namespace.
+    private String forkSystemId(final String namespace) {
+        final List<String> held = heldSchemas.systemIdsIn(NullSafe.string(namespace));
+        if (held.size() == 1) {
+            return held.getFirst();
+        }
+        throw new ToolRefusal("The Events are in namespace " + namespace + ", not event-logging:3, and declare no "
+                              + "xsi:schemaLocation, and this Stroom holds " + (held.isEmpty()
+                ? "no XML schema for that namespace (that the user may view)"
+                : held.size() + " XML schemas for it (" + ToolText.list(held) + ")") + ". Have the translation "
+                              + "write xsi:schemaLocation naming the schema, as its other Events do.");
+    }
+
+    // The element at a path of Events children below node (in its namespace), or null.
     private static Element find(final Element node, final String... path) {
         Element current = node;
         for (final String step : path) {
             current = XmlTrees.children(current).stream()
-                    .filter(child -> EVT.equals(child.getNamespaceURI()) && step.equals(child.getLocalName()))
+                    .filter(child -> EventsNamespaces.sameNamespace(child, node) && step.equals(child.getLocalName()))
                     .findFirst()
                     .orElse(null);
             if (current == null) {

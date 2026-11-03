@@ -548,6 +548,38 @@ class TestReadDocumentTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void aForksElementsAreDescribedFromTheForksOwnSchema() {
+        // Before, a fork's document was refused as "not an event-logging schema", so its own activity couldn't be
+        // read.
+        final HeldSchemas forked = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK, "EVENTS")
+                .heldSchemas();
+        // The world's second schema.
+        final DocRef fork = new DocRef(XmlSchemaDoc.TYPE, "schema-1", "Test fork");
+        node(fork);
+        viewable.add(fork.getUuid());
+        indexable(fork, Map.of("xsd", HeldSchemasWorld.XSD_FORK), XmlSchemaDoc.builder().uuid(fork.getUuid())
+                .name(fork.getName()).systemId(HeldSchemasWorld.FORK_SYSTEM_ID).namespaceURI(HeldSchemasWorld.FORK_NS)
+                .schemaGroup("EVENTS").data(HeldSchemasWorld.XSD_FORK).build());
+        final ReadDocumentTool tool = toolWithSchemas(forked);
+
+        final Map<String, Object> json = tool.execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"uuid\":\"schema-1\",\"element\":\"EventDetail/Charge\"}"), ToolCalls.inChat(1, workspace))
+                .structuredContent();
+
+        assertThat(json).containsEntry("path", "Event/EventDetail/Charge")
+                .containsEntry("namespace", HeldSchemasWorld.FORK_NS)
+                .containsEntry("schema_version", "1.2.0");
+        assertThat(String.valueOf(json.get("children"))).contains("Account");
+        // Read with no document, event-logging's newest is described, and the fork named for its own elements.
+        assertThat((String) tool.execute(new ToolCall(null, ReadDocumentTool.NAME,
+                "{\"type\":\"XMLSchema\",\"element\":\"EventDetail\"}"), ToolCalls.inChat(1, workspace))
+                .structuredContent().get("forks")).contains("uuid schema-1", HeldSchemasWorld.FORK_NS);
+    }
+
+    @Test
     void anElementWithoutAUuidIsDescribedFromTheNewestVersion() {
         final ToolResult result = toolWithSchemas().execute(new ToolCall(null, ReadDocumentTool.NAME,
                 "{\"type\":\"XMLSchema\",\"element\":\"EventDetail\"}"),
@@ -804,9 +836,12 @@ class TestReadDocumentTool {
     }
 
     private ReadDocumentTool toolWithSchemas() {
-        final HeldSchemas heldSchemas = new HeldSchemasWorld()
+        return toolWithSchemas(new HeldSchemasWorld()
                 .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0)
-                .heldSchemas();
+                .heldSchemas());
+    }
+
+    private ReadDocumentTool toolWithSchemas(final HeldSchemas heldSchemas) {
         final DocumentAccess documentAccess = new DocumentAccess(() -> explorerNodeService, securityContext,
                 () -> handlers, auditLog);
         return new ReadDocumentTool(workspace, documentAccess, new ProcessorFilterAccess(securityContext,

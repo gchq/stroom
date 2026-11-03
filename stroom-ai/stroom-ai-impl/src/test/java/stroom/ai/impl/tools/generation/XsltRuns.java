@@ -118,10 +118,17 @@ class XsltRuns extends GenerationFixtures {
     }
 
     /// @param root      An element.
+    // The namespace of the Events an element is in or writes: its own, or event-logging's for an XSLT element.
+    private static String eventsNamespace(final XmlElement element) {
+        return XmlTrees.XSL.equals(element.namespace())
+                ? EVT
+                : element.namespace();
+    }
+
     /// @param localName An event-logging element's name.
-    /// @return Its event-logging children of that name.
+    /// @return Its children of that name in its own namespace (event-logging's, or a fork's).
     static List<XmlElement> children(final XmlElement root, final String localName) {
-        return root.childElements(EVT, localName);
+        return root.childElements(eventsNamespace(root), localName);
     }
 
     /// @param root A tree.
@@ -130,7 +137,7 @@ class XsltRuns extends GenerationFixtures {
     static XmlElement find(final XmlElement root, final String path) {
         XmlElement at = root;
         for (final String step : path.split("/")) {
-            final List<XmlElement> found = at.childElements(EVT, step);
+            final List<XmlElement> found = at.childElements(eventsNamespace(at), step);
             if (found.isEmpty()) {
                 return null;
             }
