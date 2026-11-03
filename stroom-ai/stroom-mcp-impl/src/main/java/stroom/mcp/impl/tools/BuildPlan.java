@@ -100,10 +100,11 @@ public class BuildPlan {
             List.of("samples", "Upload every sample file as its own stream",
                     "upload_sample files=[their paths] (sample= only for text pasted into the chat)"),
             List.of("converter", "Text converter for the format: build_data_splitter infers the Data Splitter from "
-                                 + "the sample text (for XML fragments: the wrapper, as the environment writes them)",
+                                 + "the sample text (for XML fragments: the wrapper, as the environment writes "
+                                 + "them; stroom://guide/data-splitter)",
                     "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
             List.of("translation", "Translation XSLT from a mapping: draft it from the sample, decide the action "
-                                   + "elements, generate and save it with the mapping",
+                                   + "elements, generate and save it with the mapping (stroom://guide/mapping)",
                     "draft_translation_mapping, build_translation_xslt build=... name=... (uuid=... to replace)"),
             List.of("pipeline", "Events pipeline as a child of the right template, with its text converter and XSLT "
                                 + "set (create_pipeline fills them from the build; update_pipeline sets a missing "
@@ -993,7 +994,7 @@ public class BuildPlan {
                     "with what the user confirmed in one message (cluster, index name, template, time field, stream "
                     + "meta, fields to drop, an example index template); then save_xslt index_plan=plan, "
                     + "find_pipeline_templates stage=discovery and create_indexing_pipeline from the discovery "
-                    + "template");
+                    + "template (stroom://guide/indexing)");
             case "index" -> call("get_field_conventions", args(),
                     "go straight on, without asking first: it finds the backend and asks the user, in a form, how "
                     + "the index's fields are named; then draft_index_mapping as its reply says (index_name, "

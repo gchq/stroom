@@ -4,6 +4,26 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 `draft_translation_mapping`'s draft and change only what it gets wrong; the xslt guide explains each part at length
 (stroom://guide/xslt).
 
+## Rules
+
+- Never write a translation XSLT by hand, and never send the field inventory as the mapping: draft it, edit what the
+  draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
+  (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught
+  before stepping.
+- A field that no element of the schema means (a rule id, a byte count, a vendor code) is carried as Data of the action
+  element (see Data below): never invent an element for it, and never leave the event Unknown because of it.
+  `read_document type=XMLSchema element=` says what an element takes (`EventDetail` for the action elements,
+  `EventDetail/<Action>` for its children and values).
+- Values the record doesn't carry come from reference data (`find_reference_data`; `build_reference_xslt` and a
+  reference-data pipeline for a new table, the events pipeline naming its feed in references:
+  stroom://guide/reference-data) or from a Dictionary doc (`save_dictionary`).
+- A text field holding several values (a message with a time, user, action and description) is parsed with `extract`,
+  never substring-before/after chains; JSON held in a string is read with an `xpath` using `json-to-xml()`
+  (stroom://guide/json-input).
+- Only `stroom:` functions that exist may be used (`format-date`, `lookup`, `meta`, `dictionary`, `log`,
+  `json-to-xml`, ...; there is no `stroom:json-parse`): `check_xslt` refuses unknown ones, elements the schema has no
+  place for, and expressions that would select nothing for want of a namespace (stroom://guide/xslt).
+
 ## The mapping
 
 | Key | What it holds |
