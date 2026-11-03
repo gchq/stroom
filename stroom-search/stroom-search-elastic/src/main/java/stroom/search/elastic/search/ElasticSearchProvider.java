@@ -92,6 +92,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
@@ -536,8 +537,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     /// parameters that differ from the defaults.
     ///
     /// @param fieldMeta the field's mapping
-    /// @return the parameter values keyed by parameter name, with objects and arrays rendered as JSON, or `null`
-    /// if they can't be read
+    /// @return the parameter values keyed by parameter name, or `null` if they can't be read. A parameter whose
+    /// value is an object is listed as one entry per nested value, keyed by its dotted path, e.g.
+    /// `index_options.type`. See [#flattenMappingParameter(String, JsonNode, Map)].
     static Map<String, String> getMappingParameters(final FieldMapping fieldMeta) {
         final Optional<Property> property = fieldMeta.mapping().values().stream().findFirst();
         if (property.isEmpty()) {
@@ -562,12 +564,53 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final String name = entry.getKey();
             final JsonNode value = entry.getValue();
             if (!EXCLUDED_MAPPING_PARAMETERS.contains(name)) {
-                parameters.put(name, value.isString()
-                        ? value.stringValue()
-                        : value.toString());
+                flattenMappingParameter(name, value, parameters);
             }
         }
         return parameters;
+    }
+
+    /// Adds a mapping parameter to a map of key/value line items, so nested settings such as `index_options`
+    /// read as one line each:
+    ///
+    /// - an object adds an entry per member, keyed `key.member`, recursively; an empty object adds `{}`
+    /// - an array of scalar values adds one entry listing them, separated by commas
+    /// - an array holding objects or arrays adds an entry per element, keyed `key[index]`, recursively
+    /// - a scalar adds its text, without quotes for a string
+    ///
+    /// @param key        the parameter's name or dotted path
+    /// @param value      the parameter's value
+    /// @param parameters the map to add the entries to
+    static void flattenMappingParameter(final String key,
+                                        final JsonNode value,
+                                        final Map<String, String> parameters) {
+        if (value.isObject()) {
+            if (value.isEmpty()) {
+                parameters.put(key, "{}");
+            } else {
+                for (final Map.Entry<String, JsonNode> member : value.properties()) {
+                    flattenMappingParameter(key + "." + member.getKey(), member.getValue(), parameters);
+                }
+            }
+        } else if (value.isArray()) {
+            if (value.valueStream().allMatch(JsonNode::isValueNode)) {
+                parameters.put(key, value.valueStream()
+                        .map(ElasticSearchProvider::toMappingValueText)
+                        .collect(Collectors.joining(", ")));
+            } else {
+                for (int i = 0; i < value.size(); i++) {
+                    flattenMappingParameter(key + "[" + i + "]", value.get(i), parameters);
+                }
+            }
+        } else {
+            parameters.put(key, toMappingValueText(value));
+        }
+    }
+
+    private static String toMappingValueText(final JsonNode value) {
+        return value.isString()
+                ? value.stringValue()
+                : value.toString();
     }
 
     /**
