@@ -26,15 +26,24 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryOptionSet;
+import stroom.query.api.datasource.QueryOptionUtil;
 import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
+import stroom.query.client.presenter.FieldValuePickerPresenter;
+import stroom.query.client.presenter.FieldValuesScope;
+import stroom.query.client.presenter.QueryOptionsPresenter;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -54,6 +63,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class TermEditor extends Composite {
 
@@ -61,6 +71,8 @@ public class TermEditor extends Composite {
     private static final String DROPDOWN_CLASS_NAME = "dropdown";
     private static final String WIDE_CLASS_NAME = "wide";
     private static final String NARROW_CLASS_NAME = "narrow";
+    // Highlights the options button when the term has options other than the defaults
+    private static final String ON_CLASS_NAME = "on";
 
     private final FlowPanel layout;
     private final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox;
@@ -75,6 +87,10 @@ public class TermEditor extends Composite {
     private final Widget docRefWidget;
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
+    private final SvgButton optionsButton;
+    private final SvgButton valuesButton;
+    private final Provider<QueryOptionsPresenter> queryOptionsPresenterProvider;
+    private final Provider<FieldValuePickerPresenter> fieldValuePickerPresenterProvider;
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
@@ -87,10 +103,17 @@ public class TermEditor extends Composite {
 
     private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
+    private RestFactory restFactory;
+    private DocRef dataSource;
+    private Supplier<FieldValuesScope> scopeSupplier;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
                       final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                      final Provider<QueryOptionsPresenter> queryOptionsPresenterProvider,
+                      final Provider<FieldValuePickerPresenter> fieldValuePickerPresenterProvider,
                       final UiConfigCache uiConfigCache) {
+        this.queryOptionsPresenterProvider = queryOptionsPresenterProvider;
+        this.fieldValuePickerPresenterProvider = fieldValuePickerPresenterProvider;
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
@@ -134,6 +157,8 @@ public class TermEditor extends Composite {
         dateTo.setVisible(false);
 
         fieldTypeLabel = createFieldTypeLabel();
+        optionsButton = createOptionsButton();
+        valuesButton = createValuesButton();
 
         final FlowPanel inner = new FlowPanel();
         inner.setStyleName("termEditor-inner");
@@ -148,6 +173,8 @@ public class TermEditor extends Composite {
         inner.add(dateTo);
         inner.add(docRefWidget);
         inner.add(userRefWidget);
+        inner.add(valuesButton);
+        inner.add(optionsButton);
 
         layout = new FlowPanel();
         layout.add(inner);
@@ -169,9 +196,19 @@ public class TermEditor extends Composite {
                      final FieldSelectionListModel fieldSelectionListModel) {
         suggestOracle.setRestFactory(restFactory);
         suggestOracle.setDataSource(dataSource);
+        this.restFactory = restFactory;
+        this.dataSource = dataSource;
 
         this.fieldSelectionListModel = fieldSelectionListModel;
         fieldListBox.setModel(fieldSelectionListModel);
+    }
+
+    /// Sets where the value picker gets what to count values across, e.g. the dashboard's time range and the
+    /// query's expression. Without one, values are counted across all time.
+    ///
+    /// @param scopeSupplier Supplies the current scope, or null.
+    public void setValueScopeSupplier(final Supplier<FieldValuesScope> scopeSupplier) {
+        this.scopeSupplier = scopeSupplier;
     }
 
     public void startEdit(final Term term) {
@@ -308,6 +345,7 @@ public class TermEditor extends Composite {
         conditionListBox.setValue(selected);
         NullSafe.consume(selected, Condition::getDescription, conditionListBox::setTitle);
         changeCondition(field, selected);
+        updateOptionsButton(field);
 
         if (NullSafe.nonNull(field, QueryField::getFldType)) {
             fieldTypeLabel.setText(field.getFldType().getShortTypeName());
@@ -377,6 +415,18 @@ public class TermEditor extends Composite {
                     break;
             }
         }
+        updateValuesButton(selectedField, condition);
+    }
+
+    // Shows the value picker button for fields whose data source can list their most common values, when the
+    // condition takes values from the text box.
+    private void updateValuesButton(final QueryField field, final Condition condition) {
+        final boolean supported = field != null
+                                  && field.supportsTopValues()
+                                  && (Condition.EQUALS.equals(condition)
+                                      || Condition.NOT_EQUALS.equals(condition)
+                                      || Condition.IN.equals(condition));
+        valuesButton.setVisible(supported);
     }
 
     private void enterTextOrDateMode(final FieldType indexFieldType) {
@@ -532,10 +582,16 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
+                // Keep only the options that the new field supports
+                term.setOptions(QueryOptionUtil.normalise(
+                        NullSafe.get(event.getValue(), QueryField::getQueryOptionSet),
+                        term.getOptions()));
                 changeField(event.getValue(), conditionListBox.getValue(), true);
                 fireDirty();
             }
         }));
+        registerHandler(optionsButton.addClickHandler(event -> showOptions()));
+        registerHandler(valuesButton.addClickHandler(event -> showValuePicker()));
         registerHandler(conditionListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
@@ -543,6 +599,60 @@ public class TermEditor extends Composite {
                 fireDirty();
             }
         }));
+    }
+
+    private void showOptions() {
+        final QueryField field = fieldListBox.getValue();
+        if (field != null && field.getQueryOptionSet() != null) {
+            queryOptionsPresenterProvider.get().show(field, term.getOptions(), options -> {
+                term.setOptions(options);
+                updateOptionsButton(field);
+                fireDirty();
+            });
+        }
+    }
+
+    private void showValuePicker() {
+        final QueryField field = fieldListBox.getValue();
+        if (field != null && restFactory != null && dataSource != null) {
+            // An `in` term's values are separated by commas, so a value containing a comma can't be one of them
+            final boolean allowCommas = !Condition.IN.equals(conditionListBox.getValue());
+            fieldValuePickerPresenterProvider.get().show(
+                    valuesButton.getElement(),
+                    restFactory,
+                    dataSource,
+                    field,
+                    allowCommas,
+                    NullSafe.get(scopeSupplier, Supplier::get),
+                    this::insertValue);
+        }
+    }
+
+    // Puts a picked value in the value box, replacing its text for `=` and `!=`, or adding to the list for `in`.
+    // The data source has already quoted the value as its query syntax needs.
+    private void insertValue(final String pickedValue) {
+        final String currentText = StringUtil.trimWhitespace(value.getText());
+        if (Condition.IN.equals(conditionListBox.getValue()) && NullSafe.isNonBlankString(currentText)) {
+            value.setText(currentText + Condition.IN_CONDITION_DELIMITER + " " + pickedValue);
+        } else {
+            value.setText(pickedValue);
+        }
+        value.setFocus(true);
+        fireDirty();
+    }
+
+    // Shows the options button only for fields whose data source supports field-level query options, and
+    // highlights it when the term has options other than the defaults.
+    private void updateOptionsButton(final QueryField field) {
+        final QueryOptionSet queryOptionSet = NullSafe.get(field, QueryField::getQueryOptionSet);
+        optionsButton.setVisible(queryOptionSet != null);
+        if (queryOptionSet != null && QueryOptionUtil.hasNonDefaultOptions(queryOptionSet, term.getOptions())) {
+            optionsButton.getElement().addClassName(ON_CLASS_NAME);
+            optionsButton.setTitle("Query options (changed from the defaults)");
+        } else {
+            optionsButton.getElement().removeClassName(ON_CLASS_NAME);
+            optionsButton.setTitle("Query options");
+        }
     }
 
     private void unbind() {
@@ -602,6 +712,22 @@ public class TermEditor extends Composite {
         final Label label = new Label(text, false);
         label.addStyleName("termEditor-label");
         return label;
+    }
+
+    private SvgButton createOptionsButton() {
+        final SvgButton button = SvgButton.create(SvgPresets.SETTINGS);
+        button.addStyleName("termEditor-button");
+        button.setTitle("Query options");
+        button.setVisible(false);
+        return button;
+    }
+
+    private SvgButton createValuesButton() {
+        final SvgButton button = SvgButton.create(
+                new Preset(SvgImage.VALUE_FILTER, "Pick from the most common values", true));
+        button.addStyleName("termEditor-button");
+        button.setVisible(false);
+        return button;
     }
 
     private Label createFieldTypeLabel() {
