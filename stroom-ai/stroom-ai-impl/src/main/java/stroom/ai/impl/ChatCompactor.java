@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -36,6 +37,7 @@ import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -206,7 +208,7 @@ public class ChatCompactor {
             LOGGER.warn(() -> "Unable to summarise earlier turns of chatId=" + chatId + ": " + e.getMessage(), e);
             final int dropUpTo = turns.get((turns.size() - 1) / 2);
             aiService.storeMessage(chatId, AiMessageType.WARNING,
-                    "Earlier turns could not be summarised to save space (" + e.getMessage() + "), so the oldest "
+                    "Earlier turns could not be summarised to save space (" + reason(e) + "), so the oldest "
                     + "turns have been left out of what the model sees. They are still stored, and the model "
                     + "can look them up.");
             return compaction.withSummary(compaction.summary(), dropUpTo);
@@ -240,13 +242,20 @@ public class ChatCompactor {
         final StreamingChatModel streamingModel = modelDoc != null
                 ? aiService.getStreamingChatModel(modelDoc)
                 : null;
-        final String summary = modelStreamer.callUnseen(chatModel, streamingModel, request, chatId, cancelled)
-                .aiMessage()
-                .text();
+        final ChatResponse response = modelStreamer.callUnseen(chatModel, streamingModel, request, chatId, cancelled);
+        final String summary = NullSafe.get(response, ChatResponse::aiMessage, AiMessage::text);
         if (NullSafe.isBlankString(summary)) {
             throw new IllegalStateException("the model gave an empty summary");
         }
         return summary.strip();
+    }
+
+    // Why a summary couldn't be written, for the user. Seen in testing: a compaction's warning said only "(null)",
+    // from an exception with no message.
+    static String reason(final RuntimeException e) {
+        return NullSafe.isBlankString(e.getMessage())
+                ? e.getClass().getSimpleName()
+                : e.getMessage().strip();
     }
 
     /// Compacts a chat now, because the user asked: the turns before the latest ones are replaced by their

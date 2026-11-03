@@ -175,6 +175,26 @@ class TestChatCompactor {
     }
 
     @Test
+    void testASummaryFailureWithNoMessageIsNeverShownAsNull() {
+        // Seen in testing: Compact Context's warning said the turns couldn't be summarised "(null)": an exception
+        // with no message. A reply with no message at all is an error of its own, and either names what went wrong.
+        history(turns(40, 2_000));
+        final ChatModel noReply = new ChatModel() {
+            @Override
+            public ChatResponse doChat(final ChatRequest chatRequest) {
+                return ChatResponse.builder().aiMessage(AiMessage.from("")).build();
+            }
+        };
+
+        compactor.assemble(request(), 1, Map.of(), model(8_000), noReply, CompactionMode.AUTO, null, () -> false);
+
+        Mockito.verify(aiService).storeMessage(Mockito.eq(1), Mockito.eq(AiMessageType.WARNING),
+                Mockito.contains("(the model gave an empty summary)"));
+        assertThat(ChatCompactor.reason(new NullPointerException())).isEqualTo("NullPointerException");
+        assertThat(ChatCompactor.reason(new IllegalStateException(" timed out "))).isEqualTo("timed out");
+    }
+
+    @Test
     void testStopWhileSummarisingEndsTheRun() {
         // Seen: Stop pressed while earlier turns were being summarised didn't stop the run until the model answered.
         history(turns(40, 2_000));
