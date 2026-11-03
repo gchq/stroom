@@ -41,6 +41,8 @@ import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
@@ -67,7 +69,10 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -138,6 +143,10 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         final DocRef dataSource = request.getDataSource();
         final ElasticIndexDoc index = elasticIndexCacheProvider.get().get(dataSource);
         final String fieldName = request.getField().getFldName();
+        final List<ElasticVirtualFieldGroup> virtualGroups = getVirtualGroups(index, fieldName);
+        if (virtualGroups != null) {
+            return getVirtualFieldValues(index, request, virtualGroups, config.getEffectiveTopValuesCount());
+        }
         final ElasticIndexField indexField = getElasticIndexField(dataSource, fieldName);
         if (indexField == null) {
             return FieldValues.EMPTY;
@@ -185,6 +194,83 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             throw new RuntimeException(LogUtil.message("Error fetching values of field '{}': {}",
                     fieldName, NullSafe.getOrElse(e.getCause(), Throwable::getMessage, e.getMessage())), e);
         }
+    }
+
+    /// @return the groups of the named field if it is a virtual field, otherwise `null`. A mapped field of the same
+    /// name takes precedence.
+    private static List<ElasticVirtualFieldGroup> getVirtualGroups(final ElasticIndexDoc index,
+                                                                   final String fieldName) {
+        final boolean isMapped = NullSafe.list(index.getFields())
+                .stream()
+                .anyMatch(field -> field.getFldName().equals(fieldName));
+        final ElasticIndexFieldSettings settings = index.findFieldSettings(fieldName);
+        return !isMapped && settings != null && settings.isVirtual()
+                ? settings.getVirtualGroups()
+                : null;
+    }
+
+    /// Lists a virtual field's groups as its values, each with the number of documents in scope its expression
+    /// matches. Groups whose names don't contain the filter (ignoring case), or whose expressions can't be run,
+    /// are left out.
+    private FieldValues getVirtualFieldValues(final ElasticIndexDoc index,
+                                              final FetchFieldValuesRequest request,
+                                              final List<ElasticVirtualFieldGroup> groups,
+                                              final int count) {
+        final String fieldName = request.getField().getFldName();
+        final String filter = NullSafe.trim(request.getFilter()).toLowerCase(Locale.ROOT);
+        final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                aiServiceProvider,
+                index,
+                indexFieldCacheProvider.get(),
+                wordListProviderProvider.get(),
+                getDateTimeSettings(request));
+        final Map<String, Query> groupQueries = new LinkedHashMap<>();
+        for (final ElasticVirtualFieldGroup group : groups) {
+            final String groupName = group.getName();
+            if (groupName != null && groupName.toLowerCase(Locale.ROOT).contains(filter)) {
+                try {
+                    groupQueries.put(groupName, builder.buildVirtualGroupQuery(fieldName, group, List.of()));
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> LogUtil.message("Leaving out group '{}' of virtual field '{}': {}",
+                            groupName, fieldName, e.getMessage()), e);
+                }
+            }
+        }
+
+        final ScopeQuery scopeQuery = getScopeQuery(index, request);
+        final ElasticClusterDoc elasticCluster = elasticClusterStoreProvider.get()
+                .readDocument(index.getClusterRef());
+        return elasticClientCacheProvider.get().contextResult(elasticCluster.getConnection(), elasticClient -> {
+            final SearchRequest searchRequest = SearchRequest.of(s -> {
+                s.index(index.getIndexName())
+                        .size(0)
+                        .trackTotalHits(t -> t.enabled(true))
+                        .query(scopeQuery.query());
+                if (!groupQueries.isEmpty()) {
+                    s.aggregations(AGGREGATION_NAME, a -> a.filters(f -> f.filters(b -> b.keyed(groupQueries))));
+                }
+                return s;
+            });
+            final SearchResponse<Void> response;
+            try {
+                response = elasticClient.search(searchRequest, Void.class);
+            } catch (final IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+            final List<FieldValueCount> values = new ArrayList<>();
+            final Aggregate aggregate = NullSafe.get(response.aggregations(), aggs -> aggs.get(AGGREGATION_NAME));
+            if (aggregate != null && aggregate.isFilters()) {
+                aggregate.filters().buckets().keyed().forEach((groupName, bucket) ->
+                        values.add(toFieldValueCount(groupName, bucket.docCount(), FieldType.KEYWORD)));
+            }
+            values.sort(Comparator.comparingLong(FieldValueCount::getCount).reversed());
+            final long totalCount = NullSafe.getOrElse(response.hits().total(), total -> total.value(), 0L);
+            return new FieldValues(
+                    values.subList(0, Math.min(count, values.size())),
+                    totalCount,
+                    scopeQuery.allTime(),
+                    scopeQuery.description());
+        });
     }
 
     private ElasticIndexField getElasticIndexField(final DocRef dataSource, final String fieldName) {

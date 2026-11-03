@@ -622,7 +622,7 @@ public class SearchExpressionQueryBuilder {
     /// @param group          the group
     /// @param enclosingPaths the `nested` object paths the query will be placed inside
     /// @return the group's query
-    Query buildVirtualGroupQuery(final String fieldName,
+    public Query buildVirtualGroupQuery(final String fieldName,
                                  final ElasticVirtualFieldGroup group,
                                  final List<String> enclosingPaths) {
         final ExpressionOperator expression = group.getExpression();

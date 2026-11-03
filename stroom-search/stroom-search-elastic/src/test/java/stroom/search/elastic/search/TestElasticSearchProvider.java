@@ -511,6 +511,43 @@ class TestElasticSearchProvider {
     }
 
     @Test
+    void testGetFieldsMap_valuePickerAndQueryOptions() throws IOException {
+        givenMapping("""
+                {
+                  "Name": { "type": "keyword" },
+                  "Message": { "type": "text", "fields": { "keyword": { "type": "keyword" } } },
+                  "Vector": { "type": "dense_vector", "dims": 3 }
+                }""");
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        // The field info carries what the group query editor needs to offer the options button and value picker
+        assertThat(fieldsMap.get("Name").getSupportsTopValues()).isTrue();
+        assertThat(fieldsMap.get("Name").getQueryOptionSet()).isEqualTo(ElasticQueryOptionSets.get("keyword"));
+        assertThat(fieldsMap.get("Message").getSupportsTopValues()).isTrue();
+        assertThat(fieldsMap.get("Vector").getSupportsTopValues()).isNull();
+    }
+
+    @Test
+    void testGetDataSourceFields_virtualFieldSupportsTopValues() throws IOException {
+        givenMapping("""
+                {
+                  "Name": { "type": "keyword" }
+                }""");
+        final ElasticIndexDoc index = createIndex().copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder("Category")
+                        .virtualGroups(List.of())
+                        .build()))
+                .build();
+
+        // The value picker lists a virtual field's groups
+        assertThat(elasticSearchProvider.getDataSourceFields(index))
+                .filteredOn(field -> field.getFldName().equals("Category"))
+                .extracting(QueryField::supportsTopValues)
+                .containsExactly(true);
+    }
+
+    @Test
     void testGetDataSourceFields_noTopValuesWhenValuePickerDisabled() throws IOException {
         givenMapping("""
                 {

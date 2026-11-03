@@ -21,6 +21,7 @@ import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryOptionSet;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,7 +53,9 @@ import java.util.Objects;
         "multiFieldParent",
         "sourceIndices",
         "conflictingTypes",
-        "mappingParameters"
+        "mappingParameters",
+        "queryOptionSet",
+        "supportsTopValues"
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexField implements IndexField {
@@ -93,6 +96,12 @@ public class ElasticIndexField implements IndexField {
     /// The mapping parameters set for this field, other than its type and child fields, keyed by parameter name
     @JsonProperty
     private final Map<String, String> mappingParameters;
+    /// The query options the field's terms may set, or `null` if it has none
+    @JsonProperty
+    private final QueryOptionSet queryOptionSet;
+    /// Whether the value picker can list the field's most common values; `null` means it can't
+    @JsonProperty
+    private final Boolean supportsTopValues;
 
     @JsonCreator
     public ElasticIndexField(
@@ -109,7 +118,9 @@ public class ElasticIndexField implements IndexField {
             @JsonProperty("multiFieldParent") final String multiFieldParent,
             @JsonProperty("sourceIndices") final List<String> sourceIndices,
             @JsonProperty("conflictingTypes") final Map<String, String> conflictingTypes,
-            @JsonProperty("mappingParameters") final Map<String, String> mappingParameters) {
+            @JsonProperty("mappingParameters") final Map<String, String> mappingParameters,
+            @JsonProperty("queryOptionSet") final QueryOptionSet queryOptionSet,
+            @JsonProperty("supportsTopValues") final Boolean supportsTopValues) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
@@ -120,6 +131,10 @@ public class ElasticIndexField implements IndexField {
         this.sourceIndices = emptyToNull(sourceIndices);
         this.conflictingTypes = emptyToNull(conflictingTypes);
         this.mappingParameters = emptyToNull(mappingParameters);
+        this.queryOptionSet = queryOptionSet;
+        this.supportsTopValues = Boolean.TRUE.equals(supportsTopValues)
+                ? Boolean.TRUE
+                : null;
     }
 
     private static <T> List<T> emptyToNull(final List<T> list) {
@@ -236,6 +251,16 @@ public class ElasticIndexField implements IndexField {
         return mappingParameters;
     }
 
+    /// @return the query options the field's terms may set, or `null` if it has none
+    public QueryOptionSet getQueryOptionSet() {
+        return queryOptionSet;
+    }
+
+    /// @return `Boolean.TRUE` if the value picker can list the field's most common values, otherwise `null`
+    public Boolean getSupportsTopValues() {
+        return supportsTopValues;
+    }
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
@@ -262,13 +287,16 @@ public class ElasticIndexField implements IndexField {
                Objects.equals(multiFieldParent, that.multiFieldParent) &&
                Objects.equals(sourceIndices, that.sourceIndices) &&
                Objects.equals(conflictingTypes, that.conflictingTypes) &&
-               Objects.equals(mappingParameters, that.mappingParameters);
+               Objects.equals(mappingParameters, that.mappingParameters) &&
+               Objects.equals(queryOptionSet, that.queryOptionSet) &&
+               Objects.equals(supportsTopValues, that.supportsTopValues);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(fieldUse, fieldName, fieldType, fldName, fldType, nativeType, indexed, virtual,
-                multiFieldParent, sourceIndices, conflictingTypes, mappingParameters);
+                multiFieldParent, sourceIndices, conflictingTypes, mappingParameters, queryOptionSet,
+                supportsTopValues);
     }
 
     @Override
@@ -296,6 +324,8 @@ public class ElasticIndexField implements IndexField {
         private List<String> sourceIndices;
         private Map<String, String> conflictingTypes;
         private Map<String, String> mappingParameters;
+        private QueryOptionSet queryOptionSet;
+        private Boolean supportsTopValues;
 
         private Builder() {
         }
@@ -311,6 +341,8 @@ public class ElasticIndexField implements IndexField {
             this.sourceIndices = indexField.sourceIndices;
             this.conflictingTypes = indexField.conflictingTypes;
             this.mappingParameters = indexField.mappingParameters;
+            this.queryOptionSet = indexField.queryOptionSet;
+            this.supportsTopValues = indexField.supportsTopValues;
         }
 
         public Builder fldName(final String fldName) {
@@ -373,6 +405,20 @@ public class ElasticIndexField implements IndexField {
             return this;
         }
 
+        /// @param queryOptionSet the query options the field's terms may set, or `null`
+        /// @return this builder
+        public Builder queryOptionSet(final QueryOptionSet queryOptionSet) {
+            this.queryOptionSet = queryOptionSet;
+            return this;
+        }
+
+        /// @param supportsTopValues `true` if the value picker can list the field's most common values
+        /// @return this builder
+        public Builder supportsTopValues(final Boolean supportsTopValues) {
+            this.supportsTopValues = supportsTopValues;
+            return this;
+        }
+
         public ElasticIndexField build() {
             return new ElasticIndexField(
                     null,
@@ -387,7 +433,9 @@ public class ElasticIndexField implements IndexField {
                     multiFieldParent,
                     sourceIndices,
                     conflictingTypes,
-                    mappingParameters);
+                    mappingParameters,
+                    queryOptionSet,
+                    supportsTopValues);
         }
     }
 }

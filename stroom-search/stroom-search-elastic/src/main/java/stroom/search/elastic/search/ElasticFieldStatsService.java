@@ -94,8 +94,6 @@ public class ElasticFieldStatsService {
     private static final String SAMPLE_AGG = "sample";
     // Elasticsearch only accepts a random sampler probability of up to 0.5 (or exactly 1)
     private static final double MAX_SAMPLE_PROBABILITY = 0.5;
-    // Characters with a meaning in Lucene regular expressions
-    private static final String LUCENE_REGEX_SPECIAL_CHARS = ".?+*|{}[]()\"\\#@&<>~";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String HAS_VALUE_AGG = "has_value";
     private static final String DISTINCT_AGG = "distinct";
@@ -287,7 +285,7 @@ public class ElasticFieldStatsService {
             subAggs.put(TOP_AGG, Aggregation.of(a -> a.terms(t -> {
                 t.field(fieldName).size(topValuesCount);
                 if (filterInElasticsearch) {
-                    t.include(i -> i.regexp(toCaseInsensitiveContainsRegex(topValuesFilter)));
+                    t.include(i -> i.regexp(ElasticTopValues.toContainsRegex(topValuesFilter, true)));
                 }
                 return t;
             })));
@@ -709,29 +707,6 @@ public class ElasticFieldStatsService {
                 Objects.requireNonNullElse(request.getTopValuesCount(), DEFAULT_TOP_VALUES_COUNT),
                 1,
                 MAX_TOP_VALUES_COUNT);
-    }
-
-    /// Builds a Lucene regular expression, as a `terms` aggregation's `include` takes, matching any value that
-    /// contains the text, ignoring case. Lucene regular expressions have no flag to ignore case, so each letter
-    /// matches either case.
-    ///
-    /// @param text the text values must contain
-    /// @return the regular expression
-    static String toCaseInsensitiveContainsRegex(final String text) {
-        final StringBuilder sb = new StringBuilder(".*");
-        text.codePoints().forEach(codePoint -> {
-            final int lower = Character.toLowerCase(codePoint);
-            final int upper = Character.toUpperCase(codePoint);
-            if (lower != upper) {
-                sb.append('[').appendCodePoint(lower).appendCodePoint(upper).append(']');
-            } else {
-                if (LUCENE_REGEX_SPECIAL_CHARS.indexOf(codePoint) >= 0) {
-                    sb.append('\\');
-                }
-                sb.appendCodePoint(codePoint);
-            }
-        });
-        return sb.append(".*").toString();
     }
 
     private static List<ElasticFieldValueCount> filterValues(final List<ElasticFieldValueCount> values,
