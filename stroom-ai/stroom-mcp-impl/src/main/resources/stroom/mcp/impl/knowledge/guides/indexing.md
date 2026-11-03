@@ -120,7 +120,12 @@ discovery index: when the records hold times in several fields, the user picks w
 or ask them with the `timestamp_candidates` it lists, then draft again with `timestamp_chosen_by_user`).
 
 A discovery index is different: raw data (JSON, delimited text, XML) indexed as it is into Elasticsearch, for
-exploration, with no translation. Don't survey the data first; Elasticsearch maps its fields dynamically. Give
+exploration, with no translation. Don't survey the data first; Elasticsearch maps its fields dynamically. The source is a feed already
+holding raw data (`start_build feeds=[it] kind=discovery`) or a sample (`start_build kind=discovery`, `create_feed`,
+`upload_sample`). Ask the user, in one message: the cluster, the index name (e.g. stroom-discovery-<source>-v1), the
+discovery template (`find_pipeline_templates stage=discovery`), the field holding each record's time (and its format
+if it is not ISO 8601 or epoch milliseconds), any stream meta to add, any fields to leave out, and an example index
+template from a sibling index. Delimited text needs a Data Splitter in the build first (`build_data_splitter`). Give
 `draft_index_mapping` `discovery` with what the user confirmed (the input: `json`, `delimited`, which needs a Data
 Splitter naming the columns, or `xml` with its `record` element; the timestamp field; any stream meta; fields to
 drop): only `StreamId`,

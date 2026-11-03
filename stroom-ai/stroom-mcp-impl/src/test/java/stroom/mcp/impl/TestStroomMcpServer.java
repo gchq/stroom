@@ -732,8 +732,11 @@ class TestStroomMcpServer {
                 .contains("Raw data (JSON, delimited text, XML) to explore as it is, with no translation: a "
                           + "discovery index")
                 .contains("A table to look values up in (users, assets, codes): reference data")
-                .contains("When what the user wants fits more than one, ask which.")
-                // A discovery index's choices are asked together.
+                .contains("When what the user wants fits more than one, ask which.");
+        // A discovery index's choices are asked together: said in the indexing guide, which the instructions name
+        // for it (the discovery plan step's next says so too).
+        assertThat(text).contains("a discovery index (stroom://guide/indexing)");
+        assertThat(String.join(" ", new BundledKnowledge().guide("indexing").orElseThrow().split("\\s+")))
                 .contains("Ask the user, in one message: the cluster, the index name");
     }
 
