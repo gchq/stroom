@@ -181,9 +181,14 @@ public class ElasticFieldInfoPresenter
             getView().showStatsMessage(noStatsMessage);
             return;
         }
-        final Long fromMs = getView().getFromMs();
-        final Long toMs = getView().getToMs();
-        if (!getView().isTimeRangeValid() || (fromMs != null && toMs != null && fromMs >= toMs)) {
+        // Only exact statistics are limited to a time range; a random sample is taken from all documents
+        final Long fromMs = exact
+                ? getView().getFromMs()
+                : null;
+        final Long toMs = exact
+                ? getView().getToMs()
+                : null;
+        if (exact && (!getView().isTimeRangeValid() || (fromMs != null && toMs != null && fromMs >= toMs))) {
             getView().setLoading(false);
             getView().showStatsMessage(MESSAGE_BAD_TIME_RANGE);
             return;

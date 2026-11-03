@@ -265,6 +265,16 @@ class TestElasticFieldStatsService {
     }
 
     @Test
+    void testNoDocumentsInTimeRange() {
+        stubCount(0);
+
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L, true));
+
+        assertThat(stats.getMessage()).isEqualTo("No documents were found in the time range");
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))).isEmpty();
+    }
+
+    @Test
     void testGetSampleProbability() {
         assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 100_000)).isEqualTo(0.05);
         assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 10_000)).isEqualTo(0.5);

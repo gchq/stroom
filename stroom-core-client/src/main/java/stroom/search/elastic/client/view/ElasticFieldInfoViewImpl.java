@@ -27,6 +27,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.help.client.HelpButton;
@@ -81,7 +82,11 @@ public class ElasticFieldInfoViewImpl
     @UiField
     SelectionBox<Integer> sampleSize;
     @UiField
-    Button refreshStats;
+    InlineSvgButton refreshStats;
+    @UiField
+    FlowPanel randomControls;
+    @UiField
+    FlowPanel exactControls;
     @UiField
     SpinnerSmall spinner;
     @UiField
@@ -119,7 +124,8 @@ public class ElasticFieldInfoViewImpl
                 : MODE_RANDOM);
         mode.addItems(List.of(false, true));
         mode.setValue(false);
-        refreshStats.setIcon(SvgImage.REFRESH);
+        refreshStats.setSvg(SvgImage.REFRESH);
+        refreshStats.setTitle("Refresh statistics");
         retry.setIcon(SvgImage.REFRESH);
     }
 
@@ -158,10 +164,9 @@ public class ElasticFieldInfoViewImpl
     @Override
     public void setTimeFieldName(final String timeField) {
         if (NullSafe.isBlankString(timeField)) {
-            timeFieldLabel.setText("Documents are sampled from the time range using the index's main date field.");
+            timeFieldLabel.setText("Documents are selected by the index's main date field.");
         } else {
-            timeFieldLabel.setText("Documents are sampled from the time range using the index's main date field, '" +
-                                   timeField + "'.");
+            timeFieldLabel.setText("Documents are selected by the index's main date field, '" + timeField + "'.");
         }
     }
 
@@ -341,7 +346,10 @@ public class ElasticFieldInfoViewImpl
     @UiHandler("mode")
     void onModeChange(final ValueChangeEvent<Boolean> event) {
         final boolean exact = Boolean.TRUE.equals(mode.getValue());
-        sampleSize.setEnabled(!exact);
+        // A random sample is taken from all documents; exact statistics are for a time range
+        randomControls.setVisible(!exact);
+        exactControls.setVisible(exact);
+        timeFieldLabel.setVisible(exact);
         if (getUiHandlers() != null) {
             getUiHandlers().onExactChange(exact);
         }
@@ -402,9 +410,6 @@ public class ElasticFieldInfoViewImpl
 
         /// @return the style of the sample size selector
         String sampleSize();
-
-        /// @return the style of the refresh button and loading indicator
-        String refresh();
 
         /// @return the style of the statistics content
         String stats();

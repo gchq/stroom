@@ -49,7 +49,7 @@ public class ElasticFieldListModel {
     /// The type label shown for a field whose source indices map it to different types.
     public static final String CONFLICT_TYPE_LABEL = "Conflict";
 
-    static final String STATUS_HAS_SETTINGS = "Has settings";
+    static final String STATUS_CONFIGURED = "Configured";
     static final String STATUS_VIRTUAL = "Virtual";
     static final String STATUS_MISSING = "Missing from all source indices";
     static final String STATUS_CLASHING = "Name clashes with a mapped field";
@@ -438,8 +438,9 @@ public class ElasticFieldListModel {
                             new TreeSet<>(field.getConflictingTypes().values()));
                 } else {
                     typeLabel = field.getFldType().getDisplayValue();
-                    status = rowSettings != null && !rowSettings.isDefault()
-                            ? STATUS_HAS_SETTINGS
+                    // The Enabled column shows whether the field is enabled, so only other settings count
+                    status = rowSettings != null && rowSettings.getDenseVector() != null
+                            ? STATUS_CONFIGURED
                             : "";
                 }
                 filterType = typeLabel;

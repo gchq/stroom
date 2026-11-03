@@ -1,7 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:tab="urn:import:stroom.widget.tab.client.view"
              xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
@@ -9,13 +8,14 @@
         .filters {
             display: flex;
             flex-direction: row;
-            align-items: flex-end;
+            align-items: center;
             gap: 8px;
+            padding: 2px 4px 4px 4px;
         }
 
         .nameFilter {
-            flex-grow: 1;
-            min-width: 150px;
+            width: 250px;
+            flex-shrink: 0;
         }
 
         .typeFilter {
@@ -29,22 +29,15 @@
     </ui:style>
 
     <g:ThinSplitLayoutPanel styleName="max">
-        <g:north size="350">
+        <g:north size="700">
             <g:FlowPanel styleName="max dock-container-vertical">
                 <!-- Both filters narrow the same list, so they sit side by side above it -->
-                <g:FlowPanel styleName="dock-min form-padding {style.filters}">
-                    <form:FormGroup identity="elasticIndexFieldsNameFilter" label="Name"
-                                    addStyleNames="{style.nameFilter}">
-                        <view:QuickFilter ui:field="nameFilter"/>
-                    </form:FormGroup>
-                    <form:FormGroup identity="elasticIndexFieldsTypeFilter" label="Field types"
-                                    helpText="Show only fields of the ticked types. Tick none to show all types."
-                                    addStyleNames="{style.typeFilter}">
-                        <l:MultiSelectionBox ui:field="typeFilter" addStyleNames="w-100"/>
-                    </form:FormGroup>
+                <g:FlowPanel styleName="dock-min {style.filters}">
+                    <view:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter}"/>
+                    <l:MultiSelectionBox ui:field="typeFilter" addStyleNames="{style.typeFilter}"
+                                         title="Show only fields of the ticked types. Tick none to show all types."/>
                 </g:FlowPanel>
                 <g:SimplePanel ui:field="dataGrid" styleName="dock-max"/>
-                <g:Label ui:field="statusMessage" styleName="dock-min elasticFieldListView-statusMessage"/>
             </g:FlowPanel>
         </g:north>
         <g:center>
