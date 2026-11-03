@@ -24,8 +24,12 @@ public interface ElasticFieldInfoUiHandlers extends UiHandlers {
     /// Called when the user changes the statistics time range.
     void onTimeRangeChange();
 
-    /// @param sampleSize the sample size per shard the user chose
+    /// @param sampleSize the approximate number of documents to sample at random that the user chose
     void onSampleSizeChange(int sampleSize);
+
+    /// @param exact `true` if the user chose to calculate the statistics across every document, `false` for a random
+    ///              sample
+    void onExactChange(boolean exact);
 
     /// Called when the user asks for the statistics to be fetched again, by refreshing or retrying.
     void onRefreshStats();

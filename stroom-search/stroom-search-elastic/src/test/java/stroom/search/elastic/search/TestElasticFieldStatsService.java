@@ -73,6 +73,7 @@ class TestElasticFieldStatsService {
 
     private static final String INDEX_NAME = "test-index";
     private static final String SEARCH_PATH = "/" + INDEX_NAME + "/_search";
+    private static final String COUNT_PATH = "/" + INDEX_NAME + "/_count";
     private static final DocRef INDEX_REF = new DocRef(ElasticIndexDoc.TYPE, "index-uuid", "Test Index");
     private static final DocRef CLUSTER_REF = new DocRef(ElasticClusterDoc.TYPE, "cluster-uuid", "Cluster");
     private static final String SHARDS = """
@@ -130,59 +131,59 @@ class TestElasticFieldStatsService {
     }
 
     @Test
-    void testKeywordFieldStats() {
-        stubSearch(null, """
-                "sampler#sample": {
-                  "doc_count": 100,
-                  "filter#has_value": {"doc_count": 90},
-                  "cardinality#distinct": {"value": 3},
-                  "sterms#top": {
-                    "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
-                    "buckets": [{"key": "web01", "doc_count": 50}, {"key": "web02", "doc_count": 40}]
-                  }
-                }""");
+    void testKeywordFieldStatsFromRandomSample() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "filter#has_value": {"doc_count": 90000},
+                "cardinality#distinct": {"value": 3},
+                "sterms#top": {
+                  "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                  "buckets": [{"key": "web01", "doc_count": 50000}, {"key": "web02", "doc_count": 40000}]
+                }"""));
 
-        final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L));
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L, null));
 
         assertThat(stats.getMessage()).isNull();
+        assertThat(stats.getExact()).isFalse();
         assertThat(stats.getSampleSize()).isEqualTo(5_000);
         assertThat(stats.getMaxSampleSize()).isEqualTo(50_000);
-        assertThat(stats.getSampledDocs()).isEqualTo(100);
-        assertThat(stats.getDocsWithValue()).isEqualTo(90);
+        assertThat(stats.getTotalDocs()).isEqualTo(100_000);
+        assertThat(stats.getSampledDocs()).isEqualTo(5_000);
+        // Counts within the random sampler are already scaled by Elasticsearch to estimate every document
+        assertThat(stats.getDocsWithValue()).isEqualTo(90_000);
         assertThat(stats.getDistinctCount()).isEqualTo(3);
         assertThat(stats.getTopValues())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
-                .containsExactly(tuple("web01", 50L), tuple("web02", 40L));
+                .containsExactly(tuple("web01", 50_000L), tuple("web02", 40_000L));
         assertThat(stats.getMin()).isNull();
 
-        // Each shard is sampled, within the time range on the doc's time field
-        final String body = onlyRequest().getBodyAsString();
+        // Documents are sampled at random, within the time range on the doc's time field
+        final String body = onlySearchRequest().getBodyAsString();
         assertThat(body)
-                .contains("\"shard_size\":5000")
+                .contains("\"random_sampler\":{\"probability\":0.05}")
                 .contains("\"@timestamp\"")
                 .contains("\"gte\":1000")
                 .contains("\"lt\":2000")
                 .contains("\"terms\":{\"field\":\"host\",\"size\":10}");
+        assertThat(onlyCountRequest().getBodyAsString()).contains("\"gte\":1000").contains("\"lt\":2000");
     }
 
     @Test
-    void testNumericFieldStats() {
+    void testNumericFieldStatsExact() {
+        stubCount(1_000_000);
         stubSearch(null, """
-                "sampler#sample": {
-                  "doc_count": 10,
-                  "filter#has_value": {"doc_count": 10},
-                  "cardinality#distinct": {"value": 5},
-                  "stats#stats": {"count": 10, "min": 0.0, "max": 100.0, "avg": 42.5, "sum": 425.0},
-                  "tdigest_percentiles#median": {"values": [{"key": 50.0, "value": 40.0}]}
-                }""");
+                "filter#has_value": {"doc_count": 10},
+                "cardinality#distinct": {"value": 5},
+                "stats#stats": {"count": 10, "min": 0.0, "max": 100.0, "avg": 42.5, "sum": 425.0},
+                "tdigest_percentiles#median": {"values": [{"key": 50.0, "value": 40.0}]}""");
         stubSearch("\"histogram\"", """
-                "sampler#sample": {
-                  "doc_count": 10,
-                  "histogram#histogram": {"buckets": [{"key": 0.0, "doc_count": 4}, {"key": 5.0, "doc_count": 6}]}
-                }""");
+                "histogram#histogram": {"buckets": [{"key": 0.0, "doc_count": 4}, {"key": 5.0, "doc_count": 6}]}""");
 
-        final ElasticFieldStats stats = service.getFieldStats(request("bytes", null, null, null));
+        final ElasticFieldStats stats = service.getFieldStats(request("bytes", null, null, null, true));
 
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getTotalDocs()).isEqualTo(1_000_000);
+        assertThat(stats.getSampledDocs()).isEqualTo(1_000_000);
         assertThat(stats.getMin()).isEqualTo("0");
         assertThat(stats.getMax()).isEqualTo("100");
         assertThat(stats.getMean()).isEqualTo(42.5);
@@ -191,45 +192,50 @@ class TestElasticFieldStatsService {
         assertThat(stats.getHistogram())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                 .containsExactly(tuple("0", 4L), tuple("5", 6L));
-        // No time range was asked for
+        // Every document is included, with no time range
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
-                .allSatisfy(request -> assertThat(request.getBodyAsString()).contains("\"match_all\""));
+                .hasSize(2)
+                .allSatisfy(request -> assertThat(request.getBodyAsString())
+                        .contains("\"match_all\"")
+                        .doesNotContain("random_sampler"));
     }
 
     @Test
-    void testTextFieldCoverageOnly() {
+    void testSmallIndexIsExact() {
+        // A sample of more than half the documents can't be random, so all of them are used
+        stubCount(8_000);
         stubSearch(null, """
-                "sampler#sample": {"doc_count": 10, "filter#has_value": {"doc_count": 7}}""");
+                "filter#has_value": {"doc_count": 7000}""");
 
-        final ElasticFieldStats stats = service.getFieldStats(request("message", null, null, null));
+        final ElasticFieldStats stats = service.getFieldStats(request("message", null, null, null, null));
 
-        assertThat(stats.getDocsWithValue()).isEqualTo(7);
-        assertThat(stats.getDistinctCount()).isNull();
-        assertThat(stats.getTopValues()).isNull();
-        assertThat(onlyRequest().getBodyAsString()).doesNotContain("cardinality");
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getSampledDocs()).isEqualTo(8_000);
+        assertThat(stats.getDocsWithValue()).isEqualTo(7_000);
+        assertThat(onlySearchRequest().getBodyAsString())
+                .doesNotContain("random_sampler")
+                .doesNotContain("cardinality");
     }
 
     @Test
     void testVirtualFieldStatsUseEditedGroups() {
         indexFieldCache.put("host", keyword("host"));
-        stubSearch(null, """
-                "sampler#sample": {
-                  "doc_count": 20,
-                  "filter#has_value": {"doc_count": 12},
-                  "filters#groups": {"buckets": {"web": {"doc_count": 5}, "db": {"doc_count": 7}}}
-                }""");
+        stubCount(1_000_000);
+        stubSearch(null, randomSample(5_000, """
+                "filter#has_value": {"doc_count": 12000},
+                "filters#groups": {"buckets": {"web": {"doc_count": 5000}, "db": {"doc_count": 7000}}}"""));
         final List<ElasticVirtualFieldGroup> groups = List.of(
                 new ElasticVirtualFieldGroup("web", group("web01")),
                 new ElasticVirtualFieldGroup("db", group("db01")));
 
         final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
-                INDEX_REF, "Category", null, null, null, groups));
+                INDEX_REF, "Category", null, null, null, groups, null));
 
-        assertThat(stats.getDocsWithValue()).isEqualTo(12);
+        assertThat(stats.getDocsWithValue()).isEqualTo(12_000);
         assertThat(stats.getTopValues())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
-                .containsExactly(tuple("db", 7L), tuple("web", 5L));
-        assertThat(onlyRequest().getBodyAsString()).contains("web01").contains("db01");
+                .containsExactly(tuple("db", 7_000L), tuple("web", 5_000L));
+        assertThat(onlySearchRequest().getBodyAsString()).contains("web01").contains("db01");
     }
 
     @Test
@@ -240,7 +246,7 @@ class TestElasticFieldStatsService {
                 new ElasticVirtualFieldGroup("web", group("web02")));
 
         assertThatThrownBy(() -> service.getFieldStats(new ElasticFieldStatsRequest(
-                INDEX_REF, "Category", null, null, null, groups)))
+                INDEX_REF, "Category", null, null, null, groups, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("more than one group named 'web'");
         assertThat(ELASTIC.getAllServeEvents()).isEmpty();
@@ -248,27 +254,37 @@ class TestElasticFieldStatsService {
 
     @Test
     void testSampleSizeLimitedToMaximum() {
-        stubSearch(null, """
-                "sampler#sample": {"doc_count": 0, "filter#has_value": {"doc_count": 0}}""");
+        stubCount(10_000_000);
+        stubSearch(null, randomSample(50_000, """
+                "filter#has_value": {"doc_count": 0}"""));
 
-        final ElasticFieldStats stats = service.getFieldStats(request("message", 1_000_000, null, null));
+        final ElasticFieldStats stats = service.getFieldStats(request("message", 1_000_000, null, null, null));
 
         assertThat(stats.getSampleSize()).isEqualTo(50_000);
-        assertThat(onlyRequest().getBodyAsString()).contains("\"shard_size\":50000");
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"probability\":0.005");
+    }
+
+    @Test
+    void testGetSampleProbability() {
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 100_000)).isEqualTo(0.05);
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 10_000)).isEqualTo(0.5);
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 9_999)).isNull();
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 0)).isNull();
+        assertThat(ElasticFieldStatsService.getSampleProbability(true, 5_000, 100_000)).isNull();
     }
 
     @Test
     void testNoPermission() {
         when(securityContext.hasDocumentPermission(INDEX_REF, DocumentPermission.USE)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.getFieldStats(request("host", null, null, null)))
+        assertThatThrownBy(() -> service.getFieldStats(request("host", null, null, null, null)))
                 .isInstanceOf(PermissionException.class);
         assertThat(ELASTIC.getAllServeEvents()).isEmpty();
     }
 
     @Test
     void testConflictingField() {
-        final ElasticFieldStats stats = service.getFieldStats(request("port", null, null, null));
+        final ElasticFieldStats stats = service.getFieldStats(request("port", null, null, null, null));
 
         assertThat(stats.getMessage()).contains("conflicting types");
         assertThat(ELASTIC.getAllServeEvents()).isEmpty();
@@ -276,7 +292,7 @@ class TestElasticFieldStatsService {
 
     @Test
     void testUnknownField() {
-        final ElasticFieldStats stats = service.getFieldStats(request("unknown", null, null, null));
+        final ElasticFieldStats stats = service.getFieldStats(request("unknown", null, null, null, null));
 
         assertThat(stats.getMessage()).isEqualTo("Field 'unknown' was not found in any source index");
         assertThat(ELASTIC.getAllServeEvents()).isEmpty();
@@ -287,6 +303,13 @@ class TestElasticFieldStatsService {
         assertThat(ElasticFieldStatsService.formatNumber(5.0)).isEqualTo("5");
         assertThat(ElasticFieldStatsService.formatNumber(-2.0)).isEqualTo("-2");
         assertThat(ElasticFieldStatsService.formatNumber(2.5)).isEqualTo("2.5");
+    }
+
+    private void stubCount(final long count) {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(COUNT_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, """
+                        {"count": %d, "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0}}"""
+                        .formatted(count))));
     }
 
     private void stubSearch(final String bodyContaining, final String aggregations) {
@@ -300,9 +323,26 @@ class TestElasticFieldStatsService {
                 "{" + SHARDS + "\"aggregations\": {" + aggregations + "}}")));
     }
 
-    private LoggedRequest onlyRequest() {
-        final List<LoggedRequest> requests = ELASTIC.findAll(
-                WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)));
+    /// @return the aggregations of a search response, wrapped in a random sampler aggregate as Elasticsearch
+    /// returns it, with the client's typed keys
+    private static String randomSample(final long docCount, final String aggregations) {
+        return """
+                "random_sampler#sample": {
+                  "seed": 123, "probability": 0.05, "doc_count": %d,
+                  %s
+                }""".formatted(docCount, aggregations);
+    }
+
+    private LoggedRequest onlySearchRequest() {
+        return onlyRequest(SEARCH_PATH);
+    }
+
+    private LoggedRequest onlyCountRequest() {
+        return onlyRequest(COUNT_PATH);
+    }
+
+    private LoggedRequest onlyRequest(final String path) {
+        final List<LoggedRequest> requests = ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(path)));
         assertThat(requests).hasSize(1);
         return requests.getFirst();
     }
@@ -310,8 +350,9 @@ class TestElasticFieldStatsService {
     private static ElasticFieldStatsRequest request(final String fieldName,
                                                     final Integer sampleSize,
                                                     final Long fromMs,
-                                                    final Long toMs) {
-        return new ElasticFieldStatsRequest(INDEX_REF, fieldName, sampleSize, fromMs, toMs, null);
+                                                    final Long toMs,
+                                                    final Boolean exact) {
+        return new ElasticFieldStatsRequest(INDEX_REF, fieldName, sampleSize, fromMs, toMs, null, exact);
     }
 
     private static ExpressionOperator group(final String host) {

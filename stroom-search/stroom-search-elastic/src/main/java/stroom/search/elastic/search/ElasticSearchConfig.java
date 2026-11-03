@@ -88,14 +88,14 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return suggestConfig;
     }
 
-    @JsonPropertyDescription("The default number of documents sampled per shard when showing the statistics of an " +
-                             "Elasticsearch index field.")
+    @JsonPropertyDescription("The default approximate number of documents sampled at random when estimating the " +
+                             "statistics of an Elasticsearch index field.")
     public int getFieldStatsSampleSize() {
         return fieldStatsSampleSize;
     }
 
-    @JsonPropertyDescription("The largest number of documents a user may ask to sample per shard when showing the " +
-                             "statistics of an Elasticsearch index field.")
+    @JsonPropertyDescription("The largest approximate number of documents a user may ask to sample at random when " +
+                             "estimating the statistics of an Elasticsearch index field.")
     public int getFieldStatsMaxSampleSize() {
         return fieldStatsMaxSampleSize;
     }

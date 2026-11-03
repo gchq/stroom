@@ -25,14 +25,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
-/// Statistics about one field of an Elasticsearch index doc, from a sample of documents.
+/// Statistics about one field of an Elasticsearch index doc, calculated across every matching document or estimated
+/// from a random sample of them.
 ///
-/// Which statistics are present depends on the field's type. Values are rendered as text, so dates and numbers can be
-/// shown as Elasticsearch formats them.
+/// Which statistics are present depends on the field's type. Counts are for all matching documents: exact, or estimated
+/// from the sample. Values are rendered as text, so dates and numbers can be shown as Elasticsearch formats them.
 @JsonPropertyOrder({
         "fieldName",
+        "exact",
         "sampleSize",
         "maxSampleSize",
+        "totalDocs",
         "sampledDocs",
         "docsWithValue",
         "distinctCount",
@@ -49,9 +52,13 @@ public final class ElasticFieldStats {
     @JsonProperty
     private final String fieldName;
     @JsonProperty
+    private final Boolean exact;
+    @JsonProperty
     private final Integer sampleSize;
     @JsonProperty
     private final Integer maxSampleSize;
+    @JsonProperty
+    private final Long totalDocs;
     @JsonProperty
     private final Long sampledDocs;
     @JsonProperty
@@ -74,23 +81,28 @@ public final class ElasticFieldStats {
     private final String message;
 
     /// @param fieldName the full name of the field
-    /// @param sampleSize the number of documents sampled per shard
-    /// @param maxSampleSize the largest sample size per shard that may be requested
-    /// @param sampledDocs the number of documents sampled
-    /// @param docsWithValue the number of sampled documents holding a value for the field
-    /// @param distinctCount the approximate number of distinct values in the sample, or `null` if not applicable
+    /// @param exact `true` if the statistics were calculated across every matching document, `false` if estimated
+    ///     from a random sample
+    /// @param sampleSize the approximate number of documents asked to be sampled
+    /// @param maxSampleSize the largest sample size that may be requested
+    /// @param totalDocs the number of documents matching the time range
+    /// @param sampledDocs the approximate number of documents the statistics were calculated from
+    /// @param docsWithValue the number of matching documents holding a value for the field
+    /// @param distinctCount the approximate number of distinct values, or `null` if not applicable
     /// @param topValues the most common values with their counts, or `null` if not applicable
     /// @param min the smallest value, or `null` if not applicable
     /// @param max the largest value, or `null` if not applicable
     /// @param mean the mean of numeric values, or `null` if not applicable
     /// @param median the median of numeric values, or `null` if not applicable
     /// @param histogram the distribution of numeric or date values as ordered buckets, keyed by each bucket's lower
-    ///         bound, or `null` if not applicable
+    ///     bound, or `null` if not applicable
     /// @param message an explanation when no statistics can be given for the field, otherwise `null`
     @JsonCreator
     public ElasticFieldStats(@JsonProperty("fieldName") final String fieldName,
+                             @JsonProperty("exact") final Boolean exact,
                              @JsonProperty("sampleSize") final Integer sampleSize,
                              @JsonProperty("maxSampleSize") final Integer maxSampleSize,
+                             @JsonProperty("totalDocs") final Long totalDocs,
                              @JsonProperty("sampledDocs") final Long sampledDocs,
                              @JsonProperty("docsWithValue") final Long docsWithValue,
                              @JsonProperty("distinctCount") final Long distinctCount,
@@ -102,8 +114,10 @@ public final class ElasticFieldStats {
                              @JsonProperty("histogram") final List<ElasticFieldValueCount> histogram,
                              @JsonProperty("message") final String message) {
         this.fieldName = fieldName;
+        this.exact = exact;
         this.sampleSize = sampleSize;
         this.maxSampleSize = maxSampleSize;
+        this.totalDocs = totalDocs;
         this.sampledDocs = sampledDocs;
         this.docsWithValue = docsWithValue;
         this.distinctCount = distinctCount;
@@ -121,27 +135,38 @@ public final class ElasticFieldStats {
         return fieldName;
     }
 
-    /// @return the number of documents sampled per shard
+    /// @return `true` if the statistics were calculated across every matching document, `false` if estimated from a
+    /// random sample
+    public Boolean getExact() {
+        return exact;
+    }
+
+    /// @return the approximate number of documents asked to be sampled
     public Integer getSampleSize() {
         return sampleSize;
     }
 
-    /// @return the largest sample size per shard that may be requested
+    /// @return the largest sample size that may be requested
     public Integer getMaxSampleSize() {
         return maxSampleSize;
     }
 
-    /// @return the number of documents sampled
+    /// @return the number of documents matching the time range
+    public Long getTotalDocs() {
+        return totalDocs;
+    }
+
+    /// @return the approximate number of documents the statistics were calculated from
     public Long getSampledDocs() {
         return sampledDocs;
     }
 
-    /// @return the number of sampled documents holding a value for the field
+    /// @return the number of matching documents holding a value for the field
     public Long getDocsWithValue() {
         return docsWithValue;
     }
 
-    /// @return the approximate number of distinct values in the sample, or `null` if not applicable
+    /// @return the approximate number of distinct values, or `null` if not applicable
     public Long getDistinctCount() {
         return distinctCount;
     }
@@ -172,7 +197,7 @@ public final class ElasticFieldStats {
     }
 
     /// @return the distribution of numeric or date values as ordered buckets, keyed by each bucket's lower bound,
-    ///         or `null` if not applicable
+    /// or `null` if not applicable
     public List<ElasticFieldValueCount> getHistogram() {
         return histogram;
     }
@@ -192,8 +217,10 @@ public final class ElasticFieldStats {
         }
         final ElasticFieldStats that = (ElasticFieldStats) o;
         return Objects.equals(fieldName, that.fieldName) &&
+               Objects.equals(exact, that.exact) &&
                Objects.equals(sampleSize, that.sampleSize) &&
                Objects.equals(maxSampleSize, that.maxSampleSize) &&
+               Objects.equals(totalDocs, that.totalDocs) &&
                Objects.equals(sampledDocs, that.sampledDocs) &&
                Objects.equals(docsWithValue, that.docsWithValue) &&
                Objects.equals(distinctCount, that.distinctCount) &&
@@ -208,16 +235,18 @@ public final class ElasticFieldStats {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldName, sampleSize, maxSampleSize, sampledDocs, docsWithValue, distinctCount,
-                topValues, min, max, mean, median, histogram, message);
+        return Objects.hash(fieldName, exact, sampleSize, maxSampleSize, totalDocs, sampledDocs, docsWithValue,
+                distinctCount, topValues, min, max, mean, median, histogram, message);
     }
 
     @Override
     public String toString() {
         return "ElasticFieldStats{" +
                "fieldName=" + fieldName +
+               ", exact=" + exact +
                ", sampleSize=" + sampleSize +
                ", maxSampleSize=" + maxSampleSize +
+               ", totalDocs=" + totalDocs +
                ", sampledDocs=" + sampledDocs +
                ", docsWithValue=" + docsWithValue +
                ", distinctCount=" + distinctCount +

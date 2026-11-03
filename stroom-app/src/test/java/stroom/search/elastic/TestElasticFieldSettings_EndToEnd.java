@@ -39,6 +39,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.node.ArrayNode;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -225,9 +226,51 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
                 .containsExactly(tuple("red", 2L), tuple("yellow", 1L));
     }
 
+    @Test
+    void testRandomSampleAndExactStats() {
+        // A random sample needs many more documents than the sample size
+        final String largeIndexName = ElasticTestNode.createIndexName("field-stats-sample");
+        node.createIndex(largeIndexName, """
+                {"mappings": {"properties": {"Kind": {"type": "keyword"}, "Date": {"type": "date"}}}}""");
+        try {
+            final ArrayNode documents = JsonUtil.getMapper().createArrayNode();
+            for (int i = 0; i < 20_000; i++) {
+                documents.addObject()
+                        .put("_id", String.valueOf(i))
+                        .put("Kind", i % 4 == 0 ? "a" : "b")
+                        .put("Date", "2026-01-01T00:00:00.000Z");
+            }
+            node.bulkIndex(largeIndexName, documents);
+            final DocRef largeIndexRef = helper.createIndexDoc(
+                    helper.createCluster(node), largeIndexName, "Date", 100);
+
+            final ElasticFieldStats sampled = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    largeIndexRef, "Kind", 2_000, null, null, null, null));
+            assertThat(sampled.getExact()).isFalse();
+            assertThat(sampled.getTotalDocs()).isEqualTo(20_000);
+            // About 2,000 documents are sampled, and their counts are scaled up to estimate all 20,000
+            assertThat(sampled.getSampledDocs()).isBetween(1_000L, 3_000L);
+            assertThat(sampled.getDocsWithValue()).isBetween(15_000L, 25_000L);
+            assertThat(sampled.getTopValues())
+                    .extracting(ElasticFieldValueCount::getValue)
+                    .containsExactly("b", "a");
+
+            final ElasticFieldStats exact = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    largeIndexRef, "Kind", 2_000, null, null, null, true));
+            assertThat(exact.getExact()).isTrue();
+            assertThat(exact.getSampledDocs()).isEqualTo(20_000);
+            assertThat(exact.getDocsWithValue()).isEqualTo(20_000);
+            assertThat(exact.getTopValues())
+                    .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                    .containsExactly(tuple("b", 15_000L), tuple("a", 5_000L));
+        } finally {
+            node.deleteIndices(largeIndexName);
+        }
+    }
+
     private ElasticFieldStats stats(final String fieldName, final Long fromMs, final Long toMs) {
         return elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
-                indexRef, fieldName, null, fromMs, toMs, null));
+                indexRef, fieldName, null, fromMs, toMs, null, null));
     }
 
     private void assertIds(final ExpressionOperator expression, final String... expectedIds) {

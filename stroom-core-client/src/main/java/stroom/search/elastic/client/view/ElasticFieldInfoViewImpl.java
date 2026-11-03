@@ -59,6 +59,9 @@ public class ElasticFieldInfoViewImpl
     private static final String MAPPING_HELP = "How Elasticsearch maps this field. Parameters shown are those set " +
                                                "in the index mapping; change them in Elasticsearch, not Stroom.";
 
+    private static final String MODE_RANDOM = "Random sample";
+    private static final String MODE_EXACT = "Exact (all documents)";
+
     private final Widget widget;
 
     @UiField
@@ -73,6 +76,8 @@ public class ElasticFieldInfoViewImpl
     DateTimeBox fromTime;
     @UiField
     DateTimeBox toTime;
+    @UiField
+    SelectionBox<Boolean> mode;
     @UiField
     SelectionBox<Integer> sampleSize;
     @UiField
@@ -109,6 +114,11 @@ public class ElasticFieldInfoViewImpl
         fromTime.setOptional(true);
         toTime.setOptional(true);
         sampleSize.setDisplayValueFunction(size -> ElasticFieldStatsSupport.formatCount(size.longValue()));
+        mode.setDisplayValueFunction(exact -> Boolean.TRUE.equals(exact)
+                ? MODE_EXACT
+                : MODE_RANDOM);
+        mode.addItems(List.of(false, true));
+        mode.setValue(false);
         refreshStats.setIcon(SvgImage.REFRESH);
         retry.setIcon(SvgImage.REFRESH);
     }
@@ -205,21 +215,19 @@ public class ElasticFieldInfoViewImpl
     @Override
     public void showStats(final ElasticFieldStats stats) {
         clearStats();
-        final long sampledDocs = Objects.requireNonNullElse(stats.getSampledDocs(), 0L);
+        // Counts are for every document in the time range: exact, or estimated from the sample
+        final long totalDocs = Objects.requireNonNullElse(stats.getTotalDocs(), 0L);
         final long docsWithValue = Objects.requireNonNullElse(stats.getDocsWithValue(), 0L);
 
         final FlowPanel summary = new FlowPanel();
-        summary.add(new Label("Sampled " + ElasticFieldStatsSupport.formatCount(sampledDocs) +
-                              " documents (up to " + ElasticFieldStatsSupport.formatCount(
-                                      Objects.requireNonNullElse(stats.getSampleSize(), 0).longValue()) +
-                              " per shard)."));
+        summary.add(new Label(ElasticFieldStatsSupport.getSummary(stats)));
         statsContent.add(summary);
 
         final FlowPanel coverage = createBlock("Coverage");
         coverage.add(createBarRow("Documents with a value",
-                ElasticFieldStatsSupport.getPercent(docsWithValue, sampledDocs),
+                ElasticFieldStatsSupport.getPercent(docsWithValue, totalDocs),
                 ElasticFieldStatsSupport.formatCount(docsWithValue) + " (" +
-                ElasticFieldStatsSupport.formatPercent(docsWithValue, sampledDocs) + ")"));
+                ElasticFieldStatsSupport.formatPercent(docsWithValue, totalDocs) + ")"));
         statsContent.add(coverage);
 
         final FlowPanel values = new FlowPanel();
@@ -241,9 +249,9 @@ public class ElasticFieldInfoViewImpl
             for (final ElasticFieldValueCount valueCount : stats.getTopValues()) {
                 final long count = Objects.requireNonNullElse(valueCount.getCount(), 0L);
                 topValues.add(createBarRow(valueCount.getValue(),
-                        ElasticFieldStatsSupport.getPercent(count, sampledDocs),
+                        ElasticFieldStatsSupport.getPercent(count, totalDocs),
                         ElasticFieldStatsSupport.formatCount(count) + " (" +
-                        ElasticFieldStatsSupport.formatPercent(count, sampledDocs) + " of sample)"));
+                        ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
             }
             statsContent.add(topValues);
         }
@@ -260,7 +268,7 @@ public class ElasticFieldInfoViewImpl
                 histogram.add(createBarRow(bucket.getValue(),
                         ElasticFieldStatsSupport.getPercent(count, maxCount),
                         ElasticFieldStatsSupport.formatCount(count) + " (" +
-                        ElasticFieldStatsSupport.formatPercent(count, sampledDocs) + " of sample)"));
+                        ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
             }
             statsContent.add(histogram);
         }
@@ -328,6 +336,15 @@ public class ElasticFieldInfoViewImpl
     @UiHandler("toTime")
     void onToTimeChange(final ValueChangeEvent<String> event) {
         onTimeRangeChange();
+    }
+
+    @UiHandler("mode")
+    void onModeChange(final ValueChangeEvent<Boolean> event) {
+        final boolean exact = Boolean.TRUE.equals(mode.getValue());
+        sampleSize.setEnabled(!exact);
+        if (getUiHandlers() != null) {
+            getUiHandlers().onExactChange(exact);
+        }
     }
 
     @UiHandler("sampleSize")

@@ -27,8 +27,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
-/// A request for sampled statistics about one field of an Elasticsearch index doc.
-@JsonPropertyOrder({"indexDocRef", "fieldName", "sampleSize", "fromMs", "toMs", "virtualGroups"})
+/// A request for statistics about one field of an Elasticsearch index doc.
+@JsonPropertyOrder({
+        "indexDocRef",
+        "fieldName",
+        "sampleSize",
+        "fromMs",
+        "toMs",
+        "virtualGroups",
+        "exact"})
 @JsonInclude(Include.NON_NULL)
 public final class ElasticFieldStatsRequest {
 
@@ -44,29 +51,36 @@ public final class ElasticFieldStatsRequest {
     private final Long toMs;
     @JsonProperty
     private final List<ElasticVirtualFieldGroup> virtualGroups;
+    @JsonProperty
+    private final Boolean exact;
 
     /// @param indexDocRef the index doc
     /// @param fieldName the full name of the field
-    /// @param sampleSize the number of documents to sample per shard, or `null` for the configured default
-    /// @param fromMs sample only documents whose time field is at or after this time, in epoch milliseconds, or
-    ///         `null` for no lower bound
-    /// @param toMs sample only documents whose time field is before this time, in epoch milliseconds, or `null` for
-    ///         no upper bound
+    /// @param sampleSize the approximate number of documents to sample at random, or `null` for the configured
+    ///     default; ignored when `exact` is `true`
+    /// @param fromMs include only documents whose time field is at or after this time, in epoch milliseconds, or
+    ///     `null` for no lower bound
+    /// @param toMs include only documents whose time field is before this time, in epoch milliseconds, or `null`
+    ///     for no upper bound
     /// @param virtualGroups for a virtual field, its groups as currently edited, which may not yet be saved;
-    ///         otherwise `null`
+    ///     otherwise `null`
+    /// @param exact `true` to calculate the statistics across every document of the index pattern rather than a
+    ///     random sample
     @JsonCreator
     public ElasticFieldStatsRequest(@JsonProperty("indexDocRef") final DocRef indexDocRef,
                                     @JsonProperty("fieldName") final String fieldName,
                                     @JsonProperty("sampleSize") final Integer sampleSize,
                                     @JsonProperty("fromMs") final Long fromMs,
                                     @JsonProperty("toMs") final Long toMs,
-                                    @JsonProperty("virtualGroups") final List<ElasticVirtualFieldGroup> virtualGroups) {
+                                    @JsonProperty("virtualGroups") final List<ElasticVirtualFieldGroup> virtualGroups,
+                                    @JsonProperty("exact") final Boolean exact) {
         this.indexDocRef = indexDocRef;
         this.fieldName = fieldName;
         this.sampleSize = sampleSize;
         this.fromMs = fromMs;
         this.toMs = toMs;
         this.virtualGroups = virtualGroups;
+        this.exact = exact;
     }
 
     /// @return the index doc
@@ -79,19 +93,20 @@ public final class ElasticFieldStatsRequest {
         return fieldName;
     }
 
-    /// @return the number of documents to sample per shard, or `null` for the configured default
+    /// @return the approximate number of documents to sample at random, or `null` for the configured default;
+    /// ignored when `exact` is `true`
     public Integer getSampleSize() {
         return sampleSize;
     }
 
-    /// @return sample only documents whose time field is at or after this time, in epoch milliseconds, or `null`
-    ///         for no lower bound
+    /// @return include only documents whose time field is at or after this time, in epoch milliseconds, or `null`
+    /// for no lower bound
     public Long getFromMs() {
         return fromMs;
     }
 
-    /// @return sample only documents whose time field is before this time, in epoch milliseconds, or `null` for no
-    ///         upper bound
+    /// @return include only documents whose time field is before this time, in epoch milliseconds, or `null` for no
+    /// upper bound
     public Long getToMs() {
         return toMs;
     }
@@ -99,6 +114,12 @@ public final class ElasticFieldStatsRequest {
     /// @return for a virtual field, its groups as currently edited, which may not yet be saved; otherwise `null`
     public List<ElasticVirtualFieldGroup> getVirtualGroups() {
         return virtualGroups;
+    }
+
+    /// @return `true` to calculate the statistics across every document of the index pattern rather than a random
+    /// sample
+    public Boolean getExact() {
+        return exact;
     }
 
     @Override
@@ -115,12 +136,13 @@ public final class ElasticFieldStatsRequest {
                Objects.equals(sampleSize, that.sampleSize) &&
                Objects.equals(fromMs, that.fromMs) &&
                Objects.equals(toMs, that.toMs) &&
-               Objects.equals(virtualGroups, that.virtualGroups);
+               Objects.equals(virtualGroups, that.virtualGroups) &&
+               Objects.equals(exact, that.exact);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(indexDocRef, fieldName, sampleSize, fromMs, toMs, virtualGroups);
+        return Objects.hash(indexDocRef, fieldName, sampleSize, fromMs, toMs, virtualGroups, exact);
     }
 
     @Override
@@ -132,6 +154,7 @@ public final class ElasticFieldStatsRequest {
                ", fromMs=" + fromMs +
                ", toMs=" + toMs +
                ", virtualGroups=" + virtualGroups +
+               ", exact=" + exact +
                '}';
     }
 }
