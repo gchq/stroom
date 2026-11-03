@@ -31,11 +31,15 @@
     color: var(--control__text-color);
 }
 
+/* In a document tab bar, in line with its tabs: as high as a tab, 4px into the bar */
 .tab-bar--curved .tab-selector {
+    top: 4px;
+    box-sizing: border-box;
+    height: 24px;
     border: var(--curve-tab__border);
     border-radius: var(--curve-tab__border-radius);
     background-color: var(--curve-tab__background-color);
-    padding: 10px;
+    padding: 0 10px;
     align-items: center;
 }
 

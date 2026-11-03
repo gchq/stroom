@@ -101,30 +101,37 @@
     left: -1000px;
 }
 
-/* A document tab: an icon, its label, then its spinner or close cross */
+/* A document tab: an icon, its label, then its spinner or close cross. 24px high (a 24px target, as
+   a toolbar button is), 4px into the 32px bar, so its focus ring (below) has the bar's 4px above
+   and below it; the bar leaves 6px between tabs for the ring at the sides (CurveTabBar.getTabGap) */
 .tab-bar--curved .tab-bar__tab {
     cursor: pointer;
     display: flex;
     align-items: center;
-    /* 5px shorter and lower than the bar, so its selected bar stays on the bar's bottom edge and its
-       focus ring (drawn outside it) has room above it; the bar leaves 6px between tabs for the ring
-       at the sides (CurveTabBar.getTabGap) */
-    top: 5px;
-    height: 29px;
-    border-bottom: solid 3px transparent;
-    border-top: solid 3px transparent;
+    box-sizing: border-box;
+    top: 4px;
+    height: 24px;
+    border-radius: 4px;
     background-color: var(--curve-tab__background-color);
     color: var(--control__text-color);
 }
 
 .tab-bar--curved .tab-bar__tab:hover {
     background: var(--curve-tab__background-color--hover);
-    /* Rounded at the top only, so it meets the bar's edge (and a selected tab's bar) square */
-    border-radius: 4px 4px 0 0;
 }
 
-.tab-bar--curved .tab-bar__tab[aria-selected="true"] {
-    border-bottom-color: var(--curve-tab__selected-color);
+/* A selected tab's line, under it on the bar's bottom edge, over the line along it (the bar's row's
+   border, curve-tab-layout.css), in the bar's room below the tab, which its focus ring's band
+   shares */
+.tab-bar--curved .tab-bar__tab[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -5px;
+    height: 3px;
+    background-color: var(--curve-tab__selected-color);
+    pointer-events: none;
 }
 
 .tab-bar__icon {
@@ -157,15 +164,18 @@
     opacity: 1;
 }
 
-/* The spinner, which the close cross replaces on hover or keyboard focus */
+/* The spinner, which the close cross replaces on hover or keyboard focus: room for the cross's 24px
+   and 2px before it, clear of the label */
 .tab-bar__end {
     position: relative;
-    width: 22px;
+    width: 26px;
     height: 22px;
 }
 
+/* Centred where the cross is */
 .tab-bar__spinner {
     position: absolute;
+    left: 3px;
     transition: opacity 0.2s ease-in-out;
 }
 
@@ -174,11 +184,38 @@
     opacity: 0.8;
 }
 
+/* The close cross: a 24px target (WCAG 2.5.8), at the end of the end's room, ending at the tab's
+   edge, with a toolbar button's hover and pressed fills (toolbar-button.css), drawn by ::before
+   under its icon */
 .tab-bar__close {
     position: absolute;
+    top: -1px;
+    left: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: .25rem;
+    cursor: pointer;
     opacity: 0;
-    top: 2px;
-    left: -1px;
+}
+
+.tab-bar__close::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: .25rem;
+}
+
+.tab-bar__close:hover::before {
+    background-color: var(--icon-button__background-color--hover);
+    border: thin solid var(--icon-button__border-color--hover);
+}
+
+.tab-bar__close:active::before {
+    background-color: var(--icon-button__background-color--active);
+    border: none;
 }
 
 .tab-bar__tab:hover .tab-bar__spinner,
@@ -192,11 +229,10 @@
 }
 
 .tab-bar__close svg {
+    position: relative;
     width: 17px;
     height: 17px;
     cursor: pointer;
-    margin: 0 6px 0 4px;
-    z-index: 0;
     color: var(--curve-tab__svg-color);
     opacity: 0.8;
 }
@@ -212,6 +248,15 @@
 
 .tab-bar--curved .tab-bar__tab--fixed .tab-bar__label {
     padding-right: 20px;
+}
+
+/* With no cross, its end is only its spinner's room */
+.tab-bar__tab--fixed .tab-bar__end {
+    width: 22px;
+}
+
+.tab-bar__tab--fixed .tab-bar__spinner {
+    left: 0;
 }
 
 /* A link tab: its label, drawn over an invisible bold copy (the sizer) that keeps its width the
@@ -302,21 +347,23 @@
    Keyboard focus (not a mouse click's): a line in the focus colour with a band of it beside the
    line, as a focused control has */
 
-/* Around a document tab, in the room the bar leaves around it, and above its neighbours */
-.tab-bar--curved .tab-bar__tab:focus-visible {
+/* On a tab's edge, its band reaching into the bar's padding and the room between tabs (a document
+   tab's gap, a link tab's beside the separators); a document tab's is above its neighbours */
+.tab-bar .tab-bar__tab:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 1px var(--tab__focus-color), 0 0 0 5px var(--tab__focus-band-color);
-    border-radius: 4px;
+}
+
+.tab-bar--curved .tab-bar__tab:focus-visible {
     z-index: 1;
 }
 
-/* On a link tab's edge, its band reaching into the bar's padding and the room beside the
-   separators */
-.tab-bar--link .tab-bar__tab:focus-visible {
-    outline: none;
+/* A selected document tab's line, with the keyboard focus, over the ring's band (the same width as
+   without it), so the band doesn't tint it */
+.tab-bar--curved .tab-bar__tab[aria-selected="true"]:focus-visible::before {
+    z-index: 1;
 }
 
-.tab-bar--link .tab-bar__tab:focus-visible::after {
+.tab-bar .tab-bar__tab:focus-visible::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -329,12 +376,13 @@
 
 /* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */
 @media (forced-colors: active) {
-    .tab-bar--curved .tab-bar__tab:focus-visible {
-        outline: 2px solid Highlight;
-        outline-offset: -2px;
+    .tab-bar .tab-bar__tab:focus-visible::after {
+        border-color: Highlight;
     }
 
-    .tab-bar--link .tab-bar__tab:focus-visible::after {
-        border-color: Highlight;
+    /* A selected document tab's line, which would otherwise be replaced */
+    .tab-bar--curved .tab-bar__tab[aria-selected="true"]::before {
+        forced-color-adjust: none;
+        background-color: Highlight;
     }
 }

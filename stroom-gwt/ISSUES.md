@@ -1851,6 +1851,17 @@ each is 8px wider (`LinkTabPanel` `Overflow`: 6 of 9, from 8). A link tab's labe
 (its line's room for descenders left its letters 1px high); the "|" between tabs isn't, as it
 reaches below the baseline.
 
+**Fixed for document tabs** (3 November 2026, the user's design): the document tab bar
+(`CurveTabLayout`) is 32px high, from 33px, as is the main toolbar at its right, so its 24px tabs
+(from 29px) line up with the Hide Sidebar, Ask Stroom AI and main menu buttons, 4px into the bar, the
+bar's 4px above and below holding their rings' band. A tab's focus ring is a link tab's (one rule
+for both). A selected tab's line is drawn under the tab (`::before`), on the bar's bottom edge over
+the line along it, as it was, and the tab's width whether focused or not; with the keyboard focus
+it is drawn over the ring's band, so the band doesn't tint it. A tab's close cross was a 17px icon
+in a 27 by 18px target that reached past the tab's edge; it is a 24px target with a toolbar button's hover and pressed fills, 3px clear
+of the label (a closeable tab is 4px wider; one that can't be closed keeps its width), and the busy
+spinner is centred where the cross is. The overflow selector is 24px high, in line with the tabs.
+
 ### A scroll pane that overflows can't be scrolled from the keyboard
 
 **Fixed** (3 November 2026) for Stroom's `ScrollPane`. **Open** for GWT's own `ScrollPanel`.

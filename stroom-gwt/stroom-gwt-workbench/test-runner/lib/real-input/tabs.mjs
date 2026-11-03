@@ -60,18 +60,19 @@ async function expectTabStopReturnsToSelected(page) {
   assert.equal(await selected(), 'true', 'tabbing back into the bar lands on the selected tab');
 }
 
+// What draws a tab's ring: its ::after, on its edge (tab-bar.css), a document tab's as a link tab's
+function ringColour(element) {
+  const after = getComputedStyle(element, '::after');
+  return after.content === 'none' ? 'none' : after.borderTopColor;
+}
+
 export const CHECKS = {
-  // A document tab's ring is a box shadow inside it
   'widgets-tabs-curvetabbar--basic': async (page) => {
-    await expectRingOnKeyboardOnly(page, { click: 2, next: 3 }, (element) => getComputedStyle(element).boxShadow);
+    await expectRingOnKeyboardOnly(page, { click: 2, next: 3 }, ringColour);
     await expectTabStopReturnsToSelected(page);
   },
-  // A link tab's ring is drawn around its label (by ::after)
   'widgets-tabs-linktabpanel--basic': async (page) => {
-    await expectRingOnKeyboardOnly(page, { click: 0, next: 1 }, (element) => {
-      const after = getComputedStyle(element, '::after');
-      return after.content === 'none' ? 'none' : after.borderTopColor;
-    });
+    await expectRingOnKeyboardOnly(page, { click: 0, next: 1 }, ringColour);
     await expectTabStopReturnsToSelected(page);
   },
 };
