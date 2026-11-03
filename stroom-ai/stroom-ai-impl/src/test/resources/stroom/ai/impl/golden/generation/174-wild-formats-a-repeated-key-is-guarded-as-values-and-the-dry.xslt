@@ -11,10 +11,10 @@
   <!-- Rule 'send': every record. Writes a Send event (TypeId send) from from, rcpt. -->
   <xsl:template match="node()" mode="event_type_send">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -31,18 +31,18 @@
       <EventDetail>
         <TypeId>send</TypeId>
         <xsl:variable name="from" select="data[@name='from']/@value[normalize-space(.)]"/>
-        <xsl:if test="$from or (data[@name='rcpt']/@value)[normalize-space(.)]">
+        <xsl:if test="$from or exists((data[@name='rcpt']/@value)[normalize-space(.)])">
           <Send>
             <xsl:if test="$from">
               <Source>
                 <User>
                   <EmailAddress>
-                    <xsl:value-of select="$from"/>
+                    <xsl:value-of select="$from[1]"/>
                   </EmailAddress>
                 </User>
               </Source>
             </xsl:if>
-            <xsl:if test="(data[@name='rcpt']/@value)[normalize-space(.)]">
+            <xsl:if test="exists((data[@name='rcpt']/@value)[normalize-space(.)])">
               <Destination>
                 <xsl:for-each select="data[@name='rcpt']/@value">
                   <User>

@@ -13,7 +13,7 @@
     <xsl:choose>
       <xsl:when test="data[@name='user']/@value = $vip_users_list">
         <xsl:apply-templates select="." mode="event_type_vip"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string((normalize-space(data[@name='user']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string((data[@name='user']/@value[normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
@@ -29,9 +29,9 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>vip</TypeId>
-        <xsl:if test="normalize-space(data[@name='user']/@value)">
+        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
           <Unknown>
-            <Data Name="u" Value="{data[@name='user']/@value}"/>
+            <Data Name="u" Value="{(data[@name='user']/@value)[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -47,8 +47,8 @@
         <xsl:variable name="user" select="data[@name='user']/@value[normalize-space(.)]"/>
         <xsl:if test="$user">
           <Unknown>
-            <Data Name="u" Value="{$user}"/>
-            <Data Name="source_ip" Value="{$user}"/>
+            <Data Name="u" Value="{$user[1]}"/>
+            <Data Name="source_ip" Value="{$user[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -56,10 +56,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'vip', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -109,7 +109,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

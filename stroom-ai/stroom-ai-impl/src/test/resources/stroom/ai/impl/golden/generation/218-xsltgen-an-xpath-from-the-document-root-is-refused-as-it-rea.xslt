@@ -27,14 +27,14 @@
           <xsl:if test="(user)[normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="user"/>
+                <xsl:value-of select="(user)[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="result = ('ok', 'fail')">
+          <xsl:if test="(result)[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (result = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((result)[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -51,11 +51,11 @@
       <EventDetail>
         <xsl:variable name="action" select="(action)[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:if test="$action">
           <Unknown>
-            <Data Name="action" Value="{$action}"/>
+            <Data Name="action" Value="{$action[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -66,7 +66,7 @@
     <xsl:if test="(time)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="time"/>
+          <xsl:value-of select="(time)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -81,13 +81,17 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if ((host)[normalize-space(.)]) then host else 'unknown'"/>
+          <xsl:value-of select="if ((host)[normalize-space(.)]) then (host)[1] else 'unknown'"/>
         </HostName>
       </Device>
-      <xsl:if test="exists((upper-case(//data[@name='user']/@value))[normalize-space(.)])">
+      <xsl:variable name="user_id" select="(upper-case(//data[@name='user']/@value))[normalize-space(.)]"/>
+      <xsl:if test="exists($user_id)">
         <User>
           <Id>
-            <xsl:value-of select="upper-case(//data[@name='user']/@value)"/>
+            <xsl:if test="count($user_id) gt 1">
+              <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($user_id), ') for ', 'EventSource/User/Id, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+            </xsl:if>
+            <xsl:value-of select="$user_id[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -98,7 +102,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

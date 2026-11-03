@@ -29,7 +29,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='action']/@value)) then data[@name='action']/@value else 'system_alert'"/>
+          <xsl:value-of select="if (data[@name='action']/@value[normalize-space(.)]) then (data[@name='action']/@value)[1] else 'system_alert'"/>
         </TypeId>
         <Alert>
           <Type>Other</Type>
@@ -47,11 +47,11 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:if test="$action">
           <Unknown>
-            <Data Name="action" Value="{$action}"/>
+            <Data Name="action" Value="{$action[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -59,10 +59,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'system_alert', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='timestamp']/@value)">
+    <xsl:if test="data[@name='timestamp']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='timestamp']/@value"/>
+          <xsl:value-of select="(data[@name='timestamp']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -75,10 +75,10 @@
         <Environment>Prod</Environment>
       </System>
       <Generator>FW</Generator>
-      <xsl:if test="normalize-space(data[@name='device']/@value)">
+      <xsl:if test="data[@name='device']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='device']/@value"/>
+            <xsl:value-of select="(data[@name='device']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -89,7 +89,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

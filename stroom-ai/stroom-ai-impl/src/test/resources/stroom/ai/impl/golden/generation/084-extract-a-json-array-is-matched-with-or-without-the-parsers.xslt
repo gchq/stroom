@@ -11,10 +11,10 @@
   <!-- Rule 'any': every record. Writes an Unknown event (TypeId x) from host. -->
   <xsl:template match="node()" mode="event_type_any">
     <Event>
-      <xsl:if test="normalize-space(*[@key='time'])">
+      <xsl:if test="*[@key='time'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="*[@key='time']"/>
+            <xsl:value-of select="(*[@key='time'])[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -28,7 +28,7 @@
         <xsl:if test="$host">
           <Device>
             <HostName>
-              <xsl:value-of select="$host"/>
+              <xsl:value-of select="$host[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -37,7 +37,7 @@
         <TypeId>x</TypeId>
         <xsl:if test="$host">
           <Unknown>
-            <Data Name="h" Value="{$host}"/>
+            <Data Name="h" Value="{$host[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -48,7 +48,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

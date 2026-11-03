@@ -20,7 +20,7 @@
     <xsl:variable name="json_action" select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
-      <xsl:when test="not(normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time']))">
+      <xsl:when test="not(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)])">
         <!-- drop: damaged lines (not JSON): left untranslated on purpose -->
       </xsl:when>
       <xsl:when test="$json_action = 'login'">
@@ -33,7 +33,7 @@
         <xsl:apply-templates select="." mode="event_type_password"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string((normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time']))[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)])[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -86,10 +86,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'password' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'])">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -105,17 +105,17 @@
       <Device>
         <HostName>auth01</HostName>
       </Device>
-      <xsl:if test="normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip'])">
+      <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip']"/>
+            <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])">
+      <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user']"/>
+            <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -123,28 +123,28 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff', 'password' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action']"/>
+        <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='action'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff', 'password' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])">
+    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user']"/>
+          <xsl:value-of select="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='user'])[1]"/>
         </Id>
       </User>
     </xsl:if>
   </xsl:template>
   <!-- outcome: shared by the rules 'logon', 'password' -->
   <xsl:template match="node()" mode="outcome">
-    <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'] = ('success', 'failure')">
+    <xsl:if test="(mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'])[1] = ('success', 'failure')">
       <Outcome>
         <Success>
-          <xsl:value-of select="if (mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'] = 'success') then 'true' else 'false'"/>
+          <xsl:value-of select="if ((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='result'])[1] = 'success') then 'true' else 'false'"/>
         </Success>
       </Outcome>
     </xsl:if>

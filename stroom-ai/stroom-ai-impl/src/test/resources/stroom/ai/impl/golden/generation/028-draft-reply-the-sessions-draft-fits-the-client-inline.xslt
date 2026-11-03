@@ -120,15 +120,15 @@
         <xsl:apply-templates select="." mode="type_id"/>
         <xsl:apply-templates select="." mode="description"/>
         <Process>
-          <xsl:if test="data[@name='action']/@value = ('START')">
+          <xsl:if test="(data[@name='action']/@value)[1] = ('START')">
             <Action>
               <xsl:value-of select="'Startup'"/>
             </Action>
           </xsl:if>
           <Type>Service</Type>
-          <xsl:if test="normalize-space(data[@name='message']/@value)">
+          <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
             <Command>
-              <xsl:value-of select="data[@name='message']/@value"/>
+              <xsl:value-of select="(data[@name='message']/@value)[1]"/>
             </Command>
           </xsl:if>
           <xsl:apply-templates select="." mode="data_severity_to_bytes_received_2"/>
@@ -149,20 +149,20 @@
       <xsl:variable name="protocol" select="data[@name='protocol']/@value[normalize-space(.)]"/>
       <xsl:variable name="severity" select="data[@name='severity']/@value[normalize-space(.)]"/>
       <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
-      <xsl:if test="normalize-space(data[@name='message']/@value) or normalize-space(data[@name='event_type']/@value) or $action = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP') or exists($severity_to_severity?($severity)) or $protocol or $rule_id or $bytes_sent or $bytes_received">
+      <xsl:if test="data[@name='message']/@value[normalize-space(.)] or data[@name='event_type']/@value[normalize-space(.)] or $action[1] = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP') or exists($severity_to_severity?($severity[1])) or $protocol or $rule_id or $bytes_sent or $bytes_received">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
           <xsl:apply-templates select="." mode="description"/>
-          <xsl:if test="$action = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP') or exists($severity_to_severity?($severity)) or $protocol or $rule_id or $bytes_sent or $bytes_received">
+          <xsl:if test="$action[1] = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP') or exists($severity_to_severity?($severity[1])) or $protocol or $rule_id or $bytes_sent or $bytes_received">
             <Alert>
-              <xsl:if test="$action = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP')">
+              <xsl:if test="$action[1] = ('HIGH_CPU', 'VPN_TUNNEL_DOWN', 'VPN_TUNNEL_UP')">
                 <Type>
-                  <xsl:value-of select="if ($action = 'HIGH_CPU') then 'Other' else if ($action = 'VPN_TUNNEL_DOWN') then 'Network' else 'Network'"/>
+                  <xsl:value-of select="if ($action[1] = 'HIGH_CPU') then 'Other' else if ($action[1] = 'VPN_TUNNEL_DOWN') then 'Network' else 'Network'"/>
                 </Type>
               </xsl:if>
-              <xsl:if test="exists($severity_to_severity?($severity))">
+              <xsl:if test="exists($severity_to_severity?($severity[1]))">
                 <Severity>
-                  <xsl:value-of select="$severity_to_severity?($severity)[1]"/>
+                  <xsl:value-of select="$severity_to_severity?($severity[1])[1]"/>
                 </Severity>
               </xsl:if>
               <xsl:sequence select="mcp:data('protocol', $protocol)"/>
@@ -188,10 +188,10 @@
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:if test="data[@name='action']/@value = ('LOGIN_SUCCESS', 'LOGIN_FAILED')">
+          <xsl:if test="(data[@name='action']/@value)[1] = ('LOGIN_SUCCESS', 'LOGIN_FAILED')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='action']/@value = 'LOGIN_SUCCESS') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'LOGIN_SUCCESS') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -235,10 +235,10 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='event_type']/@value)) then data[@name='event_type']/@value else 'other'"/>
+          <xsl:value-of select="if (data[@name='event_type']/@value[normalize-space(.)]) then (data[@name='event_type']/@value)[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="normalize-space(data[@name='severity']/@value) or normalize-space(data[@name='protocol']/@value) or normalize-space(data[@name='action']/@value) or normalize-space(data[@name='rule_id']/@value) or normalize-space(data[@name='bytes_sent']/@value) or normalize-space(data[@name='bytes_received']/@value)">
+        <xsl:if test="data[@name='severity']/@value[normalize-space(.)] or data[@name='protocol']/@value[normalize-space(.)] or data[@name='action']/@value[normalize-space(.)] or data[@name='rule_id']/@value[normalize-space(.)] or data[@name='bytes_sent']/@value[normalize-space(.)] or data[@name='bytes_received']/@value[normalize-space(.)]">
           <Unknown>
             <xsl:sequence select="mcp:data('severity', data[@name='severity']/@value)"/>
             <xsl:sequence select="mcp:data('protocol', data[@name='protocol']/@value)"/>
@@ -254,10 +254,10 @@
   <!-- event_time: shared by the rules 'traffic_permitted', 'traffic_denied', 'system_config_change',
        'system_service', 'system_alert', 'admin_logon', 'admin_logoff', 'admin_config_change', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='timestamp']/@value)">
+    <xsl:if test="data[@name='timestamp']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='timestamp']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='timestamp']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -271,10 +271,10 @@
         <Environment>TODO e.g. Prod</Environment>
       </System>
       <Generator>Firewall Logs</Generator>
-      <xsl:if test="normalize-space(data[@name='device']/@value)">
+      <xsl:if test="data[@name='device']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='device']/@value"/>
+            <xsl:value-of select="(data[@name='device']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -284,12 +284,12 @@
         <Client>
           <xsl:if test="$src_ip">
             <IPAddress>
-              <xsl:value-of select="$src_ip"/>
+              <xsl:value-of select="$src_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$src_port">
             <Port>
-              <xsl:value-of select="$src_port"/>
+              <xsl:value-of select="$src_port[1]"/>
             </Port>
           </xsl:if>
         </Client>
@@ -300,20 +300,20 @@
         <Server>
           <xsl:if test="$dst_ip">
             <IPAddress>
-              <xsl:value-of select="$dst_ip"/>
+              <xsl:value-of select="$dst_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$dst_port">
             <Port>
-              <xsl:value-of select="$dst_port"/>
+              <xsl:value-of select="$dst_port[1]"/>
             </Port>
           </xsl:if>
         </Server>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='username']/@value)">
+      <xsl:if test="data[@name='username']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='username']/@value"/>
+            <xsl:value-of select="(data[@name='username']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -322,37 +322,37 @@
   <!-- type_id: shared by the rules 'traffic_permitted', 'traffic_denied', 'system_config_change', 'system_service',
        'system_alert', 'admin_logon', 'admin_logoff', 'admin_config_change' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='event_type']/@value)">
+    <xsl:if test="data[@name='event_type']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='event_type']/@value"/>
+        <xsl:value-of select="(data[@name='event_type']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'traffic_permitted', 'traffic_denied', 'system_config_change',
        'system_service', 'system_alert', 'admin_logon', 'admin_logoff', 'admin_config_change', 'other' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='message']/@value)">
+    <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="data[@name='message']/@value"/>
+        <xsl:value-of select="(data[@name='message']/@value)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- source: shared by the rules 'traffic_permitted', 'traffic_denied' -->
   <xsl:template match="node()" mode="source">
     <Source>
-      <xsl:if test="normalize-space(data[@name='src_ip']/@value)">
+      <xsl:if test="data[@name='src_ip']/@value[normalize-space(.)]">
         <Device>
           <IPAddress>
-            <xsl:value-of select="data[@name='src_ip']/@value"/>
+            <xsl:value-of select="(data[@name='src_ip']/@value)[1]"/>
           </IPAddress>
         </Device>
       </xsl:if>
       <TransportProtocol>
-        <xsl:value-of select="($protocol_to_transport_protocol?(normalize-space(data[@name='protocol']/@value)), 'Other')[1]"/>
+        <xsl:value-of select="($protocol_to_transport_protocol?((data[@name='protocol']/@value)[1]), 'Other')[1]"/>
       </TransportProtocol>
-      <xsl:if test="normalize-space(data[@name='src_port']/@value)">
+      <xsl:if test="data[@name='src_port']/@value[normalize-space(.)]">
         <Port>
-          <xsl:value-of select="data[@name='src_port']/@value"/>
+          <xsl:value-of select="(data[@name='src_port']/@value)[1]"/>
         </Port>
       </xsl:if>
     </Source>
@@ -366,13 +366,13 @@
         <xsl:if test="$dst_ip">
           <Device>
             <IPAddress>
-              <xsl:value-of select="$dst_ip"/>
+              <xsl:value-of select="$dst_ip[1]"/>
             </IPAddress>
           </Device>
         </xsl:if>
         <xsl:if test="$dst_port">
           <Port>
-            <xsl:value-of select="$dst_port"/>
+            <xsl:value-of select="$dst_port[1]"/>
           </Port>
         </xsl:if>
       </Destination>
@@ -389,23 +389,23 @@
   <xsl:template match="node()" mode="event_detail">
     <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
-    <xsl:if test="$message or normalize-space(data[@name='event_type']/@value) or $action or $message or normalize-space(data[@name='severity']/@value) or normalize-space(data[@name='protocol']/@value) or normalize-space(data[@name='rule_id']/@value) or normalize-space(data[@name='bytes_sent']/@value) or normalize-space(data[@name='bytes_received']/@value)">
+    <xsl:if test="$message or data[@name='event_type']/@value[normalize-space(.)] or $action or $message or data[@name='severity']/@value[normalize-space(.)] or data[@name='protocol']/@value[normalize-space(.)] or data[@name='rule_id']/@value[normalize-space(.)] or data[@name='bytes_sent']/@value[normalize-space(.)] or data[@name='bytes_received']/@value[normalize-space(.)]">
       <EventDetail>
         <xsl:apply-templates select="." mode="type_id"/>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="$action or $message or normalize-space(data[@name='severity']/@value) or normalize-space(data[@name='protocol']/@value) or normalize-space(data[@name='rule_id']/@value) or normalize-space(data[@name='bytes_sent']/@value) or normalize-space(data[@name='bytes_received']/@value)">
+        <xsl:if test="$action or $message or data[@name='severity']/@value[normalize-space(.)] or data[@name='protocol']/@value[normalize-space(.)] or data[@name='rule_id']/@value[normalize-space(.)] or data[@name='bytes_sent']/@value[normalize-space(.)] or data[@name='bytes_received']/@value[normalize-space(.)]">
           <Update>
             <xsl:if test="$action or $message">
               <After>
                 <Configuration>
                   <xsl:if test="$action">
                     <Type>
-                      <xsl:value-of select="$action"/>
+                      <xsl:value-of select="$action[1]"/>
                     </Type>
                   </xsl:if>
                   <xsl:if test="$message">
                     <Description>
-                      <xsl:value-of select="$message"/>
+                      <xsl:value-of select="$message[1]"/>
                     </Description>
                   </xsl:if>
                 </Configuration>
@@ -428,10 +428,10 @@
   </xsl:template>
   <!-- user: shared by the rules 'admin_logon', 'admin_logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='username']/@value)">
+    <xsl:if test="data[@name='username']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='username']/@value"/>
+          <xsl:value-of select="(data[@name='username']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -441,7 +441,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

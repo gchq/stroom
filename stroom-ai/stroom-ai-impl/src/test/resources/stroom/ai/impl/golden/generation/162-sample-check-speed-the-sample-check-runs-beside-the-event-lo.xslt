@@ -12,31 +12,31 @@
        from body). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <xsl:if test="normalize-space(*[@key='time'])">
+      <xsl:if test="*[@key='time'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="*[@key='time']"/>
+            <xsl:value-of select="(*[@key='time'])[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
-      <xsl:variable name="user" select="mcp:quoted_value(normalize-space(*[@key='body']), 'user')[normalize-space(.)]"/>
+      <xsl:variable name="user" select="mcp:quoted_value(*[@key='body'][normalize-space(.)], 'user')[normalize-space(.)]"/>
       <EventSource>
         <System>
           <Name>FortiOS</Name>
           <Environment>Test</Environment>
         </System>
         <Generator>fortigate</Generator>
-        <xsl:if test="normalize-space(*[@key='host'])">
+        <xsl:if test="*[@key='host'][normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="*[@key='host']"/>
+              <xsl:value-of select="(*[@key='host'])[1]"/>
             </HostName>
           </Device>
         </xsl:if>
         <xsl:if test="$user">
           <User>
             <Id>
-              <xsl:value-of select="$user"/>
+              <xsl:value-of select="$user[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -48,14 +48,14 @@
           <xsl:if test="$user">
             <User>
               <Id>
-                <xsl:value-of select="$user"/>
+                <xsl:value-of select="$user[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="*[@key='result'] = ('ok', 'fail')">
+          <xsl:if test="(*[@key='result'])[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (*[@key='result'] = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((*[@key='result'])[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -69,7 +69,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
   <xsl:function name="mcp:quoted_value" as="xs:string?">

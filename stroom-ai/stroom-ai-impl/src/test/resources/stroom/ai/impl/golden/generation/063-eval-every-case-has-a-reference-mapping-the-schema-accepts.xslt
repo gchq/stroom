@@ -7,7 +7,7 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:choose>
-      <xsl:when test="normalize-space(*[@key='user'])">
+      <xsl:when test="*[@key='user'][normalize-space(.)]">
         <xsl:apply-templates select="." mode="event_type_user_access"/>
       </xsl:when>
       <xsl:otherwise>
@@ -23,19 +23,19 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(*[@key='result'])) then *[@key='result'] else 'user access'"/>
+          <xsl:value-of select="if (*[@key='result'][normalize-space(.)]) then (*[@key='result'])[1] else 'user access'"/>
         </TypeId>
         <Authenticate>
           <Action>Connect</Action>
-          <xsl:if test="normalize-space(*[@key='user'])">
+          <xsl:if test="*[@key='user'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='user']"/>
+                <xsl:value-of select="(*[@key='user'])[1]"/>
               </Id>
             </User>
           </xsl:if>
           <xsl:apply-templates select="." mode="outcome"/>
-          <xsl:variable name="service_port_parts" select="analyze-string(string(*[@key='service'][1]), '^(\d+)/(\w+)$')"/>
+          <xsl:variable name="service_port_parts" select="analyze-string(string((*[@key='service'])[1]), '^(\d+)/(\w+)$')"/>
           <xsl:sequence select="mcp:data('protocol', $service_port_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
@@ -49,19 +49,23 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(*[@key='result'])) then *[@key='result'] else 'device access'"/>
+          <xsl:value-of select="if (*[@key='result'][normalize-space(.)]) then (*[@key='result'])[1] else 'device access'"/>
         </TypeId>
         <Authenticate>
           <Action>Connect</Action>
-          <xsl:if test="exists(replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')[normalize-space(.)])">
+          <xsl:variable name="device_mac_address" select="replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')[normalize-space(.)]"/>
+          <xsl:if test="exists($device_mac_address)">
             <Device>
               <MACAddress>
-                <xsl:value-of select="replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')"/>
+                <xsl:if test="count($device_mac_address) gt 1">
+                  <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($device_mac_address), ') for ', 'EventDetail/Authenticate/Device/MACAddress, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+                </xsl:if>
+                <xsl:value-of select="$device_mac_address[1]"/>
               </MACAddress>
             </Device>
           </xsl:if>
           <xsl:apply-templates select="." mode="outcome"/>
-          <xsl:variable name="service_port_parts" select="analyze-string(string(*[@key='service'][1]), '^(\d+)/(\w+)$')"/>
+          <xsl:variable name="service_port_parts" select="analyze-string(string((*[@key='service'])[1]), '^(\d+)/(\w+)$')"/>
           <xsl:sequence select="mcp:data('protocol', $service_port_parts/fn:match//fn:group[@nr=2])"/>
         </Authenticate>
       </EventDetail>
@@ -69,10 +73,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'user access', 'device access' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='time'])">
+    <xsl:if test="*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='time'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -85,16 +89,16 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>nac</Generator>
-      <xsl:variable name="service_port_parts" select="analyze-string(string(*[@key='service'][1]), '^(\d+)/(\w+)$')"/>
+      <xsl:variable name="service_port_parts" select="analyze-string(string((*[@key='service'])[1]), '^(\d+)/(\w+)$')"/>
       <xsl:variable name="service_port" select="$service_port_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
       <xsl:variable name="device_mac_address" select="replace(upper-case(replace(*[@key='mac'], '[.:-]', '')), '^(..)(..)(..)(..)(..)(..)$', '$1:$2:$3:$4:$5:$6')[normalize-space(.)]"/>
       <xsl:variable name="ip" select="*[@key='ip'][normalize-space(.)]"/>
       <xsl:variable name="switch" select="*[@key='switch'][normalize-space(.)]"/>
-      <xsl:if test="$switch or $ip or exists($device_mac_address) or $service_port or normalize-space(*[@key='port'])">
+      <xsl:if test="$switch or $ip or exists($device_mac_address) or $service_port or *[@key='port'][normalize-space(.)]">
         <Device>
           <xsl:if test="$switch">
             <HostName>
-              <xsl:value-of select="$switch"/>
+              <xsl:value-of select="$switch[1]"/>
             </HostName>
           </xsl:if>
           <xsl:if test="$ip">
@@ -104,21 +108,24 @@
           </xsl:if>
           <xsl:if test="exists($device_mac_address)">
             <MACAddress>
-              <xsl:value-of select="$device_mac_address"/>
+              <xsl:if test="count($device_mac_address) gt 1">
+                <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($device_mac_address), ') for ', 'EventSource/Device/MACAddress, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+              </xsl:if>
+              <xsl:value-of select="$device_mac_address[1]"/>
             </MACAddress>
           </xsl:if>
           <xsl:if test="$service_port">
             <Port>
-              <xsl:value-of select="$service_port"/>
+              <xsl:value-of select="$service_port[1]"/>
             </Port>
           </xsl:if>
           <xsl:sequence select="mcp:data('switch_port', *[@key='port'])"/>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='user'])">
+      <xsl:if test="*[@key='user'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='user']"/>
+            <xsl:value-of select="(*[@key='user'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -126,10 +133,10 @@
   </xsl:template>
   <!-- outcome: shared by the rules 'user access', 'device access' -->
   <xsl:template match="node()" mode="outcome">
-    <xsl:if test="*[@key='result'] = ('accept', 'reject')">
+    <xsl:if test="(*[@key='result'])[1] = ('accept', 'reject')">
       <Outcome>
         <Success>
-          <xsl:value-of select="if (*[@key='result'] = 'accept') then 'true' else 'false'"/>
+          <xsl:value-of select="if ((*[@key='result'])[1] = 'accept') then 'true' else 'false'"/>
         </Success>
       </Outcome>
     </xsl:if>
@@ -139,7 +146,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

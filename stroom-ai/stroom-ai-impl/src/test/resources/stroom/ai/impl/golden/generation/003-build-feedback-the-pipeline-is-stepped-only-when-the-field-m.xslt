@@ -11,10 +11,10 @@
   <!-- Rule 'logon': every record. Writes an Authenticate event (TypeId Logon) from user. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <xsl:if test="normalize-space(*[@key='ts'])">
+      <xsl:if test="*[@key='ts'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="*[@key='ts']"/>
+            <xsl:value-of select="(*[@key='ts'])[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -24,10 +24,10 @@
           <Environment>Test</Environment>
         </System>
         <Generator>acme</Generator>
-        <xsl:if test="normalize-space(*[@key='host'])">
+        <xsl:if test="*[@key='host'][normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="*[@key='host']"/>
+              <xsl:value-of select="(*[@key='host'])[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -36,10 +36,10 @@
         <TypeId>Logon</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='user'])">
+          <xsl:if test="*[@key='user'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='user']"/>
+                <xsl:value-of select="(*[@key='user'])[1]"/>
               </Id>
             </User>
           </xsl:if>

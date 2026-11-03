@@ -32,7 +32,7 @@
             <Source>
               <xsl:apply-templates select="." mode="device"/>
               <TransportProtocol>
-                <xsl:value-of select="if (data[@name='proto']/@value = 'TCP') then 'TCP' else if (data[@name='proto']/@value = 'UDP') then 'UDP' else 'Other'"/>
+                <xsl:value-of select="if ((data[@name='proto']/@value)[1] = 'TCP') then 'TCP' else if ((data[@name='proto']/@value)[1] = 'UDP') then 'UDP' else 'Other'"/>
               </TransportProtocol>
               <xsl:apply-templates select="." mode="port"/>
               <xsl:sequence select="mcp:data('source_zone', data[@name='source_zone']/@value)"/>
@@ -59,7 +59,7 @@
             <Source>
               <xsl:apply-templates select="." mode="device"/>
               <TransportProtocol>
-                <xsl:value-of select="if (data[@name='proto']/@value = 'TCP') then 'TCP' else 'Other'"/>
+                <xsl:value-of select="if ((data[@name='proto']/@value)[1] = 'TCP') then 'TCP' else 'Other'"/>
               </TransportProtocol>
               <xsl:apply-templates select="." mode="port"/>
               <xsl:sequence select="mcp:data('source_zone', data[@name='source_zone']/@value)"/>
@@ -80,9 +80,9 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='event']/@value)) then data[@name='event']/@value else 'other'"/>
+          <xsl:value-of select="if (data[@name='event']/@value[normalize-space(.)]) then (data[@name='event']/@value)[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="normalize-space(data[@name='conn_id']/@value) or normalize-space(data[@name='proto']/@value) or normalize-space(data[@name='source_zone']/@value) or normalize-space(data[@name='destination_zone']/@value) or normalize-space(data[@name='destination_key']/@value) or normalize-space(data[@name='tls_ja3']/@value) or normalize-space(data[@name='policy']/@value) or normalize-space(data[@name='bytes_in']/@value) or normalize-space(data[@name='bytes_out']/@value)">
+        <xsl:if test="data[@name='conn_id']/@value[normalize-space(.)] or data[@name='proto']/@value[normalize-space(.)] or data[@name='source_zone']/@value[normalize-space(.)] or data[@name='destination_zone']/@value[normalize-space(.)] or data[@name='destination_key']/@value[normalize-space(.)] or data[@name='tls_ja3']/@value[normalize-space(.)] or data[@name='policy']/@value[normalize-space(.)] or data[@name='bytes_in']/@value[normalize-space(.)] or data[@name='bytes_out']/@value[normalize-space(.)]">
           <Unknown>
             <xsl:sequence select="mcp:data('conn_id', data[@name='conn_id']/@value)"/>
             <xsl:sequence select="mcp:data('proto', data[@name='proto']/@value)"/>
@@ -97,10 +97,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'connected', 'closed', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='timestamp']/@value)">
+    <xsl:if test="data[@name='timestamp']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='timestamp']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='timestamp']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -113,10 +113,10 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>Connection Broker</Generator>
-      <xsl:if test="normalize-space(data[@name='sensor']/@value)">
+      <xsl:if test="data[@name='sensor']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='sensor']/@value"/>
+            <xsl:value-of select="(data[@name='sensor']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -126,12 +126,12 @@
         <Client>
           <xsl:if test="$client_addr">
             <IPAddress>
-              <xsl:value-of select="$client_addr"/>
+              <xsl:value-of select="$client_addr[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$client_port">
             <Port>
-              <xsl:value-of select="$client_port"/>
+              <xsl:value-of select="$client_port[1]"/>
             </Port>
           </xsl:if>
         </Client>
@@ -142,12 +142,12 @@
         <Server>
           <xsl:if test="$server_addr">
             <IPAddress>
-              <xsl:value-of select="$server_addr"/>
+              <xsl:value-of select="$server_addr[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$server_port">
             <Port>
-              <xsl:value-of select="$server_port"/>
+              <xsl:value-of select="$server_port[1]"/>
             </Port>
           </xsl:if>
         </Server>
@@ -156,27 +156,27 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'connected', 'closed' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='event']/@value)">
+    <xsl:if test="data[@name='event']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='event']/@value"/>
+        <xsl:value-of select="(data[@name='event']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- device: shared by the rules 'connected', 'closed' -->
   <xsl:template match="node()" mode="device">
-    <xsl:if test="normalize-space(data[@name='client_addr']/@value)">
+    <xsl:if test="data[@name='client_addr']/@value[normalize-space(.)]">
       <Device>
         <IPAddress>
-          <xsl:value-of select="data[@name='client_addr']/@value"/>
+          <xsl:value-of select="(data[@name='client_addr']/@value)[1]"/>
         </IPAddress>
       </Device>
     </xsl:if>
   </xsl:template>
   <!-- port: shared by the rules 'connected', 'closed' -->
   <xsl:template match="node()" mode="port">
-    <xsl:if test="normalize-space(data[@name='client_port']/@value)">
+    <xsl:if test="data[@name='client_port']/@value[normalize-space(.)]">
       <Port>
-        <xsl:value-of select="data[@name='client_port']/@value"/>
+        <xsl:value-of select="(data[@name='client_port']/@value)[1]"/>
       </Port>
     </xsl:if>
   </xsl:template>
@@ -184,18 +184,18 @@
   <xsl:template match="node()" mode="destination">
     <xsl:variable name="server_port" select="data[@name='server_port']/@value[normalize-space(.)]"/>
     <xsl:variable name="server_addr" select="data[@name='server_addr']/@value[normalize-space(.)]"/>
-    <xsl:if test="$server_addr or $server_port or normalize-space(data[@name='destination_zone']/@value) or normalize-space(data[@name='destination_key']/@value)">
+    <xsl:if test="$server_addr or $server_port or data[@name='destination_zone']/@value[normalize-space(.)] or data[@name='destination_key']/@value[normalize-space(.)]">
       <Destination>
         <xsl:if test="$server_addr">
           <Device>
             <IPAddress>
-              <xsl:value-of select="$server_addr"/>
+              <xsl:value-of select="$server_addr[1]"/>
             </IPAddress>
           </Device>
         </xsl:if>
         <xsl:if test="$server_port">
           <Port>
-            <xsl:value-of select="$server_port"/>
+            <xsl:value-of select="$server_port[1]"/>
           </Port>
         </xsl:if>
         <xsl:sequence select="mcp:data('destination_zone', data[@name='destination_zone']/@value)"/>
@@ -215,7 +215,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

@@ -16,7 +16,7 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+    <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
     <xsl:variable name="category" select="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
@@ -83,7 +83,7 @@
           <xsl:variable name="event_data_data" select="(EventData/Data)[normalize-space(.)]"/>
           <xsl:variable name="msg_user_parts" select="analyze-string(string($event_data_data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
           <Action>
-            <xsl:value-of select="($action_to_action?(($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]), 'Other')[1]"/>
+            <xsl:value-of select="($action_to_action?(($msg_user_parts/fn:match//fn:group[@nr=3])[1]), 'Other')[1]"/>
           </Action>
           <xsl:variable name="msg_user" select="($msg_user_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]"/>
           <xsl:variable name="actor" select="($msg_user_parts/fn:match//fn:group[@nr=4])[normalize-space(.)]"/>
@@ -91,12 +91,12 @@
             <User>
               <xsl:if test="$actor">
                 <Id>
-                  <xsl:value-of select="$actor"/>
+                  <xsl:value-of select="$actor[1]"/>
                 </Id>
               </xsl:if>
               <xsl:if test="$msg_user">
                 <Name>
-                  <xsl:value-of select="$msg_user"/>
+                  <xsl:value-of select="$msg_user[1]"/>
                 </Name>
               </xsl:if>
             </User>
@@ -153,7 +153,7 @@
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+      <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
       <xsl:if test="(EventData/Data)[normalize-space(.)] or ($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)] or ($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)] or ($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)] or ($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)] or ($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
@@ -178,7 +178,7 @@
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+      <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
       <xsl:variable name="item_id" select="($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]"/>
       <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
       <xsl:if test="(EventData/Data)[normalize-space(.)] or $action or ($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)] or $item_id or $action or $item_id">
@@ -211,7 +211,7 @@
           <xsl:variable name="msg_user_parts" select="analyze-string(string($event_data_data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
           <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
           <Type>
-            <xsl:value-of select="if ($action = 'Access Denied') then 'Other' else if ($action = 'Heartbeat Failed') then 'Error' else if ($action = 'Password Change Failed') then 'Error' else 'Other'"/>
+            <xsl:value-of select="if ($action[1] = 'Access Denied') then 'Other' else if ($action[1] = 'Heartbeat Failed') then 'Error' else if ($action[1] = 'Password Change Failed') then 'Error' else 'Other'"/>
           </Type>
           <xsl:sequence select="mcp:data('action', $action)"/>
           <xsl:sequence select="mcp:data('item_id', $msg_user_parts/fn:match//fn:group[@nr=5])"/>
@@ -265,8 +265,8 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
-          <xsl:value-of select="if (($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]) then $msg_user_parts/fn:match//fn:group[@nr=3] else 'folder-update'"/>
+          <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+          <xsl:value-of select="if (($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]) then ($msg_user_parts/fn:match//fn:group[@nr=3])[1] else 'folder-update'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <xsl:apply-templates select="." mode="update"/>
@@ -281,8 +281,8 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
-          <xsl:value-of select="if (($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]) then $msg_user_parts/fn:match//fn:group[@nr=3] else 'permission'"/>
+          <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+          <xsl:value-of select="if (($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]) then ($msg_user_parts/fn:match//fn:group[@nr=3])[1] else 'permission'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <xsl:apply-templates select="." mode="update"/>
@@ -300,12 +300,12 @@
         <xsl:variable name="msg_user_parts" select="analyze-string(string($event_data_data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
         <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'session'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'session'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Process>
           <Action>
-            <xsl:value-of select="if ($action = 'End') then 'Shutdown' else if ($action = 'Recording Viewed') then 'Access' else if ($action = 'Start') then 'Startup' else 'Execute'"/>
+            <xsl:value-of select="if ($action[1] = 'End') then 'Shutdown' else if ($action[1] = 'Recording Viewed') then 'Access' else if ($action[1] = 'Start') then 'Startup' else 'Execute'"/>
           </Action>
           <Type>Application</Type>
           <xsl:apply-templates select="." mode="command"/>
@@ -333,10 +333,10 @@
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+        <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
         <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'system-job'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'system-job'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Process>
@@ -359,10 +359,10 @@
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+        <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
         <xsl:variable name="action" select="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)] or $action or ($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]">
@@ -382,7 +382,7 @@
     <xsl:if test="(System/TimeCreated/@SystemTime)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(System/TimeCreated/@SystemTime[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSSX')"/>
+          <xsl:value-of select="stroom:format-date((System/TimeCreated/@SystemTime)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -396,7 +396,7 @@
       <xsl:variable name="session_id_parts" select="analyze-string(string($event_data_data[1]), '^.*?Session Id: (\d+).*$')"/>
       <xsl:if test="($session_id_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]">
         <SessionId>
-          <xsl:value-of select="$session_id_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($session_id_parts/fn:match//fn:group[@nr=1])[1]"/>
         </SessionId>
       </xsl:if>
       <System>
@@ -407,7 +407,7 @@
       <xsl:if test="(System/Computer)[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="System/Computer"/>
+            <xsl:value-of select="(System/Computer)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -415,7 +415,7 @@
       <xsl:if test="($source_ip_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="$source_ip_parts/fn:match//fn:group[@nr=1]"/>
+            <xsl:value-of select="($source_ip_parts/fn:match//fn:group[@nr=1])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
@@ -423,7 +423,7 @@
       <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=4])[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="replace(replace($msg_user_parts/fn:match//fn:group[@nr=4][1], '^[^\\]*\\', ''), '@.*$', '')"/>
+            <xsl:value-of select="replace(replace(($msg_user_parts/fn:match//fn:group[@nr=4])[1], '^[^\\]*\\', ''), '@.*$', '')"/>
           </Id>
         </User>
       </xsl:if>
@@ -432,10 +432,10 @@
   <!-- type_id: shared by the rules 'auth', 'user-admin', 'secret-view', 'secret-create', 'secret-update',
        'secret-delete', 'secret-alert', 'secret-launch', 'system-config' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+    <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$msg_user_parts/fn:match//fn:group[@nr=3]"/>
+        <xsl:value-of select="($msg_user_parts/fn:match//fn:group[@nr=3])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -445,7 +445,7 @@
   <xsl:template match="node()" mode="description">
     <xsl:if test="(EventData/Data)[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="EventData/Data"/>
+        <xsl:value-of select="(EventData/Data)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
@@ -476,12 +476,12 @@
             <Object>
               <xsl:if test="$category">
                 <Type>
-                  <xsl:value-of select="$category"/>
+                  <xsl:value-of select="$category[1]"/>
                 </Type>
               </xsl:if>
               <xsl:if test="$item_id">
                 <Id>
-                  <xsl:value-of select="$item_id"/>
+                  <xsl:value-of select="$item_id[1]"/>
                 </Id>
               </xsl:if>
             </Object>
@@ -495,19 +495,19 @@
   </xsl:template>
   <!-- object: shared by the rules 'secret-view', 'secret-create', 'secret-delete', 'folder-create' -->
   <xsl:template match="node()" mode="object">
-    <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+    <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:variable name="item_id" select="($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]"/>
     <xsl:variable name="category" select="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)]"/>
     <xsl:if test="$category or $item_id">
       <Object>
         <xsl:if test="$category">
           <Type>
-            <xsl:value-of select="$category"/>
+            <xsl:value-of select="$category[1]"/>
           </Type>
         </xsl:if>
         <xsl:if test="$item_id">
           <Id>
-            <xsl:value-of select="$item_id"/>
+            <xsl:value-of select="$item_id[1]"/>
           </Id>
         </xsl:if>
       </Object>
@@ -515,7 +515,7 @@
   </xsl:template>
   <!-- create: shared by the rules 'secret-create', 'folder-create' -->
   <xsl:template match="node()" mode="create">
-    <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+    <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:variable name="item_id" select="($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]"/>
     <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)] or $item_id or ($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)] or $item_id">
       <Create>
@@ -527,10 +527,10 @@
   </xsl:template>
   <!-- command: shared by the rules 'secret-launch', 'session', 'system-job' -->
   <xsl:template match="node()" mode="command">
-    <xsl:variable name="msg_user_parts" select="analyze-string(string(EventData/Data[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
+    <xsl:variable name="msg_user_parts" select="analyze-string(string((EventData/Data)[1]), '^[A-Z][a-z]{2} +\d{1,2} \d{4} \d{2}:\d{2}:\d{2} - User: (.+) - \[\[SecretServer\]\] Event: \[([^\]]*)\] Action: \[([^\]]*)\] By User: (\S+)(?: \(Item Id: (\d+)\))?.*$')"/>
     <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=3])[normalize-space(.)]">
       <Command>
-        <xsl:value-of select="$msg_user_parts/fn:match//fn:group[@nr=3]"/>
+        <xsl:value-of select="($msg_user_parts/fn:match//fn:group[@nr=3])[1]"/>
       </Command>
     </xsl:if>
   </xsl:template>
@@ -539,7 +539,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

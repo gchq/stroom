@@ -66,10 +66,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'traffic_permitted', 'traffic_denied' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='timestamp']/@value)">
+    <xsl:if test="data[@name='timestamp']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='timestamp']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='timestamp']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -82,10 +82,10 @@
         <Environment>Prod</Environment>
       </System>
       <Generator>Firewall</Generator>
-      <xsl:if test="normalize-space(data[@name='device']/@value)">
+      <xsl:if test="data[@name='device']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='device']/@value"/>
+            <xsl:value-of select="(data[@name='device']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -95,12 +95,12 @@
         <Client>
           <xsl:if test="$src_ip">
             <IPAddress>
-              <xsl:value-of select="$src_ip"/>
+              <xsl:value-of select="$src_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$src_port">
             <Port>
-              <xsl:value-of select="$src_port"/>
+              <xsl:value-of select="$src_port[1]"/>
             </Port>
           </xsl:if>
         </Client>
@@ -111,20 +111,20 @@
         <Server>
           <xsl:if test="$dst_ip">
             <IPAddress>
-              <xsl:value-of select="$dst_ip"/>
+              <xsl:value-of select="$dst_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$dst_port">
             <Port>
-              <xsl:value-of select="$dst_port"/>
+              <xsl:value-of select="$dst_port[1]"/>
             </Port>
           </xsl:if>
         </Server>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='username']/@value)">
+      <xsl:if test="data[@name='username']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='username']/@value"/>
+            <xsl:value-of select="(data[@name='username']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -132,36 +132,36 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'traffic_permitted', 'traffic_denied' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='event_type']/@value)">
+    <xsl:if test="data[@name='event_type']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='event_type']/@value"/>
+        <xsl:value-of select="(data[@name='event_type']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'traffic_permitted', 'traffic_denied' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='message']/@value)">
+    <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="data[@name='message']/@value"/>
+        <xsl:value-of select="(data[@name='message']/@value)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- source: shared by the rules 'traffic_permitted', 'traffic_denied' -->
   <xsl:template match="node()" mode="source">
     <Source>
-      <xsl:if test="normalize-space(data[@name='src_ip']/@value)">
+      <xsl:if test="data[@name='src_ip']/@value[normalize-space(.)]">
         <Device>
           <IPAddress>
-            <xsl:value-of select="data[@name='src_ip']/@value"/>
+            <xsl:value-of select="(data[@name='src_ip']/@value)[1]"/>
           </IPAddress>
         </Device>
       </xsl:if>
       <TransportProtocol>
-        <xsl:value-of select="($protocol_to_transport_protocol?(normalize-space(data[@name='protocol']/@value)), 'Other')[1]"/>
+        <xsl:value-of select="($protocol_to_transport_protocol?((data[@name='protocol']/@value)[1]), 'Other')[1]"/>
       </TransportProtocol>
-      <xsl:if test="normalize-space(data[@name='src_port']/@value)">
+      <xsl:if test="data[@name='src_port']/@value[normalize-space(.)]">
         <Port>
-          <xsl:value-of select="data[@name='src_port']/@value"/>
+          <xsl:value-of select="(data[@name='src_port']/@value)[1]"/>
         </Port>
       </xsl:if>
     </Source>
@@ -175,13 +175,13 @@
         <xsl:if test="$dst_ip">
           <Device>
             <IPAddress>
-              <xsl:value-of select="$dst_ip"/>
+              <xsl:value-of select="$dst_ip[1]"/>
             </IPAddress>
           </Device>
         </xsl:if>
         <xsl:if test="$dst_port">
           <Port>
-            <xsl:value-of select="$dst_port"/>
+            <xsl:value-of select="$dst_port[1]"/>
           </Port>
         </xsl:if>
       </Destination>

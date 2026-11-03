@@ -21,10 +21,12 @@ import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.json.JsonUtil;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -82,6 +84,9 @@ class TestBuildTranslationXsltTool {
                                           + "\"message\":\"Admin login\"}\n";
     private static final List<Map<String, Object>> SYSTEM = List.of(Map.of("path", "EventSource/System/Name",
             "value", "FortiOS"));
+
+    private static final String FORK_NS = "file://xml/schema/test-fork/events";
+    private static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
 
     private final TranslationWorld world = new TranslationWorld();
     private final BuildTranslationXsltTool tool = world.buildTool();
@@ -732,6 +737,32 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aForkTranslationChangedByUuidInANewSessionStaysInTheFork() {
+        // Seen in testing: a change by uuid alone, in a session that remembered no schema choice, fell back to
+        // event-logging's document of the version and moved the fork's translation into event-logging:3. The XML
+        // schema document kept with the XSLT says which it was generated against.
+        final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
+                .systemId(FORK_SYSTEM_ID).namespaceURI(FORK_NS).schemaGroup("EVENTS")
+                .data(TranslationWorld.resource("test-fork-events.xsd")).build();
+        final EventSchema forkSchema = EventSchema.parse(fork.getData()).withSystemId(FORK_SYSTEM_ID);
+        Mockito.when(world.heldSchemas.forks()).thenReturn(List.of(fork));
+        Mockito.when(world.heldSchemas.eventSchema(fork)).thenReturn(forkSchema);
+        Mockito.when(world.heldSchemas.eventSchema(TranslationWorld.VERSION, "fork-1")).thenReturn(forkSchema);
+        final String uuid = keptXslt("acme-v1", "ACME-Events", TranslationWorld.mapping(), TranslationWorld.VERSION,
+                "fork-1");
+
+        final Map<String, Object> result = world.call(tool, Map.of("changes", Map.of("unmatched", "warn"),
+                "uuid", uuid));
+
+        assertThat(result).containsKey("saved");
+        assertThat(world.xslt(uuid).getData()).contains("xmlns=\"" + FORK_NS + "\"")
+                .contains(FORK_NS + " " + FORK_SYSTEM_ID)
+                .doesNotContain("xmlns=\"event-logging:3\"");
+        assertThat(KeptMapping.readMapping(world.xslt(uuid).getDescription()).orElseThrow().payload())
+                .containsEntry(EventVersions.KEPT_SCHEMA_UUID, "fork-1");
+    }
+
+    @Test
     void changesNeedAMappingToChange() {
         assertThat(world.call(tool, Map.of("changes", Map.of("unmatched", "warn"), "build", "acme-v1", "name", "new"))
                 .get("error")).asString().contains("None was found for those: draft one, or give the whole mapping");
@@ -851,10 +882,21 @@ class TestBuildTranslationXsltTool {
                             final String name,
                             final Map<String, Object> mapping,
                             final String version) {
+        return keptXslt(build, name, mapping, version, null);
+    }
+
+    private String keptXslt(final String build,
+                            final String name,
+                            final Map<String, Object> mapping,
+                            final String version,
+                            final String schemaUuid) {
         final DocRef ref = world.inBuild(build, XsltDoc.TYPE, name);
         final Map<String, Object> payload = new LinkedHashMap<>();
         if (version != null) {
             payload.put("schema_version", version);
+        }
+        if (schemaUuid != null) {
+            payload.put(EventVersions.KEPT_SCHEMA_UUID, schemaUuid);
         }
         payload.put("mapping", mapping);
         world.world.docs.put(ref.getUuid(), world.xslt(ref.getUuid()).copy()

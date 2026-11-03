@@ -11,10 +11,10 @@
   <!-- Rule 'alert': every record. Writes an Alert event (TypeId IDS-Alert) from sig, sev, src, dst, dport. -->
   <xsl:template match="node()" mode="event_type_alert">
     <Event>
-      <xsl:if test="normalize-space(*[@key='ts'])">
+      <xsl:if test="*[@key='ts'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(*[@key='ts'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((*[@key='ts'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -24,10 +24,10 @@
           <Environment>Eval</Environment>
         </System>
         <Generator>ids-sensor</Generator>
-        <xsl:if test="normalize-space(*[@key='sensor'])">
+        <xsl:if test="*[@key='sensor'][normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="*[@key='sensor']"/>
+              <xsl:value-of select="(*[@key='sensor'])[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -37,18 +37,18 @@
         <xsl:variable name="sig" select="*[@key='sig'][normalize-space(.)]"/>
         <xsl:if test="$sig">
           <Description>
-            <xsl:value-of select="$sig"/>
+            <xsl:value-of select="$sig[1]"/>
           </Description>
         </xsl:if>
         <Alert>
           <Type>IDS</Type>
           <Severity>
             <xsl:variable name="sev" select="*[@key='sev'][normalize-space(.)]"/>
-            <xsl:value-of select="if ($sev = '1') then 'Critical' else if ($sev = '2') then 'Major' else if ($sev = '3') then 'Minor' else 'Info'"/>
+            <xsl:value-of select="if ($sev[1] = '1') then 'Critical' else if ($sev[1] = '2') then 'Major' else if ($sev[1] = '3') then 'Minor' else 'Info'"/>
           </Severity>
           <xsl:if test="$sig">
             <Description>
-              <xsl:value-of select="$sig"/>
+              <xsl:value-of select="$sig[1]"/>
             </Description>
           </xsl:if>
           <xsl:sequence select="mcp:data('source_ip', *[@key='src'])"/>
@@ -63,7 +63,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

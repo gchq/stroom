@@ -162,7 +162,7 @@ class TestXsltReader extends XsltRuns {
                 List.of("rule logon: EventDetail/Authenticate/Data Data host_seen"), List.of()));
         // An element no longer written: the user in EventSource, for every rule.
         edits.put("an element removed", new HandEdit(code -> {
-            final int from = code.indexOf("<xsl:if test=\"normalize-space(data[@name='user']/@value)\">\n        "
+            final int from = code.indexOf("<xsl:if test=\"data[@name='user']/@value[normalize-space(.)]\">\n        "
                                           + "<User>");
             final int to = code.indexOf("</User>", code.indexOf("<EventSource>")) + "</User>\n      </xsl:if>".length();
             return once(code, code.substring(from, to), "");

@@ -20,10 +20,14 @@
   <!-- Rule 'view': records where EventID = 4663. Writes a View event (TypeId from EventID) from EventID. -->
   <xsl:template match="node()" mode="event_type_view">
     <Event>
-      <xsl:if test="exists((System/TimeCreated/@SystemTime)[normalize-space(.)])">
+      <xsl:variable name="event_time_time_created" select="(System/TimeCreated/@SystemTime)[normalize-space(.)]"/>
+      <xsl:if test="exists($event_time_time_created)">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date((System/TimeCreated/@SystemTime)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+            <xsl:if test="count($event_time_time_created) gt 1">
+              <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+            </xsl:if>
+            <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -36,7 +40,7 @@
         <xsl:if test="(Computer)[normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="Computer"/>
+              <xsl:value-of select="(Computer)[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -47,14 +51,17 @@
         <EventDetail>
           <xsl:if test="$event_id">
             <TypeId>
-              <xsl:value-of select="$event_id"/>
+              <xsl:value-of select="$event_id[1]"/>
             </TypeId>
           </xsl:if>
           <xsl:if test="exists($document_id)">
             <View>
               <Document>
                 <Id>
-                  <xsl:value-of select="$document_id"/>
+                  <xsl:if test="count($document_id) gt 1">
+                    <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($document_id), ') for ', 'EventDetail/View/Document/Id, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+                  </xsl:if>
+                  <xsl:value-of select="$document_id[1]"/>
                 </Id>
               </Document>
             </View>

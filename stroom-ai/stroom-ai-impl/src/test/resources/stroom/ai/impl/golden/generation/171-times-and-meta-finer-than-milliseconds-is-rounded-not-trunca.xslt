@@ -11,10 +11,10 @@
   <!-- Rule 'a': every record. Writes an Authenticate event (TypeId x) from u. -->
   <xsl:template match="node()" mode="event_type_a">
     <Event>
-      <xsl:if test="normalize-space(*[@key='ts'])">
+      <xsl:if test="*[@key='ts'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(*[@key='ts'][1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX')"/>
+            <xsl:value-of select="stroom:format-date((*[@key='ts'])[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -32,10 +32,10 @@
         <TypeId>x</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='u'])">
+          <xsl:if test="*[@key='u'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='u']"/>
+                <xsl:value-of select="(*[@key='u'])[1]"/>
               </Id>
             </User>
           </xsl:if>

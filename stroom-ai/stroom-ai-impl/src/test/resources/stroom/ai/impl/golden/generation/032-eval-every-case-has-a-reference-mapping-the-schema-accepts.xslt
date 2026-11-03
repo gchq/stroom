@@ -12,10 +12,10 @@
        process.args, process.pid. -->
   <xsl:template match="node()" mode="event_type_process_start">
     <Event>
-      <xsl:if test="normalize-space(*[@key='@timestamp'])">
+      <xsl:if test="*[@key='@timestamp'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(*[@key='@timestamp'][1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+            <xsl:value-of select="stroom:format-date((*[@key='@timestamp'])[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -31,20 +31,20 @@
           <Device>
             <xsl:if test="$host_name">
               <HostName>
-                <xsl:value-of select="$host_name"/>
+                <xsl:value-of select="$host_name[1]"/>
               </HostName>
             </xsl:if>
             <xsl:if test="$host_ip">
               <IPAddress>
-                <xsl:value-of select="$host_ip"/>
+                <xsl:value-of select="$host_ip[1]"/>
               </IPAddress>
             </xsl:if>
           </Device>
         </xsl:if>
-        <xsl:if test="normalize-space(*[@key='user']/*[@key='name'])">
+        <xsl:if test="*[@key='user']/*[@key='name'][normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="*[@key='user']/*[@key='name']"/>
+              <xsl:value-of select="(*[@key='user']/*[@key='name'])[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -54,19 +54,19 @@
         <Process>
           <Action>Execute</Action>
           <Type>Application</Type>
-          <xsl:if test="normalize-space(*[@key='process']/*[@key='executable'])">
+          <xsl:if test="*[@key='process']/*[@key='executable'][normalize-space(.)]">
             <Command>
-              <xsl:value-of select="*[@key='process']/*[@key='executable']"/>
+              <xsl:value-of select="(*[@key='process']/*[@key='executable'])[1]"/>
             </Command>
           </xsl:if>
-          <xsl:if test="normalize-space(*[@key='process']/*[@key='args'])">
+          <xsl:if test="*[@key='process']/*[@key='args'][normalize-space(.)]">
             <Arguments>
-              <xsl:value-of select="*[@key='process']/*[@key='args']"/>
+              <xsl:value-of select="(*[@key='process']/*[@key='args'])[1]"/>
             </Arguments>
           </xsl:if>
-          <xsl:if test="normalize-space(*[@key='process']/*[@key='pid'])">
+          <xsl:if test="*[@key='process']/*[@key='pid'][normalize-space(.)]">
             <ProcessId>
-              <xsl:value-of select="*[@key='process']/*[@key='pid']"/>
+              <xsl:value-of select="(*[@key='process']/*[@key='pid'])[1]"/>
             </ProcessId>
           </xsl:if>
         </Process>
