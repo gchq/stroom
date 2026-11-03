@@ -26,14 +26,18 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.api.datasource.QueryOptionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 import stroom.util.functions.TriFunction;
+import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
@@ -286,6 +290,7 @@ public class SearchExpressionQueryBuilder {
         if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
             throw new SearchException("Field not found in index: " + field);
         }
+        checkFieldUsable(elasticIndexField);
         final String fieldName = elasticIndexField.getFldName();
 
         // Work out the effective field-level query options, e.g. case-insensitive matching, from those set on
@@ -461,22 +466,43 @@ public class SearchExpressionQueryBuilder {
                 .caseInsensitive(caseInsensitive));
     }
 
+    /// Throws if a field can't be used in a query, because it is disabled or its source indices disagree on its type.
+    private void checkFieldUsable(final ElasticIndexField field) {
+        if (field.hasTypeConflict()) {
+            throw new SearchException("Field '" + field.getFldName() + "' has conflicting types across the source " +
+                                      "indices of " + indexDoc.getName() + ", so can't be queried");
+        }
+        if (!ElasticSearchProvider.isFieldEnabled(indexDoc, field)) {
+            throw new SearchException("Field '" + field.getFldName() + "' is disabled in " + indexDoc.getName());
+        }
+    }
+
     private Query buildDenseVectorQuery(final String fieldName, final String expression) {
-        if (indexDoc.getVectorGenerationModelRef() == null) {
-            throw new IllegalArgumentException("Vector embedding model is not defined in data source " +
-                                               indexDoc.getName());
+        final DenseVectorFieldConfig config = NullSafe.get(
+                indexDoc.findFieldSettings(fieldName),
+                ElasticIndexFieldSettings::getDenseVector,
+                ElasticDenseVectorSettings::getConfig);
+        final DocRef embeddingModelRef = NullSafe.get(config, DenseVectorFieldConfig::getEmbeddingModelRef);
+        if (embeddingModelRef == null) {
+            throw new IllegalArgumentException("Vector embedding model is not set for field '" + fieldName +
+                                               "' in data source " + indexDoc.getName());
         }
 
         // Query the embeddings API for a vector representation of the query expression
-        final OpenAIModelDoc modelDoc = aiServiceProvider.get().getOpenAIModelDoc(
-                indexDoc.getVectorGenerationModelRef());
+        final OpenAIModelDoc modelDoc = aiServiceProvider.get().getOpenAIModelDoc(embeddingModelRef);
         try {
             final EmbeddingModel embeddingModel = aiServiceProvider.get().getEmbeddingModel(modelDoc);
             final List<Float> queryVector = embeddingModel.embed(expression).content().vectorAsList();
             elasticQueryParams.addKnnFieldQuery(fieldName, expression);
-            return QueryBuilders.knn(q -> q
-                    .field(fieldName)
-                    .queryVector(queryVector));
+            // A nearest neighbour count of 0 leaves `k` to Elasticsearch's default
+            final int nearestNeighbourCount = config.getNearestNeighbourCount();
+            return QueryBuilders.knn(q -> {
+                q.field(fieldName).queryVector(queryVector);
+                if (nearestNeighbourCount > 0) {
+                    q.k(nearestNeighbourCount);
+                }
+                return q;
+            });
         } catch (final Exception e) {
             throw new RuntimeException("Failed to create vector embeddings for field " + fieldName + ". " +
                                        e.getMessage(), e);

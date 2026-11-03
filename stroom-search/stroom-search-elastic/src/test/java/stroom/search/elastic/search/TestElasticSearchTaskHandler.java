@@ -16,6 +16,11 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.OpenAIModelStore;
+import stroom.docref.DocRef;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -25,7 +30,11 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.search.elastic.search.ElasticSearchTaskHandler.RerankTarget;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 import stroom.util.time.StroomDuration;
 
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -56,6 +65,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 /// Unit tests for the pure field resolution and value conversion helpers in [ElasticSearchTaskHandler].
 /// No Elasticsearch cluster is involved; hit `fields` maps are built by hand in the shapes that
@@ -69,6 +79,8 @@ class TestElasticSearchTaskHandler {
     private ErrorConsumer errorConsumer;
     @Mock
     private ResultStore resultStore;
+    @Mock
+    private OpenAIModelStore openAIModelStore;
 
     // --------------------------------------------------------------------------------
     // getFieldValue
@@ -453,32 +465,102 @@ class TestElasticSearchTaskHandler {
     }
 
     // --------------------------------------------------------------------------------
-    // Field name helpers
+    // Field availability and reranking
     // --------------------------------------------------------------------------------
 
     @Test
-    void testGetFieldBaseName() {
-        assertThat(ElasticSearchTaskHandler.getFieldBaseName("content.vector"))
-                .isEqualTo("content");
-        assertThat(ElasticSearchTaskHandler.getFieldBaseName("a.b.vector"))
-                .isEqualTo("a.b");
-        assertThat(ElasticSearchTaskHandler.getFieldBaseName("vector"))
-                .isNull();
-        assertThat(ElasticSearchTaskHandler.getFieldBaseName("trailing."))
-                .isNull();
-        assertThat(ElasticSearchTaskHandler.getFieldBaseName(".leading"))
-                .isNull();
+    void testGetUnavailableFieldNames() {
+        final ElasticIndexDoc doc = elasticIndexDoc().copy()
+                .fields(List.of(
+                        field("host", FieldType.KEYWORD, null),
+                        field("title", FieldType.TEXT, null),
+                        field("title.keyword", FieldType.KEYWORD, "title"),
+                        field("port", FieldType.LONG, null)))
+                .fieldSettings(List.of(
+                        ElasticIndexFieldSettings.builder("title").enabled(false).build(),
+                        ElasticIndexFieldSettings.builder("port").enabled(false).build(),
+                        ElasticIndexFieldSettings.builder("role").virtualGroups(List.of()).build()))
+                .build();
+
+        // A disabled parent disables its multi-field, and a virtual field has no values
+        assertThat(ElasticSearchTaskHandler.getUnavailableFieldNames(
+                doc, Set.of("host", "title.keyword", "port", "role", "unknown")))
+                .containsExactlyInAnyOrder("title.keyword", "port", "role");
     }
 
     @Test
-    void testGetSuffixedFieldName() {
-        assertThat(ElasticSearchTaskHandler.getSuffixedFieldName("content.vector", ".text"))
-                .isEqualTo("content.text");
-        assertThat(ElasticSearchTaskHandler.getSuffixedFieldName("a.b.vector", ".score"))
-                .isEqualTo("a.b.score");
-        assertThat(ElasticSearchTaskHandler.getSuffixedFieldName("vector", ".text"))
-                .isNull();
+    void testGetUnavailableFieldNames_noSettings() {
+        final ElasticIndexDoc doc = elasticIndexDoc().copy()
+                .fields(List.of(field("host", FieldType.KEYWORD, null)))
+                .build();
+
+        assertThat(ElasticSearchTaskHandler.getUnavailableFieldNames(doc, Set.of("host", "unknown")))
+                .isEmpty();
     }
+
+    @Test
+    void testCreateRerankTargets() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").name("model").build();
+        when(openAIModelStore.readDocument(model.asDocRef())).thenReturn(model);
+        final ElasticIndexDoc doc = vectorDoc(model.asDocRef(), "content.text", "content.score");
+
+        final List<RerankTarget> targets = rerankHandler().createRerankTargets(doc, knnQuery("content.vector"));
+
+        assertThat(targets).containsExactly(new RerankTarget(
+                "content.vector", "content.text", "content.score", model, 0.5F, 50));
+    }
+
+    @Test
+    void testCreateRerankTargets_noRerankModel() {
+        final ElasticIndexDoc doc = vectorDoc(null, "content.text", "content.score");
+
+        assertThat(rerankHandler().createRerankTargets(doc, knnQuery("content.vector")))
+                .isEmpty();
+        verifyNoInteractions(openAIModelStore);
+    }
+
+    @Test
+    void testCreateRerankTargets_fieldNotQueried() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").name("model").build();
+        final ElasticIndexDoc doc = vectorDoc(model.asDocRef(), "content.text", "content.score");
+
+        assertThat(rerankHandler().createRerankTargets(doc, new ElasticQueryParams()))
+                .isEmpty();
+    }
+
+    @Test
+    void testCreateRerankTargets_missingTextField() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").name("model").build();
+        final ElasticIndexDoc doc = vectorDoc(model.asDocRef(), "body.text", "content.score");
+
+        assertThatThrownBy(() -> rerankHandler().createRerankTargets(doc, knnQuery("content.vector")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("body.text");
+    }
+
+    @Test
+    void testCreateRerankTargets_textFieldNotSet() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").name("model").build();
+        final ElasticIndexDoc doc = vectorDoc(model.asDocRef(), null, "content.score");
+
+        assertThatThrownBy(() -> rerankHandler().createRerankTargets(doc, knnQuery("content.vector")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rerank text field is not set");
+    }
+
+    @Test
+    void testCreateRerankTargets_modelNotFound() {
+        final OpenAIModelDoc model = OpenAIModelDoc.builder().uuid("model-uuid").name("model").build();
+        final ElasticIndexDoc doc = vectorDoc(model.asDocRef(), "content.text", "content.score");
+
+        assertThatThrownBy(() -> rerankHandler().createRerankTargets(doc, knnQuery("content.vector")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rerank model");
+    }
+
+    // --------------------------------------------------------------------------------
+    // Field name helpers
+    // --------------------------------------------------------------------------------
 
     @Test
     void testFirstStringValue() {
@@ -624,8 +706,8 @@ class TestElasticSearchTaskHandler {
                         {"a": ["x"]}"""))
                 .highlight("a", List.of("<em>x</em>", "<em>x</em>")));
 
-        handler.processResultBatch(fieldIndex("a"), Set.of(), elasticIndexDoc(), new ElasticQueryParams(),
-                null, resultStore, valuesConsumer, errorConsumer, new AtomicLong(), List.of(hit));
+        handler.processResultBatch(fieldIndex("a"), List.of(), new ElasticQueryParams(),
+                resultStore, valuesConsumer, errorConsumer, new AtomicLong(), List.of(hit));
 
         verify(resultStore).addHighlights(Set.of("<em>x</em>"));
         captureRows(1);
@@ -638,8 +720,8 @@ class TestElasticSearchTaskHandler {
             throw exception;
         };
 
-        handler(false).processResultBatch(fieldIndex("a"), Set.of(), elasticIndexDoc(), new ElasticQueryParams(),
-                null, resultStore, failingConsumer, errorConsumer, new AtomicLong(),
+        handler(false).processResultBatch(fieldIndex("a"), List.of(), new ElasticQueryParams(),
+                resultStore, failingConsumer, errorConsumer, new AtomicLong(),
                 List.of(hit("1", """
                         {"a": ["x"]}""")));
 
@@ -687,8 +769,8 @@ class TestElasticSearchTaskHandler {
     private void processResultBatch(final FieldIndex fieldIndex,
                                     final List<Hit<ObjectNode>> hits,
                                     final AtomicLong hitCount) {
-        handler(false).processResultBatch(fieldIndex, Set.of(), elasticIndexDoc(), new ElasticQueryParams(),
-                null, resultStore, valuesConsumer, errorConsumer, hitCount, hits);
+        handler(false).processResultBatch(fieldIndex, List.of(), new ElasticQueryParams(),
+                resultStore, valuesConsumer, errorConsumer, hitCount, hits);
     }
 
     private List<Val[]> captureRows(final int expectedCount) {
@@ -702,6 +784,42 @@ class TestElasticSearchTaskHandler {
                 highlight, StroomDuration.ofMinutes(1), null, null);
         return new ElasticSearchTaskHandler(
                 () -> config, null, null, null, null, null, null);
+    }
+
+    private ElasticSearchTaskHandler rerankHandler() {
+        return new ElasticSearchTaskHandler(null, null, null, null, openAIModelStore, null, null);
+    }
+
+    private static ElasticQueryParams knnQuery(final String vectorFieldName) {
+        final ElasticQueryParams queryParams = new ElasticQueryParams();
+        queryParams.addKnnFieldQuery(vectorFieldName, "some text");
+        return queryParams;
+    }
+
+    private static ElasticIndexDoc vectorDoc(final DocRef rerankModelRef,
+                                             final String rerankTextField,
+                                             final String rerankScoreField) {
+        final DenseVectorFieldConfig config = DenseVectorFieldConfig.builder()
+                .rerankModelRef(rerankModelRef)
+                .rerankScoreMinimum(0.5F)
+                .rerankBatchSize(50)
+                .build();
+        return elasticIndexDoc().copy()
+                .fields(List.of(
+                        field("content.vector", FieldType.DENSE_VECTOR, null),
+                        field("content.text", FieldType.TEXT, null)))
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder("content.vector")
+                        .denseVector(new ElasticDenseVectorSettings(config, rerankTextField, rerankScoreField))
+                        .build()))
+                .build();
+    }
+
+    private static ElasticIndexField field(final String name, final FieldType type, final String multiFieldParent) {
+        return ElasticIndexField.builder()
+                .fldName(name)
+                .fldType(type)
+                .multiFieldParent(multiFieldParent)
+                .build();
     }
 
     private static ElasticIndexDoc elasticIndexDoc() {
