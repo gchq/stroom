@@ -48,16 +48,16 @@
           <xsl:apply-templates select="." mode="user"/>
           <xsl:variable name="outcome_reason" select="*[@key='outcome']/*[@key='reason'][normalize-space(.)]"/>
           <xsl:variable name="outcome_result" select="*[@key='outcome']/*[@key='result'][normalize-space(.)]"/>
-          <xsl:if test="$outcome_result = ('SUCCESS', 'FAILURE') or $outcome_reason">
+          <xsl:if test="$outcome_result[1] = ('SUCCESS', 'FAILURE') or $outcome_reason">
             <Outcome>
-              <xsl:if test="$outcome_result = ('SUCCESS', 'FAILURE')">
+              <xsl:if test="$outcome_result[1] = ('SUCCESS', 'FAILURE')">
                 <Success>
-                  <xsl:value-of select="if ($outcome_result = 'SUCCESS') then 'true' else 'false'"/>
+                  <xsl:value-of select="if ($outcome_result[1] = 'SUCCESS') then 'true' else 'false'"/>
                 </Success>
               </xsl:if>
               <xsl:if test="$outcome_reason">
                 <Description>
-                  <xsl:value-of select="$outcome_reason"/>
+                  <xsl:value-of select="$outcome_reason[1]"/>
                 </Description>
               </xsl:if>
             </Outcome>
@@ -145,10 +145,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'new session start', 'new session end', 'new account lock' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='published'])">
+    <xsl:if test="*[@key='published'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='published'][1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='published'])[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -159,17 +159,17 @@
       <xsl:apply-templates select="." mode="system"/>
       <Generator>idp</Generator>
       <xsl:apply-templates select="." mode="device"/>
-      <xsl:if test="normalize-space(*[@key='client']/*[@key='ipAddress'])">
+      <xsl:if test="*[@key='client']/*[@key='ipAddress'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='client']/*[@key='ipAddress']"/>
+            <xsl:value-of select="(*[@key='client']/*[@key='ipAddress'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='actor']/*[@key='alternateId'])">
+      <xsl:if test="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='actor']/*[@key='alternateId']"/>
+            <xsl:value-of select="(*[@key='actor']/*[@key='alternateId'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -192,28 +192,28 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'new session start', 'new session end', 'new account lock' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='eventType'])">
+    <xsl:if test="*[@key='eventType'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='eventType']"/>
+        <xsl:value-of select="(*[@key='eventType'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'new session start', 'new session end', 'new account lock' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(*[@key='actor']/*[@key='alternateId'])">
+    <xsl:if test="*[@key='actor']/*[@key='alternateId'][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="*[@key='actor']/*[@key='alternateId']"/>
+          <xsl:value-of select="(*[@key='actor']/*[@key='alternateId'])[1]"/>
         </Id>
       </User>
     </xsl:if>
   </xsl:template>
   <!-- event_time_2: shared by the rules 'legacy login', 'legacy logout', 'legacy password change' -->
   <xsl:template match="node()" mode="event_time_2">
-    <xsl:if test="normalize-space(*[@key='ts'])">
+    <xsl:if test="*[@key='ts'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='ts'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='ts'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -224,17 +224,17 @@
       <xsl:apply-templates select="." mode="system"/>
       <Generator>idp</Generator>
       <xsl:apply-templates select="." mode="device"/>
-      <xsl:if test="normalize-space(*[@key='ip'])">
+      <xsl:if test="*[@key='ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='ip']"/>
+            <xsl:value-of select="(*[@key='ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='user'])">
+      <xsl:if test="*[@key='user'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='user']"/>
+            <xsl:value-of select="(*[@key='user'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -242,28 +242,28 @@
   </xsl:template>
   <!-- event_detail_type_id: shared by the rules 'legacy login', 'legacy logout', 'legacy password change' -->
   <xsl:template match="node()" mode="event_detail_type_id">
-    <xsl:if test="normalize-space(*[@key='type'])">
+    <xsl:if test="*[@key='type'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='type']"/>
+        <xsl:value-of select="(*[@key='type'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- authenticate_user: shared by the rules 'legacy login', 'legacy logout', 'legacy password change' -->
   <xsl:template match="node()" mode="authenticate_user">
-    <xsl:if test="normalize-space(*[@key='user'])">
+    <xsl:if test="*[@key='user'][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="*[@key='user']"/>
+          <xsl:value-of select="(*[@key='user'])[1]"/>
         </Id>
       </User>
     </xsl:if>
   </xsl:template>
   <!-- outcome: shared by the rules 'legacy login', 'legacy password change' -->
   <xsl:template match="node()" mode="outcome">
-    <xsl:if test="normalize-space(*[@key='ok'])">
+    <xsl:if test="*[@key='ok'][normalize-space(.)]">
       <Outcome>
         <Success>
-          <xsl:value-of select="*[@key='ok']"/>
+          <xsl:value-of select="(*[@key='ok'])[1]"/>
         </Success>
       </Outcome>
     </xsl:if>

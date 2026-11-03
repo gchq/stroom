@@ -39,10 +39,10 @@
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:if test="data[@name='outcome']/@value = ('success', 'failure')">
+          <xsl:if test="(data[@name='outcome']/@value)[1] = ('success', 'failure')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='outcome']/@value = 'success') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='outcome']/@value)[1] = 'success') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -78,18 +78,18 @@
       <xsl:variable name="dpt" select="data[@name='dpt']/@value[normalize-space(.)]"/>
       <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)]"/>
       <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)]"/>
-      <xsl:if test="normalize-space(data[@name='cef_signature_id']/@value) or exists(((data[@name='msg']/@value, data[@name='cef_name']/@value)[normalize-space(.)][1])[normalize-space(.)]) or $src or $dst or $dpt or $request or $cat or $act = ('allow', 'block')">
+      <xsl:if test="data[@name='cef_signature_id']/@value[normalize-space(.)] or exists(((data[@name='msg']/@value, data[@name='cef_name']/@value)[normalize-space(.)][1])[normalize-space(.)]) or $src or $dst or $dpt or $request or $cat or $act[1] = ('allow', 'block')">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
           <xsl:apply-templates select="." mode="description"/>
-          <xsl:if test="$src or $dst or $dpt or $request or $cat or $act = ('allow', 'block')">
+          <xsl:if test="$src or $dst or $dpt or $request or $cat or $act[1] = ('allow', 'block')">
             <Network>
               <Open>
                 <xsl:if test="$src">
                   <Source>
                     <Device>
                       <IPAddress>
-                        <xsl:value-of select="$src"/>
+                        <xsl:value-of select="$src[1]"/>
                       </IPAddress>
                     </Device>
                   </Source>
@@ -99,23 +99,23 @@
                     <xsl:if test="$dst">
                       <Device>
                         <IPAddress>
-                          <xsl:value-of select="$dst"/>
+                          <xsl:value-of select="$dst[1]"/>
                         </IPAddress>
                       </Device>
                     </xsl:if>
                     <xsl:if test="$dpt">
                       <Port>
-                        <xsl:value-of select="$dpt"/>
+                        <xsl:value-of select="$dpt[1]"/>
                       </Port>
                     </xsl:if>
                     <xsl:sequence select="mcp:data('url', $request)"/>
                     <xsl:sequence select="mcp:data('category', $cat)"/>
                   </Destination>
                 </xsl:if>
-                <xsl:if test="$act = ('allow', 'block')">
+                <xsl:if test="$act[1] = ('allow', 'block')">
                   <Outcome>
                     <Permitted>
-                      <xsl:value-of select="if ($act = 'allow') then 'true' else 'false'"/>
+                      <xsl:value-of select="if ($act[1] = 'allow') then 'true' else 'false'"/>
                     </Permitted>
                   </Outcome>
                 </xsl:if>
@@ -147,10 +147,14 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'web request', 'malware' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="exists(concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))[normalize-space(.)])">
+    <xsl:variable name="event_time_time_created" select="concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))[normalize-space(.)]"/>
+    <xsl:if test="exists($event_time_time_created)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(concat('2026 ', replace(data[@name='time']/@value, '  ', ' '))[1], 'yyyy MMM d HH:mm:ss', 'UTC')"/>
+          <xsl:if test="count($event_time_time_created) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy MMM d HH:mm:ss', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -162,29 +166,29 @@
         <Name>Secure Web Gateway</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(data[@name='cef_product']/@value)">
+      <xsl:if test="data[@name='cef_product']/@value[normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="data[@name='cef_product']/@value"/>
+          <xsl:value-of select="(data[@name='cef_product']/@value)[1]"/>
         </Generator>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='host']/@value)">
+      <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='host']/@value"/>
+            <xsl:value-of select="(data[@name='host']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='src']/@value)">
+      <xsl:if test="data[@name='src']/@value[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="data[@name='src']/@value"/>
+            <xsl:value-of select="(data[@name='src']/@value)[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='suser']/@value)">
+      <xsl:if test="data[@name='suser']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='suser']/@value"/>
+            <xsl:value-of select="(data[@name='suser']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -192,9 +196,9 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff', 'web request', 'malware' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='cef_signature_id']/@value)">
+    <xsl:if test="data[@name='cef_signature_id']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='cef_signature_id']/@value"/>
+        <xsl:value-of select="(data[@name='cef_signature_id']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -208,10 +212,10 @@
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='suser']/@value)">
+    <xsl:if test="data[@name='suser']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='suser']/@value"/>
+          <xsl:value-of select="(data[@name='suser']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -221,7 +225,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

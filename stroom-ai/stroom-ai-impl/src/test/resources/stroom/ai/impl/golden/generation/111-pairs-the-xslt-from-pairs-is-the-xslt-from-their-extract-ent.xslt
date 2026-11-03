@@ -12,14 +12,14 @@
        from body). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <xsl:if test="normalize-space(*[@key='time'])">
+      <xsl:if test="*[@key='time'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="*[@key='time']"/>
+            <xsl:value-of select="(*[@key='time'])[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
-      <xsl:variable name="user_parts" select="analyze-string(string(*[@key='body'][1]), '(?:^|[\s,;])user=&quot;([^&quot;]*)&quot;')"/>
+      <xsl:variable name="user_parts" select="analyze-string(string((*[@key='body'])[1]), '(?:^|[\s,;])user=&quot;([^&quot;]*)&quot;')"/>
       <xsl:variable name="user" select="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
       <EventSource>
         <System>
@@ -27,17 +27,17 @@
           <Environment>Test</Environment>
         </System>
         <Generator>fortigate</Generator>
-        <xsl:if test="normalize-space(*[@key='host'])">
+        <xsl:if test="*[@key='host'][normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="*[@key='host']"/>
+              <xsl:value-of select="(*[@key='host'])[1]"/>
             </HostName>
           </Device>
         </xsl:if>
         <xsl:if test="$user">
           <User>
             <Id>
-              <xsl:value-of select="$user"/>
+              <xsl:value-of select="$user[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -49,14 +49,14 @@
           <xsl:if test="$user">
             <User>
               <Id>
-                <xsl:value-of select="$user"/>
+                <xsl:value-of select="$user[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="*[@key='result'] = ('ok', 'fail')">
+          <xsl:if test="(*[@key='result'])[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (*[@key='result'] = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((*[@key='result'])[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -70,7 +70,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.query.api.Column;
+import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.datasource.QueryField;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
@@ -96,6 +97,33 @@ class TestVerifyIndexTool {
     // A user who agrees in every form.
     private ToolCallContext agreeing() {
         return world.forms(question -> Map.of("value", true));
+    }
+
+    @Test
+    void theDashboardsWindowStartsAtTheSamplesEarliestEvent() {
+        // Seen in testing: the start was read from the dashboard's own table, newest first, so the earliest of the
+        // 100 newest events (2026-10-04) hid a third of a sample reaching back to 2026-08-08.
+        index(true);
+        Mockito.doAnswer(inv -> {
+            final Probe probe = inv.getArgument(1);
+            if (probe.columns().stream().map(Column::getName).toList().equals(List.of("All", "Count"))) {
+                return new Found(List.of(Map.of("All", "all", "Count", "3")), List.of(), true);
+            }
+            final boolean oldestFirst = probe.columns().stream()
+                    .anyMatch(column -> "@timestamp".equals(column.getName()) && column.getSort() != null
+                                        && column.getSort().getDirection() == SortDirection.ASCENDING);
+            return new Found(List.of(Map.of("StreamId", "6", "EventId", "1", "user.name", "alice", "@timestamp",
+                    oldestFirst
+                            ? "2026-08-08T10:00:00.000Z"
+                            : "2026-10-11T08:00:00.000Z")), List.of(), true);
+        }).when(indexSearches).search(any(), any(), anyInt(), any());
+
+        call(args(""), agreeing());
+
+        final String start = IndexChecks.windowStart(List.of("2026-08-08T10:00:00.000Z"));
+        assertThat(start).isEqualTo("2026-08-05T00:00:00.000Z");
+        assertThat(world.asked).singleElement().asString()
+                .contains("- initial query: @timestamp from " + start + " through today");
     }
 
     @Test

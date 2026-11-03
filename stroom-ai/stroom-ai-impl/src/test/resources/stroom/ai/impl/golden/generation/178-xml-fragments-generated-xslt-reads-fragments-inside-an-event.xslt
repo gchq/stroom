@@ -76,7 +76,7 @@
     <xsl:if test="(System/TimeCreated/@SystemTime)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(System/TimeCreated/@SystemTime[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:value-of select="stroom:format-date((System/TimeCreated/@SystemTime)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -92,21 +92,21 @@
       <xsl:if test="(System/Computer)[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="System/Computer"/>
+            <xsl:value-of select="(System/Computer)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
       <xsl:if test="(EventData/Data[@Name='IpAddress'])[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="EventData/Data[@Name='IpAddress']"/>
+            <xsl:value-of select="(EventData/Data[@Name='IpAddress'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
       <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="EventData/Data[@Name='TargetUserName']"/>
+            <xsl:value-of select="(EventData/Data[@Name='TargetUserName'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -116,7 +116,7 @@
   <xsl:template match="node()" mode="type_id">
     <xsl:if test="(System/EventID)[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="System/EventID"/>
+        <xsl:value-of select="(System/EventID)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -125,7 +125,7 @@
     <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="EventData/Data[@Name='TargetUserName']"/>
+          <xsl:value-of select="(EventData/Data[@Name='TargetUserName'])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -135,7 +135,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

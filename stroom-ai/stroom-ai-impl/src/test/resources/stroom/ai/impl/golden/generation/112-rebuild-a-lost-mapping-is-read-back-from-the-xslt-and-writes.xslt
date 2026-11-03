@@ -30,24 +30,24 @@
         <TypeId>Logon</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(data[@name='user']/@value)">
+          <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="data[@name='user']/@value"/>
+                <xsl:value-of select="(data[@name='user']/@value)[1]"/>
               </Id>
             </User>
           </xsl:if>
           <xsl:variable name="result" select="data[@name='result']/@value[normalize-space(.)]"/>
-          <xsl:if test="exists($result_to_success?($result))">
+          <xsl:if test="exists($result_to_success?($result[1]))">
             <Outcome>
               <Success>
-                <xsl:value-of select="$result_to_success?($result)[1]"/>
+                <xsl:value-of select="$result_to_success?($result[1])[1]"/>
               </Success>
             </Outcome>
           </xsl:if>
           <xsl:sequence select="mcp:data('session', data[@name='sid']/@value)"/>
-          <xsl:if test="exists($result_to_success?($result))">
-            <Data Name="outcome" Value="{$result_to_success?($result)[1]}"/>
+          <xsl:if test="exists($result_to_success?($result[1]))">
+            <Data Name="outcome" Value="{$result_to_success?($result[1])[1]}"/>
           </xsl:if>
         </Authenticate>
       </EventDetail>
@@ -61,20 +61,20 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <Unknown>
-          <Data Name="kind" Value="{if ($action = 'login') then 'Logon' else 'Other'}"/>
+          <Data Name="kind" Value="{if ($action[1] = 'login') then 'Logon' else 'Other'}"/>
         </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -89,13 +89,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -106,7 +106,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

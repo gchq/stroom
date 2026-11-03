@@ -25,7 +25,7 @@
         <TypeId>deny</TypeId>
         <xsl:variable name="msg" select="data[@name='msg']/@value[normalize-space(.)]"/>
         <xsl:variable name="proto_parts" select="analyze-string(string($msg[1]), '(?:^|\s)proto=(\S+)')"/>
-        <xsl:if test="normalize-space(mcp:quoted_value($msg, 'srcip')) or normalize-space(mcp:quoted_value($msg, 'dstip')) or normalize-space(mcp:quoted_value($msg, 'dstintfrole')) or normalize-space($proto_parts/fn:match//fn:group[@nr=1])">
+        <xsl:if test="normalize-space(mcp:quoted_value($msg, 'srcip')) or normalize-space(mcp:quoted_value($msg, 'dstip')) or normalize-space(mcp:quoted_value($msg, 'dstintfrole')) or $proto_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
           <Network>
             <Deny>
               <xsl:apply-templates select="." mode="source"/>
@@ -48,7 +48,7 @@
         <TypeId>permit</TypeId>
         <xsl:variable name="msg" select="data[@name='msg']/@value[normalize-space(.)]"/>
         <xsl:variable name="proto_parts" select="analyze-string(string($msg[1]), '(?:^|\s)proto=(\S+)')"/>
-        <xsl:if test="normalize-space(mcp:quoted_value($msg, 'srcip')) or normalize-space(mcp:quoted_value($msg, 'dstip')) or normalize-space(mcp:quoted_value($msg, 'dstintfrole')) or normalize-space($proto_parts/fn:match//fn:group[@nr=1])">
+        <xsl:if test="normalize-space(mcp:quoted_value($msg, 'srcip')) or normalize-space(mcp:quoted_value($msg, 'dstip')) or normalize-space(mcp:quoted_value($msg, 'dstintfrole')) or $proto_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
           <Network>
             <Permit>
               <xsl:apply-templates select="." mode="source"/>
@@ -63,10 +63,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'deny', 'permit' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -81,13 +81,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
       <xsl:if test="normalize-space(mcp:quoted_value(data[@name='msg']/@value, 'user'))">
         <User>
           <Id>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'user')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'user')[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -99,7 +99,7 @@
       <Source>
         <Device>
           <IPAddress>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'srcip')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'srcip')[1]"/>
           </IPAddress>
         </Device>
       </Source>
@@ -111,7 +111,7 @@
       <Destination>
         <Device>
           <IPAddress>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'dstip')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'dstip')[1]"/>
           </IPAddress>
         </Device>
       </Destination>
@@ -122,7 +122,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
   <xsl:function name="mcp:quoted_value" as="xs:string?">

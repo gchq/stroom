@@ -31,17 +31,17 @@
         <xsl:apply-templates select="." mode="type_id"/>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='user']/*[@key='name'])">
+          <xsl:if test="*[@key='user']/*[@key='name'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='user']/*[@key='name']"/>
+                <xsl:value-of select="(*[@key='user']/*[@key='name'])[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="*[@key='event']/*[@key='outcome'] = ('success', 'failure')">
+          <xsl:if test="(*[@key='event']/*[@key='outcome'])[1] = ('success', 'failure')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (*[@key='event']/*[@key='outcome'] = 'success') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((*[@key='event']/*[@key='outcome'])[1] = 'success') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -60,14 +60,14 @@
         <Delete>
           <Object>
             <Type>File</Type>
-            <xsl:if test="normalize-space(*[@key='file']/*[@key='path'])">
+            <xsl:if test="*[@key='file']/*[@key='path'][normalize-space(.)]">
               <Id>
-                <xsl:value-of select="*[@key='file']/*[@key='path']"/>
+                <xsl:value-of select="(*[@key='file']/*[@key='path'])[1]"/>
               </Id>
             </xsl:if>
-            <xsl:if test="normalize-space(*[@key='file']/*[@key='name'])">
+            <xsl:if test="*[@key='file']/*[@key='name'][normalize-space(.)]">
               <Name>
-                <xsl:value-of select="*[@key='file']/*[@key='name']"/>
+                <xsl:value-of select="(*[@key='file']/*[@key='name'])[1]"/>
               </Name>
             </xsl:if>
           </Object>
@@ -77,10 +77,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'file-delete' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='@timestamp'])">
+    <xsl:if test="*[@key='@timestamp'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='@timestamp'][1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='@timestamp'])[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -93,24 +93,24 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>ecs-shipper</Generator>
-      <xsl:if test="normalize-space(*[@key='host']/*[@key='name'])">
+      <xsl:if test="*[@key='host']/*[@key='name'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']/*[@key='name']"/>
+            <xsl:value-of select="(*[@key='host']/*[@key='name'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='source']/*[@key='ip'])">
+      <xsl:if test="*[@key='source']/*[@key='ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='source']/*[@key='ip']"/>
+            <xsl:value-of select="(*[@key='source']/*[@key='ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='user']/*[@key='name'])">
+      <xsl:if test="*[@key='user']/*[@key='name'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='user']/*[@key='name']"/>
+            <xsl:value-of select="(*[@key='user']/*[@key='name'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -118,9 +118,9 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'file-delete' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='event']/*[@key='action'])">
+    <xsl:if test="*[@key='event']/*[@key='action'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='event']/*[@key='action']"/>
+        <xsl:value-of select="(*[@key='event']/*[@key='action'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>

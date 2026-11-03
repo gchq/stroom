@@ -30,10 +30,10 @@
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:if test="normalize-space(data[@name='change']/@value) or normalize-space(data[@name='employee_id']/@value) or normalize-space(data[@name='employee_name']/@value) or normalize-space(data[@name='department']/@value)">
+      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="normalize-space(data[@name='employee_id']/@value) or normalize-space(data[@name='employee_name']/@value) or normalize-space(data[@name='department']/@value)">
+          <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
             <Create>
               <xsl:apply-templates select="." mode="user"/>
             </Create>
@@ -51,7 +51,7 @@
       <xsl:variable name="department" select="data[@name='department']/@value[normalize-space(.)]"/>
       <xsl:variable name="employee_name" select="data[@name='employee_name']/@value[normalize-space(.)]"/>
       <xsl:variable name="employee_id" select="data[@name='employee_id']/@value[normalize-space(.)]"/>
-      <xsl:if test="normalize-space(data[@name='change']/@value) or $employee_id or $employee_name or $department">
+      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or $employee_id or $employee_name or $department">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
           <xsl:if test="$employee_id or $employee_name or $department">
@@ -60,12 +60,12 @@
                 <User>
                   <xsl:if test="$employee_id">
                     <Id>
-                      <xsl:value-of select="$employee_id"/>
+                      <xsl:value-of select="$employee_id[1]"/>
                     </Id>
                   </xsl:if>
                   <xsl:if test="$employee_name">
                     <Name>
-                      <xsl:value-of select="$employee_name"/>
+                      <xsl:value-of select="$employee_name[1]"/>
                     </Name>
                   </xsl:if>
                   <xsl:sequence select="mcp:data('department', $department)"/>
@@ -83,10 +83,10 @@
     <Event>
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
-      <xsl:if test="normalize-space(data[@name='change']/@value) or normalize-space(data[@name='employee_id']/@value) or normalize-space(data[@name='employee_name']/@value) or normalize-space(data[@name='department']/@value)">
+      <xsl:if test="data[@name='change']/@value[normalize-space(.)] or data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
-          <xsl:if test="normalize-space(data[@name='employee_id']/@value) or normalize-space(data[@name='employee_name']/@value) or normalize-space(data[@name='department']/@value)">
+          <xsl:if test="data[@name='employee_id']/@value[normalize-space(.)] or data[@name='employee_name']/@value[normalize-space(.)] or data[@name='department']/@value[normalize-space(.)]">
             <Delete>
               <xsl:apply-templates select="." mode="user"/>
             </Delete>
@@ -97,10 +97,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'joiner', 'mover', 'leaver' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -116,10 +116,10 @@
       <Device>
         <HostName>hr01.example.org</HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='changed_by']/@value)">
+      <xsl:if test="data[@name='changed_by']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='changed_by']/@value"/>
+            <xsl:value-of select="(data[@name='changed_by']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -127,9 +127,9 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'joiner', 'mover', 'leaver' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='change']/@value)">
+    <xsl:if test="data[@name='change']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='change']/@value"/>
+        <xsl:value-of select="(data[@name='change']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -137,16 +137,16 @@
   <xsl:template match="node()" mode="user">
     <xsl:variable name="employee_name" select="data[@name='employee_name']/@value[normalize-space(.)]"/>
     <xsl:variable name="employee_id" select="data[@name='employee_id']/@value[normalize-space(.)]"/>
-    <xsl:if test="$employee_id or $employee_name or normalize-space(data[@name='department']/@value)">
+    <xsl:if test="$employee_id or $employee_name or data[@name='department']/@value[normalize-space(.)]">
       <User>
         <xsl:if test="$employee_id">
           <Id>
-            <xsl:value-of select="$employee_id"/>
+            <xsl:value-of select="$employee_id[1]"/>
           </Id>
         </xsl:if>
         <xsl:if test="$employee_name">
           <Name>
-            <xsl:value-of select="$employee_name"/>
+            <xsl:value-of select="$employee_name[1]"/>
           </Name>
         </xsl:if>
         <xsl:sequence select="mcp:data('department', data[@name='department']/@value)"/>
@@ -158,7 +158,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

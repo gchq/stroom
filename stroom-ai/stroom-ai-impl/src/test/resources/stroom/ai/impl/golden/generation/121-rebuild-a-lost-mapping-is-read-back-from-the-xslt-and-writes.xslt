@@ -24,17 +24,17 @@
         <TypeId>Logon</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='user'])">
+          <xsl:if test="*[@key='user'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='user']"/>
+                <xsl:value-of select="(*[@key='user'])[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="*[@key='result'] = ('ok', 'fail')">
+          <xsl:if test="(*[@key='result'])[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (*[@key='result'] = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((*[@key='result'])[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -51,11 +51,11 @@
       <EventDetail>
         <xsl:variable name="action" select="*[@key='action'][normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:if test="$action">
           <Unknown>
-            <Data Name="action" Value="{$action}"/>
+            <Data Name="action" Value="{$action[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -63,10 +63,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='time'])">
+    <xsl:if test="*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="*[@key='time']"/>
+          <xsl:value-of select="(*[@key='time'])[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -79,17 +79,17 @@
         <Environment>Dev</Environment>
       </System>
       <Generator>vpnd</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='user']/*[@key='name'])">
+      <xsl:if test="*[@key='user']/*[@key='name'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='user']/*[@key='name']"/>
+            <xsl:value-of select="(*[@key='user']/*[@key='name'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -100,7 +100,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

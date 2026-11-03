@@ -53,10 +53,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='ts']/@value)">
+    <xsl:if test="data[@name='ts']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='ts']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='ts']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -69,24 +69,24 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>acme-directory</Generator>
-      <xsl:if test="normalize-space(data[@name='host']/@value)">
+      <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='host']/@value"/>
+            <xsl:value-of select="(data[@name='host']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='src']/@value)">
+      <xsl:if test="data[@name='src']/@value[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="data[@name='src']/@value"/>
+            <xsl:value-of select="(data[@name='src']/@value)[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='usr']/@value)">
+      <xsl:if test="data[@name='usr']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='usr']/@value"/>
+            <xsl:value-of select="(data[@name='usr']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -94,18 +94,18 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='evt']/@value)">
+    <xsl:if test="data[@name='evt']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='evt']/@value"/>
+        <xsl:value-of select="(data[@name='evt']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='usr']/@value)">
+    <xsl:if test="data[@name='usr']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='usr']/@value"/>
+          <xsl:value-of select="(data[@name='usr']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -113,10 +113,10 @@
   <!-- outcome: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="outcome">
     <xsl:variable name="res" select="data[@name='res']/@value[normalize-space(.)]"/>
-    <xsl:if test="$res = ('R0', 'R7', 'R9')">
+    <xsl:if test="$res[1] = ('R0', 'R7', 'R9')">
       <Outcome>
         <Success>
-          <xsl:value-of select="if ($res = 'R0') then 'true' else if ($res = 'R7') then 'false' else 'false'"/>
+          <xsl:value-of select="if ($res[1] = 'R0') then 'true' else if ($res[1] = 'R7') then 'false' else 'false'"/>
         </Success>
       </Outcome>
     </xsl:if>

@@ -75,9 +75,9 @@
           <Source>
             <Object>
               <Type>Records</Type>
-              <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=5])">
+              <xsl:if test="$user_parts/fn:match//fn:group[@nr=5][normalize-space(.)]">
                 <Description>
-                  <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=5]"/>
+                  <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=5])[1]"/>
                 </Description>
               </xsl:if>
             </Object>
@@ -90,10 +90,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'export' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSSSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -105,23 +105,23 @@
         <Name>API</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(data[@name='stream']/@value)">
+      <xsl:if test="data[@name='stream']/@value[normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="data[@name='stream']/@value"/>
+          <xsl:value-of select="(data[@name='stream']/@value)[1]"/>
         </Generator>
       </xsl:if>
       <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
-      <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=4])">
+      <xsl:if test="$user_parts/fn:match//fn:group[@nr=4][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=4]"/>
+            <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=4])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=1])">
+      <xsl:if test="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=1]"/>
+            <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=1])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -130,19 +130,19 @@
   <!-- type_id: shared by the rules 'logon', 'logoff', 'export' -->
   <xsl:template match="node()" mode="type_id">
     <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
-    <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=2])">
+    <xsl:if test="$user_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=2]"/>
+        <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=2])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
     <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
-    <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=1])">
+    <xsl:if test="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=1])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -150,10 +150,10 @@
   <!-- outcome: shared by the rules 'logon', 'export' -->
   <xsl:template match="node()" mode="outcome">
     <xsl:variable name="user_parts" select="analyze-string(string(replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')[1]), '^user=(\S+) action=(\S+) result=(\S+) pod=(\S+)(?: detail=(\S+) rows=(\d+))?$')"/>
-    <xsl:if test="exists($result_to_success?(normalize-space($user_parts/fn:match//fn:group[@nr=3])))">
+    <xsl:if test="exists($result_to_success?(($user_parts/fn:match//fn:group[@nr=3])[1]))">
       <Outcome>
         <Success>
-          <xsl:value-of select="$result_to_success?(normalize-space($user_parts/fn:match//fn:group[@nr=3]))[1]"/>
+          <xsl:value-of select="$result_to_success?(($user_parts/fn:match//fn:group[@nr=3])[1])[1]"/>
         </Success>
       </Outcome>
     </xsl:if>
@@ -163,7 +163,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

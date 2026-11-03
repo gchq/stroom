@@ -80,7 +80,7 @@
       <xsl:variable name="event_data_data" select="(EventData/Data)[normalize-space(.)]"/>
       <xsl:variable name="action_parts" select="analyze-string(string($event_data_data[1]), '(?:^|[;|()\]]|\s-)\s*Action: \[([^\]]*)\]')"/>
       <xsl:variable name="event_parts" select="analyze-string(string($event_data_data[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
-      <xsl:if test="($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or (System/Provider/@Name)[normalize-space(.)] or (System/EventID)[normalize-space(.)] or ($action_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'By User'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Item Id'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Client'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Secret'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Secret Id'))[normalize-space(.)]">
+      <xsl:if test="($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or (System/Provider/@Name)[normalize-space(.)] or (System/EventID)[normalize-space(.)] or ($action_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or normalize-space(mcp:keyed_value($event_data_data, 'By User')) or normalize-space(mcp:keyed_value($event_data_data, 'Item Id')) or normalize-space(mcp:keyed_value($event_data_data, 'Client')) or normalize-space(mcp:keyed_value($event_data_data, 'Secret')) or normalize-space(mcp:keyed_value($event_data_data, 'Secret Id'))">
         <EventDetail>
           <xsl:apply-templates select="." mode="type_id"/>
           <xsl:apply-templates select="." mode="unknown"/>
@@ -99,8 +99,8 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="event_parts" select="analyze-string(string(EventData/Data[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
-          <xsl:value-of select="if (($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]) then $event_parts/fn:match//fn:group[@nr=1] else 'other'"/>
+          <xsl:variable name="event_parts" select="analyze-string(string((EventData/Data)[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
+          <xsl:value-of select="if (($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]) then ($event_parts/fn:match//fn:group[@nr=1])[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="unknown"/>
       </EventDetail>
@@ -111,7 +111,7 @@
     <xsl:if test="(System/TimeCreated/@SystemTime)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(System/TimeCreated/@SystemTime[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:value-of select="stroom:format-date((System/TimeCreated/@SystemTime)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -120,9 +120,9 @@
   <xsl:template match="node()" mode="event_source">
     <EventSource>
       <xsl:variable name="event_data_data" select="(EventData/Data)[normalize-space(.)]"/>
-      <xsl:if test="(mcp:keyed_value($event_data_data, 'Session Id'))[normalize-space(.)]">
+      <xsl:if test="normalize-space(mcp:keyed_value($event_data_data, 'Session Id'))">
         <SessionId>
-          <xsl:value-of select="mcp:keyed_value($event_data_data, 'Session Id')"/>
+          <xsl:value-of select="mcp:keyed_value($event_data_data, 'Session Id')[1]"/>
         </SessionId>
       </xsl:if>
       <System>
@@ -133,21 +133,21 @@
       <xsl:if test="(System/Computer)[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="System/Computer"/>
+            <xsl:value-of select="(System/Computer)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="(mcp:keyed_value($event_data_data, 'Source IP'))[normalize-space(.)]">
+      <xsl:if test="normalize-space(mcp:keyed_value($event_data_data, 'Source IP'))">
         <Client>
           <IPAddress>
-            <xsl:value-of select="mcp:keyed_value($event_data_data, 'Source IP')"/>
+            <xsl:value-of select="mcp:keyed_value($event_data_data, 'Source IP')[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="(mcp:keyed_value($event_data_data, 'User'))[normalize-space(.)]">
+      <xsl:if test="normalize-space(mcp:keyed_value($event_data_data, 'User'))">
         <User>
           <Id>
-            <xsl:value-of select="mcp:keyed_value($event_data_data, 'User')"/>
+            <xsl:value-of select="mcp:keyed_value($event_data_data, 'User')[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -155,19 +155,19 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'user_logon', 'user_logoff', 'secret' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="event_parts" select="analyze-string(string(EventData/Data[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
+    <xsl:variable name="event_parts" select="analyze-string(string((EventData/Data)[1]), '(?:^|[;|()\]]|\s-)\s*Event: \[([^\]]*)\]')"/>
     <xsl:if test="($event_parts/fn:match//fn:group[@nr=1])[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$event_parts/fn:match//fn:group[@nr=1]"/>
+        <xsl:value-of select="($event_parts/fn:match//fn:group[@nr=1])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'user_logon', 'user_logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="(mcp:keyed_value((EventData/Data)[normalize-space(.)], 'User'))[normalize-space(.)]">
+    <xsl:if test="normalize-space(mcp:keyed_value(EventData/Data, 'User'))">
       <User>
         <Id>
-          <xsl:value-of select="mcp:keyed_value(EventData/Data, 'User')"/>
+          <xsl:value-of select="mcp:keyed_value(EventData/Data, 'User')[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -185,7 +185,7 @@
   <xsl:template match="node()" mode="unknown">
     <xsl:variable name="event_data_data" select="(EventData/Data)[normalize-space(.)]"/>
     <xsl:variable name="action_parts" select="analyze-string(string($event_data_data[1]), '(?:^|[;|()\]]|\s-)\s*Action: \[([^\]]*)\]')"/>
-    <xsl:if test="(System/Provider/@Name)[normalize-space(.)] or (System/EventID)[normalize-space(.)] or ($action_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'By User'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Item Id'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Client'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Secret'))[normalize-space(.)] or (mcp:keyed_value($event_data_data, 'Secret Id'))[normalize-space(.)]">
+    <xsl:if test="(System/Provider/@Name)[normalize-space(.)] or (System/EventID)[normalize-space(.)] or ($action_parts/fn:match//fn:group[@nr=1])[normalize-space(.)] or normalize-space(mcp:keyed_value($event_data_data, 'By User')) or normalize-space(mcp:keyed_value($event_data_data, 'Item Id')) or normalize-space(mcp:keyed_value($event_data_data, 'Client')) or normalize-space(mcp:keyed_value($event_data_data, 'Secret')) or normalize-space(mcp:keyed_value($event_data_data, 'Secret Id'))">
       <Unknown>
         <xsl:sequence select="mcp:data('System/Provider/@Name', System/Provider/@Name)"/>
         <xsl:sequence select="mcp:data('System/EventID', System/EventID)"/>
@@ -199,7 +199,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
   <xsl:function name="mcp:keyed_value" as="xs:string?">

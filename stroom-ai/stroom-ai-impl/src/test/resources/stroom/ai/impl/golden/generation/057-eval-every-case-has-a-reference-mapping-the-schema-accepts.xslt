@@ -14,7 +14,7 @@
       <xsl:if test="(when)[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(when[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((when)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -28,14 +28,14 @@
         <xsl:if test="$door">
           <Device>
             <Name>
-              <xsl:value-of select="$door"/>
+              <xsl:value-of select="$door[1]"/>
             </Name>
           </Device>
         </xsl:if>
         <xsl:if test="(holder)[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="holder"/>
+              <xsl:value-of select="(holder)[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -46,7 +46,7 @@
           <xsl:if test="$door">
             <Resource>
               <Name>
-                <xsl:value-of select="$door"/>
+                <xsl:value-of select="$door[1]"/>
               </Name>
             </Resource>
           </xsl:if>
@@ -54,7 +54,7 @@
           <xsl:if test="(granted)[normalize-space(.)]">
             <Outcome>
               <Success>
-                <xsl:value-of select="granted"/>
+                <xsl:value-of select="(granted)[1]"/>
               </Success>
             </Outcome>
           </xsl:if>

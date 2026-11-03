@@ -11,10 +11,10 @@
   <!-- Rule 'badge': every record. Writes an Authenticate event (TypeId Badge-Access) from door, badge_user, result. -->
   <xsl:template match="node()" mode="event_type_badge">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -29,7 +29,7 @@
         <xsl:if test="$door">
           <Device>
             <Name>
-              <xsl:value-of select="$door"/>
+              <xsl:value-of select="$door[1]"/>
             </Name>
           </Device>
         </xsl:if>
@@ -61,7 +61,7 @@
         <TypeId>Badge-Access</TypeId>
         <xsl:if test="$door">
           <Description>
-            <xsl:value-of select="$door"/>
+            <xsl:value-of select="$door[1]"/>
           </Description>
         </xsl:if>
         <Authenticate>
@@ -73,10 +73,10 @@
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="data[@name='result']/@value = ('granted', 'denied')">
+          <xsl:if test="(data[@name='result']/@value)[1] = ('granted', 'denied')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='result']/@value = 'granted') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='result']/@value)[1] = 'granted') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -310,8 +311,27 @@ final class ReadIdioms {
             base.put("value", normal.valueText());
             return new Entry(base, false);
         }
-        base.put("xpath", portable(normal.text()));
+        base.put("xpath", portable(keptText(normal)));
         return new Entry(base, true);
+    }
+
+    // An expression kept as an xpath entry, without the [1] the generator puts after an entry's value (its first, as
+    // an entry without repeat writes), there or after a default's value: regenerating adds it again, so the mapping
+    // reads back as it was.
+    private String keptText(final XPathNode normal) {
+        final Optional<XPathNode> first = XPathTrees.firstOf(normal);
+        if (first.isPresent()) {
+            return XPathTrees.normal(first.get()).text();
+        }
+        final XPathMatch match = unify("default", normal);
+        if (match != null) {
+            final Optional<XPathNode> value = XPathTrees.firstOf(XPathTrees.normal(match.expr(2)));
+            if (value.isPresent()) {
+                return XPathText.defaultText(XPathTrees.normal(match.expr(1)).text(),
+                        XPathTrees.normal(value.get()).text(), match.string(1));
+            }
+        }
+        return normal.text();
     }
 
     private Map<String, Object> idiom(final XPathNode node, final String guard) {

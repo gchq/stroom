@@ -66,10 +66,14 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="exists((mcp:json-to-xml(*[@key='payload'])/*/*[@key='ts'])[normalize-space(.)])">
+    <xsl:variable name="event_time_time_created" select="(mcp:json-to-xml(*[@key='payload'])/*/*[@key='ts'])[normalize-space(.)]"/>
+    <xsl:if test="exists($event_time_time_created)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date((mcp:json-to-xml(*[@key='payload'])/*/*[@key='ts'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:if test="count($event_time_time_created) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -82,25 +86,25 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>gateway</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
       <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
-      <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=3])">
+      <xsl:if test="$user_parts/fn:match//fn:group[@nr=3][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=3]"/>
+            <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=3])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=1])">
+      <xsl:if test="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=1]"/>
+            <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=1])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -109,27 +113,31 @@
   <!-- type_id: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="type_id">
     <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
-    <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=2])">
+    <xsl:if test="$user_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=2]"/>
+        <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=2])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="exists((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[normalize-space(.)])">
+    <xsl:variable name="text" select="(mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[normalize-space(.)]"/>
+    <xsl:if test="exists($text)">
       <Description>
-        <xsl:value-of select="(mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])"/>
+        <xsl:if test="count($text) gt 1">
+          <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($text), ') for ', 'EventDetail/Description, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+        </xsl:if>
+        <xsl:value-of select="$text[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
     <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
-    <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=1])">
+    <xsl:if test="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=1])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -137,10 +145,10 @@
   <!-- outcome: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="outcome">
     <xsl:variable name="user_parts" select="analyze-string(string((mcp:json-to-xml(*[@key='payload'])/*/*[@key='msg'])[1]), '^user=(\S+) action=(\S+) src=(\S+) result=(\S+)$')"/>
-    <xsl:if test="$user_parts/fn:match//fn:group[@nr=4] = ('success', 'failure')">
+    <xsl:if test="($user_parts/fn:match//fn:group[@nr=4])[1] = ('success', 'failure')">
       <Outcome>
         <Success>
-          <xsl:value-of select="if ($user_parts/fn:match//fn:group[@nr=4] = 'success') then 'true' else 'false'"/>
+          <xsl:value-of select="if (($user_parts/fn:match//fn:group[@nr=4])[1] = 'success') then 'true' else 'false'"/>
         </Success>
       </Outcome>
     </xsl:if>

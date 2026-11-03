@@ -72,6 +72,9 @@ public final class XsltGenerator {
     public static final String UNMATCHED = "No event mapping matched record ";
     /// Logged (INFO) for each record a kept-Unknown rule takes; `{rule}` is the rule's name.
     public static final String KEPT_UNKNOWN = "Kept as Unknown by rule '{rule}': record ";
+    /// Logged (WARN) where an entry without `repeat` reads several values from its own xpath (a split list, say): the
+    /// first is written. The line starts `Several values (n) for <path>, ` and ends with the record's number.
+    public static final String SEVERAL_VALUES = "only the first written (repeat: true writes each): record ";
     /// How many of the fields the rules test the log lines carry.
     public static final int LOGGED_FIELDS = 4;
     /// The variable holding the record's number (`stroom:record-no()`), read once for every record.
@@ -631,6 +634,21 @@ public final class XsltGenerator {
                 : XPathText.transformExpression(entry.transform(), one);
     }
 
+    // The one value an entry without repeat writes, maps or tests as a key: the first with text, transformed if asked.
+    // Seen in testing: several values (a field given again, an xpath giving several) were written joined with
+    // spaces where the entry had no transform, and only the first where it had one.
+    private String one(final FieldMapping entry, final String src) {
+        if (entry.transform() != null) {
+            return scalar(entry, src);
+        }
+        // A lookup, a dictionary, any_of (its first value) and join (one string) give one value already.
+        final boolean single = entry.lookup() != null || isSet(entry.dictionary()) || hasAnyOf(entry)
+                               || entry.join() != null;
+        return single
+                ? src
+                : src + "[1]";
+    }
+
     // A variable holding the input's non-blank values, declared at the top of the template being written, so each
     // selector appears once per template. Named after the field, or for an xpath after `label`.
     private String ref(final String fieldName, final String xpath, final String label, final String inputScope) {
@@ -763,14 +781,14 @@ public final class XsltGenerator {
         if (entry.repeat() && !entry.hasMap()) {
             // Several values (a key given again, as rcpt= once per recipient): whether any has text. Seen in eval
             // case 50: normalize-space() over them all, which takes one, failed every record with two recipients.
+            // exists(), as an xpath may give strings (tokenize), and two or more strings have no effective boolean
+            // value: seen in testing, a split group list failed every record holding two groups.
             final Source given = sourceOf(entry);
-            return "(" + source(given.field(), given.xpath(), given.scope()) + ")[normalize-space(.)]";
+            return "exists((" + source(given.field(), given.xpath(), given.scope()) + ")[normalize-space(.)])";
         }
         if (entry.hasMap()) {
             final String src = entryRef(entry);
-            final String key = entry.transform() != null
-                    ? scalar(entry, src)
-                    : src;
+            final String key = one(entry, src);
             if (asXslMap(entry)) {
                 return "exists(" + mapRef(entry, src) + "?(" + key + "))";
             }
@@ -788,9 +806,7 @@ public final class XsltGenerator {
                     : ".";
         }
         final String src = entryRef(entry);
-        final String key = entry.transform() != null
-                ? scalar(entry, src)
-                : src;
+        final String key = one(entry, src);
         if (entry.hasMap() && asXslMap(entry)) {
             // The lookup operator takes any number of keys, so an empty input gives no value rather than an error.
             return XPathText.mapLookupText(mapRef(entry, src), key, entry.defaultValue());
@@ -812,6 +828,7 @@ public final class XsltGenerator {
         }
         final String format = entry.timeFormat();
         final String zone = entry.timezone();
+        // A time is converted from one value, whatever the source.
         final String one = entry.transform() != null
                 ? scalar(entry, src)
                 : src + "[1]";
@@ -821,9 +838,7 @@ public final class XsltGenerator {
         } else if (isSet(format)) {
             expression = XPathText.timeExpression(format, zone, one);
         } else {
-            expression = entry.transform() != null
-                    ? one
-                    : src;
+            expression = key;
         }
         if (entry.defaultValue() != null) {
             return XPathText.defaultText(entryHas(entry), expression, entry.defaultValue());
@@ -835,8 +850,25 @@ public final class XsltGenerator {
         if (entry.value() != null) {
             element.setText(entry.value());
         } else {
+            warnOfSeveral(element, entry);
             element.addElement(XSL, "value-of", "select", valueExpression(entry));
         }
+    }
+
+    // A warning logged where an entry without repeat reads several values from its own xpath: the first is written.
+    // Seen in testing: a group list split with tokenize() but not repeated; a field gives one value per name, and
+    // lookups, joins and any_of read one already. The log call writes nothing, so the output is the same.
+    private void warnOfSeveral(final XmlElement parent, final FieldMapping entry) {
+        if (entry.repeat() || entry.value() != null || !isSet(entry.xpath())) {
+            return;
+        }
+        final String values = entryRef(entry);
+        parent.addElement(XSL, "if", "test", "count(" + values + ") gt 1")
+                .addElement(XSL, "sequence", "select", "stroom:log('WARN', concat('Several values (', count("
+                                                       + values + "), ') for ', "
+                                                       + XPathText.literal(entry.strippedPath() + ", "
+                                                                           + SEVERAL_VALUES)
+                                                       + ", stroom:record-no()))");
     }
 
     // --- XSLT ---
@@ -935,15 +967,10 @@ public final class XsltGenerator {
                                final String name,
                                final List<FieldMapping> entries,
                                final String enclosing) {
-        // A repeated entry's test is the values that have text: exists() over them, as an xpath giving several strings
-        // (not nodes) has no boolean value.
+        // A repeated entry's test is already exists() over its values with text (leafTest): wrapping it again made
+        // exists(false), always true, and wrote an empty container.
         final List<String> tests = entries.stream()
-                .map(entry -> {
-                    final String test = leafTest(entry);
-                    return test != null && entry.repeat()
-                            ? "exists(" + test + ")"
-                            : test;
-                })
+                .map(this::leafTest)
                 .toList();
         final String test = tests.contains(null)
                 ? null
@@ -985,19 +1012,25 @@ public final class XsltGenerator {
             final String test = leafTest(entry);
             final boolean guarded = isSet(test) && !test.equals(enclosing);
             if (entry.value() == null && dataFunctionWanted && guarded) {
+                // The values' variable, passed whole: the function writes the first.
                 final String expression = valueExpression(entry);
-                if (VARIABLE_ONLY.matcher(expression).matches()
-                    && (test.equals(expression) || test.equals("exists(" + expression + ")"))) {
+                final String values = expression.endsWith("[1]")
+                        ? expression.substring(0, expression.length() - 3)
+                        : expression;
+                if (VARIABLE_ONLY.matcher(values).matches()
+                    && (test.equals(values) || test.equals("exists(" + values + ")"))) {
                     dataFunctionUsed = true;
+                    warnOfSeveral(parent, entry);
                     parent.addElement(XSL, "sequence", "select", "mcp:" + dataFunction + "("
                                                                  + XPathText.literal(entry.dataName()) + ", "
-                                                                 + expression + ")");
+                                                                 + values + ")");
                     return;
                 }
             }
             holder = guarded
                     ? parent.addElement(XSL, "if", "test", test)
                     : parent;
+            warnOfSeveral(holder, entry);
         }
         final XmlElement element = holder.addElement(ns, "Data", "Name", entry.dataName());
         if (entry.value() != null) {
@@ -1316,15 +1349,22 @@ public final class XsltGenerator {
         final String plain = !xpathNames.contains(name) || MappingFacts.isCall(selector)
                 ? selector
                 : "(" + selector + ")";
-        // A Data Splitter or JSON field has one value per record, so its test reads naturally as
-        // normalize-space(field); an XML path or an xpath may give several, which normalize-space() would refuse, so
-        // those keep the predicate.
-        final boolean single = !xpathNames.contains(name)
-                               && ("data_splitter".equals(m.input()) || "json".equals(m.input()))
-                               && m.nilValues().isEmpty();
-        final String hasValue = single
+        // A key=value function gives one string at most (as="xs:string?"), so its test reads as normalize-space().
+        final boolean oneValue = m.nilValues().isEmpty() && keyed.values().stream()
+                .anyMatch(function -> selector.startsWith("mcp:" + function.function() + "(")
+                                      && selector.endsWith(")"));
+        // A test of whether the input has a value keeps the predicate: any input may give several values (a key
+        // given again in a Data Splitter's record, an XML path, an xpath), which normalize-space() would refuse.
+        // Seen: a present condition on a repeated key failed every record holding it twice.
+        final String hasValue = oneValue
                 ? XPathText.hasValueText(selector)
                 : select;
+        // The first value, as $name[1] reads it: in brackets, as a [1] after a path takes the first of each step's
+        // nodes (every data element's @value) rather than the first of all. An xpath's selector is in brackets
+        // already, and a key=value function gives one string at most.
+        final String values = oneValue || xpathNames.contains(name)
+                ? plain
+                : "(" + selector + ")";
         for (final Read read : reads) {
             final String value = read.element().get(read.attribute());
             final Matcher matcher = pattern.matcher(value);
@@ -1334,6 +1374,10 @@ public final class XsltGenerator {
                 // guard, or after 'then'), a comparison and a [1] read the selector as it is.
                 final String after = value.substring(matcher.end());
                 final String before = ToolText.rstrip(value.substring(0, matcher.start()));
+                if (after.startsWith("[1]")) {
+                    matcher.appendReplacement(sb, Matcher.quoteReplacement(values));
+                    continue;
+                }
                 final boolean asIs = "Value".equals(read.attribute())
                                      || ("select".equals(read.attribute())
                                          && value.startsWith("mcp:" + dataFunction + "("))
@@ -1832,7 +1876,7 @@ public final class XsltGenerator {
             function.addElement(XSL, "param", "name", "value", "as", "item()*");
             final XmlElement present = function.addElement(XSL, "if", "test", "exists($value[normalize-space(.)]"
                                                                               + nil() + ")");
-            present.addElement(ns, "Data", "Name", "{$name}", "Value", "{$value}");
+            present.addElement(ns, "Data", "Name", "{$name}", "Value", "{$value[1]}");
             out.add(function);
         }
         for (final Map.Entry<Shape, String> entry : keyedFunctions.entrySet()) {

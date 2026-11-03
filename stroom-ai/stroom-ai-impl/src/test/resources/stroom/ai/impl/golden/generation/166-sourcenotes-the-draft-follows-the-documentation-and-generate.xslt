@@ -102,7 +102,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>Other</TypeId>
-        <xsl:if test="normalize-space(data[@name='evt']/@value) or normalize-space(data[@name='usr']/@value) or normalize-space(data[@name='res']/@value)">
+        <xsl:if test="data[@name='evt']/@value[normalize-space(.)] or data[@name='usr']/@value[normalize-space(.)] or data[@name='res']/@value[normalize-space(.)]">
           <Unknown>
             <xsl:sequence select="mcp:data('evt', data[@name='evt']/@value)"/>
             <xsl:sequence select="mcp:data('usr', data[@name='usr']/@value)"/>
@@ -114,10 +114,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules '4624', '4625', '4634', '4648', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='ts']/@value)">
+    <xsl:if test="data[@name='ts']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='ts']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='ts']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -130,24 +130,24 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>Acme directory</Generator>
-      <xsl:if test="normalize-space(data[@name='host']/@value)">
+      <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='host']/@value"/>
+            <xsl:value-of select="(data[@name='host']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='src']/@value)">
+      <xsl:if test="data[@name='src']/@value[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="data[@name='src']/@value"/>
+            <xsl:value-of select="(data[@name='src']/@value)[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='usr']/@value)">
+      <xsl:if test="data[@name='usr']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='usr']/@value"/>
+            <xsl:value-of select="(data[@name='usr']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -155,10 +155,10 @@
   </xsl:template>
   <!-- user: shared by the rules '4624', '4625', '4634', '4648' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='usr']/@value)">
+    <xsl:if test="data[@name='usr']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='usr']/@value"/>
+          <xsl:value-of select="(data[@name='usr']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -168,7 +168,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

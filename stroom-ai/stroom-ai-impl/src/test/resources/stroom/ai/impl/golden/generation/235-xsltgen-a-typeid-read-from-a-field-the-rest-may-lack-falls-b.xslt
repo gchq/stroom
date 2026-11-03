@@ -14,7 +14,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('kind=', string((normalize-space(*[@key='kind']))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('kind=', string((*[@key='kind'][normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -24,17 +24,17 @@
       <xsl:apply-templates select="." mode="event_time"/>
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
-        <xsl:if test="normalize-space(*[@key='kind'])">
+        <xsl:if test="*[@key='kind'][normalize-space(.)]">
           <TypeId>
-            <xsl:value-of select="*[@key='kind']"/>
+            <xsl:value-of select="(*[@key='kind'])[1]"/>
           </TypeId>
         </xsl:if>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='user'])">
+          <xsl:if test="*[@key='user'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='user']"/>
+                <xsl:value-of select="(*[@key='user'])[1]"/>
               </Id>
             </User>
           </xsl:if>
@@ -51,11 +51,11 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(*[@key='kind'])) then *[@key='kind'] else 'other'"/>
+          <xsl:value-of select="if (*[@key='kind'][normalize-space(.)]) then (*[@key='kind'])[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="normalize-space(*[@key='msg'])">
+        <xsl:if test="*[@key='msg'][normalize-space(.)]">
           <Unknown>
-            <Data Name="msg" Value="{*[@key='msg']}"/>
+            <Data Name="msg" Value="{(*[@key='msg'])[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -63,10 +63,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='time'])">
+    <xsl:if test="*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="*[@key='time']"/>
+          <xsl:value-of select="(*[@key='time'])[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -79,10 +79,10 @@
         <Environment>Prod</Environment>
       </System>
       <Generator>Acme</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -93,7 +93,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

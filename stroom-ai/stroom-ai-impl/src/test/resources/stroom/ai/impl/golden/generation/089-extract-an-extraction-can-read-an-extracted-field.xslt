@@ -6,7 +6,7 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
-    <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
     <xsl:choose>
       <xsl:when test="$ts_parts/fn:match//fn:group[@nr=3] = 'LOGIN'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
@@ -14,7 +14,7 @@
       <xsl:when test="$ts_parts/fn:match//fn:group[@nr=3] = 'LOGOUT'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
-      <xsl:when test="not(normalize-space($ts_parts/fn:match//fn:group[@nr=1]))">
+      <xsl:when test="not($ts_parts/fn:match//fn:group[@nr=1][normalize-space(.)])">
         <!-- unparsed: left untranslated on purpose -->
       </xsl:when>
     </xsl:choose>
@@ -53,11 +53,11 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
-    <xsl:if test="normalize-space($ts_parts/fn:match//fn:group[@nr=1])">
+    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:if test="$ts_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="$ts_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=1])[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -70,26 +70,26 @@
         <Environment>Dev</Environment>
       </System>
       <Generator>app</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
-      <xsl:variable name="client_ip_parts" select="analyze-string(string($ts_parts/fn:match//fn:group[@nr=4][1]), 'from (\S+)$')"/>
-      <xsl:if test="normalize-space($client_ip_parts/fn:match//fn:group[@nr=1])">
+      <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+      <xsl:variable name="client_ip_parts" select="analyze-string(string(($ts_parts/fn:match//fn:group[@nr=4])[1]), 'from (\S+)$')"/>
+      <xsl:if test="$client_ip_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="$client_ip_parts/fn:match//fn:group[@nr=1]"/>
+            <xsl:value-of select="($client_ip_parts/fn:match//fn:group[@nr=1])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space($ts_parts/fn:match//fn:group[@nr=2])">
+      <xsl:if test="$ts_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="$ts_parts/fn:match//fn:group[@nr=2]"/>
+            <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=2])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -97,29 +97,29 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
-    <xsl:if test="normalize-space($ts_parts/fn:match//fn:group[@nr=3])">
+    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:if test="$ts_parts/fn:match//fn:group[@nr=3][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$ts_parts/fn:match//fn:group[@nr=3]"/>
+        <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=3])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="description">
-    <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
-    <xsl:if test="normalize-space($ts_parts/fn:match//fn:group[@nr=4])">
+    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:if test="$ts_parts/fn:match//fn:group[@nr=4][normalize-space(.)]">
       <Description>
-        <xsl:value-of select="$ts_parts/fn:match//fn:group[@nr=4]"/>
+        <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=4])[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:variable name="ts_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
-    <xsl:if test="normalize-space($ts_parts/fn:match//fn:group[@nr=2])">
+    <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:if test="$ts_parts/fn:match//fn:group[@nr=2][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="$ts_parts/fn:match//fn:group[@nr=2]"/>
+          <xsl:value-of select="($ts_parts/fn:match//fn:group[@nr=2])[1]"/>
         </Id>
       </User>
     </xsl:if>

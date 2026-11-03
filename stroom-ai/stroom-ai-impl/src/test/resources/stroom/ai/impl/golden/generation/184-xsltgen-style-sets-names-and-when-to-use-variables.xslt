@@ -26,15 +26,15 @@
               <xsl:if test="$user">
                 <User>
                   <Id>
-                    <xsl:value-of select="$user"/>
+                    <xsl:value-of select="$user[1]"/>
                   </Id>
                 </User>
               </xsl:if>
               <xsl:variable name="result" select="data[@name='result']/@value[normalize-space(.)]"/>
-              <xsl:if test="exists($resultToSuccess?($result))">
+              <xsl:if test="exists($resultToSuccess?($result[1]))">
                 <Outcome>
                   <Success>
-                    <xsl:value-of select="$resultToSuccess?($result)[1]"/>
+                    <xsl:value-of select="$resultToSuccess?($result[1])[1]"/>
                   </Success>
                 </Outcome>
               </xsl:if>
@@ -50,11 +50,11 @@
           <xsl:call-template name="eventSource"/>
           <EventDetail>
             <TypeId>
-              <xsl:value-of select="if ($action) then $action else 'other'"/>
+              <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
             </TypeId>
             <xsl:if test="$action">
               <Unknown>
-                <Data Name="action" Value="{$action}"/>
+                <Data Name="action" Value="{$action[1]}"/>
               </Unknown>
             </xsl:if>
           </EventDetail>
@@ -68,7 +68,7 @@
     <xsl:if test="$time">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="$time"/>
+          <xsl:value-of select="$time[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -84,14 +84,14 @@
       <Device>
         <HostName>
           <xsl:variable name="host" select="data[@name='host']/@value[normalize-space(.)]"/>
-          <xsl:value-of select="if ($host) then $host else 'unknown'"/>
+          <xsl:value-of select="if ($host) then $host[1] else 'unknown'"/>
         </HostName>
       </Device>
       <xsl:variable name="user" select="data[@name='user']/@value[normalize-space(.)]"/>
       <xsl:if test="$user">
         <User>
           <Id>
-            <xsl:value-of select="$user"/>
+            <xsl:value-of select="$user[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -102,7 +102,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

@@ -12,10 +12,10 @@
        proto. -->
   <xsl:template match="node()" mode="event_type_connection">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -25,10 +25,10 @@
           <Environment>Eval</Environment>
         </System>
         <Generator>firewall</Generator>
-        <xsl:if test="normalize-space(data[@name='host']/@value)">
+        <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="data[@name='host']/@value"/>
+              <xsl:value-of select="(data[@name='host']/@value)[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -36,49 +36,49 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'connection'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'connection'"/>
         </TypeId>
         <xsl:variable name="proto" select="data[@name='proto']/@value[normalize-space(.)]"/>
         <xsl:variable name="dport" select="data[@name='dport']/@value[normalize-space(.)]"/>
         <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)]"/>
         <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)]"/>
-        <xsl:if test="$src or $dst or $dport or $proto = ('tcp', 'udp') or $action = ('allow', 'deny')">
+        <xsl:if test="$src or $dst or $dport or $proto[1] = ('tcp', 'udp') or $action[1] = ('allow', 'deny')">
           <Network>
             <Open>
               <xsl:if test="$src">
                 <Source>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$src"/>
+                      <xsl:value-of select="$src[1]"/>
                     </IPAddress>
                   </Device>
                 </Source>
               </xsl:if>
-              <xsl:if test="$dst or $dport or $proto = ('tcp', 'udp')">
+              <xsl:if test="$dst or $dport or $proto[1] = ('tcp', 'udp')">
                 <Destination>
                   <xsl:if test="$dst">
                     <Device>
                       <IPAddress>
-                        <xsl:value-of select="$dst"/>
+                        <xsl:value-of select="$dst[1]"/>
                       </IPAddress>
                     </Device>
                   </xsl:if>
-                  <xsl:if test="$proto = ('tcp', 'udp')">
+                  <xsl:if test="$proto[1] = ('tcp', 'udp')">
                     <TransportProtocol>
-                      <xsl:value-of select="if ($proto = 'tcp') then 'TCP' else 'UDP'"/>
+                      <xsl:value-of select="if ($proto[1] = 'tcp') then 'TCP' else 'UDP'"/>
                     </TransportProtocol>
                   </xsl:if>
                   <xsl:if test="$dport">
                     <Port>
-                      <xsl:value-of select="$dport"/>
+                      <xsl:value-of select="$dport[1]"/>
                     </Port>
                   </xsl:if>
                 </Destination>
               </xsl:if>
-              <xsl:if test="$action = ('allow', 'deny')">
+              <xsl:if test="$action[1] = ('allow', 'deny')">
                 <Outcome>
                   <Permitted>
-                    <xsl:value-of select="if ($action = 'allow') then 'true' else 'false'"/>
+                    <xsl:value-of select="if ($action[1] = 'allow') then 'true' else 'false'"/>
                   </Permitted>
                 </Outcome>
               </xsl:if>
