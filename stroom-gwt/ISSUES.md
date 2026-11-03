@@ -2264,6 +2264,25 @@ dashboard; a visualisation that paints its own background could still hide a lin
 doesn't hold, e.g. a horizontal splitter, nested splits, or a stacking context around the dashboard
 in the app. Not yet checked with the old visualisations.
 
+### Text fields asking for `max` kept their default size
+
+**Fixed** (3 November 2026). The upload dialog's Meta Data area (`DataUpload`, `addStyleNames="max"`)
+was 200px by 80px in a 400px wide group, as was any text field sized only by `max`: `.max`
+(layout-helpers.css) and `.text-field` / `.text-field--multiline` (text-field.css) are each one
+class, and app.css imports text-field.css later, so its default size won. `w-100` (`!important`) and
+screens' own rules loaded later weren't affected. The defaults are now at no weight
+(`:where(.text-field)`, `:where(.text-field--multiline)`), so any class sizing a field wins wherever
+its sheet comes.
+
+### Value spinners too narrow for their values
+
+**Fixed** (3 November 2026). A spinner's default width was 96px (80px narrow), of which the arrows
+take 54px, so its field showed three or four digits: 8 spinners in the stories couldn't show their
+largest value (e.g. the processor filter's Max Processing Tasks, the processor profile's thread
+limits, the OpenAI model's token counts, Elastic's slices and scroll size). A spinner is now as wide
+as a text field (200px), and those four narrow ones are the default width. `value-spinner--narrow`
+is for a value of a few digits; `value-spinner--wide` is now the default width.
+
 ## Smaller oddities
 
 **Reported** (30 October 2026, found fixing the processor profile periods' Remove): lists that

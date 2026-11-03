@@ -31,7 +31,7 @@
                         label="Maximum context window tokens"
                         helpText="The largest number of tokens the model can accept at once. Ask Stroom AI uses it to decide when to split large attachments into batches. Elasticsearch reranking also uses it as a limit on the number of characters of each value sent. Set to 0 if not known. Default is 0."
                         screenReaderText="Number of tokens. 0 means not set. Default is 0.">
-            <v:ValueSpinner ui:field="maxContextWindowTokens" addStyleNames="value-spinner--narrow"
+            <v:ValueSpinner ui:field="maxContextWindowTokens"
                             minValue="0" maxValue="2147483647"
                             title="Maximum number of tokens allowed in the model's context window. Set to zero to disable."/>
         </form:FormGroup>
@@ -46,7 +46,7 @@
                         label="Embedding model dimensions"
                         helpText="The number of dimensions for embedding vectors. Lucene supports up to 1024; Elasticsearch up to 4096. Set to 0 to use the model's default. Default is 1024."
                         screenReaderText="Lucene max 1024, Elasticsearch max 4096. 0 uses the model's default.">
-            <v:ValueSpinner ui:field="embeddingModelDimensions" addStyleNames="value-spinner--narrow"
+            <v:ValueSpinner ui:field="embeddingModelDimensions"
                             minValue="0" maxValue="2147483647"
                             title="Number of dimensions to use for embedding models."/>
         </form:FormGroup>
