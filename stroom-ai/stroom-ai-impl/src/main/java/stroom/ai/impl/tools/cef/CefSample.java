@@ -46,7 +46,8 @@ public final class CefSample {
     /// @throws IllegalArgumentException if the plan's XSLT isn't written (an unsafe expression).
     /// @throws IllegalStateException    if it doesn't compile or run.
     public static List<String> lines(final CefPlan plan, final List<XmlElement> events, final int cap) {
-        final StringBuilder xml = new StringBuilder("<Events xmlns=\"" + CefKeys.EL + "\">");
+        // In the plan's Events namespace (an environment's fork's, or event-logging:3), as its XSLT reads them.
+        final StringBuilder xml = new StringBuilder("<Events xmlns=\"" + plan.eventsNamespaceOrStandard() + "\">");
         events.subList(0, Math.min(cap, events.size()))
                 .forEach(event -> xml.append(XmlSerialiser.toXmlWithoutTail(event)));
         xml.append("</Events>");

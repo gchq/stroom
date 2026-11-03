@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import org.w3c.dom.Attr;
@@ -457,7 +458,7 @@ final class SharedXslt {
                 }
                 break;
             }
-            if (EVT.equals(element.getNamespaceURI())) {
+            if (isEventsElement(element)) {
                 if ("Event".equals(element.getLocalName()) || "Events".equals(element.getLocalName())) {
                     break;
                 }
@@ -494,13 +495,21 @@ final class SharedXslt {
         for (final Element candidate : found) {
             Node node = candidate.getParentNode();
             while (node instanceof final Element element && !XmlTrees.is(element, XSL, "template")) {
-                if (EVT.equals(element.getNamespaceURI()) || FN.equals(element.getNamespaceURI())) {
+                if (isEventsElement(element) || FN.equals(element.getNamespaceURI())) {
                     return candidate;
                 }
                 node = element.getParentNode();
             }
         }
         return null;
+    }
+
+    // An element written in the Events namespace of its XSLT: event-logging:3, or an environment's fork's.
+    private static boolean isEventsElement(final Element element) {
+        final String namespace = element.getNamespaceURI();
+        return namespace != null
+               && EventsNamespaces.eventsNamespacesOf(element.getOwnerDocument().getDocumentElement())
+                       .contains(namespace);
     }
 
     // The stream meta a template reads, by its stroom:meta() calls.

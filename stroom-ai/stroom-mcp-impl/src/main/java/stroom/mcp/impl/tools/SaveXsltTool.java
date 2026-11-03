@@ -184,6 +184,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
                         ? " by hand"
                         : ""));
         if (code == null && indexPlan != null) {
+            indexPlan = withEventsNamespace(context, indexPlan);
             indexPlan = withCardinality(context, withRequiredImports(context, indexPlan, build, uuid), build);
         }
         if (code == null) {
@@ -272,6 +273,19 @@ class SaveXsltTool extends AbstractBuiltInTool {
         }
     }
 
+    // The plan with the namespace of the Events it was drafted from, when the agent's copy left it out: an
+    // environment's fork of the event-logging schema has a namespace of its own, and without it the XSLT would read
+    // event-logging:3 and match no events.
+    private FieldPlan withEventsNamespace(final ToolCallContext context, final FieldPlan plan) {
+        if (plan.eventsNamespace() != null || plan.discovery() != null) {
+            return plan;
+        }
+        final FieldPlan drafted = indexingMemory.drafted(context.session()).get(plan.indexName());
+        return drafted != null && drafted.eventsNamespace() != null
+                ? plan.withEventsNamespace(drafted.eventsNamespace())
+                : plan;
+    }
+
     // The imports standing instructions require of indexing XSLTs, added as the generator writes it.
     private FieldPlan withRequiredImports(final ToolCallContext context,
                                           final FieldPlan indexPlan,
@@ -317,6 +331,6 @@ class SaveXsltTool extends AbstractBuiltInTool {
     private static FieldPlan withImports(final FieldPlan plan, final List<String> imports) {
         return new FieldPlan(plan.backend(), plan.indexName(), plan.timeField(), plan.fields(), plan.dropWhen(),
                 plan.discovery(), List.copyOf(imports), plan.shared(), plan.subobjects(), plan.convention(),
-                plan.customNamespaces(), plan.style(), plan.standIns());
+                plan.customNamespaces(), plan.style(), plan.standIns(), plan.eventsNamespace());
     }
 }

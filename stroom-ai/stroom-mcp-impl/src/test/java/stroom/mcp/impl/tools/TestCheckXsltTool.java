@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
@@ -26,6 +27,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.json.JsonUtil;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,7 @@ import static org.mockito.ArgumentMatchers.eq;
 /// themselves are [XsltChecks]'s, tested with it).
 class TestCheckXsltTool {
 
+    private static final String FORK_NS = "file://xml/schema/test-fork/events";
     private static final String XSLT = """
             <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3"
              xmlns:stroom="stroom" xpath-default-namespace="records:2" version="3.0">
@@ -244,6 +247,62 @@ class TestCheckXsltTool {
 
         Mockito.verify(heldSchemas).eventSchema("4.1.0", "doc-b");
         Mockito.verify(heldSchemas, Mockito.never()).eventSchema("4.1.0");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void anXsltWritingTheForkIsCheckedAgainstTheForksSchema() {
+        holdingFork();
+        final String forked = XSLT.replace("xmlns=\"event-logging:3\"", "xmlns=\"" + FORK_NS + "\"")
+                .replace("<xsl:import href=\"IP Lookup\"/>", "")
+                .replace("<Data Name=\"host\" Value=\"{data[@name='host']/@value}\"/>", "")
+                .replace("</EventSource>", "</EventSource><EventDetail><TypeId>t</TypeId><Charge><Account>"
+                                           + "<xsl:value-of select=\"data[@name='user']/@value\"/></Account>"
+                                           + "</Charge></EventDetail>");
+
+        // The fork's own activity is in place; event-logging's schema is never read.
+        assertThat(call(forked).get("errors")).isEqualTo(List.of());
+        Mockito.verify(heldSchemas, Mockito.never()).eventSchema(anyString());
+        // An element neither schema has is named as missing from the fork.
+        assertThat((List<String>) call(forked.replace("<TypeId>t</TypeId>", "<TypeId>t</TypeId><Bogus/>"))
+                .get("errors")).anySatisfy(error -> assertThat(error)
+                .contains("environment's fork of the event-logging schema"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void anImportWritingTheForkIsNotMixedWithEventLogging() {
+        // Seen in testing: the agent moved the translation to event-logging:3 and dropped the environment's common
+        // import, which writes its fork.
+        holdingFork();
+        Mockito.when(docFinder.findByName(eq(XsltDoc.TYPE), eq("IP Lookup"), eq(false))).thenReturn(List.of(
+                new DocRef(XsltDoc.TYPE, "x1", "IP Lookup")));
+        Mockito.when(documentAccess.read(new DocRef(XsltDoc.TYPE, "x1", "IP Lookup"), XsltDoc.class))
+                .thenReturn(java.util.Optional.of(XsltDoc.builder().uuid("x1").name("IP Lookup").data("""
+                        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+                          <xsl:template name="source"><EventSource xmlns="%s"><Generator>g</Generator>\
+                        </EventSource></xsl:template>
+                        </xsl:stylesheet>""".formatted(FORK_NS)).build()));
+
+        final List<String> errors = (List<String>) call(XSLT).get("errors");
+
+        assertThat(errors).anySatisfy(error -> assertThat(error)
+                .contains("The import 'IP Lookup' writes Events elements in namespace " + FORK_NS)
+                .contains("but this XSLT writes them in event-logging:3")
+                .contains("Don't drop an import"));
+        // Written in the fork as the import is: no such error.
+        assertThat((List<String>) call(XSLT.replace("xmlns=\"event-logging:3\"", "xmlns=\"" + FORK_NS + "\""))
+                .get("errors")).noneSatisfy(error -> assertThat(error).contains("writes Events elements"));
+    }
+
+    // The test fork of event-logging 4.1.0, in the EVENTS schema group.
+    private void holdingFork() {
+        final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
+                .systemId("file://test-fork-events-v1.2.0.xsd").namespaceURI(FORK_NS).schemaGroup("EVENTS")
+                .data(TranslationWorld.resource("test-fork-events-v1.2.0.xsd")).build();
+        Mockito.when(heldSchemas.forks()).thenReturn(List.of(fork));
+        Mockito.when(heldSchemas.eventSchema(fork)).thenReturn(EventSchema.parse(fork.getData())
+                .withSystemId(fork.getSystemId()));
     }
 
     @Test

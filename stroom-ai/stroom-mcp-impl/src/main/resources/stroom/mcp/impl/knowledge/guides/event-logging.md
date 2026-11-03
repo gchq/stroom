@@ -6,6 +6,21 @@ authority is the XSD installed in Stroom: use `check_events`, which picks the ve
 from those this Stroom holds (`draft_translation_mapping` asks, the newest recommended, whatever its major version);
 an existing one keeps its own.
 
+## Environments with a fork of the schema
+
+Some environments hold a fork of the event-logging schema in a namespace of their own (e.g.
+`file://xml/schema/accounting/events`), with the same elements and a few of its own. Events in it are Events all the
+same: every tool reads and writes them, and says which namespace it found.
+
+- The translation tools settle which schema a new translation writes from what the environment's imports and
+  templates already write (`schema_version_settled` says so): don't ask the user which namespace to use. Only when
+  nothing settles it do they ask, offering the fork beside the event-logging versions.
+- A schema filter's schema group (e.g. `EVENTS`) only narrows the schemas it may use. The output's own namespace
+  and `xsi:schemaLocation` pick the schema, so a group holding both `event-logging:3` and the fork validates either:
+  changing namespace never needs the schema filter changed or bypassed.
+- Moving a translation to the other namespace means its imports must write that namespace too. Never drop an import
+  the environment requires to get there: tell the user which import writes the other namespace instead.
+
 ## Shape of one event
 
 ```

@@ -577,7 +577,8 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 ToolArgs.strings(call, DROP_WHEN_ARG), null, List.of(), shared, subobjects, draft.convention,
                 "ecs".equals(draft.convention)
                         ? namespaces
-                        : List.of(), XsltStyle.DEFAULT, Map.of());
+                        : List.of(), XsltStyle.DEFAULT, Map.of(),
+                eventsNamespace(events));
         if ((pasted != null || draft.likeIndex != null) && FieldPlan.ELASTICSEARCH.equals(backend)) {
             keepExample(draft, indexName, streamIds.getFirst(), pasted, exampleNotes);
         }
@@ -677,6 +678,14 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
         final Map<String, String> all = new LinkedHashMap<>(remembered);
         all.putAll(chosen);
         return plan.withStandIns(all);
+    }
+
+    // The namespace the sample Events are written in where it is not event-logging:3 (an environment's fork of the
+    // schema), else null: the indexing XSLT reads them in it.
+    static String eventsNamespace(final Map<String, Object> events) {
+        return events.get(StreamSummaries.EVENTS_NAMESPACE) instanceof final String namespace
+                ? namespace
+                : null;
     }
 
     // ECS has no place for an action's own elements (Authenticate/User/Id): they go under the source's namespace,

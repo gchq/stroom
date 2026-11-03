@@ -19,6 +19,8 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.sample.SampleProfiler;
+import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 
@@ -60,6 +62,20 @@ public interface SampleProfiling {
     /// @param chosenVersion The event-logging version the user chose for the build, or null if none was chosen.
     /// @return It, for XML fragments with the wrapper; any other profile as it is.
     default Map<String, Object> withFragmentSetup(final Map<String, Object> profiled, final String chosenVersion) {
+        return withFragmentSetup(profiled, chosenVersion, null);
+    }
+
+    /// As [#withFragmentSetup(Map, String)], for a build that writes an environment's fork of the event-logging
+    /// schema: Event fragments that declare no namespace are wrapped in the fork's, and the environment's own
+    /// wrappers in it are preferred.
+    ///
+    /// @param profiled      A profile.
+    /// @param chosenVersion The version chosen for the build (the fork's, for a fork), or null.
+    /// @param fork          The fork chosen for the build, or null for event-logging.
+    /// @return It, for XML fragments with the wrapper; any other profile as it is.
+    default Map<String, Object> withFragmentSetup(final Map<String, Object> profiled,
+                                                  final String chosenVersion,
+                                                  final XmlSchemaDoc fork) {
         return profiled;
     }
 
@@ -84,6 +100,20 @@ public interface SampleProfiling {
     static Map<String, Object> fragmentSetup(final Map<String, Object> profiled,
                                              final List<Map<String, Object>> found,
                                              final String version) {
+        return fragmentSetup(profiled, found, version, null);
+    }
+
+    /// As [#fragmentSetup(Map, List, String)], for a build that writes an environment's fork.
+    ///
+    /// @param profiled A profile.
+    /// @param found    The environment's fragment wrappers outside the workspace.
+    /// @param version  The version an `<Events>` wrapper is written with, or null for none.
+    /// @param fork     The fork the build writes, or null for event-logging.
+    /// @return The profile, for XML fragments with their wrapper, parser and XSLT input; any other as it is.
+    static Map<String, Object> fragmentSetup(final Map<String, Object> profiled,
+                                             final List<Map<String, Object>> found,
+                                             final String version,
+                                             final XmlSchemaDoc fork) {
         // Several files: as the first is read.
         final Map<?, ?> files = profiled.get("files") instanceof final Map<?, ?> map
                 ? map
@@ -100,15 +130,25 @@ public interface SampleProfiling {
             return profiled;
         }
         final boolean events = JsonValues.truthy(first.get("event_logging"));
+        // Event fragments: a wrapper in their own namespace, else the build's (an environment's fork's, or
+        // event-logging's).
+        final String buildNamespace = fork == null
+                ? "event-logging:3"
+                : NullSafe.string(fork.getNamespaceURI()).strip();
+        final String eventsNamespace = first.get("namespace") instanceof final String declared && !declared.isBlank()
+                ? declared
+                : buildNamespace;
         final List<Map<String, Object>> fitting = events
-                ? found.stream().filter(wrapper -> "event-logging:3".equals(wrapper.get("namespace"))).toList()
+                ? found.stream().filter(wrapper -> eventsNamespace.equals(wrapper.get("namespace"))).toList()
                 : found;
         final Map<String, Object> wrapper;
         if (!fitting.isEmpty()) {
             wrapper = mostUsed(fitting);
         } else if (events && version != null) {
             wrapper = new LinkedHashMap<>();
-            wrapper.put("code", SampleProfiler.EVENTS_FRAGMENT_WRAPPER.replace("{version}", version));
+            wrapper.put("code", fork == null
+                    ? SampleProfiler.EVENTS_FRAGMENT_WRAPPER.replace("{version}", version)
+                    : SampleProfiler.eventsFragmentWrapper(buildNamespace, fork.getSystemId().strip(), version));
         } else {
             wrapper = null;
         }
@@ -169,14 +209,20 @@ public interface SampleProfiling {
         }
 
         @Override
-        public Map<String, Object> withFragmentSetup(final Map<String, Object> profiled, final String chosenVersion) {
+        public Map<String, Object> withFragmentSetup(final Map<String, Object> profiled,
+                                                     final String chosenVersion,
+                                                     final XmlSchemaDoc fork) {
             if (!SampleProfiler.XML_FRAGMENTS.equals(profiled.get("format"))) {
                 // Nothing to look up.
                 return profiled;
             }
-            return wrappers == null
-                    ? fragmentSetup(profiled, List.of(), null)
-                    : fragmentSetup(profiled, wrappers.find(), wrappers.version(chosenVersion));
+            if (wrappers == null) {
+                return fragmentSetup(profiled, List.of(), null);
+            }
+            // A fork's version is the fork's own, not one of event-logging's.
+            return fragmentSetup(profiled, wrappers.find(), fork == null
+                    ? wrappers.version(chosenVersion)
+                    : chosenVersion, fork);
         }
 
         @Override

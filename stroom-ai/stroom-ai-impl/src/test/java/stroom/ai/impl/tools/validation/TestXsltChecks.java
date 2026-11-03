@@ -89,6 +89,25 @@ class TestXsltChecks {
     }
 
     @Test
+    void testEventsReadBareAreSaidToBeInTheForksNamespaceWhereTheInputIsTheForks() {
+        final String fork = "file://xml/schema/test-fork/events";
+        final Element root = XmlTrees.parse("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                            + "version=\"3.0\"><xsl:template match=\"/Events\"><xsl:apply-templates "
+                                            + "select=\"Event\"/></xsl:template></xsl:stylesheet>");
+
+        // Forked input: the fork's namespace is the fix.
+        assertThat(XsltChecks.namespaceProblems(root, fork, List.of(fork))).singleElement().asString()
+                .contains("xpath-default-namespace=\"" + fork + "\"", "environment's fork")
+                .doesNotContain("xpath-default-namespace=\"event-logging:3\"");
+        // Input not known: event-logging:3, the fork named as the alternative.
+        assertThat(XsltChecks.namespaceProblems(root, null, List.of(fork))).singleElement().asString()
+                .contains("xpath-default-namespace=\"event-logging:3\"", "is in " + fork + " instead");
+        // No fork held: as before.
+        assertThat(XsltChecks.namespaceProblems(root, null)).singleElement().asString()
+                .contains("(an Events stream)").doesNotContain("fork");
+    }
+
+    @Test
     void testAnUnknownFunctionComesBackWithTheNearestRealName() {
         final String xslt = XSLT.replace("stroom:lookup", "stroom:lookp");
         assertThat(XsltChecks.functionProblems(xslt, XmlTrees.parse(xslt)).errors()).containsExactly(

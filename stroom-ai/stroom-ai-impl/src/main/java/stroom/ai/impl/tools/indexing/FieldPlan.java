@@ -21,6 +21,8 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ModelReader;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.validation.EventsNamespaces;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -53,7 +55,7 @@ import java.util.TreeSet;
 /// @param indexName        `index_name`: Lucene index doc name, or Elasticsearch index / data stream name.
 /// @param timeField        `time_field`: name of the field holding the event time.
 /// @param fields           The planned fields.
-/// @param dropWhen         `drop_when`: XPath tests on an Event (event-logging:3 is the default namespace) for events
+/// @param dropWhen         `drop_when`: XPath tests on an Event (the Events namespace is the default) for events
 ///                         the index must not hold, e.g. `EventDetail/TypeId = 'Heartbeat'`; any that holds drops the
 ///                         event.
 /// @param discovery        Set for a discovery index (draft_index_mapping), else null.
@@ -77,6 +79,9 @@ import java.util.TreeSet;
 /// @param standIns         `stand_ins`: values the Events hold for none (e.g. `-`), each with what the user chose to
 ///                         index it as: left out, or null (Elasticsearch), or kept as written (see
 ///                         [Discovery#STAND_IN_TREATMENTS]). Asked for by the user.
+/// @param eventsNamespace  `events_namespace`: the namespace the Events are written in, where it is not
+///                         event-logging:3 (an environment's fork of the event-logging schema, with the same
+///                         elements), else null. The indexing XSLT's xpath-default-namespace, and drop_when's.
 public record FieldPlan(String backend,
                         String indexName,
                         String timeField,
@@ -89,7 +94,8 @@ public record FieldPlan(String backend,
                         String convention,
                         List<String> customNamespaces,
                         XsltStyle style,
-                        Map<String, String> standIns) {
+                        Map<String, String> standIns,
+                        String eventsNamespace) {
 
     /// The Elasticsearch backend.
     public static final String ELASTICSEARCH = "elasticsearch";
@@ -107,10 +113,47 @@ public record FieldPlan(String backend,
         customNamespaces = List.copyOf(Objects.requireNonNullElse(customNamespaces, List.of()));
         style = Objects.requireNonNullElse(style, XsltStyle.DEFAULT);
         standIns = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(standIns, Map.of())));
+        // Only a namespace other than the standard one is kept, so a plan for standard Events is as it always was.
+        eventsNamespace = NullSafe.isBlankString(eventsNamespace)
+                          || EventsNamespaces.isStandard(eventsNamespace.strip())
+                ? null
+                : eventsNamespace.strip();
         if (discovery != null) {
             fields = discoveryFields(discovery);
             timeField = "@timestamp";
         }
+    }
+
+    /// A plan for Events in the standard event-logging:3 namespace.
+    ///
+    /// @param backend          `lucene` or `elasticsearch`.
+    /// @param indexName        The index name.
+    /// @param timeField        The time field's name.
+    /// @param fields           The planned fields.
+    /// @param dropWhen         XPath tests on an Event for events the index must not hold.
+    /// @param discovery        Set for a discovery index, else null.
+    /// @param imports          Shared XSLTs imported with no call.
+    /// @param shared           Named templates from shared XSLTs the XSLT calls.
+    /// @param subobjects       Elasticsearch: the index template's subobjects setting.
+    /// @param convention       The naming convention the plan follows, or null.
+    /// @param customNamespaces ECS: the top-level names the plan's own fields go under.
+    /// @param style            How the indexing XSLT is written.
+    /// @param standIns         Values the Events hold for none, each with what the user chose to index it as.
+    public FieldPlan(final String backend,
+                     final String indexName,
+                     final String timeField,
+                     final List<PlannedField> fields,
+                     final List<String> dropWhen,
+                     final Discovery discovery,
+                     final List<String> imports,
+                     final List<SharedTemplate> shared,
+                     final boolean subobjects,
+                     final String convention,
+                     final List<String> customNamespaces,
+                     final XsltStyle style,
+                     final Map<String, String> standIns) {
+        this(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects, convention,
+                customNamespaces, style, standIns, null);
     }
 
     /// @param backend   `lucene` or `elasticsearch`.
@@ -175,7 +218,8 @@ public record FieldPlan(String backend,
                 fields.optionalString("convention"),
                 fields.strings("custom_namespaces"),
                 fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT),
-                Discovery.standIns(reader, fields.stringMap("stand_ins"), loc));
+                Discovery.standIns(reader, fields.stringMap("stand_ins"), loc),
+                fields.optionalString("events_namespace"));
         return fields.ok()
                 ? plan
                 : null;
@@ -203,6 +247,10 @@ public record FieldPlan(String backend,
         if (!standIns.isEmpty()) {
             json.put("stand_ins", new LinkedHashMap<>(standIns));
         }
+        // Likewise only for Events in a namespace other than event-logging:3.
+        if (eventsNamespace != null) {
+            json.put("events_namespace", eventsNamespace);
+        }
         return json;
     }
 
@@ -210,14 +258,14 @@ public record FieldPlan(String backend,
     /// @return This plan with them.
     public FieldPlan withFields(final List<PlannedField> fields) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style, standIns);
+                convention, customNamespaces, style, standIns, eventsNamespace);
     }
 
     /// @param indexName Another index name.
     /// @return This plan for that index.
     public FieldPlan withIndexName(final String indexName) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style, standIns);
+                convention, customNamespaces, style, standIns, eventsNamespace);
     }
 
     /// @param convention       The convention the plan follows, or null.
@@ -225,14 +273,14 @@ public record FieldPlan(String backend,
     /// @return This plan following it.
     public FieldPlan withConvention(final String convention, final List<String> customNamespaces) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style, standIns);
+                convention, customNamespaces, style, standIns, eventsNamespace);
     }
 
     /// @param style How the indexing XSLT is written.
     /// @return This plan written so.
     public FieldPlan withStyle(final XsltStyle style) {
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style, standIns);
+                convention, customNamespaces, style, standIns, eventsNamespace);
     }
 
     /// @param chosen What the user chose for stand-ins for none, by value; added to (and replacing) those it has.
@@ -241,7 +289,19 @@ public record FieldPlan(String backend,
         final Map<String, String> all = new LinkedHashMap<>(standIns);
         all.putAll(chosen);
         return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
-                convention, customNamespaces, style, all);
+                convention, customNamespaces, style, all, eventsNamespace);
+    }
+
+    /// @param namespace The namespace the Events are written in, or null (or event-logging:3) for the standard one.
+    /// @return This plan reading Events in it.
+    public FieldPlan withEventsNamespace(final String namespace) {
+        return new FieldPlan(backend, indexName, timeField, fields, dropWhen, discovery, imports, shared, subobjects,
+                convention, customNamespaces, style, standIns, namespace);
+    }
+
+    /// @return The namespace the Events are written in: [#eventsNamespace()], else event-logging:3.
+    public String eventsNamespaceOrStandard() {
+        return EventsNamespaces.orStandard(eventsNamespace);
     }
 
     /// @param treatment One of [Discovery#STAND_IN_TREATMENTS].
@@ -423,7 +483,8 @@ public record FieldPlan(String backend,
     }
 
     /// @param version The XSLT version, e.g. `3.0`.
-    /// @return A draft indexing XSLT reading Events (xpath-default-namespace event-logging:3), or for a discovery
+    /// @return A draft indexing XSLT reading Events (xpath-default-namespace the plan's Events namespace, by default
+    /// event-logging:3), or for a discovery
     /// index, reading the parser's records; the golden plans pin the text to the byte.
     /// @throws IllegalArgumentException for an XML discovery plan without its record element's name.
     public String xslt(final String version) {

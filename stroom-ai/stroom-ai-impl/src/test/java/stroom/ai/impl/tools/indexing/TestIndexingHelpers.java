@@ -77,6 +77,39 @@ class TestIndexingHelpers {
     }
 
     @Test
+    void fieldsWhoseSourceNoEventCanHoldAreNamed() {
+        // Seen in testing: an index plan written by hand named sources no Event has, and nothing said so.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "x", "@timestamp", List.of(
+                PlannedField.of("StreamId", "id", "@StreamId"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("app.name", "keyword", "EventDetail/Network/*/Data[@Name='ApplicationName']/@Value"),
+                PlannedField.of("app.vendor", "keyword", "EventDetail/Application/Vendor"),
+                PlannedField.of("user.mail", "keyword", "EventSource/User/Mail"),
+                PlannedField.of("label", "keyword", "concat(EventSource/User/Id, '-')")));
+
+        assertThat(IndexingHelpers.plannedNotInSchema(plan, SCHEMA)).containsExactly(
+                "app.vendor <- EventDetail/Application/Vendor",
+                "user.mail <- EventSource/User/Mail");
+        // Without the schema, or for a discovery plan, nothing is judged.
+        assertThat(IndexingHelpers.plannedNotInSchema(plan, null)).isEmpty();
+        assertThat(IndexingHelpers.plannedNotInSchema(FieldPlan.forDiscovery("d", Discovery.of("json", "ts")),
+                SCHEMA)).isEmpty();
+    }
+
+    @Test
+    void aForksOwnElementsAreJudgedByTheForksSchema() {
+        // The test fork adds an activity, Charge, that event-logging lacks.
+        final EventSchema fork = EventSchema.parse(HeldSchemasWorld.XSD_FORK);
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "x", "@timestamp", List.of(
+                PlannedField.of("charge.account", "keyword", "EventDetail/Charge/Account")))
+                .withEventsNamespace(HeldSchemasWorld.FORK_NS);
+
+        assertThat(IndexingHelpers.plannedNotInSchema(plan, fork)).isEmpty();
+        assertThat(IndexingHelpers.plannedNotInSchema(plan, SCHEMA))
+                .containsExactly("charge.account <- EventDetail/Charge/Account");
+    }
+
+    @Test
     void thePlanGivenComesFirstThenTheOneKeptWithThePipelineThenTheSessions() {
         // Seen in Ask Stroom AI: past the client's step cap the agent had lost its earlier extra_fields, and the
         // 50-field plan went inline to save_xslt, create_index_doc and propose_index_template, five times in all.

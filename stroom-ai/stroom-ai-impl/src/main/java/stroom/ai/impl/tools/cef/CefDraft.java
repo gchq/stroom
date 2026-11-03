@@ -156,7 +156,11 @@ public final class CefDraft {
         }
         final CefPlan plan = new CefPlan(output, topic, kafkaKey, customKeys, head.get("vendor"), head.get("product"),
                 head.get("version"), head.get("signature"), head.get("name"), head.get("severity"), common, eventsOut,
-                draft.notSent, List.of(), null);
+                draft.notSent, List.of(), null,
+                // The namespace the sample's Events are in: an environment's fork's, else event-logging:3.
+                events.isEmpty()
+                        ? null
+                        : events.getFirst().namespace());
         return new Drafted(plan, draft.notes);
     }
 

@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.validation;
 
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -89,6 +90,59 @@ class TestHeldSchemas {
             assertThat(schemas.eventSchema("4.1." + i)).isSameAs(schema);
         }
         assertThat(schemas.eventSchemasKept()).isEqualTo(HeldSchemas.MAX_EVENT_SCHEMAS);
+    }
+
+    @Test
+    void testAForkIsASchemaInEventLoggingsSchemaGroupInAnotherNamespace() {
+        final HeldSchemas forked = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK, "EVENTS")
+                // In no group event-logging is in: not a fork.
+                .hold("file://other-v1.xsd", "other:1", HeldSchemasWorld.XSD_FORK.replace(HeldSchemasWorld.FORK_NS,
+                        "other:1"), "OTHER")
+                .heldSchemas();
+
+        assertThat(forked.forks()).extracting(XmlSchemaDoc::getSystemId)
+                .containsExactly(HeldSchemasWorld.FORK_SYSTEM_ID);
+        assertThat(forked.forksIn(HeldSchemasWorld.FORK_NS)).hasSize(1);
+        assertThat(forked.forksIn("event-logging:3")).isEmpty();
+        // Its system id names no event-logging version, so it isn't one.
+        assertThat(forked.heldEventVersions()).containsExactly("4.1.0");
+        // Read by its document's UUID, knowing its namespace and system id.
+        final String uuid = forked.forks().getFirst().getUuid();
+        final EventSchema schema = forked.eventSchema("4.1.0", uuid);
+        assertThat(schema.namespace()).isEqualTo(HeldSchemasWorld.FORK_NS);
+        assertThat(schema.systemId()).isEqualTo(HeldSchemasWorld.FORK_SYSTEM_ID);
+        assertThat(schema.hasPath("EventDetail/Charge/Account")).isTrue();
+        // The version itself is event-logging's, knowing its own system id.
+        final EventSchema standard = forked.eventSchema("4.1.0");
+        assertThat(standard.namespace()).isEqualTo("event-logging:3");
+        assertThat(standard.systemId()).isEqualTo("file://event-logging-v4.1.0.xsd");
+    }
+
+    @Test
+    void testASchemaStroomDoesntHoldNamesTheForkToo() {
+        final HeldSchemas forked = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK, "EVENTS")
+                .heldSchemas();
+
+        assertThatThrownBy(() -> forked.document("file://nothing-v1.xsd"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("versions it holds, newest first: 4.1.0")
+                .hasMessageContaining("the environment's own fork of the event-logging schema: "
+                                      + HeldSchemasWorld.FORK_SYSTEM_ID + " (namespace " + HeldSchemasWorld.FORK_NS
+                                      + ")");
+    }
+
+    @Test
+    void testAForkNeedsEventLoggingInItsGroup() {
+        final HeldSchemas ungrouped = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0)
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK)
+                .heldSchemas();
+
+        assertThat(ungrouped.forks()).isEmpty();
     }
 
     @Test
