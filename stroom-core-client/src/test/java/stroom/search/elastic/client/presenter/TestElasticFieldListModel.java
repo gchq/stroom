@@ -113,6 +113,22 @@ class TestElasticFieldListModel {
     }
 
     @Test
+    void testExpandableNames() {
+        // Only fields with multi-fields can be expanded
+        assertThat(model.getExpandableNames()).containsExactly("title");
+    }
+
+    @Test
+    void testMandatoryFieldEnabledNotEditable() {
+        model.setMandatoryFieldNames(Set.of("bytes"));
+
+        final ElasticFieldRow bytes = find(buildRows(Set.of()), "bytes", Kind.MAPPED);
+
+        assertThat(bytes.isEnabled()).isTrue();
+        assertThat(bytes.isEnabledEditable()).isFalse();
+    }
+
+    @Test
     void testVectorSettingsShowAsConfigured() {
         model.putSettings(ElasticIndexFieldSettings.builder("embedding")
                 .denseVector(new ElasticDenseVectorSettings(null, "title", "score"))

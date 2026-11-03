@@ -191,7 +191,7 @@ class TestElasticFieldStatsService {
         assertThat(stats.getTopValues()).isNull();
         assertThat(stats.getHistogram())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
-                .containsExactly(tuple("0", 4L), tuple("5", 6L));
+                .containsExactly(tuple("0 – 5", 4L), tuple("5 – 100", 6L));
         // Every document is included, with no time range
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
                 .hasSize(2)
@@ -267,11 +267,51 @@ class TestElasticFieldStatsService {
     @Test
     void testNoDocumentsInTimeRange() {
         stubCount(0);
+        stubSearch(null, """
+                "stats#stats": {"count": 3, "min": 1.0, "max": 2.0, "avg": 1.5, "sum": 4.5,
+                  "min_as_string": "2025-01-01T00:00:00.000Z", "max_as_string": "2025-06-30T00:00:00.000Z"}""");
 
         final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L, true));
 
-        assertThat(stats.getMessage()).isEqualTo("No documents were found in the time range");
+        // Says what dates the index's documents have, so the user can choose a range holding some
+        assertThat(stats.getMessage()).isEqualTo("No documents were found in the time range. The index's " +
+                                                 "documents are dated from 2025-01-01T00:00:00.000Z to " +
+                                                 "2025-06-30T00:00:00.000Z.");
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"@timestamp\"").doesNotContain("range");
+    }
+
+    @Test
+    void testNoDocumentsInIndex() {
+        stubCount(0);
+
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, null, null, true));
+
+        assertThat(stats.getMessage()).isEqualTo("No documents were found in the index");
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))).isEmpty();
+    }
+
+    @Test
+    void testToRanges() {
+        assertThat(ElasticFieldStatsService.toRanges(List.of("0", "5"), List.of(4L, 6L), "10"))
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("0 – 5", 4L), tuple("5 – 10", 6L));
+        // All values the same
+        assertThat(ElasticFieldStatsService.toRanges(List.of("7"), List.of(3L), "7"))
+                .extracting(ElasticFieldValueCount::getValue)
+                .containsExactly("7");
+    }
+
+    @Test
+    void testToRangesMergesBucketStartingAtMaximum() {
+        // A bucket starting at the largest value is counted in the last full range, leaving 10 ranges
+        final List<String> starts = List.of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+        final List<Long> counts = List.of(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 5L);
+
+        final List<ElasticFieldValueCount> ranges = ElasticFieldStatsService.toRanges(starts, counts, "10");
+
+        assertThat(ranges).hasSize(10);
+        assertThat(ranges.getLast().getValue()).isEqualTo("9 – 10");
+        assertThat(ranges.getLast().getCount()).isEqualTo(6L);
     }
 
     @Test

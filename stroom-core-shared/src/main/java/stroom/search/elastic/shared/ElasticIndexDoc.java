@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.index.shared.IndexConstants;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,8 +32,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Description(
         "Defines an index that exists within an Elasticsearch cluster.\n" +
@@ -305,6 +308,19 @@ public class ElasticIndexDoc extends AbstractDoc {
     public boolean isFieldEnabled(final String fieldName) {
         final ElasticIndexFieldSettings settings = findFieldSettings(fieldName);
         return settings == null || settings.isEnabled();
+    }
+
+    /// @return the names of the fields Stroom needs to search the index, which can't be disabled: the time field,
+    /// and the stream and event ids that identify each hit's source event
+    @JsonIgnore
+    public Set<String> getMandatoryFieldNames() {
+        final Set<String> names = new LinkedHashSet<>();
+        if (NullSafe.isNonBlankString(timeField)) {
+            names.add(timeField);
+        }
+        names.add(IndexConstants.STREAM_ID);
+        names.add(IndexConstants.EVENT_ID);
+        return names;
     }
 
     /// @return `true` if the doc still holds any of the legacy, doc-level vector settings

@@ -64,6 +64,10 @@ public final class ElasticFieldSettingsValidator {
             if (settings.isVirtual()) {
                 virtualNames.add(fieldName);
             }
+            if (!settings.isEnabled() && doc.getMandatoryFieldNames().contains(fieldName)) {
+                throw new EntityServiceException("Field '" + fieldName + "' can't be disabled, as Stroom needs it " +
+                                                 "to search the index");
+            }
         }
 
         for (final ElasticIndexFieldSettings settings : doc.getFieldSettings()) {

@@ -67,6 +67,7 @@ public class ElasticFieldSettingsPresenter
                                         "hidden from users.";
     static final String NOTE_CLASHING = "This virtual field is hidden by the mapped field of the same name. Rename " +
                                         "it to use it.";
+    static final String NOTE_MANDATORY = "Stroom needs this field to search the index, so it can't be disabled.";
     static final String NOTE_PARENT_DISABLED_PREFIX = "Disabled because the field it belongs to is disabled: ";
     static final String ERROR_SCORE_MINIMUM = "Enter a number, e.g. 0.8.";
 
@@ -316,6 +317,9 @@ public class ElasticFieldSettingsPresenter
         }
         if (row.hasTypeConflict()) {
             return NOTE_CONFLICT;
+        }
+        if (row.getKind() == Kind.MAPPED && model.isMandatory(row.getName())) {
+            return NOTE_MANDATORY;
         }
         final String parent = NullSafe.get(row.getField(), ElasticIndexField::getMultiFieldParent);
         if (parent != null && !model.isFieldEnabled(parent)) {

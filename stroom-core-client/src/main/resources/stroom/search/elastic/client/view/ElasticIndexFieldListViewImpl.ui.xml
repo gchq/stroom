@@ -23,6 +23,23 @@
             flex-shrink: 0;
         }
 
+        /* A details panel takes the space left below the tab bar and scrolls within it */
+        .detailsPanel {
+            flex: 1 1 0;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* So the scroll panel of the Info or Settings view fills the details panel exactly */
+        .detailsPanel > * {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
         .noSelection {
             padding: 10px;
         }
@@ -46,8 +63,8 @@
                     <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
                         <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
                     </g:FlowPanel>
-                    <g:SimplePanel ui:field="infoPanel" styleName="dock-max"/>
-                    <g:SimplePanel ui:field="settingsPanel" styleName="dock-max"/>
+                    <g:SimplePanel ui:field="infoPanel" styleName="{style.detailsPanel}"/>
+                    <g:SimplePanel ui:field="settingsPanel" styleName="{style.detailsPanel}"/>
                 </g:ResizeFlowPanel>
                 <g:Label ui:field="noSelection" addStyleNames="{style.noSelection}"
                          text="Select a field to see how it is mapped and change its settings."/>

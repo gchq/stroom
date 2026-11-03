@@ -21,6 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter.ElasticFieldSettingsView;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsUiHandlers;
 import stroom.util.shared.NullSafe;
+import stroom.widget.help.client.HelpButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -47,10 +48,16 @@ public class ElasticFieldSettingsViewImpl
         extends ViewWithUiHandlers<ElasticFieldSettingsUiHandlers>
         implements ElasticFieldSettingsView {
 
+    private static final String ENABLED_HELP = "When unticked, the field is hidden from users and can't be used in " +
+                                               "queries. Existing queries that use it fail with an error. " +
+                                               "Disabling a field also disables its subfields.";
+
     private final Widget widget;
 
     @UiField
     HTML fieldName;
+    @UiField
+    FlowPanel enabledRow;
     @UiField
     CustomCheckBox enabled;
     @UiField
@@ -98,6 +105,14 @@ public class ElasticFieldSettingsViewImpl
         rerankBatchSize.setMin(1L);
         rerankBatchSize.setMax(100_000L);
         rerankTextField.setNonSelectString(DocSelectionBoxPresenter.NONE_DISPLAY_VALUE);
+
+        final HelpButton enabledHelp = HelpButton.create();
+        enabledHelp.setHelpContent("Enabled", new SafeHtmlBuilder()
+                .appendHtmlConstant("<p>")
+                .appendEscaped(ENABLED_HELP)
+                .appendHtmlConstant("</p>")
+                .toSafeHtml());
+        enabledRow.add(enabledHelp);
     }
 
     @Override
