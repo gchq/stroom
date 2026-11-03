@@ -113,46 +113,40 @@
     cursor: row-resize;
 }
 
-/* A splitter's handle (and the dragged marker's): a short rounded bar, 5px across (an odd width,
-   so it is centred on the 1px line, 2px either side), up to 56px long */
+/* A splitter's line hovered (and the dragged marker's): 3px across, over the 1px line, in a
+   scrollbar thumb's colours, fading in as SplitPane's does */
 .flex-layout__splitter::after,
 .flex-layout__marker--splitter::after {
     content: "";
     position: absolute;
-    border-radius: 2.5px;
-    background-color: var(--splitter__handle-color);
-    visibility: hidden;
+    background-color: var(--splitter__line-color--hover);
+    opacity: 0;
+    transition: opacity .5s;
     pointer-events: none;
 }
 
 .flex-layout__splitter[aria-orientation="vertical"]::after,
 .flex-layout__marker--across::after {
-    top: calc(50% - min(56px, 100%) / 2);
-    left: calc(50% - 2.5px);
-    width: 5px;
-    height: min(56px, 100%);
+    inset: 0 -1px;
 }
 
 .flex-layout__splitter[aria-orientation="horizontal"]::after,
 .flex-layout__marker--down::after {
-    top: calc(50% - 2.5px);
-    left: calc(50% - min(56px, 100%) / 2);
-    width: min(56px, 100%);
-    height: 5px;
+    inset: -1px 0;
 }
 
 .flex-layout__splitter:hover::after {
-    visibility: visible;
+    opacity: 1;
 }
 
+/* With the keyboard focus, the line is drawn in the focus colour, ringed */
 .flex-layout__splitter:focus-visible {
     background-color: var(--splitter__focus-color);
     box-shadow: var(--focus-shadow);
 }
 
 .flex-layout__splitter:focus-visible::after {
-    visibility: visible;
-    background-color: var(--splitter__focus-color);
+    opacity: 0;
 }
 
 /* The glass over the whole page while a splitter or tab is dragged, so the mouse is caught over
@@ -205,16 +199,17 @@
     opacity: 0.8;
 }
 
-/* The dragged splitter: its line, with its handle lighter (darker in the light theme), as
-   SplitPane's dragged splitter */
+/* The dragged splitter: its line, 3px across in the dragged colour, as SplitPane's dragged
+   splitter */
 .flex-layout__marker--splitter {
     background: var(--splitter__line-color);
     opacity: 1;
 }
 
 .flex-layout__marker--splitter::after {
-    visibility: visible;
-    background-color: var(--splitter__handle-color--active);
+    opacity: 1;
+    transition: none;
+    background-color: var(--splitter__line-color--active);
 }
 
 .flex-layout__marker--across {
@@ -226,7 +221,7 @@
 }
 
 /* In forced colours (e.g. Windows high contrast) backgrounds are replaced, which would leave the
-   line and handle invisible, so they are drawn in system colours instead */
+   lines invisible, so they are drawn in system colours instead */
 @media (forced-colors: active) {
     .flex-layout__splitter,
     .flex-layout__splitter::after,

@@ -311,7 +311,7 @@ public final class DashboardKeyboardStories {
                     play.waitFor(() -> play.expect(currentTab(play, "B")).toHaveFocus());
                     DashboardPlays.expectNoProblems(play);
                 })
-                // A splitter with the keyboard focus: its line and handle in the focus colour, ringed
+                // A splitter with the keyboard focus: its line in the focus colour, ringed
                 .story("SplitterFocused", DashboardSupport.story(SIDE_BY_SIDE, routes -> {
                 }))
                 .withPlay(play -> {
@@ -323,8 +323,8 @@ public final class DashboardKeyboardStories {
                     play.tab(true);
                     play.expect(splitter).toHaveFocus();
                 })
-                // A splitter being dragged: the marker that follows the mouse is the line with its
-                // handle, lighter, until the panels are resized as it is released (the story leaves
+                // A splitter being dragged: the marker that follows the mouse is the line, 3px across
+                // in the dragged colour, until the panels are resized as it is released (the story leaves
                 // the mouse down)
                 .story("SplitterDragging", DashboardSupport.story(SIDE_BY_SIDE, routes -> {
                 }))

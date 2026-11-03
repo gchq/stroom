@@ -119,7 +119,7 @@ public final class SplitPaneContentStories {
                     play.expect(play.getByTestId("stepping")).toHaveTextContent(
                             TextMatch.regex("Code.*Input.*Output.*Log"));
                     // Where the Input splitter meets the Code splitter in a T, at the middle of
-                    // the Code splitter (where its handle is), the Code splitter is on top
+                    // the Code splitter, the Code splitter is on top
                     final Value<Element> codeSplitter = play.getByRole("separator", "Code").element();
                     play.expect("the splitter at the middle of the Code splitter",
                                     () -> labelAtCentre(codeSplitter.get()))

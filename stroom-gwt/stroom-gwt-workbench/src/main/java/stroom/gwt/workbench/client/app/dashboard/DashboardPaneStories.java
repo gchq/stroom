@@ -166,7 +166,7 @@ public final class DashboardPaneStories {
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The splitter beside a visualisation is above its frame (which is on the page's body,
-                // over the panel), so its grab area, handle and focus ring are not hidden by it
+                // over the panel), so its grab area, line and focus ring are not hidden by it
                 .story("SplitterAboveVisualisation", DashboardSupport.story(DashboardDocs.QUERY_TABLE_VIS_SPLIT,
                         DashboardPaneStories::visRoutes))
                 .withPlay(play -> {

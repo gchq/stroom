@@ -15,10 +15,10 @@
             </g:SimplePanel>
             <split:SplitPane thin="true" sizes="600px, *"
                              names="Info, Details" addStyleNames="max">
-                <split:ScrollPane addStyleNames="max">
+                <split:ScrollPane addStyleNames="max" role="region" ariaLabel="Processor information">
                     <tx:Html ui:field="info"/>
                 </split:ScrollPane>
-                <split:ScrollPane addStyleNames="max">
+                <split:ScrollPane addStyleNames="max" role="region" ariaLabel="Processor filter">
                     <q:ExpressionTree ui:field="expressionTree"/>
                 </split:ScrollPane>
             </split:SplitPane>

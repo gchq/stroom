@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// A regular splitter is a gap between bordered panes, so its panes are bordered as Stroom's views
 /// border them (`control-box`, as `FindInContent` does).
-/// Its states are drawn as a thin splitter's are, a line and a handle, in the middle of its gap.
+/// Its states are drawn as a thin splitter's are, a line in the middle of its gap.
 public final class SplitPaneStateStories {
 
     private static final String SPLITTER = ".split-pane__splitter";
@@ -90,30 +90,31 @@ public final class SplitPaneStateStories {
                                             () -> splitterColour(splitter(play, kind, State.NORMAL).get()))
                                     .toBe("rgba(0, 0, 0, 0)");
                         }
-                        expectHandle(play, kind, State.NORMAL, null);
-                        // Hovered, pressed or dragged, both are a line (a regular splitter's in the
-                        // middle of its gap) with a handle, lighter when pressed or dragged
+                        expectThickness(play, kind, State.NORMAL, 1);
+                        // Hovered, pressed or dragged, both are a 3px line (a regular splitter's in
+                        // the middle of its gap) in a scrollbar thumb's colours: a hovered thumb's,
+                        // and pressed or dragged, a dragged thumb's
+                        expectColour(play, kind, State.HOVER, "--splitter__line-color--hover");
+                        expectColour(play, kind, State.PRESSED, "--splitter__line-color--active");
+                        expectColour(play, kind, State.DRAGGING, "--splitter__line-color--active");
                         for (final State state : new State[]{State.HOVER, State.PRESSED, State.DRAGGING}) {
-                            expectColour(play, kind, state, "--splitter__line-color");
+                            expectThickness(play, kind, state, 3);
+                            // Centred in the splitter, 1px either side of its middle
+                            final Value<Element> shown = splitter(play, kind, state);
+                            play.expect(kind.label + " " + state.label + " line's offset from the splitter's centre",
+                                            () -> lineOffset(shown.get(), kind.vertical))
+                                    .toBe(0.0);
                         }
-                        expectHandle(play, kind, State.HOVER, "--splitter__handle-color");
-                        // Centred on the line, 2px either side of it
-                        final Value<Element> hovered = splitter(play, kind, State.HOVER);
-                        play.expect(kind.label + " handle's offset from the line's centre",
-                                        () -> handleOffset(hovered.get(), kind.vertical))
-                                .toBe(0.0);
-                        expectHandle(play, kind, State.PRESSED, "--splitter__handle-color--active");
-                        expectHandle(play, kind, State.DRAGGING, "--splitter__handle-color--active");
-                        // With the keyboard focus, the line is in the focus colour and ringed, and
-                        // the handle shown in the focus colour, without a ring of its own
+                        // With the keyboard focus, the line is in the focus colour and ringed
                         final Value<Element> focused = splitter(play, kind, State.FOCUS);
                         expectColour(play, kind, State.FOCUS, "--splitter__focus-color");
-                        expectHandle(play, kind, State.FOCUS, "--splitter__focus-color");
+                        expectThickness(play, kind, State.FOCUS, 1);
                         play.expect(kind.label + " focused line's ring",
                                         () -> shadow(focused.get(), "::before"))
                                 .not().toBe("none");
-                        play.expect(kind.label + " focused handle's ring",
-                                        () -> shadow(focused.get(), "::after"))
+                        // No handle
+                        play.expect(kind.label + " focused splitter's ::after",
+                                        () -> content(focused.get(), "::after"))
                                 .toBe("none");
                     }
                 });
@@ -232,21 +233,15 @@ public final class SplitPaneStateStories {
                 .toBe(true);
     }
 
-    // A thin splitter's handle is hidden, or shown in the colour given
-    private static void expectHandle(final Play play,
-                                     final Kind kind,
-                                     final State state,
-                                     final String variable) {
+    // A splitter's line is the thickness given across it, in pixels
+    private static void expectThickness(final Play play,
+                                        final Kind kind,
+                                        final State state,
+                                        final double pixels) {
         final Value<Element> splitter = splitter(play, kind, state);
-        play.expect(Value.of(kind.label + " " + state.label + " splitter's handle is "
-                             + (variable == null
-                ? "hidden"
-                : "drawn in " + variable),
-                        () -> variable == null
-                                ? !handleShown(splitter.get())
-                                : handleShown(splitter.get())
-                                  && handleColour(splitter.get()).equals(variableColour(variable))))
-                .toBe(true);
+        play.expect(kind.label + " " + state.label + " line's thickness",
+                        () -> lineThickness(splitter.get(), kind.vertical))
+                .toBe(pixels);
     }
 
     // --------------------------------------------------------------------------------
@@ -308,16 +303,19 @@ public final class SplitPaneStateStories {
         return splitPane.querySelector(@stroom.gwt.workbench.client.widgets.layout.SplitPaneStateStories::SPLITTER);
     }-*/;
 
-    // How far the centre of a thin splitter's handle (::after) is from the centre of its line
-    // (::before), across the line
-    private static native double handleOffset(Element splitter, boolean vertical) /*-{
-        var centre = function (style) {
-            return vertical
-                ? parseFloat(style.top) + parseFloat(style.height) / 2
-                : parseFloat(style.left) + parseFloat(style.width) / 2;
-        };
-        return centre($wnd.getComputedStyle(splitter, '::after'))
-            - centre($wnd.getComputedStyle(splitter, '::before'));
+    // How thick a splitter's line (::before) is across it
+    private static native double lineThickness(Element splitter, boolean vertical) /*-{
+        var style = $wnd.getComputedStyle(splitter, '::before');
+        return parseFloat(vertical ? style.height : style.width);
+    }-*/;
+
+    // How far the centre of a splitter's line (::before) is from the centre of the splitter, across
+    // the line
+    private static native double lineOffset(Element splitter, boolean vertical) /*-{
+        var style = $wnd.getComputedStyle(splitter, '::before');
+        return vertical
+            ? parseFloat(style.top) + parseFloat(style.height) / 2 - splitter.offsetHeight / 2
+            : parseFloat(style.left) + parseFloat(style.width) / 2 - splitter.offsetWidth / 2;
     }-*/;
 
     // The box shadow of a splitter's pseudo-element (the focus ring)
@@ -325,13 +323,9 @@ public final class SplitPaneStateStories {
         return $wnd.getComputedStyle(splitter, pseudoElement).boxShadow;
     }-*/;
 
-    private static native boolean handleShown(Element splitter) /*-{
-        return $wnd.getComputedStyle(splitter, '::after').visibility === 'visible';
-    }-*/;
-
-    // The colour a thin splitter's handle is drawn in (its ::after's background)
-    private static native String handleColour(Element splitter) /*-{
-        return $wnd.getComputedStyle(splitter, '::after').backgroundColor;
+    // The content of a splitter's pseudo-element ("none" when it isn't drawn)
+    private static native String content(Element splitter, String pseudoElement) /*-{
+        return $wnd.getComputedStyle(splitter, pseudoElement).content;
     }-*/;
 
     private static native String cursor(Element element) /*-{
@@ -376,7 +370,7 @@ public final class SplitPaneStateStories {
     // A splitter's states, the columns of the grid
     private enum State {
         NORMAL("Normal", "At rest", null),
-        HOVER("Hover", "A line and handle", "hover"),
+        HOVER("Hover", "A 3px line", "hover"),
         PRESSED("Click", "Pressed (:active)", "active"),
         DRAGGING("Drag", "Pressed, split pane resizing", "active"),
         FOCUS("Keyboard focus", ":focus-visible", "focus-visible");
