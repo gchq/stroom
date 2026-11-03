@@ -75,9 +75,25 @@ public class ElasticIndexStoreImpl
         final ElasticIndexDoc migrated = ElasticVectorSettingsMigrator.migrate(
                 document.copy().fields(fields).build(), fields);
         ElasticFieldSettingsValidator.validate(migrated, fields);
-        return super.writeDocument(migrated.copy()
+        // The mapping details of each field are read afresh with the doc, so aren't stored with it, which would
+        // make the doc large and change it whenever an index is added
+        final ElasticIndexDoc written = super.writeDocument(migrated.copy()
+                .fields(fields.stream()
+                        .map(ElasticIndexStoreImpl::withoutMappingDetails)
+                        .toList())
                 .fieldSettings(dropDefaultSettings(migrated.getFieldSettings()))
                 .build());
+        return written == null
+                ? null
+                : written.copy().fields(fields).build();
+    }
+
+    private static ElasticIndexField withoutMappingDetails(final ElasticIndexField field) {
+        return field.copy()
+                .sourceIndices(null)
+                .conflictingTypes(null)
+                .mappingParameters(null)
+                .build();
     }
 
     /// Drops settings entries that hold nothing but defaults, so removing a field's last setting reverts it to

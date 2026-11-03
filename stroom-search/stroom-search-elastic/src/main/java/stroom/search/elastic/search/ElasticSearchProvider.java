@@ -104,6 +104,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     // Mapping parameters not shown as a field's parameters: its type, and its child and multi-fields, which are
     // fields in their own right
     private static final Set<String> EXCLUDED_MAPPING_PARAMETERS = Set.of("type", "properties", "fields");
+    // Numeric types are queried alike, so a field mapped to different numeric types doesn't conflict
+    private static final Set<FieldType> NUMERIC_FIELD_TYPES = Set.of(
+            FieldType.ID, FieldType.INTEGER, FieldType.LONG, FieldType.FLOAT, FieldType.DOUBLE);
 
     private final ElasticIndexCache elasticIndexCache;
     private final SecurityContext securityContext;
@@ -218,8 +221,15 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
         final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
         if (index != null) {
-            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
-            final ElasticIndexField mappedField = indexFieldMap.get(fieldName);
+            // Reading the doc from the store has already read its fields from the index mapping
+            final List<ElasticIndexField> fields = NullSafe.isEmptyCollection(index.getFields())
+                    ? getFields(index)
+                    : index.getFields();
+            final ElasticIndexField mappedField = fields
+                    .stream()
+                    .filter(field -> field.getFldName().equals(fieldName))
+                    .findFirst()
+                    .orElse(null);
             if (mappedField != null) {
                 return mappedField;
             }
@@ -478,10 +488,29 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 }
             }
         });
-        final long distinctTypes = typesByIndex.values().stream().distinct().count();
+        // Native types Stroom queries the same way, such as `integer` and `long` or `keyword` and `wildcard`,
+        // don't conflict
+        final long distinctTypes = typesByIndex.values()
+                .stream()
+                .map(nativeType -> getStroomFieldTypeName(fieldName, nativeType))
+                .distinct()
+                .count();
         return distinctTypes > 1
                 ? typesByIndex
                 : null;
+    }
+
+    /// @return the name of the Stroom field type a native type is queried as, with all numeric types counted as one,
+    /// or the native type itself if Stroom doesn't support it
+    private static String getStroomFieldTypeName(final String fieldName, final String nativeType) {
+        try {
+            final FieldType fieldType = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
+            return NUMERIC_FIELD_TYPES.contains(fieldType)
+                    ? "NUMBER"
+                    : fieldType.name();
+        } catch (final UnsupportedTypeException | IllegalArgumentException e) {
+            return nativeType;
+        }
     }
 
     /// Returns the parameters set in a field's mapping, other than its type and its child and multi-fields, which

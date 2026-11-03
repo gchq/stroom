@@ -927,6 +927,29 @@ class TestElasticSearchProvider {
     }
 
     @Test
+    void testGetFieldsMap_compatibleTypesDoNotConflict() throws IOException {
+        givenMappingResponse("""
+                {
+                  "logs-a": { "mappings": { "properties": {
+                    "Bytes": { "type": "integer" },
+                    "Path": { "type": "keyword" }
+                  } } },
+                  "logs-b": { "mappings": { "properties": {
+                    "Bytes": { "type": "long" },
+                    "Path": { "type": "wildcard" }
+                  } } }
+                }""");
+
+        // Types Stroom queries the same way don't conflict
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+        assertThat(fieldsMap.get("Bytes").hasTypeConflict()).isFalse();
+        assertThat(fieldsMap.get("Path").hasTypeConflict()).isFalse();
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName)
+                .containsExactly("Bytes", "Path");
+    }
+
+    @Test
     void testGetDataSourceFields_fieldSettings() throws IOException {
         givenMappingResponse("""
                 {

@@ -1730,6 +1730,47 @@ class TestSearchExpressionQueryBuilder {
     }
 
     @Test
+    void testVirtualFieldGroupMayUseDisabledField() {
+        givenVirtualField();
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(
+                        indexDoc.findFieldSettings(VIRTUAL_FIELD),
+                        ElasticIndexFieldSettings.builder(KEYWORD_FIELD).enabled(false).build()))
+                .build();
+
+        // Users see only the virtual field, but its groups still use the disabled field
+        assertTerm(singleMust(buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "db")), KEYWORD_FIELD, "db1");
+        assertThatThrownBy(() -> buildSingleTerm(KEYWORD_FIELD, Condition.EQUALS, "db1"))
+                .isInstanceOf(SearchException.class)
+                .hasMessageContaining("is disabled");
+    }
+
+    @Test
+    void testFieldsOfTheDocTakePrecedenceOverTheCache() {
+        // The cache still holds a virtual field, but the mapping now has a field of the same name
+        givenVirtualField();
+        final ElasticIndexField mapped = ElasticIndexField.builder()
+                .fldName(VIRTUAL_FIELD)
+                .fldType(FieldType.KEYWORD)
+                .nativeType("keyword")
+                .build();
+        indexDoc = indexDoc.copy().fields(List.of(mapped)).build();
+
+        assertTerm(buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "db"), VIRTUAL_FIELD, "db");
+    }
+
+    @Test
+    void testVirtualFieldFoundFromSettingsWhenNotCached() {
+        givenVirtualField();
+        indexFieldCache.put(VIRTUAL_FIELD, null);
+        indexDoc = indexDoc.copy()
+                .fields(List.of((ElasticIndexField) indexFieldCache.get(null, KEYWORD_FIELD)))
+                .build();
+
+        assertTerm(singleMust(buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "db")), KEYWORD_FIELD, "db1");
+    }
+
+    @Test
     void testDisabledVirtualField() {
         givenVirtualField();
         indexDoc = indexDoc.copy()

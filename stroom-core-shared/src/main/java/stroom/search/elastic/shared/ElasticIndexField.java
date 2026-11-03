@@ -77,30 +77,20 @@ public class ElasticIndexField implements IndexField {
     private final boolean indexed;
     @JsonProperty
     private final DenseVectorFieldConfig denseVectorFieldConfig;
-    /**
-     * Whether this is a virtual field, defined in the index doc's field settings rather than the index mapping
-     */
+    /// Whether this is a virtual field, defined in the index doc's field settings rather than the index mapping
     @JsonProperty
     @JsonInclude(Include.NON_DEFAULT)
     private final boolean virtual;
-    /**
-     * For a multi-field (e.g. `title.keyword`), the full name of the field it belongs to (e.g. `title`)
-     */
+    /// For a multi-field (e.g. `title.keyword`), the full name of the field it belongs to (e.g. `title`)
     @JsonProperty
     private final String multiFieldParent;
-    /**
-     * The concrete indices whose mappings hold this field
-     */
+    /// The concrete indices whose mappings hold this field
     @JsonProperty
     private final List<String> sourceIndices;
-    /**
-     * When source indices map this field to different types, the native type in each index, keyed by index name
-     */
+    /// When source indices map this field to different types, the native type in each index, keyed by index name
     @JsonProperty
     private final Map<String, String> conflictingTypes;
-    /**
-     * The mapping parameters set for this field, other than its type and child fields, keyed by parameter name
-     */
+    /// The mapping parameters set for this field, other than its type and child fields, keyed by parameter name
     @JsonProperty
     private final Map<String, String> mappingParameters;
 
@@ -348,26 +338,36 @@ public class ElasticIndexField implements IndexField {
             return this;
         }
 
+        /// @param virtual `true` if this is a virtual field
+        /// @return this builder
         public Builder virtual(final boolean virtual) {
             this.virtual = virtual;
             return this;
         }
 
+        /// @param multiFieldParent for a multi-field, the full name of the field it belongs to
+        /// @return this builder
         public Builder multiFieldParent(final String multiFieldParent) {
             this.multiFieldParent = multiFieldParent;
             return this;
         }
 
+        /// @param sourceIndices the concrete indices whose mappings hold the field
+        /// @return this builder
         public Builder sourceIndices(final List<String> sourceIndices) {
             this.sourceIndices = sourceIndices;
             return this;
         }
 
+        /// @param conflictingTypes the native type in each source index, keyed by index name, when they differ
+        /// @return this builder
         public Builder conflictingTypes(final Map<String, String> conflictingTypes) {
             this.conflictingTypes = conflictingTypes;
             return this;
         }
 
+        /// @param mappingParameters the mapping parameters set for the field, keyed by parameter name
+        /// @return this builder
         public Builder mappingParameters(final Map<String, String> mappingParameters) {
             this.mappingParameters = mappingParameters;
             return this;

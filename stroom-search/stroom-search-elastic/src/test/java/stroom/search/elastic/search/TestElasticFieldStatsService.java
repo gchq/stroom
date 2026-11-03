@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -109,6 +110,8 @@ class TestElasticFieldStatsService {
                         .<Function<ElasticsearchClient, ?>>getArgument(1)
                         .apply(client));
         when(securityContext.hasDocumentPermission(INDEX_REF, DocumentPermission.USE)).thenReturn(true);
+        when(securityContext.useAsReadResult(any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(0).get());
         when(elasticIndexStore.readDocument(INDEX_REF)).thenReturn(createIndex());
         service = new ElasticFieldStatsService(
                 securityContext,
@@ -227,6 +230,20 @@ class TestElasticFieldStatsService {
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                 .containsExactly(tuple("db", 7L), tuple("web", 5L));
         assertThat(onlyRequest().getBodyAsString()).contains("web01").contains("db01");
+    }
+
+    @Test
+    void testVirtualFieldGroupsWithDuplicateNames() {
+        indexFieldCache.put("host", keyword("host"));
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", group("web01")),
+                new ElasticVirtualFieldGroup("web", group("web02")));
+
+        assertThatThrownBy(() -> service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "Category", null, null, null, groups)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("more than one group named 'web'");
+        assertThat(ELASTIC.getAllServeEvents()).isEmpty();
     }
 
     @Test

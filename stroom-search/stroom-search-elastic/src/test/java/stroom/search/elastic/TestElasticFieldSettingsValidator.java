@@ -68,6 +68,11 @@ class TestElasticFieldSettingsValidator {
     }
 
     @Test
+    void testVirtualFieldWithNoGroups() {
+        assertInvalid("Virtual field 'Category' has no groups", virtual("Category"));
+    }
+
+    @Test
     void testDuplicateGroupNames() {
         assertInvalid("Virtual field 'Category' has more than one group named 'web'",
                 virtual("Category", group("web", term("host", "a")), group("web", term("host", "b"))));
