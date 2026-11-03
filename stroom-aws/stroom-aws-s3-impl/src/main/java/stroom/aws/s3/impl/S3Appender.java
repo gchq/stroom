@@ -89,6 +89,7 @@ public class S3Appender extends AbstractAppender {
     private String contentDisposition;
     private String contentEncoding;
     private String contentType;
+    private boolean allowOverwrite = true;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
@@ -176,7 +177,8 @@ public class S3Appender extends AbstractAppender {
                                 meta,
                                 attributeMap,
                                 uploadProperties,
-                                tempFile);
+                                tempFile,
+                                allowOverwrite);
 
                         LOGGER.debug(
                                 "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +
@@ -290,5 +292,12 @@ public class S3Appender extends AbstractAppender {
             displayPriority = 12)
     public void setContentType(final String contentType) {
         this.contentType = contentType;
+    }
+
+    @PipelineProperty(
+            description = "Whether to allow overwriting of existing objects. Default is true.",
+            displayPriority = 13)
+    public void setContentType(final boolean allowOverwrite) {
+        this.allowOverwrite = allowOverwrite;
     }
 }

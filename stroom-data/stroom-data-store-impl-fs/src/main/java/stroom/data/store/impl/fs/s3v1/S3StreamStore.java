@@ -132,13 +132,16 @@ public class S3StreamStore extends AbstractS3StreamStore {
         final S3Location s3Location;
         if (NullSafe.isEmptyCollection(s3Locations)) {
             // Legacy streams may still exist with no record in the s3Locations table,
-            // as we used to always derive the s3 bucket/key, thus it may be null, in which
-            // case it will be derived. Thus, we persist the location here if applicable.
+            // as <7.14 we used to always derive the s3 bucket/key. Thus, it may be null, in which
+            // case it will be derived based on the config. If the region/bucket/key patterns in the
+            // config have changed then we have no idea where the data is in S3.
             s3Location = deriveS3Location(dataVolume, meta);
             Objects.requireNonNull(s3Location, "S3Location cannot be null after derivation");
             if (storeLocation) {
                 // Store it in the db, so next time we can avoid deriving it.
-                // Do tryCreate in case another node beat us to it.
+                // It is possible we are storing a location that is not valid if the config
+                // has changed, but not a lot we can do.
+                // Use tryCreate in case another node is hitting the same stream.
                 dataVolumeService.tryCreateS3Location(meta, dataVolume, s3Location);
             }
         } else {
@@ -385,7 +388,8 @@ public class S3StreamStore extends AbstractS3StreamStore {
                     meta,
                     attributeMap,
                     null,
-                    zipFile);
+                    zipFile,
+                    false);
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
@@ -495,15 +499,21 @@ public class S3StreamStore extends AbstractS3StreamStore {
 
     public void shutdown() {
         synchronized (S3StreamStore.this) {
-            LOGGER.debug("shutdown() - Deleting {} cached items", cacheByMetaId.size());
+            LOGGER.debug(() -> LogUtil.message("shutdown() - Deleting {} cached items", cacheByMetaId.size()));
+            final AtomicInteger cnt = new AtomicInteger();
             cacheByMetaId.forEach((ignored, trackedSource) -> {
-                deleteDir("Shutdown deleting: ", trackedSource.getPath());
-                try {
-                    Files.delete(trackedSource.getPath());
-                } catch (final IOException e) {
-                    LOGGER.error("Failed to delete file {}", trackedSource.getPath(), e);
+                if (trackedSource != null) {
+                    deleteDir("Shutdown deleting: ", trackedSource.getPath());
+                    try {
+                        Files.delete(trackedSource.getPath());
+                        cnt.incrementAndGet();
+                    } catch (final IOException e) {
+                        // It may have been deleted by cache eviction
+                        LOGGER.debug("Failed to delete file {}", trackedSource.getPath(), e);
+                    }
                 }
             });
+            LOGGER.debug("shutdown() - Deleted {} cached items", cnt);
         }
     }
 

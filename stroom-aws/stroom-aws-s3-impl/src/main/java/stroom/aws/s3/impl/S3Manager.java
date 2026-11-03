@@ -88,6 +88,7 @@ public class S3Manager {
     static final String META_METADATA_KEY_PREFIX = "meta-";
 
     public static final String META_ID_TAG_KEY = "meta-id";
+    public static final boolean DEFAULT_ALLOW_OVERWRITE = false;
 
     private final S3ClientConfig s3ClientConfig;
     private final S3ClientHelper s3ClientHelper;
@@ -266,7 +267,8 @@ public class S3Manager {
     public PutObjectResponse upload(final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         return upload(
                 getBucketNamePattern(),
                 getKeyNamePattern(),
@@ -274,13 +276,15 @@ public class S3Manager {
                 convertAttributeMapToS3Metadata(attributeMap),
                 null,
                 source,
-                timeBasis);
+                timeBasis,
+                allowOverwrite);
     }
 
     public PutObjectResponse upload(final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         return upload(
                 getBucketNamePattern(),
                 getKeyNamePattern(),
@@ -288,7 +292,8 @@ public class S3Manager {
                 s3MetaData,
                 null,
                 source,
-                timeBasis);
+                timeBasis,
+                allowOverwrite);
     }
 
     /**
@@ -306,7 +311,8 @@ public class S3Manager {
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final S3UploadProperties uploadProperties,
-                                    final Path source) {
+                                    final Path source,
+                                    final boolean allowOverwrite) {
         NullSafe.requireNonBlankString(bucketName);
         NullSafe.requireNonBlankString(key);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -316,7 +322,8 @@ public class S3Manager {
                 tags,
                 convertAttributeMapToS3Metadata(attributeMap),
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     /**
@@ -334,7 +341,8 @@ public class S3Manager {
                                     final Meta meta,
                                     final Map<CIKey, String> s3MetaData,
                                     final S3UploadProperties uploadProperties,
-                                    final Path source) {
+                                    final Path source,
+                                    final boolean allowOverwrite) {
         NullSafe.requireNonBlankString(bucketName);
         NullSafe.requireNonBlankString(key);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -344,7 +352,8 @@ public class S3Manager {
                 tags,
                 s3MetaData,
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     public PutObjectResponse upload(final String bucketNamePattern,
@@ -353,7 +362,8 @@ public class S3Manager {
                                     final Map<CIKey, String> s3MetaData,
                                     final S3UploadProperties uploadProperties,
                                     final Path source,
-                                    final TimeBasis timeBasis) {
+                                    final TimeBasis timeBasis,
+                                    final boolean allowOverwrite) {
         final String bucketName = createBucketName(bucketNamePattern, meta, timeBasis);
         final String key = createKey(keyNamePattern, meta, timeBasis);
         final Map<String, String> tags = createS3TagsFromMeta(meta);
@@ -363,7 +373,8 @@ public class S3Manager {
                 tags,
                 s3MetaData,
                 uploadProperties,
-                source);
+                source,
+                allowOverwrite);
     }
 
     private Map<CIKey, String> convertAttributeMapToS3Metadata(final AttributeMap attributeMap) {
