@@ -24,10 +24,12 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.search.elastic.ElasticTestNode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,6 +64,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// 4. An index plan and its indexing XSLT read them in the fork's namespace; a CEF draft reads them too.
 /// 5. check_xslt refuses an event-logging:3 translation importing the fork's import, rather than the import being
 ///    dropped.
+///
+/// Then, each in an environment of its own: a client without forms told the variant question first and answering
+/// with the fork's namespace, and every reader of processed Events (evaluate_pipeline, review_coverage, survey_feed,
+/// explain_processing, read_document, rebuild_mapping, a CEF pipeline stepped and evaluated); in forms, the variant
+/// before the fork's versions (one versioning itself, 1.0.0) and before a version given; and the fork's Events
+/// indexed into a live Elasticsearch (skipped without one, as [TestE2eUsersAggregate] is).
 class TestE2eForkedSchema extends AbstractE2eTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestE2eForkedSchema.class);
@@ -68,6 +79,9 @@ class TestE2eForkedSchema extends AbstractE2eTest {
     /// The test fork's system id.
     static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
     private static final String STAMP = "FORK1";
+    // The first question where the fork is held and nothing settles which schema a translation writes.
+    private static final String VARIANT_QUESTION = "Which Events schema should the translation write: "
+                                                   + "event-logging, or the environment's own fork?";
     private static final String WORKSPACE = "System/MCP Workspace/";
     private static final String BUILD = "fork";
     private static final String FEED = "E2E-FORK";
@@ -342,9 +356,312 @@ class TestE2eForkedSchema extends AbstractE2eTest {
         assertThat(map(profiled, "xslt_input")).containsEntry("namespace", FORK_NS);
     }
 
+    @Test
+    void withoutFormsTheSchemaIsChosenByNamespaceAndEveryReaderReadsTheForksEvents() {
+        final Fork fork = installFork();
+        final String build = "fork-plain";
+        final String feed = "E2E-FORK-PLAIN";
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+
+        // ### 1. A client that can't show forms: a version alone is answered with the variant question first.
+        final Map<String, Object> bare = plainClient.json("draft_translation_mapping", args("stream_ids",
+                List.of(raw), "source_name", "Fork", "system_name", "Fork", "environment", "Test", "build", build,
+                "schema_version", VERSION));
+        dump("draft_translation_mapping, a version alone", bare);
+        assertThat(bare).containsEntry("status", "needs_guidance")
+                .containsEntry("question", VARIANT_QUESTION);
+        assertThat(jsonOf(bare.get("options"))).contains(FORK_NS, "event-logging:3", VERSION);
+        assertThat((String) bare.get("hint")).contains("schema_version= the namespace chosen");
+        // Given back as the fork's namespace, drafted for the fork (its one version), and kept for the build.
+        final Map<String, Object> drafted = plainClient.json("draft_translation_mapping", args("stream_ids",
+                List.of(raw), "source_name", "Fork", "system_name", "Fork", "environment", "Test", "build", build,
+                "schema_version", FORK_NS));
+        dump("draft_translation_mapping, the fork's namespace", drafted);
+        assertThat(drafted).doesNotContainKey("status").containsEntry("schema_version", VERSION)
+                .containsKey("mapping");
+        // A version given next is read within the fork, not asked about again.
+        assertThat(plainClient.json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "Fork", "system_name", "Fork", "environment", "Test", "build", build,
+                "schema_version", VERSION))).doesNotContainKey("status").containsEntry("schema_version", VERSION);
+
+        // ### 2. The draft built, given no version: the fork chosen for the build, from its record. As the agent
+        // would, its decisions made first: the device and the type (which the schema requires), and the action, the
+        // fork's own Charge, in place of the draft's catch-all rule.
+        @SuppressWarnings("unchecked") final Map<String, Object> completed = new LinkedHashMap<>(
+                (Map<String, Object>) drafted.get("mapping"));
+        final List<Object> common = new ArrayList<>((List<?>) completed.getOrDefault("common", List.of()));
+        common.add(Map.of("path", "EventSource/Device/HostName", "value", "h1"));
+        common.add(Map.of("path", "EventDetail/TypeId", "value", "Charge"));
+        completed.put("common", common);
+        completed.put("events", mapping().get("events"));
+        final Map<String, Object> fromDraft = agreed("build_translation_xslt", args("mapping", completed,
+                "stream_ids", List.of(raw), "build", build, "name", feed + "-Draft", "feeds", List.of(feed)));
+        dump("build_translation_xslt from the draft", fromDraft);
+        assertThat(readXslt(uuidOf(map(fromDraft, "saved"))).getData()).as("the draft written in the fork")
+                .contains("xmlns=\"" + FORK_NS + "\"").doesNotContain("event-logging:3");
+        final String xsltUuid = uuidOf(map(agreed("build_translation_xslt", args("mapping", mapping(),
+                "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "feeds", List.of(feed))),
+                "saved"));
+        assertThat(readXslt(xsltUuid).getData()).contains("xmlns=\"" + FORK_NS + "\"", "<Charge>");
+        final String pipeline = uuidOf(createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (JSON)"),
+                docProperty("translationFilter", "xslt", xsltUuid, XsltDoc.TYPE)));
+        assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).isEqualTo("clean");
+        agreed("create_processor_filter", args("pipeline_uuid", pipeline, "stream_ids", List.of(raw)));
+        processAll();
+        final Map<String, Object> gate = json("wait_for_processing", args("pipeline_uuid", pipeline,
+                "stream_ids", List.of(raw), "timeout_seconds", 10));
+        assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+        final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+
+        // ### 3. The readers of processed Events, each reading them in the fork's namespace.
+        final Map<String, Object> evaluated = json("evaluate_pipeline", args("pipeline_uuid", pipeline));
+        dump("evaluate_pipeline", evaluated);
+        assertThat(map(evaluated, "stepping")).as("stepped clean against the fork").containsEntry("verdict", "clean");
+        final Map<String, Object> events = map(evaluated, "events");
+        assertThat(events).as("the Events checked: %s", events).containsEntry("status", "checked")
+                .containsEntry("ok", true);
+        assertThat(map(events, "field_population")).as("the fork's own activity profiled")
+                .containsKey("EventDetail/Charge/Account");
+        final Map<String, Object> coverage = json("review_coverage", args("pipeline_uuid", pipeline));
+        dump("review_coverage", coverage);
+        assertThat(list(coverage, "missed")).as("every record translated").isEmpty();
+        assertThat((String) coverage.get("tell_user")).startsWith("No untranslated events");
+        final Map<String, Object> surveyed = json("survey_feed", args("feed", feed, "build", build));
+        dump("survey_feed", surveyed);
+        assertThat(ids(surveyed, "streams_read")).containsExactly(raw);
+        final Map<String, Object> explained = json("explain_processing", args("pipeline_uuid", pipeline));
+        dump("explain_processing", explained);
+        assertThat(jsonOf(explained.get("subject"))).contains(feed + "-Events");
+        // The fork's own element, read from its schema.
+        final Map<String, Object> charge = json("read_document", args("uuid", fork.uuid(), "element",
+                "EventDetail/Charge"));
+        assertThat(charge).containsEntry("path", "Event/EventDetail/Charge")
+                .containsEntry("namespace", FORK_NS)
+                .containsEntry("schema_version", VERSION);
+        assertThat(jsonOf(charge.get("children"))).contains("Account", "Amount");
+
+        // ### 4. A hand edit carried into the mapping: rebuilt, still the fork's.
+        final String code = readXslt(xsltUuid).getData();
+        editXslt(xsltUuid, doc -> doc.copy().data(code.replaceFirst("<TypeId>Charge</TypeId>",
+                "<TypeId>AccountCharge</TypeId>")).build());
+        final Map<String, Object> rebuilt = agreed("rebuild_mapping", args("uuid", xsltUuid));
+        dump("rebuild_mapping", rebuilt);
+        assertThat(rebuilt.get("saved")).as("rebuilt and saved: %s", rebuilt).isNotNull();
+        assertThat(readXslt(xsltUuid).getData()).as("regenerated in the fork, with the hand edit")
+                .contains("xmlns=\"" + FORK_NS + "\"", "<TypeId>AccountCharge</TypeId>", "<Charge>")
+                .doesNotContain("event-logging:3");
+        assertThat(KeptMapping.readMapping(readXslt(xsltUuid).getDescription()).orElseThrow().payload())
+                .containsEntry("schema_uuid", fork.uuid());
+
+        // ### 5. A CEF pipeline over the fork's Events: saved, stepped clean and evaluated.
+        // Lines of text for a file; the vendor the user gives (the sample's Events name no organisation).
+        final Map<String, Object> cef = agreed("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "output", "text", "header", Map.of("vendor", "Acme"), "build", build,
+                "name", feed + "-CEF"));
+        dump("draft_cef_mapping saved", cef);
+        final String cefXslt = uuidOf(map(cef, "saved"));
+        assertThat(readXslt(cefXslt).getData()).as("the CEF XSLT reads the fork")
+                .contains("xpath-default-namespace=\"" + FORK_NS + "\"");
+        final String output = System.getProperty("java.io.tmpdir") + "/e2e-fork-cef-" + STAMP + ".log";
+        final String cefPipeline = uuidOf(createPipeline(build, feed + "-CEF-File",
+                textFileTemplate(folder("System/E2E Fork CEF"), "E2E Fork CEF to file", output),
+                docProperty("xsltFilter", "xslt", cefXslt, XsltDoc.TYPE)));
+        final Map<String, Object> cefStepped = stepSample(cefPipeline, List.of(eventsId));
+        assertThat(cefStepped).as("stepped clean: %s", cefStepped.get("groups")).containsEntry("verdict", "clean");
+        assertThat(stepOutput(cefPipeline, eventsId, 0, "xsltFilter")).as("a CEF line from the fork's Event")
+                .contains("CEF:0|");
+        final Map<String, Object> cefEvaluated = json("evaluate_pipeline", args("pipeline_uuid", cefPipeline,
+                "stream_ids", List.of(eventsId)));
+        dump("evaluate_pipeline cef", cefEvaluated);
+        assertThat(map(cefEvaluated, "cef")).containsEntry("status", "checked").containsEntry("lines_stepped", 2);
+    }
+
+    @Test
+    void inFormsTheVariantComesFirstThenTheVersionsItHolds() {
+        installFork();
+        // A second document of the fork, versioning itself (1.0.0), at a system id of its own.
+        final String olderSystemId = FORK_NS + "/v1.0.0";
+        installFork("Test Fork Events v1.0.0", olderSystemId, textResource("test-fork-events.xsd")
+                .replace("version=\"" + VERSION + "\"", "version=\"1.0.0\"")
+                .replace("<xs:enumeration value=\"" + VERSION + "\"/>", "<xs:enumeration value=\"1.0.0\"/>"));
+
+        // ### 1. Nothing settles it: which schema first, then which of the fork's versions.
+        final String build = "fork-versions";
+        final String feed = "E2E-FORK-VERSIONS";
+        createFeed(build, feed);
+        final long raw = upload(feed, SAMPLE);
+        final List<String> asked = new ArrayList<>();
+        client.answeringWith(answering(asked, Map.of(
+                "Which Events schema", option -> option.startsWith("this environment's fork"),
+                "Which version of the environment's fork", option -> option.startsWith("1.0.0:"))));
+        final Map<String, Object> older;
+        try {
+            older = agreed("build_translation_xslt", args("mapping", mapping(), "stream_ids", List.of(raw),
+                    "build", build, "name", feed + "-Events", "feeds", List.of(feed)));
+        } finally {
+            client.answeringWith(McpTestClient::agree);
+        }
+        dump("the fork's 1.0.0, chosen in forms", older);
+        assertThat(asked).as("the variant asked before the version")
+                .containsSubsequence(VARIANT_QUESTION, "Which version of the environment's fork (namespace " + FORK_NS
+                                                       + ") should the translation write?");
+        final String olderXslt = uuidOf(map(older, "saved"));
+        assertThat(readXslt(olderXslt).getData()).as("written with the fork's own version and document")
+                .contains("xmlns=\"" + FORK_NS + "\"", FORK_NS + " " + olderSystemId, "Version=\"1.0.0\"");
+        final String pipeline = uuidOf(createPipeline(build, feed + "-Events",
+                templateUuid("translation", "Event Data (JSON)"),
+                docProperty("translationFilter", "xslt", olderXslt, XsltDoc.TYPE)));
+        assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).as("validated against the fork's 1.0.0")
+                .isEqualTo("clean");
+
+        // ### 2. A version given before the variant is settled: the variant still asked first; event-logging chosen.
+        final String other = "fork-or-not";
+        createFeed(other, "E2E-FORK-OR-NOT");
+        final long otherRaw = upload("E2E-FORK-OR-NOT", CSV_SAMPLE);
+        saveTextConverter(other, "E2E-FORK-OR-NOT", CSV_SPLITTER);
+        asked.clear();
+        client.answeringWith(answering(asked, Map.of(
+                "Which Events schema", option -> option.startsWith("event-logging"))));
+        final Map<String, Object> standard;
+        try {
+            standard = agreed("build_translation_xslt", args("mapping", csvMapping(), "stream_ids",
+                    List.of(otherRaw), "build", other, "name", "E2E-FORK-OR-NOT-Events", "schema_version", VERSION,
+                    "feeds", List.of("E2E-FORK-OR-NOT")));
+        } finally {
+            client.answeringWith(McpTestClient::agree);
+        }
+        dump("event-logging, chosen over the fork", standard);
+        assertThat(asked).as("asked the variant, the version given").containsExactly(VARIANT_QUESTION);
+        assertThat(readXslt(uuidOf(map(standard, "saved"))).getData()).contains("xmlns=\"event-logging:3\"")
+                .doesNotContain(FORK_NS);
+        assertThat(String.valueOf(standard.get("schema_version_settled")))
+                .contains("The user chose event-logging (namespace event-logging:3) over the environment's fork");
+    }
+
+    @Test
+    void aForksEventsAreIndexedIntoElasticsearch() {
+        final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        final String stamp = Long.toString(System.currentTimeMillis(), 36);
+        final String index = "e2e-fork-" + stamp + "-v1";
+        final List<String> indexTemplates = new ArrayList<>();
+        try {
+            installFork();
+            final String build = "fork-es";
+            final String feed = "E2E-FORK-ES";
+            createFeed(build, feed);
+            final long raw = upload(feed, SAMPLE);
+            // The namespace given: the fork's one version.
+            final String xsltUuid = uuidOf(map(agreed("build_translation_xslt", args("mapping", mapping(),
+                    "stream_ids", List.of(raw), "build", build, "name", feed + "-Events", "feeds", List.of(feed),
+                    "schema_version", FORK_NS)), "saved"));
+            assertThat(readXslt(xsltUuid).getData()).contains("xmlns=\"" + FORK_NS + "\"");
+            final String pipeline = uuidOf(createPipeline(build, feed + "-Events",
+                    templateUuid("translation", "Event Data (JSON)"),
+                    docProperty("translationFilter", "xslt", xsltUuid, XsltDoc.TYPE)));
+            assertThat(stepSample(pipeline, List.of(raw)).get("verdict")).isEqualTo("clean");
+            agreed("create_processor_filter", args("pipeline_uuid", pipeline, "stream_ids", List.of(raw)));
+            processAll();
+            final Map<String, Object> gate = json("wait_for_processing", args("pipeline_uuid", pipeline,
+                    "stream_ids", List.of(raw), "timeout_seconds", 10));
+            assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+            final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+
+            // Planned (ECS), the indexing XSLT reading the fork, stepped through the Elasticsearch template.
+            final DocRef cluster = liveElasticCluster(node, "E2E Fork Live Elasticsearch");
+            final String template = elasticEventsTemplate("E2E Fork Events to Elasticsearch",
+                    "Fixture for TestE2eForkedSchema");
+            final Map<String, Object> draft = agreed("draft_index_mapping", args("backend", "elasticsearch",
+                    "index_name", index, "convention", "ecs", "events_stream_ids", List.of(eventsId),
+                    "without_example", true));
+            dump("draft_index_mapping elasticsearch", draft);
+            final Map<String, Object> plan = map(draft, "plan");
+            assertThat(plan).containsEntry("events_namespace", FORK_NS);
+            assertThat(draft).as("nothing planned that no Event can hold").doesNotContainKey("fields_not_in_schema");
+            final String indexXslt = uuidOf(client.json("save_xslt", args("build", build, "name", index + "-XSLT",
+                    "index_plan", plan)));
+            assertThat(readXslt(indexXslt).getData()).contains("xpath-default-namespace=\"" + FORK_NS + "\"");
+            final String indexing = uuidOf(agreed("create_indexing_pipeline", args("build", build,
+                    "name", index + " - Indexing", "template_uuid", template, "xslt_uuid", indexXslt,
+                    "index_name", index, "cluster_uuid", cluster.getUuid())));
+            final Map<String, Object> stepped = stepSample(indexing, List.of(eventsId));
+            assertThat(stepped).as("stepped clean: %s", stepped.get("groups")).containsEntry("verdict", "clean");
+
+            // The template agreed and applied, the Events indexed, counted and searched through Stroom.
+            final Map<String, Object> agreedTemplate = agreed("propose_index_template", args("pipeline_uuid",
+                    indexing, "plan", plan, "events_stream_ids", List.of(eventsId), "without_example", true));
+            assertThat(agreedTemplate).containsEntry("agreed", true);
+            final String applied = applyDevTools(node, (String) agreedTemplate.get("dev_tools"));
+            if (applied != null) {
+                indexTemplates.add(applied);
+            }
+            final Map<String, Object> started = agreed("create_processor_filter", args("pipeline_uuid", indexing,
+                    "stream_ids", List.of(eventsId), "source_pipeline_uuid", pipeline));
+            processAll();
+            final Map<String, Object> done = json("wait_for_processing", args("pipeline_uuid", indexing,
+                    "stream_ids", List.of(eventsId), "expect_events", false, "filter_id", started.get("filter_id"),
+                    "timeout_seconds", 10));
+            assertThat(done).as("indexed with no Error stream: %s", done.get("streams"))
+                    .containsEntry("gate", "pass");
+            node.refresh(index);
+            assertThat(node.count(index, null)).as("both of the fork's Events indexed").isEqualTo(2);
+            final String userField = fieldFrom(plan, "EventSource/User/Id");
+            final String indexDoc = uuidOf(agreed("create_index_doc", args("build", build, "backend",
+                    "elasticsearch", "name", index, "time_field", plan.get("time_field"), "index_name", index,
+                    "cluster_uuid", cluster.getUuid())));
+            final Map<String, Object> verified = agreed("verify_index", args("build", build, "index_uuid", indexDoc,
+                    "backend", "elasticsearch", "stream_ids", List.of(eventsId), "expected_documents", 2,
+                    "fields", List.of(userField), "exact", List.of(Map.of("field", userField, "value", "alice")),
+                    "pipeline_uuid", indexing));
+            dump("verify_index elasticsearch", verified.get("checks"));
+            assertThat(verified).as("found through Stroom: %s", verified.get("checks"))
+                    .containsEntry("passed", true);
+        } finally {
+            node.request("DELETE", "/_data_stream/" + index, null);
+            node.deleteIndices(index + "*");
+            indexTemplates.forEach(node::deleteIndexTemplate);
+        }
+    }
+
+    // Answers each form whose message holds a key with the first option the key's test accepts, noting each such
+    // form's message; any other form is agreed to.
+    private static Function<ElicitFormRequest, ElicitResult> answering(final List<String> asked,
+                                                                       final Map<String, Predicate<String>> choices) {
+        return form -> {
+            final String message = String.valueOf(form.message());
+            final Optional<Map.Entry<String, Predicate<String>>> choice = choices.entrySet().stream()
+                    .filter(entry -> message.contains(entry.getKey()))
+                    .findFirst();
+            if (choice.isEmpty()) {
+                return McpTestClient.agree(form);
+            }
+            asked.add(message);
+            final Map<String, Object> content = new LinkedHashMap<>();
+            if (form.requestedSchema().get("properties") instanceof final Map<?, ?> fields) {
+                fields.forEach((name, field) -> {
+                    if (field instanceof final Map<?, ?> schema
+                        && schema.get("enum") instanceof final List<?> options) {
+                        options.stream()
+                                .map(String::valueOf)
+                                .filter(choice.get().getValue())
+                                .findFirst()
+                                .ifPresent(option -> content.put(String.valueOf(name), option));
+                    }
+                });
+            }
+            return new ElicitResult(ElicitResult.Action.ACCEPT, content, null);
+        };
+    }
+
     // The test fork as an XML schema document in the event-logging schemas' group (that of the content pack's
     // 4.1.0), as an environment holds its own.
     private Fork installFork() {
+        return installFork("Test Fork Events v" + VERSION, FORK_SYSTEM_ID, textResource("test-fork-events.xsd"));
+    }
+
+    // A document of the test fork, at that system id, in the event-logging schemas' group.
+    private Fork installFork(final String name, final String systemId, final String xsd) {
         final String group = asUser(admin, () -> xmlSchemaStore.list().stream()
                 .map(xmlSchemaStore::readDocument)
                 .filter(doc -> ("file://event-logging-v" + VERSION + ".xsd").equals(doc.getSystemId()))
@@ -353,12 +670,12 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 .orElseThrow(() -> new AssertionError("No event-logging " + VERSION + " schema in the content "
                                                       + "pack")));
         assertThat(group).as("event-logging's schema group").isNotBlank();
-        final DocRef ref = create(XmlSchemaDoc.TYPE, "Test Fork Events v" + VERSION, "System").getDocRef();
+        final DocRef ref = create(XmlSchemaDoc.TYPE, name, "System").getDocRef();
         asUser(admin, () -> xmlSchemaStore.writeDocument(xmlSchemaStore.readDocument(ref).copy()
-                .systemId(FORK_SYSTEM_ID)
+                .systemId(systemId)
                 .namespaceURI(FORK_NS)
                 .schemaGroup(group)
-                .data(textResource("test-fork-events.xsd"))
+                .data(xsd)
                 .build()));
         return new Fork(ref.getUuid(), group);
     }

@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -342,6 +343,30 @@ class TestPipelineWrites {
         // Reads anything.
         writes.parserReadsSample(BUILD, merged, "CombinedParser", false);
         writes.parserReadsSample(BUILD, merged, null, true);
+    }
+
+    @Test
+    void aPipelineFedEventsIsToldApartByTheXsltItSets() {
+        // Seen in testing: a CEF pipeline reading the build's Events was refused for not reading its JSON sample.
+        final String forkNs = "file://xml/schema/test-fork/events";
+        final Set<String> events = Set.of("event-logging:3", forkNs);
+        pipelines.xslt("cef", "Fork-CEF", null);
+        pipelines.world.docs.put("cef", XsltDoc.builder().uuid("cef").name("Fork-CEF").version("v0")
+                .data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                      + "xpath-default-namespace=\"" + forkNs + "\" version=\"3.0\"/>").build());
+        pipelines.xslt("translation", "Fork-Events", null);
+        pipelines.world.docs.put("translation", XsltDoc.builder().uuid("translation").name("Fork-Events")
+                .version("v0").data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                    + "xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" "
+                                    + "version=\"3.0\"/>").build());
+
+        assertThat(writes.readsEvents(List.of(PropertyValue.document("xsltFilter", "xslt", "cef", "XSLT")),
+                events)).as("reads the fork's Events").isTrue();
+        assertThat(writes.readsEvents(List.of(PropertyValue.document("xsltFilter", "xslt", "cef", "XSLT")),
+                Set.of("event-logging:3"))).as("a namespace no Events schema defines").isFalse();
+        assertThat(writes.readsEvents(List.of(PropertyValue.document("translationFilter", "xslt", "translation",
+                "XSLT")), events)).as("a translation reads the raw sample").isFalse();
+        assertThat(writes.readsEvents(List.of(), events)).isFalse();
     }
 
     @Test
