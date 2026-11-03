@@ -92,7 +92,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
@@ -571,11 +570,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     /// Adds a mapping parameter to a map of key/value line items, so nested settings such as `index_options`
-    /// read as one line each:
+    /// can be listed one option per line:
     ///
     /// - an object adds an entry per member, keyed `key.member`, recursively; an empty object adds `{}`
-    /// - an array of scalar values adds one entry listing them, separated by commas
-    /// - an array holding objects or arrays adds an entry per element, keyed `key[index]`, recursively
+    /// - an array adds an entry per element, keyed `key[index]`, recursively; an empty array adds `[]`
     /// - a scalar adds its text, without quotes for a string
     ///
     /// @param key        the parameter's name or dotted path
@@ -593,24 +591,18 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 }
             }
         } else if (value.isArray()) {
-            if (value.valueStream().allMatch(JsonNode::isValueNode)) {
-                parameters.put(key, value.valueStream()
-                        .map(ElasticSearchProvider::toMappingValueText)
-                        .collect(Collectors.joining(", ")));
+            if (value.isEmpty()) {
+                parameters.put(key, "[]");
             } else {
                 for (int i = 0; i < value.size(); i++) {
                     flattenMappingParameter(key + "[" + i + "]", value.get(i), parameters);
                 }
             }
         } else {
-            parameters.put(key, toMappingValueText(value));
+            parameters.put(key, value.isString()
+                    ? value.stringValue()
+                    : value.toString());
         }
-    }
-
-    private static String toMappingValueText(final JsonNode value) {
-        return value.isString()
-                ? value.stringValue()
-                : value.toString();
     }
 
     /**
