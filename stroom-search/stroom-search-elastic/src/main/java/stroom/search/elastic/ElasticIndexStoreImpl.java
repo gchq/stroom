@@ -19,12 +19,20 @@ package stroom.search.elastic;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.StoreFactory;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.List;
 
 @Singleton
 public class ElasticIndexStoreImpl
@@ -54,14 +62,33 @@ public class ElasticIndexStoreImpl
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
         final ElasticIndexDoc doc = super.readDocument(docRef);
-        return doc.copy().fields(elasticIndexService.getFields(doc)).build();
+        if (doc == null) {
+            return null;
+        }
+        final List<ElasticIndexField> fields = elasticIndexService.getFields(doc);
+        return ElasticVectorSettingsMigrator.migrate(doc.copy().fields(fields).build(), fields);
     }
 
     @Override
     public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
-        return super.writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
+        final List<ElasticIndexField> fields = elasticIndexService.getFields(document);
+        final ElasticIndexDoc migrated = ElasticVectorSettingsMigrator.migrate(
+                document.copy().fields(fields).build(), fields);
+        return super.writeDocument(migrated.copy()
+                .fieldSettings(dropDefaultSettings(migrated.getFieldSettings()))
+                .build());
     }
 
+    /// Drops settings entries that hold nothing but defaults, so removing a field's last setting reverts it to
+    /// having no entry at all.
+    private static List<ElasticIndexFieldSettings> dropDefaultSettings(
+            final List<ElasticIndexFieldSettings> fieldSettings) {
+        return fieldSettings.stream()
+                .filter(settings -> !settings.isDefault())
+                .toList();
+    }
+
+    @SuppressWarnings("deprecation")
     @Override
     protected DependencyRemapFunction<ElasticIndexDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> doc
@@ -70,6 +97,39 @@ public class ElasticIndexStoreImpl
                 .vectorGenerationModelRef(dependencyRemapper.remap(doc.getVectorGenerationModelRef()))
                 .rerankModelRef(dependencyRemapper.remap(doc.getRerankModelRef()))
                 .defaultExtractionPipeline(dependencyRemapper.remap(doc.getDefaultExtractionPipeline()))
+                .fieldSettings(doc.getFieldSettings()
+                        .stream()
+                        .map(settings -> remapFieldSettings(settings, dependencyRemapper))
+                        .toList())
                 .build();
+    }
+
+    /// Remaps the model docs referenced by a field's vector settings, and the docs (such as dictionaries)
+    /// referenced by a virtual field's group expressions.
+    static ElasticIndexFieldSettings remapFieldSettings(final ElasticIndexFieldSettings settings,
+                                                        final DependencyRemapper dependencyRemapper) {
+        final ElasticIndexFieldSettings.Builder builder = settings.copy();
+        final ElasticDenseVectorSettings denseVector = settings.getDenseVector();
+        if (denseVector != null && denseVector.getConfig() != null) {
+            final DenseVectorFieldConfig config = denseVector.getConfig();
+            builder.denseVector(new ElasticDenseVectorSettings(
+                    config.copy()
+                            .embeddingModelRef(dependencyRemapper.remap(config.getEmbeddingModelRef()))
+                            .rerankModelRef(dependencyRemapper.remap(config.getRerankModelRef()))
+                            .build(),
+                    denseVector.getRerankTextField(),
+                    denseVector.getRerankScoreField()));
+        }
+        if (settings.getVirtualGroups() != null) {
+            builder.virtualGroups(settings.getVirtualGroups()
+                    .stream()
+                    .map(group -> new ElasticVirtualFieldGroup(
+                            group.getName(),
+                            group.getExpression() == null
+                                    ? null
+                                    : dependencyRemapper.remapExpression(group.getExpression())))
+                    .toList());
+        }
+        return builder.build();
     }
 }

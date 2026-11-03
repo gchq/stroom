@@ -24,6 +24,7 @@ import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -62,6 +63,7 @@ import java.util.Objects;
         "rerankScoreFieldSuffix",
         "rerankScoreMinimum",
         "defaultExtractionPipeline",
+        "fieldSettings",
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
@@ -72,9 +74,10 @@ public class ElasticIndexDoc extends AbstractDoc {
     public static final String TYPE = "ElasticIndex";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_INDEX_DOCUMENT_TYPE;
     private static final String DEFAULT_TIME_FIELD = "@timestamp";
-    private static final String DEFAULT_RERANK_TEXT_FIELD_SUFFIX = ".text";
-    private static final String DEFAULT_RERANK_SCORE_FIELD_SUFFIX = ".score";
-    private static final Float DEFAULT_RERANK_SCORE_MINIMUM = 0.8f;
+    /// The rerank text field suffix applied to legacy docs that did not set one
+    public static final String LEGACY_DEFAULT_RERANK_TEXT_FIELD_SUFFIX = ".text";
+    /// The rerank score field suffix applied to legacy docs that did not set one
+    public static final String LEGACY_DEFAULT_RERANK_SCORE_FIELD_SUFFIX = ".score";
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -104,14 +107,17 @@ public class ElasticIndexDoc extends AbstractDoc {
     private final Integer searchScrollSize;
 
     /**
-     * Reference to the `OpenAIModel` used to generate vector embeddings from search query expressions
+     * Legacy reference to the `OpenAIModel` used to generate vector embeddings from search query expressions.
+     * Replaced by per-field `dense_vector` settings in {@link #fieldSettings}, to which it is migrated on read.
      */
+    @Deprecated
     @JsonProperty
     private final DocRef vectorGenerationModelRef;
 
     /**
      * Reference to the `OpenAIModel` used for reranking vector search results
      */
+    @Deprecated
     @JsonProperty
     private final DocRef rerankModelRef;
 
@@ -122,6 +128,7 @@ public class ElasticIndexDoc extends AbstractDoc {
      * For example, with a vector field `Content.vector` and a text field suffix of `.text`, the source text used for
      * reranking will be `Content.text`.
      */
+    @Deprecated
     @JsonProperty
     private final String rerankTextFieldSuffix;
 
@@ -130,12 +137,14 @@ public class ElasticIndexDoc extends AbstractDoc {
      * containing the rerank score.
      * For example, with a vector field `Content.vector`, the rerank score will be stored in new field `Content.score`.
      */
+    @Deprecated
     @JsonProperty
     private final String rerankScoreFieldSuffix;
 
     /**
      * Minimum rerank score for documents to be included in search hits
      */
+    @Deprecated
     @JsonProperty
     private final Float rerankScoreMinimum;
 
@@ -148,6 +157,12 @@ public class ElasticIndexDoc extends AbstractDoc {
     private final String timeField;
     @JsonProperty
     private final DocRef defaultExtractionPipeline;
+
+    /**
+     * User-defined settings for individual fields, including virtual fields
+     */
+    @JsonProperty
+    private final List<ElasticIndexFieldSettings> fieldSettings;
 
     @JsonCreator
     public ElasticIndexDoc(
@@ -170,7 +185,8 @@ public class ElasticIndexDoc extends AbstractDoc {
             @JsonProperty("rerankTextFieldSuffix") final String rerankTextFieldSuffix,
             @JsonProperty("rerankScoreFieldSuffix") final String rerankScoreFieldSuffix,
             @JsonProperty("rerankScoreMinimum") final Float rerankScoreMinimum,
-            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
+            @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline,
+            @JsonProperty("fieldSettings") final List<ElasticIndexFieldSettings> fieldSettings) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
@@ -187,20 +203,20 @@ public class ElasticIndexDoc extends AbstractDoc {
         } else {
             this.timeField = timeField;
         }
+        // Legacy vector settings are held exactly as given, so that they drop out of the doc once migrated
         this.vectorGenerationModelRef = vectorGenerationModelRef;
         this.rerankModelRef = rerankModelRef;
-        if (NullSafe.isEmptyString(rerankTextFieldSuffix)) {
-            this.rerankTextFieldSuffix = DEFAULT_RERANK_TEXT_FIELD_SUFFIX;
-        } else {
-            this.rerankTextFieldSuffix = rerankTextFieldSuffix;
-        }
-        if (NullSafe.isEmptyString(rerankScoreFieldSuffix)) {
-            this.rerankScoreFieldSuffix = DEFAULT_RERANK_SCORE_FIELD_SUFFIX;
-        } else {
-            this.rerankScoreFieldSuffix = rerankScoreFieldSuffix;
-        }
-        this.rerankScoreMinimum = Objects.requireNonNullElse(rerankScoreMinimum, DEFAULT_RERANK_SCORE_MINIMUM);
+        this.rerankTextFieldSuffix = NullSafe.isEmptyString(rerankTextFieldSuffix)
+                ? null
+                : rerankTextFieldSuffix;
+        this.rerankScoreFieldSuffix = NullSafe.isEmptyString(rerankScoreFieldSuffix)
+                ? null
+                : rerankScoreFieldSuffix;
+        this.rerankScoreMinimum = rerankScoreMinimum;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
+        this.fieldSettings = NullSafe.isEmptyCollection(fieldSettings)
+                ? null
+                : fieldSettings;
     }
 
     /**
@@ -238,28 +254,71 @@ public class ElasticIndexDoc extends AbstractDoc {
         return timeField;
     }
 
+    @Deprecated
     public DocRef getVectorGenerationModelRef() {
         return vectorGenerationModelRef;
     }
 
+    @Deprecated
     public DocRef getRerankModelRef() {
         return rerankModelRef;
     }
 
+    @Deprecated
     public String getRerankTextFieldSuffix() {
         return rerankTextFieldSuffix;
     }
 
+    @Deprecated
     public String getRerankScoreFieldSuffix() {
         return rerankScoreFieldSuffix;
     }
 
+    @Deprecated
     public Float getRerankScoreMinimum() {
         return rerankScoreMinimum;
     }
 
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
+    }
+
+    /// @return the user-defined field settings, or an empty list if there are none
+    public List<ElasticIndexFieldSettings> getFieldSettings() {
+        return NullSafe.list(fieldSettings);
+    }
+
+    /// @param fieldName the full name of a field
+    /// @return the settings for the named field, or `null` if it has none
+    @JsonIgnore
+    public ElasticIndexFieldSettings findFieldSettings(final String fieldName) {
+        if (fieldName == null || fieldSettings == null) {
+            return null;
+        }
+        for (final ElasticIndexFieldSettings settings : fieldSettings) {
+            if (fieldName.equals(settings.getFieldName())) {
+                return settings;
+            }
+        }
+        return null;
+    }
+
+    /// @param fieldName the full name of a field
+    /// @return `false` if the field has been disabled, otherwise `true`
+    @JsonIgnore
+    public boolean isFieldEnabled(final String fieldName) {
+        final ElasticIndexFieldSettings settings = findFieldSettings(fieldName);
+        return settings == null || settings.isEnabled();
+    }
+
+    /// @return `true` if the doc still holds any of the legacy, doc-level vector settings
+    @JsonIgnore
+    public boolean hasLegacyVectorSettings() {
+        return vectorGenerationModelRef != null ||
+               rerankModelRef != null ||
+               rerankTextFieldSuffix != null ||
+               rerankScoreFieldSuffix != null ||
+               rerankScoreMinimum != null;
     }
 
     @Override
@@ -283,7 +342,8 @@ public class ElasticIndexDoc extends AbstractDoc {
                Objects.equals(rerankScoreMinimum, that.rerankScoreMinimum) &&
                Objects.equals(fields, that.fields) &&
                Objects.equals(timeField, that.timeField) &&
-               Objects.equals(defaultExtractionPipeline, that.defaultExtractionPipeline);
+               Objects.equals(defaultExtractionPipeline, that.defaultExtractionPipeline) &&
+               Objects.equals(fieldSettings, that.fieldSettings);
     }
 
     @Override
@@ -301,7 +361,8 @@ public class ElasticIndexDoc extends AbstractDoc {
                 rerankScoreMinimum,
                 fields,
                 timeField,
-                defaultExtractionPipeline);
+                defaultExtractionPipeline,
+                fieldSettings);
     }
 
     @Override
@@ -320,6 +381,7 @@ public class ElasticIndexDoc extends AbstractDoc {
                ", fields=" + fields +
                ", timeField='" + timeField + '\'' +
                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
+               ", fieldSettings=" + fieldSettings +
                '}';
     }
 
@@ -343,9 +405,10 @@ public class ElasticIndexDoc extends AbstractDoc {
         private DocRef defaultExtractionPipeline;
         private DocRef vectorGenerationModelRef;
         private DocRef rerankModelRef;
-        private String rerankTextFieldSuffix = DEFAULT_RERANK_TEXT_FIELD_SUFFIX;
-        private String rerankScoreFieldSuffix = DEFAULT_RERANK_SCORE_FIELD_SUFFIX;
-        private Float rerankScoreMinimum = DEFAULT_RERANK_SCORE_MINIMUM;
+        private String rerankTextFieldSuffix;
+        private String rerankScoreFieldSuffix;
+        private Float rerankScoreMinimum;
+        private List<ElasticIndexFieldSettings> fieldSettings;
 
         private Builder() {
         }
@@ -365,6 +428,7 @@ public class ElasticIndexDoc extends AbstractDoc {
             this.rerankTextFieldSuffix = elasticIndexDoc.rerankTextFieldSuffix;
             this.rerankScoreFieldSuffix = elasticIndexDoc.rerankScoreFieldSuffix;
             this.rerankScoreMinimum = elasticIndexDoc.rerankScoreMinimum;
+            this.fieldSettings = elasticIndexDoc.fieldSettings;
         }
 
         public Builder clusterRef(final DocRef clusterRef) {
@@ -411,28 +475,52 @@ public class ElasticIndexDoc extends AbstractDoc {
             return self();
         }
 
+        @Deprecated
         public Builder vectorGenerationModelRef(final DocRef vectorGenerationModelRef) {
             this.vectorGenerationModelRef = vectorGenerationModelRef;
             return self();
         }
 
+        @Deprecated
         public Builder rerankModelRef(final DocRef rerankModelRef) {
             this.rerankModelRef = rerankModelRef;
             return self();
         }
 
+        @Deprecated
         public Builder rerankTextFieldSuffix(final String rerankTextFieldSuffix) {
             this.rerankTextFieldSuffix = rerankTextFieldSuffix;
             return self();
         }
 
+        @Deprecated
         public Builder rerankScoreFieldSuffix(final String rerankScoreFieldSuffix) {
             this.rerankScoreFieldSuffix = rerankScoreFieldSuffix;
             return self();
         }
 
+        @Deprecated
         public Builder rerankScoreMinimum(final Float rerankScoreMinimum) {
             this.rerankScoreMinimum = rerankScoreMinimum;
+            return self();
+        }
+
+        /// @param fieldSettings the user-defined field settings
+        /// @return this builder
+        public Builder fieldSettings(final List<ElasticIndexFieldSettings> fieldSettings) {
+            this.fieldSettings = fieldSettings;
+            return self();
+        }
+
+        /// Removes all legacy, doc-level vector settings.
+        ///
+        /// @return this builder
+        public Builder clearLegacyVectorSettings() {
+            this.vectorGenerationModelRef = null;
+            this.rerankModelRef = null;
+            this.rerankTextFieldSuffix = null;
+            this.rerankScoreFieldSuffix = null;
+            this.rerankScoreMinimum = null;
             return self();
         }
 
@@ -462,7 +550,8 @@ public class ElasticIndexDoc extends AbstractDoc {
                     rerankTextFieldSuffix,
                     rerankScoreFieldSuffix,
                     rerankScoreMinimum,
-                    defaultExtractionPipeline);
+                    defaultExtractionPipeline,
+                    fieldSettings);
         }
     }
 }

@@ -255,7 +255,7 @@ class TestElasticSearchProviderWireMock {
         final List<QueryField> fields = elasticSearchProvider.getDataSourceFields(createIndex());
 
         // Ordered case-insensitively. The object container `Host`, the geo_point `Location` (unsupported)
-        // are dropped, and the first definition of `Shared` wins
+        // are dropped, and so is `Shared`, as the two indices map it to different types
         assertThat(fields)
                 .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::queryable)
                 .containsExactly(
@@ -268,7 +268,6 @@ class TestElasticSearchProviderWireMock {
                         tuple("Message", FieldType.TEXT, true),
                         tuple("Message.keyword", FieldType.KEYWORD, true),
                         tuple("RawPayload", FieldType.KEYWORD, false),
-                        tuple("Shared", FieldType.KEYWORD, true),
                         tuple("Timestamp", FieldType.DATE, true),
                         tuple("User", FieldType.NESTED, false),
                         tuple("User.Address", FieldType.NESTED, false),

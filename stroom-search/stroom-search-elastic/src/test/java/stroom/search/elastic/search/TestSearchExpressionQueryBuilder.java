@@ -25,11 +25,14 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.MockIndexFieldCache;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -738,7 +741,24 @@ class TestSearchExpressionQueryBuilder {
     void testDenseVectorFieldWithoutModel() {
         assertThatThrownBy(() -> buildSingleTerm(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats"))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Vector embedding model is not defined in data source " + INDEX_NAME);
+                .hasMessage("Vector embedding model is not set for field '" + DENSE_VECTOR_FIELD +
+                            "' in data source " + INDEX_NAME);
+    }
+
+    @Test
+    void testDenseVectorFieldNearestNeighbourCount() {
+        final SearchExpressionQueryBuilder builder = createBuilderWithVectorModel(5);
+        final ElasticQueryParams params = builder.buildQuery(and(term(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats")));
+
+        assertThat(singleMust(params.getQuery()).knn().k()).isEqualTo(5);
+    }
+
+    @Test
+    void testDenseVectorFieldNearestNeighbourCountUnset() {
+        final SearchExpressionQueryBuilder builder = createBuilderWithVectorModel();
+        final ElasticQueryParams params = builder.buildQuery(and(term(DENSE_VECTOR_FIELD, Condition.EQUALS, "cats")));
+
+        assertThat(singleMust(params.getQuery()).knn().k()).isNull();
     }
 
     @Test
@@ -1599,14 +1619,33 @@ class TestSearchExpressionQueryBuilder {
     }
 
     private SearchExpressionQueryBuilder createBuilderWithVectorModel() {
+        return createBuilderWithVectorModel(0);
+    }
+
+    private SearchExpressionQueryBuilder createBuilderWithVectorModel(final int nearestNeighbourCount) {
         final EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
         when(embeddingModel.embed(any(String.class)))
                 .thenReturn(Response.from(Embedding.from(new float[]{0.25F, 0.5F})));
-        return createBuilderWithVectorModel(embeddingModel);
+        return createBuilderWithVectorModel(embeddingModel, nearestNeighbourCount);
     }
 
     private SearchExpressionQueryBuilder createBuilderWithVectorModel(final EmbeddingModel embeddingModel) {
-        indexDoc = indexDoc.copy().vectorGenerationModelRef(MODEL_REF).build();
+        return createBuilderWithVectorModel(embeddingModel, 0);
+    }
+
+    private SearchExpressionQueryBuilder createBuilderWithVectorModel(final EmbeddingModel embeddingModel,
+                                                                      final int nearestNeighbourCount) {
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder(DENSE_VECTOR_FIELD)
+                        .denseVector(new ElasticDenseVectorSettings(
+                                DenseVectorFieldConfig.builder()
+                                        .embeddingModelRef(MODEL_REF)
+                                        .nearestNeighbourCount(nearestNeighbourCount)
+                                        .build(),
+                                null,
+                                null))
+                        .build()))
+                .build();
         final OpenAIModelDoc modelDoc = mock(OpenAIModelDoc.class);
         when(aiService.getOpenAIModelDoc(MODEL_REF)).thenReturn(modelDoc);
         when(aiService.getEmbeddingModel(modelDoc)).thenReturn(embeddingModel);

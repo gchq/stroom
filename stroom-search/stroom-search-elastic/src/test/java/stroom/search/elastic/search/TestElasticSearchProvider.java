@@ -28,6 +28,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.security.api.SecurityContext;
 
@@ -649,7 +650,7 @@ class TestElasticSearchProvider {
     }
 
     @Test
-    void testGetDataSourceFields_mergedAcrossIndicesFirstDefinitionWins() throws IOException {
+    void testGetDataSourceFields_mergedAcrossIndicesConflictingTypeHidden() throws IOException {
         givenMappingResponse("""
                 {
                   "index-a": {
@@ -670,12 +671,12 @@ class TestElasticSearchProvider {
                   }
                 }""");
 
+        // `Shared` is mapped to different types, so Stroom can't choose how to query it
         assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
                 .extracting(QueryField::getFldName, QueryField::getFldType)
                 .containsExactly(
                         tuple("OnlyInA", FieldType.LONG),
-                        tuple("OnlyInB", FieldType.IPV4_ADDRESS),
-                        tuple("Shared", FieldType.KEYWORD));
+                        tuple("OnlyInB", FieldType.IPV4_ADDRESS));
     }
 
     @Test
@@ -875,6 +876,116 @@ class TestElasticSearchProvider {
     }
 
     /// Stubs the mapping response for a single index with the supplied properties.
+    @Test
+    void testGetFieldsMap_multiFieldParentAndMappingParameters() throws IOException {
+        givenMapping("""
+                {
+                  "Title": {
+                    "type": "text",
+                    "analyzer": "english",
+                    "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } }
+                  },
+                  "Vector": { "type": "dense_vector", "dims": 3, "similarity": "cosine" }
+                }""");
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        assertThat(fieldsMap.get("Title").getMultiFieldParent()).isNull();
+        assertThat(fieldsMap.get("Title").getMappingParameters())
+                .containsExactly(Map.entry("analyzer", "english"));
+        assertThat(fieldsMap.get("Title.keyword").getMultiFieldParent()).isEqualTo("Title");
+        assertThat(fieldsMap.get("Title.keyword").getMappingParameters())
+                .containsExactly(Map.entry("ignore_above", "256"));
+        assertThat(fieldsMap.get("Vector").getMappingParameters())
+                .containsEntry("dims", "3")
+                .containsEntry("similarity", "cosine")
+                .doesNotContainKey("type");
+        assertThat(fieldsMap.get("Vector").getSourceIndices()).containsExactly(INDEX_NAME);
+    }
+
+    @Test
+    void testGetFieldsMap_typeConflictAcrossIndices() throws IOException {
+        givenMappingResponse("""
+                {
+                  "logs-a": { "mappings": { "properties": {
+                    "Host": { "type": "keyword" },
+                    "Port": { "type": "long" }
+                  } } },
+                  "logs-b": { "mappings": { "properties": {
+                    "Host": { "type": "keyword" },
+                    "Port": { "type": "keyword" },
+                    "Extra": { "type": "keyword" }
+                  } } }
+                }""");
+
+        final Map<String, ElasticIndexField> fieldsMap = elasticSearchProvider.getFieldsMap(createIndex());
+
+        assertThat(fieldsMap.get("Port").getConflictingTypes())
+                .containsExactly(Map.entry("logs-a", "long"), Map.entry("logs-b", "keyword"));
+        assertThat(fieldsMap.get("Port").hasTypeConflict()).isTrue();
+        assertThat(fieldsMap.get("Host").hasTypeConflict()).isFalse();
+        assertThat(fieldsMap.get("Host").getSourceIndices()).containsExactly("logs-a", "logs-b");
+        assertThat(fieldsMap.get("Extra").getSourceIndices()).containsExactly("logs-b");
+    }
+
+    @Test
+    void testGetDataSourceFields_fieldSettings() throws IOException {
+        givenMappingResponse("""
+                {
+                  "logs-a": { "mappings": { "properties": {
+                    "Host": { "type": "keyword" },
+                    "Port": { "type": "long" },
+                    "Role": { "type": "keyword" },
+                    "Title": { "type": "text", "fields": { "keyword": { "type": "keyword" } } },
+                    "User": { "type": "keyword" }
+                  } } },
+                  "logs-b": { "mappings": { "properties": {
+                    "Port": { "type": "keyword" }
+                  } } }
+                }""");
+        final ElasticIndexDoc index = createIndex().copy()
+                .fieldSettings(List.of(
+                        ElasticIndexFieldSettings.builder("User").enabled(false).build(),
+                        ElasticIndexFieldSettings.builder("Title").enabled(false).build(),
+                        ElasticIndexFieldSettings.builder("Category").virtualGroups(List.of()).build(),
+                        ElasticIndexFieldSettings.builder("Hidden").virtualGroups(List.of()).enabled(false).build(),
+                        ElasticIndexFieldSettings.builder("Role").virtualGroups(List.of()).build()))
+                .build();
+
+        // Disabled fields (and the multi-fields of disabled fields), conflicting fields and disabled virtual
+        // fields are left out. A virtual field named like a mapped field is hidden by the mapped field.
+        assertThat(elasticSearchProvider.getDataSourceFields(index))
+                .extracting(QueryField::getFldName, QueryField::getFldType, QueryField::getConditionSet)
+                .containsExactly(
+                        tuple("Category", FieldType.KEYWORD, ConditionSet.ELASTIC_VIRTUAL),
+                        tuple("Host", FieldType.KEYWORD, ConditionSet.ELASTIC_TEXT),
+                        tuple("Role", FieldType.KEYWORD, ConditionSet.ELASTIC_TEXT));
+    }
+
+    @Test
+    void testGetIndexField_virtualField() throws IOException {
+        givenMapping("""
+                {
+                  "Host": { "type": "keyword" }
+                }""");
+        final ElasticIndexDoc index = createIndex().copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder("Category")
+                        .virtualGroups(List.of())
+                        .enabled(false)
+                        .build()))
+                .build();
+        when(elasticIndexStore.readDocument(INDEX_REF)).thenReturn(index);
+
+        // Returned even though disabled, so query building can say why it can't be used
+        final ElasticIndexField virtual = (ElasticIndexField) elasticSearchProvider.getIndexField(
+                INDEX_REF, "Category");
+        assertThat(virtual.isVirtual()).isTrue();
+        assertThat(virtual.getFldType()).isEqualTo(FieldType.KEYWORD);
+        assertThat(((ElasticIndexField) elasticSearchProvider.getIndexField(INDEX_REF, "Host")).isVirtual())
+                .isFalse();
+        assertThat(elasticSearchProvider.getIndexField(INDEX_REF, "Unknown")).isNull();
+    }
+
     private void givenMapping(final String propertiesJson) throws IOException {
         givenMappingResponse("""
                 {
