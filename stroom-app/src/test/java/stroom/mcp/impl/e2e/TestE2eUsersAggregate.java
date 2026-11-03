@@ -17,17 +17,9 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineData;
-import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticTestNode;
-import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.json.JsonUtil;
 
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,11 +110,6 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
             "items", List.of(obj("name", "login", "type", "keyword", "source", "Id"),
                     obj("name", "email", "type", "keyword", "source", "EmailAddress"),
                     obj("name", "organisation", "type", "keyword", "source", "UserDetails/Organisation")));
-
-    @Inject
-    private PipelineStore pipelineStore;
-    @Inject
-    private ElasticClusterStore elasticClusterStore;
 
     private ElasticTestNode node;
     private final List<String> indices = new ArrayList<>();
@@ -246,65 +233,22 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
         return node.count("e2e-users-" + STAMP + "-v1", "{\"term\": {\"users.login\": \"" + login + "\"}}");
     }
 
-    // An indexing template reading Events (the content pack's Indexing, its Lucene filter swapped for Elasticsearch's,
-    // with a JSON schema filter before it, as the live one has).
+    // An indexing template reading Events into Elasticsearch, as the live one is.
     private String eventsTemplate() {
-        final String lucene = templateUuid("indexing", "Indexing");
-        final ExplorerNode created = create(PipelineDoc.TYPE, FIXTURE_TEMPLATE, templateFolder());
-        asUser(admin, () -> {
-            final PipelineDoc source = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, lucene));
-            final String json = JsonUtil.writeValueAsString(source.getPipelineData(), false)
-                    .replace("\"indexingFilter\"", "\"elasticIndexingFilter\"")
-                    .replace("\"IndexingFilter\"", "\"ElasticIndexingFilter\"");
-            final Map<String, Object> data = JsonUtil.readValue(json, Map.class);
-            final List<Map<String, Object>> elements = (List<Map<String, Object>>) ((Map<String, Object>)
-                    data.computeIfAbsent("elements", key -> new LinkedHashMap<>()))
-                    .computeIfAbsent("add", key -> new ArrayList<>());
-            elements.add(Map.of("id", "schemaFilter", "type", "SchemaFilter"));
-            ((List<Map<String, Object>>) ((Map<String, Object>) data.computeIfAbsent("properties",
-                    key -> new LinkedHashMap<>())).computeIfAbsent("add", key -> new ArrayList<>()))
-                    .add(Map.of("element", "schemaFilter", "name", "schemaGroup", "value", Map.of("string", "JSON")));
-            final List<Map<String, Object>> links = (List<Map<String, Object>>) ((Map<String, Object>)
-                    data.computeIfAbsent("links", key -> new LinkedHashMap<>()))
-                    .computeIfAbsent("add", key -> new ArrayList<>());
-            for (final Map<String, Object> link : links) {
-                if ("xsltFilter".equals(link.get("from")) && "elasticIndexingFilter".equals(link.get("to"))) {
-                    link.put("to", "schemaFilter");
-                }
-            }
-            links.add(Map.of("from", "schemaFilter", "to", "elasticIndexingFilter"));
-            pipelineStore.writeDocument(pipelineStore.readDocument(created.getDocRef()).copy()
-                    .description("Fixture for TestE2eUsersAggregate")
-                    .pipelineData(JsonUtil.readValue(JsonUtil.writeValueAsString(data, false), PipelineData.class))
-                    .build());
-        });
-        return created.getUuid();
+        return elasticEventsTemplate(FIXTURE_TEMPLATE, "Fixture for TestE2eUsersAggregate");
     }
 
     // The Elastic Cluster doc for the test node.
     private DocRef liveCluster() {
-        final ExplorerNode created = create(ElasticClusterDoc.TYPE, FIXTURE_CLUSTER, templateFolder());
-        final ElasticConnectionConfig connection = new ElasticConnectionConfig();
-        connection.setConnectionUrls(List.of(node.getUrl()));
-        asUser(admin, () -> elasticClusterStore.writeDocument(elasticClusterStore.readDocument(created.getDocRef())
-                .copy()
-                .connection(connection)
-                .build()));
-        return created.getDocRef();
+        return liveElasticCluster(node, FIXTURE_CLUSTER);
     }
 
     // The cluster admin applies a Dev Tools request the user was given.
     private void apply(final String devTools) {
-        final int newline = devTools.indexOf('\n');
-        final String[] line = devTools.substring(0, newline).strip().split(" ", 2);
-        final String path = line[1].strip();
-        if (path.startsWith("_index_template/")) {
-            indexTemplates.add(path.substring("_index_template/".length()));
+        final String indexTemplate = applyDevTools(node, devTools);
+        if (indexTemplate != null) {
+            indexTemplates.add(indexTemplate);
         }
-        final ElasticTestNode.Response response = node.request(line[0], "/" + path,
-                devTools.substring(newline + 1));
-        assertThat(response.isSuccess()).as("%s %s: %s %s", line[0], path, response.status(), response.body())
-                .isTrue();
     }
 
     private static String compactXml(final String xml) {

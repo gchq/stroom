@@ -331,7 +331,10 @@ class CreatePipelineTool extends AbstractBuiltInTool {
         // The parser first: a template whose parser can't read the sample is the wrong one, whatever else it lacks
         // (seen: an XML source refused the Data Splitter template for want of a text converter, not for its
         // parser).
-        writes.parserReadsSample(build, merged, replaceParser, request.acceptParserMismatch());
+        // A pipeline fed the build's Events (a CEF pipeline, say) doesn't read the raw sample.
+        writes.parserReadsSample(build, merged, replaceParser, request.acceptParserMismatch()
+                                                               || writes.readsEvents(typed.properties(),
+                eventVersions.eventsNamespaces()));
         final Filled slots = writes.fillOpenSlots(build, merged, replaceParser, typed.properties(), previous);
         final List<PropertyValue> properties = new ArrayList<>(slots.properties());
         final List<String> filled = new ArrayList<>(slots.filled());

@@ -82,6 +82,8 @@ class PipelineWrites {
     private static final Pattern TEMPLATE_UUID = Pattern.compile(
             "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
     private static final Pattern WHOLE_NUMBER = Pattern.compile("-?\\d+");
+    private static final Pattern XPATH_DEFAULT_NAMESPACE = Pattern.compile(
+            "xpath-default-namespace\\s*=\\s*[\"']([^\"']*)[\"']");
     private static final Map<String, String> PLAIN = Map.of("boolean", "boolean", "int", "integer",
             "long", "long", "String", "string");
 
@@ -394,6 +396,24 @@ class PipelineWrites {
                                       + "reuse_existing_docs=true.");
             }
         }
+    }
+
+    /// Whether a pipeline is fed Events rather than the build's raw sample: an XSLT the call sets reads them (its
+    /// xpath-default-namespace is an Events namespace). Seen in testing: a CEF pipeline reading the build's Events,
+    /// from a template whose XMLParser reads them, was refused for not reading the build's JSON sample.
+    ///
+    /// @param properties       The properties the call sets.
+    /// @param eventsNamespaces The Events namespaces: event-logging:3 and any environment's fork.
+    /// @return True if an XSLT among them reads Events.
+    boolean readsEvents(final List<PropertyValue> properties, final Set<String> eventsNamespaces) {
+        return NullSafe.list(properties).stream()
+                .filter(property -> XsltDoc.TYPE.equals(property.docType()) && property.docUuid() != null)
+                .map(property -> documentAccess.read(new DocRef(XsltDoc.TYPE, property.docUuid()), XsltDoc.class)
+                        .map(XsltDoc::getData)
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .map(XPATH_DEFAULT_NAMESPACE::matcher)
+                .anyMatch(matcher -> matcher.find() && eventsNamespaces.contains(matcher.group(1).strip()));
     }
 
     /// The template's parser (or the replacement) must read the format of the build's sample streams.
