@@ -310,8 +310,10 @@ subprojects {
         addTestListener(new TestListener() {
             @Override
             void beforeSuite(TestDescriptor descriptor) {
-                if (descriptor?.className?.trim())
+                // Extra check to stop it logging for each TestFactory dynamic test
+                if (descriptor?.className?.trim() && descriptor.name == descriptor.className) {
                     println "Executing test class ${descriptor.className}"
+                }
             }
 
             @Override
@@ -334,6 +336,7 @@ subprojects {
             void afterSuite(TestDescriptor descriptor, TestResult result) {
                 if (descriptor != null
                         && descriptor.className != null
+                        && descriptor.name == descriptor.className
                         && result.resultType.toString() == "FAILURE") {
 
                     // test class failed so add its project info and test report file to a global list for
