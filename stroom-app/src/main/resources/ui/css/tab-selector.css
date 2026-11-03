@@ -44,7 +44,14 @@
     border: var(--curve-tab__border--hover);
 }
 
+/* In a link bar, in line with its tabs: inside the bar's padding (the bar places it in its tab
+   list's terms), as high as a tab */
 .tab-bar--link .tab-selector {
+    top: 4px;
+    margin-left: 4px;
+    box-sizing: border-box;
+    height: 24px;
+    align-items: center;
     border: 1px solid transparent;
     border-radius: .25rem;
     background-color: transparent;

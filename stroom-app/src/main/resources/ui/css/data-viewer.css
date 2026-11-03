@@ -18,9 +18,10 @@
    The data viewer (stroom.data.client.component.DataViewer), named BEM style. Its rules were in `components.css`.
 */
 
+/* Its tabs are .75rem in from the edge, 4px of it the tab bar's own padding (tab-bar.css) */
 .data-viewer__tab-bar {
     align-items: center;
-    padding: 0 .75rem;
+    padding: 0 .75rem 0 calc(.75rem - 4px);
     gap: .75rem;
     min-height: 27px;
 }

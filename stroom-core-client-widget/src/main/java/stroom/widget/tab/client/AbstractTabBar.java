@@ -411,7 +411,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
      */
     private Set<TabData> getDisplayableTabs() {
         final int selectorWidth = getTabSelector().getOffsetWidth();
-        final int totalWidth = getElement().getOffsetWidth();
+        final int totalWidth = getTabSpaceWidth();
         final int tabGap = getTabGap();
 
         // Pre-filter: only consider non-hidden tabs
@@ -1047,6 +1047,13 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     protected int getTabGap() {
         return 0;
+    }
+
+    /// The width the bar's tabs, and its overflow selector, must fit in.
+    ///
+    /// @return By default the bar's width.
+    protected int getTabSpaceWidth() {
+        return getElement().getOffsetWidth();
     }
 
     private enum Direction {

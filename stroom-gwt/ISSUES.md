@@ -1833,7 +1833,23 @@ against an edge that hides overflow, which is where rings were cut) the buttons 
 bar is 4px higher. Measured by putting the old rules back with an injected style and comparing each
 button's place.
 
-**Open**: link tabs (with the 24px link tab change, a link tab bar 32px high, from 18px).
+**Fixed for link tabs** (3 November 2026, the user's decision, as for toolbars): a link tab is now
+24px high and 4px wider than its label either side (a 24px target, WCAG 2.5.8), its ring on its
+edge, and a link bar has 4px of padding round its tabs for the ring's band (32px high, from 18px;
+`tab-bar.css`, the overflow selector in line, `LinkTabBar.getTabSpaceWidth` fitting tabs to the tab
+list). The room the bar's containers had becomes the bar's padding, so the tabs stay close to where
+they were (measured on the 345 link tabs in the first story of each App/ and Screens/ component):
+a document's tab bar (`link-tab-panel`) +3px across and -1px down, its 4px below overlapping the
+toolbar's padding under it, so what follows moves 1-3px; a dashboard pane's (`tab-layout`) 0 across
+and -3px; a dialog's (User Preferences) +3px down, its fields where they were; the query results',
+the data viewer's and data retention's +3-4px across, data retention's toolbar 8px lower. The bar's
+invisible strut, which gives it its height, now takes no clicks: transparent (opacity), it was drawn
+over the tabs and took clicks on the start of the first tab (a real-input check found it once it was
+a whole row). The remaining rings counted as cut are rounding (under 1px, the floor map's bars) or
+a results pane squeezed below its bar at 720px high, as before. Fewer link tabs fit a narrow bar, as
+each is 8px wider (`LinkTabPanel` `Overflow`: 6 of 9, from 8). A link tab's label is centred 1px low
+(its line's room for descenders left its letters 1px high); the "|" between tabs isn't, as it
+reaches below the baseline.
 
 ### A scroll pane that overflows can't be scrolled from the keyboard
 
