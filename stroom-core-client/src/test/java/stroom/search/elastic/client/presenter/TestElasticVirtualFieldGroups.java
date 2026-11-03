@@ -31,32 +31,42 @@ class TestElasticVirtualFieldGroups {
     private static final ExpressionOperator WEB = ExpressionOperator.builder()
             .addTerm("host", Condition.EQUALS, "web*")
             .build();
+    private static final ExpressionOperator MAIL = ExpressionOperator.builder()
+            .addTerm("host", Condition.EQUALS, "mail*")
+            .build();
     private static final List<ElasticVirtualFieldGroup> GROUPS = List.of(
             new ElasticVirtualFieldGroup("web", WEB),
-            new ElasticVirtualFieldGroup(ElasticVirtualFieldGroups.NEW_GROUP_NAME, null));
+            new ElasticVirtualFieldGroup("other", null));
 
     @Test
-    void testAddGivesUniqueNameAndEmptyExpression() {
-        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.add(GROUPS);
+    void testAdd() {
+        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.add(GROUPS, " mail ", MAIL);
 
         assertThat(groups).hasSize(3);
-        assertThat(groups.get(2).getName()).isEqualTo(ElasticVirtualFieldGroups.NEW_GROUP_NAME + " 2");
-        assertThat(groups.get(2).getExpression()).isEqualTo(ExpressionOperator.builder().build());
+        assertThat(groups.get(2).getName()).isEqualTo("mail");
+        assertThat(groups.get(2).getExpression()).isEqualTo(MAIL);
         assertThat(GROUPS).hasSize(2);
     }
 
     @Test
     void testAddToNoGroups() {
-        assertThat(ElasticVirtualFieldGroups.add(null))
+        assertThat(ElasticVirtualFieldGroups.add(null, "mail", MAIL))
                 .extracting(ElasticVirtualFieldGroup::getName)
-                .containsExactly(ElasticVirtualFieldGroups.NEW_GROUP_NAME);
+                .containsExactly("mail");
+    }
+
+    @Test
+    void testAddRejectsInvalidName() {
+        assertThat(ElasticVirtualFieldGroups.add(GROUPS, " ", MAIL)).isEqualTo(GROUPS);
+        assertThat(ElasticVirtualFieldGroups.add(GROUPS, null, MAIL)).isEqualTo(GROUPS);
+        assertThat(ElasticVirtualFieldGroups.add(GROUPS, "web", MAIL)).isEqualTo(GROUPS);
     }
 
     @Test
     void testRemove() {
         assertThat(ElasticVirtualFieldGroups.remove(GROUPS, 0))
                 .extracting(ElasticVirtualFieldGroup::getName)
-                .containsExactly(ElasticVirtualFieldGroups.NEW_GROUP_NAME);
+                .containsExactly("other");
         assertThat(ElasticVirtualFieldGroups.remove(GROUPS, 5)).isEqualTo(GROUPS);
         assertThat(ElasticVirtualFieldGroups.remove(GROUPS, -1)).isEqualTo(GROUPS);
     }
@@ -72,21 +82,37 @@ class TestElasticVirtualFieldGroups {
     }
 
     @Test
-    void testRenameKeepsExpression() {
-        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.rename(GROUPS, 0, " websites ");
-
-        assertThat(groups.get(0).getName()).isEqualTo("websites");
-        assertThat(groups.get(0).getExpression()).isEqualTo(WEB);
-        assertThat(ElasticVirtualFieldGroups.rename(GROUPS, 1, "web")).isEqualTo(GROUPS);
-        assertThat(ElasticVirtualFieldGroups.rename(GROUPS, 9, "other")).isEqualTo(GROUPS);
+    void testValidateNameForNewGroup() {
+        assertThat(ElasticVirtualFieldGroups.validateName(GROUPS, -1, "web"))
+                .isEqualTo(ElasticVirtualFieldGroups.ERROR_NAME_IN_USE);
+        assertThat(ElasticVirtualFieldGroups.validateName(GROUPS, -1, ""))
+                .isEqualTo(ElasticVirtualFieldGroups.ERROR_EMPTY_NAME);
+        assertThat(ElasticVirtualFieldGroups.validateName(null, -1, "mail")).isNull();
     }
 
     @Test
-    void testSetExpression() {
-        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.setExpression(GROUPS, 1, WEB);
+    void testReplace() {
+        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.replace(GROUPS, 1, " mail ", MAIL);
 
-        assertThat(groups.get(1).getName()).isEqualTo(ElasticVirtualFieldGroups.NEW_GROUP_NAME);
-        assertThat(groups.get(1).getExpression()).isEqualTo(WEB);
-        assertThat(ElasticVirtualFieldGroups.setExpression(GROUPS, 2, WEB)).isEqualTo(GROUPS);
+        assertThat(groups.get(0)).isEqualTo(GROUPS.get(0));
+        assertThat(groups.get(1).getName()).isEqualTo("mail");
+        assertThat(groups.get(1).getExpression()).isEqualTo(MAIL);
+        assertThat(GROUPS.get(1).getName()).isEqualTo("other");
+    }
+
+    @Test
+    void testReplaceKeepingName() {
+        final List<ElasticVirtualFieldGroup> groups = ElasticVirtualFieldGroups.replace(GROUPS, 0, "web", MAIL);
+
+        assertThat(groups.get(0).getName()).isEqualTo("web");
+        assertThat(groups.get(0).getExpression()).isEqualTo(MAIL);
+    }
+
+    @Test
+    void testReplaceRejectsInvalidNameOrIndex() {
+        assertThat(ElasticVirtualFieldGroups.replace(GROUPS, 1, "web", MAIL)).isEqualTo(GROUPS);
+        assertThat(ElasticVirtualFieldGroups.replace(GROUPS, 1, " ", MAIL)).isEqualTo(GROUPS);
+        assertThat(ElasticVirtualFieldGroups.replace(GROUPS, 2, "mail", MAIL)).isEqualTo(GROUPS);
+        assertThat(ElasticVirtualFieldGroups.replace(GROUPS, -1, "mail", MAIL)).isEqualTo(GROUPS);
     }
 }

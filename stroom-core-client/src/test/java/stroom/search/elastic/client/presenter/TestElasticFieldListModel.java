@@ -81,33 +81,33 @@ class TestElasticFieldListModel {
     }
 
     @Test
-    void testRowKindsAndStatuses() {
+    void testRowKindsAndStateNotes() {
         final List<ElasticFieldRow> rows = buildRows(Set.of());
 
         final ElasticFieldRow missing = find(rows, "gone", Kind.MISSING);
-        assertThat(missing.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_MISSING);
+        assertThat(missing.getStateNote()).isEqualTo(ElasticFieldListModel.STATE_MISSING);
         assertThat(missing.isEnabled()).isFalse();
         assertThat(missing.isEnabledEditable()).isFalse();
 
         final ElasticFieldRow virtual = find(rows, "category", Kind.VIRTUAL);
-        assertThat(virtual.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_VIRTUAL);
+        assertThat(virtual.getStateNote()).isNull();
         assertThat(virtual.getTypeLabel()).isEqualTo(ElasticFieldListModel.VIRTUAL_FILTER_TYPE);
         assertThat(virtual.getFilterType()).isEqualTo(ElasticFieldListModel.VIRTUAL_FILTER_TYPE);
         assertThat(virtual.isEnabledEditable()).isTrue();
 
         final ElasticFieldRow clashing = find(rows, "host", Kind.CLASHING_VIRTUAL);
-        assertThat(clashing.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_CLASHING);
+        assertThat(clashing.getStateNote()).isEqualTo(ElasticFieldListModel.STATE_CLASHING);
         assertThat(clashing.isEnabledEditable()).isFalse();
 
         // The mapped field wins over the virtual field of the same name and doesn't take its settings
         final ElasticFieldRow mappedHost = find(rows, "host", Kind.MAPPED);
         assertThat(mappedHost.getSettings()).isNull();
-        assertThat(mappedHost.getStatus()).isEmpty();
+        assertThat(mappedHost.getStateNote()).isNull();
         assertThat(mappedHost.isEnabled()).isTrue();
 
         final ElasticFieldRow conflict = find(rows, "status", Kind.MAPPED);
         assertThat(conflict.getTypeLabel()).isEqualTo(ElasticFieldListModel.CONFLICT_TYPE_LABEL);
-        assertThat(conflict.getStatus()).isEqualTo("Type conflict: keyword, long");
+        assertThat(conflict.getStateNote()).isEqualTo("Type conflict: keyword, long");
         assertThat(conflict.isEnabled()).isFalse();
         assertThat(conflict.isEnabledEditable()).isFalse();
     }
@@ -129,7 +129,7 @@ class TestElasticFieldListModel {
     }
 
     @Test
-    void testVectorSettingsShowAsConfigured() {
+    void testVectorSettingsHaveNoStateNote() {
         model.putSettings(ElasticIndexFieldSettings.builder("embedding")
                 .denseVector(new ElasticDenseVectorSettings(null, "title", "score"))
                 .enabled(false)
@@ -137,7 +137,8 @@ class TestElasticFieldListModel {
 
         final ElasticFieldRow embedding = find(buildRows(Set.of()), "embedding", Kind.MAPPED);
 
-        assertThat(embedding.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_CONFIGURED);
+        assertThat(embedding.getSettings().getDenseVector()).isNotNull();
+        assertThat(embedding.getStateNote()).isNull();
     }
 
     @Test
@@ -150,8 +151,8 @@ class TestElasticFieldListModel {
 
         assertThat(title.isEnabled()).isFalse();
         assertThat(title.isEnabledEditable()).isTrue();
-        // Being disabled doesn't count as being configured, as the Enabled column shows it
-        assertThat(title.getStatus()).isEmpty();
+        // Being disabled is shown by the Enabled column, not as a state note
+        assertThat(title.getStateNote()).isNull();
         assertThat(keyword.isEnabled()).isFalse();
         assertThat(keyword.isEnabledEditable()).isFalse();
         assertThat(model.isFieldEnabled("title.keyword")).isFalse();
@@ -260,17 +261,54 @@ class TestElasticFieldListModel {
     }
 
     @Test
-    void testAddVirtualFieldGivesUniqueNames() {
-        final String first = model.addVirtualField();
-        final String second = model.addVirtualField();
+    void testAddVirtualField() {
+        assertThat(model.addVirtualField(" sources ")).isTrue();
+        assertThat(model.addVirtualField("targets")).isTrue();
 
-        assertThat(first).isEqualTo(ElasticFieldListModel.NEW_VIRTUAL_FIELD_NAME);
-        assertThat(second).isEqualTo(ElasticFieldListModel.NEW_VIRTUAL_FIELD_NAME + " 2");
-        final ElasticFieldRow row = model.findRow(first, Kind.VIRTUAL);
+        final ElasticFieldRow row = model.findRow("sources", Kind.VIRTUAL);
         assertThat(row).isNotNull();
         assertThat(row.getSettings().getVirtualGroups()).isEmpty();
         assertThat(model.getSettingsList()).extracting(ElasticIndexFieldSettings::getFieldName)
-                .endsWith(first, second);
+                .endsWith("sources", "targets");
+    }
+
+    @Test
+    void testAddVirtualFieldRejectsInvalidNames() {
+        final List<ElasticIndexFieldSettings> before = model.getSettingsList();
+
+        assertThat(model.addVirtualField(" ")).isFalse();
+        assertThat(model.addVirtualField(null)).isFalse();
+        // Clashes with a mapped field
+        assertThat(model.addVirtualField("bytes")).isFalse();
+        // Already used by a virtual field or by settings for a missing field
+        assertThat(model.addVirtualField("category")).isFalse();
+        assertThat(model.addVirtualField("gone")).isFalse();
+        assertThat(model.getSettingsList()).isEqualTo(before);
+    }
+
+    @Test
+    void testValidateNewVirtualFieldName() {
+        assertThat(model.validateVirtualFieldName(null, ""))
+                .isEqualTo(ElasticFieldListModel.ERROR_EMPTY_NAME);
+        assertThat(model.validateVirtualFieldName(null, "bytes"))
+                .isEqualTo(ElasticFieldListModel.ERROR_CLASHES_WITH_MAPPED);
+        assertThat(model.validateVirtualFieldName(null, "category"))
+                .isEqualTo(ElasticFieldListModel.ERROR_NAME_IN_USE);
+        assertThat(model.validateVirtualFieldName(null, "sources")).isNull();
+    }
+
+    @Test
+    void testValidateVirtualFieldRename() {
+        // Keeping the name is allowed, even for a virtual field whose name clashes with a mapped field
+        assertThat(model.validateVirtualFieldRename("category", " category ")).isNull();
+        assertThat(model.validateVirtualFieldRename("host", "host")).isNull();
+        assertThat(model.validateVirtualFieldRename("host", "bytes"))
+                .isEqualTo(ElasticFieldListModel.ERROR_CLASHES_WITH_MAPPED);
+        assertThat(model.validateVirtualFieldRename("category", "gone"))
+                .isEqualTo(ElasticFieldListModel.ERROR_NAME_IN_USE);
+        assertThat(model.validateVirtualFieldRename("category", " "))
+                .isEqualTo(ElasticFieldListModel.ERROR_EMPTY_NAME);
+        assertThat(model.validateVirtualFieldRename("host", "sources")).isNull();
     }
 
     @Test

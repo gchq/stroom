@@ -18,16 +18,25 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
     <ui:style>
         .groups {
-            height: 160px;
+            height: 200px;
         }
 
-        .expression {
-            height: 250px;
+        /* Fill the width of the section rather than shrinking to the content */
+        .fill {
+            align-self: stretch;
+        }
+
+        .nameRow {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
         }
 
         .section {
@@ -103,30 +112,19 @@
 
             <g:FlowPanel ui:field="virtualSection" addStyleNames="{style.section}">
                 <g:Label text="Virtual field" addStyleNames="{style.sectionTitle}"/>
-                <form:FormGroup identity="elasticFieldSettingsVirtualName" label="Name">
-                    <g:FlowPanel>
-                        <g:TextBox ui:field="virtualName" width="400px"/>
-                        <g:Label ui:field="virtualNameError" styleName="invalid-feedback" visible="false"/>
+                <form:FormGroup identity="elasticFieldSettingsVirtualName" label="Name"
+                                helpText="The name users query the virtual field by.">
+                    <g:FlowPanel addStyleNames="{style.nameRow}">
+                        <g:Label ui:field="virtualName"/>
+                        <b:Button ui:field="renameVirtualField" text="Rename" addStyleNames="allow-focus"/>
                     </g:FlowPanel>
                 </form:FormGroup>
                 <form:FormGroup identity="elasticFieldSettingsVirtualGroups" label="Groups"
+                                addStyleNames="{style.fill}"
                                 helpText="Each group is a named query. Searching this field for a group runs that
-                                          group's query.">
-                    <g:SimplePanel ui:field="groups" addStyleNames="{style.groups} stroom-control"/>
+                                          group's query. Double-click a group to edit it.">
+                    <g:SimplePanel ui:field="groups" addStyleNames="{style.groups} stroom-control w-100"/>
                 </form:FormGroup>
-                <g:FlowPanel ui:field="groupEditor" addStyleNames="{style.section}">
-                    <form:FormGroup identity="elasticFieldSettingsGroupName" label="Group name">
-                        <g:FlowPanel>
-                            <g:TextBox ui:field="groupName" width="400px"/>
-                            <g:Label ui:field="groupNameError" styleName="invalid-feedback" visible="false"/>
-                        </g:FlowPanel>
-                    </form:FormGroup>
-                    <form:FormGroup identity="elasticFieldSettingsGroupExpression" label="Group query"
-                                    helpText="The query run when users search this field for the group. Terms may
-                                              use the index's keyword fields.">
-                        <g:SimplePanel ui:field="expression" addStyleNames="{style.expression}"/>
-                    </form:FormGroup>
-                </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:ScrollPanel>

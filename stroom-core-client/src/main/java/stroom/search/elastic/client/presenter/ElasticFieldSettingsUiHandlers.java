@@ -27,15 +27,6 @@ public interface ElasticFieldSettingsUiHandlers extends UiHandlers {
     /// Called when any `dense_vector` setting changes.
     void onDenseVectorChange();
 
-    /// Called as the virtual field name is edited, so it can be checked.
-    void onVirtualNameEdit();
-
-    /// Called when the user has finished editing the virtual field name.
-    void onVirtualNameChange();
-
-    /// Called as the selected group's name is edited, so it can be checked.
-    void onGroupNameEdit();
-
-    /// Called when the user has finished editing the selected group's name.
-    void onGroupNameChange();
+    /// Called when the user asks to rename the virtual field.
+    void onRenameVirtualField();
 }

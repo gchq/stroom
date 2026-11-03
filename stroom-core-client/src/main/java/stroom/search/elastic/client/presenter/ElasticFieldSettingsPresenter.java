@@ -16,14 +16,11 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -42,6 +39,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.user.cellview.client.Header;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -50,13 +48,13 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /// The Settings tab of the Elasticsearch index Fields tab, for editing the selected field's settings.
 ///
 /// Every field has an Enabled setting. `dense_vector` fields also have vector search settings, and virtual fields
-/// have a name and a list of named groups, each with an expression. Edits are written to the shared
-/// [ElasticFieldListModel] and reported to the [ElasticFieldSettingsListener]; nothing is sent to the server.
+/// have a name and a list of named groups, each with an expression. The name and the groups are edited in dialogs.
+/// Edits are written to the shared [ElasticFieldListModel] and reported to the [ElasticFieldSettingsListener];
+/// nothing is sent to the server.
 public class ElasticFieldSettingsPresenter
         extends MyPresenterWidget<ElasticFieldSettingsView>
         implements ElasticFieldSettingsUiHandlers {
@@ -71,19 +69,24 @@ public class ElasticFieldSettingsPresenter
     static final String NOTE_PARENT_DISABLED_PREFIX = "Disabled because the field it belongs to is disabled: ";
     static final String ERROR_SCORE_MINIMUM = "Enter a number, e.g. 0.8.";
 
+    private static final String RENAME_VIRTUAL_FIELD = "Rename Virtual Field";
+    private static final String ADD_GROUP = "Add group";
+    private static final String EDIT_GROUP = "Edit group";
+    private static final String VIEW_GROUP = "View group";
+
     private final DocSelectionBoxPresenter embeddingModelPresenter;
     private final DocSelectionBoxPresenter rerankModelPresenter;
-    private final EditExpressionPresenter expressionPresenter;
-    private final RestFactory restFactory;
+    private final ElasticVirtualFieldNamePresenter namePresenter;
+    private final ElasticVirtualFieldGroupPresenter groupPresenter;
     private final SimpleFieldSelectionListModel fieldSelectionListModel = new SimpleFieldSelectionListModel();
     private final MyDataGrid<ElasticVirtualFieldGroup> groupsGrid;
     private final MultiSelectionModelImpl<ElasticVirtualFieldGroup> groupsSelectionModel;
     private final ButtonView addGroupButton;
+    private final ButtonView editGroupButton;
     private final ButtonView removeGroupButton;
 
     private ElasticFieldListModel model;
     private ElasticFieldSettingsListener listener;
-    private DocRef indexDocRef;
     private boolean readOnly = true;
     private ElasticFieldRow row;
     private List<ElasticVirtualFieldGroup> groups = new ArrayList<>();
@@ -95,14 +98,14 @@ public class ElasticFieldSettingsPresenter
                                          final ElasticFieldSettingsView view,
                                          final DocSelectionBoxPresenter embeddingModelPresenter,
                                          final DocSelectionBoxPresenter rerankModelPresenter,
-                                         final EditExpressionPresenter expressionPresenter,
-                                         final PagerView groupsPagerView,
-                                         final RestFactory restFactory) {
+                                         final ElasticVirtualFieldNamePresenter namePresenter,
+                                         final ElasticVirtualFieldGroupPresenter groupPresenter,
+                                         final PagerView groupsPagerView) {
         super(eventBus, view);
         this.embeddingModelPresenter = embeddingModelPresenter;
         this.rerankModelPresenter = rerankModelPresenter;
-        this.expressionPresenter = expressionPresenter;
-        this.restFactory = restFactory;
+        this.namePresenter = namePresenter;
+        this.groupPresenter = groupPresenter;
 
         embeddingModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
         embeddingModelPresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -112,21 +115,20 @@ public class ElasticFieldSettingsPresenter
         groupsGrid = new MyDataGrid<>(this, MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
         groupsGrid.setTableName("Virtual Field Groups");
         groupsSelectionModel = groupsGrid.addDefaultSelectionModel(false);
+        // No heading, so the grid hides its header row; the Groups label above the list names it
         groupsGrid.addAutoResizableColumn(
                 DataGridUtil.textColumnBuilder(ElasticVirtualFieldGroup::getName).build(),
-                DataGridUtil.headingBuilder("Group")
-                        .withToolTip("The value users search the virtual field for to run the group's query.")
-                        .build(),
+                (Header<?>) null,
                 200);
         groupsPagerView.setDataWidget(groupsGrid);
-        addGroupButton = groupsPagerView.addButton(SvgPresets.ADD.title("Add group"));
+        addGroupButton = groupsPagerView.addButton(SvgPresets.ADD.title(ADD_GROUP));
+        editGroupButton = groupsPagerView.addButton(SvgPresets.EDIT.title(EDIT_GROUP));
         removeGroupButton = groupsPagerView.addButton(SvgPresets.DELETE.title("Remove group"));
 
         view.setUiHandlers(this);
         view.setEmbeddingModelView(embeddingModelPresenter.getView());
         view.setRerankModelView(rerankModelPresenter.getView());
         view.setGroupsView(groupsPagerView);
-        view.setExpressionView(expressionPresenter.getView());
         showSections();
     }
 
@@ -135,9 +137,14 @@ public class ElasticFieldSettingsPresenter
         super.onBind();
         registerHandler(embeddingModelPresenter.addDataSelectionHandler(event -> onDenseVectorChange()));
         registerHandler(rerankModelPresenter.addDataSelectionHandler(event -> onDenseVectorChange()));
-        registerHandler(expressionPresenter.addChangeHandler(this::onExpressionChange));
-        registerHandler(groupsSelectionModel.addSelectionHandler(event -> onGroupSelected()));
+        registerHandler(groupsSelectionModel.addSelectionHandler(event -> {
+            onGroupSelected();
+            if (event.getSelectionType().isDoubleSelect()) {
+                editGroup();
+            }
+        }));
         registerHandler(addGroupButton.addClickHandler(event -> addGroup()));
+        registerHandler(editGroupButton.addClickHandler(event -> editGroup()));
         registerHandler(removeGroupButton.addClickHandler(event -> removeGroup()));
     }
 
@@ -153,10 +160,7 @@ public class ElasticFieldSettingsPresenter
 
     /// @param indexDocRef the index doc, used when picking terms for a group's expression
     public void setIndex(final DocRef indexDocRef) {
-        if (indexDocRef != null && !indexDocRef.equals(this.indexDocRef)) {
-            this.indexDocRef = indexDocRef;
-            expressionPresenter.init(restFactory, indexDocRef, fieldSelectionListModel);
-        }
+        groupPresenter.setIndex(indexDocRef, fieldSelectionListModel);
     }
 
     /// @param readOnly `true` if the doc can't be changed
@@ -175,13 +179,6 @@ public class ElasticFieldSettingsPresenter
             selectedGroupIndex = -1;
         }
         showSections();
-    }
-
-    /// Moves the keyboard focus to the virtual field name, so a new field can be named straight away.
-    public void focusVirtualName() {
-        if (row != null && row.isVirtual()) {
-            getView().focusVirtualName();
-        }
     }
 
     @Override
@@ -224,62 +221,27 @@ public class ElasticFieldSettingsPresenter
     }
 
     @Override
-    public void onVirtualNameEdit() {
-        if (canEdit() && row.isVirtual()) {
-            getView().setVirtualNameError(validateVirtualName(getView().getVirtualName()));
-        }
-    }
-
-    @Override
-    public void onVirtualNameChange() {
+    public void onRenameVirtualField() {
         if (!canEdit() || !row.isVirtual()) {
             return;
         }
         final String oldName = row.getName();
-        final String newName = NullSafe.trim(getView().getVirtualName());
-        final String error = validateVirtualName(newName);
-        getView().setVirtualNameError(error);
-        if (error == null && !newName.equals(oldName) && model.renameVirtualField(oldName, newName)) {
-            row = model.findRow(newName, Kind.VIRTUAL);
-            getView().setVirtualName(newName);
-            if (listener != null) {
-                listener.onVirtualFieldRenamed(oldName, newName);
-            }
-        }
-    }
-
-    @Override
-    public void onGroupNameEdit() {
-        if (canEdit() && hasSelectedGroup()) {
-            getView().setGroupNameError(ElasticVirtualFieldGroups.validateName(groups,
-                    selectedGroupIndex,
-                    getView().getGroupName()));
-        }
-    }
-
-    @Override
-    public void onGroupNameChange() {
-        if (!canEdit() || !hasSelectedGroup()) {
-            return;
-        }
-        final String newName = getView().getGroupName();
-        final String error = ElasticVirtualFieldGroups.validateName(groups, selectedGroupIndex, newName);
-        getView().setGroupNameError(error);
-        if (error == null && !NullSafe.trim(newName).equals(groups.get(selectedGroupIndex).getName())) {
-            applyGroups(ElasticVirtualFieldGroups.rename(groups, selectedGroupIndex, newName));
-        }
+        namePresenter.show(RENAME_VIRTUAL_FIELD,
+                oldName,
+                name -> model.validateVirtualFieldRename(oldName, name),
+                newName -> {
+                    if (model.renameVirtualField(oldName, newName)) {
+                        row = model.findRow(newName, Kind.VIRTUAL);
+                        showSections();
+                        if (listener != null) {
+                            listener.onVirtualFieldRenamed(oldName, newName);
+                        }
+                    }
+                });
     }
 
     private boolean canEdit() {
         return !updating && !readOnly && row != null && model != null;
-    }
-
-    private String validateVirtualName(final String name) {
-        if (row.getKind() == Kind.CLASHING_VIRTUAL && NullSafe.trim(name).equals(row.getName())) {
-            // Keeping the clashing name is allowed, but the user should know why the field is hidden
-            return ElasticFieldListModel.ERROR_CLASHES_WITH_MAPPED;
-        }
-        return model.validateVirtualFieldName(row.getName(), name);
     }
 
     private void fireChanged() {
@@ -373,9 +335,6 @@ public class ElasticFieldSettingsPresenter
             return;
         }
         view.setVirtualName(row.getName());
-        view.setVirtualNameError(row.getKind() == Kind.CLASHING_VIRTUAL
-                ? ElasticFieldListModel.ERROR_CLASHES_WITH_MAPPED
-                : null);
 
         fieldSelectionListModel.clear();
         for (final String fieldName : model.getKeywordFieldNames()) {
@@ -407,27 +366,17 @@ public class ElasticFieldSettingsPresenter
         } else {
             groupsSelectionModel.clear(false);
         }
-        showSelectedGroup();
-        addGroupButton.setEnabled(!readOnly);
-        removeGroupButton.setEnabled(!readOnly && hasSelectedGroup());
+        updateGroupButtons();
     }
 
-    private void showSelectedGroup() {
-        final boolean wasUpdating = updating;
-        updating = true;
-        try {
-            final boolean hasGroup = hasSelectedGroup();
-            getView().setGroupEditorVisible(hasGroup);
-            if (hasGroup) {
-                final ElasticVirtualFieldGroup group = groups.get(selectedGroupIndex);
-                getView().setGroupName(group.getName());
-                getView().setGroupNameError(null);
-                expressionPresenter.read(Objects.requireNonNullElseGet(group.getExpression(),
-                        () -> ExpressionOperator.builder().build()));
-            }
-        } finally {
-            updating = wasUpdating;
-        }
+    private void updateGroupButtons() {
+        addGroupButton.setEnabled(!readOnly);
+        // A read-only doc's groups can still be viewed
+        editGroupButton.setEnabled(hasSelectedGroup());
+        editGroupButton.setTitle(readOnly
+                ? VIEW_GROUP
+                : EDIT_GROUP);
+        removeGroupButton.setEnabled(!readOnly && hasSelectedGroup());
     }
 
     private boolean hasSelectedGroup() {
@@ -441,18 +390,35 @@ public class ElasticFieldSettingsPresenter
                 : groups.indexOf(selected);
         if (index != selectedGroupIndex) {
             selectedGroupIndex = index;
-            showSelectedGroup();
-            removeGroupButton.setEnabled(!readOnly && hasSelectedGroup());
+            updateGroupButtons();
         }
     }
 
     private void addGroup() {
         if (canEdit() && row.isVirtual()) {
-            final List<ElasticVirtualFieldGroup> newGroups = ElasticVirtualFieldGroups.add(groups);
-            selectedGroupIndex = newGroups.size() - 1;
-            applyGroups(newGroups);
-            getView().focusGroupName();
+            groupPresenter.show(groups, -1, false, group -> {
+                final List<ElasticVirtualFieldGroup> newGroups = ElasticVirtualFieldGroups.add(groups,
+                        group.getName(),
+                        group.getExpression());
+                selectedGroupIndex = newGroups.size() - 1;
+                applyGroups(newGroups);
+            });
         }
+    }
+
+    private void editGroup() {
+        if (updating || row == null || model == null || !row.isVirtual() || !hasSelectedGroup()) {
+            return;
+        }
+        final int index = selectedGroupIndex;
+        groupPresenter.show(groups, index, readOnly, group -> {
+            if (canEdit()) {
+                applyGroups(ElasticVirtualFieldGroups.replace(groups,
+                        index,
+                        group.getName(),
+                        group.getExpression()));
+            }
+        });
     }
 
     private void removeGroup() {
@@ -464,40 +430,14 @@ public class ElasticFieldSettingsPresenter
         }
     }
 
-    private void onExpressionChange() {
-        if (updating || !hasSelectedGroup()) {
-            return;
-        }
-        if (readOnly) {
-            // The expression editor has no read only mode, so undo the change
-            showSelectedGroup();
-            return;
-        }
-        if (canEdit()) {
-            applyGroups(ElasticVirtualFieldGroups.setExpression(groups,
-                    selectedGroupIndex,
-                    expressionPresenter.write()));
-        }
-    }
-
     private void applyGroups(final List<ElasticVirtualFieldGroup> newGroups) {
         final ElasticIndexFieldSettings existing = model.findSettings(row.getName());
         final ElasticIndexFieldSettings.Builder builder = existing == null
                 ? ElasticIndexFieldSettings.builder(row.getName())
                 : existing.copy();
         model.putSettings(builder.virtualGroups(newGroups).build());
-        final boolean expressionChangeOnly = newGroups.size() == groups.size()
-                                             && hasSelectedGroup()
-                                             && newGroups.get(selectedGroupIndex).getName()
-                                                     .equals(groups.get(selectedGroupIndex).getName());
         groups = new ArrayList<>(newGroups);
-        if (expressionChangeOnly) {
-            // Leave the expression editor alone so its selection and focus survive each edit
-            groupsGrid.setRowData(0, groups);
-            groupsSelectionModel.setSelected(groups.get(selectedGroupIndex), new SelectionType(), false);
-        } else {
-            showGroups();
-        }
+        showGroups();
         fireChanged();
     }
 
@@ -571,38 +511,11 @@ public class ElasticFieldSettingsPresenter
         /// @param visible `true` to show the virtual field settings
         void setVirtualVisible(boolean visible);
 
-        /// @param name the virtual field's name
+        /// @param name the virtual field's name, shown read-only
         void setVirtualName(String name);
-
-        /// @return the virtual field's name as entered
-        String getVirtualName();
-
-        /// @param error the reason the name can't be used, or `null`
-        void setVirtualNameError(String error);
-
-        /// Moves the keyboard focus to the virtual field name.
-        void focusVirtualName();
 
         /// @param view the list of the virtual field's groups
         void setGroupsView(View view);
-
-        /// @param visible `true` to show the selected group's name and expression
-        void setGroupEditorVisible(boolean visible);
-
-        /// @param name the selected group's name
-        void setGroupName(String name);
-
-        /// @return the selected group's name as entered
-        String getGroupName();
-
-        /// @param error the reason the group name can't be used, or `null`
-        void setGroupNameError(String error);
-
-        /// Moves the keyboard focus to the group name.
-        void focusGroupName();
-
-        /// @param view the selected group's expression editor
-        void setExpressionView(View view);
 
         /// @param editable `true` if the virtual field may be changed
         void setVirtualEditable(boolean editable);

@@ -27,9 +27,6 @@ import java.util.List;
 /// unchanged.
 public final class ElasticVirtualFieldGroups {
 
-    /// The base name given to a new group.
-    public static final String NEW_GROUP_NAME = "New group";
-
     static final String ERROR_EMPTY_NAME = "Enter a name for the group.";
     static final String ERROR_NAME_IN_USE = "Another group already has this name.";
 
@@ -37,23 +34,17 @@ public final class ElasticVirtualFieldGroups {
         // Static utility
     }
 
-    /// @param groups the existing groups
-    /// @return [#NEW_GROUP_NAME], or that name with a number added if a group already has it
-    public static String createUniqueName(final List<ElasticVirtualFieldGroup> groups) {
-        String name = NEW_GROUP_NAME;
-        int suffix = 2;
-        while (indexOf(groups, name) >= 0) {
-            name = NEW_GROUP_NAME + " " + suffix;
-            suffix++;
-        }
-        return name;
-    }
-
-    /// @param groups the existing groups
-    /// @return the groups with a new, uniquely named group with an empty expression added at the end
-    public static List<ElasticVirtualFieldGroup> add(final List<ElasticVirtualFieldGroup> groups) {
+    /// @param groups     the existing groups
+    /// @param name       the new group's name, which is trimmed
+    /// @param expression the new group's expression
+    /// @return the groups with the new group added at the end, or the groups unchanged if the name is not valid
+    public static List<ElasticVirtualFieldGroup> add(final List<ElasticVirtualFieldGroup> groups,
+                                                     final String name,
+                                                     final ExpressionOperator expression) {
         final List<ElasticVirtualFieldGroup> result = new ArrayList<>(NullSafe.list(groups));
-        result.add(new ElasticVirtualFieldGroup(createUniqueName(groups), ExpressionOperator.builder().build()));
+        if (validateName(groups, -1, name) == null) {
+            result.add(new ElasticVirtualFieldGroup(NullSafe.trim(name), expression));
+        }
         return result;
     }
 
@@ -72,7 +63,7 @@ public final class ElasticVirtualFieldGroups {
     /// Checks a new name for a group.
     ///
     /// @param groups  the existing groups
-    /// @param index   the position of the group being renamed
+    /// @param index   the position of the group being renamed, or -1 for a new group
     /// @param newName the proposed name
     /// @return a message describing why the name can't be used, or `null` if it can
     public static String validateName(final List<ElasticVirtualFieldGroup> groups,
@@ -89,34 +80,19 @@ public final class ElasticVirtualFieldGroups {
         return null;
     }
 
-    /// @param groups  the existing groups
-    /// @param index   the position of the group to rename
-    /// @param newName the new name, which is trimmed
-    /// @return the groups with the one at `index` renamed, or the groups unchanged if the name is not valid or
-    /// `index` is out of range
-    public static List<ElasticVirtualFieldGroup> rename(final List<ElasticVirtualFieldGroup> groups,
-                                                        final int index,
-                                                        final String newName) {
-        final List<ElasticVirtualFieldGroup> result = new ArrayList<>(NullSafe.list(groups));
-        if (index >= 0 && index < result.size() && validateName(groups, index, newName) == null) {
-            final ElasticVirtualFieldGroup group = result.get(index);
-            result.set(index, new ElasticVirtualFieldGroup(NullSafe.trim(newName), group.getExpression()));
-        }
-        return result;
-    }
-
     /// @param groups     the existing groups
-    /// @param index      the position of the group to change
+    /// @param index      the position of the group to replace
+    /// @param name       the group's new name, which is trimmed
     /// @param expression the group's new expression
-    /// @return the groups with the expression of the one at `index` replaced, or the groups unchanged if `index` is
-    /// out of range
-    public static List<ElasticVirtualFieldGroup> setExpression(final List<ElasticVirtualFieldGroup> groups,
-                                                               final int index,
-                                                               final ExpressionOperator expression) {
+    /// @return the groups with the one at `index` given the new name and expression, or the groups unchanged if the
+    /// name is not valid or `index` is out of range
+    public static List<ElasticVirtualFieldGroup> replace(final List<ElasticVirtualFieldGroup> groups,
+                                                         final int index,
+                                                         final String name,
+                                                         final ExpressionOperator expression) {
         final List<ElasticVirtualFieldGroup> result = new ArrayList<>(NullSafe.list(groups));
-        if (index >= 0 && index < result.size()) {
-            final ElasticVirtualFieldGroup group = result.get(index);
-            result.set(index, new ElasticVirtualFieldGroup(group.getName(), expression));
+        if (index >= 0 && index < result.size() && validateName(groups, index, name) == null) {
+            result.set(index, new ElasticVirtualFieldGroup(NullSafe.trim(name), expression));
         }
         return result;
     }

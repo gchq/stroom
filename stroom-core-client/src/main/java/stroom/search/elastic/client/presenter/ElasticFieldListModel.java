@@ -43,19 +43,15 @@ import java.util.stream.Collectors;
 /// entries that hold only default values.
 public class ElasticFieldListModel {
 
-    /// The base name given to a new virtual field.
-    public static final String NEW_VIRTUAL_FIELD_NAME = "New virtual field";
     /// The Field Type shown for virtual fields, and the type filter value that matches them. It is only used in this
     /// list, not added to the shared field types.
     public static final String VIRTUAL_FILTER_TYPE = "Virtual";
     /// The type label shown for a field whose source indices map it to different types.
     public static final String CONFLICT_TYPE_LABEL = "Conflict";
 
-    static final String STATUS_CONFIGURED = "Configured";
-    static final String STATUS_VIRTUAL = "Virtual";
-    static final String STATUS_MISSING = "Missing from all source indices";
-    static final String STATUS_CLASHING = "Name clashes with a mapped field";
-    static final String STATUS_TYPE_CONFLICT_PREFIX = "Type conflict: ";
+    static final String STATE_MISSING = "Missing from all source indices";
+    static final String STATE_CLASHING = "Hidden by a mapped field of the same name";
+    static final String STATE_TYPE_CONFLICT_PREFIX = "Type conflict: ";
 
     static final String ERROR_EMPTY_NAME = "Enter a name for the virtual field.";
     static final String ERROR_CLASHES_WITH_MAPPED = "Name clashes with a mapped field.";
@@ -231,26 +227,24 @@ public class ElasticFieldListModel {
         return settings != null && !settings.isDefault();
     }
 
-    /// Adds a virtual field with no groups, named [#NEW_VIRTUAL_FIELD_NAME] or that name with a number added to
-    /// make it unique.
+    /// Adds a virtual field with no groups.
     ///
-    /// @return the name of the new field
-    public String addVirtualField() {
-        String name = NEW_VIRTUAL_FIELD_NAME;
-        int suffix = 2;
-        while (isNameInUse(name)) {
-            name = NEW_VIRTUAL_FIELD_NAME + " " + suffix;
-            suffix++;
+    /// @param name the name of the new field, which is trimmed
+    /// @return `true` if the field was added, or `false` if the name fails
+    /// [#validateVirtualFieldName(String, String)]
+    public boolean addVirtualField(final String name) {
+        if (validateVirtualFieldName(null, name) != null) {
+            return false;
         }
-        putSettings(ElasticIndexFieldSettings.builder(name)
+        putSettings(ElasticIndexFieldSettings.builder(NullSafe.trim(name))
                 .virtualGroups(new ArrayList<>())
                 .build());
-        return name;
+        return true;
     }
 
     /// Checks a new name for a virtual field.
     ///
-    /// @param currentName the field's current name
+    /// @param currentName the field's current name, or `null` for a new field
     /// @param newName     the proposed name
     /// @return a message describing why the name can't be used, or `null` if it can
     public String validateVirtualFieldName(final String currentName, final String newName) {
@@ -265,6 +259,19 @@ public class ElasticFieldListModel {
             return ERROR_NAME_IN_USE;
         }
         return null;
+    }
+
+    /// Checks a name entered to rename a virtual field. Keeping the current name is always allowed, as it leaves the
+    /// field unchanged, even if that name clashes with a mapped field.
+    ///
+    /// @param currentName the field's current name
+    /// @param newName     the proposed name
+    /// @return a message describing why the name can't be used, or `null` if it can
+    public String validateVirtualFieldRename(final String currentName, final String newName) {
+        if (NullSafe.trim(newName).equals(currentName)) {
+            return null;
+        }
+        return validateVirtualFieldName(currentName, newName);
     }
 
     /// Renames a virtual field, keeping the position of its settings entry. Names that fail
@@ -393,10 +400,6 @@ public class ElasticFieldListModel {
         return settings == null || settings.isEnabled();
     }
 
-    private boolean isNameInUse(final String name) {
-        return fieldsByName.containsKey(name) || settingsByName.containsKey(name);
-    }
-
     private Map<String, List<ElasticIndexField>> getChildrenByParent() {
         final Map<String, List<ElasticIndexField>> childrenByParent = new HashMap<>();
         for (final ElasticIndexField field : fields) {
@@ -456,20 +459,17 @@ public class ElasticFieldListModel {
 
         final String typeLabel;
         final String filterType;
-        final String status;
+        final String stateNote;
         final boolean enabledEditable;
         switch (kind) {
             case MAPPED -> {
                 if (field.hasTypeConflict()) {
                     typeLabel = CONFLICT_TYPE_LABEL;
-                    status = STATUS_TYPE_CONFLICT_PREFIX + String.join(", ",
+                    stateNote = STATE_TYPE_CONFLICT_PREFIX + String.join(", ",
                             new TreeSet<>(field.getConflictingTypes().values()));
                 } else {
                     typeLabel = field.getFldType().getDisplayValue();
-                    // The Enabled column shows whether the field is enabled, so only other settings count
-                    status = rowSettings != null && rowSettings.getDenseVector() != null
-                            ? STATUS_CONFIGURED
-                            : "";
+                    stateNote = null;
                 }
                 filterType = typeLabel;
                 final String parent = field.getMultiFieldParent();
@@ -484,19 +484,19 @@ public class ElasticFieldListModel {
                 // Shown only in this list; virtual fields are still queried as keyword fields
                 typeLabel = VIRTUAL_FILTER_TYPE;
                 filterType = VIRTUAL_FILTER_TYPE;
-                status = STATUS_VIRTUAL;
+                stateNote = null;
                 enabledEditable = true;
             }
             case CLASHING_VIRTUAL -> {
                 typeLabel = VIRTUAL_FILTER_TYPE;
                 filterType = VIRTUAL_FILTER_TYPE;
-                status = STATUS_CLASHING;
+                stateNote = STATE_CLASHING;
                 enabledEditable = false;
             }
             default -> {
                 typeLabel = "";
                 filterType = null;
-                status = STATUS_MISSING;
+                stateNote = STATE_MISSING;
                 enabledEditable = false;
             }
         }
@@ -511,7 +511,7 @@ public class ElasticFieldListModel {
                 rowSettings,
                 typeLabel,
                 filterType,
-                status,
+                stateNote,
                 enabled,
                 enabledEditable,
                 expander);
@@ -533,7 +533,7 @@ public class ElasticFieldListModel {
                 row.getSettings(),
                 row.getTypeLabel(),
                 row.getFilterType(),
-                row.getStatus(),
+                row.getStateNote(),
                 row.isEnabled(),
                 row.isEnabledEditable(),
                 expander);
@@ -559,8 +559,6 @@ public class ElasticFieldListModel {
             case TYPE -> Comparator.comparing(ElasticFieldRow::getTypeLabel, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(byName);
             case ENABLED -> Comparator.comparing(ElasticFieldRow::isEnabled).thenComparing(byName);
-            case STATUS -> Comparator.comparing(ElasticFieldRow::getStatus, String.CASE_INSENSITIVE_ORDER)
-                    .thenComparing(byName);
             default -> byName;
         };
         return ascending
@@ -575,8 +573,6 @@ public class ElasticFieldListModel {
         /// Sort on the field type label.
         TYPE,
         /// Sort on whether the field is enabled.
-        ENABLED,
-        /// Sort on the status text.
-        STATUS
+        ENABLED
     }
 }
