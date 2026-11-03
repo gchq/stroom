@@ -33,7 +33,23 @@
         .section {
             display: flex;
             flex-direction: column;
+            align-items: flex-start;
             gap: 8px;
+        }
+
+        /* As the section headings of the stream browser's Info tab */
+        .sectionTitle {
+            color: var(--heading-color);
+            font-weight: bold;
+            font-size: 125%;
+            padding-top: 1rem;
+        }
+
+        .checkboxRow {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
         }
     </ui:style>
 
@@ -41,18 +57,14 @@
         <g:FlowPanel styleName="form-padding form">
             <g:HTML ui:field="fieldName"/>
 
-            <form:FormGroup identity="elasticFieldSettingsEnabled" label="Enabled"
-                            helpText="When unticked, the field is hidden from users and can't be used in queries.
-                                      Existing queries that use it fail with an error. Disabling a field also
-                                      disables its subfields.">
-                <tickbox:CustomCheckBox ui:field="enabled"/>
-            </form:FormGroup>
+            <!-- The tick box, its label and its help button sit on one line -->
+            <g:FlowPanel ui:field="enabledRow" addStyleNames="{style.checkboxRow}">
+                <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
+            </g:FlowPanel>
             <g:Label ui:field="enabledNote" visible="false"/>
 
             <g:FlowPanel ui:field="denseVectorSection" addStyleNames="{style.section}">
-                <g:HTML>
-                    <h3>Vector search</h3>
-                </g:HTML>
+                <g:Label text="Vector search" addStyleNames="{style.sectionTitle}"/>
                 <form:FormGroup identity="elasticFieldSettingsEmbeddingModel" label="Embedding model"
                                 helpText="Model that turns the query text into a vector for kNN search on this
                                           field.">
@@ -91,9 +103,7 @@
             </g:FlowPanel>
 
             <g:FlowPanel ui:field="virtualSection" addStyleNames="{style.section}">
-                <g:HTML>
-                    <h3>Virtual field</h3>
-                </g:HTML>
+                <g:Label text="Virtual field" addStyleNames="{style.sectionTitle}"/>
                 <form:FormGroup identity="elasticFieldSettingsVirtualName" label="Name">
                     <g:FlowPanel>
                         <g:TextBox ui:field="virtualName" width="400px"/>

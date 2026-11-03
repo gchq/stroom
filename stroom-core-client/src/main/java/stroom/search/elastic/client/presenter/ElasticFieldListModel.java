@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,7 @@ public class ElasticFieldListModel {
     private final List<ElasticIndexField> fields = new ArrayList<>();
     private final Map<String, ElasticIndexField> fieldsByName = new HashMap<>();
     private final Map<String, ElasticIndexFieldSettings> settingsByName = new LinkedHashMap<>();
+    private final Set<String> mandatoryFieldNames = new HashSet<>();
 
     /// Replaces the fields and settings held by this model.
     ///
@@ -77,6 +79,31 @@ public class ElasticFieldListModel {
                 settingsByName.put(entry.getFieldName(), entry);
             }
         });
+    }
+
+    /// Sets the fields Stroom needs to search the index, which can't be disabled.
+    ///
+    /// @param names the names of the fields, such as the time field, `StreamId` and `EventId`
+    public void setMandatoryFieldNames(final Set<String> names) {
+        mandatoryFieldNames.clear();
+        mandatoryFieldNames.addAll(NullSafe.set(names));
+    }
+
+    /// @return the names of the fields that have multi-fields, which can be expanded to show them
+    public Set<String> getExpandableNames() {
+        final Set<String> names = new HashSet<>();
+        for (final ElasticIndexField field : fields) {
+            if (field.getMultiFieldParent() != null && fieldsByName.containsKey(field.getMultiFieldParent())) {
+                names.add(field.getMultiFieldParent());
+            }
+        }
+        return names;
+    }
+
+    /// @param fieldName the full name of a field
+    /// @return `true` if Stroom needs the field to search the index, so it can't be disabled
+    public boolean isMandatory(final String fieldName) {
+        return mandatoryFieldNames.contains(fieldName);
     }
 
     /// Replaces the mapped fields, keeping the settings as they are.
@@ -447,7 +474,10 @@ public class ElasticFieldListModel {
                 final String parent = field.getMultiFieldParent();
                 final boolean parentEnabled = parent == null || isOwnEnabled(parent);
                 final boolean nameHeldByVirtual = settings != null && settings.isVirtual();
-                enabledEditable = !field.hasTypeConflict() && parentEnabled && !nameHeldByVirtual;
+                enabledEditable = !field.hasTypeConflict()
+                                  && parentEnabled
+                                  && !nameHeldByVirtual
+                                  && !mandatoryFieldNames.contains(name);
             }
             case VIRTUAL -> {
                 typeLabel = FieldType.KEYWORD.getDisplayValue();

@@ -85,6 +85,8 @@ public class ElasticIndexFieldListPresenter
     private final ButtonView addVirtualFieldButton;
     private final ButtonView removeButton;
     private final ButtonView refreshButton;
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
     private final RestFactory restFactory;
     private final ElasticFieldInfoPresenter infoPresenter;
     private final ElasticFieldSettingsPresenter settingsPresenter;
@@ -123,6 +125,8 @@ public class ElasticIndexFieldListPresenter
         removeButton = pagerView.addButton(SvgPresets.DELETE.title(REMOVE_SETTINGS));
         refreshButton = pagerView.addButton(SvgPresets.REFRESH_BLUE.title(
                 "Refresh the field list from the index mapping"));
+        expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL.title("Expand all"));
+        collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL.title("Collapse all"));
 
         addColumns();
         dataGrid.sort(findColumn(SortColumn.NAME));
@@ -149,6 +153,14 @@ public class ElasticIndexFieldListPresenter
         registerHandler(addVirtualFieldButton.addClickHandler(event -> addVirtualField()));
         registerHandler(removeButton.addClickHandler(event -> removeSelected()));
         registerHandler(refreshButton.addClickHandler(event -> refreshFields()));
+        registerHandler(expandAllButton.addClickHandler(event -> {
+            expandedNames.addAll(model.getExpandableNames());
+            refreshRows();
+        }));
+        registerHandler(collapseAllButton.addClickHandler(event -> {
+            expandedNames.clear();
+            refreshRows();
+        }));
     }
 
     /// Sets the supplier of the doc as currently edited across all of its tabs, so that refreshing the field list
@@ -163,6 +175,7 @@ public class ElasticIndexFieldListPresenter
     protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
         dataGrid.setTableName("Elastic Index '" + docRef.getName() + "' Fields");
         model.read(document.getFields(), document.getFieldSettings());
+        model.setMandatoryFieldNames(document.getMandatoryFieldNames());
         infoPresenter.setIndex(docRef, document.getTimeField());
         settingsPresenter.setIndex(docRef);
         settingsPresenter.setReadOnly(readOnly);

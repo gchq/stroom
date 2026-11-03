@@ -55,6 +55,17 @@ class TestElasticFieldSettingsValidator {
     }
 
     @Test
+    void testMandatoryFieldsCannotBeDisabled() {
+        assertInvalid("Field 'StreamId' can't be disabled, as Stroom needs it to search the index",
+                ElasticIndexFieldSettings.builder("StreamId").enabled(false).build());
+        assertInvalid("Field 'EventId' can't be disabled, as Stroom needs it to search the index",
+                ElasticIndexFieldSettings.builder("EventId").enabled(false).build());
+        // The doc's time field, which defaults to @timestamp
+        assertInvalid("Field '@timestamp' can't be disabled, as Stroom needs it to search the index",
+                ElasticIndexFieldSettings.builder("@timestamp").enabled(false).build());
+    }
+
+    @Test
     void testDuplicateSettings() {
         assertInvalid("Field 'host' has more than one set of settings",
                 ElasticIndexFieldSettings.builder("host").enabled(false).build(),

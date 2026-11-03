@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.client.view;
 
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticFieldInfoPresenter.ElasticFieldInfoView;
 import stroom.search.elastic.client.presenter.ElasticFieldInfoPresenter.MappingEntry;
@@ -35,6 +36,7 @@ import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -42,6 +44,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -60,6 +63,18 @@ public class ElasticFieldInfoViewImpl
     private static final String MAPPING_HELP = "How Elasticsearch maps this field. Parameters shown are those set " +
                                                "in the index mapping; change them in Elasticsearch, not Stroom.";
 
+    private static final String TOP_VALUES_HELP = "The values held by the most documents. Each bar shows the " +
+                                                  "percentage of all documents that hold the value, and the " +
+                                                  "count beside it is the number of documents. For a random " +
+                                                  "sample, both are estimated from the sample. A document " +
+                                                  "holding several values is counted for each of them.";
+    private static final String DISTRIBUTION_HELP = "How the values are spread between the smallest and largest " +
+                                                    "value, in up to ten ranges. Each bar shows the percentage of " +
+                                                    "all documents with a value in that range, and the count " +
+                                                    "beside it is the number of documents. Each range includes " +
+                                                    "its start but not its end, except the last, which includes " +
+                                                    "the largest value. For a random sample, both are estimated " +
+                                                    "from the sample.";
     private static final String MODE_RANDOM = "Random sample";
     private static final String MODE_EXACT = "Exact (all documents)";
 
@@ -183,7 +198,11 @@ public class ElasticFieldInfoViewImpl
         mappingMessage.setText(NullSafe.string(message));
         mappingMessage.setVisible(NullSafe.isNonBlankString(message));
         for (final MappingEntry entry : NullSafe.list(entries)) {
-            addEntry(mappingEntries, entry.getName(), entry.getValue());
+            if (entry.getValues() != null) {
+                addListEntry(mappingEntries, entry.getName(), entry.getValues());
+            } else {
+                addEntry(mappingEntries, entry.getName(), entry.getValue());
+            }
         }
         mappingEntries.setVisible(NullSafe.hasItems(entries));
     }
@@ -229,7 +248,7 @@ public class ElasticFieldInfoViewImpl
         statsContent.add(summary);
 
         final FlowPanel coverage = createBlock("Coverage");
-        coverage.add(createBarRow("Documents with a value",
+        coverage.add(createBarRow("Documents with a value", false,
                 ElasticFieldStatsSupport.getPercent(docsWithValue, totalDocs),
                 ElasticFieldStatsSupport.formatCount(docsWithValue) + " (" +
                 ElasticFieldStatsSupport.formatPercent(docsWithValue, totalDocs) + ")"));
@@ -250,10 +269,10 @@ public class ElasticFieldInfoViewImpl
         }
 
         if (NullSafe.hasItems(stats.getTopValues())) {
-            final FlowPanel topValues = createBlock("Most common values");
+            final FlowPanel topValues = createBlock("Most common values", TOP_VALUES_HELP);
             for (final ElasticFieldValueCount valueCount : stats.getTopValues()) {
                 final long count = Objects.requireNonNullElse(valueCount.getCount(), 0L);
-                topValues.add(createBarRow(valueCount.getValue(),
+                topValues.add(createBarRow(valueCount.getValue(), true,
                         ElasticFieldStatsSupport.getPercent(count, totalDocs),
                         ElasticFieldStatsSupport.formatCount(count) + " (" +
                         ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
@@ -262,16 +281,11 @@ public class ElasticFieldInfoViewImpl
         }
 
         if (NullSafe.hasItems(stats.getHistogram())) {
-            long maxCount = 0;
-            for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
-                maxCount = Math.max(maxCount, Objects.requireNonNullElse(bucket.getCount(), 0L));
-            }
-            final FlowPanel histogram = createBlock("Distribution");
+            final FlowPanel histogram = createBlock("Distribution", DISTRIBUTION_HELP);
             for (final ElasticFieldValueCount bucket : stats.getHistogram()) {
                 final long count = Objects.requireNonNullElse(bucket.getCount(), 0L);
-                // Bars are scaled to the largest bucket so the shape of the distribution is easy to see
-                histogram.add(createBarRow(bucket.getValue(),
-                        ElasticFieldStatsSupport.getPercent(count, maxCount),
+                histogram.add(createBarRow(bucket.getValue(), false,
+                        ElasticFieldStatsSupport.getPercent(count, totalDocs),
                         ElasticFieldStatsSupport.formatCount(count) + " (" +
                         ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
             }
@@ -285,18 +299,42 @@ public class ElasticFieldInfoViewImpl
     }
 
     private FlowPanel createBlock(final String heading) {
+        return createBlock(heading, null);
+    }
+
+    /// @param heading  the heading of the block
+    /// @param helpText text explaining what the block shows, shown by an info button beside the heading, or `null`
+    private FlowPanel createBlock(final String heading, final String helpText) {
         final FlowPanel block = new FlowPanel();
+        final FlowPanel headingPanel = new FlowPanel();
+        headingPanel.addStyleName(style.sectionHeader());
+        headingPanel.addStyleName(style.statsHeader());
         final Label headingLabel = new Label(heading);
         headingLabel.addStyleName(style.statsHeading());
-        block.add(headingLabel);
+        headingPanel.add(headingLabel);
+        if (helpText != null) {
+            final HelpButton helpButton = HelpButton.create();
+            helpButton.setHelpContent(heading, new SafeHtmlBuilder()
+                    .appendHtmlConstant("<p>")
+                    .appendEscaped(helpText)
+                    .appendHtmlConstant("</p>")
+                    .toSafeHtml());
+            headingPanel.add(helpButton);
+        }
+        block.add(headingPanel);
         return block;
     }
 
-    private Widget createBarRow(final String label, final double percent, final String countText) {
+    private Widget createBarRow(final String label,
+                                final boolean copyable,
+                                final double percent,
+                                final String countText) {
         final FlowPanel row = new FlowPanel();
         row.addStyleName(style.barRow());
 
-        final Label labelWidget = new Label(NullSafe.string(label));
+        final Widget labelWidget = copyable
+                ? createCopyableText(label)
+                : new Label(NullSafe.string(label));
         labelWidget.addStyleName(style.barLabel());
         labelWidget.setTitle(NullSafe.string(label));
         row.add(labelWidget);
@@ -322,6 +360,26 @@ public class ElasticFieldInfoViewImpl
         if (NullSafe.isNonBlankString(value)) {
             addEntry(panel, name, value);
         }
+    }
+
+    private void addListEntry(final FlowPanel panel, final String name, final List<String> values) {
+        final Label nameLabel = new Label(name);
+        nameLabel.addStyleName(style.entryName());
+        final FlowPanel valuesPanel = new FlowPanel();
+        valuesPanel.addStyleName(style.entryValue());
+        valuesPanel.addStyleName(style.valueList());
+        for (final String value : values) {
+            valuesPanel.add(createCopyableText(value));
+        }
+        panel.add(nameLabel);
+        panel.add(valuesPanel);
+    }
+
+    /// @return the text, with a button to copy it that shows when the mouse is over it
+    private static Widget createCopyableText(final String text) {
+        final HTML html = new HTML(CopyTextUtil.render(text, false));
+        html.addDomHandler(event -> CopyTextUtil.onClick(event.getNativeEvent(), html), MouseDownEvent.getType());
+        return html;
     }
 
     private void addEntry(final FlowPanel panel, final String name, final String value) {
@@ -393,6 +451,15 @@ public class ElasticFieldInfoViewImpl
         /// @return the style of a section heading with its help button
         String sectionHeader();
 
+        /// @return the style of a section title, as in the stream browser's Info tab
+        String sectionTitle();
+
+        /// @return the style of a section heading after the first
+        String laterSection();
+
+        /// @return the style of a list of values
+        String valueList();
+
         /// @return the style of a list of names and values
         String entries();
 
@@ -416,6 +483,9 @@ public class ElasticFieldInfoViewImpl
 
         /// @return the style of a statistics block heading
         String statsHeading();
+
+        /// @return the style of the line holding a statistics block heading and its info button
+        String statsHeader();
 
         /// @return the style of a labelled bar
         String barRow();

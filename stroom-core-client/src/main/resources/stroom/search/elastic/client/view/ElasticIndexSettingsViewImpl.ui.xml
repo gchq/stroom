@@ -33,10 +33,6 @@
         <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
-        <g:HTML>
-            <p>Vector search settings are set per dense_vector field in the Fields tab.</p>
-        </g:HTML>
-
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder> 

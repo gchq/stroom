@@ -83,7 +83,8 @@ public class ElasticFieldStatsService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticFieldStatsService.class);
 
     private static final int TOP_VALUES_COUNT = 10;
-    private static final int HISTOGRAM_BUCKETS = 20;
+    private static final int HISTOGRAM_BUCKETS = 10;
+    private static final String RANGE_SEPARATOR = " – ";
     private static final String SAMPLE_AGG = "sample";
     // Elasticsearch only accepts a random sampler probability of up to 0.5 (or exactly 1)
     private static final double MAX_SAMPLE_PROBABILITY = 0.5;
@@ -191,10 +192,8 @@ public class ElasticFieldStatsService {
             return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> {
                 final Sampling sampling = createSampling(elasticClient, indexDoc, request, sampleSize);
                 if (sampling.totalDocs() == 0) {
-                    return emptyStats(fieldName, sampleSize, maxSampleSize, request.getFromMs() != null
-                                                                            || request.getToMs() != null
-                            ? "No documents were found in the time range"
-                            : "No documents were found in the index");
+                    return emptyStats(fieldName, sampleSize, maxSampleSize,
+                            getNoDocumentsMessage(elasticClient, indexDoc, request));
                 }
                 return field == null
                         ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampling, maxSampleSize)
@@ -298,12 +297,15 @@ public class ElasticFieldStatsService {
 
         List<ElasticFieldValueCount> histogram = null;
         if (date) {
-            histogram = aggs.get(HISTOGRAM_AGG).autoDateHistogram().buckets().array()
-                    .stream()
-                    .map(bucket -> new ElasticFieldValueCount(
-                            Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())),
-                            bucket.docCount()))
-                    .toList();
+            final List<String> starts = new ArrayList<>();
+            final List<Long> counts = new ArrayList<>();
+            aggs.get(HISTOGRAM_AGG).autoDateHistogram().buckets().array().forEach(bucket -> {
+                starts.add(Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())));
+                counts.add(bucket.docCount());
+            });
+            histogram = toRanges(starts, counts, stats == null
+                    ? null
+                    : getStatValue(stats.maxAsString(), stats.max()));
         } else if (numeric && stats != null && stats.count() > 0) {
             histogram = getNumericHistogram(elasticClient, indexDoc, sampling, fieldName, stats);
         }
@@ -338,8 +340,8 @@ public class ElasticFieldStatsService {
                 null);
     }
 
-    /// Gets the distribution of a numeric field over even buckets between its smallest and largest values, which a
-    /// second request needs, as the bucket width depends on them.
+    /// Gets the distribution of a numeric field over [#HISTOGRAM_BUCKETS] even ranges between its smallest and
+    /// largest values, which a second request needs, as the range width depends on them.
     private List<ElasticFieldValueCount> getNumericHistogram(final ElasticsearchClient elasticClient,
                                                              final ElasticIndexDoc indexDoc,
                                                              final Sampling sampling,
@@ -356,12 +358,45 @@ public class ElasticFieldStatsService {
                         .interval(interval)
                         .offset(min)
                         .minDocCount(0)))));
-        return sample.aggregations().get(HISTOGRAM_AGG).histogram().buckets().array()
-                .stream()
-                .map(bucket -> new ElasticFieldValueCount(
-                        Objects.requireNonNullElse(bucket.keyAsString(), formatNumber(bucket.key())),
-                        bucket.docCount()))
-                .toList();
+        final List<String> starts = new ArrayList<>();
+        final List<Long> counts = new ArrayList<>();
+        sample.aggregations().get(HISTOGRAM_AGG).histogram().buckets().array().forEach(bucket -> {
+            starts.add(formatNumber(bucket.key()));
+            counts.add(bucket.docCount());
+        });
+        return toRanges(starts, counts, formatNumber(max));
+    }
+
+    /// Labels each bucket with the range of values it holds, from its start to the next bucket's start, and the
+    /// last to the largest value. A bucket starting at the largest value (as the range of the last full bucket
+    /// ends there) is counted in the bucket before it, so there are at most [#HISTOGRAM_BUCKETS].
+    ///
+    /// @param starts the start of each bucket, in order
+    /// @param counts the number of documents in each bucket
+    /// @param max    the largest value, or `null` if not known
+    /// @return the buckets labelled with their ranges
+    static List<ElasticFieldValueCount> toRanges(final List<String> starts,
+                                                 final List<Long> counts,
+                                                 final String max) {
+        final List<String> bucketStarts = new ArrayList<>(starts);
+        final List<Long> bucketCounts = new ArrayList<>(counts);
+        while (bucketStarts.size() > HISTOGRAM_BUCKETS) {
+            final int last = bucketStarts.size() - 1;
+            bucketCounts.set(last - 1, bucketCounts.get(last - 1) + bucketCounts.get(last));
+            bucketStarts.remove(last);
+            bucketCounts.remove(last);
+        }
+        final List<ElasticFieldValueCount> ranges = new ArrayList<>();
+        for (int i = 0; i < bucketStarts.size(); i++) {
+            final String end = i + 1 < bucketStarts.size()
+                    ? bucketStarts.get(i + 1)
+                    : max;
+            final String label = end == null || end.equals(bucketStarts.get(i))
+                    ? bucketStarts.get(i)
+                    : bucketStarts.get(i) + RANGE_SEPARATOR + end;
+            ranges.add(new ElasticFieldValueCount(label, bucketCounts.get(i)));
+        }
+        return ranges;
     }
 
     private ElasticFieldStats getVirtualFieldStats(final ElasticsearchClient elasticClient,
@@ -418,6 +453,34 @@ public class ElasticFieldStatsService {
         } catch (final IOException e) {
             LOGGER.debug(e::getMessage, e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /// Explains that no documents matched, and when the time range is to blame, says what dates the index's
+    /// documents do have, so the user can choose a range that holds some.
+    private String getNoDocumentsMessage(final ElasticsearchClient elasticClient,
+                                         final ElasticIndexDoc indexDoc,
+                                         final ElasticFieldStatsRequest request) {
+        final String timeField = indexDoc.getTimeField();
+        if ((request.getFromMs() == null && request.getToMs() == null) || NullSafe.isBlankString(timeField)) {
+            return "No documents were found in the index";
+        }
+        try {
+            final SearchResponse<Void> response = elasticClient.search(s -> s
+                            .index(indexDoc.getIndexName())
+                            .size(0)
+                            .aggregations(STATS_AGG, a -> a.stats(st -> st.field(timeField))),
+                    Void.class);
+            final StatsAggregate dates = response.aggregations().get(STATS_AGG).stats();
+            if (dates.count() == 0) {
+                return "No documents were found in the index";
+            }
+            return "No documents were found in the time range. The index's documents are dated from " +
+                   getStatValue(dates.minAsString(), dates.min()) + " to " +
+                   getStatValue(dates.maxAsString(), dates.max()) + ".";
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            return "No documents were found in the time range";
         }
     }
 

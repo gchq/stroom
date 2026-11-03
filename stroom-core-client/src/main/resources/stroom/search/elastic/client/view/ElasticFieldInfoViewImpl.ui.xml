@@ -30,8 +30,33 @@
             gap: 4px;
         }
 
-        .sectionHeader h3 {
-            margin: 0;
+        @external docRefLinkContainer, docRefLinkText;
+
+        /* As the section headings of the stream browser's Info tab */
+        .sectionTitle {
+            color: var(--heading-color);
+            font-weight: bold;
+            font-size: 125%;
+            padding-bottom: 0.3em;
+        }
+
+        .laterSection {
+            padding-top: 1rem;
+        }
+
+        .valueList {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .barLabel .docRefLinkContainer {
+            min-width: 0;
+        }
+
+        .barLabel .docRefLinkText {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .entries {
@@ -42,7 +67,7 @@
         }
 
         .entryName {
-            font-weight: bold;
+            font-weight: 500;
             white-space: nowrap;
         }
 
@@ -76,8 +101,14 @@
             gap: 12px;
         }
 
+        /* A subheading, in the colour of the section headings but smaller */
         .statsHeading {
+            color: var(--heading-color);
             font-weight: bold;
+            font-size: 110%;
+        }
+
+        .statsHeader {
             margin-bottom: 4px;
         }
 
@@ -90,6 +121,7 @@
         }
 
         .barLabel {
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -114,17 +146,13 @@
     <g:ScrollPanel styleName="max">
         <g:FlowPanel styleName="form-padding form">
             <g:FlowPanel ui:field="mappingHeader" addStyleNames="{style.sectionHeader}">
-                <g:HTML>
-                    <h3>Field mapping</h3>
-                </g:HTML>
+                <g:Label text="Field mapping" addStyleNames="{style.sectionTitle}"/>
             </g:FlowPanel>
             <g:Label ui:field="mappingMessage"/>
             <g:FlowPanel ui:field="mappingEntries" addStyleNames="{style.entries}"/>
 
-            <g:FlowPanel addStyleNames="{style.sectionHeader}">
-                <g:HTML>
-                    <h3>Statistics</h3>
-                </g:HTML>
+            <g:FlowPanel addStyleNames="{style.sectionHeader} {style.laterSection}">
+                <g:Label text="Statistics" addStyleNames="{style.sectionTitle}"/>
                 <b:InlineSvgButton ui:field="refreshStats" addStyleNames="allow-focus"/>
                 <spinner:SpinnerSmall ui:field="spinner"/>
                 <g:Label ui:field="loadingLabel" text="Loading statistics..." visible="false"/>

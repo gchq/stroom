@@ -285,7 +285,7 @@ public class ElasticFieldInfoPresenter
             entries.add(new MappingEntry("Multi-field of", field.getMultiFieldParent()));
         }
         if (NullSafe.hasItems(field.getSourceIndices())) {
-            entries.add(new MappingEntry("Source indices", String.join(", ", field.getSourceIndices())));
+            entries.add(new MappingEntry("Source indices", field.getSourceIndices()));
         }
         if (field.getMappingParameters() != null) {
             for (final Map.Entry<String, String> entry : new TreeMap<>(field.getMappingParameters()).entrySet()) {
@@ -349,12 +349,22 @@ public class ElasticFieldInfoPresenter
 
         private final String name;
         private final String value;
+        private final List<String> values;
 
         /// @param name  the name of the detail, e.g. a mapping parameter name
         /// @param value the value of the detail
         public MappingEntry(final String name, final String value) {
             this.name = name;
             this.value = value;
+            this.values = null;
+        }
+
+        /// @param name   the name of the detail
+        /// @param values the values of the detail, shown as a list with a copy button for each
+        public MappingEntry(final String name, final List<String> values) {
+            this.name = name;
+            this.value = null;
+            this.values = values;
         }
 
         /// @return the name of the detail
@@ -362,9 +372,14 @@ public class ElasticFieldInfoPresenter
             return name;
         }
 
-        /// @return the value of the detail
+        /// @return the value of the detail, or `null` if it has a list of values
         public String getValue() {
             return value;
+        }
+
+        /// @return the values of the detail, or `null` if it has a single value
+        public List<String> getValues() {
+            return values;
         }
     }
 }
