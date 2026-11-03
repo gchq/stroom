@@ -23,10 +23,12 @@
    is toolbar-row.css.
 */
 
-/* A named group of buttons that sit together, one tab stop */
+/* A named group of buttons that sit together, one tab stop. Its padding holds its buttons' focus
+   rings (a 4px band, toolbar-button.css), so nothing around it that hides its overflow can cut them
+   off */
 .toolbar {
     display: flex;
-    margin: 2px;
+    padding: 4px;
     gap: 2px;
 }
 
@@ -41,10 +43,11 @@
     margin: 0;
 }
 
-/* A toolbar inside a form control (e.g. a search box's options), without margins and with its icons
-   in the control's text colour (toolbar-button.css) */
+/* A toolbar inside a form control (e.g. a search box's options), without room around it, as the
+   control holds it, and with its icons in the control's text colour (toolbar-button.css) */
 .toolbar--control {
     margin: 0;
+    padding: 0;
 }
 
 /* For now, a toolbar that a document's tab adds to its document's toolbar
@@ -53,6 +56,7 @@
    itself. */
 .toolbar > .toolbar {
     margin: 0 0 0 2px;
+    padding: 0;
 }
 
 /* A line between a toolbar's buttons, close enough that they still look one group (the

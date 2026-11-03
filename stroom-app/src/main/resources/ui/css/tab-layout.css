@@ -66,6 +66,9 @@
 }
 
 .tab-layout .tab-layout__buttons {
+	/* As big in the bar as it was (its padding 2px more each side than its old margin), so its
+	   buttons stay where they were */
+	margin: -2px;
 	z-index: 5;
 	opacity: 0;
 	transition: opacity 0.3s;

@@ -1809,6 +1809,40 @@ further shade to use (green-900 is the darkest green; blue-700 and green-800 the
 **Kept** (2 November 2026): a loading button's fade (now that it can't be pressed) is lighter in the
 light theme and darker in the dark, as it shows the page through.
 
+### Toolbar buttons' and tabs' focus rings are cut off
+
+**Open** (2 November 2026, measured, not decided): a toolbar has a 2px margin (`toolbar.css`) but a
+toolbar button's focus band reaches 4px, and a link tab's ring reaches 5px above and below it and
+8px either side (`tab-bar.css`, a line outside the tab and a 4px band) in an 18px bar, so where
+something around them hides its overflow the ring is cut. A scan of the first story of each App/
+and Screens/ component (157 stories) found 870 of 1,498 visible toolbar buttons cut, almost all by
+2px at the top (`tab-layout__content` 471, `split-pane__pane` 148, `overflow-hidden` panels), and
+13 of 345 link tabs (e.g. the data viewer's, by `data-viewer__tab-bar-outer`).
+
+**Fixed for toolbars** (2 November 2026, the user's decision): a toolbar now has 4px of padding in
+place of its 2px margin (`toolbar.css`), so it holds its buttons' rings and nothing around it can
+cut them (the same scan: 1 of 1,496 cut, a button scrolled half out of view). A toolbar over or in
+a field, or in line with text, has none, as the field or text holds it (`toolbar--control`,
+`quick-filter__toolbar`, `password-box__toolbar`, `ai-message__toolbar`); nor does a toolbar in a
+toolbar. Where the room around a toolbar was its screen's own, the screen gives back the 2px, so
+the buttons stay where they were: the explorer's toolbar row and menu, the Hide Sidebar button, the
+query pane's and query toolbar's bars, a results table's and a visualisation's bars, the main
+toolbar, Ask Stroom AI's header, a dialog's window options, a dashboard pane's buttons and the
+stepping controls. Elsewhere (a document's toolbar, a list's bar, a link tab bar's toolbar, all
+against an edge that hides overflow, which is where rings were cut) the buttons move 2px in and the
+bar is 4px higher. Measured by putting the old rules back with an injected style and comparing each
+button's place.
+
+**Open**: link tabs (with the 24px link tab change, a link tab bar 32px high, from 18px).
+
+### A scroll pane that overflows can't be scrolled from the keyboard
+
+**Open** (2 November 2026, shown by the toolbars' padding): when its content is taller than it, a
+scroll pane (`scroll-pane`) scrolls but can't take the focus, so a keyboard user can't scroll it
+(axe `scrollable-region-focusable`). `PipelineEditor` `Processors` shows it: the processor's details
+(309px) no longer fit its pane (307px) now that the toolbar above is 4px higher; at other window
+sizes it was already so.
+
 ### GitHub issues loosely related to accessibility
 
 **Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,

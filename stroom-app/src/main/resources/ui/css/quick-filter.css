@@ -61,6 +61,8 @@
     position: absolute;
     right: 4px;
     margin: 0;
+    /* The box holds it, so it needs no room of its own for its buttons' focus rings */
+    padding: 0;
 }
 
 /* Its buttons are the 24px of a minimum touch target (WCAG 2.5.8), as they sit over the box with no
