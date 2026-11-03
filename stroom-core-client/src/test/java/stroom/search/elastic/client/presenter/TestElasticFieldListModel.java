@@ -16,12 +16,14 @@
 
 package stroom.search.elastic.client.presenter;
 
+import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FieldType;
 import stroom.search.elastic.client.presenter.ElasticFieldListModel.SortColumn;
 import stroom.search.elastic.client.presenter.ElasticFieldRow.Kind;
 import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +112,30 @@ class TestElasticFieldListModel {
         assertThat(conflict.getStateNote()).isEqualTo("Type conflict: keyword, long");
         assertThat(conflict.isEnabled()).isFalse();
         assertThat(conflict.isEnabledEditable()).isFalse();
+    }
+
+    @Test
+    void testSetVirtualGroups() {
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", ExpressionOperator.builder().build()));
+
+        assertThat(model.setVirtualGroups("category", groups)).isTrue();
+        assertThat(model.findSettings("category").getVirtualGroups()).isEqualTo(groups);
+    }
+
+    @Test
+    void testSetVirtualGroupsNeverMakesAnotherFieldVirtual() {
+        // A group edited for a virtual field must not be applied to another field, e.g. one selected while the
+        // group dialog was open
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", ExpressionOperator.builder().build()));
+
+        assertThat(model.setVirtualGroups("bytes", groups)).isFalse();
+        assertThat(model.setVirtualGroups("gone", groups)).isFalse();
+        assertThat(model.setVirtualGroups("unknown", groups)).isFalse();
+        assertThat(model.findSettings("bytes")).isNull();
+        assertThat(model.findSettings("gone").isVirtual()).isFalse();
+        assertThat(model.findSettings("unknown")).isNull();
     }
 
     @Test

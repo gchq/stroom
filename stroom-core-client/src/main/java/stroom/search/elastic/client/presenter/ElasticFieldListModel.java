@@ -20,6 +20,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.search.elastic.client.presenter.ElasticFieldRow.Kind;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 
@@ -210,6 +211,21 @@ public class ElasticFieldListModel {
         Objects.requireNonNull(settings);
         Objects.requireNonNull(settings.getFieldName());
         settingsByName.put(settings.getFieldName(), settings);
+    }
+
+    /// Sets the groups of a virtual field. Nothing changes if the field is not a virtual field, e.g. because it was
+    /// renamed or deleted while a group was being edited, so another field is never made a virtual field.
+    ///
+    /// @param fieldName the name of the virtual field
+    /// @param groups    its new groups
+    /// @return `true` if the groups were set
+    public boolean setVirtualGroups(final String fieldName, final List<ElasticVirtualFieldGroup> groups) {
+        final ElasticIndexFieldSettings existing = settingsByName.get(fieldName);
+        if (existing == null || !existing.isVirtual()) {
+            return false;
+        }
+        putSettings(existing.copy().virtualGroups(new ArrayList<>(groups)).build());
+        return true;
     }
 
     /// Removes the settings of a field. For a virtual field this deletes the field.

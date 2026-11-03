@@ -222,8 +222,14 @@ public class ElasticFieldSettingsPresenter
     }
 
     private void fireChanged() {
-        if (listener != null && row != null) {
-            listener.onFieldSettingsChanged(row.getName());
+        if (row != null) {
+            fireChanged(row.getName());
+        }
+    }
+
+    private void fireChanged(final String fieldName) {
+        if (listener != null) {
+            listener.onFieldSettingsChanged(fieldName);
         }
     }
 
@@ -373,12 +379,14 @@ public class ElasticFieldSettingsPresenter
 
     private void addGroup() {
         if (canEdit() && row.isVirtual()) {
-            groupPresenter.show(groups, -1, false, group -> {
-                final List<ElasticVirtualFieldGroup> newGroups = ElasticVirtualFieldGroups.add(groups,
+            // The selected field may change while the dialog is open, so the groups go to the field it was opened for
+            final String fieldName = row.getName();
+            final List<ElasticVirtualFieldGroup> groupsAtOpen = groups;
+            groupPresenter.show(groupsAtOpen, -1, false, group -> {
+                final List<ElasticVirtualFieldGroup> newGroups = ElasticVirtualFieldGroups.add(groupsAtOpen,
                         group.getName(),
                         group.getExpression());
-                selectedGroupIndex = newGroups.size() - 1;
-                applyGroups(newGroups);
+                applyGroups(fieldName, newGroups, newGroups.size() - 1);
             });
         }
     }
@@ -388,12 +396,16 @@ public class ElasticFieldSettingsPresenter
             return;
         }
         final int index = selectedGroupIndex;
-        groupPresenter.show(groups, index, readOnly, group -> {
+        final String fieldName = row.getName();
+        final List<ElasticVirtualFieldGroup> groupsAtOpen = groups;
+        groupPresenter.show(groupsAtOpen, index, readOnly, group -> {
             if (canEdit()) {
-                applyGroups(ElasticVirtualFieldGroups.replace(groups,
-                        index,
-                        group.getName(),
-                        group.getExpression()));
+                applyGroups(fieldName,
+                        ElasticVirtualFieldGroups.replace(groupsAtOpen,
+                                index,
+                                group.getName(),
+                                group.getExpression()),
+                        index);
             }
         });
     }
@@ -402,20 +414,28 @@ public class ElasticFieldSettingsPresenter
         if (canEdit() && row.isVirtual() && hasSelectedGroup()) {
             final List<ElasticVirtualFieldGroup> newGroups = ElasticVirtualFieldGroups.remove(groups,
                     selectedGroupIndex);
-            selectedGroupIndex = Math.min(selectedGroupIndex, newGroups.size() - 1);
-            applyGroups(newGroups);
+            applyGroups(row.getName(), newGroups, Math.min(selectedGroupIndex, newGroups.size() - 1));
         }
     }
 
-    private void applyGroups(final List<ElasticVirtualFieldGroup> newGroups) {
-        final ElasticIndexFieldSettings existing = model.findSettings(row.getName());
-        final ElasticIndexFieldSettings.Builder builder = existing == null
-                ? ElasticIndexFieldSettings.builder(row.getName())
-                : existing.copy();
-        model.putSettings(builder.virtualGroups(newGroups).build());
-        groups = new ArrayList<>(newGroups);
-        showGroups();
-        fireChanged();
+    /// Sets the groups of a virtual field.
+    ///
+    /// @param fieldName          the virtual field, which may no longer be the selected field
+    /// @param newGroups          its new groups
+    /// @param selectedGroupIndex the group to select if the field is still shown
+    private void applyGroups(final String fieldName,
+                             final List<ElasticVirtualFieldGroup> newGroups,
+                             final int selectedGroupIndex) {
+        if (!model.setVirtualGroups(fieldName, newGroups)) {
+            // The virtual field was deleted or renamed while its group was being edited
+            return;
+        }
+        if (row != null && fieldName.equals(row.getName())) {
+            this.selectedGroupIndex = selectedGroupIndex;
+            groups = new ArrayList<>(newGroups);
+            showGroups();
+        }
+        fireChanged(fieldName);
     }
 
     private static Float parseFloat(final String text) {
