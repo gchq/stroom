@@ -321,12 +321,12 @@ subprojects {
                 }
             }
 
-            // Report duration of tests that take over 1s
+            // Report duration of tests that take over 5s
             @Override
             void afterTest(TestDescriptor descriptor, TestResult result) {
                 def durationSecs = (result.endTime - result.startTime) / 1000
-                if (durationSecs > 1) {
-                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+                if (durationSecs > 5) {
+                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 5s, result: ${result.resultType}, duration: ${durationSecs}s"
                 }
             }
 
