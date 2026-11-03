@@ -539,6 +539,8 @@ appConfig:
       maxNestedElementDepth: 10
       retryCount: 5
     search:
+      fieldStatsMaxSampleSize: 50000
+      fieldStatsSampleSize: 5000
       highlight: true
       scrollDuration: "PT1M"
       storeSize: "1000000,100,10,1"

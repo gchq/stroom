@@ -20,8 +20,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.search.elastic.search.ElasticFieldStatsService;
 import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticFieldStats;
+import stroom.search.elastic.shared.ElasticFieldStatsRequest;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.util.shared.EntityServiceException;
@@ -33,6 +37,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 
+import java.util.List;
+
 @AutoLogged
 class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<ElasticIndexDoc> {
 
@@ -42,6 +48,8 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
     private final Provider<ElasticConfig> elasticConfigProvider;
     private final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider;
     private final Provider<ElasticClientFactory> elasticClientFactoryProvider;
+    private final Provider<ElasticIndexService> elasticIndexServiceProvider;
+    private final Provider<ElasticFieldStatsService> elasticFieldStatsServiceProvider;
 
     @Inject
     ElasticIndexResourceImpl(
@@ -50,7 +58,9 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
             final Provider<ElasticConfig> elasticConfigProvider,
             final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider,
-            final Provider<ElasticClientFactory> elasticClientFactoryProvider
+            final Provider<ElasticClientFactory> elasticClientFactoryProvider,
+            final Provider<ElasticIndexService> elasticIndexServiceProvider,
+            final Provider<ElasticFieldStatsService> elasticFieldStatsServiceProvider
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
@@ -58,6 +68,8 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
         this.elasticConfigProvider = elasticConfigProvider;
         this.elasticConnectionResolverProvider = elasticConnectionResolverProvider;
         this.elasticClientFactoryProvider = elasticClientFactoryProvider;
+        this.elasticIndexServiceProvider = elasticIndexServiceProvider;
+        this.elasticFieldStatsServiceProvider = elasticFieldStatsServiceProvider;
     }
 
     @Override
@@ -112,5 +124,19 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
         } catch (final Exception e) {
             return new ElasticIndexTestResponse(false, e.getMessage());
         }
+    }
+
+    /// Reads the index doc first, so only users who may view it can read its fields.
+    @Override
+    @AutoLogged(OperationType.VIEW)
+    public List<ElasticIndexField> fetchFields(final ElasticIndexDoc elasticIndexDoc) {
+        documentResourceHelperProvider.get().read(elasticIndexStoreProvider.get(), elasticIndexDoc.asDocRef());
+        return elasticIndexServiceProvider.get().getFields(elasticIndexDoc);
+    }
+
+    @Override
+    @AutoLogged(value = OperationType.VIEW, verb = "Fetching Elasticsearch index field statistics")
+    public ElasticFieldStats fetchFieldStats(final ElasticFieldStatsRequest request) {
+        return elasticFieldStatsServiceProvider.get().getFieldStats(request);
     }
 }

@@ -36,6 +36,7 @@ import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.util.functions.TriFunction;
 import stroom.util.shared.NullSafe;
 
@@ -76,6 +77,8 @@ public class SearchExpressionQueryBuilder {
     private static final BigInteger UNSIGNED_LONG_MAX = BigInteger.ONE.shiftLeft(Long.SIZE).subtract(BigInteger.ONE);
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
+    // The most values Elasticsearch accepts in one `terms` query by default (`index.max_terms_count`)
+    static final int MAX_TERMS_COUNT = 65_536;
     private static final Pattern IPV4_ADDRESS_PATTERN =
             Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/(\\d{1,2}))?$");
     private static final int IPV4_OCTET_COUNT = 4;
@@ -291,6 +294,9 @@ public class SearchExpressionQueryBuilder {
             throw new SearchException("Field not found in index: " + field);
         }
         checkFieldUsable(elasticIndexField);
+        if (elasticIndexField.isVirtual()) {
+            return buildVirtualFieldQuery(field, condition, value, docRef, enclosingPaths);
+        }
         final String fieldName = elasticIndexField.getFldName();
 
         // Work out the effective field-level query options, e.g. case-insensitive matching, from those set on
@@ -405,7 +411,9 @@ public class SearchExpressionQueryBuilder {
             }
             case IN -> {
                 final Query inQuery;
-                if (terms.size() > 1) {
+                if (terms.size() > 1 && canMergeIntoTerms(indexField.getNativeType(), options)) {
+                    inQuery = buildKeywordValuesQuery(fieldName, terms, options);
+                } else if (terms.size() > 1) {
                     inQuery = BoolQuery.of(q -> q
                             .should(terms.stream()
                                     .map(term -> buildQueryFn.apply(fieldName, term))
@@ -475,6 +483,150 @@ public class SearchExpressionQueryBuilder {
         if (!ElasticSearchProvider.isFieldEnabled(indexDoc, field)) {
             throw new SearchException("Field '" + field.getFldName() + "' is disabled in " + indexDoc.getName());
         }
+    }
+
+    /// Creates a query matching any of several values of a `keyword` field. Exact values are matched by a single
+    /// `terms` query (split into several when there are more values than one `terms` query may hold), and
+    /// wildcard patterns by their own `wildcard` queries. Values are interpreted as by [#buildKeywordQuery].
+    private Query buildKeywordValuesQuery(final String fieldName,
+                                          final List<String> values,
+                                          final Map<String, String> options) {
+        final List<FieldValue> exactValues = new ArrayList<>();
+        final List<Query> wildcardQueries = new ArrayList<>();
+        for (final String value : values) {
+            final Matcher quotedMatcher = QUOTED_PATTERN.matcher(value);
+            if (quotedMatcher.matches()) {
+                exactValues.add(FieldValue.of(quotedMatcher.group(1)));
+            } else if (WILDCARD_PATTERN.matcher(value).matches()) {
+                wildcardQueries.add(buildKeywordQuery(fieldName, value, options));
+            } else {
+                exactValues.add(FieldValue.of(value));
+            }
+        }
+        final List<Query> queries = new ArrayList<>();
+        for (int from = 0; from < exactValues.size(); from += MAX_TERMS_COUNT) {
+            final List<FieldValue> chunk = exactValues.subList(
+                    from, Math.min(from + MAX_TERMS_COUNT, exactValues.size()));
+            queries.add(QueryBuilders.terms(q -> q
+                    .field(fieldName)
+                    .terms(t -> t.value(chunk))));
+        }
+        queries.addAll(wildcardQueries);
+        if (queries.size() == 1) {
+            return queries.getFirst();
+        }
+        return BoolQuery.of(q -> q.should(queries))._toQuery();
+    }
+
+    /// Creates the query for a term on a virtual field: the expressions of the named groups, ORed together.
+    ///
+    /// @param fieldName      the name of the virtual field
+    /// @param condition      the term's condition
+    /// @param value          the term's value, naming one or more groups
+    /// @param dictionaryRef  for `in dictionary`, the dictionary whose lines name groups
+    /// @param enclosingPaths the `nested` object paths the query will be placed inside
+    private Query buildVirtualFieldQuery(final String fieldName,
+                                         final Condition condition,
+                                         final String value,
+                                         final DocRef dictionaryRef,
+                                         final List<String> enclosingPaths) {
+        final List<String> groupNames = switch (condition) {
+            case EQUALS, NOT_EQUALS -> NullSafe.isBlankString(value)
+                    ? List.of()
+                    : List.of(unquote(value));
+            case IN -> tokenizeExpression(value).map(this::unquote).toList();
+            case IN_DICTIONARY -> {
+                if (dictionaryRef == null || dictionaryRef.getUuid() == null) {
+                    throw new IllegalArgumentException("Dictionary not set for field: " + fieldName);
+                }
+                yield Arrays.stream(wordListProvider.getWords(dictionaryRef))
+                        .map(String::trim)
+                        .filter(line -> !line.isEmpty())
+                        .toList();
+            }
+            default -> throw new UnsupportedOperationException(
+                    "Unsupported condition '" + condition.getDisplayValue() + "' for virtual field '" + fieldName +
+                    "'");
+        };
+        if (groupNames.isEmpty()) {
+            return null;
+        }
+
+        final List<ElasticVirtualFieldGroup> groups = NullSafe.list(NullSafe.get(
+                indexDoc.findFieldSettings(fieldName),
+                ElasticIndexFieldSettings::getVirtualGroups));
+        final List<Query> groupQueries = new ArrayList<>();
+        for (final String groupName : groupNames) {
+            final ElasticVirtualFieldGroup group = groups.stream()
+                    .filter(candidate -> groupName.equals(candidate.getName()))
+                    .findFirst()
+                    .orElseThrow(() -> new SearchException(
+                            "Unknown group '" + groupName + "' for virtual field '" + fieldName + "'"));
+            groupQueries.add(buildVirtualGroupQuery(fieldName, group, enclosingPaths));
+        }
+
+        final Query query = groupQueries.size() == 1
+                ? groupQueries.getFirst()
+                : BoolQuery.of(q -> q.should(groupQueries))._toQuery();
+        return Condition.NOT_EQUALS.equals(condition)
+                ? negate(query)
+                : query;
+    }
+
+    /// Creates the query for one group of a virtual field from its expression, after checking that the expression
+    /// only uses `keyword` fields of the index mapping.
+    ///
+    /// @param fieldName      the name of the virtual field
+    /// @param group          the group
+    /// @param enclosingPaths the `nested` object paths the query will be placed inside
+    /// @return the group's query
+    Query buildVirtualGroupQuery(final String fieldName,
+                                 final ElasticVirtualFieldGroup group,
+                                 final List<String> enclosingPaths) {
+        final ExpressionOperator expression = group.getExpression();
+        if (expression != null) {
+            checkVirtualGroupFields(fieldName, group, expression);
+        }
+        final Query query = expression == null
+                ? null
+                : getQuery(expression, enclosingPaths);
+        if (query == null) {
+            throw new SearchException("Group '" + group.getName() + "' of virtual field '" + fieldName +
+                                      "' has no conditions");
+        }
+        return query;
+    }
+
+    private void checkVirtualGroupFields(final String fieldName,
+                                         final ElasticVirtualFieldGroup group,
+                                         final ExpressionItem item) {
+        if (!item.enabled()) {
+            return;
+        }
+        if (item instanceof final ExpressionOperator operator) {
+            NullSafe.list(operator.getChildren())
+                    .forEach(child -> checkVirtualGroupFields(fieldName, group, child));
+        } else if (item instanceof final ExpressionTerm term) {
+            final String termField = NullSafe.get(term.getField(), String::trim);
+            final IndexField indexField = termField == null
+                    ? null
+                    : indexFieldCache.get(indexDoc.asDocRef(), termField);
+            if (!(indexField instanceof final ElasticIndexField elasticIndexField)
+                || elasticIndexField.isVirtual()
+                || !Kind.Keyword.jsonValue().equals(elasticIndexField.getNativeType())) {
+                throw new SearchException("Group '" + group.getName() + "' of virtual field '" + fieldName +
+                                          "' uses field '" + termField + "', which is not a keyword field of " +
+                                          indexDoc.getName());
+            }
+        }
+    }
+
+    private String unquote(final String value) {
+        final String trimmed = value.trim();
+        final Matcher quotedMatcher = QUOTED_PATTERN.matcher(trimmed);
+        return quotedMatcher.matches()
+                ? quotedMatcher.group(1)
+                : trimmed;
     }
 
     private Query buildDenseVectorQuery(final String fieldName, final String expression) {
@@ -549,6 +701,18 @@ public class SearchExpressionQueryBuilder {
 
     /// @return True if the case-insensitive option is set, otherwise null so that Elasticsearch's default
     /// (case-sensitive) applies and the query is unchanged.
+    /// Exact values of a `keyword` or `wildcard` field can be merged into one `terms` query, unless the term's
+    /// options match them case-insensitively or fuzzily, which a `terms` query can't do.
+    ///
+    /// @param nativeType the field's mapping type
+    /// @param options    the term's effective options
+    /// @return `true` if the values can be merged into a `terms` query
+    private static boolean canMergeIntoTerms(final String nativeType, final Map<String, String> options) {
+        return ElasticQueryOptionSets.isTermLevelStringType(nativeType)
+               && getCaseInsensitive(options) == null
+               && getFuzziness(options) == null;
+    }
+
     private static Boolean getCaseInsensitive(final Map<String, String> options) {
         return QueryOptionUtil.getBoolean(options, ElasticQueryOptionSets.CASE_INSENSITIVE)
                 ? Boolean.TRUE
@@ -950,6 +1114,16 @@ public class SearchExpressionQueryBuilder {
             final Map<String, String> options
     ) {
         final String[] lines = wordListProvider.getWords(docRef);
+        if (canMergeIntoTerms(indexField.getNativeType(), options)) {
+            // Every line is matched by a keyword query, so merge the exact values into `terms` queries
+            final List<String> values = Arrays.stream(lines)
+                    .filter(line -> !line.isEmpty())
+                    .toList();
+            if (values.isEmpty()) {
+                return wrapInNested(nestedPaths, new BoolQuery.Builder().build()._toQuery());
+            }
+            return wrapInNested(nestedPaths, buildKeywordValuesQuery(fieldName, values, options));
+        }
         final BoolQuery.Builder builder = new BoolQuery.Builder();
 
         for (final String line : lines) {
