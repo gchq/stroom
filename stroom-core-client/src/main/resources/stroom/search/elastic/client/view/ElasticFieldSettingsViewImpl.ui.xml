@@ -55,7 +55,6 @@
 
     <g:ScrollPanel styleName="max">
         <g:FlowPanel styleName="form-padding form">
-            <g:HTML ui:field="fieldName"/>
 
             <!-- The tick box, its label and its help button sit on one line -->
             <g:FlowPanel ui:field="enabledRow" addStyleNames="{style.checkboxRow}">
