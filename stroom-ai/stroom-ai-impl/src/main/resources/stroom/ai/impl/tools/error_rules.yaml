@@ -78,6 +78,8 @@ rules:
   # added a rule for; the first piece was translated with fields missing, with no error).
   - {message: 'No event mapping matched record \d* ?\([^=|()]+=( \| [^=|()]+=)*\)\s*$', class: review,
      reason: "No rule matched these records, and every value the rules test is empty in them. Before adding a rule for them, check they are whole records: in delimited data whose quoted values hold line breaks, a Data Splitter without quoted_newlines splits each such record at the line break, so the later pieces' columns hold the wrong values (often none) and the first piece is translated with fields missing, with no error. If the raw stream has quoted values over several lines, build_data_splitter again with spec quoted_newlines=true, save it over the converter, step and process again. Otherwise they are a kind of record with those fields unset"}
+  - {message: 'Several values \(\d+\) for .*, only the first written', class: review,
+     reason: "An entry without repeat read several values from its xpath (a delimited list split with tokenize(), say), and the translation wrote only the first. If each value belongs in the event, give the entry repeat: true (build_translation_xslt changes=), which writes one element per value where the schema lets the element repeat; if one value is meant, change the xpath to give one"}
   - {message: 'Kept as Unknown by rule', class: benign,
      reason: "A record a rule keeps as EventDetail/Unknown, as the user agreed (allow_unknown): logged so review_coverage finds every one in the whole feed"}
   - {own: true, severity: [WARNING], class: review, reason: "Warning in this pipeline's own element"}

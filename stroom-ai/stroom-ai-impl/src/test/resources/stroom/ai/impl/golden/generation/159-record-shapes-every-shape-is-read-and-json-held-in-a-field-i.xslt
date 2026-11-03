@@ -87,7 +87,7 @@
         <TypeId>
           <xsl:value-of select="if (exists(((*[@key='event_type'], mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'])[normalize-space(.)][1])[normalize-space(.)])) then ((*[@key='event_type'], mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'])[normalize-space(.)][1]) else 'other'"/>
         </TypeId>
-        <xsl:if test="normalize-space(*[@key='level']) or normalize-space(mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'])">
+        <xsl:if test="*[@key='level'][normalize-space(.)] or mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'][normalize-space(.)]">
           <Unknown>
             <xsl:sequence select="mcp:data('level', *[@key='level'])"/>
             <xsl:sequence select="mcp:data('message.timestamp', mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'])"/>
@@ -114,17 +114,17 @@
         <Environment>Prod</Environment>
       </System>
       <Generator>App</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='src_ip'])">
+      <xsl:if test="*[@key='src_ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='src_ip']"/>
+            <xsl:value-of select="(*[@key='src_ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
@@ -172,7 +172,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

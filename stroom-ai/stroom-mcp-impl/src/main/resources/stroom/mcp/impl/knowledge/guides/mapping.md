@@ -60,7 +60,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `default` | Written when the input is empty |
 | `transform` | `lower`, `upper`, `trim`, `strip_domain`, `domain`, `digits`, `unescape_quotes`, `strip_control` |
 | `dictionary` | The value a Dictionary of key=value lines gives |
-| `repeat: true` | One element per value of a field holding several |
+| `repeat: true` | One element per value of a field holding several; a delimited text list is one value, so split it with an `xpath` using `tokenize()` |
 | `time_format`, `timezone` | Time parsing: see below |
 | `data_name`, `data_parent` | A `Data` entry: see below |
 

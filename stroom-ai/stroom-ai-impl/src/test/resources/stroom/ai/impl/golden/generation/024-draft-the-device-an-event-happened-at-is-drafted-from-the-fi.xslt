@@ -14,7 +14,7 @@
       <xsl:if test="(when)[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(when[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((when)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -27,14 +27,14 @@
         <xsl:if test="(door)[normalize-space(.)]">
           <Device>
             <Name>
-              <xsl:value-of select="door"/>
+              <xsl:value-of select="(door)[1]"/>
             </Name>
           </Device>
         </xsl:if>
         <xsl:if test="(holder)[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="holder"/>
+              <xsl:value-of select="(holder)[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -43,7 +43,7 @@
         <TypeId>Other</TypeId>
         <xsl:if test="(granted)[normalize-space(.)]">
           <Unknown>
-            <Data Name="granted" Value="{granted}"/>
+            <Data Name="granted" Value="{(granted)[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -54,7 +54,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

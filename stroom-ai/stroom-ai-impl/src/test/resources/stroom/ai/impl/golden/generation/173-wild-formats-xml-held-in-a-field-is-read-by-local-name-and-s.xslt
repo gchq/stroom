@@ -21,10 +21,10 @@
   <!-- Rule 'login': every record. Writes an Authenticate event (TypeId x) from payload//User. -->
   <xsl:template match="node()" mode="event_type_login">
     <Event>
-      <xsl:if test="normalize-space(*[@key='time'])">
+      <xsl:if test="*[@key='time'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(*[@key='time'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -41,7 +41,7 @@
         <xsl:if test="$payload_user">
           <User>
             <Id>
-              <xsl:value-of select="$payload_user"/>
+              <xsl:value-of select="$payload_user[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -53,7 +53,7 @@
           <xsl:if test="$payload_user">
             <User>
               <Id>
-                <xsl:value-of select="$payload_user"/>
+                <xsl:value-of select="$payload_user[1]"/>
               </Id>
             </User>
           </xsl:if>

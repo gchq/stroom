@@ -7,15 +7,15 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="src_parts" select="analyze-string(string(*[@key='message'][1]), 'src=(\S+)')"/>
+    <xsl:variable name="src_parts" select="analyze-string(string((*[@key='message'])[1]), 'src=(\S+)')"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
-      <xsl:when test="normalize-space($src_parts/fn:match//fn:group[@nr=1])">
+      <xsl:when test="$src_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <xsl:apply-templates select="." mode="event_type_connection"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('src=', string((normalize-space($src_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('src=', string(($src_parts/fn:match//fn:group[@nr=1][normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -40,7 +40,7 @@
                 <Source>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$src"/>
+                      <xsl:value-of select="$src[1]"/>
                     </IPAddress>
                   </Device>
                 </Source>
@@ -49,7 +49,7 @@
                 <Destination>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$dst"/>
+                      <xsl:value-of select="$dst[1]"/>
                     </IPAddress>
                   </Device>
                 </Destination>
@@ -70,9 +70,9 @@
       <EventDetail>
         <TypeId>other</TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="normalize-space(*[@key='message'])">
+        <xsl:if test="*[@key='message'][normalize-space(.)]">
           <Unknown>
-            <Data Name="message" Value="{*[@key='message']}"/>
+            <Data Name="message" Value="{(*[@key='message'])[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -80,10 +80,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'connection', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='ts'])">
+    <xsl:if test="*[@key='ts'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="*[@key='ts']"/>
+          <xsl:value-of select="(*[@key='ts'])[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -96,17 +96,17 @@
         <Environment>Dev</Environment>
       </System>
       <Generator>app</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='user'])">
+      <xsl:if test="*[@key='user'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='user']"/>
+            <xsl:value-of select="(*[@key='user'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -114,9 +114,9 @@
   </xsl:template>
   <!-- description: shared by the rules 'connection', 'other' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(*[@key='desc'])">
+    <xsl:if test="*[@key='desc'][normalize-space(.)]">
       <Description>
-        <xsl:value-of select="*[@key='desc']"/>
+        <xsl:value-of select="(*[@key='desc'])[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
@@ -125,7 +125,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

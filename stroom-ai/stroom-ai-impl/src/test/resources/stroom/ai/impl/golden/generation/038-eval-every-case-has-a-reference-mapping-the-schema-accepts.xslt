@@ -11,10 +11,10 @@
   <!-- Rule 'copy to removable media': every record. Writes a Copy event (TypeId USB-Copy) from source, destination. -->
   <xsl:template match="node()" mode="event_type_copy_to_removable_media">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -24,17 +24,17 @@
           <Environment>Eval</Environment>
         </System>
         <Generator>usb-monitor</Generator>
-        <xsl:if test="normalize-space(data[@name='host']/@value)">
+        <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="data[@name='host']/@value"/>
+              <xsl:value-of select="(data[@name='host']/@value)[1]"/>
             </HostName>
           </Device>
         </xsl:if>
-        <xsl:if test="normalize-space(data[@name='user']/@value)">
+        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="data[@name='user']/@value"/>
+              <xsl:value-of select="(data[@name='user']/@value)[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -49,7 +49,7 @@
               <Source>
                 <File>
                   <Path>
-                    <xsl:value-of select="$source"/>
+                    <xsl:value-of select="$source[1]"/>
                   </Path>
                 </File>
               </Source>
@@ -58,7 +58,7 @@
               <Destination>
                 <File>
                   <Path>
-                    <xsl:value-of select="$destination"/>
+                    <xsl:value-of select="$destination[1]"/>
                   </Path>
                 </File>
               </Destination>

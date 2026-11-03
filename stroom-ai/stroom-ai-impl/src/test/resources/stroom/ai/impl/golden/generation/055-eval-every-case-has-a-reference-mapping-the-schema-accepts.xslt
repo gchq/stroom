@@ -78,7 +78,7 @@
             <Success>false</Success>
             <xsl:if test="(EventData/Data[@Name='FailureReason'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
               <Description>
-                <xsl:value-of select="EventData/Data[@Name='FailureReason']"/>
+                <xsl:value-of select="(EventData/Data[@Name='FailureReason'])[1]"/>
               </Description>
             </xsl:if>
           </Outcome>
@@ -119,7 +119,7 @@
           <xsl:if test="(EventData/Data[@Name='SubjectUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
             <User>
               <Id>
-                <xsl:value-of select="EventData/Data[@Name='SubjectUserName']"/>
+                <xsl:value-of select="(EventData/Data[@Name='SubjectUserName'])[1]"/>
               </Id>
             </User>
           </xsl:if>
@@ -165,10 +165,14 @@
   <!-- event_time: shared by the rules 'logon', 'failed logon', 'logoff', 'special privileges', 'account locked',
        'account created' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="exists((replace(System/TimeCreated/@SystemTime, '(\.\d{3})\d*Z$', '$1Z'))[normalize-space(.)][not(normalize-space(.) = ('-'))])">
+    <xsl:variable name="event_time_time_created" select="(replace(System/TimeCreated/@SystemTime, '(\.\d{3})\d*Z$', '$1Z'))[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
+    <xsl:if test="exists($event_time_time_created)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(replace(System/TimeCreated/@SystemTime, '(\.\d{3})\d*Z$', '$1Z')[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:if test="count($event_time_time_created) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -182,7 +186,7 @@
       <xsl:if test="(EventData/Data[@Name='IpAddress'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="EventData/Data[@Name='IpAddress']"/>
+            <xsl:value-of select="(EventData/Data[@Name='IpAddress'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
@@ -202,7 +206,7 @@
   <xsl:template match="node()" mode="generator">
     <xsl:if test="(System/Provider/@Name)[normalize-space(.)][not(normalize-space(.) = ('-'))]">
       <Generator>
-        <xsl:value-of select="System/Provider/@Name"/>
+        <xsl:value-of select="(System/Provider/@Name)[1]"/>
       </Generator>
     </xsl:if>
   </xsl:template>
@@ -212,7 +216,7 @@
     <xsl:if test="(System/Computer)[normalize-space(.)][not(normalize-space(.) = ('-'))]">
       <Device>
         <HostName>
-          <xsl:value-of select="System/Computer"/>
+          <xsl:value-of select="(System/Computer)[1]"/>
         </HostName>
       </Device>
     </xsl:if>
@@ -222,7 +226,7 @@
     <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
       <User>
         <Id>
-          <xsl:value-of select="EventData/Data[@Name='TargetUserName']"/>
+          <xsl:value-of select="(EventData/Data[@Name='TargetUserName'])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -232,14 +236,14 @@
   <xsl:template match="node()" mode="type_id">
     <xsl:if test="(System/EventID)[normalize-space(.)][not(normalize-space(.) = ('-'))]">
       <TypeId>
-        <xsl:value-of select="System/EventID"/>
+        <xsl:value-of select="(System/EventID)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- logon_type: shared by the rules 'logon', 'failed logon' -->
   <xsl:template match="node()" mode="logon_type">
     <LogonType>
-      <xsl:value-of select="($event_data_data_name_logon_type_to_logon_type?((EventData/Data[@Name='LogonType'])[normalize-space(.)][not(normalize-space(.) = ('-'))]), 'Other')[1]"/>
+      <xsl:value-of select="($event_data_data_name_logon_type_to_logon_type?((EventData/Data[@Name='LogonType'])[1]), 'Other')[1]"/>
     </LogonType>
   </xsl:template>
   <!-- authenticate_user: shared by the rules 'logon', 'failed logon', 'account created' -->
@@ -250,7 +254,7 @@
         <xsl:apply-templates select="." mode="id"/>
         <xsl:if test="$event_data_data_name_target_domain_name">
           <Domain>
-            <xsl:value-of select="$event_data_data_name_target_domain_name"/>
+            <xsl:value-of select="$event_data_data_name_target_domain_name[1]"/>
           </Domain>
         </xsl:if>
       </User>
@@ -260,7 +264,7 @@
   <xsl:template match="node()" mode="id">
     <xsl:if test="(EventData/Data[@Name='TargetUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
       <Id>
-        <xsl:value-of select="EventData/Data[@Name='TargetUserName']"/>
+        <xsl:value-of select="(EventData/Data[@Name='TargetUserName'])[1]"/>
       </Id>
     </xsl:if>
   </xsl:template>
@@ -281,7 +285,7 @@
       <xsl:if test="(EventData/Data[@Name='SubjectUserName'])[normalize-space(.)][not(normalize-space(.) = ('-'))]">
         <User>
           <Id>
-            <xsl:value-of select="EventData/Data[@Name='SubjectUserName']"/>
+            <xsl:value-of select="(EventData/Data[@Name='SubjectUserName'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -292,7 +296,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)][not(normalize-space(.) = ('-'))])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

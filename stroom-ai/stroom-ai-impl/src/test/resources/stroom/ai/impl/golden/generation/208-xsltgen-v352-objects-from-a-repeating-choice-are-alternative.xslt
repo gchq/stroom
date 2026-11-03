@@ -11,10 +11,10 @@
   <!-- Rule 'view': every record. Writes a View event (TypeId FileRead) from action. -->
   <xsl:template match="node()" mode="event_type_view">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="data[@name='time']/@value"/>
+            <xsl:value-of select="(data[@name='time']/@value)[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -26,24 +26,24 @@
         <Generator>vpnd</Generator>
         <Device>
           <HostName>
-            <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+            <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
           </HostName>
         </Device>
-        <xsl:if test="normalize-space(data[@name='user']/@value)">
+        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="data[@name='user']/@value"/>
+              <xsl:value-of select="(data[@name='user']/@value)[1]"/>
             </Id>
           </User>
         </xsl:if>
       </EventSource>
       <EventDetail>
         <TypeId>FileRead</TypeId>
-        <xsl:if test="normalize-space(data[@name='action']/@value)">
+        <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
           <View>
             <File>
               <Path>
-                <xsl:value-of select="data[@name='action']/@value"/>
+                <xsl:value-of select="(data[@name='action']/@value)[1]"/>
               </Path>
             </File>
           </View>

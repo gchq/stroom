@@ -33,10 +33,10 @@
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:if test="data[@name='result']/@value = ('success', 'failure')">
+          <xsl:if test="(data[@name='result']/@value)[1] = ('success', 'failure')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='result']/@value = 'success') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='result']/@value)[1] = 'success') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -61,10 +61,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -86,12 +86,12 @@
         <User>
           <xsl:if test="$user">
             <Id>
-              <xsl:value-of select="$user"/>
+              <xsl:value-of select="$user[1]"/>
             </Id>
           </xsl:if>
           <xsl:if test="$name">
             <Name>
-              <xsl:value-of select="$name"/>
+              <xsl:value-of select="$name[1]"/>
             </Name>
           </xsl:if>
         </User>
@@ -100,26 +100,26 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='action']/@value)">
+    <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='action']/@value"/>
+        <xsl:value-of select="(data[@name='action']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='msg']/@value)">
+    <xsl:if test="data[@name='msg']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="replace(data[@name='msg']/@value[1], '\p{Cc}\[[0-9;]*[A-Za-z]|[\p{Cc}-[\t\n\r]]', '')"/>
+        <xsl:value-of select="replace((data[@name='msg']/@value)[1], '\p{Cc}\[[0-9;]*[A-Za-z]|[\p{Cc}-[\t\n\r]]', '')"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='user']/@value)">
+    <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='user']/@value"/>
+          <xsl:value-of select="(data[@name='user']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>

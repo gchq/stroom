@@ -12,10 +12,10 @@
        action. -->
   <xsl:template match="node()" mode="event_type_message">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -26,17 +26,17 @@
           <Environment>Eval</Environment>
         </System>
         <Generator>mailgw</Generator>
-        <xsl:if test="normalize-space(data[@name='host']/@value)">
+        <xsl:if test="data[@name='host']/@value[normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="data[@name='host']/@value"/>
+              <xsl:value-of select="(data[@name='host']/@value)[1]"/>
             </HostName>
           </Device>
         </xsl:if>
         <xsl:if test="$from">
           <User>
             <EmailAddress>
-              <xsl:value-of select="$from"/>
+              <xsl:value-of select="$from[1]"/>
             </EmailAddress>
           </User>
         </xsl:if>
@@ -44,19 +44,19 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'message'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'message'"/>
         </TypeId>
         <Send>
           <xsl:if test="$from">
             <Source>
               <User>
                 <EmailAddress>
-                  <xsl:value-of select="$from"/>
+                  <xsl:value-of select="$from[1]"/>
                 </EmailAddress>
               </User>
             </Source>
           </xsl:if>
-          <xsl:if test="(data[@name='rcpt']/@value)[normalize-space(.)]">
+          <xsl:if test="exists((data[@name='rcpt']/@value)[normalize-space(.)])">
             <Destination>
               <xsl:for-each select="data[@name='rcpt']/@value">
                 <User>
@@ -74,12 +74,12 @@
               <Email>
                 <xsl:if test="$msgid">
                   <Id>
-                    <xsl:value-of select="$msgid"/>
+                    <xsl:value-of select="$msgid[1]"/>
                   </Id>
                 </xsl:if>
                 <xsl:if test="$subject">
                   <Name>
-                    <xsl:value-of select="$subject"/>
+                    <xsl:value-of select="$subject[1]"/>
                   </Name>
                 </xsl:if>
               </Email>
@@ -87,7 +87,7 @@
           </xsl:if>
           <Outcome>
             <Success>
-              <xsl:value-of select="if ($action = 'deliver') then 'true' else 'false'"/>
+              <xsl:value-of select="if ($action[1] = 'deliver') then 'true' else 'false'"/>
             </Success>
           </Outcome>
           <xsl:sequence select="mcp:data('size', data[@name='size']/@value)"/>
@@ -101,7 +101,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

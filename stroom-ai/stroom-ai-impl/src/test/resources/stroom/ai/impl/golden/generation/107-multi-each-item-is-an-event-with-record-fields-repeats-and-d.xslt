@@ -62,10 +62,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='ts'])">
+    <xsl:if test="*[@key='ts'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="*[@key='ts']"/>
+          <xsl:value-of select="(*[@key='ts'])[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -79,22 +79,22 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>audit</Generator>
-      <xsl:if test="normalize-space($record/*[@key='host'])">
+      <xsl:if test="$record/*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="$record/*[@key='host']"/>
+            <xsl:value-of select="($record/*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
       <xsl:variable name="user" select="*[@key='user'][normalize-space(.)]"/>
-      <xsl:if test="$user or (*[@key='roles'])[normalize-space(.)]">
+      <xsl:if test="$user or exists((*[@key='roles'])[normalize-space(.)])">
         <User>
           <xsl:if test="$user">
             <Id>
-              <xsl:value-of select="$user"/>
+              <xsl:value-of select="$user[1]"/>
             </Id>
           </xsl:if>
-          <xsl:if test="(*[@key='roles'])[normalize-space(.)]">
+          <xsl:if test="exists((*[@key='roles'])[normalize-space(.)])">
             <Groups>
               <xsl:for-each select="*[@key='roles']/*">
                 <Group>
@@ -111,18 +111,18 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='action'])">
+    <xsl:if test="*[@key='action'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='action']"/>
+        <xsl:value-of select="(*[@key='action'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(*[@key='user'])">
+    <xsl:if test="*[@key='user'][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="*[@key='user']"/>
+          <xsl:value-of select="(*[@key='user'])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -132,7 +132,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

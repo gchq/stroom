@@ -75,6 +75,35 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void aLinkToADocumentThatDoesNotExistIsRefusedBeforeAnythingIsWritten() {
+        // Seen in testing: a feed's UUID typed by hand with a digit doubled, its link broken in documentation bound
+        // for production.
+        world.pipeline(BUILD, "Acme", "p");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("translation",
+                Map.of("mapping", Map.of()))));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenReturn("The generated section.");
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "pipeline_uuid", "p",
+                "markdown", "# Acme\n\n## Purpose and data\n\nFrom [the feed](?action=open-doc&docType=Feed"
+                            + "&docUuid=e23530257-7884) through [Acme](?action=open-doc&docType=Pipeline&docUuid=p)"
+                            + ".\n",
+                "stream_ids", List.of(5)));
+
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
+                .startsWith("These links name no document of that type the user can open: Feed e23530257-7884.")
+                .contains("Copy each UUID from a tool's result");
+        assertThat(world.world.created).noneMatch(made -> made.startsWith(DocumentationDoc.TYPE + ":"));
+
+        // A link naming a document as another type is broken too; a link to the pipeline itself is fine.
+        args.put("markdown", "# Acme\n\n## Purpose and data\n\n[Acme](?action=open-doc&docType=XSLT&docUuid=p)"
+                             + ".\n");
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args))).contains("XSLT p");
+        args.put("markdown", "# Acme\n\n## Purpose and data\n\n[Acme](?action=open-doc&docType=Pipeline"
+                             + "&docUuid=p).\n");
+        assertThat(world.call(tool, context, DocumentationWorld.args(args))).containsEntry("written", "created");
+    }
+
+    @Test
     void theDocIsWrittenBesideThePipelineTitledWithItsErrorsAndItsChangePending() {
         world.pipeline(BUILD, "Acme", "p");
         Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("translation",

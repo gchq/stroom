@@ -29,7 +29,7 @@
         <xsl:apply-templates select="." mode="event_type_config"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('message=', string(($message)[1])), concat('level=', string((normalize-space(data[@name='level']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('message=', string(($message)[1])), concat('level=', string((data[@name='level']/@value[normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -41,7 +41,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'logon'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logon'"/>
         </TypeId>
         <Authenticate>
           <Action>Logon</Action>
@@ -58,7 +58,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'logoff'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logoff'"/>
         </TypeId>
         <Authenticate>
           <Action>Logoff</Action>
@@ -75,16 +75,16 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'logon-failed'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'logon-failed'"/>
         </TypeId>
         <Authenticate>
           <Action>Logon</Action>
           <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
           <xsl:variable name="failed_user_parts" select="analyze-string(string($message[1]), '^Login failed for user (\S+) from ([\d.]+).*$')"/>
-          <xsl:if test="normalize-space($failed_user_parts/fn:match//fn:group[@nr=1])">
+          <xsl:if test="$failed_user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="$failed_user_parts/fn:match//fn:group[@nr=1]"/>
+                <xsl:value-of select="($failed_user_parts/fn:match//fn:group[@nr=1])[1]"/>
               </Id>
             </User>
           </xsl:if>
@@ -92,7 +92,7 @@
             <Success>false</Success>
             <xsl:if test="$message">
               <Description>
-                <xsl:value-of select="$message"/>
+                <xsl:value-of select="$message[1]"/>
               </Description>
             </xsl:if>
           </Outcome>
@@ -108,14 +108,14 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'invoice'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'invoice'"/>
         </TypeId>
         <Create>
           <Object>
             <Type>Invoice</Type>
-            <xsl:if test="normalize-space(data[@name='message']/@value)">
+            <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
               <Description>
-                <xsl:value-of select="data[@name='message']/@value"/>
+                <xsl:value-of select="(data[@name='message']/@value)[1]"/>
               </Description>
             </xsl:if>
           </Object>
@@ -130,13 +130,13 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'payment-error'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'payment-error'"/>
         </TypeId>
         <Alert>
           <Type>Error</Type>
-          <xsl:if test="normalize-space(data[@name='message']/@value)">
+          <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
             <Description>
-              <xsl:value-of select="data[@name='message']/@value"/>
+              <xsl:value-of select="(data[@name='message']/@value)[1]"/>
             </Description>
           </xsl:if>
         </Alert>
@@ -151,16 +151,16 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logger']/@value)) then data[@name='logger']/@value else 'config'"/>
+          <xsl:value-of select="if (data[@name='logger']/@value[normalize-space(.)]) then (data[@name='logger']/@value)[1] else 'config'"/>
         </TypeId>
         <Update>
-          <xsl:variable name="setting_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^Setting (\S+) changed from (\S+) to (\S+) by (\S+).*$')"/>
+          <xsl:variable name="setting_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^Setting (\S+) changed from (\S+) to (\S+) by (\S+).*$')"/>
           <After>
             <Object>
               <Type>Setting</Type>
-              <xsl:if test="normalize-space($setting_parts/fn:match//fn:group[@nr=1])">
+              <xsl:if test="$setting_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
                 <Id>
-                  <xsl:value-of select="$setting_parts/fn:match//fn:group[@nr=1]"/>
+                  <xsl:value-of select="($setting_parts/fn:match//fn:group[@nr=1])[1]"/>
                 </Id>
               </xsl:if>
             </Object>
@@ -173,10 +173,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'logon-failed', 'invoice', 'payment-error', 'config' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd HH:mm:ss,SSS', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd HH:mm:ss,SSS', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -188,9 +188,9 @@
         <Name>Billing Service</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(data[@name='logger']/@value)">
+      <xsl:if test="data[@name='logger']/@value[normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="data[@name='logger']/@value"/>
+          <xsl:value-of select="(data[@name='logger']/@value)[1]"/>
         </Generator>
       </xsl:if>
       <Device>
@@ -212,11 +212,11 @@
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:variable name="user_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^User (\S+) logged.*$')"/>
-    <xsl:if test="normalize-space($user_parts/fn:match//fn:group[@nr=1])">
+    <xsl:variable name="user_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^User (\S+) logged.*$')"/>
+    <xsl:if test="$user_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="$user_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($user_parts/fn:match//fn:group[@nr=1])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -226,7 +226,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

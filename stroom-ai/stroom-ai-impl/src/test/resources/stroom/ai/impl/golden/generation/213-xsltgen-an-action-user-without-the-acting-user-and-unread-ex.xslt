@@ -11,10 +11,10 @@
   <!-- Rule 'logon': every record. Writes an Authenticate event (TypeId Logon) from who (extracted from msg). -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="data[@name='time']/@value"/>
+            <xsl:value-of select="(data[@name='time']/@value)[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -26,7 +26,7 @@
         <Generator>vpnd</Generator>
         <Device>
           <HostName>
-            <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+            <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
           </HostName>
         </Device>
       </EventSource>
@@ -34,11 +34,11 @@
         <TypeId>Logon</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:variable name="who_parts" select="analyze-string(string(data[@name='msg']/@value[1]), '^(\S+) src=(\S+)$')"/>
-          <xsl:if test="normalize-space($who_parts/fn:match//fn:group[@nr=1])">
+          <xsl:variable name="who_parts" select="analyze-string(string((data[@name='msg']/@value)[1]), '^(\S+) src=(\S+)$')"/>
+          <xsl:if test="$who_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="$who_parts/fn:match//fn:group[@nr=1]"/>
+                <xsl:value-of select="($who_parts/fn:match//fn:group[@nr=1])[1]"/>
               </Id>
             </User>
           </xsl:if>

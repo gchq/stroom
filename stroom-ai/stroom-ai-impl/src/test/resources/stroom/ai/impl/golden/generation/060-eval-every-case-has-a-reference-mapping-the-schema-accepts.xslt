@@ -31,7 +31,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logid']/@value)) then data[@name='logid']/@value else 'signed in'"/>
+          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'signed in'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
@@ -49,7 +49,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logid']/@value)) then data[@name='logid']/@value else 'failed sign in'"/>
+          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'failed sign in'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
@@ -70,7 +70,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(data[@name='logid']/@value)) then data[@name='logid']/@value else 'signed out'"/>
+          <xsl:value-of select="if (data[@name='logid']/@value[normalize-space(.)]) then (data[@name='logid']/@value)[1] else 'signed out'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
@@ -82,11 +82,11 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'signed in', 'failed sign in', 'signed out' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:variable name="eventtime_ms_parts" select="analyze-string(string(data[@name='eventtime']/@value[1]), '^(\d{13})')"/>
-    <xsl:if test="normalize-space($eventtime_ms_parts/fn:match//fn:group[@nr=1])">
+    <xsl:variable name="eventtime_ms_parts" select="analyze-string(string((data[@name='eventtime']/@value)[1]), '^(\d{13})')"/>
+    <xsl:if test="$eventtime_ms_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string($eventtime_ms_parts/fn:match//fn:group[@nr=1][1]))"/>
+          <xsl:value-of select="stroom:format-date(string(($eventtime_ms_parts/fn:match//fn:group[@nr=1])[1]))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -99,24 +99,24 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>fortigate</Generator>
-      <xsl:if test="normalize-space(data[@name='devname']/@value)">
+      <xsl:if test="data[@name='devname']/@value[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="data[@name='devname']/@value"/>
+            <xsl:value-of select="(data[@name='devname']/@value)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='remip']/@value)">
+      <xsl:if test="data[@name='remip']/@value[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="data[@name='remip']/@value"/>
+            <xsl:value-of select="(data[@name='remip']/@value)[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -124,18 +124,18 @@
   </xsl:template>
   <!-- description: shared by the rules 'signed in', 'failed sign in', 'signed out' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='msg']/@value)">
+    <xsl:if test="data[@name='msg']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="data[@name='msg']/@value"/>
+        <xsl:value-of select="(data[@name='msg']/@value)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'signed in', 'failed sign in', 'signed out' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='user']/@value)">
+    <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='user']/@value"/>
+          <xsl:value-of select="(data[@name='user']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>

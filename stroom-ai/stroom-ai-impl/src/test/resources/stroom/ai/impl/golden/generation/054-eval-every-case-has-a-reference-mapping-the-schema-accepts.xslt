@@ -15,7 +15,7 @@
       <xsl:if test="data[@name='time']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -26,20 +26,20 @@
         </System>
         <xsl:if test="data[@name='app']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
           <Generator>
-            <xsl:value-of select="data[@name='app']/@value"/>
+            <xsl:value-of select="(data[@name='app']/@value)[1]"/>
           </Generator>
         </xsl:if>
         <xsl:if test="data[@name='host']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
           <Device>
             <HostName>
-              <xsl:value-of select="data[@name='host']/@value"/>
+              <xsl:value-of select="(data[@name='host']/@value)[1]"/>
             </HostName>
           </Device>
         </xsl:if>
         <xsl:if test="data[@name='user']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]">
           <User>
             <Id>
-              <xsl:value-of select="data[@name='user']/@value"/>
+              <xsl:value-of select="(data[@name='user']/@value)[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -47,14 +47,14 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'web request'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'web request'"/>
         </TypeId>
         <xsl:variable name="category" select="data[@name='category']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="url" select="data[@name='url']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="dst" select="data[@name='dst']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="referer" select="data[@name='referer']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
         <xsl:variable name="src" select="data[@name='src']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
-        <xsl:if test="$src or $referer or $dst or $url or $category or $action = ('allow', 'block')">
+        <xsl:if test="$src or $referer or $dst or $url or $category or $action[1] = ('allow', 'block')">
           <Network>
             <Open>
               <xsl:if test="$src or $referer">
@@ -62,7 +62,7 @@
                   <xsl:if test="$src">
                     <Device>
                       <IPAddress>
-                        <xsl:value-of select="$src"/>
+                        <xsl:value-of select="$src[1]"/>
                       </IPAddress>
                     </Device>
                   </xsl:if>
@@ -74,7 +74,7 @@
                   <xsl:if test="$dst">
                     <Device>
                       <IPAddress>
-                        <xsl:value-of select="$dst"/>
+                        <xsl:value-of select="$dst[1]"/>
                       </IPAddress>
                     </Device>
                   </xsl:if>
@@ -82,10 +82,10 @@
                   <xsl:sequence select="mcp:data('category', $category)"/>
                 </Destination>
               </xsl:if>
-              <xsl:if test="$action = ('allow', 'block')">
+              <xsl:if test="$action[1] = ('allow', 'block')">
                 <Outcome>
                   <Permitted>
-                    <xsl:value-of select="if ($action = 'allow') then 'true' else 'false'"/>
+                    <xsl:value-of select="if ($action[1] = 'allow') then 'true' else 'false'"/>
                   </Permitted>
                 </Outcome>
               </xsl:if>
@@ -100,7 +100,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)][not(normalize-space(.) = ('-'))])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

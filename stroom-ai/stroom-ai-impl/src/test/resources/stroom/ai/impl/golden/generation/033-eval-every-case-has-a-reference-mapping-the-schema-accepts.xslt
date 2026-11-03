@@ -38,7 +38,11 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)])) then (mcp:json-to-xml(*[@key='message'])/*/*[@key='event']) else 'logon'"/>
+          <xsl:variable name="event_detail_type_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
+          <xsl:if test="count($event_detail_type_id) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_detail_type_id), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="if (exists($event_detail_type_id)) then $event_detail_type_id[1] else 'logon'"/>
         </TypeId>
         <Authenticate>
           <Action>Logon</Action>
@@ -56,7 +60,11 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)])) then (mcp:json-to-xml(*[@key='message'])/*/*[@key='event']) else 'logoff'"/>
+          <xsl:variable name="event_detail_type_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='event'])[normalize-space(.)]"/>
+          <xsl:if test="count($event_detail_type_id) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_detail_type_id), ') for ', 'EventDetail/TypeId, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="if (exists($event_detail_type_id)) then $event_detail_type_id[1] else 'logoff'"/>
         </TypeId>
         <Authenticate>
           <Action>Logoff</Action>
@@ -68,10 +76,14 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='time'])[normalize-space(.)])">
+    <xsl:variable name="event_time_time_created" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='time'])[normalize-space(.)]"/>
+    <xsl:if test="exists($event_time_time_created)">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date((mcp:json-to-xml(*[@key='message'])/*/*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:if test="count($event_time_time_created) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -84,17 +96,21 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>log-shipper</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])[normalize-space(.)])">
+      <xsl:variable name="user_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])[normalize-space(.)]"/>
+      <xsl:if test="exists($user_id)">
         <User>
           <Id>
-            <xsl:value-of select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])"/>
+            <xsl:if test="count($user_id) gt 1">
+              <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($user_id), ') for ', 'EventSource/User/Id, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+            </xsl:if>
+            <xsl:value-of select="$user_id[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -102,20 +118,28 @@
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])[normalize-space(.)])">
+    <xsl:variable name="user_id" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])[normalize-space(.)]"/>
+    <xsl:if test="exists($user_id)">
       <User>
         <Id>
-          <xsl:value-of select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='user'])"/>
+          <xsl:if test="count($user_id) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($user_id), ') for ', 'EventDetail/Authenticate/User/Id, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="$user_id[1]"/>
         </Id>
       </User>
     </xsl:if>
   </xsl:template>
   <!-- outcome: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="outcome">
-    <xsl:if test="exists((mcp:json-to-xml(*[@key='message'])/*/*[@key='ok'])[normalize-space(.)])">
+    <xsl:variable name="outcome_success" select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='ok'])[normalize-space(.)]"/>
+    <xsl:if test="exists($outcome_success)">
       <Outcome>
         <Success>
-          <xsl:value-of select="(mcp:json-to-xml(*[@key='message'])/*/*[@key='ok'])"/>
+          <xsl:if test="count($outcome_success) gt 1">
+            <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($outcome_success), ') for ', 'EventDetail/Authenticate/Outcome/Success, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+          </xsl:if>
+          <xsl:value-of select="$outcome_success[1]"/>
         </Success>
       </Outcome>
     </xsl:if>

@@ -39,7 +39,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="verb_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^statement: (\w+)[\s\S]*$')"/>
+          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
           <xsl:value-of select="if (exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])) then (($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1]) else 'connect'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
@@ -57,7 +57,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="verb_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^statement: (\w+)[\s\S]*$')"/>
+          <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
           <xsl:value-of select="if (exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])) then (($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1]) else 'disconnect'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
@@ -97,9 +97,9 @@
           <After>
             <Object>
               <Type>Database rows</Type>
-              <xsl:if test="normalize-space(data[@name='database']/@value)">
+              <xsl:if test="data[@name='database']/@value[normalize-space(.)]">
                 <Name>
-                  <xsl:value-of select="data[@name='database']/@value"/>
+                  <xsl:value-of select="(data[@name='database']/@value)[1]"/>
                 </Name>
               </xsl:if>
             </Object>
@@ -127,10 +127,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'connect', 'disconnect', 'query', 'update', 'delete' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd HH:mm:ss.SSS', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd HH:mm:ss.SSS', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -146,10 +146,10 @@
       <Device>
         <HostName>pg01</HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -157,25 +157,25 @@
   </xsl:template>
   <!-- description: shared by the rules 'connect', 'disconnect', 'query', 'update', 'delete' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='message']/@value)">
+    <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="data[@name='message']/@value"/>
+        <xsl:value-of select="(data[@name='message']/@value)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'connect', 'disconnect' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(data[@name='user']/@value)">
+    <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="data[@name='user']/@value"/>
+          <xsl:value-of select="(data[@name='user']/@value)[1]"/>
         </Id>
       </User>
     </xsl:if>
   </xsl:template>
   <!-- type_id: shared by the rules 'query', 'update', 'delete' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="verb_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^statement: (\w+)[\s\S]*$')"/>
+    <xsl:variable name="verb_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^statement: (\w+)[\s\S]*$')"/>
     <xsl:if test="exists((($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])[normalize-space(.)])">
       <TypeId>
         <xsl:value-of select="(($verb_parts/fn:match//fn:group[@nr=1], data[@name='level']/@value)[normalize-space(.)][1])"/>
@@ -184,9 +184,9 @@
   </xsl:template>
   <!-- name: shared by the rules 'query', 'delete' -->
   <xsl:template match="node()" mode="name">
-    <xsl:if test="normalize-space(data[@name='database']/@value)">
+    <xsl:if test="data[@name='database']/@value[normalize-space(.)]">
       <Name>
-        <xsl:value-of select="data[@name='database']/@value"/>
+        <xsl:value-of select="(data[@name='database']/@value)[1]"/>
       </Name>
     </xsl:if>
   </xsl:template>

@@ -65,9 +65,9 @@
         <xsl:apply-templates select="." mode="description"/>
         <Alert>
           <Type>Other</Type>
-          <xsl:if test="normalize-space(*[@key='short_message'])">
+          <xsl:if test="*[@key='short_message'][normalize-space(.)]">
             <Description>
-              <xsl:value-of select="*[@key='short_message']"/>
+              <xsl:value-of select="(*[@key='short_message'])[1]"/>
             </Description>
           </xsl:if>
           <xsl:sequence select="mcp:data('disk', *[@key='_disk'])"/>
@@ -78,10 +78,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'disk' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='timestamp'])">
+    <xsl:if test="*[@key='timestamp'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal(*[@key='timestamp'][1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal((*[@key='timestamp'])[1]) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -94,24 +94,24 @@
         <Environment>Eval</Environment>
       </System>
       <Generator>gelf</Generator>
-      <xsl:if test="normalize-space(*[@key='host'])">
+      <xsl:if test="*[@key='host'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='host']"/>
+            <xsl:value-of select="(*[@key='host'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='_src_ip'])">
+      <xsl:if test="*[@key='_src_ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='_src_ip']"/>
+            <xsl:value-of select="(*[@key='_src_ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='_user'])">
+      <xsl:if test="*[@key='_user'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='_user']"/>
+            <xsl:value-of select="(*[@key='_user'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -119,9 +119,9 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'logon', 'logoff', 'disk' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='_action'])">
+    <xsl:if test="*[@key='_action'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='_action']"/>
+        <xsl:value-of select="(*[@key='_action'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -135,10 +135,10 @@
   </xsl:template>
   <!-- user: shared by the rules 'logon', 'logoff' -->
   <xsl:template match="node()" mode="user">
-    <xsl:if test="normalize-space(*[@key='_user'])">
+    <xsl:if test="*[@key='_user'][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="*[@key='_user']"/>
+          <xsl:value-of select="(*[@key='_user'])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -148,7 +148,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

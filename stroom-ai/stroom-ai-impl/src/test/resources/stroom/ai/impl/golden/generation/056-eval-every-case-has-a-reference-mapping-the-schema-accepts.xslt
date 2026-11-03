@@ -16,14 +16,14 @@
       <xsl:when test="$direction = 'in'">
         <xsl:apply-templates select="." mode="event_type_logged_in"/>
       </xsl:when>
-      <xsl:when test="normalize-space($user_failed_parts/fn:match//fn:group[@nr=1])">
+      <xsl:when test="$user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <xsl:apply-templates select="." mode="event_type_failed_login"/>
       </xsl:when>
       <xsl:when test="$direction = 'out'">
         <xsl:apply-templates select="." mode="event_type_logged_out"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('direction=', string(($direction)[1])), concat('user_failed=', string((normalize-space($user_failed_parts/fn:match//fn:group[@nr=1]))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('direction=', string(($direction)[1])), concat('user_failed=', string(($user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -39,7 +39,7 @@
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:variable name="session_parts" select="analyze-string(string(data[@name='message']/@value[1]), ' session (\S+)$')"/>
+          <xsl:variable name="session_parts" select="analyze-string(string((data[@name='message']/@value)[1]), ' session (\S+)$')"/>
           <xsl:sequence select="mcp:data('session', $session_parts/fn:match//fn:group[@nr=1])"/>
         </Authenticate>
       </EventDetail>
@@ -58,19 +58,19 @@
           <Action>Logon</Action>
           <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
           <xsl:variable name="user_failed_parts" select="analyze-string(string($message[1]), '^Login failed for user ''([^'']+)''')"/>
-          <xsl:if test="normalize-space($user_failed_parts/fn:match//fn:group[@nr=1])">
+          <xsl:if test="$user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="$user_failed_parts/fn:match//fn:group[@nr=1]"/>
+                <xsl:value-of select="($user_failed_parts/fn:match//fn:group[@nr=1])[1]"/>
               </Id>
             </User>
           </xsl:if>
           <Outcome>
             <Success>false</Success>
             <xsl:variable name="reason_parts" select="analyze-string(string($message[1]), ' reason: (.+)$')"/>
-            <xsl:if test="normalize-space($reason_parts/fn:match//fn:group[@nr=1])">
+            <xsl:if test="$reason_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
               <Description>
-                <xsl:value-of select="$reason_parts/fn:match//fn:group[@nr=1]"/>
+                <xsl:value-of select="($reason_parts/fn:match//fn:group[@nr=1])[1]"/>
               </Description>
             </xsl:if>
           </Outcome>
@@ -90,7 +90,7 @@
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:variable name="session_parts" select="analyze-string(string(data[@name='message']/@value[1]), ' session (\S+)$')"/>
+          <xsl:variable name="session_parts" select="analyze-string(string((data[@name='message']/@value)[1]), ' session (\S+)$')"/>
           <xsl:sequence select="mcp:data('session', $session_parts/fn:match//fn:group[@nr=1])"/>
         </Authenticate>
       </EventDetail>
@@ -98,10 +98,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logged in', 'failed login', 'logged out' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd HH:mm:ss,SSS', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd HH:mm:ss,SSS', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -113,9 +113,9 @@
         <Name>Auth Service</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(data[@name='component']/@value)">
+      <xsl:if test="data[@name='component']/@value[normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="data[@name='component']/@value"/>
+          <xsl:value-of select="(data[@name='component']/@value)[1]"/>
         </Generator>
       </xsl:if>
       <Device>
@@ -123,10 +123,10 @@
       </Device>
       <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)]"/>
       <xsl:variable name="client_parts" select="analyze-string(string($message[1]), ' from (\S+)')"/>
-      <xsl:if test="normalize-space($client_parts/fn:match//fn:group[@nr=1])">
+      <xsl:if test="$client_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="$client_parts/fn:match//fn:group[@nr=1]"/>
+            <xsl:value-of select="($client_parts/fn:match//fn:group[@nr=1])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
@@ -143,19 +143,19 @@
   </xsl:template>
   <!-- description: shared by the rules 'logged in', 'failed login', 'logged out' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='message']/@value)">
+    <xsl:if test="data[@name='message']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="data[@name='message']/@value"/>
+        <xsl:value-of select="(data[@name='message']/@value)[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'logged in', 'logged out' -->
   <xsl:template match="node()" mode="user">
-    <xsl:variable name="user_ok_parts" select="analyze-string(string(data[@name='message']/@value[1]), '^User ''([^'']+)'' logged (in|out)')"/>
-    <xsl:if test="normalize-space($user_ok_parts/fn:match//fn:group[@nr=1])">
+    <xsl:variable name="user_ok_parts" select="analyze-string(string((data[@name='message']/@value)[1]), '^User ''([^'']+)'' logged (in|out)')"/>
+    <xsl:if test="$user_ok_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="$user_ok_parts/fn:match//fn:group[@nr=1]"/>
+          <xsl:value-of select="($user_ok_parts/fn:match//fn:group[@nr=1])[1]"/>
         </Id>
       </User>
     </xsl:if>
@@ -165,7 +165,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

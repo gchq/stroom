@@ -23,14 +23,14 @@
       <EventDetail>
         <TypeId>Traffic</TypeId>
         <xsl:variable name="ip" select="data[@name='ip']/@value[normalize-space(.)]"/>
-        <xsl:if test="$ip or normalize-space(data[@name='result']/@value)">
+        <xsl:if test="$ip or data[@name='result']/@value[normalize-space(.)]">
           <Network>
             <Permit>
               <xsl:if test="$ip">
                 <Source>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$ip"/>
+                      <xsl:value-of select="$ip[1]"/>
                     </IPAddress>
                   </Device>
                 </Source>
@@ -58,10 +58,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'traffic', 'alert' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -76,13 +76,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -93,7 +93,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

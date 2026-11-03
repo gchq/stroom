@@ -18,7 +18,7 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event_type=', string(($event_type)[1])), concat('action=', string((normalize-space(*[@key='action']))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('event_type=', string(($event_type)[1])), concat('action=', string((*[@key='action'][normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -35,19 +35,19 @@
         <Network>
           <Permit>
             <Source>
-              <xsl:if test="normalize-space(*[@key='src_ip'])">
+              <xsl:if test="*[@key='src_ip'][normalize-space(.)]">
                 <Device>
                   <IPAddress>
-                    <xsl:value-of select="*[@key='src_ip']"/>
+                    <xsl:value-of select="(*[@key='src_ip'])[1]"/>
                   </IPAddress>
                 </Device>
               </xsl:if>
               <TransportProtocol>
-                <xsl:value-of select="if (*[@key='protocol'] = 'TCP') then 'TCP' else 'Other'"/>
+                <xsl:value-of select="if ((*[@key='protocol'])[1] = 'TCP') then 'TCP' else 'Other'"/>
               </TransportProtocol>
-              <xsl:if test="normalize-space(*[@key='src_port'])">
+              <xsl:if test="*[@key='src_port'][normalize-space(.)]">
                 <Port>
-                  <xsl:value-of select="*[@key='src_port']"/>
+                  <xsl:value-of select="(*[@key='src_port'])[1]"/>
                 </Port>
               </xsl:if>
             </Source>
@@ -58,13 +58,13 @@
                 <xsl:if test="$dst_ip">
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$dst_ip"/>
+                      <xsl:value-of select="$dst_ip[1]"/>
                     </IPAddress>
                   </Device>
                 </xsl:if>
                 <xsl:if test="$dst_port">
                   <Port>
-                    <xsl:value-of select="$dst_port"/>
+                    <xsl:value-of select="$dst_port[1]"/>
                   </Port>
                 </xsl:if>
               </Destination>
@@ -89,10 +89,10 @@
         <xsl:apply-templates select="." mode="description"/>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='username'])">
+          <xsl:if test="*[@key='username'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='username']"/>
+                <xsl:value-of select="(*[@key='username'])[1]"/>
               </Id>
             </User>
           </xsl:if>
@@ -110,10 +110,10 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (normalize-space(*[@key='event_type'])) then *[@key='event_type'] else 'other'"/>
+          <xsl:value-of select="if (*[@key='event_type'][normalize-space(.)]) then (*[@key='event_type'])[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="normalize-space(*[@key='severity']) or normalize-space(*[@key='protocol']) or normalize-space(*[@key='action']) or normalize-space(*[@key='rule_id']) or normalize-space(*[@key='bytes_sent']) or normalize-space(*[@key='bytes_received'])">
+        <xsl:if test="*[@key='severity'][normalize-space(.)] or *[@key='protocol'][normalize-space(.)] or *[@key='action'][normalize-space(.)] or *[@key='rule_id'][normalize-space(.)] or *[@key='bytes_sent'][normalize-space(.)] or *[@key='bytes_received'][normalize-space(.)]">
           <Unknown>
             <xsl:apply-templates select="." mode="data_severity_to_bytes_received"/>
           </Unknown>
@@ -123,10 +123,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'traffic_permitted', 'login', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='timestamp'])">
+    <xsl:if test="*[@key='timestamp'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='timestamp'][1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='timestamp'])[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -139,10 +139,10 @@
         <Environment>TODO e.g. Prod</Environment>
       </System>
       <Generator>FortiOS firewall</Generator>
-      <xsl:if test="normalize-space(*[@key='device'])">
+      <xsl:if test="*[@key='device'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='device']"/>
+            <xsl:value-of select="(*[@key='device'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -152,12 +152,12 @@
         <Client>
           <xsl:if test="$src_ip">
             <IPAddress>
-              <xsl:value-of select="$src_ip"/>
+              <xsl:value-of select="$src_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$src_port">
             <Port>
-              <xsl:value-of select="$src_port"/>
+              <xsl:value-of select="$src_port[1]"/>
             </Port>
           </xsl:if>
         </Client>
@@ -168,20 +168,20 @@
         <Server>
           <xsl:if test="$dst_ip">
             <IPAddress>
-              <xsl:value-of select="$dst_ip"/>
+              <xsl:value-of select="$dst_ip[1]"/>
             </IPAddress>
           </xsl:if>
           <xsl:if test="$dst_port">
             <Port>
-              <xsl:value-of select="$dst_port"/>
+              <xsl:value-of select="$dst_port[1]"/>
             </Port>
           </xsl:if>
         </Server>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='username'])">
+      <xsl:if test="*[@key='username'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='username']"/>
+            <xsl:value-of select="(*[@key='username'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -189,17 +189,17 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'traffic_permitted', 'login' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='event_type'])">
+    <xsl:if test="*[@key='event_type'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='event_type']"/>
+        <xsl:value-of select="(*[@key='event_type'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'traffic_permitted', 'login', 'other' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(*[@key='message'])">
+    <xsl:if test="*[@key='message'][normalize-space(.)]">
       <Description>
-        <xsl:value-of select="*[@key='message']"/>
+        <xsl:value-of select="(*[@key='message'])[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
@@ -217,7 +217,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

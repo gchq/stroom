@@ -13,7 +13,7 @@
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('action=', string((normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('action=', string((data[@name='action']/@value[normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -21,10 +21,10 @@
        result, sid. -->
   <xsl:template match="node()" mode="event_type_logon">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="data[@name='time']/@value"/>
+            <xsl:value-of select="(data[@name='time']/@value)[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -37,13 +37,13 @@
         <Generator>vpnd</Generator>
         <Device>
           <HostName>
-            <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+            <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
           </HostName>
         </Device>
         <xsl:if test="$user">
           <User>
             <Id>
-              <xsl:value-of select="$user"/>
+              <xsl:value-of select="$user[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -55,14 +55,14 @@
           <xsl:if test="$user">
             <User>
               <Id>
-                <xsl:value-of select="$user"/>
+                <xsl:value-of select="$user[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="data[@name='result']/@value = ('ok', 'fail')">
+          <xsl:if test="(data[@name='result']/@value)[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='result']/@value = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='result']/@value)[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -76,7 +76,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>
