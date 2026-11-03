@@ -70,6 +70,21 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aPlanPassedBackWithoutItsEventsNamespaceGetsTheDraftedOnesBack() {
+        // Events in an environment's fork of the schema: the agent's copy of the plan may leave out
+        // events_namespace, and the XSLT would then read event-logging:3 and match no events.
+        final String fork = "file://xml/schema/accounting/events";
+        final FieldPlan drafted = FieldPlan.fromJson(lucenePlan()).withEventsNamespace(fork);
+        final SaveXsltTool tool = world.saveXsltTool(Map.of(drafted.indexName(), drafted));
+
+        final Map<String, Object> saved = world.call(tool, Map.of("build", BUILD, "name", "ACME-INDEX-XSLT",
+                "index_plan", lucenePlan()));
+
+        assertThat(world.xslt(String.valueOf(saved.get("uuid"))).getData())
+                .contains("xpath-default-namespace=\"" + fork + "\"");
+    }
+
+    @Test
     void saveToolsCreateOrUpdateByUuid() {
         final SaveXsltTool tool = world.saveXsltTool();
         final String code = HAND.replace("{BODY}", "");

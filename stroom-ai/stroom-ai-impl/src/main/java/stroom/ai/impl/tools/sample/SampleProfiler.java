@@ -114,6 +114,7 @@ public final class SampleProfiler {
             &fragment;
             </Events>
             """;
+
     /// How a record of several lines starts: its time, as logs write it (ISO, with a space or T; bracketed;
     /// syslog's; Apache's day/month/year).
     public static final List<String> RECORD_STARTS = List.of("\\d{4}-\\d{2}-\\d{2}[ T]\\d{2}:\\d{2}:\\d{2}",
@@ -249,14 +250,14 @@ public final class SampleProfiler {
     }
 
     /// @param fragments XML fragments.
-    /// @return True if they are event-logging `<Event>`s already (EventTime, EventDetail...), in its namespace or
-    /// none; not a source's own `<Event>` (Windows' System and EventData).
+    /// @return True if they are event-logging `<Event>`s already (EventTime, EventDetail...), in its namespace, an
+    /// environment's fork's, or none; not a source's own `<Event>` (Windows' System and EventData). Told by their
+    /// shape, as a fork keeps event-logging's elements in a namespace of its own.
     static boolean eventLoggingFragments(final List<XmlTree.Element> fragments) {
         final XmlTree.Element first = fragments.getFirst();
         final Set<String> parts = new LinkedHashSet<>();
         first.elements().forEach(child -> parts.add(child.localName));
         return "Event".equals(first.localName)
-               && (first.namespace == null || "event-logging:3".equals(first.namespace))
                && parts.contains("EventTime") && parts.contains("EventDetail");
     }
 
@@ -292,6 +293,18 @@ public final class SampleProfiler {
         return elements.size() > 1
                 ? elements
                 : null;
+    }
+
+    /// @param namespace The Events namespace: `event-logging:3`, or an environment's fork's.
+    /// @param systemId  Its schema's system id.
+    /// @param version   The Version its Events are written with.
+    /// @return [#EVENTS_FRAGMENT_WRAPPER] in that namespace and schema: fragments that declare no namespace take it.
+    public static String eventsFragmentWrapper(final String namespace, final String systemId, final String version) {
+        return EVENTS_FRAGMENT_WRAPPER
+                .replace("xmlns=\"event-logging:3\"", "xmlns=\"" + namespace + "\"")
+                .replace("\"event-logging:3 file://event-logging-v{version}.xsd\"",
+                        "\"" + namespace + " " + systemId + "\"")
+                .replace("{version}", version);
     }
 
     /// How fragments are read: the wrapper converter (the environment's own when it has one: `wrapper` with its
@@ -361,7 +374,8 @@ public final class SampleProfiler {
                                   + (wrapperNs.isEmpty()
                                         ? "none"
                                         : wrapperNs) + ": set xml_namespace to that. The XSLT reads them in it and "
-                                  + "writes Events in event-logging:3.",
+                                  + "writes Events in the build's Events namespace (event-logging:3, or the "
+                                  + "environment's fork).",
                         "mapping", map("input", "xml_fragments", "xml_namespace", effective, "record", record)));
     }
 

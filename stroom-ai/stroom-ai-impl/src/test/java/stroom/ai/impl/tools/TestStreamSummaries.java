@@ -202,6 +202,50 @@ class TestStreamSummaries {
     }
 
     @Test
+    void eventsInAnEnvironmentsForkedNamespaceAreProfiledAndTheNamespaceIsSaid() {
+        // Seen in testing: Events in an environment's fork of the schema were profiled as no events, so an index
+        // plan found no populated paths.
+        final String forked = EVENTS.replace("event-logging:3", "file://xml/schema/accounting/events");
+        world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(forked));
+
+        final Map<String, Object> profile = summaries.summariseEvents(List.of(8L), 200);
+
+        assertThat(profile.get("events")).isEqualTo(2);
+        assertThat(profile.get("event_types")).isEqualTo(Map.of("Authenticate", 2));
+        assertThat(profile.get("type_ids")).isEqualTo(Map.of("logon", 2));
+        assertThat(population(profile))
+                .containsEntry("EventDetail/Authenticate/User/Id", 50.0)
+                .containsEntry("EventDetail/TypeId", 100.0);
+        assertThat(profile.get("data_names")).isEqualTo(Map.of("Data", Map.of("host", 50.0)));
+        assertThat(profile.get(StreamSummaries.EVENTS_NAMESPACE)).isEqualTo("file://xml/schema/accounting/events");
+        assertThat((String) profile.get("namespace_note"))
+                .contains("xpath-default-namespace")
+                .contains("needs no change to the schema filter");
+    }
+
+    @Test
+    void standardEventsSayNoNamespace() {
+        world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(EVENTS));
+
+        final Map<String, Object> profile = summaries.summariseEvents(List.of(8L), 200);
+
+        assertThat(profile).doesNotContainKeys(StreamSummaries.EVENTS_NAMESPACE, "namespace_note");
+    }
+
+    @Test
+    void elementsOutsideTheEventsNamespaceAreNotTakenForEventElements() {
+        // A Data element in another namespace is not one of the event's Data entries.
+        final String mixed = "<Events xmlns=\"event-logging:3\" xmlns:o=\"other\"><Event><EventDetail>"
+                             + "<TypeId>t</TypeId><o:Data Name=\"x\" Value=\"1\"/></EventDetail></Event></Events>";
+        world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(mixed));
+
+        final Map<String, Object> profile = summaries.summariseEvents(List.of(8L), 200);
+
+        assertThat(profile.get("events")).isEqualTo(1);
+        assertThat(profile.get("data_names")).isEqualTo(Map.of());
+    }
+
+    @Test
     void aSampledProfileSaysSo() {
         world.addSegmented(8, StreamTypeNames.EVENTS, null, null, List.of(EVENTS, EVENTS));
 

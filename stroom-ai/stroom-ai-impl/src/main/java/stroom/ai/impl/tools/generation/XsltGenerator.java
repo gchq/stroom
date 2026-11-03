@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XmlTrees;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -171,10 +172,15 @@ public final class XsltGenerator {
     private final List<RuleTemplate> ruleTemplates = new ArrayList<>();
     private final List<Map<String, Object>> summary = new ArrayList<>();
     private int repeatTokens;
+    // The namespace the Events are written in: the schema's, event-logging:3 or an environment's fork's.
+    private final String ns;
 
     private XsltGenerator(final TranslationMapping mapping, final EventSchema schema, final boolean markRules) {
         this.m = mapping;
         this.schema = schema;
+        this.ns = schema == null
+                ? EVT
+                : schema.namespace();
         this.markRules = markRules;
         this.style = mapping.style();
         this.itemMode = mapping.forEach() != null && !mapping.forEach().isEmpty();
@@ -946,7 +952,7 @@ public final class XsltGenerator {
         final XmlElement holder = guarded
                 ? parent.addElement(XSL, "if", "test", test)
                 : parent;
-        final XmlElement container = holder.addElement(EVT, "Data", "Name", name);
+        final XmlElement container = holder.addElement(ns, "Data", "Name", name);
         final Set<String> inner = new HashSet<>();
         for (final FieldMapping entry : entries) {
             final String[] parents = entry.dataParent().split("/", 2);
@@ -993,7 +999,7 @@ public final class XsltGenerator {
                     ? parent.addElement(XSL, "if", "test", test)
                     : parent;
         }
-        final XmlElement element = holder.addElement(EVT, "Data", "Name", entry.dataName());
+        final XmlElement element = holder.addElement(ns, "Data", "Name", entry.dataName());
         if (entry.value() != null) {
             // A literal element's attributes are value templates: a brace in a constant is doubled.
             element.set("Value", entry.value().replace("{", "{{").replace("}", "}}"));
@@ -1184,7 +1190,7 @@ public final class XsltGenerator {
         final XmlElement holder = guarded
                 ? parent.addElement(XSL, "if", "test", test)
                 : parent;
-        final XmlElement element = holder.addElement(EVT, node.child.name());
+        final XmlElement element = holder.addElement(ns, node.child.name());
         if (node.leaf != null) {
             writeValue(element, node.leaf);
         } else {
@@ -1255,7 +1261,7 @@ public final class XsltGenerator {
                 for (final String attribute : List.of("test", "select", "Value")) {
                     final String value = el.get(attribute);
                     if (value != null && pattern.matcher(value).find()
-                        && (!"Value".equals(attribute) || el.is(EVT, "Data"))) {
+                        && (!"Value".equals(attribute) || el.is(ns, "Data"))) {
                         reads.add(new Read(el, attribute));
                     }
                 }
@@ -1553,8 +1559,12 @@ public final class XsltGenerator {
         final XmlElement rootTemplate = sheet.addElement(XSL, "template", "match", isSet(m.root())
                 ? m.root()
                 : DEFAULT_ROOT.getOrDefault(m.input(), ""));
-        final XmlElement events = rootTemplate.addElement(EVT, "Events", "Version", version);
-        events.set(MappingFacts.XSI, "schemaLocation", EVT + " file://event-logging-v" + version + ".xsd");
+        final XmlElement events = rootTemplate.addElement(ns, "Events", "Version", version);
+        // The schema's own system id where it is known (an environment's fork has one of its own), else
+        // event-logging's for the version.
+        final String systemId = NullSafe.nonBlankStringElse(NullSafe.get(schema, EventSchema::systemId),
+                "file://event-logging-v" + version + ".xsd");
+        events.set(MappingFacts.XSI, "schemaLocation", ns + " " + systemId);
         String records = isSet(m.record())
                 ? m.record()
                 : "json".equals(m.input())
@@ -1630,7 +1640,7 @@ public final class XsltGenerator {
                                            final boolean usesJson,
                                            final Map<String, String> bound) {
         final Map<String, String> namespaces = new LinkedHashMap<>();
-        namespaces.put(null, EVT);
+        namespaces.put(null, ns);
         namespaces.put("xsl", XSL);
         namespaces.put("xsi", MappingFacts.XSI);
         namespaces.put("stroom", "stroom");
@@ -1794,7 +1804,7 @@ public final class XsltGenerator {
                                                          + logged(KEPT_UNKNOWN.replace("{rule}", rule.name()), tested)
                                                          + ")");
         }
-        final XmlElement event = home.addElement(EVT, "Event");
+        final XmlElement event = home.addElement(ns, "Event");
         if (markRules) {
             // A processing instruction the output carries: a comment in the stylesheet is not copied to the output,
             // and one written (xsl:comment) Stroom's stepping drops, so every event was left to the guess by its
@@ -1822,7 +1832,7 @@ public final class XsltGenerator {
             function.addElement(XSL, "param", "name", "value", "as", "item()*");
             final XmlElement present = function.addElement(XSL, "if", "test", "exists($value[normalize-space(.)]"
                                                                               + nil() + ")");
-            present.addElement(EVT, "Data", "Name", "{$name}", "Value", "{$value}");
+            present.addElement(ns, "Data", "Name", "{$name}", "Value", "{$value}");
             out.add(function);
         }
         for (final Map.Entry<Shape, String> entry : keyedFunctions.entrySet()) {

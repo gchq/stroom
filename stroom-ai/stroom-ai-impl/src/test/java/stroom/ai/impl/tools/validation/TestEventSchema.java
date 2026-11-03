@@ -77,6 +77,20 @@ class TestEventSchema {
     }
 
     @Test
+    void testKnownPathsAreTold() {
+        assertThat(SCHEMA.hasPath("EventSource/User/Id")).isTrue();
+        assertThat(SCHEMA.hasPath("Event/EventTime/TimeCreated")).isTrue();
+        // A wildcard step stands for any child; predicates and a trailing attribute aren't judged.
+        assertThat(SCHEMA.hasPath("EventDetail/*/Data[@Name='x']/@Value")).isTrue();
+        assertThat(SCHEMA.hasPath("EventDetail/Unknown/Data/@Value")).isTrue();
+        // An element no Event has there.
+        assertThat(SCHEMA.hasPath("EventSource/User/Mail")).isFalse();
+        assertThat(SCHEMA.hasPath("EventDetail/*/Nonsense")).isFalse();
+        // An expression rather than a path counts as known.
+        assertThat(SCHEMA.hasPath("concat(a, b)")).isTrue();
+    }
+
+    @Test
     void testALeafsTypeAndValues() {
         final Child created = SCHEMA.resolve("EventTime/TimeCreated").getLast();
         assertThat(SCHEMA.baseType(created.decl())).isEqualTo("dateTime");

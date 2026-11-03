@@ -49,6 +49,13 @@ public final class HeldSchemasWorld {
 
     /// The event-logging 4.1.0 XSD (a test fixture).
     public static final String XSD_4_1_0 = resource("event-logging-v4.1.0.xsd");
+    /// The test fork of event-logging 4.1.0: the same schema in a namespace of its own ([#FORK_NS]), with one extra
+    /// EventDetail activity, Charge (a test fixture).
+    public static final String XSD_FORK = resource("test-fork-events-v1.2.0.xsd");
+    /// The test fork's namespace.
+    public static final String FORK_NS = "file://xml/schema/test-fork/events";
+    /// The test fork's system id.
+    public static final String FORK_SYSTEM_ID = "file://test-fork-events-v1.2.0.xsd";
 
     private final XmlSchemaStore store = Mockito.mock(XmlSchemaStore.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);

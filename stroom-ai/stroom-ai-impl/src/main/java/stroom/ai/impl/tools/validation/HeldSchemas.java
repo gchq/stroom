@@ -42,11 +42,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -100,8 +102,8 @@ public class HeldSchemas {
     private final Provider<XmlSchemaStore> xmlSchemaStoreProvider;
     private final DocumentAccess documentAccess;
     private final Provider<SchemaPool> schemaPoolProvider;
-    // Each XSD's schema model, by its text: an XSD is parsed once however many users read it. Only the most
-    // recently used are kept: each edit of an XSD is a new text.
+    // Each XSD's schema model, by its system id and text: an XSD is parsed once however many users read it. Only the
+    // most recently used are kept: each edit of an XSD is a new text.
     private final Map<String, EventSchema> eventSchemas = Collections.synchronizedMap(
             new LinkedHashMap<>(16, 0.75F, true) {
                 @Override
@@ -172,11 +174,22 @@ public class HeldSchemas {
         return List.copyOf(index().keySet());
     }
 
+    /// @param namespace A target namespace.
+    /// @return The system ids of the schemas of that namespace the user may view, sorted; empty if none.
+    public List<String> systemIdsIn(final String namespace) {
+        return index().entrySet().stream()
+                .filter(entry -> Objects.equals(namespace, NullSafe.string(entry.getValue().getNamespaceURI())
+                        .strip()))
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
     /// @return The event-logging versions this Stroom holds (that the user may view), newest first; empty if it
     /// holds none.
     public List<String> heldEventVersions() {
-        return newestFirst(index().keySet().stream()
-                .map(HeldSchemas::eventLoggingVersion)
+        return newestFirst(index().entrySet().stream()
+                .filter(entry -> isEventLoggingNamespace(entry.getValue()))
+                .map(entry -> eventLoggingVersion(entry.getKey()))
                 .filter(Objects::nonNull)
                 .toList());
     }
@@ -271,10 +284,17 @@ public class HeldSchemas {
                 .map(HeldSchemas::eventLoggingVersion)
                 .filter(Objects::nonNull)
                 .toList());
+        final List<String> forks = forks().stream()
+                .map(fork -> fork.getSystemId().strip() + " (namespace " + NullSafe.string(fork.getNamespaceURI())
+                        .strip() + ")")
+                .toList();
         throw new ToolRefusal("Stroom has no XML schema '" + systemId + "'. Event-logging versions it "
                               + "holds, newest first: " + (versions.isEmpty()
                 ? "none"
-                : String.join(", ", versions)) + " (all in namespace event-logging:3, 4.x as much as 3.x)");
+                : String.join(", ", versions)) + " (all in namespace event-logging:3, 4.x as much as 3.x)"
+                              + (forks.isEmpty()
+                ? ""
+                : "; the environment's own fork of the event-logging schema: " + String.join(", ", forks)));
     }
 
     /// One of the XMLSchema documents of a system id, by UUID, where a system id is held by more than one.
@@ -326,21 +346,81 @@ public class HeldSchemas {
     /// @return The model of what its schema allows.
     /// @throws ToolRefusal if this Stroom holds no such schema, or it can't be read as one.
     public EventSchema eventSchema(final String version, final String uuid) {
-        final String xsd = source(eventLoggingSystemId(version), uuid);
+        // A UUID may name a fork's document (another namespace and system id), as well as a copy of the version.
+        final Optional<XmlSchemaDoc> fork = uuid == null
+                ? Optional.empty()
+                : forks().stream().filter(doc -> uuid.equals(doc.getUuid())).findFirst();
+        if (fork.isPresent()) {
+            return eventSchema(fork.get());
+        }
+        final XmlSchemaDoc doc = document(eventLoggingSystemId(version), uuid);
+        return parsed(NullSafe.string(doc.getData()), doc.getSystemId().strip(), "event-logging " + version);
+    }
+
+    /// The model of an Events schema held in an XML schema document: an event-logging version's, or a fork's.
+    ///
+    /// @param doc The XML schema document.
+    /// @return The model of what its schema allows, knowing its system id.
+    /// @throws ToolRefusal if it can't be read as an Events schema.
+    public EventSchema eventSchema(final XmlSchemaDoc doc) {
+        return parsed(NullSafe.string(doc.getData()), doc.getSystemId().strip(), "'" + doc.getSystemId() + "'");
+    }
+
+    /// The forks of the event-logging schema this Stroom holds: XML schema documents in a schema group that holds
+    /// an event-logging schema (e.g. EVENTS), in a namespace other than `event-logging:3`. Seen: an environment
+    /// whose Events are all in `file://xml/schema/accounting/events`, its schema in the EVENTS group beside
+    /// event-logging's.
+    ///
+    /// @return The forks' documents the user may view, by system id; empty if none.
+    public List<XmlSchemaDoc> forks() {
+        final Map<String, List<XmlSchemaDoc>> all = all();
+        final Set<String> groups = new HashSet<>();
+        all.forEach((systemId, docs) -> {
+            if (eventLoggingVersion(systemId) != null) {
+                docs.stream()
+                        .filter(HeldSchemas::isEventLoggingNamespace)
+                        .map(doc -> NullSafe.string(doc.getSchemaGroup()).strip())
+                        .filter(group -> !group.isEmpty())
+                        .forEach(groups::add);
+            }
+        });
+        return all.values().stream()
+                .flatMap(List::stream)
+                .filter(doc -> !isEventLoggingNamespace(doc))
+                .filter(doc -> groups.contains(NullSafe.string(doc.getSchemaGroup()).strip()))
+                .toList();
+    }
+
+    /// @param namespace An Events namespace.
+    /// @return The forks' documents in that namespace; empty if none (or for `event-logging:3`).
+    public List<XmlSchemaDoc> forksIn(final String namespace) {
+        return forks().stream()
+                .filter(doc -> NullSafe.string(doc.getNamespaceURI()).strip().equals(namespace))
+                .toList();
+    }
+
+    // True for a document in event-logging:3, or one that names no namespace (taken as the system id says).
+    private static boolean isEventLoggingNamespace(final XmlSchemaDoc doc) {
+        final String namespace = NullSafe.string(doc.getNamespaceURI()).strip();
+        return namespace.isEmpty() || EVENT_LOGGING_NS.equals(namespace);
+    }
+
+    // The model of an XSD read from a document of that system id, parsed once per text and system id.
+    private EventSchema parsed(final String xsd, final String systemId, final String which) {
+        final String key = systemId + "\n" + xsd;
         try {
-            final EventSchema known = eventSchemas.get(xsd);
+            final EventSchema known = eventSchemas.get(key);
             if (known != null) {
                 return known;
             }
             // Parsed outside the map's lock, so one schema being read doesn't hold up the rest.
-            final EventSchema parsed = EventSchema.parse(xsd);
-            final EventSchema raced = eventSchemas.putIfAbsent(xsd, parsed);
+            final EventSchema parsed = EventSchema.parse(xsd).withSystemId(systemId);
+            final EventSchema raced = eventSchemas.putIfAbsent(key, parsed);
             return raced != null
                     ? raced
                     : parsed;
         } catch (final RuntimeException e) {
-            throw new ToolRefusal("The event-logging " + version + " schema in this Stroom can't be read: "
-                                  + e.getMessage());
+            throw new ToolRefusal("The " + which + " schema in this Stroom can't be read: " + e.getMessage());
         }
     }
 

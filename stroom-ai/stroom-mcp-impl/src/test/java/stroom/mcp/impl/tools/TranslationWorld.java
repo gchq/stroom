@@ -98,8 +98,10 @@ final class TranslationWorld {
     final BuildPlan plan = new BuildPlan(facts, world.guard(), consent, memory);
     final CheckXsltTool checkXslt = new CheckXsltTool(heldSchemas, () -> docFinder, world.documentAccess,
             compileCheck, () -> this.eventVersions);
+    // What the environment's translations already write: nothing inferred unless a test says.
+    final EventsTargetInference inference = Mockito.mock(EventsTargetInference.class);
     final EventVersions eventVersions = new EventVersions(heldSchemas, consent, memory, world::guard,
-            world::records);
+            world::records, () -> inference);
     final KeptCode keptCode = new KeptCode(eventVersions);
     final HandEditGate handEditGate = new HandEditGate(keptCode, consent);
     // The model each chat runs on: none unless a test says.
@@ -366,8 +368,14 @@ final class TranslationWorld {
     }
 
     private static EventSchema schema() {
-        try (final InputStream in = TranslationWorld.class.getResourceAsStream("event-logging-v4.1.0.xsd")) {
-            return EventSchema.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+        return EventSchema.parse(resource("event-logging-v4.1.0.xsd"));
+    }
+
+    /// @param name A test resource beside this class, e.g. `test-fork-events-v1.2.0.xsd`.
+    /// @return Its text.
+    static String resource(final String name) {
+        try (final InputStream in = TranslationWorld.class.getResourceAsStream(name)) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }

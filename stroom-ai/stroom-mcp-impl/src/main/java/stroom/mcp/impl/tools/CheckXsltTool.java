@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XmlTrees.NotWellFormedException;
@@ -39,6 +40,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -46,9 +48,11 @@ import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /// `check_xslt` - checks an XSLT before it is saved or stepped: well-formed, an xsl:stylesheet with a version, only
 /// real stroom: functions, expressions that select nothing for want of the input's namespace, event-logging elements
@@ -204,7 +208,10 @@ class CheckXsltTool extends AbstractBuiltInTool {
         errors.addAll(functions.errors());
         XsltSafety.unsafeInXslt(xslt).forEach(unsafe -> errors.add(unsafe.why()));
         XsltSafety.lookupsInXslt(xslt).forEach(lookup -> warnings.add(lookupWarning(lookup)));
-        errors.addAll(XsltChecks.namespaceProblems(root, inputNamespace));
+        errors.addAll(XsltChecks.namespaceProblems(root, inputNamespace, heldSchemas.forks().stream()
+                .map(fork -> NullSafe.string(fork.getNamespaceURI()).strip())
+                .distinct()
+                .toList()));
         if (xslt.contains("schemaLocation")) {
             try {
                 errors.addAll(heldSchemas.locationProblems(root));
@@ -221,6 +228,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
         if (!missing.isEmpty()) {
             errors.add("xsl:import/include targets not found as XSLT documents: " + String.join(", ", missing));
         }
+        errors.addAll(importNamespaceProblems(xslt, imports));
         // Compiled only once the rest passes, so a fault isn't reported twice (e.g. a missing import), and only
         // with imports the user can view.
         if (errors.isEmpty()) {
@@ -243,6 +251,28 @@ class CheckXsltTool extends AbstractBuiltInTool {
                                       final Map<String, String> chosenDocs,
                                       final List<String> errors,
                                       final List<String> warnings) {
+        // An environment's fork: checked against the fork's own schema (the document chosen for the build, else the
+        // one this Stroom holds for the namespace).
+        final List<XmlSchemaDoc> forks = heldSchemas.forks();
+        for (final XmlSchemaDoc fork : forks) {
+            final String namespace = NullSafe.string(fork.getNamespaceURI()).strip();
+            if (XmlTrees.named(root, namespace, "*").isEmpty()) {
+                continue;
+            }
+            final List<XmlSchemaDoc> inNamespace = forks.stream()
+                    .filter(doc -> namespace.equals(NullSafe.string(doc.getNamespaceURI()).strip()))
+                    .toList();
+            final XmlSchemaDoc doc = inNamespace.stream()
+                    .filter(held -> held.getUuid().equals(chosenDocs.get(held.getSystemId().strip())))
+                    .findFirst()
+                    .orElse(inNamespace.getFirst());
+            try {
+                errors.addAll(XsltChecks.eventElementProblems(root, heldSchemas.eventSchema(doc)));
+            } catch (final ToolRefusal e) {
+                warnings.add("Element names of the fork " + namespace + " not checked: " + e.getMessage());
+            }
+            return;
+        }
         final List<Element> written = XmlTrees.named(root, XsltChecks.EVT, "*");
         if (written.isEmpty()) {
             return;
@@ -266,6 +296,51 @@ class CheckXsltTool extends AbstractBuiltInTool {
             return;
         }
         errors.addAll(XsltChecks.eventElementProblems(root, schema));
+    }
+
+    // An import writing Events in another namespace than the XSLT itself: their output mixes namespaces, and the
+    // schema filter refuses it. Seen in testing: the agent moved a translation to event-logging:3 and dropped the
+    // environment's common import, which writes its fork, to make it validate.
+    private List<String> importNamespaceProblems(final String xslt, final List<String> imports) {
+        final List<XmlSchemaDoc> forks = heldSchemas.forks();
+        if (forks.isEmpty() || imports.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> known = new LinkedHashSet<>();
+        known.add(XsltChecks.EVT);
+        forks.forEach(fork -> known.add(NullSafe.string(fork.getNamespaceURI()).strip()));
+        final Optional<String> own = EventsNamespaces.writtenBy(xslt, known);
+        if (own.isEmpty()) {
+            return List.of();
+        }
+        final List<String> problems = new ArrayList<>();
+        for (final String href : imports) {
+            final Optional<String> theirs = importedXslt(href).flatMap(text -> EventsNamespaces.writtenBy(text,
+                    known));
+            if (theirs.isPresent() && !theirs.get().equals(own.get())) {
+                problems.add("The import '" + href + "' writes Events elements in namespace " + theirs.get()
+                             + ", but this XSLT writes them in " + own.get() + ": the output would mix the two, and "
+                             + "the schema filter refuses it. Write this XSLT in " + theirs.get() + " (as the "
+                             + "import does), or ask the user which import writes " + own.get() + ". Don't drop an "
+                             + "import the environment requires to get round this.");
+            }
+        }
+        return problems;
+    }
+
+    // The text of the XSLT document of exactly that name the user may view, if there is one.
+    private Optional<String> importedXslt(final String name) {
+        try {
+            return NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, name, false)).stream()
+                    .filter(docRef -> name.equals(docRef.getName()))
+                    .map(docRef -> documentAccess.read(docRef, XsltDoc.class))
+                    .flatMap(Optional::stream)
+                    .map(XsltDoc::getData)
+                    .findFirst();
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the XSLT {}", name, e);
+            return Optional.empty();
+        }
     }
 
     // The xsl:import and xsl:include hrefs, in document order.

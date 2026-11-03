@@ -121,6 +121,41 @@ class TestFieldPlan {
     }
 
     @Test
+    void aPlanForEventsInAForkedNamespaceReadsThemInIt() {
+        // Seen in testing: Events in an environment's fork of the schema; an XSLT reading event-logging:3 matched
+        // none of them.
+        final String fork = "file://xml/schema/accounting/events";
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "acme", "@timestamp", FIELDS).withEventsNamespace(fork);
+
+        assertThat(plan.eventsNamespace()).isEqualTo(fork);
+        assertThat(plan.xslt()).contains("xpath-default-namespace=\"" + fork + "\"");
+        final String output = IndexingFixtures.compact(IndexingFixtures.transform(plan.xslt(),
+                EVENTS.replace("event-logging:3", fork)));
+        assertThat(output).contains("<number key=\"StreamId\">7</number>")
+                .contains("<map key=\"user\"><string key=\"name\">alice</string></map>");
+        // Kept with the plan, and read back.
+        assertThat(plan.toJson()).containsEntry("events_namespace", fork);
+        assertThat(FieldPlan.fromJson(plan.toJson())).isEqualTo(plan);
+        // Carried by the plan's other changes.
+        assertThat(plan.withIndexName("other").eventsNamespace()).isEqualTo(fork);
+        assertThat(plan.withFields(FIELDS.subList(0, 3)).eventsNamespace()).isEqualTo(fork);
+    }
+
+    @Test
+    void aPlanForStandardEventsKeepsNoNamespace() {
+        final FieldPlan plain = FieldPlan.of("elasticsearch", "acme", "@timestamp", FIELDS);
+
+        assertThat(plain.eventsNamespace()).isNull();
+        assertThat(plain.toJson()).doesNotContainKey("events_namespace");
+        assertThat(plain.xslt()).contains("xpath-default-namespace=\"event-logging:3\"");
+        // The standard namespace, or a blank one, is the same as none.
+        assertThat(plain.withEventsNamespace("event-logging:3")).isEqualTo(plain);
+        assertThat(plain.withEventsNamespace("  ")).isEqualTo(plain);
+        assertThat(plain.withEventsNamespace("event-logging:3").eventsNamespaceOrStandard())
+                .isEqualTo("event-logging:3");
+    }
+
+    @Test
     void aLucenePlanMapsKeywordsToTextWithTheKeywordAnalyzer() {
         final FieldPlan plan = FieldPlan.of("lucene", "ACME-INDEX", "EventTime", List.of(
                 PlannedField.of("StreamId", "id", "@StreamId"), PlannedField.of("EventId", "id", "@EventId"),
