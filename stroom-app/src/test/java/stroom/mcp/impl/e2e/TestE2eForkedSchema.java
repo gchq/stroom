@@ -45,9 +45,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// profiled as none, check_events refused them, and the agent dropped the environment's common import to write
 /// event-logging:3 instead.
 ///
-/// The fork here is the test's own: event-logging 4.1.0 in namespace [#FORK_NS], with one extra EventDetail activity,
-/// Charge, versioned 1.2.0 (real forks have only a few additions to the generally available schema, and versions
-/// of their own). Covered whole, in one
+/// The fork here is the test's own, made as environments make theirs: event-logging 4.1.0 with event-logging:3
+/// replaced by [#FORK_NS] wherever it appears, its version and id kept, its namespace as its system id, and one extra
+/// EventDetail activity, Charge (real forks have only a few additions to the generally available schema). Sharing
+/// event-logging's version, nothing may fall back to event-logging's schema by version. Covered whole, in one
 /// environment:
 ///
 /// 1. The fork in event-logging's schema group, a shared import writing it, and an AGENTS doc requiring that import.
@@ -65,7 +66,7 @@ class TestE2eForkedSchema extends AbstractE2eTest {
     /// The test fork's namespace.
     static final String FORK_NS = "file://xml/schema/test-fork/events";
     /// The test fork's system id.
-    static final String FORK_SYSTEM_ID = "file://test-fork-events-v1.2.0.xsd";
+    static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
     private static final String STAMP = "FORK1";
     private static final String WORKSPACE = "System/MCP Workspace/";
     private static final String BUILD = "fork";
@@ -106,13 +107,13 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 .contains("environment's fork", FORK_NS, "don't ask the user");
         final String code = readXslt(xsltUuid).getData();
         assertThat(code).as("written in the fork, with its own schema location and version")
-                .contains("xmlns=\"" + FORK_NS + "\"", FORK_NS + " " + FORK_SYSTEM_ID, "Version=\"1.2.0\"")
+                .contains("xmlns=\"" + FORK_NS + "\"", FORK_NS + " " + FORK_SYSTEM_ID, "Version=\"4.1.0\"")
                 .doesNotContain("event-logging:3")
                 .contains("<Charge>", "<xsl:import href=\"" + SHARED + "\"");
         // Kept with the fork's document and version, so it regenerates in the fork; and it matches its mapping.
         final Map<String, Object> kept = KeptMapping.readMapping(readXslt(xsltUuid).getDescription())
                 .orElseThrow().payload();
-        assertThat(kept).containsEntry("schema_version", "1.2.0").containsKey("schema_uuid");
+        assertThat(kept).containsEntry("schema_version", "4.1.0").containsKey("schema_uuid");
         assertThat(String.valueOf(built)).as("not taken for a hand edit")
                 .doesNotContain("differs from what the mapping generates");
         // Changed (changes=, only what changes): regenerated from the kept mapping, still in the fork.
@@ -126,7 +127,7 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 .contains("xmlns=\"" + FORK_NS + "\"", "Account charge", "<Charge>")
                 .doesNotContain("event-logging:3");
         assertThat(KeptMapping.readMapping(readXslt(xsltUuid).getDescription()).orElseThrow().payload())
-                .as("the fork's document still kept").containsEntry("schema_version", "1.2.0")
+                .as("the fork's document still kept").containsEntry("schema_version", "4.1.0")
                 .containsEntry("schema_uuid", fork.uuid());
         assertThat(String.valueOf(changed)).doesNotContain("differs from what the mapping generates");
         final String pipeline = (String) createPipeline(BUILD, FEED + "-Events",
@@ -247,7 +248,8 @@ class TestE2eForkedSchema extends AbstractE2eTest {
     void aForkIsOfferedWhenNothingSettlesItAndSettledFromATemplateThatWritesIt() {
         final Fork fork = installFork();
 
-        // ### 1. A Data Splitter feed, nothing written in the fork yet: the fork is offered beside event-logging.
+        // ### 1. A Data Splitter feed, nothing written in the fork yet: the variant is asked first, the fork offered
+        // beside event-logging.
         final String build = "fork-csv";
         final String feed = "E2E-FORK-CSV";
         createFeed(build, feed);
@@ -283,9 +285,12 @@ class TestE2eForkedSchema extends AbstractE2eTest {
             client.answeringWith(McpTestClient::agree);
         }
         dump("chosen in the form", built);
-        assertThat(offered).as("the fork offered beside event-logging").anySatisfy(option -> assertThat(
-                String.valueOf(option)).contains("this environment's fork", FORK_NS))
-                .anySatisfy(option -> assertThat(String.valueOf(option)).contains("event-logging " + VERSION));
+        // Which schema first, by namespace, each with its own versions: no version until the variant is chosen.
+        assertThat(offered).as("the fork offered beside event-logging").hasSize(2)
+                .anySatisfy(option -> assertThat(String.valueOf(option))
+                        .contains("this environment's fork, namespace " + FORK_NS, "versions " + VERSION))
+                .anySatisfy(option -> assertThat(String.valueOf(option))
+                        .contains("event-logging, namespace event-logging:3", "versions " + VERSION));
         assertThat(String.valueOf(built.get("schema_version_settled"))).contains("The user chose the environment's "
                                                                                  + "fork");
         final String xsltUuid = (String) map(built, "saved").get("uuid");
@@ -319,8 +324,10 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 "stream_ids", List.of(otherRaw), "build", other, "name", "E2E-FORK-TPL-Events",
                 "feeds", List.of("E2E-FORK-TPL")));
         dump("settled from the template", settled);
+        // Inferred, not asked: the test client's default answer would otherwise pick the form's first option.
         assertThat(String.valueOf(settled.get("schema_version_settled"))).as("settled from the template")
-                .contains("environment's fork", FORK_NS);
+                .contains("environment's fork", FORK_NS, "as the environment's translations already do")
+                .doesNotContain("The user chose");
         assertThat(readXslt((String) map(settled, "saved").get("uuid")).getData())
                 .contains("xmlns=\"" + FORK_NS + "\"");
 
@@ -351,7 +358,7 @@ class TestE2eForkedSchema extends AbstractE2eTest {
                 .systemId(FORK_SYSTEM_ID)
                 .namespaceURI(FORK_NS)
                 .schemaGroup(group)
-                .data(textResource("test-fork-events-v1.2.0.xsd"))
+                .data(textResource("test-fork-events.xsd"))
                 .build()));
         return new Fork(ref.getUuid(), group);
     }
