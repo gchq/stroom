@@ -1698,8 +1698,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         LOGGER.debug("Checking for associated docRefs");
         final ImportExportActionHandler handler = importExportActionHandlers.getHandler(currentNode.getType());
         if (handler != null) {
-            final Set<DocRef> associatedNonExplorerDocRefs =
-                    handler.findAssociatedNonExplorerDocRefs(currentNode.getDocRef());
+            final Set<DocRef> associatedNonExplorerDocRefs;
+            try {
+                associatedNonExplorerDocRefs = handler.findAssociatedNonExplorerDocRefs(currentNode.getDocRef());
+            } catch (final PermissionException e) {
+                // Finding some associated docs needs more than View on the node, e.g. processor filters need
+                // Manage Processors. A user without that still gets the node itself, just not its associated docs.
+                LOGGER.debug("Permission exception finding docRefs associated with '{}' during export: {}",
+                        currentNode.getDocRef(), e.getMessage(), e);
+                exportInfo.skippedAssociatedDocRefs(currentNode, e);
+                return;
+            }
             if (associatedNonExplorerDocRefs != null) {
                 LOGGER.debug("Writing associated docRefs");
                 for (final DocRef docRef : associatedNonExplorerDocRefs) {
@@ -1956,6 +1965,18 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             }
 
             failedTypes.add(node.getType());
+        }
+
+        /// Call when the docs associated with a node, e.g. a pipeline's processor
+        /// filters, could not be exported because the user lacks permission to
+        /// read them. The node itself is still exported.
+        ///
+        /// @param node The node whose associated docs were skipped.
+        /// @param e    The permission exception that caused the skip.
+        public void skippedAssociatedDocRefs(final ExplorerNode node,
+                                             final PermissionException e) {
+            messages.add(new Message(Severity.WARNING,
+                    "Skipped documents associated with '" + node.getName() + "': " + e.getMessage()));
         }
 
         /**

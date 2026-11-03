@@ -16,62 +16,94 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResultPage;
 
-import jakarta.inject.Provider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TestAnalyticRuleStoreImpl {
 
     private static final DocRef ERROR_FEED = new DocRef("Feed", "error-feed-uuid", "ERROR_FEED");
     private static final DocRef DESTINATION_FEED = new DocRef("Feed", "destination-feed-uuid", "DESTINATION_FEED");
+    private static final DocRef RULE_DOC_REF = AnalyticRuleDoc.buildDocRef()
+            .uuid("8d3d3a07-7c4e-4b8e-9d55-2f0f6a3b1c21")
+            .name("Test rule")
+            .build();
 
     @Mock
-    private StoreFactory storeFactory;
+    private StoreFactory mockStoreFactory;
     @Mock
-    private SecurityContext securityContext;
+    private Store<AnalyticRuleDoc> mockStore;
     @Mock
-    private AnalyticRuleSerialiser serialiser;
+    private SecurityContext mockSecurityContext;
     @Mock
-    private Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private AnalyticRuleSerialiser mockSerialiser;
     @Mock
-    private Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
+    private ProcessorFilterService mockProcessorFilterService;
     @Mock
-    private Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
+    private AnalyticRuleProcessors mockAnalyticRuleProcessors;
     @Mock
-    private Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
+    private ExecutionScheduleDao mockExecutionScheduleDao;
     @Mock
-    private SearchRequestFactory searchRequestFactory;
+    private DataSourceProviderRegistry mockDataSourceProviderRegistry;
+    @Mock
+    private SearchRequestFactory mockSearchRequestFactory;
+
+    private AnalyticRuleStoreImpl analyticRuleStore;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.doReturn(mockStore)
+                .when(mockStoreFactory)
+                .createStore(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.when(mockSecurityContext.hasDocumentPermission(Mockito.any(), Mockito.any()))
+                .thenReturn(true);
+        Mockito.when(mockProcessorFilterService.find(Mockito.any(DocRef.class)))
+                .thenReturn(ResultPage.<ProcessorFilter>empty());
+        Mockito.when(mockExecutionScheduleDao.fetchExecutionSchedule(Mockito.any()))
+                .thenReturn(ResultPage.<ExecutionSchedule>empty());
+
+        analyticRuleStore = new AnalyticRuleStoreImpl(
+                mockStoreFactory,
+                mockSecurityContext,
+                mockSerialiser,
+                () -> mockProcessorFilterService,
+                () -> mockAnalyticRuleProcessors,
+                () -> mockExecutionScheduleDao,
+                () -> mockDataSourceProviderRegistry,
+                mockSearchRequestFactory);
+    }
 
     @Test
     void testDependencyRemapFunction_recordsErrorAndDestinationFeeds() {
-        final AnalyticRuleStoreImpl analyticRuleStore = new AnalyticRuleStoreImpl(
-                storeFactory,
-                securityContext,
-                serialiser,
-                processorFilterServiceProvider,
-                analyticRuleProcessorsProvider,
-                executionScheduleDaoProvider,
-                dataSourceProviderRegistryProvider,
-                searchRequestFactory);
         final AnalyticRuleDoc doc = AnalyticRuleDoc.builder()
                 .uuid("rule-uuid")
                 .name("Rule")
@@ -89,5 +121,57 @@ class TestAnalyticRuleStoreImpl {
 
         assertThat(dependencyRemapper.getDependencies())
                 .containsExactlyInAnyOrder(ERROR_FEED, DESTINATION_FEED);
+    }
+
+    @Test
+    void testFindAssociatedNonExplorerDocRefs_nullProcessType() {
+        givenRuleWithProcessType(null);
+
+        final Set<DocRef> docRefs = analyticRuleStore.findAssociatedNonExplorerDocRefs(RULE_DOC_REF);
+
+        assertThat(docRefs).isEmpty();
+        Mockito.verifyNoInteractions(mockProcessorFilterService, mockExecutionScheduleDao);
+    }
+
+    @Test
+    void testFindAssociatedNonExplorerDocRefs_streaming() {
+        givenRuleWithProcessType(AnalyticProcessType.STREAMING);
+
+        final Set<DocRef> docRefs = analyticRuleStore.findAssociatedNonExplorerDocRefs(RULE_DOC_REF);
+
+        assertThat(docRefs).isEmpty();
+        Mockito.verify(mockProcessorFilterService).find(RULE_DOC_REF);
+        Mockito.verifyNoInteractions(mockExecutionScheduleDao);
+    }
+
+    @Test
+    void testFindAssociatedNonExplorerDocRefs_scheduledQuery() {
+        givenRuleWithProcessType(AnalyticProcessType.SCHEDULED_QUERY);
+
+        final Set<DocRef> docRefs = analyticRuleStore.findAssociatedNonExplorerDocRefs(RULE_DOC_REF);
+
+        assertThat(docRefs).isEmpty();
+        Mockito.verify(mockExecutionScheduleDao).fetchExecutionSchedule(Mockito.any());
+        Mockito.verifyNoInteractions(mockProcessorFilterService);
+    }
+
+    @Test
+    void testFindAssociatedNonExplorerDocRefs_tableBuilder() {
+        givenRuleWithProcessType(AnalyticProcessType.TABLE_BUILDER);
+
+        final Set<DocRef> docRefs = analyticRuleStore.findAssociatedNonExplorerDocRefs(RULE_DOC_REF);
+
+        assertThat(docRefs).isEmpty();
+        Mockito.verifyNoInteractions(mockProcessorFilterService, mockExecutionScheduleDao);
+    }
+
+    private void givenRuleWithProcessType(final AnalyticProcessType analyticProcessType) {
+        final AnalyticRuleDoc ruleDoc = AnalyticRuleDoc.builder()
+                .uuid(RULE_DOC_REF.getUuid())
+                .name(RULE_DOC_REF.getName())
+                .analyticProcessType(analyticProcessType)
+                .build();
+        Mockito.when(mockStore.readDocument(RULE_DOC_REF))
+                .thenReturn(ruleDoc);
     }
 }

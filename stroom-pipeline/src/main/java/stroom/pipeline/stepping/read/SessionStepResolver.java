@@ -157,7 +157,9 @@ public class SessionStepResolver {
 
             if (sweep.getError() != null) {
                 final String message = sweep.getError().getMessage();
-                return SessionStepResult.error(message != null ? message : "Stepping capture error");
+                return SessionStepResult.error(
+                        message != null ? message : "Stepping capture error",
+                        startProcessStepData(sweep.getStartProcessIndicators()));
             }
 
             if (sweep.isWaitHandle() && sweep.hasEnded()) {
@@ -196,13 +198,13 @@ public class SessionStepResolver {
 
             // Stream fully captured with no match in the required direction. REFRESH is exact - no cross.
             if (stepType == StepType.REFRESH) {
-                return SessionStepResult.notFound();
+                return notFound(sweep);
             }
             final OptionalLong neighbour = forward
                     ? session.nextStreamId(currentStream)
                     : session.prevStreamId(currentStream);
             if (neighbour.isEmpty()) {
-                return SessionStepResult.notFound();
+                return notFound(sweep);
             }
             currentStream = neighbour.getAsLong();
             crossed = true;
@@ -231,6 +233,30 @@ public class SessionStepResolver {
             case BACKWARD -> refStream.isPresent() ? refStream : session.lastStreamId();
             case REFRESH -> refStream;
         };
+    }
+
+    /// The result for a step that found no record in a fully captured stream.
+    ///
+    /// When the stream yielded no records at all, the errors raised while the pipeline started up are what
+    /// stopped it stepping (e.g. a data splitter that doesn't compile leaves the parser with nothing to read),
+    /// so they are returned as the step data. Otherwise the step has simply run out of records and nothing
+    /// is returned, so the client keeps showing the last record.
+    private SessionStepResult notFound(final StreamSweep sweep) {
+        if (sweep.getLastCapturedLocation() == null) {
+            return SessionStepResult.notFound(startProcessStepData(sweep.getStartProcessIndicators()));
+        }
+        return SessionStepResult.notFound();
+    }
+
+    /// Step data holding only the indicators the pipeline raised while starting up, for a step with no
+    /// record to fold them into.
+    ///
+    /// @return The step data, or null if there are no indicators.
+    private SharedStepData startProcessStepData(final Map<ElementId, Indicators> startProcessIndicators) {
+        if (startProcessIndicators.isEmpty()) {
+            return null;
+        }
+        return mergeStartProcessIndicators(new SharedStepData(null, Map.of()), startProcessIndicators);
     }
 
     /**
@@ -269,7 +295,9 @@ public class SessionStepResolver {
      * @param foundRecord      whether a matching record was found.
      * @param complete         whether the step query resolved (true) or is still waiting on capture (false).
      * @param foundLocation    the resolved record (when found).
-     * @param stepData         the assembled per-element data (when found).
+     * @param stepData         the assembled per-element data (when found), or the indicators raised while the
+     *                         pipeline started up (when no record was found because of them, or the capture
+     *                         failed).
      * @param progressLocation the furthest-captured record while still sweeping (for progress display).
      * @param generalError     a capture error message, if the sweep failed.
      * @param segmentedData    whether the found record's part holds segmented data.
@@ -289,7 +317,11 @@ public class SessionStepResolver {
         }
 
         static SessionStepResult notFound() {
-            return new SessionStepResult(false, true, null, null, null, null, false);
+            return notFound(null);
+        }
+
+        static SessionStepResult notFound(final SharedStepData stepData) {
+            return new SessionStepResult(false, true, null, stepData, null, null, false);
         }
 
         /// A step that has not resolved yet; the client polls again.
@@ -300,8 +332,8 @@ public class SessionStepResolver {
             return new SessionStepResult(false, false, null, null, progressLocation, null, false);
         }
 
-        static SessionStepResult error(final String message) {
-            return new SessionStepResult(false, true, null, null, null, message, false);
+        static SessionStepResult error(final String message, final SharedStepData stepData) {
+            return new SessionStepResult(false, true, null, stepData, null, message, false);
         }
     }
 }

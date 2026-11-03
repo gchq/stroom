@@ -26,6 +26,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.xslt.XsltImports;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
@@ -54,7 +55,7 @@ import javax.xml.transform.stream.StreamSource;
 @Singleton
 @EntityEventHandler(
         type = XsltDoc.TYPE,
-        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+        action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
@@ -150,32 +151,22 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         // super deals with invalidating the affected doc
         super.onChange(event);
 
-        // If the oldDocRef is present then use that as that is what would be in the pool
         final DocRef changedXsltDocRef = event.getOldDocRef() != null
                 ? event.getOldDocRef()
                 : event.getDocRef();
-        final String changedXsltName = changedXsltDocRef.getName();
 
-        // An XSLT can have an xsl:include or xsl:import of other XSLTs (referenced by name)
-        // so we need to find any in the pool that reference our changed one and invalidate them too.
-        // E.g. if an imported XSLT is modified then we need to invalidate the one that uses
-        // it, so it picks up the updated import.
-        // href="...the.name..." is used for both import and include so search for that in the XSLT doc data.
-        // In the event that we get a false positive hit then it just means we invalidate something we didn't
-        // intend to but that is no biggie.
-        final String searchStr = "href=\"" + changedXsltName + "\"";
+        // An XSLT can import or include other XSLTs, by name, UUID or doc ref string, directly or through
+        // another XSLT. A pooled XSLT holds the imports as they were when it was compiled, and a failed compile
+        // (e.g. an import of an XSLT that didn't exist yet) is pooled too. Working out which pooled XSLTs
+        // depend on the changed one would mean resolving every import, so invalidate every pooled XSLT that
+        // has any. The cost is recompiling them when next borrowed, and XSLTs are saved far less often than
+        // they are used.
         final Consumer<XsltDoc> loggingPeekFunc = LOGGER.createIfDebugConsumer(xsltDoc ->
-                LOGGER.debug("Invalidating XsltDoc {} with dependency on {}", xsltDoc, changedXsltDocRef));
+                LOGGER.debug("Invalidating XsltDoc {} as it has imports and {} changed", xsltDoc, changedXsltDocRef));
 
-        // This xslt may be imported/included in other XSLTs, so we need to invalidate all of them as well
         getKeys()
                 .stream()
-                .filter(xsltDoc -> {
-                    final String xsltData = xsltDoc.getData();
-                    return xsltData != null
-                           && !xsltData.isBlank()
-                           && xsltData.contains(searchStr);
-                })
+                .filter(xsltDoc -> XsltImports.hasImports(xsltDoc.getData()))
                 .peek(loggingPeekFunc)
                 .forEach(this::invalidate);
 

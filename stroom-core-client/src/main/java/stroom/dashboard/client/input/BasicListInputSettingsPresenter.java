@@ -68,6 +68,7 @@ public class BasicListInputSettingsPresenter
             getView().setUseDictionary(settings.isUseDictionary());
             dictionaryPresenter.setSelectedEntityReference(settings.getDictionary(), true);
             getView().setAllowTextEntry(settings.isAllowTextEntry());
+            getView().setMultiSelect(settings.isMultiSelect());
         }
     }
 
@@ -87,6 +88,7 @@ public class BasicListInputSettingsPresenter
                 .useDictionary(getView().isUseDictionary())
                 .dictionary(dictionaryPresenter.getSelectedEntityReference())
                 .allowTextEntry(getView().isAllowTextEntry())
+                .multiSelect(getView().isMultiSelect())
                 .build();
     }
 
@@ -103,7 +105,8 @@ public class BasicListInputSettingsPresenter
                 Objects.equals(oldSettings.getValues(), newSettings.getValues()) &&
                 Objects.equals(oldSettings.isUseDictionary(), newSettings.isUseDictionary()) &&
                 Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary()) &&
-                Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry());
+                Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry()) &&
+                Objects.equals(oldSettings.isMultiSelect(), newSettings.isMultiSelect());
 
         return !equal;
     }
@@ -131,5 +134,9 @@ public class BasicListInputSettingsPresenter
         boolean isAllowTextEntry();
 
         void setAllowTextEntry(boolean allowTextEntry);
+
+        boolean isMultiSelect();
+
+        void setMultiSelect(boolean multiSelect);
     }
 }

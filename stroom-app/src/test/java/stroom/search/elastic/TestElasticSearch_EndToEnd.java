@@ -180,15 +180,16 @@ class TestElasticSearch_EndToEnd extends AbstractCoreIntegrationTest {
     // way through. TestElasticSearchTaskHandlerWireMock covers that, as a real node can't easily be made to fail.
     @Test
     void testSearchAcrossScrollPagesLeavesNoScrollContextOpen() {
-        final DocRef indexRef = indexNetworkEvents();
-        final long contextsBefore = node.getOpenSearchContexts();
+        final String indexName = ElasticTestNode.createIndexName("network");
+        final DocRef indexRef = indexNetworkEvents(indexName);
 
         final SearchResult result = search(indexRef, ExpressionOperator.builder(), USER_ID);
 
         assertThat(result.rows()).hasSize(ElasticEndToEndTestHelper.NETWORK_EVENT_COUNT);
-        assertThat(node.getOpenSearchContexts())
-                .as("Open search contexts after the search")
-                .isLessThanOrEqualTo(contextsBefore);
+        // Counted on this test's own index only, as other test classes may be searching the node in parallel forks
+        assertThat(node.getOpenSearchContexts(indexName))
+                .as("Open search contexts on the index after the search")
+                .isZero();
     }
 
     @Test
@@ -398,7 +399,10 @@ class TestElasticSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     private DocRef indexNetworkEvents() {
-        final String indexName = ElasticTestNode.createIndexName("network");
+        return indexNetworkEvents(ElasticTestNode.createIndexName("network"));
+    }
+
+    private DocRef indexNetworkEvents(final String indexName) {
         indexPatternsToDelete.add(indexName);
         helper.indexNetworkEvents(node, clusterRef, indexName);
         return helper.createIndexDoc(clusterRef, indexName, EVENT_TIME, SCROLL_SIZE);
