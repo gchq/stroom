@@ -115,32 +115,50 @@ class EventsTargetInference {
         return Optional.empty();
     }
 
-    // The namespace the XSLTs the best translation template (or one it inherits from) sets write in.
+    // The namespace the XSLTs set on the best translation template that writes Events (or on one it inherits from)
+    // write in. Candidates are taken in rank order, passing over those that write none: seen in testing, the
+    // configured standard template (no XSLT of its own) outranked the environment's template, inherited by its
+    // pipelines, whose XSLT writes the fork.
     private Optional<Inferred> fromTemplate(final Set<String> namespaces) {
         try {
             final Map<String, Object> found = pipelineTemplatesProvider.get().find(InstructionRules.TRANSLATION);
-            if (!(found.get("candidates") instanceof final List<?> candidates) || candidates.isEmpty()
-                || !(candidates.getFirst() instanceof final Map<?, ?> best)) {
+            if (!(found.get("candidates") instanceof final List<?> candidates)) {
                 return Optional.empty();
             }
             final Map<String, PipelineIndex.Entry> index = pipelineIndexProvider.get().read();
-            final Set<String> seen = new HashSet<>();
-            String uuid = Objects.toString(best.get("uuid"), null);
-            while (uuid != null && seen.add(uuid) && index.containsKey(uuid)) {
-                final PipelineIndex.Entry pipeline = index.get(uuid);
-                for (final DocRef xslt : xslts(pipeline.own())) {
-                    final Optional<String> written = documentAccess.read(xslt, XsltDoc.class)
-                            .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces));
+            for (final Object candidate : candidates) {
+                if (candidate instanceof final Map<?, ?> template) {
+                    final Optional<Inferred> written = writtenByTemplate(index,
+                            Objects.toString(template.get("uuid"), null), namespaces);
                     if (written.isPresent()) {
-                        return Optional.of(new Inferred(written.get(), "the XSLT '" + xslt.getName() + "' set on "
-                                                                       + "the translation template '"
-                                                                       + pipeline.name() + "' writes it"));
+                        return written;
                     }
                 }
-                uuid = pipeline.parentUuid();
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("No namespace inferred from the templates: {}", e.getMessage()), e);
+        }
+        return Optional.empty();
+    }
+
+    // The namespace the XSLTs set on a template, or the nearest template it inherits from that sets one, write in.
+    private Optional<Inferred> writtenByTemplate(final Map<String, PipelineIndex.Entry> index,
+                                                 final String templateUuid,
+                                                 final Set<String> namespaces) {
+        final Set<String> seen = new HashSet<>();
+        String uuid = templateUuid;
+        while (uuid != null && seen.add(uuid) && index.containsKey(uuid)) {
+            final PipelineIndex.Entry pipeline = index.get(uuid);
+            for (final DocRef xslt : xslts(pipeline.own())) {
+                final Optional<String> written = documentAccess.read(xslt, XsltDoc.class)
+                        .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces));
+                if (written.isPresent()) {
+                    return Optional.of(new Inferred(written.get(), "the XSLT '" + xslt.getName() + "' set on "
+                                                                   + "the translation template '"
+                                                                   + pipeline.name() + "' writes it"));
+                }
+            }
+            uuid = pipeline.parentUuid();
         }
         return Optional.empty();
     }

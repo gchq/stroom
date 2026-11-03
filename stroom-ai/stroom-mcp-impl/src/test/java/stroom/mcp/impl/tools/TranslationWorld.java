@@ -371,7 +371,7 @@ final class TranslationWorld {
         return EventSchema.parse(resource("event-logging-v4.1.0.xsd"));
     }
 
-    /// @param name A test resource beside this class, e.g. `test-fork-events-v1.2.0.xsd`.
+    /// @param name A test resource beside this class, e.g. `test-fork-events.xsd`.
     /// @return Its text.
     static String resource(final String name) {
         try (final InputStream in = TranslationWorld.class.getResourceAsStream(name)) {

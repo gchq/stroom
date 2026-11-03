@@ -14,7 +14,8 @@ same: every tool reads and writes them, and says which namespace it found.
 
 - The translation tools settle which schema a new translation writes from what the environment's imports and
   templates already write (`schema_version_settled` says so): don't ask the user which namespace to use. Only when
-  nothing settles it do they ask, offering the fork beside the event-logging versions.
+  nothing settles it do they ask, in two steps: which schema first (event-logging:3 or the fork, by namespace), then
+  its version, as a fork's versions are its own even where they match event-logging's numbers.
 - A schema filter's schema group (e.g. `EVENTS`) only narrows the schemas it may use. The output's own namespace
   and `xsi:schemaLocation` pick the schema, so a group holding both `event-logging:3` and the fork validates either:
   changing namespace never needs the schema filter changed or bypassed.

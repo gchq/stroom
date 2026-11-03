@@ -150,13 +150,13 @@ class TestSampleProfiling {
         // fork's, else the XSLT reads them in event-logging:3 and the schema filter refuses its output.
         final String fork = "file://xml/schema/test-fork/events";
         final XmlSchemaDoc forkDoc = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
-                .systemId("file://test-fork-events-v1.2.0.xsd").namespaceURI(fork).schemaGroup("EVENTS").build();
+                .systemId("file://xml/schema/test-fork/events").namespaceURI(fork).schemaGroup("EVENTS").build();
 
-        final Map<String, Object> setup = environment().withFragmentSetup(SampleProfiler.profile(EVENTS), "1.2.0",
+        final Map<String, Object> setup = environment().withFragmentSetup(SampleProfiler.profile(EVENTS), "4.1.0",
                 forkDoc);
 
         assertThat((String) ((Map<?, ?>) setup.get("text_converter")).get("code"))
-                .contains("xmlns=\"" + fork + "\"", fork + " file://test-fork-events-v1.2.0.xsd", "Version=\"1.2.0\"")
+                .contains("xmlns=\"" + fork + "\"", fork + " file://xml/schema/test-fork/events", "Version=\"4.1.0\"")
                 .doesNotContain("event-logging");
         assertThat(((Map<?, ?>) setup.get("xslt_input")).get("namespace")).isEqualTo(fork);
     }
