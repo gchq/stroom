@@ -74,6 +74,7 @@ public class ElasticIndexStoreImpl
         final List<ElasticIndexField> fields = elasticIndexService.getFields(document);
         final ElasticIndexDoc migrated = ElasticVectorSettingsMigrator.migrate(
                 document.copy().fields(fields).build(), fields);
+        ElasticFieldSettingsValidator.validate(migrated, fields);
         return super.writeDocument(migrated.copy()
                 .fieldSettings(dropDefaultSettings(migrated.getFieldSettings()))
                 .build());

@@ -436,7 +436,7 @@ class TestElasticSearchTaskHandlerWireMock {
 
     private ElasticSearchTaskHandler handler() {
         final ElasticSearchConfig config = new ElasticSearchConfig(
-                highlight, StroomDuration.ofMinutes(1), null, null);
+                highlight, StroomDuration.ofMinutes(1), null, null, null, null);
         return new ElasticSearchTaskHandler(() -> config, null, null, null, null, null, null);
     }
 

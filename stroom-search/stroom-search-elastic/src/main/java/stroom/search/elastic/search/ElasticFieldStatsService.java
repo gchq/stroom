@@ -1,0 +1,443 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.search.elastic.search;
+
+import stroom.ai.api.AiService;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.common.v2.IndexFieldCache;
+import stroom.search.elastic.ElasticClientCache;
+import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.ElasticIndexStore;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticFieldStats;
+import stroom.search.elastic.shared.ElasticFieldStatsRequest;
+import stroom.search.elastic.shared.ElasticFieldValueCount;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PermissionException;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.ArrayPercentilesItem;
+import co.elastic.clients.elasticsearch._types.aggregations.SamplerAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StatsAggregate;
+import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.JsonData;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+/// Samples the documents of an Elasticsearch index doc to give statistics about one of its fields, in the manner of
+/// Kibana's field statistics.
+///
+/// A `sampler` aggregation limits each shard to a sample of documents, optionally within a time range on the doc's
+/// time field. Which statistics are gathered depends on the field's type.
+public class ElasticFieldStatsService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticFieldStatsService.class);
+
+    private static final int TOP_VALUES_COUNT = 10;
+    private static final int HISTOGRAM_BUCKETS = 20;
+    private static final String SAMPLE_AGG = "sample";
+    private static final String HAS_VALUE_AGG = "has_value";
+    private static final String DISTINCT_AGG = "distinct";
+    private static final String TOP_AGG = "top";
+    private static final String STATS_AGG = "stats";
+    private static final String MEDIAN_AGG = "median";
+    private static final String HISTOGRAM_AGG = "histogram";
+    private static final String GROUPS_AGG = "groups";
+    private static final Set<FieldType> NUMERIC_TYPES = Set.of(
+            FieldType.ID, FieldType.INTEGER, FieldType.LONG, FieldType.FLOAT, FieldType.DOUBLE);
+    // Types whose values can be counted, i.e. that have doc values
+    private static final Set<FieldType> TERMS_TYPES = Set.of(
+            FieldType.KEYWORD, FieldType.IPV4_ADDRESS, FieldType.BOOLEAN);
+
+    private final SecurityContext securityContext;
+    private final ElasticIndexStore elasticIndexStore;
+    private final ElasticClusterStore elasticClusterStore;
+    private final ElasticClientCache elasticClientCache;
+    private final Provider<ElasticSearchConfig> elasticSearchConfigProvider;
+    private final Provider<AiService> aiServiceProvider;
+    private final IndexFieldCache indexFieldCache;
+    private final WordListProvider wordListProvider;
+
+    @Inject
+    public ElasticFieldStatsService(final SecurityContext securityContext,
+                                    final ElasticIndexStore elasticIndexStore,
+                                    final ElasticClusterStore elasticClusterStore,
+                                    final ElasticClientCache elasticClientCache,
+                                    final Provider<ElasticSearchConfig> elasticSearchConfigProvider,
+                                    final Provider<AiService> aiServiceProvider,
+                                    final IndexFieldCache indexFieldCache,
+                                    final WordListProvider wordListProvider) {
+        this.securityContext = securityContext;
+        this.elasticIndexStore = elasticIndexStore;
+        this.elasticClusterStore = elasticClusterStore;
+        this.elasticClientCache = elasticClientCache;
+        this.elasticSearchConfigProvider = elasticSearchConfigProvider;
+        this.aiServiceProvider = aiServiceProvider;
+        this.indexFieldCache = indexFieldCache;
+        this.wordListProvider = wordListProvider;
+    }
+
+    /// Samples documents to give statistics about a field.
+    ///
+    /// The statistics reveal field values, so the user needs permission to search the index (`USE`).
+    ///
+    /// @param request the field, sample size, time range and, for a virtual field, its groups as edited
+    /// @return the statistics, or a message saying why there are none
+    /// @throws PermissionException if the user may not search the index
+    public ElasticFieldStats getFieldStats(final ElasticFieldStatsRequest request) {
+        final DocRef docRef = request.getIndexDocRef();
+        if (docRef == null || !securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserRef(),
+                    LogUtil.message("You are not authorised to search {}", docRef));
+        }
+        final ElasticIndexDoc indexDoc = elasticIndexStore.readDocument(docRef);
+        if (indexDoc == null) {
+            throw new IllegalArgumentException("Elasticsearch index " + docRef + " was not found");
+        }
+
+        final ElasticSearchConfig config = elasticSearchConfigProvider.get();
+        final int maxSampleSize = Math.max(1, config.getFieldStatsMaxSampleSize());
+        final int sampleSize = Math.clamp(
+                Objects.requireNonNullElse(request.getSampleSize(), config.getFieldStatsSampleSize()),
+                1,
+                maxSampleSize);
+        final String fieldName = request.getFieldName();
+        final List<ElasticVirtualFieldGroup> virtualGroups = getVirtualGroups(indexDoc, request);
+        final ElasticIndexField field = NullSafe.list(indexDoc.getFields())
+                .stream()
+                .filter(candidate -> candidate.getFldName().equals(fieldName))
+                .findFirst()
+                .orElse(null);
+
+        final String message;
+        if (field == null && virtualGroups == null) {
+            message = "Field '" + fieldName + "' was not found in any source index";
+        } else if (field != null && field.hasTypeConflict()) {
+            message = "Field '" + fieldName + "' has conflicting types across the source indices";
+        } else if (field == null && virtualGroups.isEmpty()) {
+            message = "Virtual field '" + fieldName + "' has no groups";
+        } else {
+            message = null;
+        }
+        if (message != null) {
+            return emptyStats(fieldName, sampleSize, maxSampleSize, message);
+        }
+
+        final ElasticClusterDoc cluster = elasticClusterStore.readDocument(indexDoc.getClusterRef());
+        if (cluster == null) {
+            throw new IllegalArgumentException("Elasticsearch cluster for " + indexDoc.getName() + " was not found");
+        }
+        return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> field == null
+                ? getVirtualFieldStats(elasticClient, indexDoc, request, virtualGroups, sampleSize, maxSampleSize)
+                : getMappedFieldStats(elasticClient, indexDoc, request, field, sampleSize, maxSampleSize));
+    }
+
+    /// @return the groups of the requested field if it is a virtual field, preferring the groups as edited in the
+    /// request; `null` if the field is a mapped field or unknown
+    private static List<ElasticVirtualFieldGroup> getVirtualGroups(final ElasticIndexDoc indexDoc,
+                                                                   final ElasticFieldStatsRequest request) {
+        final boolean isMapped = NullSafe.list(indexDoc.getFields())
+                .stream()
+                .anyMatch(field -> field.getFldName().equals(request.getFieldName()));
+        if (isMapped) {
+            return null;
+        }
+        if (request.getVirtualGroups() != null) {
+            return request.getVirtualGroups();
+        }
+        final ElasticIndexFieldSettings settings = indexDoc.findFieldSettings(request.getFieldName());
+        return settings != null && settings.isVirtual()
+                ? settings.getVirtualGroups()
+                : null;
+    }
+
+    private ElasticFieldStats getMappedFieldStats(final ElasticsearchClient elasticClient,
+                                                  final ElasticIndexDoc indexDoc,
+                                                  final ElasticFieldStatsRequest request,
+                                                  final ElasticIndexField field,
+                                                  final int sampleSize,
+                                                  final int maxSampleSize) {
+        final String fieldName = field.getFldName();
+        final FieldType type = field.getFldType();
+        final boolean numeric = NUMERIC_TYPES.contains(type) && !Kind.UnsignedLong.jsonValue().equals(
+                field.getNativeType());
+        final boolean date = FieldType.DATE.equals(type);
+        final boolean terms = TERMS_TYPES.contains(type) && !Kind.Wildcard.jsonValue().equals(field.getNativeType());
+
+        final Map<String, Aggregation> subAggs = new HashMap<>();
+        subAggs.put(HAS_VALUE_AGG, Aggregation.of(a -> a.filter(f -> f.exists(e -> e.field(fieldName)))));
+        if (terms || numeric || date) {
+            subAggs.put(DISTINCT_AGG, Aggregation.of(a -> a.cardinality(c -> c.field(fieldName))));
+        }
+        if (terms) {
+            subAggs.put(TOP_AGG, Aggregation.of(a -> a.terms(t -> t.field(fieldName).size(TOP_VALUES_COUNT))));
+        }
+        if (numeric || date) {
+            subAggs.put(STATS_AGG, Aggregation.of(a -> a.stats(st -> st.field(fieldName))));
+        }
+        if (numeric) {
+            subAggs.put(MEDIAN_AGG, Aggregation.of(a -> a.percentiles(p -> p
+                    .field(fieldName)
+                    .percents(50.0)
+                    .keyed(false))));
+        }
+        if (date) {
+            subAggs.put(HISTOGRAM_AGG, Aggregation.of(a -> a.autoDateHistogram(h -> h
+                    .field(fieldName)
+                    .buckets(HISTOGRAM_BUCKETS))));
+        }
+
+        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, subAggs);
+        final Map<String, Aggregate> aggs = sample.aggregations();
+        final StatsAggregate stats = aggs.containsKey(STATS_AGG)
+                ? aggs.get(STATS_AGG).stats()
+                : null;
+
+        List<ElasticFieldValueCount> histogram = null;
+        if (date) {
+            histogram = aggs.get(HISTOGRAM_AGG).autoDateHistogram().buckets().array()
+                    .stream()
+                    .map(bucket -> new ElasticFieldValueCount(
+                            Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())),
+                            bucket.docCount()))
+                    .toList();
+        } else if (numeric && stats != null && stats.count() > 0) {
+            histogram = getNumericHistogram(elasticClient, indexDoc, request, sampleSize, fieldName, stats);
+        }
+
+        return new ElasticFieldStats(
+                fieldName,
+                sampleSize,
+                maxSampleSize,
+                sample.docCount(),
+                aggs.get(HAS_VALUE_AGG).filter().docCount(),
+                aggs.containsKey(DISTINCT_AGG)
+                        ? aggs.get(DISTINCT_AGG).cardinality().value()
+                        : null,
+                aggs.containsKey(TOP_AGG)
+                        ? getTermsBuckets(aggs.get(TOP_AGG))
+                        : null,
+                stats == null || stats.count() == 0
+                        ? null
+                        : getStatValue(stats.minAsString(), stats.min()),
+                stats == null || stats.count() == 0
+                        ? null
+                        : getStatValue(stats.maxAsString(), stats.max()),
+                numeric && stats != null
+                        ? stats.avg()
+                        : null,
+                aggs.containsKey(MEDIAN_AGG)
+                        ? getMedian(aggs.get(MEDIAN_AGG))
+                        : null,
+                histogram,
+                null);
+    }
+
+    /// Gets the distribution of a numeric field over even buckets between its smallest and largest values, which a
+    /// second request needs, as the bucket width depends on them.
+    private List<ElasticFieldValueCount> getNumericHistogram(final ElasticsearchClient elasticClient,
+                                                             final ElasticIndexDoc indexDoc,
+                                                             final ElasticFieldStatsRequest request,
+                                                             final int sampleSize,
+                                                             final String fieldName,
+                                                             final StatsAggregate stats) {
+        final double min = stats.min();
+        final double max = stats.max();
+        final double interval = max > min
+                ? (max - min) / HISTOGRAM_BUCKETS
+                : 1;
+        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, Map.of(
+                HISTOGRAM_AGG, Aggregation.of(a -> a.histogram(h -> h
+                        .field(fieldName)
+                        .interval(interval)
+                        .offset(min)
+                        .minDocCount(0)))));
+        return sample.aggregations().get(HISTOGRAM_AGG).histogram().buckets().array()
+                .stream()
+                .map(bucket -> new ElasticFieldValueCount(
+                        Objects.requireNonNullElse(bucket.keyAsString(), formatNumber(bucket.key())),
+                        bucket.docCount()))
+                .toList();
+    }
+
+    private ElasticFieldStats getVirtualFieldStats(final ElasticsearchClient elasticClient,
+                                                   final ElasticIndexDoc indexDoc,
+                                                   final ElasticFieldStatsRequest request,
+                                                   final List<ElasticVirtualFieldGroup> groups,
+                                                   final int sampleSize,
+                                                   final int maxSampleSize) {
+        // Build each group's query as a search would, from the groups as edited
+        final SearchExpressionQueryBuilder queryBuilder = new SearchExpressionQueryBuilder(
+                aiServiceProvider,
+                indexDoc,
+                indexFieldCache,
+                wordListProvider,
+                DateTimeSettings.builder().build());
+        final Map<String, Query> groupQueries = new LinkedHashMap<>();
+        for (final ElasticVirtualFieldGroup group : groups) {
+            groupQueries.put(group.getName(),
+                    queryBuilder.buildVirtualGroupQuery(request.getFieldName(), group, List.of()));
+        }
+        final Query anyGroup = QueryBuilders.bool(b -> b.should(new ArrayList<>(groupQueries.values())));
+
+        final Map<String, Aggregation> subAggs = Map.of(
+                HAS_VALUE_AGG, Aggregation.of(a -> a.filter(anyGroup)),
+                GROUPS_AGG, Aggregation.of(a -> a.filters(f -> f.filters(b -> b.keyed(groupQueries)))));
+        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, subAggs);
+        final Map<String, Aggregate> aggs = sample.aggregations();
+
+        final List<ElasticFieldValueCount> groupCounts = new ArrayList<>();
+        aggs.get(GROUPS_AGG).filters().buckets().keyed().forEach((groupName, bucket) ->
+                groupCounts.add(new ElasticFieldValueCount(groupName, bucket.docCount())));
+        groupCounts.sort((a, b) -> Long.compare(b.getCount(), a.getCount()));
+
+        return new ElasticFieldStats(
+                request.getFieldName(),
+                sampleSize,
+                maxSampleSize,
+                sample.docCount(),
+                aggs.get(HAS_VALUE_AGG).filter().docCount(),
+                null,
+                groupCounts,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    private SamplerAggregate searchSample(final ElasticsearchClient elasticClient,
+                                          final ElasticIndexDoc indexDoc,
+                                          final ElasticFieldStatsRequest request,
+                                          final int sampleSize,
+                                          final Map<String, Aggregation> subAggs) {
+        try {
+            final SearchResponse<Void> response = elasticClient.search(s -> s
+                            .index(indexDoc.getIndexName())
+                            .size(0)
+                            .query(getTimeRangeQuery(indexDoc, request))
+                            .aggregations(SAMPLE_AGG, a -> a
+                                    .sampler(sm -> sm.shardSize(sampleSize))
+                                    .aggregations(subAggs)),
+                    Void.class);
+            return response.aggregations().get(SAMPLE_AGG).sampler();
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /// @return a query limiting documents to the requested range of the doc's time field, or matching all
+    /// documents if no range is requested or the doc has no time field
+    static Query getTimeRangeQuery(final ElasticIndexDoc indexDoc, final ElasticFieldStatsRequest request) {
+        final String timeField = indexDoc.getTimeField();
+        if (NullSafe.isBlankString(timeField) || (request.getFromMs() == null && request.getToMs() == null)) {
+            return MatchAllQuery.of(q -> q)._toQuery();
+        }
+        return QueryBuilders.range(r -> r.untyped(u -> {
+            u.field(timeField).format("epoch_millis");
+            if (request.getFromMs() != null) {
+                u.gte(JsonData.of(request.getFromMs()));
+            }
+            if (request.getToMs() != null) {
+                u.lt(JsonData.of(request.getToMs()));
+            }
+            return u;
+        }));
+    }
+
+    private static List<ElasticFieldValueCount> getTermsBuckets(final Aggregate aggregate) {
+        final List<ElasticFieldValueCount> values = new ArrayList<>();
+        if (aggregate.isSterms()) {
+            aggregate.sterms().buckets().array().forEach(bucket ->
+                    values.add(new ElasticFieldValueCount(bucket.key().stringValue(), bucket.docCount())));
+        } else if (aggregate.isLterms()) {
+            aggregate.lterms().buckets().array().forEach(bucket ->
+                    values.add(new ElasticFieldValueCount(
+                            Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())),
+                            bucket.docCount())));
+        } else if (aggregate.isDterms()) {
+            aggregate.dterms().buckets().array().forEach(bucket ->
+                    values.add(new ElasticFieldValueCount(
+                            Objects.requireNonNullElse(bucket.keyAsString(), formatNumber(bucket.key())),
+                            bucket.docCount())));
+        }
+        return values;
+    }
+
+    private static Double getMedian(final Aggregate aggregate) {
+        final List<ArrayPercentilesItem> items = aggregate.tdigestPercentiles().values().array();
+        return items.isEmpty()
+                ? null
+                : items.getFirst().value();
+    }
+
+    private static String getStatValue(final String asString, final Double value) {
+        if (asString != null) {
+            return asString;
+        }
+        return value == null
+                ? null
+                : formatNumber(value);
+    }
+
+    /// @return the number without a trailing `.0` when it is whole
+    static String formatNumber(final double value) {
+        if (value == Math.rint(value) && !Double.isInfinite(value) && Math.abs(value) < 1e15) {
+            return String.valueOf((long) value);
+        }
+        return String.valueOf(value);
+    }
+
+    private static ElasticFieldStats emptyStats(final String fieldName,
+                                                final int sampleSize,
+                                                final int maxSampleSize,
+                                                final String message) {
+        return new ElasticFieldStats(fieldName, sampleSize, maxSampleSize, null, null, null, null, null, null,
+                null, null, null, message);
+    }
+}

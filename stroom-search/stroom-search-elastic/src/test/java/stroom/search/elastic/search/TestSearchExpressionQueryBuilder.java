@@ -33,6 +33,7 @@ import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -64,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -90,6 +93,7 @@ class TestSearchExpressionQueryBuilder {
     private static final String BOOLEAN_FIELD = "flag";
     private static final String WILDCARD_FIELD = "pattern";
     private static final String DENSE_VECTOR_FIELD = "embedding";
+    private static final String VIRTUAL_FIELD = "category";
 
     private static final String DATE_1 = "2021-02-17T01:23:34.000Z";
     private static final long DATE_1_MS = 1613525014000L;
@@ -490,21 +494,56 @@ class TestSearchExpressionQueryBuilder {
 
         assertThat(query.isBool()).isTrue();
         final List<Query> should = query.bool().should();
-        assertThat(should).hasSize(3);
-        assertTerm(should.get(0), field, "abc");
+        assertThat(should).hasSize(2);
+        assertTerms(should.get(0), field, "abc", "g?h");
         assertWildcard(should.get(1), field, "d*f");
-        assertTerm(should.get(2), field, "g?h");
     }
 
     @Test
     void testKeywordFieldInDictionary() {
         when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"abc", "d*f", "\"g?h\""});
 
-        final List<Query> lines = assertDictionaryLines(buildSingleTerm(dictionaryTerm(KEYWORD_FIELD)), 3);
+        final Query query = buildSingleTerm(dictionaryTerm(KEYWORD_FIELD));
 
-        assertTerm(lines.get(0), KEYWORD_FIELD, "abc");
-        assertWildcard(lines.get(1), KEYWORD_FIELD, "d*f");
-        assertTerm(lines.get(2), KEYWORD_FIELD, "g?h");
+        // Exact values (including quoted ones) are merged into one `terms` query, beside each wildcard
+        final List<Query> should = query.bool().should();
+        assertThat(should).hasSize(2);
+        assertTerms(should.get(0), KEYWORD_FIELD, "abc", "g?h");
+        assertWildcard(should.get(1), KEYWORD_FIELD, "d*f");
+    }
+
+    @Test
+    void testKeywordFieldInManyValuesSplitIntoTermsChunks() {
+        final String values = IntStream.rangeClosed(1, SearchExpressionQueryBuilder.MAX_TERMS_COUNT + 1)
+                .mapToObj(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        final Query query = buildSingleTerm(KEYWORD_FIELD, Condition.IN, values);
+
+        final List<Query> should = query.bool().should();
+        assertThat(should).hasSize(2);
+        assertThat(should.get(0).terms().terms().value()).hasSize(SearchExpressionQueryBuilder.MAX_TERMS_COUNT);
+        assertTerms(should.get(1), KEYWORD_FIELD, String.valueOf(SearchExpressionQueryBuilder.MAX_TERMS_COUNT + 1));
+    }
+
+    @Test
+    void testKeywordFieldInExactlyMaxValuesIsOneTermsQuery() {
+        final String values = IntStream.rangeClosed(1, SearchExpressionQueryBuilder.MAX_TERMS_COUNT)
+                .mapToObj(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        final Query query = buildSingleTerm(KEYWORD_FIELD, Condition.IN, values);
+
+        assertThat(query.terms().terms().value()).hasSize(SearchExpressionQueryBuilder.MAX_TERMS_COUNT);
+    }
+
+    @Test
+    void testVersionFieldInDictionaryNotMerged() {
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{"1.0.0", "2.0.0"});
+
+        // Version values are parsed as versions, so stay as separate term queries
+        final List<Query> lines = assertDictionaryLines(buildSingleTerm(dictionaryTerm(VERSION_FIELD)), 2);
+        assertTerm(lines.get(0), VERSION_FIELD, "1.0.0");
     }
 
     @Test
@@ -1149,10 +1188,8 @@ class TestSearchExpressionQueryBuilder {
 
         final Query leaf = assertNestedPaths(buildSingleTerm("user.role", Condition.IN, "a,b"), "user");
 
-        // The whole OR is wrapped once, rather than each term individually
-        assertThat(leaf.bool().should()).hasSize(2);
-        assertTerm(leaf.bool().should().get(0), "user.role", "a");
-        assertTerm(leaf.bool().should().get(1), "user.role", "b");
+        // The whole match is wrapped once, rather than each value individually
+        assertTerms(leaf, "user.role", "a", "b");
     }
 
     @Test
@@ -1174,9 +1211,7 @@ class TestSearchExpressionQueryBuilder {
 
         // The combined dictionary query is wrapped once
         final Query leaf = assertNestedPaths(query, "user");
-        final List<Query> lines = assertDictionaryLines(leaf, 2);
-        assertTerm(lines.get(0), "user.role", "a");
-        assertTerm(lines.get(1), "user.role", "b");
+        assertTerms(leaf, "user.role", "a", "b");
     }
 
     @Test
@@ -1543,8 +1578,7 @@ class TestSearchExpressionQueryBuilder {
                 .build();
 
         // The Lucene builder only requires the dictionary reference, not a value
-        final List<Query> lines = assertDictionaryLines(buildSingleTerm(term), 1);
-        assertTerm(lines.getFirst(), KEYWORD_FIELD, "a");
+        assertTerms(buildSingleTerm(term), KEYWORD_FIELD, "a");
     }
 
     // --------------------------------------------------------------------------------
@@ -1589,6 +1623,183 @@ class TestSearchExpressionQueryBuilder {
                 .stream()
                 .map(condition -> Arguments.of(BOOLEAN_FIELD, condition));
         return Stream.concat(stringFields, booleanField);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Field settings and virtual fields
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void testVirtualFieldEquals() {
+        givenVirtualField();
+
+        final Query groupQuery = buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "db");
+
+        // The group's expression replaces the term
+        assertTerm(singleMust(groupQuery), KEYWORD_FIELD, "db1");
+    }
+
+    @Test
+    void testVirtualFieldEqualsQuotedGroupName() {
+        givenVirtualField();
+
+        assertTerm(singleMust(buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "\"db\"")), KEYWORD_FIELD, "db1");
+    }
+
+    @Test
+    void testVirtualFieldNotEquals() {
+        givenVirtualField();
+
+        final Query inner = assertNegated(buildSingleTerm(VIRTUAL_FIELD, Condition.NOT_EQUALS, "db"));
+
+        assertTerm(singleMust(inner), KEYWORD_FIELD, "db1");
+    }
+
+    @Test
+    void testVirtualFieldIn() {
+        givenVirtualField();
+
+        final Query query = buildSingleTerm(VIRTUAL_FIELD, Condition.IN, "db, web");
+
+        // The groups' expressions are ORed
+        final List<Query> should = query.bool().should();
+        assertThat(should).hasSize(2);
+        assertTerm(singleMust(should.get(0)), KEYWORD_FIELD, "db1");
+        final List<Query> webShould = should.get(1).bool().should();
+        assertTerm(webShould.get(0), KEYWORD_FIELD, "web1");
+        assertTerms(webShould.get(1), KEYWORD_FIELD, "web2", "web3");
+    }
+
+    @Test
+    void testVirtualFieldInDictionary() {
+        givenVirtualField();
+        when(wordListProvider.getWords(DICTIONARY_REF)).thenReturn(new String[]{" db ", ""});
+
+        assertTerm(singleMust(buildSingleTerm(dictionaryTerm(VIRTUAL_FIELD))), KEYWORD_FIELD, "db1");
+    }
+
+    @Test
+    void testVirtualFieldUnknownGroup() {
+        givenVirtualField();
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "mail"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Unknown group 'mail' for virtual field '" + VIRTUAL_FIELD + "'");
+    }
+
+    @Test
+    void testVirtualFieldUnsupportedCondition() {
+        givenVirtualField();
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.MATCHES_REGEX, "d.*"))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void testVirtualFieldGroupUsingNonKeywordField() {
+        givenVirtualField(new ElasticVirtualFieldGroup("text", and(term(TEXT_FIELD, Condition.EQUALS, "x"))));
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "text"))
+                .isInstanceOf(SearchException.class)
+                .hasMessageContaining("uses field '" + TEXT_FIELD + "', which is not a keyword field");
+    }
+
+    @Test
+    void testVirtualFieldGroupUsingVirtualField() {
+        givenVirtualField(new ElasticVirtualFieldGroup("self", and(term(VIRTUAL_FIELD, Condition.EQUALS, "db"))));
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "self"))
+                .isInstanceOf(SearchException.class)
+                .hasMessageContaining("which is not a keyword field");
+    }
+
+    @Test
+    void testVirtualFieldGroupWithNoConditions() {
+        givenVirtualField(new ElasticVirtualFieldGroup("empty", ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(KEYWORD_FIELD)
+                        .condition(Condition.EQUALS)
+                        .value("x")
+                        .enabled(false)
+                        .build())
+                .build()));
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "empty"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Group 'empty' of virtual field '" + VIRTUAL_FIELD + "' has no conditions");
+    }
+
+    @Test
+    void testDisabledVirtualField() {
+        givenVirtualField();
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(indexDoc.findFieldSettings(VIRTUAL_FIELD).copy().enabled(false).build()))
+                .build();
+
+        assertThatThrownBy(() -> buildSingleTerm(VIRTUAL_FIELD, Condition.EQUALS, "db"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Field '" + VIRTUAL_FIELD + "' is disabled in " + INDEX_NAME);
+    }
+
+    @Test
+    void testDisabledField() {
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder(KEYWORD_FIELD).enabled(false).build()))
+                .build();
+
+        assertThatThrownBy(() -> buildSingleTerm(KEYWORD_FIELD, Condition.EQUALS, "abc"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Field '" + KEYWORD_FIELD + "' is disabled in " + INDEX_NAME);
+    }
+
+    @Test
+    void testMultiFieldOfDisabledField() {
+        indexFieldCache.put("title.keyword", ElasticIndexField.builder()
+                .fldName("title.keyword")
+                .fldType(FieldType.KEYWORD)
+                .nativeType("keyword")
+                .multiFieldParent(TEXT_FIELD)
+                .build());
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder(TEXT_FIELD).enabled(false).build()))
+                .build();
+
+        assertThatThrownBy(() -> buildSingleTerm("title.keyword", Condition.EQUALS, "abc"))
+                .isInstanceOf(SearchException.class)
+                .hasMessage("Field 'title.keyword' is disabled in " + INDEX_NAME);
+    }
+
+    @Test
+    void testFieldWithConflictingTypes() {
+        indexFieldCache.put("port", ElasticIndexField.builder()
+                .fldName("port")
+                .fldType(FieldType.LONG)
+                .nativeType("long")
+                .conflictingTypes(Map.of("a", "long", "b", "keyword"))
+                .build());
+
+        assertThatThrownBy(() -> buildSingleTerm("port", Condition.EQUALS, "80"))
+                .isInstanceOf(SearchException.class)
+                .hasMessageContaining("Field 'port' has conflicting types");
+    }
+
+    private void givenVirtualField() {
+        givenVirtualField(
+                new ElasticVirtualFieldGroup("web", ExpressionOperator.builder()
+                        .op(Op.OR)
+                        .addTerm(term(KEYWORD_FIELD, Condition.EQUALS, "web1"))
+                        .addTerm(term(KEYWORD_FIELD, Condition.IN, "web2,web3"))
+                        .build()),
+                new ElasticVirtualFieldGroup("db", and(term(KEYWORD_FIELD, Condition.EQUALS, "db1"))));
+    }
+
+    private void givenVirtualField(final ElasticVirtualFieldGroup... groups) {
+        indexFieldCache.put(VIRTUAL_FIELD, ElasticSearchProvider.createVirtualField(VIRTUAL_FIELD));
+        indexDoc = indexDoc.copy()
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder(VIRTUAL_FIELD)
+                        .virtualGroups(List.of(groups))
+                        .build()))
+                .build();
     }
 
     // --------------------------------------------------------------------------------
@@ -1714,6 +1925,14 @@ class TestSearchExpressionQueryBuilder {
         final TermQuery termQuery = query.term();
         assertThat(termQuery.field()).isEqualTo(field);
         assertThat(termQuery.value()._get()).isEqualTo(expectedValue);
+    }
+
+    private static void assertTerms(final Query query, final String field, final String... expectedValues) {
+        assertThat(query.isTerms()).as("Is a terms query").isTrue();
+        assertThat(query.terms().field()).isEqualTo(field);
+        assertThat(query.terms().terms().value())
+                .extracting(FieldValue::stringValue)
+                .containsExactly(expectedValues);
     }
 
     private static void assertWildcard(final Query query, final String field, final String expectedValue) {
