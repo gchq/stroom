@@ -66,6 +66,10 @@
             width: 140px;
         }
 
+        .mode {
+            width: 180px;
+        }
+
         .refresh {
             display: flex;
             flex-direction: row;
@@ -137,8 +141,13 @@
                 <form:FormGroup identity="elasticFieldStatsTo" label="To" addStyleNames="{style.dateBox}">
                     <datetimebox:DateTimeBox ui:field="toTime" addStyleNames="w-100"/>
                 </form:FormGroup>
+                <form:FormGroup identity="elasticFieldStatsMode" label="Mode"
+                                helpText="Random sample estimates the statistics from a random sample of the documents in the time range, which is fast. Exact calculates them across every document in the time range, which is slower on large indices."
+                                addStyleNames="{style.mode}">
+                    <l:SelectionBox ui:field="mode" addStyleNames="w-100"/>
+                </form:FormGroup>
                 <form:FormGroup identity="elasticFieldStatsSampleSize" label="Sample size"
-                                helpText="Documents sampled per shard. Larger samples are more accurate but slower."
+                                helpText="Approximate number of documents sampled at random. Larger samples are more accurate but slower."
                                 addStyleNames="{style.sampleSize}">
                     <l:SelectionBox ui:field="sampleSize" addStyleNames="w-100"/>
                 </form:FormGroup>

@@ -16,17 +16,20 @@
 
 package stroom.search.elastic.client.presenter;
 
+import stroom.search.elastic.shared.ElasticFieldStats;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /// Sample size options and number formatting for the field statistics shown on the Info tab.
 ///
 /// Formatting is done here rather than with `String.format`, which is not available in GWT client code.
 public final class ElasticFieldStatsSupport {
 
-    /// The sample sizes per shard the user can choose from.
+    /// The approximate sample sizes the user can choose from.
     public static final List<Integer> SAMPLE_SIZES = List.of(1_000, 5_000, 10_000, 50_000);
-    /// The sample size per shard used until the user chooses another.
+    /// The approximate sample size used until the user chooses another.
     public static final int DEFAULT_SAMPLE_SIZE = 5_000;
     /// The number of days before now that the statistics time range starts at by default.
     public static final int DEFAULT_RANGE_DAYS = 30;
@@ -37,7 +40,7 @@ public final class ElasticFieldStatsSupport {
         // Static utility
     }
 
-    /// @param maxSampleSize the largest sample size per shard the server allows, or `null` if not known
+    /// @param maxSampleSize the largest sample size the server allows, or `null` if not known
     /// @return the sample sizes that do not exceed `maxSampleSize`, always including the smallest
     public static List<Integer> getAllowedSampleSizes(final Integer maxSampleSize) {
         final List<Integer> allowed = new ArrayList<>();
@@ -49,8 +52,8 @@ public final class ElasticFieldStatsSupport {
         return allowed;
     }
 
-    /// @param sampleSize    the chosen sample size per shard
-    /// @param maxSampleSize the largest sample size per shard the server allows, or `null` if not known
+    /// @param sampleSize    the chosen sample size
+    /// @param maxSampleSize the largest sample size the server allows, or `null` if not known
     /// @return `sampleSize` if it is allowed, otherwise the largest allowed sample size below it, or the smallest
     /// allowed sample size if there is none below it
     public static int clampSampleSize(final int sampleSize, final Integer maxSampleSize) {
@@ -154,5 +157,20 @@ public final class ElasticFieldStatsSupport {
         return value == null
                 ? ""
                 : formatDecimal(value, 3);
+    }
+
+    /// Describes how statistics were calculated, e.g. "Estimated from a random sample of about 5,000 of 1,234,567
+    /// documents."
+    ///
+    /// @param stats the statistics
+    /// @return the description
+    public static String getSummary(final ElasticFieldStats stats) {
+        final long totalDocs = Objects.requireNonNullElse(stats.getTotalDocs(), 0L);
+        if (Boolean.TRUE.equals(stats.getExact())) {
+            return "Exact, across all " + formatCount(totalDocs) + " documents in the time range.";
+        }
+        final long sampledDocs = Objects.requireNonNullElse(stats.getSampledDocs(), 0L);
+        return "Estimated from a random sample of about " + formatCount(sampledDocs) + " of " +
+               formatCount(totalDocs) + " documents in the time range.";
     }
 }

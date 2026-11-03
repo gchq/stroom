@@ -53,10 +53,16 @@ import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.json.JsonpMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.json.stream.JsonParser;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,11 +73,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/// Samples the documents of an Elasticsearch index doc to give statistics about one of its fields, in the manner of
-/// Kibana's field statistics.
+/// Gives statistics about one field of an Elasticsearch index doc, in the manner of Kibana's field statistics.
 ///
-/// A `sampler` aggregation limits each shard to a sample of documents, optionally within a time range on the doc's
-/// time field. Which statistics are gathered depends on the field's type.
+/// By default the statistics are estimated from a random sample of the documents in the requested time range on the
+/// doc's time field, taken with a `random_sampler` aggregation. They can instead be calculated exactly, across every
+/// document in the time range. Which statistics are gathered depends on the field's type.
 public class ElasticFieldStatsService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticFieldStatsService.class);
@@ -79,6 +85,9 @@ public class ElasticFieldStatsService {
     private static final int TOP_VALUES_COUNT = 10;
     private static final int HISTOGRAM_BUCKETS = 20;
     private static final String SAMPLE_AGG = "sample";
+    // Elasticsearch only accepts a random sampler probability of up to 0.5 (or exactly 1)
+    private static final double MAX_SAMPLE_PROBABILITY = 0.5;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String HAS_VALUE_AGG = "has_value";
     private static final String DISTINCT_AGG = "distinct";
     private static final String TOP_AGG = "top";
@@ -120,7 +129,7 @@ public class ElasticFieldStatsService {
         this.wordListProvider = wordListProvider;
     }
 
-    /// Samples documents to give statistics about a field.
+    /// Gives statistics about a field, estimated from a random sample of documents or calculated exactly.
     ///
     /// The statistics reveal field values, so the user needs permission to search the index (`USE`).
     ///
@@ -179,9 +188,12 @@ public class ElasticFieldStatsService {
                 throw new IllegalArgumentException("Elasticsearch cluster for " + indexDoc.getName() +
                                                    " was not found");
             }
-            return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> field == null
-                    ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampleSize, maxSampleSize)
-                    : getMappedFieldStats(elasticClient, indexDoc, request, field, sampleSize, maxSampleSize));
+            return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> {
+                final Sampling sampling = createSampling(elasticClient, indexDoc, request, sampleSize);
+                return field == null
+                        ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampling, maxSampleSize)
+                        : getMappedFieldStats(elasticClient, indexDoc, field, sampling, maxSampleSize);
+            });
         });
     }
 
@@ -239,9 +251,8 @@ public class ElasticFieldStatsService {
 
     private ElasticFieldStats getMappedFieldStats(final ElasticsearchClient elasticClient,
                                                   final ElasticIndexDoc indexDoc,
-                                                  final ElasticFieldStatsRequest request,
                                                   final ElasticIndexField field,
-                                                  final int sampleSize,
+                                                  final Sampling sampling,
                                                   final int maxSampleSize) {
         final String fieldName = field.getFldName();
         final FieldType type = field.getFldType();
@@ -273,7 +284,7 @@ public class ElasticFieldStatsService {
                     .buckets(HISTOGRAM_BUCKETS))));
         }
 
-        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, subAggs);
+        final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
         final Map<String, Aggregate> aggs = sample.aggregations();
         final StatsAggregate stats = aggs.containsKey(STATS_AGG)
                 ? aggs.get(STATS_AGG).stats()
@@ -288,13 +299,15 @@ public class ElasticFieldStatsService {
                             bucket.docCount()))
                     .toList();
         } else if (numeric && stats != null && stats.count() > 0) {
-            histogram = getNumericHistogram(elasticClient, indexDoc, request, sampleSize, fieldName, stats);
+            histogram = getNumericHistogram(elasticClient, indexDoc, sampling, fieldName, stats);
         }
 
         return new ElasticFieldStats(
                 fieldName,
-                sampleSize,
+                sampling.isExact(),
+                sampling.sampleSize(),
                 maxSampleSize,
+                sampling.totalDocs(),
                 sample.docCount(),
                 aggs.get(HAS_VALUE_AGG).filter().docCount(),
                 aggs.containsKey(DISTINCT_AGG)
@@ -323,8 +336,7 @@ public class ElasticFieldStatsService {
     /// second request needs, as the bucket width depends on them.
     private List<ElasticFieldValueCount> getNumericHistogram(final ElasticsearchClient elasticClient,
                                                              final ElasticIndexDoc indexDoc,
-                                                             final ElasticFieldStatsRequest request,
-                                                             final int sampleSize,
+                                                             final Sampling sampling,
                                                              final String fieldName,
                                                              final StatsAggregate stats) {
         final double min = stats.min();
@@ -332,7 +344,7 @@ public class ElasticFieldStatsService {
         final double interval = max > min
                 ? (max - min) / HISTOGRAM_BUCKETS
                 : 1;
-        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, Map.of(
+        final Sample sample = search(elasticClient, indexDoc, sampling, Map.of(
                 HISTOGRAM_AGG, Aggregation.of(a -> a.histogram(h -> h
                         .field(fieldName)
                         .interval(interval)
@@ -350,14 +362,14 @@ public class ElasticFieldStatsService {
                                                    final ElasticIndexDoc indexDoc,
                                                    final ElasticFieldStatsRequest request,
                                                    final Map<String, Query> groupQueries,
-                                                   final int sampleSize,
+                                                   final Sampling sampling,
                                                    final int maxSampleSize) {
         final Query anyGroup = QueryBuilders.bool(b -> b.should(new ArrayList<>(groupQueries.values())));
 
         final Map<String, Aggregation> subAggs = Map.of(
                 HAS_VALUE_AGG, Aggregation.of(a -> a.filter(anyGroup)),
                 GROUPS_AGG, Aggregation.of(a -> a.filters(f -> f.filters(b -> b.keyed(groupQueries)))));
-        final SamplerAggregate sample = searchSample(elasticClient, indexDoc, request, sampleSize, subAggs);
+        final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
         final Map<String, Aggregate> aggs = sample.aggregations();
 
         final List<ElasticFieldValueCount> groupCounts = new ArrayList<>();
@@ -367,8 +379,10 @@ public class ElasticFieldStatsService {
 
         return new ElasticFieldStats(
                 request.getFieldName(),
-                sampleSize,
+                sampling.isExact(),
+                sampling.sampleSize(),
                 maxSampleSize,
+                sampling.totalDocs(),
                 sample.docCount(),
                 aggs.get(HAS_VALUE_AGG).filter().docCount(),
                 null,
@@ -381,24 +395,88 @@ public class ElasticFieldStatsService {
                 null);
     }
 
-    private SamplerAggregate searchSample(final ElasticsearchClient elasticClient,
-                                          final ElasticIndexDoc indexDoc,
-                                          final ElasticFieldStatsRequest request,
-                                          final int sampleSize,
-                                          final Map<String, Aggregation> subAggs) {
+    /// Counts the documents in the requested time range and works out how to sample them. A random sample can only
+    /// take up to half of the documents, so a larger sample is taken as all of them.
+    private Sampling createSampling(final ElasticsearchClient elasticClient,
+                                    final ElasticIndexDoc indexDoc,
+                                    final ElasticFieldStatsRequest request,
+                                    final int sampleSize) {
+        final Query query = getTimeRangeQuery(indexDoc, request);
         try {
-            final SearchResponse<Void> response = elasticClient.search(s -> s
-                            .index(indexDoc.getIndexName())
-                            .size(0)
-                            .query(getTimeRangeQuery(indexDoc, request))
-                            .aggregations(SAMPLE_AGG, a -> a
-                                    .sampler(sm -> sm.shardSize(sampleSize))
-                                    .aggregations(subAggs)),
-                    Void.class);
-            return response.aggregations().get(SAMPLE_AGG).sampler();
+            final long totalDocs = elasticClient.count(c -> c
+                    .index(indexDoc.getIndexName())
+                    .query(query)).count();
+            final Double probability = getSampleProbability(
+                    Boolean.TRUE.equals(request.getExact()), sampleSize, totalDocs);
+            return new Sampling(query, totalDocs, sampleSize, probability);
         } catch (final IOException e) {
             LOGGER.debug(e::getMessage, e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /// @param exact      `true` if every document is to be included
+    /// @param sampleSize the approximate number of documents to sample
+    /// @param totalDocs  the number of documents to sample from
+    /// @return the probability of including each document in a random sample, or `null` to include them all
+    static Double getSampleProbability(final boolean exact, final int sampleSize, final long totalDocs) {
+        if (exact || totalDocs <= 0) {
+            return null;
+        }
+        final double probability = (double) sampleSize / totalDocs;
+        return probability > MAX_SAMPLE_PROBABILITY
+                ? null
+                : probability;
+    }
+
+    /// Runs aggregations over the sampled documents: within a `random_sampler` aggregation for a random sample, or
+    /// directly over every document. The counts of aggregations within a `random_sampler` are scaled up by
+    /// Elasticsearch to estimate the counts for every document.
+    private Sample search(final ElasticsearchClient elasticClient,
+                          final ElasticIndexDoc indexDoc,
+                          final Sampling sampling,
+                          final Map<String, Aggregation> aggregations) {
+        try {
+            if (sampling.isExact()) {
+                final SearchResponse<Void> response = elasticClient.search(s -> s
+                                .index(indexDoc.getIndexName())
+                                .size(0)
+                                .query(sampling.query())
+                                .aggregations(aggregations),
+                        Void.class);
+                return new Sample(sampling.totalDocs(), response.aggregations());
+            }
+            final SearchResponse<Void> response = elasticClient.search(s -> s
+                            .index(indexDoc.getIndexName())
+                            .size(0)
+                            .query(sampling.query())
+                            .aggregations(SAMPLE_AGG, a -> a
+                                    .randomSampler(r -> r.probability(sampling.probability()))
+                                    .aggregations(aggregations)),
+                    Void.class);
+            final SamplerAggregate sample = readRandomSampler(
+                    response.aggregations().get(SAMPLE_AGG), elasticClient._jsonpMapper());
+            return new Sample(sample.docCount(), sample.aggregations());
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /// The Java client doesn't know the `random_sampler` aggregate, so returns it as raw JSON. Other than its seed
+    /// and probability, it has the same form as a `sampler` aggregate, so is read as one.
+    static SamplerAggregate readRandomSampler(final Aggregate aggregate, final JsonpMapper mapper) {
+        if (aggregate.isSampler()) {
+            return aggregate.sampler();
+        }
+        final JsonNode json = OBJECT_MAPPER.readTree(aggregate._custom().toJson(mapper).toString());
+        if (!(json instanceof final ObjectNode objectNode)) {
+            throw new IllegalStateException("Unexpected random_sampler aggregate: " + json);
+        }
+        objectNode.remove("seed");
+        objectNode.remove("probability");
+        try (final JsonParser parser = mapper.jsonProvider().createParser(new StringReader(objectNode.toString()))) {
+            return SamplerAggregate._DESERIALIZER.deserialize(parser, mapper);
         }
     }
 
@@ -468,7 +546,29 @@ public class ElasticFieldStatsService {
                                                 final int sampleSize,
                                                 final int maxSampleSize,
                                                 final String message) {
-        return new ElasticFieldStats(fieldName, sampleSize, maxSampleSize, null, null, null, null, null, null,
-                null, null, null, message);
+        return new ElasticFieldStats(fieldName, null, sampleSize, maxSampleSize, null, null, null, null, null, null,
+                null, null, null, null, message);
+    }
+
+    /// How the documents in the requested time range are sampled.
+    ///
+    /// @param query       the query selecting the documents in the time range
+    /// @param totalDocs   the number of documents in the time range
+    /// @param sampleSize  the approximate number of documents asked to be sampled
+    /// @param probability the probability of including each document in a random sample, or `null` to include
+    ///                    every document
+    private record Sampling(Query query, long totalDocs, int sampleSize, Double probability) {
+
+        boolean isExact() {
+            return probability == null;
+        }
+    }
+
+    /// The results of aggregations over sampled documents.
+    ///
+    /// @param docCount     the number of documents the aggregations ran over
+    /// @param aggregations the aggregation results, keyed by name
+    private record Sample(long docCount, Map<String, Aggregate> aggregations) {
+
     }
 }

@@ -73,6 +73,7 @@ public class ElasticFieldInfoPresenter
     private ElasticFieldRow row;
     private Supplier<List<ElasticVirtualFieldGroup>> virtualGroupsSupplier;
     private int sampleSize = ElasticFieldStatsSupport.DEFAULT_SAMPLE_SIZE;
+    private boolean exact;
     private Integer maxSampleSize;
     private boolean active;
     private boolean statsStale = true;
@@ -144,6 +145,14 @@ public class ElasticFieldInfoPresenter
     }
 
     @Override
+    public void onExactChange(final boolean exact) {
+        this.exact = exact;
+        statsStale = true;
+        discardPendingRequest();
+        loadIfActive();
+    }
+
+    @Override
     public void onRefreshStats() {
         statsStale = true;
         loadIfActive();
@@ -188,7 +197,8 @@ public class ElasticFieldInfoPresenter
                 sampleSize,
                 fromMs,
                 toMs,
-                virtualGroups);
+                virtualGroups,
+                exact);
 
         getView().setLoading(true);
         restFactory
@@ -302,7 +312,7 @@ public class ElasticFieldInfoPresenter
         /// @param timeField the name of the index's time field, or `null`
         void setTimeFieldName(String timeField);
 
-        /// @param sampleSizes the sample sizes per shard to offer
+        /// @param sampleSizes the approximate sample sizes to offer
         /// @param selected    the sample size to select
         void setSampleSizes(List<Integer> sampleSizes, int selected);
 
