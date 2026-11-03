@@ -358,11 +358,7 @@ public class ElasticFieldInfoPresenter
         if (NullSafe.hasItems(field.getSourceIndices())) {
             entries.add(new MappingEntry("Source indices", field.getSourceIndices()));
         }
-        if (field.getMappingParameters() != null) {
-            for (final Map.Entry<String, String> entry : new TreeMap<>(field.getMappingParameters()).entrySet()) {
-                entries.add(new MappingEntry(entry.getKey(), entry.getValue()));
-            }
-        }
+        entries.addAll(ElasticMappingParameterEntries.create(field.getMappingParameters()));
         return entries;
     }
 

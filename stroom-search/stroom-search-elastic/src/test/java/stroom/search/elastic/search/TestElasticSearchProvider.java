@@ -966,7 +966,9 @@ class TestElasticSearchProvider {
                 .containsEntry("index_options.rescore_vector.oversample", "3.0")
                 .doesNotContainKey("index_options");
         assertThat(fieldsMap.get("Name").getMappingParameters())
-                .containsEntry("copy_to", "all, names");
+                .containsEntry("copy_to[0]", "all")
+                .containsEntry("copy_to[1]", "names")
+                .containsEntry("meta", "{}");
     }
 
     @Test
@@ -979,6 +981,7 @@ class TestElasticSearchProvider {
                         {
                           "empty": {},
                           "scalars": [1, "two", true],
+                          "emptyList": [],
                           "objects": [{"x": "y"}, ["z"]],
                           "none": null
                         }"""),
@@ -986,10 +989,13 @@ class TestElasticSearchProvider {
 
         assertThat(parameters).containsExactly(
                 Map.entry("a.empty", "{}"),
+                Map.entry("a.emptyList", "[]"),
                 Map.entry("a.none", "null"),
                 Map.entry("a.objects[0].x", "y"),
-                Map.entry("a.objects[1]", "z"),
-                Map.entry("a.scalars", "1, two, true"));
+                Map.entry("a.objects[1][0]", "z"),
+                Map.entry("a.scalars[0]", "1"),
+                Map.entry("a.scalars[1]", "two"),
+                Map.entry("a.scalars[2]", "true"));
     }
 
     @Test
