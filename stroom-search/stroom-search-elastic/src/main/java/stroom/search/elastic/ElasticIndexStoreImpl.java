@@ -93,6 +93,8 @@ public class ElasticIndexStoreImpl
                 .sourceIndices(null)
                 .conflictingTypes(null)
                 .mappingParameters(null)
+                .queryOptionSet(null)
+                .supportsTopValues(null)
                 .build();
     }
 

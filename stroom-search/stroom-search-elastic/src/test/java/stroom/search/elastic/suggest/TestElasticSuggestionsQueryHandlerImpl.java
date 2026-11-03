@@ -39,6 +39,8 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticIndexFieldSettings;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.shared.PermissionException;
@@ -416,6 +418,71 @@ class TestElasticSuggestionsQueryHandlerImpl {
                 .isEqualTo(ElasticSuggestConfig.MAX_TOP_VALUES_COUNT);
         assertThat(new ElasticSuggestConfig(true, null).getTopValuesCount())
                 .isEqualTo(ElasticSuggestConfig.DEFAULT_TOP_VALUES_COUNT);
+    }
+
+    @Test
+    void testVirtualField_listsGroupsWithTheirCounts() {
+        givenVirtualField();
+        stubSearch(10, """
+                "filters#values": {"buckets": {
+                  "web": {"doc_count": 2}, "db": {"doc_count": 5}, "mail": {"doc_count": 0}
+                }}""");
+
+        final FieldValues fieldValues = createHandler().getFieldValues(request("Category", null, null));
+
+        // The groups are the virtual field's values, most matched first
+        assertThat(fieldValues.getValues()).containsExactly(
+                new FieldValueCount("db", 5L),
+                new FieldValueCount("web", 2L),
+                new FieldValueCount("mail", 0L));
+        assertThat(fieldValues.getTotalCount()).isEqualTo(10);
+        ELASTIC.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.filters.filters.web..value", WireMock.equalTo("alice")))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.filters.filters.db..value", WireMock.equalTo("bob"))));
+    }
+
+    @Test
+    void testVirtualField_filterMatchesGroupNamesIgnoringCase() {
+        givenVirtualField();
+        stubSearch(10, """
+                "filters#values": {"buckets": {"web": {"doc_count": 2}}}""");
+
+        final FieldValues fieldValues = createHandler().getFieldValues(request("Category", "WE", null));
+
+        assertThat(fieldValues.getValues()).containsExactly(new FieldValueCount("web", 2L));
+        ELASTIC.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))
+                .withRequestBody(WireMock.matchingJsonPath("$.aggregations.values.filters.filters.web"))
+                .withRequestBody(WireMock.notMatching(".*\"db\".*")));
+    }
+
+    private void givenVirtualField() {
+        final ElasticIndexDoc index = ElasticIndexDoc.builder()
+                .uuid(INDEX_REF.getUuid())
+                .name(INDEX_REF.getName())
+                .clusterRef(CLUSTER_REF)
+                .indexName(INDEX_NAME)
+                .timeField(TIME_FIELD)
+                .fields(List.of(ElasticIndexField.builder()
+                        .fldName("user")
+                        .fldType(FieldType.KEYWORD)
+                        .nativeType("keyword")
+                        .build()))
+                .fieldSettings(List.of(ElasticIndexFieldSettings.builder("Category")
+                        .virtualGroups(List.of(
+                                group("web", "alice"),
+                                group("db", "bob"),
+                                group("mail", "carol")))
+                        .build()))
+                .build();
+        when(elasticIndexCache.get(INDEX_REF)).thenReturn(index);
+    }
+
+    private static ElasticVirtualFieldGroup group(final String name, final String user) {
+        return new ElasticVirtualFieldGroup(name, ExpressionOperator.builder()
+                .addTerm("user", Condition.EQUALS, user)
+                .build());
     }
 
     private ElasticSuggestionsQueryHandlerImpl createHandler() {

@@ -301,16 +301,12 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         for (final ElasticIndexField field : fieldsMap.values()) {
             if (!field.hasTypeConflict() && isFieldEnabled(index, field)) {
                 try {
-                    final boolean supportsTopValues = valuePickerEnabled && ElasticTopValues.getAggregationField(
-                            field.getFldName(),
-                            field.getNativeType(),
-                            name -> NullSafe.get(fieldsMap.get(name), ElasticIndexField::getNativeType)) != null;
                     fields.add(toDataSourceField(
                             field.getFldType(),
                             field.getNativeType(),
                             field.getFldName(),
                             field.isIndexed(),
-                            supportsTopValues));
+                            Boolean.TRUE.equals(field.getSupportsTopValues())));
                 } catch (final IllegalArgumentException e) {
                     LOGGER.warn(e::getMessage, e);
                 }
@@ -319,12 +315,16 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         for (final ElasticIndexFieldSettings settings : index.getFieldSettings()) {
             final String fieldName = settings.getFieldName();
             if (settings.isVirtual() && settings.isEnabled() && !fieldsMap.containsKey(fieldName)) {
+                // The value picker lists a virtual field's groups
                 fields.add(QueryField
                         .builder()
                         .fldName(fieldName)
                         .fldType(FieldType.KEYWORD)
                         .conditionSet(ConditionSet.ELASTIC_VIRTUAL)
                         .queryable(true)
+                        .supportsTopValues(valuePickerEnabled
+                                ? Boolean.TRUE
+                                : null)
                         .build());
             }
         }
@@ -468,7 +468,25 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             }
         });
 
-        return fieldsMap;
+        return withValuePickerAndOptions(fieldsMap);
+    }
+
+    /// Adds to each field the query options its terms may set, and whether the value picker can list its values,
+    /// which can depend on another field, e.g. the `keyword` multi-field of a `text` field.
+    private Map<String, ElasticIndexField> withValuePickerAndOptions(final Map<String, ElasticIndexField> fieldsMap) {
+        final boolean valuePickerEnabled = Boolean.TRUE.equals(elasticSuggestConfigProvider.get().getEnabled());
+        final Map<String, ElasticIndexField> result = new HashMap<>();
+        fieldsMap.forEach((fieldName, field) -> {
+            final boolean supportsTopValues = valuePickerEnabled && ElasticTopValues.getAggregationField(
+                    fieldName,
+                    field.getNativeType(),
+                    name -> NullSafe.get(fieldsMap.get(name), ElasticIndexField::getNativeType)) != null;
+            result.put(fieldName, field.copy()
+                    .queryOptionSet(ElasticQueryOptionSets.get(field.getNativeType()))
+                    .supportsTopValues(supportsTopValues)
+                    .build());
+        });
+        return result;
     }
 
     /// @return the native type of the field in each index that holds it, keyed by index name, if the indices

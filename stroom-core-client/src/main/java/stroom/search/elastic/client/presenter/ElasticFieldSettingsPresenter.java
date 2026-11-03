@@ -320,13 +320,18 @@ public class ElasticFieldSettingsPresenter
             return;
         }
 
+        // Each field carries its query options and whether its values can be picked, so a group's terms get the
+        // options button and value picker as a dashboard's do
         fieldSelectionListModel.clear();
         for (final String fieldName : model.getKeywordFieldNames()) {
+            final ElasticIndexField field = model.findField(fieldName);
             fieldSelectionListModel.addItem(QueryField.builder()
                     .fldName(fieldName)
                     .fldType(FieldType.KEYWORD)
                     .conditionSet(ConditionSet.getElastic(FieldType.KEYWORD))
                     .queryable(true)
+                    .queryOptionSet(NullSafe.get(field, ElasticIndexField::getQueryOptionSet))
+                    .supportsTopValues(NullSafe.get(field, ElasticIndexField::getSupportsTopValues))
                     .build());
         }
 

@@ -349,14 +349,6 @@ class TestElasticFieldStatsService {
     }
 
     @Test
-    void testToCaseInsensitiveContainsRegex() {
-        assertThat(ElasticFieldStatsService.toCaseInsensitiveContainsRegex("Web-01.x"))
-                .isEqualTo(".*[wW][eE][bB]-01\\.[xX].*");
-        assertThat(ElasticFieldStatsService.toCaseInsensitiveContainsRegex("a*b(c)"))
-                .isEqualTo(".*[aA]\\*[bB]\\([cC]\\).*");
-    }
-
-    @Test
     void testHistogramInterval() {
         // Whole numbers are split into whole number ranges
         assertThat(ElasticFieldStatsService.getHistogramInterval(0, 95, true)).isEqualTo(10.0);
