@@ -45,7 +45,8 @@ public class ElasticFieldListModel {
 
     /// The base name given to a new virtual field.
     public static final String NEW_VIRTUAL_FIELD_NAME = "New virtual field";
-    /// The type filter value that matches virtual fields.
+    /// The Field Type shown for virtual fields, and the type filter value that matches them. It is only used in this
+    /// list, not added to the shared field types.
     public static final String VIRTUAL_FILTER_TYPE = "Virtual";
     /// The type label shown for a field whose source indices map it to different types.
     public static final String CONFLICT_TYPE_LABEL = "Conflict";
@@ -480,13 +481,14 @@ public class ElasticFieldListModel {
                                   && !mandatoryFieldNames.contains(name);
             }
             case VIRTUAL -> {
-                typeLabel = FieldType.KEYWORD.getDisplayValue();
+                // Shown only in this list; virtual fields are still queried as keyword fields
+                typeLabel = VIRTUAL_FILTER_TYPE;
                 filterType = VIRTUAL_FILTER_TYPE;
                 status = STATUS_VIRTUAL;
                 enabledEditable = true;
             }
             case CLASHING_VIRTUAL -> {
-                typeLabel = FieldType.KEYWORD.getDisplayValue();
+                typeLabel = VIRTUAL_FILTER_TYPE;
                 filterType = VIRTUAL_FILTER_TYPE;
                 status = STATUS_CLASHING;
                 enabledEditable = false;

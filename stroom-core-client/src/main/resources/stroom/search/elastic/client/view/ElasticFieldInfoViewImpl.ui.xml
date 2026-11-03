@@ -115,6 +115,22 @@
             margin-bottom: 4px;
         }
 
+        .topValuesControls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .topValuesCount {
+            width: 100px;
+        }
+
+        .topValuesFilter {
+            width: 220px;
+        }
+
         /* Wide enough for a range of two timestamps */
         .barRow.barRowWide {
             grid-template-columns: 420px 240px 160px;
@@ -187,7 +203,6 @@
                     <datetimebox:DateTimeBox ui:field="toTime" addStyleNames="w-100"/>
                 </form:FormGroup>
             </g:FlowPanel>
-            <g:Label ui:field="timeFieldLabel" visible="false"/>
             <g:Label ui:field="statsMessage" visible="false"/>
             <g:FlowPanel ui:field="errorPanel" addStyleNames="{style.errorPanel}" visible="false">
                 <g:Label ui:field="errorText" addStyleNames="text-danger"/>

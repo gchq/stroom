@@ -20,12 +20,16 @@ import stroom.search.elastic.shared.ElasticFieldStats;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /// Sample size options and number formatting for the field statistics shown on the Info tab.
 ///
 /// Formatting is done here rather than with `String.format`, which is not available in GWT client code.
 public final class ElasticFieldStatsSupport {
+
+    /// The numbers of most common values the user can choose to show.
+    public static final List<Integer> TOP_VALUES_COUNTS = List.of(10, 25, 50, 100);
+    /// The number of most common values shown until the user chooses another.
+    public static final int DEFAULT_TOP_VALUES_COUNT = 10;
 
     /// The approximate sample sizes the user can choose from.
     public static final List<Integer> SAMPLE_SIZES = List.of(1_000, 5_000, 10_000, 50_000);
@@ -157,20 +161,5 @@ public final class ElasticFieldStatsSupport {
         return value == null
                 ? ""
                 : formatDecimal(value, 3);
-    }
-
-    /// Describes how statistics were calculated, e.g. "Estimated from a random sample of about 5,000 of 1,234,567
-    /// documents."
-    ///
-    /// @param stats the statistics
-    /// @return the description
-    public static String getSummary(final ElasticFieldStats stats) {
-        final long totalDocs = Objects.requireNonNullElse(stats.getTotalDocs(), 0L);
-        if (Boolean.TRUE.equals(stats.getExact())) {
-            return "Exact, across all " + formatCount(totalDocs) + " documents in the time range.";
-        }
-        final long sampledDocs = Objects.requireNonNullElse(stats.getSampledDocs(), 0L);
-        return "Estimated from a random sample of about " + formatCount(sampledDocs) + " of " +
-               formatCount(totalDocs) + " documents in the time range.";
     }
 }

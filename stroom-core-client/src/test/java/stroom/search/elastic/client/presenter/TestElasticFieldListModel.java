@@ -91,7 +91,7 @@ class TestElasticFieldListModel {
 
         final ElasticFieldRow virtual = find(rows, "category", Kind.VIRTUAL);
         assertThat(virtual.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_VIRTUAL);
-        assertThat(virtual.getTypeLabel()).isEqualTo(FieldType.KEYWORD.getDisplayValue());
+        assertThat(virtual.getTypeLabel()).isEqualTo(ElasticFieldListModel.VIRTUAL_FILTER_TYPE);
         assertThat(virtual.getFilterType()).isEqualTo(ElasticFieldListModel.VIRTUAL_FILTER_TYPE);
         assertThat(virtual.isEnabledEditable()).isTrue();
 
@@ -177,9 +177,9 @@ class TestElasticFieldListModel {
                 true,
                 Set.of());
 
-        // Missing fields have no type, so sort first
+        // Missing fields have no type, so sort first, and "Virtual" sorts after the field types
         assertThat(rows.get(0).getName()).isEqualTo("gone");
-        assertThat(rows.get(rows.size() - 1).getName()).isEqualTo("title");
+        assertThat(rows.get(rows.size() - 1).getTypeLabel()).isEqualTo(ElasticFieldListModel.VIRTUAL_FILTER_TYPE);
     }
 
     @Test
