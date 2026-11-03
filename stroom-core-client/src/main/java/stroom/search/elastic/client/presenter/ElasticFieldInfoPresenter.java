@@ -31,7 +31,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimePopup;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -69,9 +68,6 @@ public class ElasticFieldInfoPresenter
                                                  "name, so it can't be searched. Rename it on the Settings tab.";
     static final String MESSAGE_BAD_TIME_RANGE = "Enter a valid time range whose start is before its end.";
 
-    // How long to wait after the user stops typing a filter before fetching the matching values
-    private static final int TOP_VALUES_FILTER_DELAY_MS = 300;
-
     private final RestFactory restFactory;
 
     private DocRef indexDocRef;
@@ -86,13 +82,6 @@ public class ElasticFieldInfoPresenter
     private int topValuesCount = ElasticFieldStatsSupport.DEFAULT_TOP_VALUES_COUNT;
     private String topValuesFilter = "";
     private int topValuesRequestId;
-    // Waits for the user to stop typing before filtering the common values
-    private final Timer topValuesFilterTimer = new Timer() {
-        @Override
-        public void run() {
-            loadTopValues();
-        }
-    };
 
     @Inject
     public ElasticFieldInfoPresenter(final EventBus eventBus,
@@ -131,7 +120,6 @@ public class ElasticFieldInfoPresenter
         if (changed) {
             discardPendingRequest();
             // A filter typed for one field's values is unlikely to suit another's
-            topValuesFilterTimer.cancel();
             topValuesFilter = "";
             getView().setTopValuesFilter("");
             getView().clearStats();
@@ -172,17 +160,17 @@ public class ElasticFieldInfoPresenter
     @Override
     public void onTopValuesCountChange(final int topValuesCount) {
         this.topValuesCount = topValuesCount;
-        topValuesFilterTimer.cancel();
         loadTopValues();
     }
 
+    /// The filter box waits for the user to stop typing before reporting a change, so the values are fetched
+    /// straight away.
     @Override
     public void onTopValuesFilterChange(final String filter) {
         final String trimmed = NullSafe.trim(filter);
         if (!trimmed.equals(topValuesFilter)) {
             topValuesFilter = trimmed;
-            topValuesFilterTimer.cancel();
-            topValuesFilterTimer.schedule(TOP_VALUES_FILTER_DELAY_MS);
+            loadTopValues();
         }
     }
 

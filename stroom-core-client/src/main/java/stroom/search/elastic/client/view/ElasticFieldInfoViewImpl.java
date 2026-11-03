@@ -31,6 +31,7 @@ import stroom.widget.button.client.Button;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.help.client.HelpButton;
 import stroom.widget.spinner.client.SpinnerSmall;
 
@@ -46,7 +47,6 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -76,6 +76,8 @@ public class ElasticFieldInfoViewImpl
                                                     "its start but not its end, except the last, which includes " +
                                                     "the largest value. For a random sample, both are estimated " +
                                                     "from the sample.";
+    private static final String TOP_VALUES_FILTER_HELP = "Only values containing the characters input, ignoring " +
+                                                         "case, will be included.";
     // Labels longer than this need the wider label column
     private static final int WIDE_LABEL_LENGTH = 30;
     private static final String MODE_RANDOM = "Random sample";
@@ -105,7 +107,7 @@ public class ElasticFieldInfoViewImpl
     // The controls and list of the most common values, kept between renders of the statistics
     private final FlowPanel topValuesControls = new FlowPanel();
     private final SelectionBox<Integer> topValuesCount = new SelectionBox<>();
-    private final TextBox topValuesFilter = new TextBox();
+    private final QuickFilter topValuesFilter = new QuickFilter();
     private final SpinnerSmall topValuesSpinner = new SpinnerSmall();
     private final Label topValuesError = new Label();
     private final FlowPanel topValuesList = new FlowPanel();
@@ -167,11 +169,17 @@ public class ElasticFieldInfoViewImpl
                 getUiHandlers().onTopValuesCountChange(topValuesCount.getValue());
             }
         });
-        topValuesFilter.addStyleName("stroom-control allow-focus");
+        // A quick filter, so it clears with its clear button or escape like the other filters
         topValuesFilter.addStyleName(style.topValuesFilter());
-        topValuesFilter.getElement().setAttribute("placeholder", "Filter values");
-        topValuesFilter.setTitle("Show only values containing this text, ignoring case");
-        topValuesFilter.addKeyUpHandler(event -> {
+        topValuesFilter.setPlaceholder("Filter values");
+        topValuesFilter.registerPopupTextProvider(() -> new SafeHtmlBuilder()
+                .appendHtmlConstant("<b>")
+                .appendEscaped("Filter values")
+                .appendHtmlConstant("</b><br/>")
+                .appendEscaped(TOP_VALUES_FILTER_HELP)
+                .appendHtmlConstant("<br/>")
+                .toSafeHtml());
+        topValuesFilter.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onTopValuesFilterChange(topValuesFilter.getText());
             }
@@ -363,7 +371,8 @@ public class ElasticFieldInfoViewImpl
 
     @Override
     public void setTopValuesFilter(final String filter) {
-        topValuesFilter.setText(NullSafe.string(filter));
+        // Not firing an event, as the presenter has already applied the filter
+        topValuesFilter.setText(NullSafe.string(filter), false);
     }
 
     @Override

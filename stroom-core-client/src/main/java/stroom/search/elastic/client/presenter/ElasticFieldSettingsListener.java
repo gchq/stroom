@@ -23,10 +23,4 @@ public interface ElasticFieldSettingsListener {
     ///
     /// @param fieldName the full name of the field
     void onFieldSettingsChanged(String fieldName);
-
-    /// Called after a virtual field has been renamed in the working copy of the doc.
-    ///
-    /// @param oldName the field's previous name
-    /// @param newName the field's new name
-    void onVirtualFieldRenamed(String oldName, String newName);
 }

@@ -40,16 +40,20 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -80,12 +84,15 @@ public class ElasticIndexFieldListPresenter
     private static final String ADD_VIRTUAL_FIELD = "Add virtual field";
     private static final String REMOVE_SETTINGS = "Remove settings";
     private static final String DELETE_VIRTUAL_FIELD = "Delete virtual field";
+    private static final String RENAME_VIRTUAL_FIELD = "Rename virtual field";
     private static final String NEW_VIRTUAL_FIELD_CAPTION = "New Virtual Field";
+    private static final String RENAME_VIRTUAL_FIELD_CAPTION = "Rename Virtual Field";
 
     private final MyDataGrid<ElasticFieldRow> dataGrid;
     private final MultiSelectionModelImpl<ElasticFieldRow> selectionModel;
     private final PagerView pagerView;
     private final ButtonView addVirtualFieldButton;
+    private final ButtonView renameButton;
     private final ButtonView removeButton;
     private final ButtonView refreshButton;
     private final ButtonView expandAllButton;
@@ -128,6 +135,7 @@ public class ElasticIndexFieldListPresenter
         pagerView.setDataWidget(dataGrid);
 
         addVirtualFieldButton = pagerView.addButton(SvgPresets.ADD.title(ADD_VIRTUAL_FIELD));
+        renameButton = pagerView.addButton(SvgPresets.EDIT.title(RENAME_VIRTUAL_FIELD));
         removeButton = pagerView.addButton(SvgPresets.DELETE.title(REMOVE_SETTINGS));
         refreshButton = pagerView.addButton(SvgPresets.REFRESH_BLUE.title(
                 "Refresh the field list from the index mapping"));
@@ -154,9 +162,16 @@ public class ElasticIndexFieldListPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(selectionModel.addSelectionHandler(event -> onRowSelected()));
+        registerHandler(selectionModel.addSelectionHandler(event -> {
+            onRowSelected();
+            // Only virtual fields can be renamed, so renameSelected ignores a double-click on any other row
+            if (event.getSelectionType().isDoubleSelect()) {
+                renameSelected();
+            }
+        }));
         registerHandler(dataGrid.addColumnSortHandler(event -> onSort()));
         registerHandler(addVirtualFieldButton.addClickHandler(event -> addVirtualField()));
+        registerHandler(renameButton.addClickHandler(event -> renameSelected()));
         registerHandler(removeButton.addClickHandler(event -> removeSelected()));
         registerHandler(refreshButton.addClickHandler(event -> refreshFields()));
         registerHandler(expandAllButton.addClickHandler(event -> {
@@ -223,17 +238,6 @@ public class ElasticIndexFieldListPresenter
         onChange();
     }
 
-    @Override
-    public void onVirtualFieldRenamed(final String oldName, final String newName) {
-        if (oldName != null && oldName.equals(selectedName)) {
-            selectedName = newName;
-            // A renamed field can't clash with a mapped field, so is now a plain virtual field
-            selectedKind = Kind.VIRTUAL;
-            infoPresenter.setField(getSelectedRow(), this::getSelectedVirtualGroups);
-        }
-        onFieldSettingsChanged(newName);
-    }
-
     private void addColumns() {
         expanderColumn = DataGridUtil.expanderColumn(ElasticFieldRow::getExpander);
         expanderColumn.setFieldUpdater((index, row, value) -> {
@@ -248,7 +252,7 @@ public class ElasticIndexFieldListPresenter
         });
         dataGrid.addColumn(expanderColumn, "", 0);
 
-        // Fields that can't be used as normal are shown muted and in italics, with the reason as the tooltip
+        // Fields that can't be used as normal are shown muted, with the reason as the tooltip
         dataGrid.addAutoResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ElasticIndexFieldListPresenter::renderName)
                         .withSorting(SortColumn.NAME.name())
@@ -256,7 +260,7 @@ public class ElasticIndexFieldListPresenter
                         .build(),
                 DataGridUtil.headingBuilder("Name")
                         .withToolTip("The full name of the field. Multi-fields, such as 'title.keyword', are shown " +
-                                     "under the field they belong to. Fields in italics can't be used as normal: " +
+                                     "under the field they belong to. Greyed out fields can't be used as normal: " +
                                      "they are missing from all source indices, the source indices map them to " +
                                      "different types, or they are virtual fields hidden by a mapped field of the " +
                                      "same name. The Status column says which.")
@@ -322,9 +326,7 @@ public class ElasticIndexFieldListPresenter
                 .appendEscaped(note == null
                         ? row.getName()
                         : row.getName() + " - " + note)
-                .appendHtmlConstant(note == null
-                        ? "\">"
-                        : "\" style=\"font-style: italic;\">")
+                .appendHtmlConstant("\">")
                 .appendEscaped(row.getName())
                 .appendHtmlConstant("</div>");
         return builder.toSafeHtml();
@@ -379,7 +381,7 @@ public class ElasticIndexFieldListPresenter
         updateButtons();
     }
 
-    private void refreshRows() {
+    private List<ElasticFieldRow> refreshRows() {
         final List<ElasticFieldRow> rows = model.buildRows(nameFilter,
                 typeFilter,
                 sortColumn,
@@ -410,6 +412,7 @@ public class ElasticIndexFieldListPresenter
         }
 
         getView().setTypeFilterOptions(model.getTypeFilterOptions());
+        return rows;
     }
 
     private ElasticFieldRow getSelectedRow() {
@@ -442,6 +445,7 @@ public class ElasticIndexFieldListPresenter
         final boolean readOnly = isReadOnly();
         final ElasticFieldRow row = getSelectedRow();
         addVirtualFieldButton.setEnabled(!readOnly);
+        renameButton.setEnabled(!readOnly && row != null && row.isVirtual());
         refreshButton.setEnabled(true);
 
         if (row != null && row.isVirtual()) {
@@ -460,16 +464,68 @@ public class ElasticIndexFieldListPresenter
                     name -> model.validateVirtualFieldName(null, name),
                     name -> {
                         if (model.addVirtualField(name)) {
-                            selectedName = name;
-                            selectedKind = Kind.VIRTUAL;
                             selectedTab = SETTINGS_TAB;
-                            refreshRows();
-                            showSelectedField();
-                            updateButtons();
+                            revealVirtualField(name);
                             onChange();
                         }
                     });
         }
+    }
+
+    private void renameSelected() {
+        final ElasticFieldRow row = getSelectedRow();
+        if (isReadOnly() || row == null || !row.isVirtual()) {
+            return;
+        }
+        final String oldName = row.getName();
+        namePresenter.show(RENAME_VIRTUAL_FIELD_CAPTION,
+                oldName,
+                name -> model.validateVirtualFieldRename(oldName, name),
+                newName -> {
+                    if (model.renameVirtualField(oldName, newName)) {
+                        // A renamed field can't clash with a mapped field, so is now a plain virtual field
+                        revealVirtualField(newName);
+                        onChange();
+                    }
+                });
+    }
+
+    /// Selects a virtual field and scrolls the list to it, clearing the filters if they hide it.
+    private void revealVirtualField(final String name) {
+        selectedName = name;
+        selectedKind = Kind.VIRTUAL;
+        List<ElasticFieldRow> rows = refreshRows();
+        if (!rows.contains(getSelectedRow())) {
+            nameFilter = "";
+            typeFilter = new ArrayList<>();
+            getView().clearFilters();
+            rows = refreshRows();
+        }
+        showSelectedField();
+        updateButtons();
+        scrollToRow(rows.indexOf(getSelectedRow()), rows);
+    }
+
+    private void scrollToRow(final int index, final List<ElasticFieldRow> rows) {
+        if (index < 0) {
+            return;
+        }
+        // Show the page holding the row, if the list is ever longer than a page
+        final Range range = dataGrid.getVisibleRange();
+        if (index < range.getStart() || index >= range.getStart() + range.getLength()) {
+            dataGrid.setVisibleRange(index - (index % range.getLength()), range.getLength());
+            dataGrid.setRowData(0, rows);
+        }
+        final int indexOnPage = index - dataGrid.getVisibleRange().getStart();
+        // Wait for the grid to draw the row before scrolling to it
+        Scheduler.get().scheduleDeferred(() -> {
+            if (indexOnPage < dataGrid.getVisibleItemCount()) {
+                final TableRowElement rowElement = dataGrid.getRowElement(indexOnPage);
+                if (rowElement != null) {
+                    ElementUtil.scrollIntoViewNearest(rowElement);
+                }
+            }
+        });
     }
 
     private void removeSelected() {
@@ -532,6 +588,9 @@ public class ElasticIndexFieldListPresenter
 
         /// @param options the values the type filter can match
         void setTypeFilterOptions(List<String> options);
+
+        /// Clears the name and type filters without telling the [ElasticIndexFieldListUiHandlers].
+        void clearFilters();
 
         /// @param tab a tab to add to the details panel
         void addDetailsTab(TabData tab);

@@ -46,6 +46,8 @@ public class ElasticIndexFieldListViewImpl
         extends ViewWithUiHandlers<ElasticIndexFieldListUiHandlers>
         implements ElasticIndexFieldListView {
 
+    private static final String ALL_TYPES = "All types";
+
     private final Widget widget;
 
     @UiField
@@ -70,6 +72,8 @@ public class ElasticIndexFieldListViewImpl
     @Inject
     public ElasticIndexFieldListViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Ticking no types shows all of them
+        typeFilter.setNoneSelectedText(ALL_TYPES);
         tabBar.addSelectionHandler(this::onTabSelection);
         // The tab bar only lays out its tabs once it has a width, so lay it out again once it is shown
         widget.addAttachHandler(event -> {
@@ -96,6 +100,12 @@ public class ElasticIndexFieldListViewImpl
             typeFilterOptions = options;
             typeFilter.setItems(options);
         }
+    }
+
+    @Override
+    public void clearFilters() {
+        nameFilter.setText("", false);
+        typeFilter.setValue(List.of());
     }
 
     @Override

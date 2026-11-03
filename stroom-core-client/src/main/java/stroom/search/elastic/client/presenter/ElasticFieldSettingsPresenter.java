@@ -51,8 +51,9 @@ import java.util.List;
 
 /// The Settings tab of the Elasticsearch index Fields tab, for editing the selected field's settings.
 ///
-/// Every field has an Enabled setting. `dense_vector` fields also have vector search settings, and virtual fields
-/// have a name and a list of named groups, each with an expression. The name and the groups are edited in dialogs.
+/// The selected field's name heads the tab. Every field has an Enabled setting. `dense_vector` fields also have
+/// vector search settings, and virtual fields have a list of named groups, each with an expression, edited in a
+/// dialog. Virtual fields are renamed from the field list.
 /// Edits are written to the shared [ElasticFieldListModel] and reported to the [ElasticFieldSettingsListener];
 /// nothing is sent to the server.
 public class ElasticFieldSettingsPresenter
@@ -69,14 +70,12 @@ public class ElasticFieldSettingsPresenter
     static final String NOTE_PARENT_DISABLED_PREFIX = "Disabled because the field it belongs to is disabled: ";
     static final String ERROR_SCORE_MINIMUM = "Enter a number, e.g. 0.8.";
 
-    private static final String RENAME_VIRTUAL_FIELD = "Rename Virtual Field";
     private static final String ADD_GROUP = "Add group";
     private static final String EDIT_GROUP = "Edit group";
     private static final String VIEW_GROUP = "View group";
 
     private final DocSelectionBoxPresenter embeddingModelPresenter;
     private final DocSelectionBoxPresenter rerankModelPresenter;
-    private final ElasticVirtualFieldNamePresenter namePresenter;
     private final ElasticVirtualFieldGroupPresenter groupPresenter;
     private final SimpleFieldSelectionListModel fieldSelectionListModel = new SimpleFieldSelectionListModel();
     private final MyDataGrid<ElasticVirtualFieldGroup> groupsGrid;
@@ -98,13 +97,11 @@ public class ElasticFieldSettingsPresenter
                                          final ElasticFieldSettingsView view,
                                          final DocSelectionBoxPresenter embeddingModelPresenter,
                                          final DocSelectionBoxPresenter rerankModelPresenter,
-                                         final ElasticVirtualFieldNamePresenter namePresenter,
                                          final ElasticVirtualFieldGroupPresenter groupPresenter,
                                          final PagerView groupsPagerView) {
         super(eventBus, view);
         this.embeddingModelPresenter = embeddingModelPresenter;
         this.rerankModelPresenter = rerankModelPresenter;
-        this.namePresenter = namePresenter;
         this.groupPresenter = groupPresenter;
 
         embeddingModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
@@ -220,26 +217,6 @@ public class ElasticFieldSettingsPresenter
         fireChanged();
     }
 
-    @Override
-    public void onRenameVirtualField() {
-        if (!canEdit() || !row.isVirtual()) {
-            return;
-        }
-        final String oldName = row.getName();
-        namePresenter.show(RENAME_VIRTUAL_FIELD,
-                oldName,
-                name -> model.validateVirtualFieldRename(oldName, name),
-                newName -> {
-                    if (model.renameVirtualField(oldName, newName)) {
-                        row = model.findRow(newName, Kind.VIRTUAL);
-                        showSections();
-                        if (listener != null) {
-                            listener.onVirtualFieldRenamed(oldName, newName);
-                        }
-                    }
-                });
-    }
-
     private boolean canEdit() {
         return !updating && !readOnly && row != null && model != null;
     }
@@ -255,11 +232,13 @@ public class ElasticFieldSettingsPresenter
         try {
             final ElasticFieldSettingsView view = getView();
             if (row == null || model == null) {
+                view.setFieldName(null);
                 view.setDenseVectorVisible(false);
                 view.setVirtualVisible(false);
                 view.setEnabled(false, false, null);
                 return;
             }
+            view.setFieldName(row.getName());
             view.setEnabled(row.isEnabled(), !readOnly && row.isEnabledEditable(), getEnabledNote(row));
             showDenseVector();
             showVirtual();
@@ -334,7 +313,6 @@ public class ElasticFieldSettingsPresenter
             groups = new ArrayList<>();
             return;
         }
-        view.setVirtualName(row.getName());
 
         fieldSelectionListModel.clear();
         for (final String fieldName : model.getKeywordFieldNames()) {
@@ -355,7 +333,6 @@ public class ElasticFieldSettingsPresenter
             selectedGroupIndex = 0;
         }
         showGroups();
-        view.setVirtualEditable(!readOnly);
     }
 
     private void showGroups() {
@@ -456,6 +433,10 @@ public class ElasticFieldSettingsPresenter
     /// The view of the Settings tab.
     public interface ElasticFieldSettingsView extends View, HasUiHandlers<ElasticFieldSettingsUiHandlers> {
 
+        /// @param fieldName the full name of the field whose settings are shown, as the tab's heading, or `null`
+        ///                  to show no heading
+        void setFieldName(String fieldName);
+
         /// @param ticked   whether the Enabled checkbox is ticked
         /// @param editable whether the user may change it
         /// @param note     text explaining why the field can't be changed, or `null`
@@ -511,13 +492,7 @@ public class ElasticFieldSettingsPresenter
         /// @param visible `true` to show the virtual field settings
         void setVirtualVisible(boolean visible);
 
-        /// @param name the virtual field's name, shown read-only
-        void setVirtualName(String name);
-
         /// @param view the list of the virtual field's groups
         void setGroupsView(View view);
-
-        /// @param editable `true` if the virtual field may be changed
-        void setVirtualEditable(boolean editable);
     }
 }
