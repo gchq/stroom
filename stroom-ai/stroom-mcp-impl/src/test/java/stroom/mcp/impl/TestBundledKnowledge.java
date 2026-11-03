@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl;
 
+import stroom.ai.impl.McpToolset;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSchema;
@@ -118,6 +119,19 @@ class TestBundledKnowledge {
                           + "user has said, and not what a form from this server will ask; then carry on with "
                           + "their answers.");
         assertThat(new BundledKnowledge().buildInstructions()).contains(BundledKnowledge.serverInstructions());
+    }
+
+    @Test
+    void theInstructionsFitWhatStroomAiGivesAServer() {
+        // Seen: the instructions grew to 20,675 characters, past the 20,000 Stroom AI gives one server's
+        // instructions, and its agent never saw the last rules: they were cut without a word. Stroom's own must fit
+        // whole; trim or move detail to a guide rather than raising the cap.
+        final String sent = new BundledKnowledge().buildInstructions().orElseThrow();
+
+        assertThat(sent.strip().length())
+                .as("the server instructions' length (Stroom AI cuts them at %s characters)",
+                        McpToolset.MAX_SERVER_INSTRUCTIONS_CHARS)
+                .isLessThanOrEqualTo(McpToolset.MAX_SERVER_INSTRUCTIONS_CHARS);
     }
 
     @Test
