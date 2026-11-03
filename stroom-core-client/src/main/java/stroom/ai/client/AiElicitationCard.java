@@ -52,6 +52,8 @@ final class AiElicitationCard {
     static final String OPTION_ATTRIBUTE = "data-question-option";
     /// On each Back button.
     static final String BACK_ATTRIBUTE = "data-question-back";
+    /// On the Send button beside the box for the user's own answer.
+    static final String SEND_ATTRIBUTE = "data-question-send";
     /// The class of a question.
     static final String QUESTION_CLASS = "ai-question";
     /// The class of the box for the user's own answer.
@@ -197,7 +199,8 @@ final class AiElicitationCard {
     }
 
     /// Adds questions from Stroom AI's agent (its ask_user tool), shown one at a time: each with its answers to
-    /// click (the recommended one marked), a box for the user's own answer if they may give one, and Back.
+    /// click (the recommended one marked), a box for the user's own answer if they may give one (sent with Enter or
+    /// the Send button beside it), and Back.
     /// Choosing an answer moves on to the next question, and after the last, sends the answers.
     ///
     /// @param hb     Where to add them.
@@ -241,12 +244,19 @@ final class AiElicitationCard {
                         }
                     }, Attribute.className("ai-question-options"));
                     if (field.isCustom() || field.getValues().isEmpty()) {
-                        question.elem(INPUT, Attribute.className("allow-focus ai-elicitation-input "
-                                                                 + CUSTOM_ANSWER_CLASS),
-                                new Attribute("type", "text"),
-                                new Attribute("placeholder", field.getValues().isEmpty()
-                                        ? "Type your answer, then press Enter"
-                                        : "Or type your own answer, then press Enter"));
+                        // The user's own answer, sent with Enter or the Send button beside it.
+                        question.div(custom -> {
+                            custom.elem(INPUT, Attribute.className("allow-focus ai-elicitation-input "
+                                                                   + CUSTOM_ANSWER_CLASS),
+                                    new Attribute("type", "text"),
+                                    new Attribute("placeholder", field.getValues().isEmpty()
+                                            ? "Type your answer"
+                                            : "Or type your own answer"));
+                            custom.elem("Send", BUTTON,
+                                    Attribute.className("allow-focus ai-question-send"),
+                                    new Attribute("title", "Send this answer (Enter)"),
+                                    new Attribute(SEND_ATTRIBUTE, "true"));
+                        }, Attribute.className("ai-question-custom-row"));
                     }
                     if (!first) {
                         // On its own line under the answers, not beside the typed answer.

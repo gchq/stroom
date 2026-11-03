@@ -1589,9 +1589,34 @@
     white-space: nowrap;
 }
 
+.ai-question-custom-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
 .ai-question-custom {
     display: block;
-    margin-bottom: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ai-question-send {
+    flex: none;
+    padding: 4px 12px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.ai-question-send:hover,
+.ai-question-send:focus-visible {
+    background: var(--curve-tab__background-color--hover);
+    border-color: var(--blue-300);
 }
 
 .ai-question-nav {
