@@ -571,7 +571,7 @@ class TestReadDocumentTool {
 
         assertThat(json).containsEntry("path", "Event/EventDetail/Charge")
                 .containsEntry("namespace", HeldSchemasWorld.FORK_NS)
-                .containsEntry("schema_version", "1.2.0");
+                .containsEntry("schema_version", "4.1.0");
         assertThat(String.valueOf(json.get("children"))).contains("Account");
         // Read with no document, event-logging's newest is described, and the fork named for its own elements.
         assertThat((String) tool.execute(new ToolCall(null, ReadDocumentTool.NAME,

@@ -45,8 +45,8 @@ class TestEventVersions {
     private static final ToolCall CALL = new ToolCall("1", "draft_translation_mapping", "{}");
 
     private static final String FORK_NS = "file://xml/schema/test-fork/events";
-    private static final String FORK_SYSTEM_ID = "file://test-fork-events-v1.2.0.xsd";
-    private static final String FORK_XSD = TranslationWorld.resource("test-fork-events-v1.2.0.xsd");
+    private static final String FORK_SYSTEM_ID = "file://xml/schema/test-fork/events";
+    private static final String FORK_XSD = TranslationWorld.resource("test-fork-events.xsd");
 
     private final TranslationWorld world = new TranslationWorld();
     private final ToolCallContext context = world.context();
@@ -370,36 +370,72 @@ class TestEventVersions {
 
         final EventVersions.Target target = world.eventVersions.target(CALL, context, null, "b1");
 
-        assertThat(target.version()).isEqualTo("1.2.0");
+        assertThat(target.version()).isEqualTo("4.1.0");
         assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
         // The pipeline validates with the fork's schema group.
         assertThat(world.eventVersions.schemaGroupFor(context, "b1")).contains("EVENTS");
-        assertThat(world.eventVersions.settled(context, "b1", "1.2.0")).hasValueSatisfying(said -> assertThat(said)
+        assertThat(world.eventVersions.settled(context, "b1", "4.1.0")).hasValueSatisfying(said -> assertThat(said)
                 .contains("environment's fork").contains(FORK_NS).contains("don't ask the user")
                 .contains("needs no change to the schema filter"));
         // Kept in the build's record, with the fork's document, for later sessions.
-        assertThat(world.world.records().eventLoggingVersion("b1")).contains(Map.of("version", "1.2.0", "how",
+        assertThat(world.world.records().eventLoggingVersion("b1")).contains(Map.of("version", "4.1.0", "how",
                 EventVersions.INFERRED, "uuid", "fork-1"));
         // And not asked again.
         Mockito.reset(world.inference);
-        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("1.2.0");
+        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("4.1.0");
         assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
     }
 
     @Test
-    void withNothingInferredTheForkIsOfferedBesideEventLogging() {
+    void withNothingInferredTheVariantIsAskedBeforeAnyVersion() {
+        // A fork's versions are its own: which schema first, by namespace, then its version.
+        holding("4.1.0", "3.5.2");
         holdingFork();
 
         final EventVersions.Target asked = world.eventVersions.target(CALL, context, null, "b1");
 
         assertThat(asked.version()).isNull();
-        assertThat(asked.question()).containsEntry("question", EventVersions.FORK_QUESTION)
-                .containsEntry("options", List.of("4.1.0"));
-        assertThat(asked.question().get("forks")).isEqualTo(List.of(Map.of("uuid", "fork-1", "namespace", FORK_NS,
-                "path", "/XML Schemas/Test fork")));
-        assertThat((String) asked.question().get("hint")).contains("schema_version= the fork's uuid");
-        // Given back as the fork's UUID, it is settled.
-        assertThat(world.eventVersions.target(CALL, context, "fork-1", "b1").version()).isEqualTo("1.2.0");
+        assertThat(asked.question()).containsEntry("question", EventVersions.VARIANT_QUESTION)
+                .containsEntry("options", List.of(
+                        Map.of("namespace", "event-logging:3", "schema", "event-logging", "versions",
+                                List.of("4.1.0", "3.5.2")),
+                        Map.of("namespace", FORK_NS, "schema", "the environment's fork", "versions",
+                                List.of("4.1.0"))));
+        assertThat((String) asked.question().get("hint")).contains("schema_version= the namespace chosen")
+                .contains("don't ask for a version until the namespace is chosen");
+        // Given back as the fork's namespace, its one version is settled with its document.
+        assertThat(world.eventVersions.target(CALL, context, FORK_NS, "b1").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
+    }
+
+    @Test
+    void eventLoggingChosenByNamespaceThenItsVersionIsAskedAndReadWithinIt() {
+        holding("4.1.0", "3.5.2");
+        holdingFork();
+
+        final EventVersions.Target asked = world.eventVersions.target(CALL, context, "event-logging:3", "b1");
+
+        assertThat(asked.question()).containsEntry("question", EventVersions.VERSION_QUESTION)
+                .containsEntry("options", List.of("4.1.0", "3.5.2"));
+        // The version given next is event-logging's, not asked about the variant again.
+        assertThat(world.eventVersions.target(CALL, context, "4.1.0", "b1").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.chosenFork(context, "b1")).isEmpty();
+    }
+
+    @Test
+    void aBareVersionGivenWhileTheVariantIsUncertainAsksTheVariantFirst() {
+        // Both hold 4.1.0: a version alone can't say which schema.
+        holdingFork();
+
+        final EventVersions.Target asked = world.eventVersions.target(CALL, context, "4.1.0", "b1");
+
+        assertThat(asked.version()).isNull();
+        assertThat(asked.question()).containsEntry("question", EventVersions.VARIANT_QUESTION);
+        // Picked in a form, the version given is read within the variant.
+        world.forms = true;
+        world.answers.put(EventVersions.VARIANT_QUESTION, "this environment's fork, namespace " + FORK_NS
+                                                          + " (versions 4.1.0)");
+        assertThat(world.eventVersions.target(CALL, context, "4.1.0", "b1").version()).isEqualTo("4.1.0");
         assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
     }
 
@@ -407,14 +443,63 @@ class TestEventVersions {
     void theForkPickedInTheFormIsRemembered() {
         holdingFork();
         world.forms = true;
-        world.answers.put(EventVersions.FORK_QUESTION, "/XML Schemas/Test fork (this environment's fork, namespace "
-                                                       + FORK_NS + ")");
+        world.answers.put(EventVersions.VARIANT_QUESTION, "this environment's fork, namespace " + FORK_NS
+                                                          + " (versions 4.1.0)");
 
-        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("1.2.0");
+        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("4.1.0");
 
         assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
-        assertThat(world.eventVersions.settled(context, "b1", "1.2.0")).hasValueSatisfying(said ->
+        assertThat(world.eventVersions.settled(context, "b1", "4.1.0")).hasValueSatisfying(said ->
                 assertThat(said).contains("The user chose the environment's fork"));
+    }
+
+    @Test
+    void eventLoggingPickedInTheFormThenItsVersionIsNotAskedAgain() {
+        holding("4.1.0", "3.5.2");
+        holdingFork();
+        world.forms = true;
+        world.answers.put(EventVersions.VARIANT_QUESTION, "event-logging, namespace event-logging:3 (versions 4.1.0, "
+                                                          + "3.5.2)");
+        world.answers.put(EventVersions.VERSION_QUESTION, "3.5.2");
+
+        assertThat(world.eventVersions.target(CALL, context, null, "b1").version()).isEqualTo("3.5.2");
+
+        assertThat(world.eventVersions.chosenFork(context, "b1")).isEmpty();
+        assertThat(world.eventVersions.settled(context, "b1", "3.5.2")).hasValueSatisfying(said ->
+                assertThat(said).startsWith("The user chose event-logging (namespace event-logging:3) over the "
+                                            + "environment's fork").contains("The user chose event-logging 3.5.2"));
+    }
+
+    @Test
+    void aForkHeldInTwoVersionsIsAskedWhichWithinItsNamespace() {
+        final XmlSchemaDoc older = forkDoc("fork-0", "Test fork v1", FORK_XSD.replace("version=\"4.1.0\"",
+                "version=\"1.0.0\""));
+        final XmlSchemaDoc newer = forkDoc("fork-1", "Test fork", FORK_XSD);
+        holdingForks(List.of(newer, older));
+        Mockito.when(world.inference.infer(Mockito.any(), Mockito.any())).thenReturn(Optional.of(
+                new EventsTargetInference.Inferred(FORK_NS, "the import 'Common' writes it")));
+
+        // No forms: the fork's own versions, by document.
+        final EventVersions.Target asked = world.eventVersions.target(CALL, context, null, "b1");
+        assertThat(asked.question()).containsEntry("question", EventVersions.forkVersionQuestion(FORK_NS));
+        assertThat(asked.question().get("forks")).isEqualTo(List.of(
+                Map.of("uuid", "fork-1", "version", "4.1.0", "namespace", FORK_NS, "path", "/XML Schemas/Test fork"),
+                Map.of("uuid", "fork-0", "version", "1.0.0", "namespace", FORK_NS, "path",
+                        "/XML Schemas/Test fork v1")));
+        // A version only event-logging holds isn't the fork's.
+        assertThatThrownBy(() -> world.eventVersions.target(CALL, context, "3.5.2", "b1"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("no version 3.5.2 of the environment's fork")
+                .hasMessageContaining("it holds 4.1.0, 1.0.0")
+                .hasMessageContaining("A fork's versions are its own");
+        // The fork's own version given: settled with its document.
+        assertThat(world.eventVersions.target(CALL, context, "1.0.0", "b1").version()).isEqualTo("1.0.0");
+        assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-0"));
+        // Picked in a form, in another build.
+        world.forms = true;
+        world.answers.put(EventVersions.forkVersionQuestion(FORK_NS), "4.1.0: /XML Schemas/Test fork");
+        assertThat(world.eventVersions.target(CALL, context, null, "b2").version()).isEqualTo("4.1.0");
+        assertThat(world.eventVersions.chosenDocs(context, "b2")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
     }
 
     @Test
@@ -426,15 +511,30 @@ class TestEventVersions {
         final String code = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"" + FORK_NS
                             + "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"3.0\">"
                             + "<xsl:template match=\"/\"><Events xsi:schemaLocation=\"" + FORK_NS + " "
-                            + FORK_SYSTEM_ID + "\" Version=\"1.2.0\"/></xsl:template></xsl:stylesheet>";
+                            + FORK_SYSTEM_ID + "\" Version=\"4.1.0\"/></xsl:template></xsl:stylesheet>";
 
         assertThat(world.eventVersions.forkWrittenBy(code)).map(XmlSchemaDoc::getUuid).contains("fork-1");
-        assertThat(world.eventVersions.translationVersion(null, code)).isEqualTo("1.2.0");
+        assertThat(world.eventVersions.translationVersion(null, code)).isEqualTo("4.1.0");
         // A version kept with the mapping comes first; event-logging's code names no fork.
         Mockito.when(world.heldSchemas.translationVersion("3.5.2", code)).thenReturn("3.5.2");
         assertThat(world.eventVersions.translationVersion("3.5.2", code)).isEqualTo("3.5.2");
         assertThat(world.eventVersions.forkWrittenBy(code.replace(FORK_NS, "event-logging:3"))).isEmpty();
         assertThat(world.eventVersions.forkWrittenBy(null)).isEmpty();
+    }
+
+    @Test
+    void aForkVersioningItselfIsWrittenWithItsOwnVersion() {
+        // Forks commonly keep event-logging's version (the test fork does); one that versions itself is written,
+        // and read back, with its own version, never event-logging's.
+        holdingFork(FORK_XSD.replace("version=\"4.1.0\"", "version=\"1.2.0\""));
+        final String code = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\"" + FORK_NS
+                            + "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"3.0\">"
+                            + "<xsl:template match=\"/\"><Events xsi:schemaLocation=\"" + FORK_NS + " "
+                            + FORK_SYSTEM_ID + "\" Version=\"1.2.0\"/></xsl:template></xsl:stylesheet>";
+
+        assertThat(world.eventVersions.target(CALL, context, "fork-1", "b1").version()).isEqualTo("1.2.0");
+        assertThat(world.eventVersions.chosenDocs(context, "b1")).isEqualTo(Map.of(FORK_SYSTEM_ID, "fork-1"));
+        assertThat(world.eventVersions.translationVersion(null, code)).isEqualTo("1.2.0");
     }
 
     @Test
@@ -462,16 +562,29 @@ class TestEventVersions {
                 "/XML Schemas/" + ((XmlSchemaDoc) inv.getArgument(0)).getName());
     }
 
-    // The test fork of event-logging 4.1.0 (versioned 1.2.0), in the EVENTS schema group beside event-logging.
+    // The test fork of event-logging 4.1.0 (sharing its version), in the EVENTS schema group beside event-logging.
     private void holdingFork() {
-        final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork").systemId(FORK_SYSTEM_ID)
-                .namespaceURI(FORK_NS).schemaGroup("EVENTS").data(FORK_XSD).build();
-        Mockito.when(world.heldSchemas.forks()).thenReturn(List.of(fork));
-        Mockito.when(world.heldSchemas.forksIn(FORK_NS)).thenReturn(List.of(fork));
-        Mockito.when(world.heldSchemas.eventSchema(fork)).thenReturn(EventSchema.parse(FORK_XSD)
-                .withSystemId(FORK_SYSTEM_ID));
+        holdingFork(FORK_XSD);
+    }
+
+    // A fork of event-logging 4.1.0 with this text, in the EVENTS schema group beside event-logging.
+    private void holdingFork(final String xsd) {
+        holdingForks(List.of(forkDoc("fork-1", "Test fork", xsd)));
+    }
+
+    // Forks in the EVENTS schema group beside event-logging, all in the test fork's namespace.
+    private void holdingForks(final List<XmlSchemaDoc> forks) {
+        Mockito.when(world.heldSchemas.forks()).thenReturn(forks);
+        Mockito.when(world.heldSchemas.forksIn(FORK_NS)).thenReturn(forks);
+        forks.forEach(fork -> Mockito.when(world.heldSchemas.eventSchema(fork)).thenReturn(
+                EventSchema.parse(fork.getData()).withSystemId(FORK_SYSTEM_ID)));
         Mockito.when(world.heldSchemas.path(Mockito.any())).thenAnswer(inv ->
                 "/XML Schemas/" + ((XmlSchemaDoc) inv.getArgument(0)).getName());
+    }
+
+    private static XmlSchemaDoc forkDoc(final String uuid, final String name, final String xsd) {
+        return XmlSchemaDoc.builder().uuid(uuid).name(name).systemId(FORK_SYSTEM_ID).namespaceURI(FORK_NS)
+                .schemaGroup("EVENTS").data(xsd).build();
     }
 
     private void holding(final String... versions) {

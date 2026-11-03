@@ -160,7 +160,13 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                + "is asked which of the versions this Stroom holds "
                                                                + "(the newest recommended). Where it holds the "
                                                                + "version in more than one XML schema document, "
-                                                               + "the UUID of the one the user chose.")
+                                                               + "the UUID of the one the user chose."
+                                                               + " Where it also holds the environment's fork of the "
+                                                               + "event-logging schema, the schema is settled first, "
+                                                               + "by namespace (event-logging:3 or the fork's), as "
+                                                               + "a fork's versions are its own: give the namespace "
+                                                               + "chosen (or a fork document's UUID); a version "
+                                                               + "alone is read within it.")
                         .build())
                 .build();
     }

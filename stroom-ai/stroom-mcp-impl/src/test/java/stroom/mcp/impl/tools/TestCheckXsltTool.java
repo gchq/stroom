@@ -298,8 +298,8 @@ class TestCheckXsltTool {
     // The test fork of event-logging 4.1.0, in the EVENTS schema group.
     private void holdingFork() {
         final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")
-                .systemId("file://test-fork-events-v1.2.0.xsd").namespaceURI(FORK_NS).schemaGroup("EVENTS")
-                .data(TranslationWorld.resource("test-fork-events-v1.2.0.xsd")).build();
+                .systemId("file://xml/schema/test-fork/events").namespaceURI(FORK_NS).schemaGroup("EVENTS")
+                .data(TranslationWorld.resource("test-fork-events.xsd")).build();
         Mockito.when(heldSchemas.forks()).thenReturn(List.of(fork));
         Mockito.when(heldSchemas.eventSchema(fork)).thenReturn(EventSchema.parse(fork.getData())
                 .withSystemId(fork.getSystemId()));
