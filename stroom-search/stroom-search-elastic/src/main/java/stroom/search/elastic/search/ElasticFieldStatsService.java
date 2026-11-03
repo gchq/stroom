@@ -71,6 +71,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -84,7 +85,8 @@ public class ElasticFieldStatsService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticFieldStatsService.class);
 
-    private static final int TOP_VALUES_COUNT = 10;
+    private static final int DEFAULT_TOP_VALUES_COUNT = 10;
+    private static final int MAX_TOP_VALUES_COUNT = 100;
     private static final int HISTOGRAM_BUCKETS = 10;
     private static final String RANGE_SEPARATOR = " – ";
     private static final int MAX_DECIMAL_PLACES = 10;
@@ -92,6 +94,8 @@ public class ElasticFieldStatsService {
     private static final String SAMPLE_AGG = "sample";
     // Elasticsearch only accepts a random sampler probability of up to 0.5 (or exactly 1)
     private static final double MAX_SAMPLE_PROBABILITY = 0.5;
+    // Characters with a meaning in Lucene regular expressions
+    private static final String LUCENE_REGEX_SPECIAL_CHARS = ".?+*|{}[]()\"\\#@&<>~";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String HAS_VALUE_AGG = "has_value";
     private static final String DISTINCT_AGG = "distinct";
@@ -201,7 +205,7 @@ public class ElasticFieldStatsService {
                 }
                 return field == null
                         ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampling, maxSampleSize)
-                        : getMappedFieldStats(elasticClient, indexDoc, field, sampling, maxSampleSize);
+                        : getMappedFieldStats(elasticClient, indexDoc, request, field, sampling, maxSampleSize);
             });
         });
     }
@@ -260,6 +264,7 @@ public class ElasticFieldStatsService {
 
     private ElasticFieldStats getMappedFieldStats(final ElasticsearchClient elasticClient,
                                                   final ElasticIndexDoc indexDoc,
+                                                  final ElasticFieldStatsRequest request,
                                                   final ElasticIndexField field,
                                                   final Sampling sampling,
                                                   final int maxSampleSize) {
@@ -270,13 +275,32 @@ public class ElasticFieldStatsService {
         final boolean date = FieldType.DATE.equals(type);
         final boolean terms = TERMS_TYPES.contains(type) && !Kind.Wildcard.jsonValue().equals(field.getNativeType());
 
+        final boolean topValuesOnly = Boolean.TRUE.equals(request.getTopValuesOnly());
+        final int topValuesCount = getTopValuesCount(request);
+        final String topValuesFilter = NullSafe.trim(request.getTopValuesFilter());
+        // Elasticsearch can filter the values of a keyword field itself; other fields' values are filtered here
+        final boolean filterInElasticsearch = !topValuesFilter.isEmpty()
+                                              && Kind.Keyword.jsonValue().equals(field.getNativeType());
+
         final Map<String, Aggregation> subAggs = new HashMap<>();
+        if (terms) {
+            subAggs.put(TOP_AGG, Aggregation.of(a -> a.terms(t -> {
+                t.field(fieldName).size(topValuesCount);
+                if (filterInElasticsearch) {
+                    t.include(i -> i.regexp(toCaseInsensitiveContainsRegex(topValuesFilter)));
+                }
+                return t;
+            })));
+        }
+        if (topValuesOnly) {
+            final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
+            return topValuesStats(fieldName, sampling, maxSampleSize, sample, sample.aggregations().containsKey(TOP_AGG)
+                    ? filterValues(getTermsBuckets(sample.aggregations().get(TOP_AGG)), topValuesFilter)
+                    : List.of());
+        }
         subAggs.put(HAS_VALUE_AGG, Aggregation.of(a -> a.filter(f -> f.exists(e -> e.field(fieldName)))));
         if (terms || numeric || date) {
             subAggs.put(DISTINCT_AGG, Aggregation.of(a -> a.cardinality(c -> c.field(fieldName))));
-        }
-        if (terms) {
-            subAggs.put(TOP_AGG, Aggregation.of(a -> a.terms(t -> t.field(fieldName).size(TOP_VALUES_COUNT))));
         }
         if (numeric || date) {
             subAggs.put(STATS_AGG, Aggregation.of(a -> a.stats(st -> st.field(fieldName))));
@@ -327,7 +351,7 @@ public class ElasticFieldStatsService {
                         ? aggs.get(DISTINCT_AGG).cardinality().value()
                         : null,
                 aggs.containsKey(TOP_AGG)
-                        ? getTermsBuckets(aggs.get(TOP_AGG))
+                        ? filterValues(getTermsBuckets(aggs.get(TOP_AGG)), topValuesFilter)
                         : null,
                 stats == null || stats.count() == 0
                         ? null
@@ -441,18 +465,38 @@ public class ElasticFieldStatsService {
                                                    final Map<String, Query> groupQueries,
                                                    final Sampling sampling,
                                                    final int maxSampleSize) {
+        final boolean topValuesOnly = Boolean.TRUE.equals(request.getTopValuesOnly());
+        final String topValuesFilter = NullSafe.trim(request.getTopValuesFilter());
         final Query anyGroup = QueryBuilders.bool(b -> b.should(new ArrayList<>(groupQueries.values())));
+        // Only the groups whose names match the filter are counted
+        final Map<String, Query> filteredGroupQueries = new LinkedHashMap<>();
+        groupQueries.forEach((groupName, query) -> {
+            if (containsIgnoreCase(groupName, topValuesFilter)) {
+                filteredGroupQueries.put(groupName, query);
+            }
+        });
 
-        final Map<String, Aggregation> subAggs = Map.of(
-                HAS_VALUE_AGG, Aggregation.of(a -> a.filter(anyGroup)),
-                GROUPS_AGG, Aggregation.of(a -> a.filters(f -> f.filters(b -> b.keyed(groupQueries)))));
+        final Map<String, Aggregation> subAggs = new HashMap<>();
+        if (!filteredGroupQueries.isEmpty()) {
+            subAggs.put(GROUPS_AGG, Aggregation.of(a -> a.filters(f -> f.filters(b -> b.keyed(filteredGroupQueries)))));
+        }
+        if (!topValuesOnly) {
+            subAggs.put(HAS_VALUE_AGG, Aggregation.of(a -> a.filter(anyGroup)));
+        }
         final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
         final Map<String, Aggregate> aggs = sample.aggregations();
 
         final List<ElasticFieldValueCount> groupCounts = new ArrayList<>();
-        aggs.get(GROUPS_AGG).filters().buckets().keyed().forEach((groupName, bucket) ->
-                groupCounts.add(new ElasticFieldValueCount(groupName, bucket.docCount())));
+        if (aggs.containsKey(GROUPS_AGG)) {
+            aggs.get(GROUPS_AGG).filters().buckets().keyed().forEach((groupName, bucket) ->
+                    groupCounts.add(new ElasticFieldValueCount(groupName, bucket.docCount())));
+        }
         groupCounts.sort((a, b) -> Long.compare(b.getCount(), a.getCount()));
+        final List<ElasticFieldValueCount> topGroupCounts = groupCounts.subList(
+                0, Math.min(groupCounts.size(), getTopValuesCount(request)));
+        if (topValuesOnly) {
+            return topValuesStats(request.getFieldName(), sampling, maxSampleSize, sample, topGroupCounts);
+        }
 
         return new ElasticFieldStats(
                 request.getFieldName(),
@@ -463,7 +507,7 @@ public class ElasticFieldStatsService {
                 sample.docCount(),
                 aggs.get(HAS_VALUE_AGG).filter().docCount(),
                 null,
-                groupCounts,
+                new ArrayList<>(topGroupCounts),
                 null,
                 null,
                 null,
@@ -658,6 +702,58 @@ public class ElasticFieldStatsService {
             return String.valueOf((long) value);
         }
         return String.valueOf(value);
+    }
+
+    private static int getTopValuesCount(final ElasticFieldStatsRequest request) {
+        return Math.clamp(
+                Objects.requireNonNullElse(request.getTopValuesCount(), DEFAULT_TOP_VALUES_COUNT),
+                1,
+                MAX_TOP_VALUES_COUNT);
+    }
+
+    /// Builds a Lucene regular expression, as a `terms` aggregation's `include` takes, matching any value that
+    /// contains the text, ignoring case. Lucene regular expressions have no flag to ignore case, so each letter
+    /// matches either case.
+    ///
+    /// @param text the text values must contain
+    /// @return the regular expression
+    static String toCaseInsensitiveContainsRegex(final String text) {
+        final StringBuilder sb = new StringBuilder(".*");
+        text.codePoints().forEach(codePoint -> {
+            final int lower = Character.toLowerCase(codePoint);
+            final int upper = Character.toUpperCase(codePoint);
+            if (lower != upper) {
+                sb.append('[').appendCodePoint(lower).appendCodePoint(upper).append(']');
+            } else {
+                if (LUCENE_REGEX_SPECIAL_CHARS.indexOf(codePoint) >= 0) {
+                    sb.append('\\');
+                }
+                sb.appendCodePoint(codePoint);
+            }
+        });
+        return sb.append(".*").toString();
+    }
+
+    private static List<ElasticFieldValueCount> filterValues(final List<ElasticFieldValueCount> values,
+                                                             final String filter) {
+        return values.stream()
+                .filter(value -> containsIgnoreCase(value.getValue(), filter))
+                .toList();
+    }
+
+    private static boolean containsIgnoreCase(final String value, final String text) {
+        return text.isEmpty()
+               || (value != null && value.toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT)));
+    }
+
+    private static ElasticFieldStats topValuesStats(final String fieldName,
+                                                    final Sampling sampling,
+                                                    final int maxSampleSize,
+                                                    final Sample sample,
+                                                    final List<ElasticFieldValueCount> topValues) {
+        return new ElasticFieldStats(fieldName, sampling.isExact(), sampling.sampleSize(), maxSampleSize,
+                sampling.totalDocs(), sample.docCount(), null, null, new ArrayList<>(topValues), null, null, null,
+                null, null, null);
     }
 
     private static ElasticFieldStats emptyStats(final String fieldName,

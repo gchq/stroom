@@ -176,7 +176,7 @@ public class ElasticIndexFieldListPresenter
         dataGrid.setTableName("Elastic Index '" + docRef.getName() + "' Fields");
         model.read(document.getFields(), document.getFieldSettings());
         model.setMandatoryFieldNames(document.getMandatoryFieldNames());
-        infoPresenter.setIndex(docRef, document.getTimeField());
+        infoPresenter.setIndex(docRef);
         settingsPresenter.setIndex(docRef);
         settingsPresenter.setReadOnly(readOnly);
         refreshRows();

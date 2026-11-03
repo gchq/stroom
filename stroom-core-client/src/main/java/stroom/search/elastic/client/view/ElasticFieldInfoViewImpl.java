@@ -46,6 +46,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -100,6 +101,15 @@ public class ElasticFieldInfoViewImpl
     SelectionBox<Integer> sampleSize;
     @UiField
     InlineSvgButton refreshStats;
+
+    // The controls and list of the most common values, kept between renders of the statistics
+    private final FlowPanel topValuesControls = new FlowPanel();
+    private final SelectionBox<Integer> topValuesCount = new SelectionBox<>();
+    private final TextBox topValuesFilter = new TextBox();
+    private final SpinnerSmall topValuesSpinner = new SpinnerSmall();
+    private final Label topValuesError = new Label();
+    private final FlowPanel topValuesList = new FlowPanel();
+    private long topValuesTotalDocs;
     @UiField
     FlowPanel randomControls;
     @UiField
@@ -108,8 +118,6 @@ public class ElasticFieldInfoViewImpl
     SpinnerSmall spinner;
     @UiField
     Label loadingLabel;
-    @UiField
-    Label timeFieldLabel;
     @UiField
     Label statsMessage;
     @UiField
@@ -141,9 +149,40 @@ public class ElasticFieldInfoViewImpl
                 : MODE_RANDOM);
         mode.addItems(List.of(false, true));
         mode.setValue(false);
+        createTopValuesControls();
         refreshStats.setSvg(SvgImage.REFRESH);
         refreshStats.setTitle("Refresh statistics");
         retry.setIcon(SvgImage.REFRESH);
+    }
+
+    private void createTopValuesControls() {
+        topValuesControls.addStyleName(style.topValuesControls());
+        topValuesCount.addStyleName(style.topValuesCount());
+        topValuesCount.setDisplayValueFunction(count -> "Top " + count);
+        topValuesCount.addItems(ElasticFieldStatsSupport.TOP_VALUES_COUNTS);
+        topValuesCount.setValue(ElasticFieldStatsSupport.DEFAULT_TOP_VALUES_COUNT);
+        topValuesCount.setTitle("How many of the most common values to show");
+        topValuesCount.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null && topValuesCount.getValue() != null) {
+                getUiHandlers().onTopValuesCountChange(topValuesCount.getValue());
+            }
+        });
+        topValuesFilter.addStyleName("stroom-control allow-focus");
+        topValuesFilter.addStyleName(style.topValuesFilter());
+        topValuesFilter.getElement().setAttribute("placeholder", "Filter values");
+        topValuesFilter.setTitle("Show only values containing this text, ignoring case");
+        topValuesFilter.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onTopValuesFilterChange(topValuesFilter.getText());
+            }
+        });
+        topValuesSpinner.setVisible(false);
+        topValuesError.addStyleName("text-danger");
+        topValuesError.setVisible(false);
+        topValuesControls.add(topValuesCount);
+        topValuesControls.add(topValuesFilter);
+        topValuesControls.add(topValuesSpinner);
+        topValuesControls.add(topValuesError);
     }
 
     @Override
@@ -176,15 +215,6 @@ public class ElasticFieldInfoViewImpl
     @Override
     public boolean isTimeRangeValid() {
         return fromTime.isValid() && toTime.isValid();
-    }
-
-    @Override
-    public void setTimeFieldName(final String timeField) {
-        if (NullSafe.isBlankString(timeField)) {
-            timeFieldLabel.setText("Documents are selected by the index's main date field.");
-        } else {
-            timeFieldLabel.setText("Documents are selected by the index's main date field, '" + timeField + "'.");
-        }
     }
 
     @Override
@@ -245,10 +275,6 @@ public class ElasticFieldInfoViewImpl
         final long totalDocs = Objects.requireNonNullElse(stats.getTotalDocs(), 0L);
         final long docsWithValue = Objects.requireNonNullElse(stats.getDocsWithValue(), 0L);
 
-        final FlowPanel summary = new FlowPanel();
-        summary.add(new Label(ElasticFieldStatsSupport.getSummary(stats)));
-        statsContent.add(summary);
-
         final FlowPanel coverage = createBlock("Coverage");
         coverage.add(createBarRow("Documents with a value", false,
                 ElasticFieldStatsSupport.getPercent(docsWithValue, totalDocs),
@@ -270,15 +296,13 @@ public class ElasticFieldInfoViewImpl
             statsContent.add(values);
         }
 
-        if (NullSafe.hasItems(stats.getTopValues())) {
+        if (stats.getTopValues() != null) {
+            // The controls are kept between renders, so the filter keeps its text and focus while the user types
+            topValuesTotalDocs = totalDocs;
             final FlowPanel topValues = createBlock("Most common values", TOP_VALUES_HELP);
-            for (final ElasticFieldValueCount valueCount : stats.getTopValues()) {
-                final long count = Objects.requireNonNullElse(valueCount.getCount(), 0L);
-                topValues.add(createBarRow(valueCount.getValue(), true,
-                        ElasticFieldStatsSupport.getPercent(count, totalDocs),
-                        ElasticFieldStatsSupport.formatCount(count) + " (" +
-                        ElasticFieldStatsSupport.formatPercent(count, totalDocs) + ")"));
-            }
+            topValues.add(topValuesControls);
+            topValues.add(topValuesList);
+            showTopValues(stats.getTopValues());
             statsContent.add(topValues);
         }
 
@@ -303,6 +327,43 @@ public class ElasticFieldInfoViewImpl
             }
             statsContent.add(histogram);
         }
+    }
+
+    @Override
+    public void showTopValues(final List<ElasticFieldValueCount> topValues) {
+        topValuesList.clear();
+        if (NullSafe.isEmptyCollection(topValues)) {
+            topValuesList.add(new Label(NullSafe.isBlankString(topValuesFilter.getText())
+                    ? "No values."
+                    : "No values match the filter."));
+            return;
+        }
+        for (final ElasticFieldValueCount valueCount : topValues) {
+            final long count = Objects.requireNonNullElse(valueCount.getCount(), 0L);
+            topValuesList.add(createBarRow(valueCount.getValue(), true,
+                    ElasticFieldStatsSupport.getPercent(count, topValuesTotalDocs),
+                    ElasticFieldStatsSupport.formatCount(count) + " (" +
+                    ElasticFieldStatsSupport.formatPercent(count, topValuesTotalDocs) + ")"));
+        }
+    }
+
+    @Override
+    public void setTopValuesLoading(final boolean loading) {
+        topValuesSpinner.setVisible(loading);
+        if (loading) {
+            topValuesError.setVisible(false);
+        }
+    }
+
+    @Override
+    public void showTopValuesError(final String error) {
+        topValuesError.setText("Unable to fetch the values: " + NullSafe.string(error));
+        topValuesError.setVisible(true);
+    }
+
+    @Override
+    public void setTopValuesFilter(final String filter) {
+        topValuesFilter.setText(NullSafe.string(filter));
     }
 
     @Override
@@ -419,7 +480,6 @@ public class ElasticFieldInfoViewImpl
         // A random sample is taken from all documents; exact statistics are for a time range
         randomControls.setVisible(!exact);
         exactControls.setVisible(exact);
-        timeFieldLabel.setVisible(exact);
         if (getUiHandlers() != null) {
             getUiHandlers().onExactChange(exact);
         }
@@ -501,6 +561,15 @@ public class ElasticFieldInfoViewImpl
 
         /// @return the style of a labelled bar whose label is long, such as a range of timestamps
         String barRowWide();
+
+        /// @return the style of the line of controls for the most common values
+        String topValuesControls();
+
+        /// @return the style of the selector of how many common values to show
+        String topValuesCount();
+
+        /// @return the style of the filter of the common values
+        String topValuesFilter();
 
         /// @return the style of a labelled bar
         String barRow();

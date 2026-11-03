@@ -245,7 +245,7 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
                     helper.createCluster(node), largeIndexName, "Date", 100);
 
             final ElasticFieldStats sampled = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
-                    largeIndexRef, "Kind", 2_000, null, null, null, null));
+                    largeIndexRef, "Kind", 2_000, null, null, null, null, null, null, null));
             assertThat(sampled.getExact()).isFalse();
             assertThat(sampled.getTotalDocs()).isEqualTo(20_000);
             // About 2,000 documents are sampled, and their counts are scaled up to estimate all 20,000
@@ -256,7 +256,7 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
                     .containsExactly("b", "a");
 
             final ElasticFieldStats exact = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
-                    largeIndexRef, "Kind", 2_000, null, null, null, true));
+                    largeIndexRef, "Kind", 2_000, null, null, null, true, null, null, null));
             assertThat(exact.getExact()).isTrue();
             assertThat(exact.getSampledDocs()).isEqualTo(20_000);
             assertThat(exact.getDocsWithValue()).isEqualTo(20_000);
@@ -270,7 +270,7 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
 
     private ElasticFieldStats stats(final String fieldName, final Long fromMs, final Long toMs) {
         return elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
-                indexRef, fieldName, null, fromMs, toMs, null, null));
+                indexRef, fieldName, null, fromMs, toMs, null, null, null, null, null));
     }
 
     private void assertIds(final ExpressionOperator expression, final String... expectedIds) {

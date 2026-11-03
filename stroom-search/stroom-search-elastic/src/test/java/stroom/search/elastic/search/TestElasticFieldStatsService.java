@@ -233,7 +233,7 @@ class TestElasticFieldStatsService {
                 new ElasticVirtualFieldGroup("db", group("db01")));
 
         final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
-                INDEX_REF, "Category", null, null, null, groups, null));
+                INDEX_REF, "Category", null, null, null, groups, null, null, null, null));
 
         assertThat(stats.getDocsWithValue()).isEqualTo(12_000);
         assertThat(stats.getTopValues())
@@ -250,7 +250,7 @@ class TestElasticFieldStatsService {
                 new ElasticVirtualFieldGroup("web", group("web02")));
 
         assertThatThrownBy(() -> service.getFieldStats(new ElasticFieldStatsRequest(
-                INDEX_REF, "Category", null, null, null, groups, null)))
+                INDEX_REF, "Category", null, null, null, groups, null, null, null, null)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("more than one group named 'web'");
         assertThat(ELASTIC.getAllServeEvents()).isEmpty();
@@ -292,6 +292,68 @@ class TestElasticFieldStatsService {
 
         assertThat(stats.getMessage()).isEqualTo("No documents were found in the index");
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))).isEmpty();
+    }
+
+    @Test
+    void testTopValuesOnlyWithFilter() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "sterms#top": {
+                  "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                  "buckets": [{"key": "WEB01", "doc_count": 50000}]
+                }"""));
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "host", null, null, null, null, null, 25, " web ", true));
+
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("WEB01", 50_000L));
+        // Only the common values are fetched, filtered by Elasticsearch, ignoring case
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"size\":25")
+                .contains("\"include\":\".*[wW][eE][bB].*\"")
+                .doesNotContain("cardinality")
+                .doesNotContain("exists");
+    }
+
+    @Test
+    void testTopValuesCountLimited() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "sterms#top": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []}"""));
+
+        service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "host", null, null, null, null, null, 1_000, null, true));
+
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"size\":100");
+    }
+
+    @Test
+    void testVirtualFieldTopValuesFilteredByGroupName() {
+        indexFieldCache.put("host", keyword("host"));
+        stubCount(1_000_000);
+        stubSearch(null, randomSample(5_000, """
+                "filters#groups": {"buckets": {"web": {"doc_count": 5000}}}"""));
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", group("web01")),
+                new ElasticVirtualFieldGroup("db", group("db01")));
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "Category", null, null, null, groups, null, null, "WE", true));
+
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue)
+                .containsExactly("web");
+        assertThat(onlySearchRequest().getBodyAsString()).contains("web01").doesNotContain("db01");
+    }
+
+    @Test
+    void testToCaseInsensitiveContainsRegex() {
+        assertThat(ElasticFieldStatsService.toCaseInsensitiveContainsRegex("Web-01.x"))
+                .isEqualTo(".*[wW][eE][bB]-01\\.[xX].*");
+        assertThat(ElasticFieldStatsService.toCaseInsensitiveContainsRegex("a*b(c)"))
+                .isEqualTo(".*[aA]\\*[bB]\\([cC]\\).*");
     }
 
     @Test
@@ -432,7 +494,8 @@ class TestElasticFieldStatsService {
                                                     final Long fromMs,
                                                     final Long toMs,
                                                     final Boolean exact) {
-        return new ElasticFieldStatsRequest(INDEX_REF, fieldName, sampleSize, fromMs, toMs, null, exact);
+        return new ElasticFieldStatsRequest(
+                INDEX_REF, fieldName, sampleSize, fromMs, toMs, null, exact, null, null, null);
     }
 
     private static ExpressionOperator group(final String host) {

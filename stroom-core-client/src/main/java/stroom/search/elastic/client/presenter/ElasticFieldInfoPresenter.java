@@ -22,6 +22,7 @@ import stroom.search.elastic.client.presenter.ElasticFieldInfoPresenter.ElasticF
 import stroom.search.elastic.client.presenter.ElasticFieldRow.Kind;
 import stroom.search.elastic.shared.ElasticFieldStats;
 import stroom.search.elastic.shared.ElasticFieldStatsRequest;
+import stroom.search.elastic.shared.ElasticFieldValueCount;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
@@ -30,6 +31,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.DateTimePopup;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -67,6 +69,9 @@ public class ElasticFieldInfoPresenter
                                                  "name, so it can't be searched. Rename it on the Settings tab.";
     static final String MESSAGE_BAD_TIME_RANGE = "Enter a valid time range whose start is before its end.";
 
+    // How long to wait after the user stops typing a filter before fetching the matching values
+    private static final int TOP_VALUES_FILTER_DELAY_MS = 300;
+
     private final RestFactory restFactory;
 
     private DocRef indexDocRef;
@@ -78,6 +83,16 @@ public class ElasticFieldInfoPresenter
     private boolean active;
     private boolean statsStale = true;
     private int requestId;
+    private int topValuesCount = ElasticFieldStatsSupport.DEFAULT_TOP_VALUES_COUNT;
+    private String topValuesFilter = "";
+    private int topValuesRequestId;
+    // Waits for the user to stop typing before filtering the common values
+    private final Timer topValuesFilterTimer = new Timer() {
+        @Override
+        public void run() {
+            loadTopValues();
+        }
+    };
 
     @Inject
     public ElasticFieldInfoPresenter(final EventBus eventBus,
@@ -95,14 +110,12 @@ public class ElasticFieldInfoPresenter
     }
 
     /// @param indexDocRef the index doc the fields belong to
-    /// @param timeField   the name of the index's time field, which the time range filters on, or `null`
-    public void setIndex(final DocRef indexDocRef, final String timeField) {
+    public void setIndex(final DocRef indexDocRef) {
         if (!Objects.equals(this.indexDocRef, indexDocRef)) {
             statsStale = true;
             maxSampleSize = null;
         }
         this.indexDocRef = indexDocRef;
-        getView().setTimeFieldName(timeField);
     }
 
     /// Shows a field. Statistics are fetched again if the field is not the one already shown.
@@ -117,6 +130,10 @@ public class ElasticFieldInfoPresenter
         showMapping();
         if (changed) {
             discardPendingRequest();
+            // A filter typed for one field's values is unlikely to suit another's
+            topValuesFilterTimer.cancel();
+            topValuesFilter = "";
+            getView().setTopValuesFilter("");
             getView().clearStats();
             statsStale = true;
             loadIfActive();
@@ -153,6 +170,23 @@ public class ElasticFieldInfoPresenter
     }
 
     @Override
+    public void onTopValuesCountChange(final int topValuesCount) {
+        this.topValuesCount = topValuesCount;
+        topValuesFilterTimer.cancel();
+        loadTopValues();
+    }
+
+    @Override
+    public void onTopValuesFilterChange(final String filter) {
+        final String trimmed = NullSafe.trim(filter);
+        if (!trimmed.equals(topValuesFilter)) {
+            topValuesFilter = trimmed;
+            topValuesFilterTimer.cancel();
+            topValuesFilterTimer.schedule(TOP_VALUES_FILTER_DELAY_MS);
+        }
+    }
+
+    @Override
     public void onRefreshStats() {
         statsStale = true;
         loadIfActive();
@@ -167,11 +201,14 @@ public class ElasticFieldInfoPresenter
     private void discardPendingRequest() {
         // Responses carry the id of their request, so moving the id on drops any response still to come
         requestId++;
+        topValuesRequestId++;
         getView().setLoading(false);
+        getView().setTopValuesLoading(false);
     }
 
     private void load() {
         requestId++;
+        topValuesRequestId++;
         final int thisRequestId = requestId;
         statsStale = false;
 
@@ -194,16 +231,7 @@ public class ElasticFieldInfoPresenter
             return;
         }
 
-        final List<ElasticVirtualFieldGroup> virtualGroups = row.isVirtual() && virtualGroupsSupplier != null
-                ? NullSafe.list(virtualGroupsSupplier.get())
-                : null;
-        final ElasticFieldStatsRequest request = new ElasticFieldStatsRequest(indexDocRef,
-                row.getName(),
-                sampleSize,
-                fromMs,
-                toMs,
-                virtualGroups,
-                exact);
+        final ElasticFieldStatsRequest request = createRequest(fromMs, toMs, false);
 
         getView().setLoading(true);
         restFactory
@@ -224,6 +252,61 @@ public class ElasticFieldInfoPresenter
                 })
                 .taskMonitorFactory(getView().getStatsTaskMonitorFactory())
                 .exec();
+    }
+
+    /// Fetches the most common values again, after their number or filter changes, leaving the other statistics
+    /// as they are.
+    private void loadTopValues() {
+        if (row == null || !active || statsStale || getNoStatsMessage(row) != null) {
+            // The statistics will be fetched in full when next shown, with the new choice
+            return;
+        }
+        topValuesRequestId++;
+        final int thisRequestId = topValuesRequestId;
+        final Long fromMs = exact
+                ? getView().getFromMs()
+                : null;
+        final Long toMs = exact
+                ? getView().getToMs()
+                : null;
+        final ElasticFieldStatsRequest request = createRequest(fromMs, toMs, true);
+
+        getView().setTopValuesLoading(true);
+        restFactory
+                .create(ELASTIC_INDEX_RESOURCE)
+                .method(resource -> resource.fetchFieldStats(request))
+                .onSuccess(stats -> {
+                    if (thisRequestId == topValuesRequestId) {
+                        getView().setTopValuesLoading(false);
+                        if (stats != null && NullSafe.isBlankString(stats.getMessage())) {
+                            getView().showTopValues(stats.getTopValues());
+                        }
+                    }
+                })
+                .onFailure(error -> {
+                    if (thisRequestId == topValuesRequestId) {
+                        getView().setTopValuesLoading(false);
+                        getView().showTopValuesError(error.getMessage());
+                    }
+                })
+                .taskMonitorFactory(getView().getStatsTaskMonitorFactory())
+                .exec();
+    }
+
+    private ElasticFieldStatsRequest createRequest(final Long fromMs, final Long toMs, final boolean topValuesOnly) {
+        final List<ElasticVirtualFieldGroup> virtualGroups = row.isVirtual() && virtualGroupsSupplier != null
+                ? NullSafe.list(virtualGroupsSupplier.get())
+                : null;
+        return new ElasticFieldStatsRequest(indexDocRef,
+                row.getName(),
+                sampleSize,
+                fromMs,
+                toMs,
+                virtualGroups,
+                exact,
+                topValuesCount,
+                topValuesFilter,
+                topValuesOnly);
     }
 
     private void onStats(final ElasticFieldStats stats) {
@@ -314,9 +397,6 @@ public class ElasticFieldInfoPresenter
         /// @return `true` if the time range boxes are empty or hold valid date-times
         boolean isTimeRangeValid();
 
-        /// @param timeField the name of the index's time field, or `null`
-        void setTimeFieldName(String timeField);
-
         /// @param sampleSizes the approximate sample sizes to offer
         /// @param selected    the sample size to select
         void setSampleSizes(List<Integer> sampleSizes, int selected);
@@ -339,6 +419,19 @@ public class ElasticFieldInfoPresenter
 
         /// @param stats the statistics to show
         void showStats(ElasticFieldStats stats);
+
+        /// @param topValues the most common values to show in place of those shown, after their number or filter
+        ///                  changed
+        void showTopValues(List<ElasticFieldValueCount> topValues);
+
+        /// @param loading `true` while the most common values are being fetched again
+        void setTopValuesLoading(boolean loading);
+
+        /// @param error why the most common values couldn't be fetched
+        void showTopValuesError(String error);
+
+        /// @param filter the text the most common values are filtered by
+        void setTopValuesFilter(String filter);
 
         /// @return the task monitor factory that shows when a statistics request is running
         TaskMonitorFactory getStatsTaskMonitorFactory();

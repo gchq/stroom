@@ -31,6 +31,12 @@ public interface ElasticFieldInfoUiHandlers extends UiHandlers {
     ///              sample
     void onExactChange(boolean exact);
 
+    /// @param topValuesCount how many of the most common values the user chose to show
+    void onTopValuesCountChange(int topValuesCount);
+
+    /// @param filter the text the user typed to filter the most common values by
+    void onTopValuesFilterChange(String filter);
+
     /// Called when the user asks for the statistics to be fetched again, by refreshing or retrying.
     void onRefreshStats();
 }

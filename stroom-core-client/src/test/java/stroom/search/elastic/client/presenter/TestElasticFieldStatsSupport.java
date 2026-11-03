@@ -16,8 +16,6 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.search.elastic.shared.ElasticFieldStats;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -27,24 +25,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestElasticFieldStatsSupport {
-
-    @Test
-    void testSummaryOfRandomSample() {
-        final ElasticFieldStats stats = new ElasticFieldStats("f", false, 5_000, 50_000, 1_234_567L, 4_987L, null,
-                null, null, null, null, null, null, null, null);
-
-        assertThat(ElasticFieldStatsSupport.getSummary(stats))
-                .isEqualTo("Estimated from a random sample of about 4,987 of 1,234,567 documents in the time range.");
-    }
-
-    @Test
-    void testSummaryOfExactStats() {
-        final ElasticFieldStats stats = new ElasticFieldStats("f", true, 5_000, 50_000, 8_000L, 8_000L, null,
-                null, null, null, null, null, null, null, null);
-
-        assertThat(ElasticFieldStatsSupport.getSummary(stats))
-                .isEqualTo("Exact, across all 8,000 documents in the time range.");
-    }
 
     @Test
     void testAllowedSampleSizes() {

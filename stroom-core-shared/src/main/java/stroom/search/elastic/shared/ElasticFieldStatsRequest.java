@@ -35,7 +35,10 @@ import java.util.Objects;
         "fromMs",
         "toMs",
         "virtualGroups",
-        "exact"})
+        "exact",
+        "topValuesCount",
+        "topValuesFilter",
+        "topValuesOnly"})
 @JsonInclude(Include.NON_NULL)
 public final class ElasticFieldStatsRequest {
 
@@ -53,6 +56,12 @@ public final class ElasticFieldStatsRequest {
     private final List<ElasticVirtualFieldGroup> virtualGroups;
     @JsonProperty
     private final Boolean exact;
+    @JsonProperty
+    private final Integer topValuesCount;
+    @JsonProperty
+    private final String topValuesFilter;
+    @JsonProperty
+    private final Boolean topValuesOnly;
 
     /// @param indexDocRef the index doc
     /// @param fieldName the full name of the field
@@ -66,6 +75,9 @@ public final class ElasticFieldStatsRequest {
     ///     otherwise `null`
     /// @param exact `true` to calculate the statistics across every document of the index pattern rather than a
     ///     random sample
+    /// @param topValuesCount how many of the most common values to give, or `null` for the default of 10
+    /// @param topValuesFilter give only common values containing this text, ignoring case, or `null` for all values
+    /// @param topValuesOnly `true` to give only the most common values, e.g. when the user changes their filter
     @JsonCreator
     public ElasticFieldStatsRequest(@JsonProperty("indexDocRef") final DocRef indexDocRef,
                                     @JsonProperty("fieldName") final String fieldName,
@@ -73,7 +85,10 @@ public final class ElasticFieldStatsRequest {
                                     @JsonProperty("fromMs") final Long fromMs,
                                     @JsonProperty("toMs") final Long toMs,
                                     @JsonProperty("virtualGroups") final List<ElasticVirtualFieldGroup> virtualGroups,
-                                    @JsonProperty("exact") final Boolean exact) {
+                                    @JsonProperty("exact") final Boolean exact,
+                                    @JsonProperty("topValuesCount") final Integer topValuesCount,
+                                    @JsonProperty("topValuesFilter") final String topValuesFilter,
+                                    @JsonProperty("topValuesOnly") final Boolean topValuesOnly) {
         this.indexDocRef = indexDocRef;
         this.fieldName = fieldName;
         this.sampleSize = sampleSize;
@@ -81,6 +96,9 @@ public final class ElasticFieldStatsRequest {
         this.toMs = toMs;
         this.virtualGroups = virtualGroups;
         this.exact = exact;
+        this.topValuesCount = topValuesCount;
+        this.topValuesFilter = topValuesFilter;
+        this.topValuesOnly = topValuesOnly;
     }
 
     /// @return the index doc
@@ -122,6 +140,21 @@ public final class ElasticFieldStatsRequest {
         return exact;
     }
 
+    /// @return how many of the most common values to give, or `null` for the default of 10
+    public Integer getTopValuesCount() {
+        return topValuesCount;
+    }
+
+    /// @return give only common values containing this text, ignoring case, or `null` for all values
+    public String getTopValuesFilter() {
+        return topValuesFilter;
+    }
+
+    /// @return `true` to give only the most common values, e.g. when the user changes their filter
+    public Boolean getTopValuesOnly() {
+        return topValuesOnly;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -137,12 +170,16 @@ public final class ElasticFieldStatsRequest {
                Objects.equals(fromMs, that.fromMs) &&
                Objects.equals(toMs, that.toMs) &&
                Objects.equals(virtualGroups, that.virtualGroups) &&
-               Objects.equals(exact, that.exact);
+               Objects.equals(exact, that.exact) &&
+               Objects.equals(topValuesCount, that.topValuesCount) &&
+               Objects.equals(topValuesFilter, that.topValuesFilter) &&
+               Objects.equals(topValuesOnly, that.topValuesOnly);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(indexDocRef, fieldName, sampleSize, fromMs, toMs, virtualGroups, exact);
+        return Objects.hash(indexDocRef, fieldName, sampleSize, fromMs, toMs, virtualGroups, exact, topValuesCount,
+                topValuesFilter, topValuesOnly);
     }
 
     @Override
@@ -155,6 +192,9 @@ public final class ElasticFieldStatsRequest {
                ", toMs=" + toMs +
                ", virtualGroups=" + virtualGroups +
                ", exact=" + exact +
+               ", topValuesCount=" + topValuesCount +
+               ", topValuesFilter=" + topValuesFilter +
+               ", topValuesOnly=" + topValuesOnly +
                '}';
     }
 }
