@@ -190,6 +190,12 @@ public class ElasticFieldStatsService {
             }
             return elasticClientCache.contextResult(cluster.getConnection(), elasticClient -> {
                 final Sampling sampling = createSampling(elasticClient, indexDoc, request, sampleSize);
+                if (sampling.totalDocs() == 0) {
+                    return emptyStats(fieldName, sampleSize, maxSampleSize, request.getFromMs() != null
+                                                                            || request.getToMs() != null
+                            ? "No documents were found in the time range"
+                            : "No documents were found in the index");
+                }
                 return field == null
                         ? getVirtualFieldStats(elasticClient, indexDoc, request, groupQueries, sampling, maxSampleSize)
                         : getMappedFieldStats(elasticClient, indexDoc, field, sampling, maxSampleSize);

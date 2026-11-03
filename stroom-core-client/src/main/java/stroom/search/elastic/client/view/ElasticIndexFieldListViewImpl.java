@@ -55,8 +55,6 @@ public class ElasticIndexFieldListViewImpl
     @UiField
     SimplePanel dataGrid;
     @UiField
-    Label statusMessage;
-    @UiField
     LinkTabBar tabBar;
     @UiField
     SimplePanel infoPanel;
@@ -89,11 +87,6 @@ public class ElasticIndexFieldListViewImpl
     @Override
     public void setDataGridView(final View view) {
         dataGrid.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void setStatusMessage(final String statusMessage) {
-        this.statusMessage.setText(statusMessage);
     }
 
     @Override

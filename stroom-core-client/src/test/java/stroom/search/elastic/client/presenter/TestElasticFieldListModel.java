@@ -19,6 +19,7 @@ package stroom.search.elastic.client.presenter;
 import stroom.query.api.datasource.FieldType;
 import stroom.search.elastic.client.presenter.ElasticFieldListModel.SortColumn;
 import stroom.search.elastic.client.presenter.ElasticFieldRow.Kind;
+import stroom.search.elastic.shared.ElasticDenseVectorSettings;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldSettings;
 
@@ -112,6 +113,18 @@ class TestElasticFieldListModel {
     }
 
     @Test
+    void testVectorSettingsShowAsConfigured() {
+        model.putSettings(ElasticIndexFieldSettings.builder("embedding")
+                .denseVector(new ElasticDenseVectorSettings(null, "title", "score"))
+                .enabled(false)
+                .build());
+
+        final ElasticFieldRow embedding = find(buildRows(Set.of()), "embedding", Kind.MAPPED);
+
+        assertThat(embedding.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_CONFIGURED);
+    }
+
+    @Test
     void testDisablingParentCascadesToMultiField() {
         model.setEnabled("title", false);
 
@@ -121,7 +134,8 @@ class TestElasticFieldListModel {
 
         assertThat(title.isEnabled()).isFalse();
         assertThat(title.isEnabledEditable()).isTrue();
-        assertThat(title.getStatus()).isEqualTo(ElasticFieldListModel.STATUS_HAS_SETTINGS);
+        // Being disabled doesn't count as being configured, as the Enabled column shows it
+        assertThat(title.getStatus()).isEmpty();
         assertThat(keyword.isEnabled()).isFalse();
         assertThat(keyword.isEnabledEditable()).isFalse();
         assertThat(model.isFieldEnabled("title.keyword")).isFalse();

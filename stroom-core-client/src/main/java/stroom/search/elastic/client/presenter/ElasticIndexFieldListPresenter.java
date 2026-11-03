@@ -25,7 +25,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticFieldListModel.SortColumn;
 import stroom.search.elastic.client.presenter.ElasticFieldRow.Kind;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
@@ -87,7 +86,6 @@ public class ElasticIndexFieldListPresenter
     private final ButtonView removeButton;
     private final ButtonView refreshButton;
     private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
     private final ElasticFieldInfoPresenter infoPresenter;
     private final ElasticFieldSettingsPresenter settingsPresenter;
     private final ElasticFieldListModel model = new ElasticFieldListModel();
@@ -108,13 +106,11 @@ public class ElasticIndexFieldListPresenter
                                           final ElasticIndexFieldListView view,
                                           final PagerView pagerView,
                                           final RestFactory restFactory,
-                                          final DateTimeFormatter dateTimeFormatter,
                                           final ElasticFieldInfoPresenter infoPresenter,
                                           final ElasticFieldSettingsPresenter settingsPresenter) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
         this.infoPresenter = infoPresenter;
         this.settingsPresenter = settingsPresenter;
 
@@ -170,7 +166,6 @@ public class ElasticIndexFieldListPresenter
         infoPresenter.setIndex(docRef, document.getTimeField());
         settingsPresenter.setIndex(docRef);
         settingsPresenter.setReadOnly(readOnly);
-        setFieldListUpdatedMessage();
         refreshRows();
         showSelectedField();
         updateButtons();
@@ -276,7 +271,7 @@ public class ElasticIndexFieldListPresenter
                         .withSorting(SortColumn.STATUS.name())
                         .build(),
                 DataGridUtil.headingBuilder("Status")
-                        .withToolTip("'Has settings': the field has settings that differ from the defaults. " +
+                        .withToolTip("'Configured': the field has settings other than whether it is enabled. " +
                                      "'Virtual': a field defined in Stroom whose values are named queries. " +
                                      "'Missing from all source indices': settings for a field no source index " +
                                      "maps. 'Type conflict': source indices map the field to different types. " +
@@ -478,7 +473,6 @@ public class ElasticIndexFieldListPresenter
                 .onSuccess(fields -> {
                     final List<ElasticIndexField> fieldList = NullSafe.list(fields);
                     model.setFields(fieldList);
-                    setFieldListUpdatedMessage();
                     refreshRows();
                     showSelectedField();
                     updateButtons();
@@ -487,19 +481,11 @@ public class ElasticIndexFieldListPresenter
                 .exec();
     }
 
-    private void setFieldListUpdatedMessage() {
-        getView().setStatusMessage("Field list updated at: " +
-                                   dateTimeFormatter.format(System.currentTimeMillis()));
-    }
-
     /// The view of the Elasticsearch index Fields tab.
     public interface ElasticIndexFieldListView extends View, HasUiHandlers<ElasticIndexFieldListUiHandlers> {
 
         /// @param view the view holding the field list and its toolbar
         void setDataGridView(View view);
-
-        /// @param statusMessage the text shown below the field list
-        void setStatusMessage(String statusMessage);
 
         /// @param options the values the type filter can match
         void setTypeFilterOptions(List<String> options);

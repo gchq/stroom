@@ -70,14 +70,6 @@
             width: 180px;
         }
 
-        .refresh {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 4px;
-            padding-bottom: 2px;
-        }
-
         .stats {
             display: flex;
             flex-direction: column;
@@ -91,7 +83,7 @@
 
         .barRow {
             display: grid;
-            grid-template-columns: 250px 1fr 160px;
+            grid-template-columns: 250px 240px 160px;
             column-gap: 8px;
             align-items: center;
             margin-bottom: 2px;
@@ -133,31 +125,33 @@
                 <g:HTML>
                     <h3>Statistics</h3>
                 </g:HTML>
+                <b:InlineSvgButton ui:field="refreshStats" addStyleNames="allow-focus"/>
+                <spinner:SpinnerSmall ui:field="spinner"/>
+                <g:Label ui:field="loadingLabel" text="Loading statistics..." visible="false"/>
             </g:FlowPanel>
             <g:FlowPanel addStyleNames="{style.controls}">
+                <form:FormGroup identity="elasticFieldStatsMode" label="Mode"
+                                helpText="Random sample estimates the statistics from a random sample of all the documents, which is fast. Exact calculates them across every document in a time range, which is slower on large indices."
+                                addStyleNames="{style.mode}">
+                    <l:SelectionBox ui:field="mode" addStyleNames="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="randomControls" addStyleNames="{style.controls}">
+                <form:FormGroup identity="elasticFieldStatsSampleSize" label="Sample size"
+                                helpText="Approximate number of documents sampled at random. Larger samples are more accurate but slower."
+                                addStyleNames="{style.sampleSize}">
+                    <l:SelectionBox ui:field="sampleSize" addStyleNames="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="exactControls" addStyleNames="{style.controls}" visible="false">
                 <form:FormGroup identity="elasticFieldStatsFrom" label="From" addStyleNames="{style.dateBox}">
                     <datetimebox:DateTimeBox ui:field="fromTime" addStyleNames="w-100"/>
                 </form:FormGroup>
                 <form:FormGroup identity="elasticFieldStatsTo" label="To" addStyleNames="{style.dateBox}">
                     <datetimebox:DateTimeBox ui:field="toTime" addStyleNames="w-100"/>
                 </form:FormGroup>
-                <form:FormGroup identity="elasticFieldStatsMode" label="Mode"
-                                helpText="Random sample estimates the statistics from a random sample of the documents in the time range, which is fast. Exact calculates them across every document in the time range, which is slower on large indices."
-                                addStyleNames="{style.mode}">
-                    <l:SelectionBox ui:field="mode" addStyleNames="w-100"/>
-                </form:FormGroup>
-                <form:FormGroup identity="elasticFieldStatsSampleSize" label="Sample size"
-                                helpText="Approximate number of documents sampled at random. Larger samples are more accurate but slower."
-                                addStyleNames="{style.sampleSize}">
-                    <l:SelectionBox ui:field="sampleSize" addStyleNames="w-100"/>
-                </form:FormGroup>
-                <g:FlowPanel addStyleNames="{style.refresh}">
-                    <b:Button ui:field="refreshStats" text="Refresh" addStyleNames="allow-focus"/>
-                    <spinner:SpinnerSmall ui:field="spinner"/>
-                    <g:Label ui:field="loadingLabel" text="Loading statistics..." visible="false"/>
-                </g:FlowPanel>
             </g:FlowPanel>
-            <g:Label ui:field="timeFieldLabel"/>
+            <g:Label ui:field="timeFieldLabel" visible="false"/>
             <g:Label ui:field="statsMessage" visible="false"/>
             <g:FlowPanel ui:field="errorPanel" addStyleNames="{style.errorPanel}" visible="false">
                 <g:Label ui:field="errorText" addStyleNames="text-danger"/>
