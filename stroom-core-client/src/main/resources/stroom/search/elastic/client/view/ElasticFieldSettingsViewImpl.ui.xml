@@ -18,7 +18,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
@@ -30,13 +29,6 @@
         /* Fill the width of the section rather than shrinking to the content */
         .fill {
             align-self: stretch;
-        }
-
-        .nameRow {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
         }
 
         .section {
@@ -54,6 +46,12 @@
             padding-top: 1rem;
         }
 
+        /* The field name heads the tab, so needs no space above it, and long names wrap */
+        .sectionTitle.fieldName {
+            padding-top: 0;
+            overflow-wrap: anywhere;
+        }
+
         .checkboxRow {
             display: flex;
             flex-direction: row;
@@ -64,6 +62,7 @@
 
     <g:ScrollPanel styleName="max">
         <g:FlowPanel styleName="form-padding form">
+            <g:Label ui:field="fieldName" addStyleNames="{style.sectionTitle} {style.fieldName}" visible="false"/>
 
             <!-- The tick box, its label and its help button sit on one line -->
             <g:FlowPanel ui:field="enabledRow" addStyleNames="{style.checkboxRow}">
@@ -112,13 +111,6 @@
 
             <g:FlowPanel ui:field="virtualSection" addStyleNames="{style.section}">
                 <g:Label text="Virtual field" addStyleNames="{style.sectionTitle}"/>
-                <form:FormGroup identity="elasticFieldSettingsVirtualName" label="Name"
-                                helpText="The name users query the virtual field by.">
-                    <g:FlowPanel addStyleNames="{style.nameRow}">
-                        <g:Label ui:field="virtualName"/>
-                        <b:Button ui:field="renameVirtualField" text="Rename" addStyleNames="allow-focus"/>
-                    </g:FlowPanel>
-                </form:FormGroup>
                 <form:FormGroup identity="elasticFieldSettingsVirtualGroups" label="Groups"
                                 addStyleNames="{style.fill}"
                                 helpText="Each group is a named query. Searching this field for a group runs that

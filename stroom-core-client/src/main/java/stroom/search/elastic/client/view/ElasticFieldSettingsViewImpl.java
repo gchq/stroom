@@ -21,12 +21,10 @@ import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter.ElasticFieldSettingsView;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsUiHandlers;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.Button;
 import stroom.widget.help.client.HelpButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -55,6 +53,8 @@ public class ElasticFieldSettingsViewImpl
     private final Widget widget;
 
     @UiField
+    Label fieldName;
+    @UiField
     FlowPanel enabledRow;
     @UiField
     CustomCheckBox enabled;
@@ -81,10 +81,6 @@ public class ElasticFieldSettingsViewImpl
     @UiField
     FlowPanel virtualSection;
     @UiField
-    Label virtualName;
-    @UiField
-    Button renameVirtualField;
-    @UiField
     SimplePanel groups;
 
     @Inject
@@ -108,6 +104,11 @@ public class ElasticFieldSettingsViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setFieldName(final String fieldName) {
+        setMessage(this.fieldName, fieldName);
     }
 
     @Override
@@ -203,18 +204,8 @@ public class ElasticFieldSettingsViewImpl
     }
 
     @Override
-    public void setVirtualName(final String name) {
-        virtualName.setText(NullSafe.string(name));
-    }
-
-    @Override
     public void setGroupsView(final View view) {
         groups.setWidget(view.asWidget());
-    }
-
-    @Override
-    public void setVirtualEditable(final boolean editable) {
-        renameVirtualField.setEnabled(editable);
     }
 
     private static void setMessage(final Label label, final String message) {
@@ -252,13 +243,6 @@ public class ElasticFieldSettingsViewImpl
     @UiHandler("rerankScoreMinimum")
     void onRerankScoreMinimumChange(final ValueChangeEvent<String> event) {
         onDenseVectorChange();
-    }
-
-    @UiHandler("renameVirtualField")
-    void onRenameVirtualFieldClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onRenameVirtualField();
-        }
     }
 
     private void onDenseVectorChange() {
