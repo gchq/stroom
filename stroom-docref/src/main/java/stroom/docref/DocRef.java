@@ -81,8 +81,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         this.uuid = uuid;
         this.name = name;
 
-        Objects.requireNonNull(type, () -> "Null DocRef type " + toShortString());
-        Objects.requireNonNull(uuid, () -> "Null DocRef UUID " + toShortString());
+        if (type == null || type.isBlank()) {
+            throw new InvalidDocRefException("Null DocRef type " + toShortString());
+        }
+        if (uuid == null || uuid.isBlank()) {
+            throw new InvalidDocRefException("Null DocRef UUID " + toShortString());
+        }
     }
 
     /**
@@ -435,6 +439,17 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
             Objects.requireNonNull(uuid, "UUID not set");
             // Name is not strictly needed by the backend
             return new DocRef(type, uuid, name);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class InvalidDocRefException extends RuntimeException {
+
+        public InvalidDocRefException(final String message) {
+            super(message);
         }
     }
 }

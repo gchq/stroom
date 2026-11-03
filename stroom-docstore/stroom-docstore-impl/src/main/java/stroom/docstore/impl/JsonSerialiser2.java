@@ -16,6 +16,7 @@
 
 package stroom.docstore.impl;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
@@ -27,6 +28,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.EncodingUtil;
 
+import org.jspecify.annotations.Nullable;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -67,9 +70,33 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
         if (asset != null) {
             final byte[] data = asset.getInputData();
             if (data != null) {
-                final D document = mapper.readValue(data, clazz);
+                final D document;
+                try {
+                    document = mapper.readValue(data, clazz);
+
+                } catch (final Exception e) {
+                    if (e instanceof JacksonException
+                        && e.getCause() instanceof DocRef.InvalidDocRefException) {
+                        // Legacy JSON may be missing type/uuid in the DocRefs (which now must be non-null),
+                        // so log the JSON so we can fix the problem.
+                        final String dataStr = getDataAsStringForLogging(data);
+                        LOGGER.error(
+                                "Error deserialising asset {} with invalid DocRef - {} (DEBUG for stacktrace):\n{}",
+                                asset, LogUtil.exceptionMessage(e), dataStr);
+                        LOGGER.debug(
+                                "Error deserialising asset {} with invalid DocRef - {}:\n{}",
+                                asset, LogUtil.exceptionMessage(e), dataStr, e);
+                    } else {
+                        if (LOGGER.isDebugEnabled()) {
+                            final String dataStr = getDataAsStringForLogging(data);
+                            LOGGER.debug("Error deserialising asset {} - {}:\n{}",
+                                    asset, LogUtil.exceptionMessage(e), dataStr, e);
+                        }
+                    }
+                    throw e;
+                }
                 LOGGER.trace(() -> LogUtil.message("read() - document: {}, json:\n{}",
-                        document, EncodingUtil.asString(data)));
+                        document, getDataAsStringForLogging(data)));
                 return document;
             } else {
                 return null;
@@ -77,6 +104,16 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
         } else {
             return null;
         }
+    }
+
+    private static @Nullable String getDataAsStringForLogging(final byte[] data) {
+        String dataStr;
+        try {
+            dataStr = EncodingUtil.asString(data);
+        } catch (final Exception ex) {
+            dataStr = "<Error reading data>";
+        }
+        return dataStr;
     }
 
     @Override
