@@ -242,6 +242,14 @@ public final class AiChatTexts {
                 : "");
     }
 
+    /// @return The question asked before compacting a chat from its menu. It asks for nothing to be typed: what the
+    /// summary should focus on is given with `/compact`, which the question mentions.
+    static String compactChatQuestion() {
+        return "Compact this chat now? Earlier messages are kept, but the model will see them as a summary. The "
+               + "compaction can be undone from its card. To say what the summary should keep, type /compact "
+               + "followed by it, e.g. /compact keep the firewall findings.";
+    }
+
     /// @param count      How many chats the user has.
     /// @param anyWorking True if any of them is working.
     /// @return The question asked before deleting all the user's chats.
