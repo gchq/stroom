@@ -40,4 +40,16 @@ public interface SuggestionsResource extends RestResource, DirectRestService {
             summary = "Fetch some suggestions",
             operationId = "fetchSuggestions")
     Suggestions fetch(@Parameter(description = "request", required = true) FetchSuggestionsRequest request);
+
+    /// Fetches the most common values of a field, for the value picker of an expression term.
+    ///
+    /// @param request The data source, field, filter and time range.
+    /// @return The most common values, or no values if the data source can't provide them.
+    @POST
+    @Path("/fieldValues")
+    @Operation(
+            summary = "Fetch the most common values of a field",
+            operationId = "fetchFieldValues")
+    FieldValues fetchFieldValues(@Parameter(description = "request", required = true)
+                                 FetchFieldValuesRequest request);
 }
