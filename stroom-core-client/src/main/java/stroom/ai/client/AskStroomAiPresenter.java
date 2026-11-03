@@ -614,6 +614,10 @@ public class AskStroomAiPresenter
                         onQuestionBack(button);
                         return;
                     }
+                    if (button.hasAttribute(AiElicitationCard.SEND_ATTRIBUTE)) {
+                        onCustomAnswerSent(button);
+                        return;
+                    }
 
                     // Answering a form from an MCP tool.
                     final String elicitationStr = button.getAttribute(ELICITATION_ATTRIBUTE);
@@ -1715,9 +1719,6 @@ public class AskStroomAiPresenter
         });
     }
 
-    /**
-     * Compacts the chat now: earlier turns are replaced, in what the model sees, by digests and a summary.
-     */
     @Override
     public void onInputChanged(final String text) {
         checkCommandReference(text);
@@ -2279,6 +2280,27 @@ public class AskStroomAiPresenter
             next.removeClassName(AiElicitationCard.LATER_CLASS);
         } else {
             onAnswerForm(question, Integer.parseInt(card.getAttribute(MESSAGE_ID_ATTRIBUTE)), "ACCEPT");
+        }
+    }
+
+    // The Send button beside the box for the user's own answer: the same as pressing Enter in the box.
+    private void onCustomAnswerSent(final Element sendButton) {
+        final Element row = sendButton.getParentElement();
+        if (row == null) {
+            return;
+        }
+        final NodeList<Element> inputs = row.getElementsByTagName("input");
+        for (int i = 0; i < inputs.getLength(); i++) {
+            final Element input = inputs.getItem(i);
+            if (input.hasClassName(AiElicitationCard.CUSTOM_ANSWER_CLASS)) {
+                final String answer = InputElement.as(input).getValue().trim();
+                if (answer.isEmpty()) {
+                    input.focus();
+                } else {
+                    onQuestionAnswered(input, answer);
+                }
+                return;
+            }
         }
     }
 
@@ -3879,18 +3901,15 @@ public class AskStroomAiPresenter
         if (currentChat == null) {
             return;
         }
-        final String question = "Compact this chat now? Earlier messages are kept, but the model will see "
-                                + "them as a summary. Optionally, say what the summary should focus on:";
-        PromptEvent.fire(this, "Compact Context", question, "",
-                focus -> {
-                    if (focus != null && currentChat != null) {
-                        compact(focus.isBlank()
-                                ? null
-                                : focus.strip());
-                    }
-                });
+        // Only a confirmation: what the summary should focus on is optional, and given with /compact <focus>.
+        ConfirmEvent.fire(this, AiChatTexts.compactChatQuestion(), ok -> {
+            if (ok && currentChat != null) {
+                compact(null);
+            }
+        });
     }
 
+    // Compacts the chat now: earlier turns are replaced, in what the model sees, by digests and a summary.
     private void compact(final String focus) {
         askStroomAiClient.getConfig(config -> askStroomAiClient.compactChat(
                 new CompactAiChatRequest(currentChat, config, focus),
