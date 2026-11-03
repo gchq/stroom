@@ -36,7 +36,7 @@ public final class ElasticFieldRow implements TreeRow {
     private final ElasticIndexFieldSettings settings;
     private final String typeLabel;
     private final String filterType;
-    private final String status;
+    private final String stateNote;
     private final boolean enabled;
     private final boolean enabledEditable;
     private final Expander expander;
@@ -47,7 +47,8 @@ public final class ElasticFieldRow implements TreeRow {
     /// @param settings        the field's settings, or `null` if it has none
     /// @param typeLabel       the text shown in the Field Type column
     /// @param filterType      the value the type filter matches the row on, or `null` if it has none
-    /// @param status          the text shown in the Status column
+    /// @param stateNote       why the field can't be used as normal (missing, type conflict or hidden by a mapped
+    ///                        field), or `null` if it can
     /// @param enabled         whether the field is enabled, taking a disabled parent field into account
     /// @param enabledEditable whether the user may change the enabled state from the list
     /// @param expander        the tree expander state for the row
@@ -57,7 +58,7 @@ public final class ElasticFieldRow implements TreeRow {
                            final ElasticIndexFieldSettings settings,
                            final String typeLabel,
                            final String filterType,
-                           final String status,
+                           final String stateNote,
                            final boolean enabled,
                            final boolean enabledEditable,
                            final Expander expander) {
@@ -67,7 +68,7 @@ public final class ElasticFieldRow implements TreeRow {
         this.settings = settings;
         this.typeLabel = typeLabel;
         this.filterType = filterType;
-        this.status = status;
+        this.stateNote = stateNote;
         this.enabled = enabled;
         this.enabledEditable = enabledEditable;
         this.expander = expander;
@@ -103,9 +104,10 @@ public final class ElasticFieldRow implements TreeRow {
         return filterType;
     }
 
-    /// @return the text shown in the Status column
-    public String getStatus() {
-        return status;
+    /// @return why the field can't be used as normal, i.e. it is missing from all source indices, has a type
+    /// conflict or is a virtual field hidden by a mapped field, or `null` if it can
+    public String getStateNote() {
+        return stateNote;
     }
 
     /// @return `true` if the field is enabled, taking a disabled parent field into account

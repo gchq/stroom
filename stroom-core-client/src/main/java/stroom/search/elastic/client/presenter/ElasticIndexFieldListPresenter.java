@@ -45,6 +45,8 @@ import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo;
@@ -78,6 +80,7 @@ public class ElasticIndexFieldListPresenter
     private static final String ADD_VIRTUAL_FIELD = "Add virtual field";
     private static final String REMOVE_SETTINGS = "Remove settings";
     private static final String DELETE_VIRTUAL_FIELD = "Delete virtual field";
+    private static final String NEW_VIRTUAL_FIELD_CAPTION = "New Virtual Field";
 
     private final MyDataGrid<ElasticFieldRow> dataGrid;
     private final MultiSelectionModelImpl<ElasticFieldRow> selectionModel;
@@ -90,6 +93,7 @@ public class ElasticIndexFieldListPresenter
     private final RestFactory restFactory;
     private final ElasticFieldInfoPresenter infoPresenter;
     private final ElasticFieldSettingsPresenter settingsPresenter;
+    private final ElasticVirtualFieldNamePresenter namePresenter;
     private final ElasticFieldListModel model = new ElasticFieldListModel();
     private final Set<String> expandedNames = new HashSet<>();
 
@@ -109,12 +113,14 @@ public class ElasticIndexFieldListPresenter
                                           final PagerView pagerView,
                                           final RestFactory restFactory,
                                           final ElasticFieldInfoPresenter infoPresenter,
-                                          final ElasticFieldSettingsPresenter settingsPresenter) {
+                                          final ElasticFieldSettingsPresenter settingsPresenter,
+                                          final ElasticVirtualFieldNamePresenter namePresenter) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         this.infoPresenter = infoPresenter;
         this.settingsPresenter = settingsPresenter;
+        this.namePresenter = namePresenter;
 
         dataGrid = new MyDataGrid<>(this, MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
         dataGrid.setTableName("Elastic Index Fields");
@@ -242,14 +248,18 @@ public class ElasticIndexFieldListPresenter
         });
         dataGrid.addColumn(expanderColumn, "", 0);
 
-        dataGrid.addResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(ElasticFieldRow::getName)
+        // Fields that can't be used as normal are shown muted and in italics, with the reason as the tooltip
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.htmlColumnBuilder(ElasticIndexFieldListPresenter::renderName)
                         .withSorting(SortColumn.NAME.name())
-                        .enabledWhen(ElasticFieldRow::isEnabled)
+                        .enabledWhen(row -> row.isEnabled() && row.getStateNote() == null)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
                         .withToolTip("The full name of the field. Multi-fields, such as 'title.keyword', are shown " +
-                                     "under the field they belong to.")
+                                     "under the field they belong to. Fields in italics can't be used as normal: " +
+                                     "they are missing from all source indices, the source indices map them to " +
+                                     "different types, or they are virtual fields hidden by a mapped field of the " +
+                                     "same name. Hover over one to see why.")
                         .build(),
                 350);
 
@@ -279,19 +289,6 @@ public class ElasticIndexFieldListPresenter
                         .build(),
                 80);
 
-        dataGrid.addAutoResizableColumn(
-                DataGridUtil.textWithTooltipColumnBuilder(ElasticFieldRow::getStatus)
-                        .withSorting(SortColumn.STATUS.name())
-                        .build(),
-                DataGridUtil.headingBuilder("Status")
-                        .withToolTip("'Configured': the field has settings other than whether it is enabled. " +
-                                     "'Virtual': a field defined in Stroom whose values are named queries. " +
-                                     "'Missing from all source indices': settings for a field no source index " +
-                                     "maps. 'Type conflict': source indices map the field to different types. " +
-                                     "'Name clashes with a mapped field': a virtual field hidden by a mapped field " +
-                                     "of the same name.")
-                        .build(),
-                250);
     }
 
     private Column<ElasticFieldRow, ?> findColumn(final SortColumn sortColumn) {
@@ -303,6 +300,21 @@ public class ElasticIndexFieldListPresenter
             }
         }
         return null;
+    }
+
+    private static SafeHtml renderName(final ElasticFieldRow row) {
+        final String note = row.getStateNote();
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.appendHtmlConstant("<div title=\"")
+                .appendEscaped(note == null
+                        ? row.getName()
+                        : row.getName() + " - " + note)
+                .appendHtmlConstant(note == null
+                        ? "\">"
+                        : "\" style=\"font-style: italic;\">")
+                .appendEscaped(row.getName())
+                .appendHtmlConstant("</div>");
+        return builder.toSafeHtml();
     }
 
     private TickBoxState getEnabledState(final ElasticFieldRow row) {
@@ -430,15 +442,20 @@ public class ElasticIndexFieldListPresenter
 
     private void addVirtualField() {
         if (!isReadOnly()) {
-            final String name = model.addVirtualField();
-            selectedName = name;
-            selectedKind = Kind.VIRTUAL;
-            selectedTab = SETTINGS_TAB;
-            refreshRows();
-            showSelectedField();
-            updateButtons();
-            onChange();
-            settingsPresenter.focusVirtualName();
+            namePresenter.show(NEW_VIRTUAL_FIELD_CAPTION,
+                    null,
+                    name -> model.validateVirtualFieldName(null, name),
+                    name -> {
+                        if (model.addVirtualField(name)) {
+                            selectedName = name;
+                            selectedKind = Kind.VIRTUAL;
+                            selectedTab = SETTINGS_TAB;
+                            refreshRows();
+                            showSelectedField();
+                            updateButtons();
+                            onChange();
+                        }
+                    });
         }
     }
 

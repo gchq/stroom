@@ -21,11 +21,12 @@ import stroom.item.client.SelectionBox;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter.ElasticFieldSettingsView;
 import stroom.search.elastic.client.presenter.ElasticFieldSettingsUiHandlers;
 import stroom.util.shared.NullSafe;
+import stroom.widget.button.client.Button;
 import stroom.widget.help.client.HelpButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -80,19 +81,11 @@ public class ElasticFieldSettingsViewImpl
     @UiField
     FlowPanel virtualSection;
     @UiField
-    TextBox virtualName;
+    Label virtualName;
     @UiField
-    Label virtualNameError;
+    Button renameVirtualField;
     @UiField
     SimplePanel groups;
-    @UiField
-    FlowPanel groupEditor;
-    @UiField
-    TextBox groupName;
-    @UiField
-    Label groupNameError;
-    @UiField
-    SimplePanel expression;
 
     @Inject
     public ElasticFieldSettingsViewImpl(final Binder binder) {
@@ -211,23 +204,7 @@ public class ElasticFieldSettingsViewImpl
 
     @Override
     public void setVirtualName(final String name) {
-        virtualName.setValue(NullSafe.string(name));
-    }
-
-    @Override
-    public String getVirtualName() {
-        return virtualName.getValue();
-    }
-
-    @Override
-    public void setVirtualNameError(final String error) {
-        setMessage(virtualNameError, error);
-    }
-
-    @Override
-    public void focusVirtualName() {
-        virtualName.setFocus(true);
-        virtualName.selectAll();
+        virtualName.setText(NullSafe.string(name));
     }
 
     @Override
@@ -236,40 +213,8 @@ public class ElasticFieldSettingsViewImpl
     }
 
     @Override
-    public void setGroupEditorVisible(final boolean visible) {
-        groupEditor.setVisible(visible);
-    }
-
-    @Override
-    public void setGroupName(final String name) {
-        groupName.setValue(NullSafe.string(name));
-    }
-
-    @Override
-    public String getGroupName() {
-        return groupName.getValue();
-    }
-
-    @Override
-    public void setGroupNameError(final String error) {
-        setMessage(groupNameError, error);
-    }
-
-    @Override
-    public void focusGroupName() {
-        groupName.setFocus(true);
-        groupName.selectAll();
-    }
-
-    @Override
-    public void setExpressionView(final View view) {
-        expression.setWidget(view.asWidget());
-    }
-
-    @Override
     public void setVirtualEditable(final boolean editable) {
-        virtualName.setEnabled(editable);
-        groupName.setEnabled(editable);
+        renameVirtualField.setEnabled(editable);
     }
 
     private static void setMessage(final Label label, final String message) {
@@ -309,31 +254,10 @@ public class ElasticFieldSettingsViewImpl
         onDenseVectorChange();
     }
 
-    @UiHandler("virtualName")
-    void onVirtualNameKeyUp(final KeyUpEvent event) {
+    @UiHandler("renameVirtualField")
+    void onRenameVirtualFieldClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onVirtualNameEdit();
-        }
-    }
-
-    @UiHandler("virtualName")
-    void onVirtualNameChange(final ValueChangeEvent<String> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onVirtualNameChange();
-        }
-    }
-
-    @UiHandler("groupName")
-    void onGroupNameKeyUp(final KeyUpEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onGroupNameEdit();
-        }
-    }
-
-    @UiHandler("groupName")
-    void onGroupNameChange(final ValueChangeEvent<String> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onGroupNameChange();
+            getUiHandlers().onRenameVirtualField();
         }
     }
 
