@@ -12,10 +12,10 @@
        method, status, bytes, action. -->
   <xsl:template match="node()" mode="event_type_request">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -32,14 +32,14 @@
         <xsl:if test="$client_ip">
           <Client>
             <IPAddress>
-              <xsl:value-of select="$client_ip"/>
+              <xsl:value-of select="$client_ip[1]"/>
             </IPAddress>
           </Client>
         </xsl:if>
-        <xsl:if test="normalize-space(data[@name='user']/@value)">
+        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="data[@name='user']/@value"/>
+              <xsl:value-of select="(data[@name='user']/@value)[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -47,18 +47,18 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'request'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'request'"/>
         </TypeId>
         <xsl:variable name="category" select="data[@name='category']/@value[normalize-space(.)]"/>
         <xsl:variable name="url" select="data[@name='url']/@value[normalize-space(.)]"/>
-        <xsl:if test="$client_ip or $url or $category or $action = ('allowed', 'blocked') or normalize-space(data[@name='method']/@value) or normalize-space(data[@name='status']/@value) or normalize-space(data[@name='bytes']/@value)">
+        <xsl:if test="$client_ip or $url or $category or $action[1] = ('allowed', 'blocked') or data[@name='method']/@value[normalize-space(.)] or data[@name='status']/@value[normalize-space(.)] or data[@name='bytes']/@value[normalize-space(.)]">
           <Network>
             <Open>
               <xsl:if test="$client_ip">
                 <Source>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$client_ip"/>
+                      <xsl:value-of select="$client_ip[1]"/>
                     </IPAddress>
                   </Device>
                 </Source>
@@ -69,10 +69,10 @@
                   <xsl:sequence select="mcp:data('category', $category)"/>
                 </Destination>
               </xsl:if>
-              <xsl:if test="$action = ('allowed', 'blocked')">
+              <xsl:if test="$action[1] = ('allowed', 'blocked')">
                 <Outcome>
                   <Permitted>
-                    <xsl:value-of select="if ($action = 'allowed') then 'true' else 'false'"/>
+                    <xsl:value-of select="if ($action[1] = 'allowed') then 'true' else 'false'"/>
                   </Permitted>
                 </Outcome>
               </xsl:if>
@@ -90,7 +90,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

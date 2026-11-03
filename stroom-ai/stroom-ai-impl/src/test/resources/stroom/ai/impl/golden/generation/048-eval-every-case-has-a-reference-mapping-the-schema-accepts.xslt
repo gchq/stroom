@@ -7,7 +7,7 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="kind_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+)')"/>
+    <xsl:variable name="kind_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+)')"/>
     <xsl:variable name="kind" select="$kind_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
@@ -39,7 +39,7 @@
         <xsl:if test="normalize-space(mcp:value($message, 'src'))">
           <Client>
             <IPAddress>
-              <xsl:value-of select="mcp:value($message, 'src')"/>
+              <xsl:value-of select="mcp:value($message, 'src')[1]"/>
             </IPAddress>
           </Client>
         </xsl:if>
@@ -55,16 +55,16 @@
           <xsl:variable name="reason" select="$reason_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
           <xsl:variable name="kind_parts" select="analyze-string(string($message[1]), '^(\S+) (\S+)')"/>
           <xsl:variable name="verb" select="$kind_parts/fn:match//fn:group[@nr=2][normalize-space(.)]"/>
-          <xsl:if test="$verb = ('ok', 'fail') or $reason">
+          <xsl:if test="$verb[1] = ('ok', 'fail') or $reason">
             <Outcome>
-              <xsl:if test="$verb = ('ok', 'fail')">
+              <xsl:if test="$verb[1] = ('ok', 'fail')">
                 <Success>
-                  <xsl:value-of select="if ($verb = 'ok') then 'true' else 'false'"/>
+                  <xsl:value-of select="if ($verb[1] = 'ok') then 'true' else 'false'"/>
                 </Success>
               </xsl:if>
               <xsl:if test="$reason">
                 <Description>
-                  <xsl:value-of select="$reason"/>
+                  <xsl:value-of select="$reason[1]"/>
                 </Description>
               </xsl:if>
             </Outcome>
@@ -91,7 +91,7 @@
         <Authenticate>
           <Action>Logoff</Action>
           <xsl:apply-templates select="." mode="authenticate_user"/>
-          <xsl:variable name="duration_parts" select="analyze-string(string(*[@key='message'][1]), ' duration=(\d+)s')"/>
+          <xsl:variable name="duration_parts" select="analyze-string(string((*[@key='message'])[1]), ' duration=(\d+)s')"/>
           <xsl:sequence select="mcp:data('duration_seconds', $duration_parts/fn:match//fn:group[@nr=1])"/>
         </Authenticate>
       </EventDetail>
@@ -110,9 +110,9 @@
           <Type>Network</Type>
           <xsl:variable name="message" select="*[@key='message'][normalize-space(.)]"/>
           <xsl:variable name="kind_parts" select="analyze-string(string($message[1]), '^(\S+) (\S+)')"/>
-          <xsl:if test="$kind_parts/fn:match//fn:group[@nr=2] = ('down', 'up')">
+          <xsl:if test="($kind_parts/fn:match//fn:group[@nr=2])[1] = ('down', 'up')">
             <Severity>
-              <xsl:value-of select="if ($kind_parts/fn:match//fn:group[@nr=2] = 'down') then 'Major' else 'Info'"/>
+              <xsl:value-of select="if (($kind_parts/fn:match//fn:group[@nr=2])[1] = 'down') then 'Major' else 'Info'"/>
             </Severity>
           </xsl:if>
           <xsl:variable name="peer" select="mcp:value($message, 'peer')[normalize-space(.)]"/>
@@ -123,7 +123,7 @@
                 <Source>
                   <Device>
                     <HostName>
-                      <xsl:value-of select="$host"/>
+                      <xsl:value-of select="$host[1]"/>
                     </HostName>
                   </Device>
                 </Source>
@@ -132,7 +132,7 @@
                 <Destination>
                   <Device>
                     <IPAddress>
-                      <xsl:value-of select="$peer"/>
+                      <xsl:value-of select="$peer[1]"/>
                     </IPAddress>
                   </Device>
                 </Destination>
@@ -154,13 +154,13 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:variable name="kind_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+)')"/>
-          <xsl:value-of select="if (normalize-space($kind_parts/fn:match//fn:group[@nr=1])) then $kind_parts/fn:match//fn:group[@nr=1] else 'other'"/>
+          <xsl:variable name="kind_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+)')"/>
+          <xsl:value-of select="if ($kind_parts/fn:match//fn:group[@nr=1][normalize-space(.)]) then ($kind_parts/fn:match//fn:group[@nr=1])[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="normalize-space(*[@key='severity'])">
+        <xsl:if test="*[@key='severity'][normalize-space(.)]">
           <Unknown>
-            <Data Name="severity" Value="{*[@key='severity']}"/>
+            <Data Name="severity" Value="{(*[@key='severity'])[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -168,10 +168,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'auth', 'session end', 'tunnel', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='time'])">
+    <xsl:if test="*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='time'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -185,17 +185,17 @@
   </xsl:template>
   <!-- device: shared by the rules 'auth', 'session end', 'tunnel', 'other' -->
   <xsl:template match="node()" mode="device">
-    <xsl:if test="normalize-space(*[@key='host'])">
+    <xsl:if test="*[@key='host'][normalize-space(.)]">
       <Device>
         <HostName>
-          <xsl:value-of select="*[@key='host']"/>
+          <xsl:value-of select="(*[@key='host'])[1]"/>
         </HostName>
       </Device>
     </xsl:if>
   </xsl:template>
   <!-- user: shared by the rules 'auth', 'session end' -->
   <xsl:template match="node()" mode="user">
-    <xsl:variable name="user_quoted_parts" select="analyze-string(string(*[@key='message'][1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
+    <xsl:variable name="user_quoted_parts" select="analyze-string(string((*[@key='message'])[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
     <xsl:if test="exists((($user_quoted_parts/fn:match//fn:group[@nr=1], $user_quoted_parts/fn:match//fn:group[@nr=2])[normalize-space(.)][1])[normalize-space(.)])">
       <User>
         <Id>
@@ -206,24 +206,24 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'auth', 'session end', 'tunnel' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:variable name="kind_parts" select="analyze-string(string(*[@key='message'][1]), '^(\S+) (\S+)')"/>
-    <xsl:if test="normalize-space($kind_parts/fn:match//fn:group[@nr=1])">
+    <xsl:variable name="kind_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+)')"/>
+    <xsl:if test="$kind_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="$kind_parts/fn:match//fn:group[@nr=1]"/>
+        <xsl:value-of select="($kind_parts/fn:match//fn:group[@nr=1])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'auth', 'session end', 'tunnel', 'other' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(*[@key='message'])">
+    <xsl:if test="*[@key='message'][normalize-space(.)]">
       <Description>
-        <xsl:value-of select="*[@key='message']"/>
+        <xsl:value-of select="(*[@key='message'])[1]"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- authenticate_user: shared by the rules 'auth', 'session end' -->
   <xsl:template match="node()" mode="authenticate_user">
-    <xsl:variable name="user_quoted_parts" select="analyze-string(string(*[@key='message'][1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
+    <xsl:variable name="user_quoted_parts" select="analyze-string(string((*[@key='message'])[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
     <xsl:if test="exists((($user_quoted_parts/fn:match//fn:group[@nr=1], $user_quoted_parts/fn:match//fn:group[@nr=2])[normalize-space(.)][1])[normalize-space(.)])">
       <User>
         <Id>
@@ -245,7 +245,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
   <xsl:function name="mcp:value" as="xs:string?">

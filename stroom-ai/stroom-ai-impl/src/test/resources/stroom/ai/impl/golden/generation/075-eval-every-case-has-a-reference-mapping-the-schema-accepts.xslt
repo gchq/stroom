@@ -50,10 +50,10 @@
         <xsl:apply-templates select="." mode="type_id"/>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:User)">
+          <xsl:if test="mcp:parse-xml((*[@key='payload'])[1])//*:User[normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="mcp:parse-xml((*[@key='payload'])[1])//*:User"/>
+                <xsl:value-of select="(mcp:parse-xml((*[@key='payload'])[1])//*:User)[1]"/>
               </Id>
             </User>
           </xsl:if>
@@ -73,9 +73,9 @@
         <View>
           <Object>
             <Type>Account</Type>
-            <xsl:if test="normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id)">
+            <xsl:if test="mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id[normalize-space(.)]">
               <Id>
-                <xsl:value-of select="mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id"/>
+                <xsl:value-of select="(mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id)[1]"/>
               </Id>
             </xsl:if>
           </Object>
@@ -96,9 +96,9 @@
           <After>
             <Object>
               <Type>Account</Type>
-              <xsl:if test="normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id)">
+              <xsl:if test="mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id[normalize-space(.)]">
                 <Id>
-                  <xsl:value-of select="mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id"/>
+                  <xsl:value-of select="(mcp:parse-xml((*[@key='payload'])[1])//*:Account/@*:id)[1]"/>
                 </Id>
               </xsl:if>
             </Object>
@@ -110,10 +110,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'login', 'read', 'update' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='time'])">
+    <xsl:if test="*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='time'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -125,25 +125,25 @@
         <Name>API Gateway</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(*[@key='service'])">
+      <xsl:if test="*[@key='service'][normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="*[@key='service']"/>
+          <xsl:value-of select="(*[@key='service'])[1]"/>
         </Generator>
       </xsl:if>
       <Device>
         <HostName>apigw01</HostName>
       </Device>
-      <xsl:if test="normalize-space(*[@key='client_ip'])">
+      <xsl:if test="*[@key='client_ip'][normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="*[@key='client_ip']"/>
+            <xsl:value-of select="(*[@key='client_ip'])[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:User)">
+      <xsl:if test="mcp:parse-xml((*[@key='payload'])[1])//*:User[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="mcp:parse-xml((*[@key='payload'])[1])//*:User"/>
+            <xsl:value-of select="(mcp:parse-xml((*[@key='payload'])[1])//*:User)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -151,18 +151,18 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'login', 'read', 'update' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='operation'])">
+    <xsl:if test="*[@key='operation'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='operation']"/>
+        <xsl:value-of select="(*[@key='operation'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- outcome: shared by the rules 'login', 'read', 'update' -->
   <xsl:template match="node()" mode="outcome">
-    <xsl:if test="exists($payload_result_to_success?(normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:Result)))">
+    <xsl:if test="exists($payload_result_to_success?((mcp:parse-xml((*[@key='payload'])[1])//*:Result)[1]))">
       <Outcome>
         <Success>
-          <xsl:value-of select="$payload_result_to_success?(normalize-space(mcp:parse-xml((*[@key='payload'])[1])//*:Result))[1]"/>
+          <xsl:value-of select="$payload_result_to_success?((mcp:parse-xml((*[@key='payload'])[1])//*:Result)[1])[1]"/>
         </Success>
       </Outcome>
     </xsl:if>

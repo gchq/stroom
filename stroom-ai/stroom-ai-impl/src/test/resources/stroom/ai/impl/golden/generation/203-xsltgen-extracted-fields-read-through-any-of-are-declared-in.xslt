@@ -47,10 +47,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'login', 'logout' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -65,10 +65,10 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
-      <xsl:variable name="user_quoted_parts" select="analyze-string(string(data[@name='msg']/@value[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
+      <xsl:variable name="user_quoted_parts" select="analyze-string(string((data[@name='msg']/@value)[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
       <xsl:if test="exists((($user_quoted_parts/fn:match//fn:group[@nr=1], $user_quoted_parts/fn:match//fn:group[@nr=2])[normalize-space(.)][1])[normalize-space(.)])">
         <User>
           <Id>
@@ -80,7 +80,7 @@
   </xsl:template>
   <!-- user: shared by the rules 'login', 'logout' -->
   <xsl:template match="node()" mode="user">
-    <xsl:variable name="user_quoted_parts" select="analyze-string(string(data[@name='msg']/@value[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
+    <xsl:variable name="user_quoted_parts" select="analyze-string(string((data[@name='msg']/@value)[1]), ' user=(?:&quot;([^&quot;]*)&quot;|(\S+))')"/>
     <xsl:if test="exists((($user_quoted_parts/fn:match//fn:group[@nr=1], $user_quoted_parts/fn:match//fn:group[@nr=2])[normalize-space(.)][1])[normalize-space(.)])">
       <User>
         <Id>

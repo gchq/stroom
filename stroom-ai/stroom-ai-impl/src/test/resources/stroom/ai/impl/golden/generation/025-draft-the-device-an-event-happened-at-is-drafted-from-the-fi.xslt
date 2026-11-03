@@ -31,27 +31,27 @@
           <Device>
             <xsl:if test="$switch">
               <HostName>
-                <xsl:value-of select="$switch"/>
+                <xsl:value-of select="$switch[1]"/>
               </HostName>
             </xsl:if>
             <xsl:if test="$mac">
               <MACAddress>
-                <xsl:value-of select="$mac"/>
+                <xsl:value-of select="$mac[1]"/>
               </MACAddress>
             </xsl:if>
           </Device>
         </xsl:if>
-        <xsl:if test="normalize-space(*[@key='ip'])">
+        <xsl:if test="*[@key='ip'][normalize-space(.)]">
           <Client>
             <IPAddress>
-              <xsl:value-of select="*[@key='ip']"/>
+              <xsl:value-of select="(*[@key='ip'])[1]"/>
             </IPAddress>
           </Client>
         </xsl:if>
-        <xsl:if test="normalize-space(*[@key='user'])">
+        <xsl:if test="*[@key='user'][normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="*[@key='user']"/>
+              <xsl:value-of select="(*[@key='user'])[1]"/>
             </Id>
           </User>
         </xsl:if>
@@ -60,7 +60,7 @@
         <TypeId>Other</TypeId>
         <xsl:if test="$time">
           <Unknown>
-            <Data Name="time" Value="{$time}"/>
+            <Data Name="time" Value="{$time[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -71,7 +71,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

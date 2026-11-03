@@ -252,7 +252,7 @@ class TestXsltGeneratorProblems extends XsltRuns {
         // With the value the rule tests, so a whole feed's misses are grouped from its Error streams alone.
         assertThat(xslt).contains("stroom:log('WARN', concat('No event mapping matched record ', "
                                   + "$record-no, ' (', string-join((concat('action=', string(("
-                                  + "normalize-space(data[@name='action']/@value))[1]))), ' | '), ')'))");
+                                  + "data[@name='action']/@value[normalize-space(.)])[1]))), ' | '), ')'))");
         // one read: no variable
         assertThat(xslt).contains("data[@name='action']/@value = ('login', 'logon')");
     }

@@ -37,8 +37,8 @@
           <Object>
             <Type>Ticket</Type>
             <xsl:apply-templates select="." mode="id"/>
-            <xsl:if test="normalize-space(data[@name='customer']/@value)">
-              <Data Name="customer" Value="{replace(data[@name='customer']/@value[1], '&quot;&quot;', '&quot;')}"/>
+            <xsl:if test="data[@name='customer']/@value[normalize-space(.)]">
+              <Data Name="customer" Value="{replace((data[@name='customer']/@value)[1], '&quot;&quot;', '&quot;')}"/>
             </xsl:if>
           </Object>
         </Create>
@@ -75,14 +75,14 @@
           <After>
             <Object>
               <Type>Ticket</Type>
-              <xsl:if test="normalize-space(data[@name='ticket']/@value)">
+              <xsl:if test="data[@name='ticket']/@value[normalize-space(.)]">
                 <Id>
-                  <xsl:value-of select="data[@name='ticket']/@value"/>
+                  <xsl:value-of select="(data[@name='ticket']/@value)[1]"/>
                 </Id>
               </xsl:if>
-              <xsl:if test="data[@name='action']/@value = ('close', 'update')">
+              <xsl:if test="(data[@name='action']/@value)[1] = ('close', 'update')">
                 <State>
-                  <xsl:value-of select="if (data[@name='action']/@value = 'close') then 'Closed' else 'Open'"/>
+                  <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'close') then 'Closed' else 'Open'"/>
                 </State>
               </xsl:if>
             </Object>
@@ -93,10 +93,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'created', 'viewed', 'updated' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -112,10 +112,10 @@
       <Device>
         <HostName>helpdesk.example.org</HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='agent']/@value)">
+      <xsl:if test="data[@name='agent']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='agent']/@value"/>
+            <xsl:value-of select="(data[@name='agent']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -123,25 +123,25 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'created', 'viewed', 'updated' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='action']/@value)">
+    <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='action']/@value"/>
+        <xsl:value-of select="(data[@name='action']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'created', 'viewed', 'updated' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='comment']/@value)">
+    <xsl:if test="data[@name='comment']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="replace(data[@name='comment']/@value[1], '&quot;&quot;', '&quot;')"/>
+        <xsl:value-of select="replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;')"/>
       </Description>
     </xsl:if>
   </xsl:template>
   <!-- id: shared by the rules 'created', 'viewed' -->
   <xsl:template match="node()" mode="id">
-    <xsl:if test="normalize-space(data[@name='ticket']/@value)">
+    <xsl:if test="data[@name='ticket']/@value[normalize-space(.)]">
       <Id>
-        <xsl:value-of select="data[@name='ticket']/@value"/>
+        <xsl:value-of select="(data[@name='ticket']/@value)[1]"/>
       </Id>
     </xsl:if>
   </xsl:template>

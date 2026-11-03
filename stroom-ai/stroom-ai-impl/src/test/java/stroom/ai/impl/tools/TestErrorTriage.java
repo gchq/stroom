@@ -18,6 +18,7 @@ package stroom.ai.impl.tools;
 
 import stroom.ai.impl.ErrorTriageRuleConfig;
 import stroom.ai.impl.tools.ErrorTriage.Marker;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.ElementId;
@@ -94,6 +95,18 @@ class TestErrorTriage {
             assertThat(RULES.classify("WARNING", "translationFilter", true, message).reason()).as(message)
                     .doesNotContain("quoted_newlines");
         }
+    }
+
+    @Test
+    void severalValuesForAnEntryWithoutRepeatAreForReviewWithTheFix() {
+        // The generated XSLT's warning (XsltGenerator.SEVERAL_VALUES) where an xpath entry without repeat reads
+        // several values: seen in testing, a split group list written as one.
+        final String message = "Log - Several values (3) for EventSource/User/Groups/Group/Name, "
+                               + XsltGenerator.SEVERAL_VALUES + "12";
+        final ErrorTriage.Classified classified = RULES.classify("WARNING", "translationFilter", true, message);
+
+        assertThat(classified.classification()).isEqualTo(ErrorTriage.REVIEW);
+        assertThat(classified.reason()).contains("repeat: true").contains("build_translation_xslt changes=");
     }
 
     @Test

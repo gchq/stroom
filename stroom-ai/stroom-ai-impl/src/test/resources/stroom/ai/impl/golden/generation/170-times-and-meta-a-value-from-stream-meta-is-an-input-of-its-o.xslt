@@ -11,10 +11,10 @@
   <!-- Rule 'a': every record. Writes an Authenticate event (TypeId x) from u. -->
   <xsl:template match="node()" mode="event_type_a">
     <Event>
-      <xsl:if test="normalize-space(*[@key='ts'])">
+      <xsl:if test="*[@key='ts'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(*[@key='ts'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((*[@key='ts'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -24,10 +24,14 @@
           <Environment>T</Environment>
         </System>
         <Generator>g</Generator>
-        <xsl:if test="exists(stroom:meta('MyHostName')[normalize-space(.)])">
+        <xsl:variable name="device_host_name" select="stroom:meta('MyHostName')[normalize-space(.)]"/>
+        <xsl:if test="exists($device_host_name)">
           <Device>
             <HostName>
-              <xsl:value-of select="stroom:meta('MyHostName')"/>
+              <xsl:if test="count($device_host_name) gt 1">
+                <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($device_host_name), ') for ', 'EventSource/Device/HostName, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
+              </xsl:if>
+              <xsl:value-of select="$device_host_name[1]"/>
             </HostName>
           </Device>
         </xsl:if>
@@ -36,10 +40,10 @@
         <TypeId>x</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='u'])">
+          <xsl:if test="*[@key='u'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='u']"/>
+                <xsl:value-of select="(*[@key='u'])[1]"/>
               </Id>
             </User>
           </xsl:if>

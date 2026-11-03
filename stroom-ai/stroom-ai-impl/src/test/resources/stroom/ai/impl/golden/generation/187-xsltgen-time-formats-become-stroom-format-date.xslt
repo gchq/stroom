@@ -24,17 +24,17 @@
         <TypeId>Logon</TypeId>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(data[@name='user']/@value)">
+          <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="data[@name='user']/@value"/>
+                <xsl:value-of select="(data[@name='user']/@value)[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="data[@name='result']/@value = ('ok', 'fail')">
+          <xsl:if test="(data[@name='result']/@value)[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='result']/@value = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='result']/@value)[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -51,11 +51,11 @@
       <EventDetail>
         <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
         <TypeId>
-          <xsl:value-of select="if ($action) then $action else 'other'"/>
+          <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:if test="$action">
           <Unknown>
-            <Data Name="action" Value="{$action}"/>
+            <Data Name="action" Value="{$action[1]}"/>
           </Unknown>
         </xsl:if>
       </EventDetail>
@@ -63,10 +63,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal(data[@name='time']/@value[1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal((data[@name='time']/@value)[1]) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -81,13 +81,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -98,7 +98,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

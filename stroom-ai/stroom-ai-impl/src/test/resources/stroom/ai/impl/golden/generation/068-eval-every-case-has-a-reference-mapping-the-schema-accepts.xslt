@@ -32,9 +32,9 @@
         <Create>
           <Object>
             <Type>Ticket</Type>
-            <xsl:if test="normalize-space(data[@name='ticket']/@value)">
+            <xsl:if test="data[@name='ticket']/@value[normalize-space(.)]">
               <Id>
-                <xsl:value-of select="data[@name='ticket']/@value"/>
+                <xsl:value-of select="(data[@name='ticket']/@value)[1]"/>
               </Id>
             </xsl:if>
           </Object>
@@ -56,9 +56,9 @@
           <After>
             <Object>
               <Type>Ticket</Type>
-              <xsl:if test="normalize-space(data[@name='ticket']/@value)">
+              <xsl:if test="data[@name='ticket']/@value[normalize-space(.)]">
                 <Id>
-                  <xsl:value-of select="data[@name='ticket']/@value"/>
+                  <xsl:value-of select="(data[@name='ticket']/@value)[1]"/>
                 </Id>
               </xsl:if>
             </Object>
@@ -71,10 +71,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'create', 'change' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -90,10 +90,10 @@
       <Device>
         <HostName>servicedesk01</HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='user']/@value)">
+      <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="data[@name='user']/@value"/>
+            <xsl:value-of select="(data[@name='user']/@value)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -101,17 +101,17 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'create', 'change' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(data[@name='action']/@value)">
+    <xsl:if test="data[@name='action']/@value[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="data[@name='action']/@value"/>
+        <xsl:value-of select="(data[@name='action']/@value)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
   <!-- description: shared by the rules 'create', 'change' -->
   <xsl:template match="node()" mode="description">
-    <xsl:if test="normalize-space(data[@name='comment']/@value)">
+    <xsl:if test="data[@name='comment']/@value[normalize-space(.)]">
       <Description>
-        <xsl:value-of select="replace(data[@name='comment']/@value[1], '&quot;&quot;', '&quot;')"/>
+        <xsl:value-of select="replace((data[@name='comment']/@value)[1], '&quot;&quot;', '&quot;')"/>
       </Description>
     </xsl:if>
   </xsl:template>
@@ -120,7 +120,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

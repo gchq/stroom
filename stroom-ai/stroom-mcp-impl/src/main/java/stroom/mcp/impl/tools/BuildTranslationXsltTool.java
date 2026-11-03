@@ -537,9 +537,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // A saved XSLT keeps the version it writes; one that names none (made empty) is asked about like a new
             // one.
             final XsltDoc saved = translationDocs.readXslt(request.uuid());
-            b.version = KeptMapping.readMapping(saved.getDescription())
-                    .filter(kept -> KeptMapping.TRANSLATION.equals(kept.kind()))
-                    .map(kept -> KeptCode.keptVersion(kept.payload()))
+            b.version = keptPayload(saved)
+                    .map(KeptCode::keptVersion)
                     .orElseGet(() -> HeldSchemas.eventLoggingVersion(saved.getData()));
         }
         if (request.schemaVersion() != null || b.version == null) {
@@ -553,10 +552,26 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         return Optional.empty();
     }
 
+    // The translation mapping's payload kept with a saved XSLT ({schema_version, schema_uuid, mapping}), or null.
+    private Map<String, Object> keptPayload(final String uuid) {
+        return keptPayload(translationDocs.readXslt(uuid)).orElse(null);
+    }
+
+    private static Optional<Map<String, Object>> keptPayload(final XsltDoc saved) {
+        return KeptMapping.readMapping(saved.getDescription())
+                .filter(kept -> KeptMapping.TRANSLATION.equals(kept.kind()))
+                .map(KeptMapping.Kept::payload);
+    }
+
     // The XSLT generated, with the imports standing instructions require.
     private void generate(final ToolCallContext context, final Build b) {
         final Request request = b.request;
-        b.schema = eventVersions.eventSchema(context, request.build(), b.version);
+        // A saved XSLT changed or regenerated with no version given stays in the XML schema document kept with it
+        // (a fork, say). Seen in testing: a new session remembered no choice, so a change by uuid alone fell back to
+        // event-logging's document of the version and moved the fork's translation into event-logging:3.
+        b.schema = request.uuid() != null && request.schemaVersion() == null
+                ? eventVersions.keptSchema(context, request.build(), keptPayload(request.uuid()), b.version)
+                : eventVersions.eventSchema(context, request.build(), b.version);
         final List<RequiredImport> required = requiredImports.requiredFor(context.session(),
                 InstructionRules.TRANSLATION, request.build(), request.feeds());
         final Set<String> have = new LinkedHashSet<>(b.mapping.imports());

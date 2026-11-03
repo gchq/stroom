@@ -47,9 +47,13 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// `write_documentation` - creates or updates the Documentation doc of a pipeline in a build, or of an existing index,
 /// its Field mapping and Errors sections generated. The doc is made in the build as the user ([WriteGuard]), and a doc
@@ -75,6 +79,9 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     private static final String FIELD_MAPPING = "Field mapping";
     private static final String REFERENCE_MAPS = "Reference maps";
     private static final String NOT_AN_OBJECT = "field_descriptions is an object, {field: description}";
+    // A link to a document, as the chat writes one: [name](?action=open-doc&docType=<type>&docUuid=<uuid>).
+    private static final Pattern DOCUMENT_LINK = Pattern.compile(
+            "\\?action=open-doc&docType=([^&\\s)]+)&docUuid=([^&\\s)]+)");
 
     private final BuildDocumentation docs;
     private final FieldMappingSections sections;
@@ -279,6 +286,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             throw new ToolRefusal("The documentation is empty: give the full text in markdown, with the sections in "
                                   + "stroom://guide");
         }
+        refuseBrokenLinks(body);
         // A new doc's is 'Created'; an update needs its own line (checked below).
         final String change = NullSafe.string(rawArg(call, CHANGE_ARG)).strip();
         final String layout = stringArg(call, FIELD_MAPPING_LAYOUT_ARG);
@@ -688,6 +696,30 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         return value == null
                 ? null
                 : String.valueOf(value);
+    }
+
+    // Links to documents the user can't open: seen in testing, a feed's UUID typed by hand with a digit doubled, its
+    // link broken in the documentation promoted to production. Each link must name a document of its type.
+    private void refuseBrokenLinks(final String body) {
+        final Set<String> broken = new LinkedHashSet<>();
+        final Matcher link = DOCUMENT_LINK.matcher(body);
+        while (link.find()) {
+            final String type = link.group(1);
+            final String uuid = link.group(2);
+            final boolean found = documentAccess.findDocRef(uuid)
+                    .filter(docRef -> type.equals(docRef.getType()))
+                    .isPresent();
+            if (!found) {
+                broken.add(type + " " + uuid);
+            }
+        }
+        if (!broken.isEmpty()) {
+            throw new ToolRefusal("These links name no " + (broken.size() == 1
+                    ? "document"
+                    : "documents") + " of that type the user can open: " + String.join(", ", broken)
+                                  + ". Copy each UUID from a tool's result (never type one), or leave the link "
+                                  + "out, and call again.");
+        }
     }
 
     // Whether the markdown has a Field mapping section of its own: a table, not a placeholder for the generated one.

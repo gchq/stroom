@@ -38,22 +38,22 @@
               <xsl:apply-templates select="." mode="source"/>
               <xsl:apply-templates select="." mode="destination"/>
               <xsl:if test="$dstintfrole">
-                <Data Name="dstintfrole" Value="{$dstintfrole}"/>
+                <Data Name="dstintfrole" Value="{$dstintfrole[1]}"/>
               </xsl:if>
               <xsl:if test="$proto">
-                <Data Name="proto" Value="{$proto}"/>
+                <Data Name="proto" Value="{$proto[1]}"/>
               </xsl:if>
               <xsl:if test="$logid">
-                <Data Name="logid" Value="{$logid}"/>
+                <Data Name="logid" Value="{$logid[1]}"/>
               </xsl:if>
               <xsl:if test="$policyid">
-                <Data Name="policyid" Value="{$policyid}"/>
+                <Data Name="policyid" Value="{$policyid[1]}"/>
               </xsl:if>
               <xsl:if test="$service">
-                <Data Name="service" Value="{$service}"/>
+                <Data Name="service" Value="{$service[1]}"/>
               </xsl:if>
               <xsl:if test="$srcintfrole">
-                <Data Name="srcintfrole" Value="{$srcintfrole}"/>
+                <Data Name="srcintfrole" Value="{$srcintfrole[1]}"/>
               </xsl:if>
             </Deny>
           </Network>
@@ -84,22 +84,22 @@
               <xsl:apply-templates select="." mode="source"/>
               <xsl:apply-templates select="." mode="destination"/>
               <xsl:if test="$dstintfrole">
-                <Data Name="dstintfrole" Value="{$dstintfrole}"/>
+                <Data Name="dstintfrole" Value="{$dstintfrole[1]}"/>
               </xsl:if>
               <xsl:if test="$proto">
-                <Data Name="proto" Value="{$proto}"/>
+                <Data Name="proto" Value="{$proto[1]}"/>
               </xsl:if>
               <xsl:if test="$logid">
-                <Data Name="logid" Value="{$logid}"/>
+                <Data Name="logid" Value="{$logid[1]}"/>
               </xsl:if>
               <xsl:if test="$policyid">
-                <Data Name="policyid" Value="{$policyid}"/>
+                <Data Name="policyid" Value="{$policyid[1]}"/>
               </xsl:if>
               <xsl:if test="$service">
-                <Data Name="service" Value="{$service}"/>
+                <Data Name="service" Value="{$service[1]}"/>
               </xsl:if>
               <xsl:if test="$srcintfrole">
-                <Data Name="srcintfrole" Value="{$srcintfrole}"/>
+                <Data Name="srcintfrole" Value="{$srcintfrole[1]}"/>
               </xsl:if>
             </Permit>
           </Network>
@@ -109,10 +109,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'deny', 'permit' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(data[@name='time']/@value)">
+    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="data[@name='time']/@value"/>
+          <xsl:value-of select="(data[@name='time']/@value)[1]"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -127,13 +127,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='host']/@value)) then data[@name='host']/@value else 'unknown'"/>
+          <xsl:value-of select="if (data[@name='host']/@value[normalize-space(.)]) then (data[@name='host']/@value)[1] else 'unknown'"/>
         </HostName>
       </Device>
       <xsl:if test="normalize-space(mcp:quoted_value(data[@name='msg']/@value, 'user'))">
         <User>
           <Id>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'user')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'user')[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -145,7 +145,7 @@
       <Source>
         <Device>
           <IPAddress>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'srcip')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'srcip')[1]"/>
           </IPAddress>
         </Device>
       </Source>
@@ -157,7 +157,7 @@
       <Destination>
         <Device>
           <IPAddress>
-            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'dstip')"/>
+            <xsl:value-of select="mcp:quoted_value(data[@name='msg']/@value, 'dstip')[1]"/>
           </IPAddress>
         </Device>
       </Destination>

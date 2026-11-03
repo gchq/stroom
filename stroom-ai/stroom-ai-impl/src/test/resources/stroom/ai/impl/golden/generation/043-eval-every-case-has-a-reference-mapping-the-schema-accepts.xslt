@@ -31,10 +31,10 @@
         <Authenticate>
           <Action>Logon</Action>
           <xsl:apply-templates select="." mode="user"/>
-          <xsl:if test="data[@name='result']/@value = ('ok', 'fail')">
+          <xsl:if test="(data[@name='result']/@value)[1] = ('ok', 'fail')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (data[@name='result']/@value = 'ok') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((data[@name='result']/@value)[1] = 'ok') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -50,7 +50,7 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>
-          <xsl:value-of select="if (data[@name='action']/@value = 'logout') then 'VPN-Logoff' else if (data[@name='action']/@value = 'timeout') then 'VPN-Timeout' else 'logoff'"/>
+          <xsl:value-of select="if ((data[@name='action']/@value)[1] = 'logout') then 'VPN-Logoff' else if ((data[@name='action']/@value)[1] = 'timeout') then 'VPN-Timeout' else 'logoff'"/>
         </TypeId>
         <Authenticate>
           <Action>Logoff</Action>
@@ -79,13 +79,13 @@
       <Generator>vpnd</Generator>
       <Device>
         <HostName>
-          <xsl:value-of select="if (normalize-space(data[@name='device']/@value)) then data[@name='device']/@value else 'vpn-gw-1'"/>
+          <xsl:value-of select="if (data[@name='device']/@value[normalize-space(.)]) then (data[@name='device']/@value)[1] else 'vpn-gw-1'"/>
         </HostName>
       </Device>
-      <xsl:if test="normalize-space(data[@name='src_ip']/@value)">
+      <xsl:if test="data[@name='src_ip']/@value[normalize-space(.)]">
         <Client>
           <IPAddress>
-            <xsl:value-of select="data[@name='src_ip']/@value"/>
+            <xsl:value-of select="(data[@name='src_ip']/@value)[1]"/>
           </IPAddress>
         </Client>
       </xsl:if>

@@ -18,18 +18,36 @@ package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.validation.XmlTrees;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.lib.ExtensionFunctionCall;
+import net.sf.saxon.lib.ExtensionFunctionDefinition;
+import net.sf.saxon.om.Item;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.Xslt30Transformer;
 import net.sf.saxon.s9api.XsltCompiler;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.SequenceType;
+import net.sf.saxon.value.StringValue;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +92,7 @@ class XsltRuns extends GenerationFixtures {
         }
         try {
             final Processor processor = new Processor(false);
+            processor.registerExtensionFunction(new FormatDateStub());
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setURIResolver((href, base) -> imports.containsKey(href)
                     ? new StreamSource(new StringReader(imports.get(href)), "urn:import:" + href.replace(" ", "%20"))
@@ -192,5 +211,87 @@ class XsltRuns extends GenerationFixtures {
             n++;
         }
         return n;
+    }
+
+    // stroom:format-date as the generated XSLT calls it, close enough to Stroom's for the generator's tests: one
+    // argument, epoch milliseconds (or ISO text, returned as it is); two or three, the text parsed with a Java pattern
+    // in the time zone given (UTC by default). Written as ISO with milliseconds in UTC; text that doesn't parse gives
+    // empty, as Stroom's does (it also logs a warning).
+    private static final class FormatDateStub extends ExtensionFunctionDefinition {
+
+        private static final DateTimeFormatter ISO = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+                .withZone(ZoneOffset.UTC);
+
+        @Override
+        public StructuredQName getFunctionQName() {
+            return new StructuredQName("stroom", "stroom", "format-date");
+        }
+
+        @Override
+        public int getMinimumNumberOfArguments() {
+            return 1;
+        }
+
+        @Override
+        public int getMaximumNumberOfArguments() {
+            return 3;
+        }
+
+        @Override
+        public SequenceType[] getArgumentTypes() {
+            return new SequenceType[]{SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING,
+                    SequenceType.OPTIONAL_STRING};
+        }
+
+        @Override
+        public SequenceType getResultType(final SequenceType[] suppliedArgumentTypes) {
+            return SequenceType.SINGLE_STRING;
+        }
+
+        @Override
+        public ExtensionFunctionCall makeCallExpression() {
+            return new ExtensionFunctionCall() {
+                @Override
+                public Sequence call(final XPathContext context, final Sequence[] arguments) throws XPathException {
+                    final String value = text(arguments, 0);
+                    if (value == null || value.isBlank()) {
+                        return StringValue.EMPTY_STRING;
+                    }
+                    if (arguments.length == 1) {
+                        return new StringValue(value.matches("-?\\d+")
+                                ? ISO.format(Instant.ofEpochMilli(Long.parseLong(value)))
+                                : value);
+                    }
+                    final String zone = arguments.length > 2 && text(arguments, 2) != null
+                            ? text(arguments, 2)
+                            : "UTC";
+                    return new StringValue(parse(value, text(arguments, 1), zone));
+                }
+            };
+        }
+
+        private static String text(final Sequence[] arguments, final int n) throws XPathException {
+            final Item item = arguments[n].head();
+            return item == null
+                    ? null
+                    : item.getStringValue();
+        }
+
+        private static String parse(final String value, final String pattern, final String zone) {
+            try {
+                final TemporalAccessor parsed = DateTimeFormatter.ofPattern(pattern).parse(value);
+                final Instant instant;
+                if (parsed.isSupported(ChronoField.OFFSET_SECONDS)) {
+                    instant = Instant.from(parsed);
+                } else if (parsed.isSupported(ChronoField.HOUR_OF_DAY)) {
+                    instant = LocalDateTime.from(parsed).atZone(ZoneId.of(zone)).toInstant();
+                } else {
+                    instant = LocalDate.from(parsed).atStartOfDay(ZoneId.of(zone)).toInstant();
+                }
+                return ISO.format(instant);
+            } catch (final DateTimeException e) {
+                return "";
+            }
+        }
     }
 }

@@ -45,6 +45,14 @@ class TestXsltGenerator extends XsltRuns {
         return rule("logon", List.of(equalsCondition("action", "login")), fields);
     }
 
+    // The names of the groups an event's source user is in, in the order written.
+    private static List<String> groupNames(final XmlElement event) {
+        final XmlElement groups = find(event, "EventSource/User/Groups");
+        return groups == null
+                ? List.of()
+                : children(groups, "Group").stream().map(group -> text(group, "Name")).toList();
+    }
+
     private static List<String> localNames(final XmlElement element) {
         return element.childElements().stream().map(XmlElement::localName).toList();
     }
@@ -215,8 +223,8 @@ class TestXsltGenerator extends XsltRuns {
         // better inline.
         assertThat(maps).isEqualTo(Map.of("result_to_success", Map.of("'ok'", "'true'", "'fail'", "'false'")));
         // guard and value of Outcome/Success and of the Data
-        assertThat(count(xslt, "$result_to_success?($result)")).isEqualTo(4);
-        assertThat(xslt).contains("if ($action = 'login') then 'Logon' else 'Other'");
+        assertThat(count(xslt, "$result_to_success?(")).isEqualTo(4);
+        assertThat(xslt).contains("if ($action[1] = 'login') then 'Logon' else 'Other'");
         final XmlElement events = transform(xslt, RECORDS);
         assertThat(invalid(events, XSD)).isEmpty();
         final XmlElement logon = children(events, "Event").get(0);
@@ -256,7 +264,7 @@ class TestXsltGenerator extends XsltRuns {
                  "timezone": "UTC"}"""));
         common.addAll(BASE.subList(1, BASE.size()));
         assertThat(generate(mapping(with("common", common))).xslt())
-                .contains("stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')");
+                .contains("stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')");
         final List<Map<String, Object>> epoch = new ArrayList<>();
         epoch.add(json("{\"path\": \"EventTime/TimeCreated\", \"field\": \"time\", \"time_format\": \"epoch_s\"}"));
         epoch.addAll(BASE.subList(1, BASE.size()));
@@ -277,7 +285,7 @@ class TestXsltGenerator extends XsltRuns {
                  "timezone": "UTC"}"""));
         common.addAll(BASE.subList(1, BASE.size()));
         final String xslt = generate(mapping(with("common", common))).xslt();
-        assertThat(xslt).contains("stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', "
+        assertThat(xslt).contains("stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', "
                                   + "'UTC')")
                 .doesNotContain("mcp:time-ms");
     }
@@ -322,6 +330,33 @@ class TestXsltGenerator extends XsltRuns {
         });
         // No mentions and no client: no container either.
         assertThat(having(children(events, "Event").get(1), EVT, "Data", "Name", "mentions")).isEmpty();
+    }
+
+    @Test
+    void aRepeatedXpathGivingSeveralStringsIsTestedForPresenceWithoutFailing() {
+        // Seen in testing (Netskope, chat 143): a group list split with tokenize() and repeated, beside User/Id.
+        // The guard around User put the bare string sequence in an or, and Saxon has no effective boolean value
+        // for two or more strings, so every record with two groups failed part-way and then the schema.
+        final List<Map<String, Object>> common = plus(BASE, json("""
+                {"path": "EventSource/User/Groups/Group/Name", "repeat": true,
+                 "xpath": "tokenize(data[@name='groups']/@value, ';')"}"""));
+        final XsltGenerator.Generated result = generate(mapping(with("common", common)));
+        assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
+
+        final XmlElement events = transform(result.xslt(), """
+                <records xmlns="records:2">
+                <record><data name="time" value="2026-09-28T10:00:00.000Z"/><data name="action" value="login"/>\
+                <data name="user" value="dave"/><data name="result" value="ok"/>\
+                <data name="groups" value="admins;staff"/></record>
+                <record><data name="time" value="2026-09-28T10:01:00.000Z"/><data name="action" value="keepalive"/>\
+                <data name="groups" value="staff"/></record>
+                </records>""");
+
+        assertThat(invalid(events, XSD)).isEmpty();
+        final List<XmlElement> written = children(events, "Event");
+        assertThat(written).hasSize(2);
+        assertThat(groupNames(written.get(0))).containsExactly("admins", "staff");
+        assertThat(groupNames(written.get(1))).containsExactly("staff");
     }
 
     @Test
@@ -925,7 +960,7 @@ class TestXsltGenerator extends XsltRuns {
         final XsltGenerator.Generated result = XsltGenerator.generate(m, SCHEMA_352, "3.5.2");
         assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
         // The rule for the rest falls back to its name; the logon rule, whose condition says kind is there, doesn't.
-        assertThat(result.xslt()).contains("then *[@key='kind'] else 'other'").doesNotContain("else 'logon'");
+        assertThat(result.xslt()).contains("then (*[@key='kind'])[1] else 'other'").doesNotContain("else 'logon'");
         assertThat(result.warnings()).anySatisfy(w -> assertThat(w).startsWith("[other] TypeId is read from kind"));
         assertThat(result.warnings()).noneSatisfy(w -> assertThat(w).startsWith("[logon] TypeId"));
     }

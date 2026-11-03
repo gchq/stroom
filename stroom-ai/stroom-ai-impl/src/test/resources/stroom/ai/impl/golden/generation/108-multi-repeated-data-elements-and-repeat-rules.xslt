@@ -28,10 +28,10 @@
   <xsl:template match="node()" mode="event_type_any">
     <xsl:param name="record" tunnel="yes"/>
     <Event>
-      <xsl:if test="normalize-space(*[@key='ts'])">
+      <xsl:if test="*[@key='ts'][normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="*[@key='ts']"/>
+            <xsl:value-of select="(*[@key='ts'])[1]"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -41,22 +41,22 @@
           <Environment>Eval</Environment>
         </System>
         <Generator>audit</Generator>
-        <xsl:if test="normalize-space($record/*[@key='host'])">
+        <xsl:if test="$record/*[@key='host'][normalize-space(.)]">
           <Device>
             <HostName>
-              <xsl:value-of select="$record/*[@key='host']"/>
+              <xsl:value-of select="($record/*[@key='host'])[1]"/>
             </HostName>
           </Device>
         </xsl:if>
         <xsl:variable name="user" select="*[@key='user'][normalize-space(.)]"/>
-        <xsl:if test="$user or (*[@key='roles'])[normalize-space(.)]">
+        <xsl:if test="$user or exists((*[@key='roles'])[normalize-space(.)])">
           <User>
             <xsl:if test="$user">
               <Id>
-                <xsl:value-of select="$user"/>
+                <xsl:value-of select="$user[1]"/>
               </Id>
             </xsl:if>
-            <xsl:if test="(*[@key='roles'])[normalize-space(.)]">
+            <xsl:if test="exists((*[@key='roles'])[normalize-space(.)])">
               <Groups>
                 <xsl:for-each select="*[@key='roles']/*">
                   <Group>
@@ -72,7 +72,7 @@
       </EventSource>
       <EventDetail>
         <TypeId>x</TypeId>
-        <xsl:if test="(*[@key='roles'])[normalize-space(.)]">
+        <xsl:if test="exists((*[@key='roles'])[normalize-space(.)])">
           <Unknown>
             <xsl:for-each select="*[@key='roles']/*">
               <Data Name="role" Value="{upper-case(.[1])}"/>

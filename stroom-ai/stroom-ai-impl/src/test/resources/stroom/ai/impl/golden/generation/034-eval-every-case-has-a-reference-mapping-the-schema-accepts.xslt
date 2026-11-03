@@ -56,7 +56,7 @@
     <xsl:if test="(when)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(when[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
+          <xsl:value-of select="stroom:format-date((when)[1], 'yyyy-MM-dd''T''HH:mm:ssXXX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -72,14 +72,14 @@
       <xsl:if test="(machine)[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="machine"/>
+            <xsl:value-of select="(machine)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
       <xsl:if test="(account)[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="account"/>
+            <xsl:value-of select="(account)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -90,7 +90,7 @@
     <xsl:if test="(path)[normalize-space(.)]">
       <File>
         <Path>
-          <xsl:value-of select="path"/>
+          <xsl:value-of select="(path)[1]"/>
         </Path>
       </File>
     </xsl:if>

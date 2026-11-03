@@ -54,7 +54,7 @@
     <xsl:if test="(@time)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(@time[1], 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date((@time)[1], 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -70,14 +70,14 @@
       <xsl:if test="(@host)[normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="@host"/>
+            <xsl:value-of select="(@host)[1]"/>
           </HostName>
         </Device>
       </xsl:if>
       <xsl:if test="(@user)[normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="@user"/>
+            <xsl:value-of select="(@user)[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -87,7 +87,7 @@
   <xsl:template match="node()" mode="type_id">
     <xsl:if test="(@action)[normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="@action"/>
+        <xsl:value-of select="(@action)[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -96,7 +96,7 @@
     <xsl:if test="(@user)[normalize-space(.)]">
       <User>
         <Id>
-          <xsl:value-of select="@user"/>
+          <xsl:value-of select="(@user)[1]"/>
         </Id>
       </User>
     </xsl:if>

@@ -47,17 +47,17 @@
         <xsl:apply-templates select="." mode="type_id"/>
         <Authenticate>
           <Action>Logon</Action>
-          <xsl:if test="normalize-space(*[@key='userIdentity']/*[@key='userName'])">
+          <xsl:if test="*[@key='userIdentity']/*[@key='userName'][normalize-space(.)]">
             <User>
               <Id>
-                <xsl:value-of select="*[@key='userIdentity']/*[@key='userName']"/>
+                <xsl:value-of select="(*[@key='userIdentity']/*[@key='userName'])[1]"/>
               </Id>
             </User>
           </xsl:if>
-          <xsl:if test="*[@key='responseElements']/*[@key='ConsoleLogin'] = ('Success', 'Failure')">
+          <xsl:if test="(*[@key='responseElements']/*[@key='ConsoleLogin'])[1] = ('Success', 'Failure')">
             <Outcome>
               <Success>
-                <xsl:value-of select="if (*[@key='responseElements']/*[@key='ConsoleLogin'] = 'Success') then 'true' else 'false'"/>
+                <xsl:value-of select="if ((*[@key='responseElements']/*[@key='ConsoleLogin'])[1] = 'Success') then 'true' else 'false'"/>
               </Success>
             </Outcome>
           </xsl:if>
@@ -108,9 +108,9 @@
         <Create>
           <Object>
             <Type>IAM user</Type>
-            <xsl:if test="normalize-space(*[@key='requestParameters']/*[@key='userName'])">
+            <xsl:if test="*[@key='requestParameters']/*[@key='userName'][normalize-space(.)]">
               <Id>
-                <xsl:value-of select="*[@key='requestParameters']/*[@key='userName']"/>
+                <xsl:value-of select="(*[@key='requestParameters']/*[@key='userName'])[1]"/>
               </Id>
             </xsl:if>
           </Object>
@@ -131,9 +131,9 @@
           <After>
             <Object>
               <Type>S3 bucket policy</Type>
-              <xsl:if test="normalize-space(*[@key='requestParameters']/*[@key='bucketName'])">
+              <xsl:if test="*[@key='requestParameters']/*[@key='bucketName'][normalize-space(.)]">
                 <Id>
-                  <xsl:value-of select="*[@key='requestParameters']/*[@key='bucketName']"/>
+                  <xsl:value-of select="(*[@key='requestParameters']/*[@key='bucketName'])[1]"/>
                 </Id>
               </xsl:if>
             </Object>
@@ -145,10 +145,10 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'console-login', 'object-read', 'object-delete', 'user-create', 'policy-change' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="normalize-space(*[@key='eventTime'])">
+    <xsl:if test="*[@key='eventTime'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(*[@key='eventTime'][1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date((*[@key='eventTime'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>
@@ -161,15 +161,15 @@
         <Name>AWS CloudTrail</Name>
         <Environment>Eval</Environment>
       </System>
-      <xsl:if test="normalize-space(*[@key='eventSource'])">
+      <xsl:if test="*[@key='eventSource'][normalize-space(.)]">
         <Generator>
-          <xsl:value-of select="*[@key='eventSource']"/>
+          <xsl:value-of select="(*[@key='eventSource'])[1]"/>
         </Generator>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='awsRegion'])">
+      <xsl:if test="*[@key='awsRegion'][normalize-space(.)]">
         <Device>
           <HostName>
-            <xsl:value-of select="*[@key='awsRegion']"/>
+            <xsl:value-of select="(*[@key='awsRegion'])[1]"/>
           </HostName>
         </Device>
       </xsl:if>
@@ -182,20 +182,20 @@
         <Client>
           <xsl:if test="$source_service">
             <HostName>
-              <xsl:value-of select="$source_service"/>
+              <xsl:value-of select="$source_service[1]"/>
             </HostName>
           </xsl:if>
           <xsl:if test="$source_ip">
             <IPAddress>
-              <xsl:value-of select="$source_ip"/>
+              <xsl:value-of select="$source_ip[1]"/>
             </IPAddress>
           </xsl:if>
         </Client>
       </xsl:if>
-      <xsl:if test="normalize-space(*[@key='userIdentity']/*[@key='userName'])">
+      <xsl:if test="*[@key='userIdentity']/*[@key='userName'][normalize-space(.)]">
         <User>
           <Id>
-            <xsl:value-of select="*[@key='userIdentity']/*[@key='userName']"/>
+            <xsl:value-of select="(*[@key='userIdentity']/*[@key='userName'])[1]"/>
           </Id>
         </User>
       </xsl:if>
@@ -203,9 +203,9 @@
   </xsl:template>
   <!-- type_id: shared by the rules 'console-login', 'object-read', 'object-delete', 'user-create', 'policy-change' -->
   <xsl:template match="node()" mode="type_id">
-    <xsl:if test="normalize-space(*[@key='eventName'])">
+    <xsl:if test="*[@key='eventName'][normalize-space(.)]">
       <TypeId>
-        <xsl:value-of select="*[@key='eventName']"/>
+        <xsl:value-of select="(*[@key='eventName'])[1]"/>
       </TypeId>
     </xsl:if>
   </xsl:template>
@@ -213,9 +213,9 @@
   <xsl:template match="node()" mode="object">
     <Object>
       <Type>S3 object</Type>
-      <xsl:if test="normalize-space(*[@key='requestParameters']/*[@key='key'])">
+      <xsl:if test="*[@key='requestParameters']/*[@key='key'][normalize-space(.)]">
         <Id>
-          <xsl:value-of select="*[@key='requestParameters']/*[@key='key']"/>
+          <xsl:value-of select="(*[@key='requestParameters']/*[@key='key'])[1]"/>
         </Id>
       </xsl:if>
     </Object>
@@ -225,7 +225,7 @@
     <xsl:param name="name" as="xs:string"/>
     <xsl:param name="value" as="item()*"/>
     <xsl:if test="exists($value[normalize-space(.)])">
-      <Data Name="{$name}" Value="{$value}"/>
+      <Data Name="{$name}" Value="{$value[1]}"/>
     </xsl:if>
   </xsl:function>
 </xsl:stylesheet>

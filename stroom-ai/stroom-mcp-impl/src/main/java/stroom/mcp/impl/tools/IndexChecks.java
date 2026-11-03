@@ -1351,6 +1351,16 @@ class IndexChecks {
                     .toList(), maxResults);
         }
 
+        /// @return It with its table sorted oldest first (on its time column), for finding the earliest event.
+        Dashboard oldestFirst() {
+            return new Dashboard(uuid, name, source, columns.stream()
+                    .map(column -> column.getSort() == null
+                            ? column
+                            : column.copy().sort(new Sort(column.getSort().getOrder(), SortDirection.ASCENDING))
+                                    .build())
+                    .toList(), maxResults);
+        }
+
         /// @param expression The query's expression.
         /// @return The search it makes.
         Probe probe(final ExpressionOperator expression) {

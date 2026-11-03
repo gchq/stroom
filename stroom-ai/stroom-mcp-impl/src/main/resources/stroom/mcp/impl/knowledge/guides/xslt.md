@@ -150,7 +150,11 @@ entry per line). Write XSLT by hand only for what none of this expresses.
   `EventSource/User/Groups/Group/Name` with `repeat` writes one `Group` per value, and
   `EventDetail/<Action>/Data` with a `data_name` writes one `Data` per value. Nothing else may be mapped below
   the repeated element; `transform` applies to each value. A key=value key given several times (`rcpt=` once per
-  recipient) is such a field: without `repeat` only its first value is read.
+  recipient) is such a field: without `repeat` only its first value is read, as for every entry (an `xpath` entry
+  reading several then logs a warning, "Several values (n) for <path>, only the first written", when stepped). A text field holding a delimited
+  list (`Finance;Employees;Remote Workers`) is one value: `field` with `repeat` writes it whole. Split it with an
+  `xpath` and `repeat`: `{"path": "EventSource/User/Groups/Group/Name", "repeat": true, "xpath":
+  "tokenize(data[@name='groups']/@value, ';')"}` writes one `Group` per value (blank ones left out).
 - **`drop_when`**: records (or items) to leave untranslated on purpose, each with a reason: heartbeats, test
   traffic, service accounts. They are tried before the event rules, write no Event and raise no "no mapping
   matched" warning; the reasons appear in the XSLT and the documentation. `survey_feed`'s `set_shape_handling`

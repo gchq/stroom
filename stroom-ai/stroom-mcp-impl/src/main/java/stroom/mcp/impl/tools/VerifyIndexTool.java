@@ -319,11 +319,13 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         final Optional<WriteGuard.BuildDoc> existing = contents.stream()
                 .filter(doc -> DashboardDoc.TYPE.equals(doc.type()) && doc.name().equals(name))
                 .findFirst();
-        // The window starts at the sample's earliest event: found by searching its streams first, saving nothing.
+        // The window starts at the sample's earliest event: found by searching its streams first, oldest first,
+        // saving nothing. Seen in testing: the dashboard's own table, newest first, read the 100 newest, and the
+        // window hid a third of the sample's events.
         final IndexChecks.Dashboard probe = IndexChecks.Dashboard.unsaved(name,
-                IndexChecks.dashboardConfig(source, fields, timeField, null));
-        final Found sample = indexSearches.search(context, probe.probe(IndexChecks.byStream(streamIds)), 100,
-                "Reading a sample of streams " + ToolText.repr(streamIds) + " from "
+                IndexChecks.dashboardConfig(source, fields, timeField, null)).oldestFirst();
+        final Found sample = indexSearches.search(context, probe.probe(IndexChecks.byStream(streamIds)), 1,
+                "Finding the earliest event of streams " + ToolText.repr(streamIds) + " in "
                 + NullSafe.nonBlankStringElse(index.indexName(), index.name()));
         final String window = timeField == null
                 ? null

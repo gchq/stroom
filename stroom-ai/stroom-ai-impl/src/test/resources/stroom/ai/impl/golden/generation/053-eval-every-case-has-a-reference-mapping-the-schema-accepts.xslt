@@ -11,10 +11,10 @@
   <!-- Rule 'printed': every record. Writes a Print event (TypeId print-job) from document, pages, printer, location. -->
   <xsl:template match="node()" mode="event_type_printed">
     <Event>
-      <xsl:if test="normalize-space(data[@name='time']/@value)">
+      <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date(data[@name='time']/@value[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>
@@ -28,14 +28,14 @@
         <xsl:if test="$printer">
           <Device>
             <HostName>
-              <xsl:value-of select="$printer"/>
+              <xsl:value-of select="$printer[1]"/>
             </HostName>
           </Device>
         </xsl:if>
-        <xsl:if test="normalize-space(data[@name='user']/@value)">
+        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
           <User>
             <Id>
-              <xsl:value-of select="replace(data[@name='user']/@value[1], '&quot;&quot;', '&quot;')"/>
+              <xsl:value-of select="replace((data[@name='user']/@value)[1], '&quot;&quot;', '&quot;')"/>
             </Id>
           </User>
         </xsl:if>
@@ -57,7 +57,7 @@
               </xsl:if>
               <xsl:if test="$pages">
                 <Pages>
-                  <xsl:value-of select="$pages"/>
+                  <xsl:value-of select="$pages[1]"/>
                 </Pages>
               </xsl:if>
             </PrintJob>
@@ -65,12 +65,12 @@
           <xsl:if test="$printer">
             <Printer>
               <Name>
-                <xsl:value-of select="$printer"/>
+                <xsl:value-of select="$printer[1]"/>
               </Name>
             </Printer>
           </xsl:if>
-          <xsl:if test="normalize-space(data[@name='location']/@value)">
-            <Data Name="printer_location" Value="{replace(data[@name='location']/@value[1], '&quot;&quot;', '&quot;')}"/>
+          <xsl:if test="data[@name='location']/@value[normalize-space(.)]">
+            <Data Name="printer_location" Value="{replace((data[@name='location']/@value)[1], '&quot;&quot;', '&quot;')}"/>
           </xsl:if>
         </Print>
       </EventDetail>
