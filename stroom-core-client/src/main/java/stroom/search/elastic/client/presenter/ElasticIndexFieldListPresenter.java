@@ -259,7 +259,7 @@ public class ElasticIndexFieldListPresenter
                                      "under the field they belong to. Fields in italics can't be used as normal: " +
                                      "they are missing from all source indices, the source indices map them to " +
                                      "different types, or they are virtual fields hidden by a mapped field of the " +
-                                     "same name. Hover over one to see why.")
+                                     "same name. The Status column says which.")
                         .build(),
                 350);
 
@@ -288,6 +288,19 @@ public class ElasticIndexFieldListPresenter
                         .centerAligned()
                         .build(),
                 80);
+
+        // Only problems are shown here, so a normal field, mapped or virtual, has no status
+        dataGrid.addResizableColumn(
+                DataGridUtil.textWithTooltipColumnBuilder(
+                                (ElasticFieldRow row) -> NullSafe.string(row.getStateNote()))
+                        .withSorting(SortColumn.STATUS.name())
+                        .build(),
+                DataGridUtil.headingBuilder("Status")
+                        .withToolTip("Why a field can't be used as normal: it is missing from all source " +
+                                     "indices, the source indices map it to different types, or it is a virtual " +
+                                     "field hidden by a mapped field of the same name.")
+                        .build(),
+                300);
 
     }
 
