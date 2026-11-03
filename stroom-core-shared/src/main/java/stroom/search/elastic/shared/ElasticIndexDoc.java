@@ -289,7 +289,6 @@ public class ElasticIndexDoc extends AbstractDoc {
 
     /// @param fieldName the full name of a field
     /// @return the settings for the named field, or `null` if it has none
-    @JsonIgnore
     public ElasticIndexFieldSettings findFieldSettings(final String fieldName) {
         if (fieldName == null || fieldSettings == null) {
             return null;
@@ -304,7 +303,6 @@ public class ElasticIndexDoc extends AbstractDoc {
 
     /// @param fieldName the full name of a field
     /// @return `false` if the field has been disabled, otherwise `true`
-    @JsonIgnore
     public boolean isFieldEnabled(final String fieldName) {
         final ElasticIndexFieldSettings settings = findFieldSettings(fieldName);
         return settings == null || settings.isEnabled();
@@ -324,7 +322,6 @@ public class ElasticIndexDoc extends AbstractDoc {
     }
 
     /// @return `true` if the doc still holds any of the legacy, doc-level vector settings
-    @JsonIgnore
     public boolean hasLegacyVectorSettings() {
         return vectorGenerationModelRef != null ||
                rerankModelRef != null ||
