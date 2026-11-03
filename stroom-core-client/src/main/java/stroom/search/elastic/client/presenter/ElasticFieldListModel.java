@@ -559,6 +559,10 @@ public class ElasticFieldListModel {
             case TYPE -> Comparator.comparing(ElasticFieldRow::getTypeLabel, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(byName);
             case ENABLED -> Comparator.comparing(ElasticFieldRow::isEnabled).thenComparing(byName);
+            case STATUS -> Comparator.comparing(
+                            (ElasticFieldRow row) -> NullSafe.string(row.getStateNote()),
+                            String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byName);
             default -> byName;
         };
         return ascending
@@ -573,6 +577,8 @@ public class ElasticFieldListModel {
         /// Sort on the field type label.
         TYPE,
         /// Sort on whether the field is enabled.
-        ENABLED
+        ENABLED,
+        /// Sort on the field's problem, if it has one.
+        STATUS
     }
 }

@@ -184,6 +184,20 @@ class TestElasticFieldListModel {
     }
 
     @Test
+    void testSortByStatus() {
+        final List<ElasticFieldRow> rows = model.buildRows(null,
+                List.of(),
+                SortColumn.STATUS,
+                false,
+                Set.of());
+
+        // Fields with a problem sort before normal fields, which have no status, including virtual fields
+        assertThat(rows.get(0).getStateNote()).isNotNull();
+        assertThat(rows.get(rows.size() - 1).getStateNote()).isNull();
+        assertThat(find(rows, "category", Kind.VIRTUAL).getStateNote()).isNull();
+    }
+
+    @Test
     void testSortByEnabled() {
         final List<ElasticFieldRow> rows = model.buildRows(null,
                 List.of(),
