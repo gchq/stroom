@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.validation.EventSchema;
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,12 +33,18 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// The event-logging versions this Stroom holds, and the one a build's translation writes.
 ///
@@ -51,6 +58,10 @@ public class EventVersions {
 
     /// The question put to the user.
     static final String VERSION_QUESTION = "Which event-logging schema version should the translation write?";
+    /// The question put to the user where this Stroom also holds a fork of the event-logging schema.
+    static final String FORK_QUESTION = "Which Events schema should the translation write: the environment's own fork, "
+                                        + "or a version of event-logging?";
+    private static final Pattern SYSTEM_ID_VERSION = Pattern.compile("-v(\\d+(?:\\.\\d+)*)\\.xsd");
     /// Seen: an agent took the nearest 3.x to a missing 3.5.2 (3.4.2) where 4.1.0 was installed, as if namespace
     /// event-logging:3 bound it to 3.x.
     static final String ONE_NAMESPACE = "Every version, 4.x as much as 3.x, writes namespace event-logging:3: the "
@@ -67,6 +78,9 @@ public class EventVersions {
     static final String FORM = "form";
     /// How a version was settled: the one version this Stroom holds.
     static final String ONLY = "only";
+    /// How a schema was settled: inferred from what the environment's translations already write
+    /// ([EventsTargetInference]).
+    static final String INFERRED = "inferred";
     /// The most sessions remembered: the least recently used are forgotten first.
     static final int MAX_SESSIONS = 10_000;
 
@@ -75,6 +89,7 @@ public class EventVersions {
     private final BuildMemory buildMemory;
     private final Provider<WriteGuard> guardProvider;
     private final Provider<BuildRecords> buildRecordsProvider;
+    private final Provider<EventsTargetInference> inferenceProvider;
     private final Map<String, Chosen> chosen = Collections.synchronizedMap(
             new LinkedHashMap<>(16, 0.75F, true) {
                 @Override
@@ -88,17 +103,20 @@ public class EventVersions {
     /// @param buildMemory          The build the session is working on, for a call that names none.
     /// @param guardProvider        Tells whether the build has a folder (and a record) yet.
     /// @param buildRecordsProvider Keeps the version chosen for a build.
+    /// @param inferenceProvider    Infers the Events namespace the environment's translations write.
     @Inject
     EventVersions(final HeldSchemas heldSchemas,
                   final Consent consent,
                   final BuildMemory buildMemory,
                   final Provider<WriteGuard> guardProvider,
-                  final Provider<BuildRecords> buildRecordsProvider) {
+                  final Provider<BuildRecords> buildRecordsProvider,
+                  final Provider<EventsTargetInference> inferenceProvider) {
         this.heldSchemas = heldSchemas;
         this.consent = consent;
         this.buildMemory = buildMemory;
         this.guardProvider = guardProvider;
         this.buildRecordsProvider = buildRecordsProvider;
+        this.inferenceProvider = inferenceProvider;
     }
 
     /// @param version An event-logging version this Stroom holds.
@@ -163,7 +181,7 @@ public class EventVersions {
         if (!(uuid instanceof final String kept) || kept.isBlank()) {
             return Optional.empty();
         }
-        return docsOf(version).stream()
+        return Stream.concat(docsOf(version).stream(), heldSchemas.forks().stream())
                 .map(XmlSchemaDoc::getUuid)
                 .filter(kept::equals)
                 .findFirst();
@@ -201,7 +219,9 @@ public class EventVersions {
     public Map<String, String> chosenDocs(final ToolCallContext context, final String build) {
         return chosenFor(context, build)
                 .flatMap(kept -> chosenDoc(context, build, kept.version())
-                        .map(uuid -> Map.of(HeldSchemas.eventLoggingSystemId(kept.version()), uuid)))
+                        .map(uuid -> Map.of(fork(uuid)
+                                .map(doc -> doc.getSystemId().strip())
+                                .orElseGet(() -> HeldSchemas.eventLoggingSystemId(kept.version())), uuid)))
                 .orElse(Map.of());
     }
 
@@ -214,7 +234,8 @@ public class EventVersions {
         return chosenFor(context, build)
                 .filter(kept -> kept.version().equals(version) && kept.uuid() != null)
                 .map(Chosen::uuid)
-                .filter(uuid -> docsOf(version).stream().anyMatch(doc -> uuid.equals(doc.getUuid())));
+                .filter(uuid -> fork(uuid).isPresent()
+                                || docsOf(version).stream().anyMatch(doc -> uuid.equals(doc.getUuid())));
     }
 
     /// The schema group a translation pipeline's schema filter needs so that Stroom validates with the XML schema
@@ -235,6 +256,11 @@ public class EventVersions {
         final String version = kept.get().version();
         final List<XmlSchemaDoc> docs = docsOf(version);
         final Optional<String> uuid = chosenDoc(context, build, version);
+        final Optional<XmlSchemaDoc> chosenFork = uuid.flatMap(this::fork);
+        if (chosenFork.isPresent()) {
+            // A fork is in a schema group with event-logging (what makes it one): the pipeline validates with it.
+            return Optional.of(groupOf(chosenFork.get()));
+        }
         if (docs.size() < 2 || uuid.isEmpty()) {
             return Optional.empty();
         }
@@ -278,7 +304,52 @@ public class EventVersions {
     /// one its code writes, else the newest this Stroom holds.
     /// @throws ToolRefusal if it names none and this Stroom holds none.
     public String translationVersion(final String keptVersion, final String code) {
+        if (NullSafe.isBlankString(keptVersion)) {
+            // A fork's code names no event-logging version: the fork's own.
+            final Optional<XmlSchemaDoc> fork = forkWrittenBy(code);
+            if (fork.isPresent()) {
+                return forkVersion(fork.get());
+            }
+        }
         return heldSchemas.translationVersion(keptVersion, code);
+    }
+
+    /// @param context The call's context.
+    /// @param build   The build the call names, or null.
+    /// @return The fork of the event-logging schema chosen for the build, while this Stroom holds it; empty for
+    /// event-logging, or nothing chosen.
+    public Optional<XmlSchemaDoc> chosenFork(final ToolCallContext context, final String build) {
+        return chosenFor(context, build)
+                .map(Chosen::uuid)
+                .flatMap(this::fork);
+    }
+
+    /// The fork of the event-logging schema an XSLT writes Events in: the one whose system id its
+    /// xsi:schemaLocation names, else the only one this Stroom holds for the namespace it writes.
+    ///
+    /// @param code An XSLT, or null.
+    /// @return The fork's document; empty if it writes event-logging:3, no Events, or a namespace no fork has.
+    public Optional<XmlSchemaDoc> forkWrittenBy(final String code) {
+        final List<XmlSchemaDoc> forks = heldSchemas.forks();
+        if (forks.isEmpty() || NullSafe.isBlankString(code)) {
+            return Optional.empty();
+        }
+        final Set<String> namespaces = new LinkedHashSet<>();
+        forks.forEach(fork -> namespaces.add(NullSafe.string(fork.getNamespaceURI()).strip()));
+        final Optional<String> written = EventsNamespaces.writtenBy(code, namespaces);
+        if (written.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<XmlSchemaDoc> inNamespace = forks.stream()
+                .filter(fork -> written.get().equals(NullSafe.string(fork.getNamespaceURI()).strip()))
+                .toList();
+        final String declared = HeldSchemas.declaredSystemId(code);
+        return inNamespace.stream()
+                .filter(fork -> fork.getSystemId().strip().equals(declared))
+                .findFirst()
+                .or(() -> inNamespace.size() == 1
+                        ? Optional.of(inNamespace.getFirst())
+                        : Optional.empty());
     }
 
     /// @param context The call's context.
@@ -306,6 +377,19 @@ public class EventVersions {
     /// @return What to tell the agent, or empty when it gave the version itself.
     public Optional<String> settled(final ToolCallContext context, final String build, final String version) {
         final String how = chosenFor(context, build).map(Chosen::how).orElse(null);
+        final Optional<XmlSchemaDoc> chosenFork = chosenDoc(context, build, version).flatMap(this::fork);
+        if (chosenFork.isPresent()) {
+            final String which = "the environment's fork of the event-logging schema, " + forkLabel(chosenFork.get());
+            if (INFERRED.equals(how)) {
+                return Optional.of("The translation writes " + which + ", as the environment's translations already "
+                                   + "do (their imports or template write it): don't ask the user which schema or "
+                                   + "namespace. " + EventsNamespaces.SCHEMA_GROUP_NOTE);
+            }
+            if (FORM.equals(how)) {
+                return Optional.of("The user chose " + which + " in the server's form: don't ask them again.");
+            }
+            return Optional.empty();
+        }
         final String doc = chosenDoc(context, build, version)
                 .flatMap(uuid -> docsOf(version).stream().filter(held -> uuid.equals(held.getUuid())).findFirst())
                 .map(held -> " The user chose its XML schema document " + label(held) + " of the "
@@ -388,6 +472,10 @@ public class EventVersions {
                          final String build) {
         final List<String> versions = eventVersions();
         if (NullSafe.isNonBlankString(schemaVersion)) {
+            final Optional<XmlSchemaDoc> givenFork = fork(schemaVersion.strip());
+            if (givenFork.isPresent()) {
+                return forkTarget(context, build, givenFork.get(), GIVEN);
+            }
             final Optional<XmlSchemaDoc> byUuid = eventDoc(schemaVersion.strip());
             if (byUuid.isPresent()) {
                 final String version = HeldSchemas.eventLoggingVersion(byUuid.get().getSystemId());
@@ -404,16 +492,64 @@ public class EventVersions {
             return withDoc(call, context, build, schemaVersion, GIVEN);
         }
         final Optional<Chosen> earlier = chosenFor(context, build);
+        if (earlier.isPresent() && earlier.get().uuid() != null && fork(earlier.get().uuid()).isPresent()) {
+            // A fork chosen for the build, still held.
+            return Target.of(earlier.get().version());
+        }
         if (earlier.isPresent() && versions.contains(earlier.get().version())) {
             return withDoc(call, context, build, earlier.get().version(), earlier.get().how());
+        }
+        final List<XmlSchemaDoc> forks = heldSchemas.forks();
+        if (!forks.isEmpty()) {
+            // What the environment's translations already write settles it, without asking.
+            final Optional<EventsTargetInference.Inferred> inferred = inferenceProvider.get()
+                    .infer(context == null
+                            ? null
+                            : context.session(), buildKey(context, build));
+            if (inferred.isPresent() && !EventsNamespaces.isStandard(inferred.get().namespace())) {
+                final List<XmlSchemaDoc> inNamespace = heldSchemas.forksIn(inferred.get().namespace());
+                if (inNamespace.size() == 1) {
+                    return forkTarget(context, build, inNamespace.getFirst(), INFERRED);
+                }
+                return ask(call, context, build, List.of(), inNamespace);
+            }
+            if (inferred.isEmpty()) {
+                return ask(call, context, build, versions, forks);
+            }
         }
         if (versions.size() == 1) {
             return withDoc(call, context, build, versions.getFirst(), ONLY);
         }
-        final Target picked = ask(call, context, versions);
+        final Target picked = ask(call, context, build, versions, List.of());
         return picked.version() == null
                 ? picked
                 : withDoc(call, context, build, picked.version(), FORM);
+    }
+
+    // A fork settled for the build: the version its Events are written with, and its document.
+    private Target forkTarget(final ToolCallContext context,
+                              final String build,
+                              final XmlSchemaDoc fork,
+                              final String how) {
+        final String version = forkVersion(fork);
+        remember(context, build, version, how, fork.getUuid());
+        return Target.of(version);
+    }
+
+    // The Version a fork's Events are written with: its schema's version attribute, else the version its system id
+    // names.
+    private String forkVersion(final XmlSchemaDoc fork) {
+        final String declared = heldSchemas.eventSchema(fork).version();
+        if (NullSafe.isNonBlankString(declared)) {
+            return declared.strip();
+        }
+        final Matcher matcher = SYSTEM_ID_VERSION.matcher(NullSafe.string(fork.getSystemId()));
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        throw new ToolRefusal("The XML schema '" + fork.getSystemId() + "' (namespace " + fork.getNamespaceURI()
+                              + ") declares no version, so the Version its Events are written with isn't known. Ask "
+                              + "the user to set the schema's version attribute.");
     }
 
     // The version settled, once the user has chosen which of its XML schema documents where it is held in more
@@ -464,29 +600,78 @@ public class EventVersions {
         return new Target(null, asked);
     }
 
-    // The version the user picks in a form, or the question for the agent to put to them (no forms).
-    private Target ask(final ToolCall call, final ToolCallContext context, final List<String> versions) {
+    // The version (or fork) the user picks in a form, or the question for the agent to put to them (no forms). A
+    // fork picked is remembered for the build here, with its document.
+    private Target ask(final ToolCall call,
+                       final ToolCallContext context,
+                       final String build,
+                       final List<String> versions,
+                       final List<XmlSchemaDoc> forks) {
         final Map<String, String> labels = new LinkedHashMap<>();
         for (int i = 0; i < versions.size(); i++) {
-            labels.put(i == 0
-                    ? versions.get(i) + " (newest installed, recommended)"
-                    : versions.get(i), versions.get(i));
+            // Beside a fork, each says what it is.
+            final String label = forks.isEmpty()
+                    ? versions.get(i)
+                    : "event-logging " + versions.get(i);
+            labels.put(i == 0 && forks.isEmpty()
+                    ? label + " (newest installed, recommended)"
+                    : label, versions.get(i));
         }
-        final Optional<String> picked = consent.choose(call, context, "event_logging_version", VERSION_QUESTION,
-                List.copyOf(labels.keySet()), null);
+        final Map<String, XmlSchemaDoc> forkLabels = new LinkedHashMap<>();
+        forks.forEach(fork -> forkLabels.put(forkLabel(fork), fork));
+        final List<String> shown = new ArrayList<>(forkLabels.keySet());
+        shown.addAll(labels.keySet());
+        final String question = forks.isEmpty()
+                ? VERSION_QUESTION
+                : FORK_QUESTION;
+        final Optional<String> picked = consent.choose(call, context, "event_logging_version", question,
+                List.copyOf(shown), null);
         if (picked.isPresent()) {
-            return Target.of(labels.getOrDefault(picked.get(), picked.get()));
+            final XmlSchemaDoc fork = forkLabels.get(picked.get());
+            return fork != null
+                    ? forkTarget(context, build, fork, FORM)
+                    : Target.of(labels.getOrDefault(picked.get(), picked.get()));
         }
-        final Map<String, Object> question = new LinkedHashMap<>();
-        question.put("status", "needs_guidance");
-        question.put("question", VERSION_QUESTION);
-        question.put("options", versions);
-        question.put("recommended", versions.getFirst());
-        question.put("hint", "Ask the user which event-logging schema version the translation should write, "
-                             + "offering these versions (those this Stroom holds), " + versions.getFirst()
-                             + ", the newest, first and recommended. " + ONE_NAMESPACE + " Then call again with "
-                             + "schema_version= their choice.");
-        return new Target(null, question);
+        final Map<String, Object> asked = new LinkedHashMap<>();
+        asked.put("status", "needs_guidance");
+        asked.put("question", question);
+        asked.put("options", versions);
+        if (forks.isEmpty()) {
+            asked.put("recommended", versions.getFirst());
+            asked.put("hint", "Ask the user which event-logging schema version the translation should write, "
+                              + "offering these versions (those this Stroom holds), " + versions.getFirst()
+                              + ", the newest, first and recommended. " + ONE_NAMESPACE + " Then call again with "
+                              + "schema_version= their choice.");
+        } else {
+            asked.put("forks", forks.stream()
+                    .map(fork -> {
+                        final Map<String, Object> option = new LinkedHashMap<>();
+                        option.put("uuid", fork.getUuid());
+                        option.put("namespace", NullSafe.string(fork.getNamespaceURI()).strip());
+                        option.put("path", heldSchemas.path(fork));
+                        return option;
+                    })
+                    .toList());
+            asked.put("hint", "This Stroom holds the environment's own fork of the event-logging schema (forks), "
+                              + "and nothing the environment's translations write settled which to use. Ask the user "
+                              + "whether the translation writes the fork (as the environment's other feeds may) or "
+                              + "event-logging (options), then call again with schema_version= the fork's uuid or "
+                              + "the version chosen.");
+        }
+        return new Target(null, asked);
+    }
+
+    // A fork as the user is shown it: where it is, and its namespace.
+    private String forkLabel(final XmlSchemaDoc fork) {
+        return heldSchemas.path(fork) + " (this environment's fork, namespace "
+               + NullSafe.string(fork.getNamespaceURI()).strip() + ")";
+    }
+
+    // A fork this Stroom holds, by its document's UUID.
+    private Optional<XmlSchemaDoc> fork(final String uuid) {
+        return heldSchemas.forks().stream()
+                .filter(doc -> uuid.equals(doc.getUuid()))
+                .findFirst();
     }
 
     // The session's memory first, then the build's record.

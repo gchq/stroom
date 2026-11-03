@@ -126,7 +126,7 @@ public final class CefXslt {
                 .collect(Collectors.joining());
         final String top = CefPlan.KAFKA.equals(plan.output())
                 ? kafkaTop(plan, imports, apply(named, lineMode))
-                : textTop(imports, apply(named, lineMode));
+                : textTop(plan, imports, apply(named, lineMode));
         final XmlElement sheet = StyledXslt.parse(top + line + String.join("", parts) + FUNCTIONS
                                                   + "</xsl:stylesheet>");
         // An input a template reads often, read once into a variable: a header field's source its map tests in turn.
@@ -160,7 +160,8 @@ public final class CefXslt {
                 ? ""
                 : plan.topic()).replace("{", "{{").replace("}", "}}"));
         return "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n"
-               + "<xsl:stylesheet xpath-default-namespace=\"event-logging:3\" xmlns=\"kafka-records:1\" "
+               + "<xsl:stylesheet xpath-default-namespace=\"" + plan.eventsNamespaceOrStandard() + "\" "
+               + "xmlns=\"kafka-records:1\" "
                + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n"
                + "    xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:cef=\"urn:stroom-mcp:cef\" "
                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -186,9 +187,9 @@ public final class CefXslt {
                + "  </xsl:template>\n";
     }
 
-    private static String textTop(final String imports, final String applyLine) {
+    private static String textTop(final CefPlan plan, final String imports, final String applyLine) {
         return "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n"
-               + "<xsl:stylesheet xpath-default-namespace=\"event-logging:3\" "
+               + "<xsl:stylesheet xpath-default-namespace=\"" + plan.eventsNamespaceOrStandard() + "\" "
                + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n"
                + "    xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:cef=\"urn:stroom-mcp:cef\" "
                + "exclude-result-prefixes=\"xs cef\" version=\"3.0\">" + imports + "\n"

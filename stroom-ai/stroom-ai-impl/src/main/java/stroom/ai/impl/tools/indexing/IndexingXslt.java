@@ -37,10 +37,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// A field plan's draft indexing XSLT, reading Events (xpath-default-namespace event-logging:3), written in the
-/// Events translation's style: each part of the record (or document) a template of its own, with a comment saying
-/// what it writes, and an input a template reads often read once into a variable ([StyledXslt]). The golden plans
-/// pin what it writes to the byte.
+/// A field plan's draft indexing XSLT, reading Events (xpath-default-namespace the plan's Events namespace, by
+/// default event-logging:3), written in the Events translation's style: each part of the record (or document) a
+/// template of its own, with a comment saying what it writes, and an input a template reads often read once into a
+/// variable ([StyledXslt]). The golden plans pin what it writes to the byte.
 final class IndexingXslt {
 
     /// A plain path: steps of names, a predicate kept with its step.
@@ -127,7 +127,8 @@ final class IndexingXslt {
         }
         final List<String> after = new ArrayList<>(own);
         after.addAll(shapes);
-        final String text = "<xsl:stylesheet xpath-default-namespace=\"event-logging:3\" " + head + "\n"
+        final String text = "<xsl:stylesheet xpath-default-namespace=\"" + plan.eventsNamespaceOrStandard() + "\" "
+                            + head + "\n"
                             + "    xmlns:stroom=\"stroom\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
                             + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"" + version + "\">\n"
                             + plan.importLines() + standInVariables(plan)

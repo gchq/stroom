@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.generation;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -172,7 +173,9 @@ public final class XsltReader {
     /// @throws XmlParser.XmlParseException if it isn't well-formed.
     /// @throws IllegalArgumentException if it has no template matching its input (no start template).
     public static XsltReading read(final String code) {
-        final XmlElement root = XmlParser.parse(XsltVersionHistory.strip(code), true, false);
+        // An environment's fork of the event-logging schema is read as event-logging:3: the mapping is the same.
+        final XmlElement root = XmlParser.parse(XsltVersionHistory.strip(ForkedEvents.asStandard(code)), true,
+                false);
         final XPathTreeParser parser = XPathTreeParser.parserFor(root.namespaces());
         final String namespace = Objects.requireNonNullElse(root.get("xpath-default-namespace"), "");
         final Map<String, XmlElement> templates = new LinkedHashMap<>();
@@ -691,9 +694,11 @@ public final class XsltReader {
                                          final TranslationMapping kept,
                                          final String keptCode,
                                          final Map<String, String> imported) {
-        return new MappingRebuild(code, kept, keptCode, imported == null
-                ? Map.of()
-                : imported).run();
+        // An environment's fork of the event-logging schema is read as event-logging:3, imports too.
+        final Map<String, String> standard = new LinkedHashMap<>();
+        NullSafe.map(imported).forEach((href, text) -> standard.put(href, ForkedEvents.asStandard(text)));
+        return new MappingRebuild(ForkedEvents.asStandard(code), kept, ForkedEvents.asStandard(keptCode), standard)
+                .run();
     }
 
     /// @param code   A translation XSLT.

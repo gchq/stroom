@@ -1516,6 +1516,55 @@ Planned, not started: repeated objects in a translation (an array of users in an
 2026-10-31.
 
 
+### Events in a forked namespace (built, 2026-11-03)
+
+Some environments hold a fork of the event-logging schema in a namespace of their own (seen:
+`file://xml/schema/accounting/events`), with the same elements. An Events document is told by its shape
+(`<Events>` holding `<Event>`s in one namespace, `EventsNamespaces`), not by `event-logging:3`. Seen in testing:
+Events in a fork were profiled as no events, so the index draft found no populated paths and the agent wrote every
+field by hand; `check_events` refused them as "not an Events document"; and the agent believed moving to
+`event-logging:3` needed the schema filter's schema group changed.
+
+* `summarise_streams` (`StreamSummaries.summariseEvents`) profiles Events in any namespace and says which one
+  (`events_namespace`, with a note), where it isn't `event-logging:3`.
+* `check_events` validates forked Events against the schema they declare, else the one schema Stroom holds for the
+  namespace (refused, saying what to write, with none or several); the quality rules apply as to standard Events.
+* An index plan keeps the namespace (`events_namespace`, only when not standard) and its indexing XSLT reads it
+  (`xpath-default-namespace`). `save_xslt` restores it from the session's drafted plan when the agent's copy leaves
+  it out. The plan's reply names fields whose source the event-logging schema has no element for
+  (`fields_not_in_schema`).
+* A schema filter's schema group only narrows its candidate schemas (`FindXMLSchemaCriteria.matches`); the output's
+  namespace and `xsi:schemaLocation` pick the schema, so a group holding both validates either. The tools and the
+  event-logging guide say so, and the guide says to keep the namespace the feed's translation and imports write
+  rather than asking.
+
+Full support (built 2026-11-03), decided with the product owner rather than writing `event-logging:3` and converting
+(a forked environment's shared imports, cooked Events and templates are all forked, so converting would need a step in
+every pipeline type):
+
+* **What a fork is.** An XML schema document in a schema group that holds an event-logging schema (e.g. EVENTS), in
+  a namespace other than `event-logging:3` (`HeldSchemas.forks`). Not "any schema with an Events root", nor a list
+  in config.
+* **Which a translation writes.** Inferred from what the environment's translations already write
+  (`EventsTargetInference`): the imports its AGENTS docs require of translations, then the XSLTs set on the best
+  translation template and those it inherits from. A fork inferred is settled without asking (how `inferred`);
+  nothing inferred, the user is asked with the fork beside the event-logging versions. The fork's document is kept
+  as the build's chosen document (its UUID, as for a version held twice), so every later call reads it.
+* **The schema model.** `EventSchema` knows its namespace (the XSD's targetNamespace) and system id, so mapping
+  checks, element checks and `read_document` see the fork's own elements (its extra activities). `HeldSchemas`
+  resolves a fork by its document's UUID.
+* **Generation.** `XsltGenerator` writes the schema's namespace and system id; standard output is unchanged (the
+  goldens). `XsltReader` and `MappingRebuild` read a fork's XSLT (and its imports) as `event-logging:3`
+  (`ForkedEvents`): a mapping doesn't depend on the namespace.
+* **Readers.** check_xslt checks a fork's XSLT against the fork's schema; index plans read the fork's schema for
+  their checks; CEF plans keep `events_namespace` like index plans; Event fragments in a fork's namespace are
+  event-logging fragments; shared templates' call sites are found in a fork's Events.
+* **Imports.** check_xslt (and so every save) refuses an XSLT whose import writes Events in another namespace than
+  it does, saying not to drop the import (seen: the agent dropped the environment's common import to write
+  `event-logging:3`).
+* **Tests.** A test fork of our own: event-logging 4.1.0 in `file://xml/schema/test-fork/events` with one extra
+  activity, Charge. Unit tests throughout; `TestE2eForkedSchema` covers a forked environment end to end.
+
 ## Indexing
 
 ### Conventions (built)

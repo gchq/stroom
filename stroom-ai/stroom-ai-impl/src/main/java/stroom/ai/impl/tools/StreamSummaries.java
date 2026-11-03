@@ -20,6 +20,7 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.ErrorTriageConfig;
 import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -51,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import javax.xml.XMLConstants;
@@ -77,6 +79,9 @@ public class StreamSummaries {
     /// share of all events, by the action element of the events that have it: for the tools' own use, not for
     /// summarise_events' reply.
     public static final String POPULATION_BY_ACTION = "path_population_by_action";
+    /// In an Events profile: the namespace the Events are written in, where it is not event-logging:3 (an
+    /// environment's fork of the event-logging schema).
+    public static final String EVENTS_NAMESPACE = "events_namespace";
     /// The key of each TypeId's share of all events (%), by the action element of its events: for the tools' own
     /// use, not for summarise_events' reply.
     public static final String TYPE_IDS_BY_ACTION = "type_ids_by_action";
@@ -263,6 +268,8 @@ public class StreamSummaries {
         final Map<String, Map<String, Integer>> byAction = new TreeMap<>();
         final Map<String, Map<String, Integer>> typeIdsByAction = new TreeMap<>();
         final Map<String, List<String>> valuesByPath = new TreeMap<>();
+        // Namespaces other than event-logging:3 the Events are written in (an environment's fork of the schema).
+        final Set<String> namespaces = new LinkedHashSet<>();
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
         for (final long streamId : streamIds) {
@@ -276,9 +283,11 @@ public class StreamSummaries {
                     // One record that isn't XML (a truncated or hand-edited stream): passed over.
                     continue;
                 }
-                final NodeList events = document.getElementsByTagNameNS(EVT, "Event");
-                for (int i = 0; i < events.getLength(); i++) {
-                    final Element event = (Element) events.item(i);
+                final String namespace = eventsNamespace(document);
+                if (!namespace.isEmpty() && !EventsNamespaces.isStandard(namespace)) {
+                    namespaces.add(namespace);
+                }
+                for (final Element event : events(document, namespace)) {
                     count++;
                     final Element detail = child(event, "EventDetail");
                     final Element action = detail == null
@@ -374,10 +383,40 @@ public class StreamSummaries {
         }
         result.put(TYPE_IDS_BY_ACTION, typeIdShares);
         result.put(VALUES_BY_PATH, valuesByPath);
+        if (!namespaces.isEmpty()) {
+            // Paths are the same whatever the namespace, but XPaths (drop_when, an indexing XSLT) need it.
+            result.put(EVENTS_NAMESPACE, namespaces.iterator().next());
+            result.put("namespace_note", "The Events are written in " + ToolText.list(List.copyOf(namespaces))
+                                         + ", not event-logging:3: XPaths over them (an indexing XSLT's "
+                                         + "xpath-default-namespace) must use it. "
+                                         + EventsNamespaces.SCHEMA_GROUP_NOTE);
+        }
         result.put("hint", count >= maxEvents
                 ? "Percentages are of events sampled; raise max_events for a fuller picture."
                 : null);
         return result;
+    }
+
+    // The namespace of a record's Events: its root's if it is <Events> or <Event> ("" for none), else
+    // event-logging:3 (Events wrapped in something else).
+    private static String eventsNamespace(final Document document) {
+        final String namespace = EventsNamespaces.of(document.getDocumentElement());
+        return namespace != null
+                ? namespace
+                : EVT;
+    }
+
+    // The record's Event elements in the Events' namespace.
+    private static List<Element> events(final Document document, final String namespace) {
+        final NodeList all = document.getElementsByTagNameNS("*", "Event");
+        final List<Element> events = new ArrayList<>();
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element event = (Element) all.item(i);
+            if (Objects.equals(namespace, Objects.requireNonNullElse(event.getNamespaceURI(), ""))) {
+                events.add(event);
+            }
+        }
+        return events;
     }
 
     private static double percent(final int n, final int of) {
@@ -425,7 +464,7 @@ public class StreamSummaries {
             if (!text.isBlank()) {
                 addValue(valuesByPath, path(node, event), text.strip());
             }
-            if (EVT.equals(node.getNamespaceURI()) && "Data".equals(node.getLocalName())
+            if (EventsNamespaces.sameNamespace(node, event) && "Data".equals(node.getLocalName())
                 && NullSafe.isNonEmptyString(node.getAttribute("Name")) && node.hasAttribute("Value")) {
                 addValue(valuesByPath, path(node, event) + "[@Name='" + node.getAttribute("Name") + "']/@Value",
                         node.getAttribute("Value").strip());
@@ -443,10 +482,11 @@ public class StreamSummaries {
     // (path of the Data element, its Name) for each Data element with a value, ignoring repeats.
     private static Set<List<String>> dataNames(final Element event) {
         final Set<List<String>> names = new LinkedHashSet<>();
-        final NodeList data = event.getElementsByTagNameNS(EVT, "Data");
+        final NodeList data = event.getElementsByTagNameNS("*", "Data");
         for (int i = 0; i < data.getLength(); i++) {
             final Element element = (Element) data.item(i);
-            if (NullSafe.isNonEmptyString(element.getAttribute("Name"))
+            if (EventsNamespaces.sameNamespace(element, event)
+                && NullSafe.isNonEmptyString(element.getAttribute("Name"))
                 && !element.getAttribute("Value").isBlank()) {
                 names.add(List.of(path(element, event), element.getAttribute("Name")));
             }
@@ -486,7 +526,7 @@ public class StreamSummaries {
 
     private static Element child(final Element parent, final String localName) {
         return childElements(parent).stream()
-                .filter(c -> localName.equals(c.getLocalName()) && EVT.equals(c.getNamespaceURI()))
+                .filter(c -> localName.equals(c.getLocalName()) && EventsNamespaces.sameNamespace(c, parent))
                 .findFirst()
                 .orElse(null);
     }

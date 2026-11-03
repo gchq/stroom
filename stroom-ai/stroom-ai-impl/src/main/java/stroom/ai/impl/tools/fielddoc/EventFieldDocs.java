@@ -820,7 +820,7 @@ public final class EventFieldDocs {
     }
 
     private static String unknownKind(final XmlElement event) {
-        final List<XmlElement> details = event.childElements(FieldDocs.EVT, "EventDetail");
+        final List<XmlElement> details = event.childElements(event.namespace(), "EventDetail");
         if (details.isEmpty()) {
             return "?";
         }

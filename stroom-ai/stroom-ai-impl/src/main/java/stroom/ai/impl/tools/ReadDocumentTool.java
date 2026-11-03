@@ -20,6 +20,7 @@ import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.UnsavedPart;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.validation.EventElements;
+import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.TranslationDescriptions;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -300,6 +301,12 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
                                    + describe(docRef) + " is a " + docRef.getType() + ".");
         }
         final XmlSchemaDoc doc = documentAccess.read(docRef, XmlSchemaDoc.class).orElse(null);
+        final HeldSchemas held = heldSchemasProvider.get();
+        if (doc != null && held != null && held.forks().stream().anyMatch(fork -> fork.getUuid()
+                .equals(doc.getUuid()))) {
+            // An environment's fork of the event-logging schema: its own elements (an activity of its own, say).
+            return describeForkElement(held, doc, element);
+        }
         final String version = HeldSchemas.eventLoggingVersion(NullSafe.get(doc, XmlSchemaDoc::getSystemId));
         if (version == null) {
             return ToolResult.text("Error: " + ELEMENT_ARG + " is for the event-logging XMLSchema only; "
@@ -311,6 +318,42 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         fields.put("name", docRef.getName());
         fields.put("systemId", doc.getSystemId());
         return describeElement(fields, element, version);
+    }
+
+    // What a fork's elements take, read from its own schema.
+    private ToolResult describeForkElement(final HeldSchemas held,
+                                           final XmlSchemaDoc doc,
+                                           final List<String> elements) {
+        final EventSchema schema;
+        try {
+            schema = held.eventSchema(doc);
+        } catch (final ToolRefusal e) {
+            return ToolResult.text("Error: " + e.getMessage());
+        }
+        final Map<String, Object> json = new LinkedHashMap<>();
+        json.put("type", XmlSchemaDoc.TYPE);
+        json.put("uuid", doc.getUuid());
+        json.put("name", doc.getName());
+        json.put("systemId", doc.getSystemId());
+        json.put("namespace", schema.namespace());
+        if (elements.size() == 1) {
+            try {
+                json.putAll(EventElements.describe(schema, elements.getFirst(), schema.version()));
+            } catch (final ToolRefusal e) {
+                return ToolResult.text("Error: " + e.getMessage());
+            }
+        } else {
+            final Map<String, Object> described = new LinkedHashMap<>();
+            for (final String element : elements) {
+                try {
+                    described.put(element, EventElements.describe(schema, element, schema.version()));
+                } catch (final ToolRefusal e) {
+                    described.put(element, Map.of("error", e.getMessage()));
+                }
+            }
+            json.put("elements", described);
+        }
+        return ToolResult.text(JsonUtil.writeValueAsString(json, false)).withStructuredContent(json);
     }
 
     // What event-logging elements take, in the version given, or the newest this Stroom holds: one as before, or
@@ -348,6 +391,16 @@ class ReadDocumentTool extends AbstractWorkspaceTool {
         if (fields != null) {
             json.put("hint", "element= any path below Event (e.g. EventDetail/Authenticate, EventSource/User) says "
                              + "what it takes; the XSD itself isn't returned.");
+        }
+        // An environment's fork may add elements event-logging lacks: the agent reads them with the fork's uuid.
+        final List<String> forks = heldSchemas.forks().stream()
+                .map(fork -> fork.getName() + " (uuid " + fork.getUuid() + ", namespace "
+                             + NullSafe.string(fork.getNamespaceURI()).strip() + ")")
+                .toList();
+        if (!forks.isEmpty()) {
+            json.put("forks", "This Stroom also holds the environment's own fork of the event-logging schema: "
+                              + String.join(", ", forks) + ". For a translation written in it, read its elements "
+                              + "with uuid= the fork's.");
         }
         return ToolResult.text(JsonUtil.writeValueAsString(json, false)).withStructuredContent(json);
     }

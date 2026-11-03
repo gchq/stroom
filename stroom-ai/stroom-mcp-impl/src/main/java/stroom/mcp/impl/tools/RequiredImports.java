@@ -278,7 +278,7 @@ class RequiredImports {
     }
 
     // The XSLT of exactly that name the user may view: Stroom imports by name.
-    private Optional<XsltDoc> named(final String href) {
+    Optional<XsltDoc> named(final String href) {
         for (final DocRef ref : NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, href, false))) {
             if (href.equals(ref.getName())) {
                 final Optional<XsltDoc> doc = documentAccess.read(ref, XsltDoc.class);

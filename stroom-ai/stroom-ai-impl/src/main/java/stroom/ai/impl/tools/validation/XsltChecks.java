@@ -25,6 +25,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -173,6 +174,20 @@ public final class XsltChecks {
     ///                       Data Splitter's records:2.
     /// @return A problem for each namespace whose elements are read bare, with the expressions and the fix.
     public static List<String> namespaceProblems(final Element root, final String inputNamespace) {
+        return namespaceProblems(root, inputNamespace, List.of());
+    }
+
+    /// As [#namespaceProblems(Element, String)], where this Stroom holds forks of the event-logging schema: Events
+    /// read bare are said to be in the input's own namespace where that is a fork's, else in event-logging:3 or a
+    /// fork's.
+    ///
+    /// @param root           An XSLT's root element.
+    /// @param inputNamespace The namespace of its input when known, or null.
+    /// @param forks          The namespaces of the forks of the event-logging schema this Stroom holds.
+    /// @return A problem for each namespace whose elements are read bare, with the expressions and the fix.
+    public static List<String> namespaceProblems(final Element root,
+                                                 final String inputNamespace,
+                                                 final Collection<String> forks) {
         final Map<String, List<String>> found = new LinkedHashMap<>();
         for (final Element node : XmlTrees.named(root, XmlTrees.XSL, "*")) {
             if (defaultNamespace(node) != null) {
@@ -199,6 +214,10 @@ public final class XsltChecks {
         if ("".equals(inputNamespace)) {
             found.remove(RECORDS_NS);
         }
+        // Events read from a fork's stream are in the fork's namespace, not event-logging:3.
+        if (inputNamespace != null && forks.contains(inputNamespace) && found.containsKey(EVT)) {
+            found.put(inputNamespace, found.remove(EVT));
+        }
         final List<String> problems = new ArrayList<>();
         found.forEach((namespace, where) -> {
             final String shown = String.join(", ", where.subList(0, Math.min(3, where.size())))
@@ -209,7 +228,14 @@ public final class XsltChecks {
                     ? " (the JSONParser's output; json-to-xml() output is in " + FN_NS + ")"
                     : RECORDS_NS.equals(namespace)
                             ? " (a Data Splitter's output, or XML that declares records:2)"
-                            : " (an Events stream)";
+                            : EVT.equals(namespace) && !forks.isEmpty()
+                                    ? " (an Events stream; one written in the environment's fork of the "
+                                      + "event-logging schema is in " + String.join(" or ", forks)
+                                      + " instead, so use that for one)"
+                                    : forks.contains(namespace)
+                                            ? " (an Events stream in the environment's fork of the event-logging "
+                                              + "schema)"
+                                            : " (an Events stream)";
             problems.add(shown + " select nothing: those elements are in namespace " + namespace + note + ", and no "
                          + "xpath-default-namespace is declared. Set xpath-default-namespace=\"" + namespace
                          + "\" on xsl:stylesheet, or bind a prefix to it. If the input really has no namespace, "
@@ -222,12 +248,20 @@ public final class XsltChecks {
     /// @return The literal event-logging elements written directly below it, looking through xsl:if, xsl:choose
     /// and so on (not into variables and parameters).
     public static List<Element> literalChildren(final Element node) {
+        return literalChildren(node, EVT);
+    }
+
+    /// @param node      An element of an XSLT.
+    /// @param namespace The Events namespace: `event-logging:3`, or an environment's fork's.
+    /// @return The literal Events elements in that namespace written directly below it, looking through xsl:if,
+    /// xsl:choose and so on (not into variables and parameters).
+    public static List<Element> literalChildren(final Element node, final String namespace) {
         final List<Element> found = new ArrayList<>();
         for (final Element child : XmlTrees.children(node)) {
-            if (EVT.equals(child.getNamespaceURI())) {
+            if (namespace.equals(child.getNamespaceURI())) {
                 found.add(child);
             } else if (!XmlTrees.isXsl(child, "variable") && !XmlTrees.isXsl(child, "param")) {
-                found.addAll(literalChildren(child));
+                found.addAll(literalChildren(child, namespace));
             }
         }
         return found;
@@ -242,8 +276,10 @@ public final class XsltChecks {
     /// @return A problem for each element out of place.
     public static List<String> eventElementProblems(final Element root, final EventSchema schema) {
         final List<String> problems = new ArrayList<>();
-        for (final Element node : XmlTrees.named(root, EVT, "*")) {
-            if (XmlTrees.ancestors(node).stream().anyMatch(a -> EVT.equals(a.getNamespaceURI()))) {
+        // The schema's own namespace: event-logging:3, or a fork's.
+        final String namespace = schema.namespace();
+        for (final Element node : XmlTrees.named(root, namespace, "*")) {
+            if (XmlTrees.ancestors(node).stream().anyMatch(a -> namespace.equals(a.getNamespaceURI()))) {
                 continue;
             }
             final String name = node.getLocalName();
@@ -253,7 +289,7 @@ public final class XsltChecks {
             } else {
                 options = schema.pathsNamed(name);
                 if (options.isEmpty()) {
-                    problems.add("No element '" + name + "' exists anywhere in the event-logging schema");
+                    problems.add("No element '" + name + "' exists anywhere in the " + schemaName(schema));
                     continue;
                 }
             }
@@ -291,12 +327,19 @@ public final class XsltChecks {
                        + "this itself.");
     }
 
+    // The schema as problems name it: event-logging's, or an environment's fork.
+    private static String schemaName(final EventSchema schema) {
+        return schema.isFork()
+                ? "environment's fork of the event-logging schema (" + schema.namespace() + ")"
+                : "event-logging schema";
+    }
+
     // Walks the literal elements below node, each against the paths its parent may be at.
     private static void walk(final EventSchema schema,
                              final Element node,
                              final List<String> options,
                              final List<String> problems) {
-        for (final Element child : literalChildren(node)) {
+        for (final Element child : literalChildren(node, schema.namespace())) {
             final String name = child.getLocalName();
             final List<String> kept = new ArrayList<>();
             String reason = null;
@@ -317,12 +360,13 @@ public final class XsltChecks {
                 }
             }
             if (kept.isEmpty()) {
+                final String which = schemaName(schema);
                 final String message = options.size() == 1
-                        ? options.getFirst() + "/" + name + " is not in the event-logging schema" + (reason != null
+                        ? options.getFirst() + "/" + name + " is not in the " + which + (reason != null
                         ? ": " + reason
                         : "")
                         : name + " is not allowed below any of " + ToolText.list(options.subList(0,
-                                Math.min(4, options.size()))) + " in the event-logging schema";
+                                Math.min(4, options.size()))) + " in the " + which;
                 if (!problems.contains(message)) {
                     problems.add(message);
                 }

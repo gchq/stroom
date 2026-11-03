@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltStyle;
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.XsltSafety;
 
 import java.util.ArrayList;
@@ -59,6 +60,9 @@ import java.util.regex.Pattern;
 ///                   `why`): documented as not sent.
 /// @param imports    Shared XSLTs imported (xsl:import), e.g. those an AGENTS doc's Required imports name.
 /// @param style      How the CEF XSLT is written, as an Events translation's is (naming, variables, layout).
+/// @param eventsNamespace `events_namespace`: the namespace the Events are written in, where it is not
+///                   event-logging:3 (an environment's fork of the event-logging schema), else null. The XSLT's
+///                   xpath-default-namespace.
 public record CefPlan(String output,
                       String topic,
                       String kafkaKey,
@@ -73,7 +77,8 @@ public record CefPlan(String output,
                       Map<String, List<CefField>> events,
                       List<Map<String, String>> notSent,
                       List<String> imports,
-                      XsltStyle style) {
+                      XsltStyle style,
+                      String eventsNamespace) {
 
     /// One Kafka record per Event.
     public static final String KAFKA = "kafka";
@@ -103,6 +108,47 @@ public record CefPlan(String output,
         notSent = List.copyOf(Objects.requireNonNullElse(notSent, List.of()));
         imports = List.copyOf(Objects.requireNonNullElse(imports, List.of()));
         style = Objects.requireNonNullElse(style, XsltStyle.DEFAULT);
+        // Only a namespace other than the standard one is kept, so a plan for standard Events is as it always was.
+        eventsNamespace = eventsNamespace == null || eventsNamespace.isBlank()
+                          || EventsNamespaces.isStandard(eventsNamespace.strip())
+                ? null
+                : eventsNamespace.strip();
+    }
+
+    /// A plan for Events in the standard event-logging:3 namespace.
+    ///
+    /// @param output     `kafka` or `text`.
+    /// @param topic      The Kafka topic, or null.
+    /// @param kafkaKey   An XPath for each Kafka record's key, or null.
+    /// @param customKeys Whether keys outside the dictionary may be sent.
+    /// @param vendor     Device Vendor.
+    /// @param product    Device Product.
+    /// @param version    Device Version.
+    /// @param signature  Device Event Class ID.
+    /// @param name       Name.
+    /// @param severity   Severity.
+    /// @param common     Fields every event gets.
+    /// @param events     Each kind of event's own fields.
+    /// @param notSent    Event values no key takes, with why.
+    /// @param imports    Shared XSLTs imported.
+    /// @param style      How the CEF XSLT is written.
+    public CefPlan(final String output,
+                   final String topic,
+                   final String kafkaKey,
+                   final boolean customKeys,
+                   final CefValue vendor,
+                   final CefValue product,
+                   final CefValue version,
+                   final CefValue signature,
+                   final CefValue name,
+                   final CefValue severity,
+                   final List<CefField> common,
+                   final Map<String, List<CefField>> events,
+                   final List<Map<String, String>> notSent,
+                   final List<String> imports,
+                   final XsltStyle style) {
+        this(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity, common, events,
+                notSent, imports, style, null);
     }
 
     /// @param output     `kafka` or `text`.
@@ -175,7 +221,8 @@ public record CefPlan(String output,
         }
         return reader.orThrow("CefPlan", new CefPlan(output, topic, kafkaKey, customKeys, header.get("vendor"),
                 header.get("product"), header.get("version"), header.get("signature"), header.get("name"),
-                header.get("severity"), common, events, notSent, imports, style));
+                header.get("severity"), common, events, notSent, imports, style,
+                reader.optionalString(data, top, "events_namespace")));
     }
 
     /// @param name A header field's name (`vendor`, `product`, `version`, `signature`, `name`, `severity`).
@@ -207,56 +254,68 @@ public record CefPlan(String output,
         header.put(name, value);
         return new CefPlan(output, topic, kafkaKey, customKeys, header.get("vendor"), header.get("product"),
                 header.get("version"), header.get("signature"), header.get("name"), header.get("severity"), common,
-                events, notSent, imports, style);
+                events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param output `kafka` or `text`.
     /// @return The plan with that output.
     public CefPlan withOutput(final String output) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param topic The Kafka topic, or null.
     /// @return The plan with that topic.
     public CefPlan withTopic(final String topic) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param kafkaKey An XPath for each Kafka record's key, or null.
     /// @return The plan with that key.
     public CefPlan withKafkaKey(final String kafkaKey) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param events Each kind of event's own fields.
     /// @return The plan with those.
     public CefPlan withEvents(final Map<String, List<CefField>> events) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param notSent The values the sample holds that no key carries (`path`, `event_type`, `why`).
     /// @return The plan with those.
     public CefPlan withNotSent(final List<Map<String, String>> notSent) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// @param imports The shared XSLTs imported.
     /// @return The plan with those.
     public CefPlan withImports(final List<String> imports) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
+    }
+
+    /// @param namespace The namespace the Events are written in, or null (or event-logging:3) for the standard one.
+    /// @return The plan reading Events in it.
+    public CefPlan withEventsNamespace(final String namespace) {
+        return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
+                common, events, notSent, imports, style, namespace);
+    }
+
+    /// @return The namespace the Events are written in: [#eventsNamespace()], else event-logging:3.
+    public String eventsNamespaceOrStandard() {
+        return EventsNamespaces.orStandard(eventsNamespace);
     }
 
     /// @param style How the XSLT is written.
     /// @return The plan with that style.
     public CefPlan withStyle(final XsltStyle style) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style);
+                common, events, notSent, imports, style, eventsNamespace);
     }
 
     /// `expressions`: where and what each expression the XSLT evaluates is: header sources, fields and the Kafka
@@ -456,6 +515,10 @@ public record CefPlan(String output,
         }
         if (mode != DumpMode.COMPACT || !style.equals(XsltStyle.DEFAULT)) {
             out.put("style", style.toJson(mode));
+        }
+        // Only for Events in a namespace other than event-logging:3, so a plan kept before reads as it was.
+        if (eventsNamespace != null) {
+            out.put("events_namespace", eventsNamespace);
         }
         return out;
     }

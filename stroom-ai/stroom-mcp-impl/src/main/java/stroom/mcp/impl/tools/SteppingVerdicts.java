@@ -198,8 +198,9 @@ final class SteppingVerdicts {
         final String message = "None of the " + keys.size() + " records produced an Event: the XSLT writes Events, "
                                + "but its record templates select nothing in the input. Usually the input's "
                                + "namespace (xpath-default-namespace: records:2 for a Data Splitter, and for XML "
-                               + "fragments the wrapper root's xmlns (records:2, or event-logging:3 for an <Events> "
-                               + "wrapper) unless they declare their own; the mapping's xml_namespace) or the "
+                               + "fragments the wrapper root's xmlns (records:2, or the Events namespace for an "
+                               + "<Events> wrapper: event-logging:3, or the environment's fork's) unless they "
+                               + "declare their own; the mapping's xml_namespace) or the "
                                + "record element's name (the mapping's record). Every record would be lost.";
         return blocking("No record produced an Event", element, keys.size(), message, keys);
     }

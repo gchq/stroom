@@ -63,10 +63,16 @@ public final class CefEvents {
     /// The Events in an XML text.
     ///
     /// @param xml The text, e.g. an Events stream.
-    /// @return Its `event-logging:3` Event elements, in order.
+    /// @return Its Event elements, in order: in its root's namespace where the root is `<Events>` (event-logging:3,
+    /// or an environment's fork's), else in event-logging:3.
     /// @throws XmlParser.XmlParseException if it doesn't parse.
     public static List<XmlElement> eventsOf(final String xml) {
-        return XmlParser.parse(xml).iterElements(CefKeys.EL, "Event");
+        final XmlElement root = XmlParser.parse(xml);
+        final String namespace = ("Events".equals(root.localName()) || "Event".equals(root.localName()))
+                                 && root.namespace() != null && !root.namespace().isEmpty()
+                ? root.namespace()
+                : CefKeys.EL;
+        return root.iterElements(namespace, "Event");
     }
 
     /// An Event's kind.

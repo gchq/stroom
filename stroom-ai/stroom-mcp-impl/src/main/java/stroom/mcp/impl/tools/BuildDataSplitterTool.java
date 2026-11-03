@@ -595,7 +595,8 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                                 final String saveAs,
                                                 final String build) {
         final Map<String, Object> setup = sampleProfiling.withFragmentSetup(profiled,
-                eventVersions.chosen(context, build).orElse(null));
+                eventVersions.chosen(context, build).orElse(null),
+                eventVersions.chosenFork(context, build).orElse(null));
         final Map<String, Object> converter = (Map<String, Object>) setup.get("text_converter");
         final Map<String, Object> input = (Map<String, Object>) setup.get("xslt_input");
         final Map<String, Object> result = new LinkedHashMap<>();

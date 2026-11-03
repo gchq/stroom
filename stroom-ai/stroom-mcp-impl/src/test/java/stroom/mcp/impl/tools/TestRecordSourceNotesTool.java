@@ -57,7 +57,7 @@ class TestRecordSourceNotesTool {
             new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
     private final EventVersions eventVersions = new EventVersions(heldSchemas, new Consent(
             () -> Mockito.mock(AiAuditLog.class)), new BuildMemory(),
-            world::guard, world::records);
+            world::guard, world::records, () -> Mockito.mock(EventsTargetInference.class));
     private final RecordSourceNotesTool tool = new RecordSourceNotesTool(world.guard(), world.documentAccess,
             new DocumentWrites(world.documentAccess), eventVersions, plan);
 

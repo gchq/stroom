@@ -293,6 +293,21 @@ class TestSampleProfiler {
     }
 
     @Test
+    void eventFragmentsInAForkedNamespaceAreEventLoggingFragmentsToo() {
+        // An environment's fork of the event-logging schema keeps its elements in a namespace of its own.
+        final String fork = "file://xml/schema/test-fork/events";
+        final String events = ("<Event xmlns=\"" + fork + "\"><EventTime><TimeCreated>2026-10-01T10:00:00.000Z"
+                               + "</TimeCreated></EventTime><EventSource><System><Name>App</Name></System>"
+                               + "</EventSource><EventDetail><TypeId>1</TypeId></EventDetail></Event>").repeat(2);
+
+        final Map<String, Object> profiled = SampleProfiler.profile(events);
+
+        assertThat(profiled).containsEntry("event_logging", true).containsEntry("namespace", fork);
+        // The fragments keep their own namespace inside the wrapper.
+        assertThat(((Map<?, ?>) profiled.get("xslt_input")).get("namespace")).isEqualTo(fork);
+    }
+
+    @Test
     void epochSecondsWithAFractionAreATimeWhateverTheSource() {
         // Seen with a Bluecoat log: 1791712800.123 was a plain decimal, so the time was mapped by hand without its
         // milliseconds. Text (a W3C column) or a JSON number alike.
