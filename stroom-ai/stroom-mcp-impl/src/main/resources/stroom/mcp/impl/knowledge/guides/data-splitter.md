@@ -5,6 +5,8 @@ A Data Splitter text converter (type `DATA_SPLITTER`, used by `DSParser`) turns 
 
 ## Generate it from a spec
 
+Write the Data Splitter with `build_data_splitter`, never by hand first.
+
 `build_data_splitter` takes the sample's text, infers the spec from its format (delimited with or without a header,
 key=value, syslog with a key=value body) and runs it locally: the records it produces, the lines that match
 nothing, and the field names the mapping may use. Give it a `spec` only when the inferred one is wrong or the

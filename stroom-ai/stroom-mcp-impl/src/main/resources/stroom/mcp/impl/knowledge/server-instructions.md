@@ -18,14 +18,6 @@ being processed, or processed slowly (a pipeline, a feed or a stream), or proces
 explain_processing, which finds what stops it and changes nothing. When what the user wants fits more than one, ask
 which.
 
-A discovery index: the source is a feed already holding raw data (start_build feeds=[it] kind=discovery) or a sample
-(start_build kind=discovery, create_feed, upload_sample); nothing is surveyed, as Elasticsearch maps the fields itself. Ask the user, in one
-message: the cluster, the index name (e.g. stroom-discovery-<source>-v1), the discovery template
-(find_pipeline_templates stage=discovery), the field holding each record's time (and its format if it is not ISO 8601
-or epoch milliseconds), any stream meta to add, any fields to leave out, and an example index template from a sibling
-index. Delimited text needs a Data Splitter in the build first (build_data_splitter). Then draft_index_mapping
-discovery= with the raw streams, and on as its reply says.
-
 Order of work for a new source, always: start_onboarding (creates the build; given the sample streams, profiles
 them and returns the plan), then stage 1, the events pipeline (feed, samples uploaded, template, translation XSLT saved with its
 mapping, step every record, process, validate the Events, document), then stage 2, indexing, which reads the Events
@@ -85,8 +77,7 @@ profiles them; never read a file's text into the conversation to send it. Only p
 (start_onboarding samples=), about 10 records each: you write that text out token by token. start_onboarding profiles
 them itself: don't call profile_sample as well. It reports what differs between files. Each file is its own stream:
 step them all, and survey_feed with those stream_ids shows every kind of event the sample holds; map variants with
-any_of. To fix a translation mapping, build_translation_xslt changes= only the rules or entries that change (with the
-uuid it saved, or the same build and name), not the whole mapping again.
+any_of; to fix one, build_translation_xslt changes= only what changes, not the whole mapping again.
 
 Whole feed: a sample can miss rare kinds of event. Once a feed has been processed (or indexed) whole, review_coverage
 finds the records no rule matched and the events kept as Unknown, with exactly which raw streams hold them; tell the
@@ -98,47 +89,16 @@ entry when the build is promoted.
 Questions about the data (what a feed holds, what a field means, how to search it): describe_feed, read only,
 from the generated documentation and the indexes' fields. Answer in plain words and give the documentation links.
 
-Parsing: profile_sample names the parser. JSON (an array, or one object per line) is parsed by the Event Data
-(JSON) template's JSONParser element with no text converter; a Data Splitter is for text (CSV, syslog, key=value).
-XML fragments (several root elements, e.g. one <Event> per line, no root) take an XMLFragmentParser with an
-XML_FRAGMENT wrapper converter: a template with one, else create_pipeline from a template whose parser is the XMLParser, with
-replace_parser='XMLFragmentParser'; fragments without a namespace take the wrapper root's (records:2, or event-logging:3
-for an <Events> wrapper): build_data_splitter gives the environment's own wrapper and saves it. The XSLT reads
-the parser's output in its namespace (records:2 for a Data Splitter; http://www.w3.org/2013/XSL/json for JSON, root
-/map for JSON lines, /array for an array), so set xpath-default-namespace to it.
+Parsing: profile_sample names the parser and the namespace the XSLT reads its output in (xslt_input): JSON is read by
+the JSON template's JSONParser with no text converter, text (CSV, syslog, key=value) by a Data Splitter written with
+build_data_splitter from a spec, never by hand first, and XML fragments by an XMLFragmentParser with a wrapper
+(stroom://guide/xslt, stroom://guide/data-splitter).
 
-Text formats: write the Data Splitter with build_data_splitter from a spec (delimited, regex, key=value, syslog with a
-parsed body), which runs it on the sample and shows the records and field names; never by hand first. Records
-longer than the Data Splitter's read buffer (bufferSize on <dataSplitter>, 20,000 characters by default) are lost:
-build_data_splitter sets it from the sample streams read through whole, and buffer_size= raises it when the feed
-holds longer records: measure_records gives a stream's longest record and the buffer for it
-(stroom://guide/data-splitter). build_data_splitter also runs the converter through Stroom's own parser
-(stroom_check): fix the spec until it matches, as processing does what that parser does.
-
-Translation: start from draft_translation_mapping (the user first chooses the event-logging version it writes, from
-those this Stroom holds, the newest recommended, 4.x as much as 3.x (namespace event-logging:3 is every version's):
-a form, or needs_guidance for you to ask, with its options; never name or offer a version before that result lists
-them, as versions differ between environments (seen: an agent offered 4.1.0, which the cluster didn't hold); then
-a valid mapping drafted
-from the sample: decide the action element per kind of event, the system name and environment; read_document
-type=XMLSchema element= says what an element takes: EventDetail for the action elements, EventDetail/<Action> for its
-children and values), then build_translation_xslt with the edited mapping and the draft's schema_version, the sample
-(and the splitter spec) so fields no record has and time formats the values do not fit are caught before stepping;
-never write XSLT by hand, and never send the field inventory as the mapping. A field that no element of the schema
-means (a rule id, a byte count, a vendor code) is carried as Data of the action element (path
-EventDetail/<Action>/Data with data_name): never invent an element for it, and never leave the event Unknown because
-of it. Sources:
-field, any_of (first of several names), value, xpath, lookup (reference data); modifiers: transform (lower, upper,
-trim, strip_domain, domain, digits), dictionary, map, default, time_format. Values the record does not carry come
-from reference data (find_reference_data; build_reference_xslt and a reference-data pipeline for new tables; the
-events pipeline names the feed in references) or from a Dictionary doc (save_dictionary). Text fields holding several
-values (a message string with a time, user, action and description) are parsed with the mapping's extract (a
-regular expression whose groups become fields), not with substring-before/after chains; JSON held in a string is
-read with an xpath using json-to-xml(). Only stroom: functions that exist may be used (format-date, lookup, meta,
-dictionary, log, json-to-xml, ...; there is no stroom:json-parse); check_xslt refuses unknown ones, elements the
-event-logging schema has no place for (e.g. EventDetail/ServerEvent: EventDetail holds TypeId, Description and one
-action element such as Authenticate, Process, View, Alert, Unknown), and match/select expressions that would
-select nothing for want of a namespace.
+Translation: start from draft_translation_mapping. The user first chooses the event-logging version it writes, from
+those this Stroom holds (a form, or needs_guidance for you to ask, with its options): never name or offer a version
+before that result lists them, as versions differ between environments. Then edit the drafted mapping and generate
+it with build_translation_xslt; never write XSLT by hand (stroom://guide/mapping says what a mapping holds and how to
+carry a field no element means).
 
 Rules for every run:
 - Start with get_instructions (docs= the folders, feeds or documents involved): standing instructions from AGENTS
