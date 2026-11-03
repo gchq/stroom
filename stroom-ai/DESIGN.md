@@ -737,7 +737,9 @@ User's view: `how-it-works/runs-and-context.md`, `ask-stroom-ai/chat-interface.m
 * **Server instructions.** In the chat, `server-instructions.md` is added to the system prompt once `start_onboarding`
   is offered, that is once the build group is on (`BuildInstructions`). Trusted MCP servers' own instructions are
   added for servers whose tools are offered. Over `/mcp` the instructions are sent on every `initialize`
-  (`StroomMcpServer.INSTRUCTIONS`, a preamble plus `BundledKnowledge.serverInstructions()`).
+  (`StroomMcpServer.INSTRUCTIONS`, a preamble plus `BundledKnowledge.serverInstructions()`). The chat gives one
+  server's instructions at most `McpToolset.MAX_SERVER_INSTRUCTIONS_CHARS` (20,000) characters, so a third-party
+  server can't fill the context; Stroom's own are held under it by a test (see [Bundled knowledge](#bundled-knowledge)).
 * **Lenient arguments** (`ToolCallGuard`, `MojibakeRepair`): unknown arguments are dropped and reported, choices given
   with stray punctuation or case are read as meant, and text mangled by a Windows code page is repaired; the notes go
   in `argument_notes`. After three identical failures a call is answered from the last failure without running
@@ -903,6 +905,25 @@ Golden files fix their larger outputs (see [Testing](#testing)).
 `server-instructions.md` is the agent's map: which work fits what the user wants, the order of work, the rules for
 every run, and how to ask the user questions.
 It is written as labelled paragraphs, not headings, as it goes into a system prompt.
+It holds only what the agent needs throughout a build, and what no tool enforces (2026-11-03):
+
+* **A rule a tool enforces stays with the tool.** A form, an approval, a refusal or a reply saying what comes next
+  (`drop_first`, `before_enabling`, a filter created disabled) is where the agent meets the rule, at the moment it
+  applies. The instructions keep only what the agent must bring itself: to follow the reply, not to look for a way
+  round a refusal, never to weaken validation.
+* **Stage detail lives in the guides.** How to parse, write a Data Splitter, draft a mapping or set up a discovery
+  index is in the data-splitter, xslt, mapping and indexing guides; the instructions give a line or two naming the
+  guide, and the plan's step for that work (converter, translation, a discovery index) names it too, so the agent
+  is pointed to it when it applies.
+* **It fits whole.** Seen: the file grew to 20,675 characters, past what the chat gives a server, and the agent lost
+  its last rules (Elasticsearch indexing only through the pipeline) without a word. It was cut to 12,934 characters,
+  and `TestBundledKnowledge.theInstructionsFitWhatStroomAiGivesAServer` fails once it no longer fits, against the
+  same constant the chat cuts at: growth means trimming or moving detail to a guide, not raising the cap. Pinned
+  phrases (keep going until `next` says promote, ask only what no form asks) are tested in `TestBundledKnowledge`
+  and `TestStroomMcpServer`.
+* **One agent, not sub-agents.** Splitting the work across sub-agents with an instruction set each was weighed and
+  decided against (2026-11-03): the instructions are already about building only, and onboarding is a conversation
+  with forms and questions mid-task, which sub-agents would need routing back to the user.
 The guides (`guides/*.md`) are short working references for the agent (event-logging, XSLT, Data Splitter, JSON input,
 indexing, reference data, CEF, documentation, visualisation, AGENTS docs).
 Conventions (`conventions/ecs.yaml`, `stroom-flat.yaml`) are field-naming profiles, each path an exact event-logging
@@ -2129,8 +2150,9 @@ User's view: `agent-tools/connecting-clients.md`.
 7. Ask the user through `Consent` (or `UserQuestions`), never by returning an id. Make it safe to re-run up to its
    question.
 8. A write tool in a build ends with `BuildPlan.withNext`.
-9. Add it to TOOLS.md, the server instructions or a guide if the agent needs to know when to use it, and the
-   stroom-docs tool reference.
+9. Add it to TOOLS.md and the stroom-docs tool reference. Say when to use it in its own description and replies
+   first; a guide for detail about one kind of work; the server instructions only for what the agent needs
+   throughout a build, which must fit their limit (see [Bundled knowledge](#bundled-knowledge)).
 10. Tests: unit tests for each refusal and its wording; an end-to-end test if it changes Stroom.
 
 ### Adding a build step or stage
@@ -2306,6 +2328,8 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-03 | The server instructions hold only what the agent needs throughout a build and no tool enforces: rules the tools enforce (processor filters, reprocessing, accept_errors, placeholders, Elasticsearch only through the pipeline) are left to their forms and replies, and stage detail (parsing, Data Splitters, mappings, discovery) moved to the guides, which the plan's steps name. 20,675 characters (past the chat's 20,000, so the last rules were cut silently) down to 12,934, held under the limit by a test rather than a higher cap. | Bundled knowledge |
+| 2026-11-03 | No sub-agents for building: the server instructions are already about building only, and onboarding is a conversation with forms and questions mid-task (decided by the user). | Bundled knowledge |
 | 2026-11-03 | A table a tool writes (`table`, `search_events`, `stream_meta`, `processor_tasks`, `server_tasks`) is in the format its file's name gives (`.md` Markdown, `.tsv` TSV, otherwise CSV), as `table` and `fetch_events` read it back: CSV written to a `.md` file was read as one column, and `fetch_events` said it had no `StreamId` and `EventId` (chat 141). `table`'s `where` takes `in` and `not_in` (values as a list or separated by commas), after a refused `in` was rewritten as a regular expression too long to be allowed. | Chat-only workflows |
 | 2026-11-03 | Whether to look into the events behind an attached table stays the model's judgement: no nudge to answer from the table first. Tried on chat 141 (events fetched unasked, most of a turn), it saved the calls (chat 142) but the model then said where a value came from without looking, wrongly (quoted secret names put down to the translation, though the source log has them). | Sessions, workspace, memory and context |
 | 2026-11-03 | `table` reads loosely shaped arguments as meant (a list as JSON text, whitespace and one trailing comma ignored; a single object as a list of one; `orderBy` items as column names, `-` for descending unless a result column has that exact name) and otherwise refuses quoting what was given; argument-shape errors are refused before the query runs, so only failures of a readable query count towards the column-summary fallback (seen in chat 140). `current_results` uses a tab's only table when the name given matches nothing, with a note; with several tables it refuses, listing them. | Chat-only workflows |
