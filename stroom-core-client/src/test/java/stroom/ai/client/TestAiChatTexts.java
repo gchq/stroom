@@ -221,4 +221,15 @@ class TestAiChatTexts {
         assertThat(AiChatTexts.toolDefinitionsNote(new AiContextUsage(131_072, 90_000L, false,
                 java.util.Map.of(), 80, 0, 0L, null))).isNull();
     }
+
+    @Test
+    void theCompactQuestionAsksForNothingToBeTypedAndSaysHowToGiveAFocus() {
+        final String question = AiChatTexts.compactChatQuestion();
+
+        assertThat(question)
+                .startsWith("Compact this chat now?")
+                .contains("can be undone")
+                .contains("/compact");
+        assertThat(question).doesNotContain("Optionally, say what");
+    }
 }
