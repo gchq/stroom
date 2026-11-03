@@ -1,0 +1,124 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
+    <ui:style>
+        .groups {
+            height: 160px;
+        }
+
+        .expression {
+            height: 250px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </ui:style>
+
+    <g:ScrollPanel styleName="max">
+        <g:FlowPanel styleName="form-padding form">
+            <g:HTML ui:field="fieldName"/>
+
+            <form:FormGroup identity="elasticFieldSettingsEnabled" label="Enabled"
+                            helpText="When unticked, the field is hidden from users and can't be used in queries.
+                                      Existing queries that use it fail with an error. Disabling a field also
+                                      disables its subfields.">
+                <tickbox:CustomCheckBox ui:field="enabled"/>
+            </form:FormGroup>
+            <g:Label ui:field="enabledNote" visible="false"/>
+
+            <g:FlowPanel ui:field="denseVectorSection" addStyleNames="{style.section}">
+                <g:HTML>
+                    <h3>Vector search</h3>
+                </g:HTML>
+                <form:FormGroup identity="elasticFieldSettingsEmbeddingModel" label="Embedding model"
+                                helpText="Model that turns the query text into a vector for kNN search on this
+                                          field.">
+                    <g:SimplePanel ui:field="embeddingModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsNearestNeighbourCount" label="Nearest-neighbour count"
+                                helpText="Number of nearest neighbours (k) the kNN query returns. 0 uses the
+                                          Elasticsearch default.">
+                    <valuespinner:ValueSpinner ui:field="nearestNeighbourCount" width="100px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankModel" label="Rerank model"
+                                helpText="Model that scores each hit's relevance to the query text. Leave empty to
+                                          skip reranking.">
+                    <g:SimplePanel ui:field="rerankModel"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankBatchSize" label="Rerank batch size"
+                                helpText="Maximum number of hits sent to the rerank model in one call.">
+                    <valuespinner:ValueSpinner ui:field="rerankBatchSize" width="100px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankTextField" label="Rerank text field"
+                                helpText="Text field whose values are sent to the rerank model.">
+                    <l:SelectionBox ui:field="rerankTextField" width="400px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreField" label="Score field name"
+                                helpText="Name of the field that holds each hit's rerank score in search results.">
+                    <g:TextBox ui:field="rerankScoreField" width="400px"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsRerankScoreMinimum" label="Rerank score minimum"
+                                helpText="Hits with a rerank score below this value are dropped.">
+                    <g:FlowPanel>
+                        <g:TextBox ui:field="rerankScoreMinimum" width="100px"/>
+                        <g:Label ui:field="rerankScoreMinimumError" styleName="invalid-feedback"
+                                 visible="false"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+            </g:FlowPanel>
+
+            <g:FlowPanel ui:field="virtualSection" addStyleNames="{style.section}">
+                <g:HTML>
+                    <h3>Virtual field</h3>
+                </g:HTML>
+                <form:FormGroup identity="elasticFieldSettingsVirtualName" label="Name">
+                    <g:FlowPanel>
+                        <g:TextBox ui:field="virtualName" width="400px"/>
+                        <g:Label ui:field="virtualNameError" styleName="invalid-feedback" visible="false"/>
+                    </g:FlowPanel>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldSettingsVirtualGroups" label="Groups"
+                                helpText="Each group is a named query. Searching this field for a group runs that
+                                          group's query.">
+                    <g:SimplePanel ui:field="groups" addStyleNames="{style.groups} stroom-control"/>
+                </form:FormGroup>
+                <g:FlowPanel ui:field="groupEditor" addStyleNames="{style.section}">
+                    <form:FormGroup identity="elasticFieldSettingsGroupName" label="Group name">
+                        <g:FlowPanel>
+                            <g:TextBox ui:field="groupName" width="400px"/>
+                            <g:Label ui:field="groupNameError" styleName="invalid-feedback" visible="false"/>
+                        </g:FlowPanel>
+                    </form:FormGroup>
+                    <form:FormGroup identity="elasticFieldSettingsGroupExpression" label="Group query"
+                                    helpText="The query run when users search this field for the group. Terms may
+                                              use the index's keyword fields.">
+                        <g:SimplePanel ui:field="expression" addStyleNames="{style.expression}"/>
+                    </form:FormGroup>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:ScrollPanel>
+</ui:UiBinder>

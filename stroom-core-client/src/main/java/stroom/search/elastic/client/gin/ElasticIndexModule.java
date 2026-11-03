@@ -18,11 +18,17 @@ package stroom.search.elastic.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.search.elastic.client.ElasticIndexPlugin;
+import stroom.search.elastic.client.presenter.ElasticFieldInfoPresenter;
+import stroom.search.elastic.client.presenter.ElasticFieldInfoPresenter.ElasticFieldInfoView;
+import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter;
+import stroom.search.elastic.client.presenter.ElasticFieldSettingsPresenter.ElasticFieldSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
+import stroom.search.elastic.client.view.ElasticFieldInfoViewImpl;
+import stroom.search.elastic.client.view.ElasticFieldSettingsViewImpl;
 import stroom.search.elastic.client.view.ElasticIndexFieldListViewImpl;
 import stroom.search.elastic.client.view.ElasticIndexSettingsViewImpl;
 
@@ -37,5 +43,11 @@ public class ElasticIndexModule extends PluginModule {
         bindPresenterWidget(ElasticIndexFieldListPresenter.class,
                 ElasticIndexFieldListView.class,
                 ElasticIndexFieldListViewImpl.class);
+        bindPresenterWidget(ElasticFieldInfoPresenter.class,
+                ElasticFieldInfoView.class,
+                ElasticFieldInfoViewImpl.class);
+        bindPresenterWidget(ElasticFieldSettingsPresenter.class,
+                ElasticFieldSettingsView.class,
+                ElasticFieldSettingsViewImpl.class);
     }
 }
