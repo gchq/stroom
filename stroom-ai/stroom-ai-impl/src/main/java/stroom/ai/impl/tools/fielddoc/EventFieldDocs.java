@@ -765,7 +765,7 @@ public final class EventFieldDocs {
     }
 
     // The events' distinct values of a key, and whether any event had several.
-    private static Values valuesOf(final List<XmlElement> events, final FieldKey key) {
+    static Values valuesOf(final List<XmlElement> events, final FieldKey key) {
         final List<String> found = new ArrayList<>();
         boolean several = false;
         for (final XmlElement event : events) {
@@ -791,7 +791,7 @@ public final class EventFieldDocs {
         return names;
     }
 
-    private static String described(final EventSchema schema, final FieldKey key) {
+    static String described(final EventSchema schema, final FieldKey key) {
         return FieldDocs.schemaDescription(schema, key.xpath());
     }
 
@@ -803,7 +803,7 @@ public final class EventFieldDocs {
                 : path;
     }
 
-    private static String orNotSampled(final String shown) {
+    static String orNotSampled(final String shown) {
         return shown.isEmpty()
                 ? "(not in the sample)"
                 : shown;
@@ -929,7 +929,7 @@ public final class EventFieldDocs {
     }
 
     // A key's distinct values, and whether any event had several.
-    private record Values(List<String> values, boolean several) {
+    record Values(List<String> values, boolean several) {
 
     }
 

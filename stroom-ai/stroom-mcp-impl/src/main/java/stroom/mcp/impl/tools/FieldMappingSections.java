@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ErrorTriage;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline.TranslationDoc;
@@ -34,6 +35,7 @@ import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.EventFieldDocs;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
+import stroom.ai.impl.tools.fielddoc.WrittenEventDocs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -48,8 +50,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -80,6 +84,7 @@ class FieldMappingSections {
     private final StreamSummaries streamSummaries;
     private final IndexValues indexValues;
     private final ReferenceEvaluation referenceEvaluation;
+    private final Provider<DocumentAccess> documentAccessProvider;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -90,6 +95,7 @@ class FieldMappingSections {
     /// @param streamSummaries Reads how populated each path of the sample Events is.
     /// @param indexValues     Reads example values from the index for fields the sample has none of.
     /// @param referenceEvaluation Reads a reference data pipeline's maps, feeds and the pipelines that look them up.
+    /// @param documentAccessProvider Reads an XSLT written by hand, as the user.
     @Inject
     FieldMappingSections(final PipelineStepping stepping,
                          final DraftCefMappingTool cef,
@@ -99,7 +105,8 @@ class FieldMappingSections {
                          final StreamReader streamReader,
                          final StreamSummaries streamSummaries,
                          final IndexValues indexValues,
-                         final ReferenceEvaluation referenceEvaluation) {
+                         final ReferenceEvaluation referenceEvaluation,
+                         final Provider<DocumentAccess> documentAccessProvider) {
         this.stepping = stepping;
         this.cef = cef;
         this.pipelineShapes = pipelineShapes;
@@ -109,6 +116,7 @@ class FieldMappingSections {
         this.streamSummaries = streamSummaries;
         this.indexValues = indexValues;
         this.referenceEvaluation = referenceEvaluation;
+        this.documentAccessProvider = documentAccessProvider;
     }
 
     /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
@@ -158,12 +166,7 @@ class FieldMappingSections {
     String writtenFieldsSection(final ToolCallContext context,
                                 final String pipelineUuid,
                                 final List<Long> streamIds) {
-        final String element = pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid).stream()
-                .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
-                .map(TranslationDoc::element)
-                .findFirst()
-                .orElseThrow(() -> new ToolRefusal("The pipeline has no XSLT of its own to document: give it one, or "
-                                                   + "document the template"));
+        final String element = ownXslt(pipelineUuid).element();
         final SteppedPipeline loaded = load(pipelineUuid);
         final List<Map<String, List<String>>> documents = IndexFieldDocs.indexDocuments(
                 outputs(context, loaded, streamIds, element, null));
@@ -173,6 +176,38 @@ class FieldMappingSections {
                                   + "streams, for discovery).");
         }
         return IndexFieldDocs.writtenFieldsMarkdown(documents);
+    }
+
+    /// The Field mapping section of an events pipeline whose translation XSLT keeps no mapping (written by hand): from
+    /// the Events its own XSLT writes, stepped over the sample streams, by event type.
+    ///
+    /// @param context      The call's context.
+    /// @param build        The build, for the event-logging document chosen for it.
+    /// @param pipelineUuid The pipeline.
+    /// @param streamIds    The sample raw streams.
+    /// @param layout       [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described    The field descriptions, given and asked for.
+    /// @return The section.
+    /// @throws ToolRefusal if it has no XSLT of its own, or the streams give no events.
+    String writtenEventsSection(final ToolCallContext context,
+                                final String build,
+                                final String pipelineUuid,
+                                final List<Long> streamIds,
+                                final String layout,
+                                final Descriptions described) {
+        final TranslationDoc own = ownXslt(pipelineUuid);
+        final String code = documentAccessProvider.get().read(own.doc(), XsltDoc.class)
+                .map(XsltDoc::getData)
+                .orElseThrow(() -> new ToolRefusal("The pipeline's XSLT '" + own.doc().getName() + "' can't be "
+                                                   + "read"));
+        final SteppedPipeline loaded = load(pipelineUuid);
+        final Map<String, String> outputs = outputMap(context, loaded, streamIds, own.element(), null);
+        final List<XmlElement> events = EventFieldDocs.sampledEvents(new ArrayList<>(outputs.values()));
+        if (events.isEmpty()) {
+            throw new ToolRefusal(noEvents(context, loaded, streamIds, own.element(), code, outputs.size()));
+        }
+        return countsLine(outputs) + WrittenEventDocs.writtenEventsMarkdown(codeSchema(context, build, code), events,
+                layout, described);
     }
 
     /// The Field mapping section of a CEF pipeline whose XSLT keeps no plan: what its lines carry, from the Events they
@@ -391,14 +426,12 @@ class FieldMappingSections {
             throw new ToolRefusal(noEvents(context, loaded, streamIds, kept.element(), marked.xslt(),
                     outputs.size()));
         }
-        // Which records the counts are of: seen in VS Code, counts from a different sample (the first records of
-        // one stream, then records spread over every stream) taken for a change in how events are routed.
-        final Map<String, Integer> perStream = new LinkedHashMap<>();
-        outputs.keySet().forEach(key -> perStream.merge(key.split(":")[0], 1, Integer::sum));
-        final List<String> counted = new ArrayList<>();
-        perStream.forEach((stream, count) -> counted.add(count + " of stream " + stream));
-        String section = "Counts are of " + outputs.size() + " sample records (" + String.join(", ", counted)
-                         + ").\n\n" + EventFieldDocs.fieldMappingMarkdown(mapping, schema, events, layout, described);
+        // Rewritten by hand (most events not as the mapping writes them): documented by the events it writes, by
+        // event type, not by rules that no longer write them.
+        final long unmarked = events.stream().filter(event -> EventFieldDocs.ruleOf(event) == null).count();
+        String section = countsLine(outputs) + (drift.isPresent() && unmarked * 2 > events.size()
+                ? WrittenEventDocs.writtenEventsMarkdown(schema, events, layout, described)
+                : EventFieldDocs.fieldMappingMarkdown(mapping, schema, events, layout, described));
         if (drift.isPresent()) {
             final List<String> unexpressible = HandEditGate.unexpressible(kept.xslt().getData());
             section += "\nNote: " + (unexpressible.isEmpty()
@@ -525,6 +558,35 @@ class FieldMappingSections {
                     e.getMessage()));
             return null;
         }
+    }
+
+    // Which records the counts are of: seen in VS Code, counts from a different sample (the first records of one
+    // stream, then records spread over every stream) taken for a change in how events are routed.
+    private static String countsLine(final Map<String, String> outputs) {
+        final Map<String, Integer> perStream = new LinkedHashMap<>();
+        outputs.keySet().forEach(key -> perStream.merge(key.split(":")[0], 1, Integer::sum));
+        final List<String> counted = new ArrayList<>();
+        perStream.forEach((stream, count) -> counted.add(count + " of stream " + stream));
+        return "Counts are of " + outputs.size() + " sample records (" + String.join(", ", counted) + ").\n\n";
+    }
+
+    // The pipeline's own XSLT (not its template's).
+    private TranslationDoc ownXslt(final String pipelineUuid) {
+        return pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid).stream()
+                .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
+                .findFirst()
+                .orElseThrow(() -> new ToolRefusal("The pipeline has no XSLT of its own to document: give it one, or "
+                                                   + "document the template"));
+    }
+
+    // The Events schema an XSLT with no mapping writes: the fork its code writes, else the event-logging version it
+    // names, from the document chosen for the build where this Stroom holds it in more than one.
+    private EventSchema codeSchema(final ToolCallContext context, final String build, final String code) {
+        final String version = eventVersions.translationVersion(null, code);
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        eventVersions.forkWrittenBy(code).map(XmlSchemaDoc::getUuid)
+                .ifPresent(uuid -> payload.put(EventVersions.KEPT_SCHEMA_UUID, uuid));
+        return eventVersions.keptSchema(context, build, payload, version);
     }
 
     private SteppedPipeline load(final String pipelineUuid) {
