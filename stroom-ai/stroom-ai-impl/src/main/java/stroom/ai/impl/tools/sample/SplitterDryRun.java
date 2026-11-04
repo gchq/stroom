@@ -91,6 +91,11 @@ public final class SplitterDryRun {
     // Words before a record's first pair (group 1), and the rest from that pair (group 2); the most taken as fields.
     private static final Pattern PREFIX_WORDS = Pattern.compile("((?:[^\\s=\"]+\\s+)+?)([^\\s=\"]+=.*)");
     private static final int MOST_PREFIX_WORDS = 4;
+    // A quoted key:"value" pair's start.
+    private static final Pattern COLON_PAIR = Pattern.compile("\\w[\\w.-]*:\"");
+    // A syslog record's structured data in brackets, read as a body where it holds the pairs (its message empty).
+    private static final String BRACKETED = "(?s)^\\[(.*)\\]$";
+    private static final String STRUCTURED = "structured";
     // White space between key=value pairs: any.
     private static final String WHITE_SPACE = "\\s";
     /// The variant of a header line giving the date of the lines after it.
@@ -221,13 +226,21 @@ public final class SplitterDryRun {
     /// @param records Records of pairs.
     /// @return The delimiter.
     public static String pairDelimiter(final List<String> records) {
+        return pairDelimiter(records, "=");
+    }
+
+    /// @param records   Records of pairs.
+    /// @param separator What separates a key from its value.
+    /// @return The delimiter between the pairs, as [#pairDelimiter(List)] finds it.
+    public static String pairDelimiter(final List<String> records, final String separator) {
+        final Pattern pair = Pattern.compile("\\w[\\w.-]*" + Pattern.quote(separator));
         long later = 0;
         for (final String record : records) {
-            later += Math.max(0, ToolText.findallGroups(SampleProfiler.KEY_VALUE, record).size() - 1);
+            later += Math.max(0, pair.matcher(record).results().count() - 1);
         }
         for (final String delimiter : List.of(", ", "; ", "|")) {
             final Pattern after = Pattern.compile("\\s*" + Pattern.quote(ToolText.strip(delimiter))
-                                                  + "\\s*\\w[\\w .-]*=");
+                                                  + "\\s*\\w[\\w .-]*" + Pattern.quote(separator));
             long count = 0;
             for (final String record : records) {
                 count += after.matcher(record).results().count();
@@ -237,6 +250,22 @@ public final class SplitterDryRun {
             }
         }
         return " ";
+    }
+
+    /// What separates keys from values: `:` where most records hold three or more quoted `key:"value"` pairs (Check
+    /// Point's `action:"Accept"; ifdir:"inbound"`) and more of them than `key=value` pairs; else `=`.
+    ///
+    /// @param records Records.
+    /// @return The separator.
+    public static String pairSeparator(final List<String> records) {
+        final long colons = records.stream().filter(record -> COLON_PAIR.matcher(record).results().count() >= 3)
+                .count();
+        final long equals = records.stream()
+                .filter(record -> ToolText.findallGroups(SampleProfiler.KEY_VALUE, record).size() >= 3)
+                .count();
+        return !records.isEmpty() && colons >= 0.8 * records.size() && colons > equals
+                ? ":"
+                : "=";
     }
 
     /// The regexes for a single-quoted key=value value (single_quotes), tried before the pair's own at each place:
@@ -468,7 +497,9 @@ public final class SplitterDryRun {
             }
             if (inner != null && !inner.isEmpty()) {
                 fields = new LinkedHashMap<>(fields);
-                fields.putAll(inner);
+                // A body's field named as one before it (Check Point's time:"..." after the syslog header's time) is
+                // a second data element of that name: a field reads the first, as Stroom's records show it.
+                inner.forEach(fields::putIfAbsent);
             }
         }
         return fields;
@@ -687,6 +718,11 @@ public final class SplitterDryRun {
                 bodies.add(message);
             }
         }
+        if (":".equals(pairSeparator(bodies))) {
+            // key:"value" pairs (Check Point's).
+            return withWords(SplitterSpec.builder("key_value").pairSeparator(":").quote("\"")
+                    .delimiter(pairDelimiter(bodies, ":")).build(), bodies);
+        }
         int pairs = 0;
         for (final String body : bodies) {
             if (ToolText.findallGroups(SampleProfiler.KEY_VALUE, body).size() >= 2) {
@@ -885,13 +921,16 @@ public final class SplitterDryRun {
         if (SampleProfiler.KEY_VALUE_FORMAT.equals(format)) {
             final boolean quoted = lines.subList(0, Math.min(50, lines.size())).stream()
                     .anyMatch(line -> line.contains("=\""));
-            final String delimiter = pairDelimiter(lines.subList(0, Math.min(200, lines.size())));
+            final List<String> head = lines.subList(0, Math.min(200, lines.size()));
+            final String separator = pairSeparator(head);
+            final String delimiter = pairDelimiter(head, separator);
             final SplitterSpec.Builder builder = SplitterSpec.builder("key_value").delimiter(delimiter)
-                    .pairSeparator("=")
-                    .quote(quoted
+                    .pairSeparator(separator)
+                    .quote(quoted || ":".equals(separator)
                             ? "\""
                             : null)
-                    .spacedValues(!quoted && " ".equals(delimiter) && spacedValues(lines, " ", "="));
+                    .spacedValues(!quoted && "=".equals(separator) && " ".equals(delimiter)
+                                  && spacedValues(lines, " ", "="));
             if (info.get("record_key") instanceof final String key) {
                 // Lines tied into records by a key (auditd): each line's fields under its name, the lines between
                 // records (ausearch's separators) passed over.
@@ -940,13 +979,40 @@ public final class SplitterDryRun {
     private static SplitterSpec.Builder syslogSpec(final String rfc, final List<String> lines) {
         final SplitterSpec head = SplitterSpec.builder("syslog").rfc(rfc).build();
         final List<String> messages = new ArrayList<>();
-        dryRun(head, String.join("\n", lines)).records()
-                .forEach(record -> messages.add(record.getOrDefault("message", "")));
+        final List<String> structured = new ArrayList<>();
+        dryRun(head, String.join("\n", lines)).records().forEach(record -> {
+            messages.add(record.getOrDefault("message", ""));
+            structured.add(record.getOrDefault(STRUCTURED, ""));
+        });
+        final SplitterSpec inBrackets = structuredBody(messages, structured);
+        if (inBrackets != null) {
+            return SplitterSpec.builder("syslog").rfc(rfc).body(inBrackets).bodyField(STRUCTURED);
+        }
         SplitterSpec body = bodySpec(messages);
         if (body == null) {
             body = mixedBody(messages);
         }
         return SplitterSpec.builder("syslog").rfc(rfc).body(body);
+    }
+
+    // Where most messages are empty and the structured data in brackets holds pairs (Check Point's Log Exporter:
+    // `[action:"Accept"; ifdir:"inbound"; ...]`): the brackets' text read by the pairs' spec; else null.
+    private static SplitterSpec structuredBody(final List<String> messages, final List<String> structured) {
+        final long empty = messages.stream().filter(ToolText::isBlank).count();
+        final List<String> inside = structured.stream()
+                .map(text -> ToolText.strip(text))
+                .filter(text -> text.startsWith("[") && text.endsWith("]"))
+                .map(text -> text.substring(1, text.length() - 1))
+                .toList();
+        if (messages.isEmpty() || empty < 0.8 * messages.size() || inside.size() < 0.8 * structured.size()) {
+            return null;
+        }
+        final SplitterSpec pairs = bodySpec(inside);
+        if (pairs == null || !"key_value".equals(pairs.kind())) {
+            return null;
+        }
+        return SplitterSpec.builder("regex").pattern(BRACKETED).names(List.of("structured_data")).body(pairs)
+                .bodyField("structured_data").build();
     }
 
     // Messages some of which are key=value pairs (two or more) and some not, each a share of them: a key=value part,

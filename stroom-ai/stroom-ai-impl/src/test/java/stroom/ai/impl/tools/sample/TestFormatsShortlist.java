@@ -79,6 +79,32 @@ class TestFormatsShortlist {
         assertThat(postfix).anySatisfy(record -> assertThat(record.get("status")).startsWith("sent (250 2.0.0 Ok"));
     }
 
+    @Test
+    void quotedKeyColonValuePairsAreRead() {
+        // Check Point's Log Exporter: the pairs in the syslog record's structured data, its message empty.
+        final SplitterSpec checkPoint = inferred("checkpoint-lines.log");
+        assertThat(checkPoint.bodyField()).isEqualTo("structured");
+        assertThat(checkPoint.body().body().pairSeparator()).isEqualTo(":");
+        assertThat(checkPoint.body().body().delimiter()).isEqualTo("; ");
+        final Map<String, String> rejected = records("checkpoint-lines.log").stream()
+                .filter(record -> record.containsKey("rule_name"))
+                .findFirst()
+                .orElseThrow();
+        // The header's time first, as Stroom keeps it, its own time:"..." the second of that name.
+        assertThat(rejected.get("time")).startsWith("2026-10-11T");
+        assertThat(rejected).containsEntry("ifname", "eth1").containsEntry("origin", "10.0.0.1")
+                .hasEntrySatisfying("rule_name", rule -> assertThat(rule).startsWith("Block "))
+                .hasEntrySatisfying("loguid", uid -> assertThat(uid).startsWith("{0x").endsWith("}"));
+        // The same pairs as lines of their own.
+        final String lines = "action:\"Accept\"; src:\"10.1.2.3\"; dst:\"10.0.0.5\"; service:\"443\"\n"
+                             + "action:\"Drop\"; src:\"203.0.113.9\"; dst:\"10.0.0.6\"; service:\"22\"\n";
+        final SplitterSpec spec = SplitterDryRun.inferSpec(lines).spec();
+        assertThat(spec.pairSeparator()).isEqualTo(":");
+        assertThat(SplitterDryRun.dryRun(spec, lines).records().getLast()).containsEntry("action", "Drop")
+                .containsEntry("service", "22");
+        assertThat(SampleProfiler.profile(lines)).doesNotContainKey("malformed_lines");
+    }
+
     private static List<Map<String, String>> records(final String fixture) {
         final SplitterDryRun.DryRun dryRun = SplitterDryRun.dryRun(inferred(fixture), resource(fixture), 1_000);
         assertThat(dryRun.unmatchedLines()).as(fixture).isEmpty();
