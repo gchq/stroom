@@ -66,7 +66,7 @@ public class BuildPlan {
     public static final Map<String, List<String>> PARSER_FOR_FORMAT = parsers();
     /// The formats a text converter turns into XML.
     public static final Set<String> TEXT_FORMATS = Set.of("delimited", "syslog rfc5424", "syslog rfc3164",
-            "key=value", "unknown text", "cef", "multi-line text", "cri", "mixed lines", "keyed sections");
+            "key=value", "unknown text", "cef", "multi-line text", "cri", "mixed lines", "keyed sections", "leef");
     /// With the plan when a build starts. Seen in testing: no task list kept, and the agent stopped at the end of
     /// each stage to report.
     public static final String TASK_LIST = "With a task-list tool (Stroom AI: task_list), write plan's steps into "
@@ -1493,7 +1493,7 @@ public class BuildPlan {
         map.put("xml fragments", List.of("XMLFragmentParser", "CombinedParser"));
         for (final String format : List.of("delimited", "syslog rfc5424", "syslog rfc3164", "key=value",
                 "unknown text", "cef", "multi-line text", "json lines (some not JSON)", "cri", "mixed lines",
-                "keyed sections")) {
+                "keyed sections", "leef")) {
             map.put(format, text);
         }
         map.put("json object", json);

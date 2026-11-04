@@ -105,6 +105,27 @@ class TestFormatsShortlist {
         assertThat(SampleProfiler.profile(lines)).doesNotContainKey("malformed_lines");
     }
 
+    @Test
+    void leefIsReadByItsHeaderAndDeclaredDelimiter() {
+        // LEEF 1.0 after a syslog header: attributes separated by tabs, values holding spaces.
+        final Map<String, String> one = firstRecord("leef1-lines.log");
+        assertThat(one).containsEntry("host", "dc01").containsEntry("leef_version", "1.0")
+                .containsEntry("leef_product", "Windows Security")
+                .containsEntry("domain", "ACME")
+                .hasEntrySatisfying("devTime", time -> assertThat(time).matches("Oct 11 2026 \\d{2}:\\d{2}:\\d{2}"));
+        // LEEF 2.0: the delimiter the header declares.
+        assertThat(inferred("leef2-lines.log").body().delimiter()).isEqualTo("^");
+        assertThat(firstRecord("leef2-lines.log")).containsEntry("leef_delimiter", "^")
+                .containsKey("usrName").containsEntry("domain", "ACME");
+        // Declared as hex, with no syslog header.
+        final String hex = "LEEF:2.0|Acme|Gate|1.0|login|x7C|src=10.1.2.3|usrName=alice|msg=two words\n"
+                           + "LEEF:2.0|Acme|Gate|1.0|logout|x7C|src=10.1.2.4|usrName=bob|msg=bye\n";
+        final SplitterSpec spec = SplitterDryRun.inferSpec(hex).spec();
+        assertThat(spec.body().delimiter()).isEqualTo("|");
+        assertThat(SplitterDryRun.dryRun(spec, hex).records().getFirst()).containsEntry("leef_event_id", "login")
+                .containsEntry("msg", "two words");
+    }
+
     private static List<Map<String, String>> records(final String fixture) {
         final SplitterDryRun.DryRun dryRun = SplitterDryRun.dryRun(inferred(fixture), resource(fixture), 1_000);
         assertThat(dryRun.unmatchedLines()).as(fixture).isEmpty();

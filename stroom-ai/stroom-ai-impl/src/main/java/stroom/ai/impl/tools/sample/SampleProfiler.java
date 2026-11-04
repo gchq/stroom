@@ -56,6 +56,10 @@ public final class SampleProfiler {
     public static final String DELIMITED = "delimited";
     /// CEF, alone or after a syslog header.
     public static final String CEF_FORMAT = "cef";
+    /// IBM QRadar's LEEF: a pipe-separated header, then key=value attributes.
+    public static final String LEEF_FORMAT = "leef";
+    // A LEEF record's header.
+    private static final Pattern LEEF = ToolText.re("LEEF:\\d\\.\\d\\|");
     /// RFC 5424 syslog.
     public static final String SYSLOG_5424_FORMAT = "syslog rfc5424";
     /// RFC 3164 syslog.
@@ -1404,6 +1408,12 @@ public final class SampleProfiler {
                 : grouped.records().subList(0, Math.min(3, grouped.records().size())).stream()
                         .map(LineFormats::headOf)
                         .toList();
+        if (!firsts.isEmpty() && count(firsts, line -> ToolText.search(LEEF, line)) >= 0.8 * firsts.size()) {
+            return continued(with(result, "format", LEEF_FORMAT, "records", firsts.size(), "examples", examples,
+                    "suggested_parser", "Data Splitter for LEEF: the header's fields, then the attributes' key=value "
+                                        + "pairs, separated by the delimiter the header declares (2.0) or a tab "
+                                        + "(1.0) (build_data_splitter infers it)"), grouped);
+        }
         if (count(firsts, line -> ToolText.search(CEF, line)) >= 0.8 * firsts.size()) {
             // CEF, alone or after a syslog header: seen read as key=value, its header fields taken for keys and its
             // values cut at their first space.
