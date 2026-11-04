@@ -41,11 +41,11 @@ class TestDocRef {
                 .withInputTypes(DocRef.class, DocRef.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final boolean isEqual1 = DocRef.equalsIncludingName(
+                    final boolean isEqual1 = DocRef.equalsAll(
                             testCase.getInput()._1,
                             testCase.getInput()._2);
                     // Check the reverse
-                    final boolean isEqual2 = DocRef.equalsIncludingName(
+                    final boolean isEqual2 = DocRef.equalsAll(
                             testCase.getInput()._2,
                             testCase.getInput()._1);
                     Assertions.assertThat(isEqual1)

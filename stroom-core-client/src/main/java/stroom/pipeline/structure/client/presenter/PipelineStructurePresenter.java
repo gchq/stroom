@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocPresenter;
@@ -74,11 +75,6 @@ public class PipelineStructurePresenter
         implements PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
-    private static final DocRef NULL_SELECTION = DocRef.builder()
-            .uuid("")
-            .name("None")
-            .type("")
-            .build();
 
     private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
@@ -135,7 +131,7 @@ public class PipelineStructurePresenter
         super.onBind();
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
             final DocRef selectedDocRef = event.getSelectedItem();
-            if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
+            if (!DocRefUtil.isNullSelection(selectedDocRef)) {
                 if (Objects.equals(selectedDocRef.getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(
                             PipelineStructurePresenter.this,
