@@ -213,6 +213,8 @@ class McpAgentChat {
     // Null where it isn't injected (in tests), and responses are stored as written.
     private AnswerLinks answerLinks;
     private TabSnapshots tabSnapshots;
+    // How many of the latest steps rolling shortening keeps as they are; 0 turns it off.
+    private int rollingKeptSteps = ConversationShortening.ROLLING_KEPT_STEPS;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -245,6 +247,14 @@ class McpAgentChat {
         this.usageTracker = usageTracker;
         this.consentGate = consentGate;
         this.auditLog = auditLog;
+    }
+
+    /// Sets how many of a run's latest steps rolling shortening (see [ConversationShortening#rolling]) keeps as
+    /// they are: tests of the budget's own shortening turn it off.
+    ///
+    /// @param rollingKeptSteps The steps kept; 0 turns rolling shortening off.
+    void setRollingKeptSteps(final int rollingKeptSteps) {
+        this.rollingKeptSteps = Math.max(0, rollingKeptSteps);
     }
 
     /// @param answerLinks Links the documents and streams the model's responses mention.
@@ -465,6 +475,14 @@ class McpAgentChat {
             run.conversation.add(UserMessage.from(LAST_STEP_NOTE));
         }
 
+        // Lean as it goes, not only near the context window (see ConversationShortening#rolling); the budget's
+        // shortening applies on top.
+        final int lean = rollingKeptSteps > 0
+                ? ConversationShortening.rolling(run.conversation, rollingKeptSteps)
+                : 0;
+        if (lean > 0) {
+            usageTracker.recordShortened(chatId, lean);
+        }
         return LOGGER.logDurationIfDebugEnabled(
                 () -> call(run.chatModel, run.conversation, offered, chatId, run.modelDoc, run.budget,
                         run.workingMessageId),
