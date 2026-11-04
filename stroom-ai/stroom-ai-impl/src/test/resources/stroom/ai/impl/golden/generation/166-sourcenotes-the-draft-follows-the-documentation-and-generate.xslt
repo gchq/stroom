@@ -102,13 +102,11 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>Other</TypeId>
-        <xsl:if test="data[@name='evt']/@value[normalize-space(.)] or data[@name='usr']/@value[normalize-space(.)] or data[@name='res']/@value[normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('evt', data[@name='evt']/@value)"/>
-            <xsl:sequence select="mcp:data('usr', data[@name='usr']/@value)"/>
-            <xsl:sequence select="mcp:data('res', data[@name='res']/@value)"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('evt', data[@name='evt']/@value)"/>
+          <xsl:sequence select="mcp:data('usr', data[@name='usr']/@value)"/>
+          <xsl:sequence select="mcp:data('res', data[@name='res']/@value)"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

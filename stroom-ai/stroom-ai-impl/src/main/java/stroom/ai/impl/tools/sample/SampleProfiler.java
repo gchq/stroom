@@ -68,6 +68,8 @@ public final class SampleProfiler {
     public static final String KEY_VALUE_FORMAT = "key=value";
     /// Text of no format known.
     public static final String UNKNOWN_TEXT = "unknown text";
+    /// Records in several formats (syslog, key=value, timestamped text...), each with its share.
+    public static final String MIXED_LINES = "mixed lines";
 
     /// The start of an RFC 5424 syslog line.
     public static final Pattern SYSLOG_5424 = ToolText.re("^<\\d{1,3}>1 \\S+ \\S+ \\S+ \\S+ \\S+");
@@ -901,8 +903,11 @@ public final class SampleProfiler {
         for (final String start : RECORD_STARTS) {
             final Pattern pattern = ToolText.re(start);
             final long begins = lines.stream().filter(line -> ToolText.match(pattern, line)).count();
+            // Few entries are enough where every other line continues one (seen: stack traces outnumbering the
+            // entries they belong to, a fifth of the lines no longer entries).
             if (begins >= 2 && begins < lines.size() && ToolText.match(pattern, lines.getFirst())
-                && begins >= 0.2 * lines.size()) {
+                && (begins >= 0.2 * lines.size() || lines.stream()
+                    .allMatch(line -> ToolText.match(pattern, line) || !LineFormats.startsRecord(line)))) {
                 return Map.entry(start, SplitterDryRun.groupLines(lines, start));
             }
         }
@@ -1367,28 +1372,39 @@ public final class SampleProfiler {
         }
     }
 
-    // CEF, syslog, CRI, records of several lines and key=value: formats read a line (or a few) a record.
+    // CEF, syslog, CRI, records of several lines, key=value and mixed lines: formats read a line (or a few) a
+    // record. Each format is judged on records' first lines, a stack trace grouped with its entry first: seen,
+    // traces outnumbering their entries, so no format reached its share of the lines.
     private static Map<String, Object> profileLines(final String text,
                                                     final List<String> lines,
                                                     final Map<String, Object> result,
                                                     final int maxRecords) {
-        final List<String> examples = lines.subList(0, Math.min(3, lines.size()));
-        if (count(lines, line -> ToolText.search(CEF, line)) >= 0.8 * lines.size()) {
+        final LineFormats.Grouped grouped = LineFormats.group(lines);
+        final List<String> firsts = grouped == null
+                ? lines
+                : LineFormats.firstLines(grouped.records());
+        final List<String> examples = grouped == null
+                ? lines.subList(0, Math.min(3, lines.size()))
+                : grouped.records().subList(0, Math.min(3, grouped.records().size())).stream()
+                        .map(LineFormats::headOf)
+                        .toList();
+        if (count(firsts, line -> ToolText.search(CEF, line)) >= 0.8 * firsts.size()) {
             // CEF, alone or after a syslog header: seen read as key=value, its header fields taken for keys and its
             // values cut at their first space.
-            return with(result, "format", CEF_FORMAT, "records", lines.size(), "examples", examples,
+            return continued(with(result, "format", CEF_FORMAT, "records", firsts.size(), "examples", examples,
                     "suggested_parser", "Data Splitter for CEF: the header's fields, then the extension's key=value "
                                         + "pairs, whose values may hold spaces (build_data_splitter infers it; a "
-                                        + "translation template with a DSParser)");
+                                        + "translation template with a DSParser)"), grouped);
         }
-        if (count(lines, line -> ToolText.match(SYSLOG_5424, line)) >= 0.8 * lines.size()) {
-            return with(result, "format", SYSLOG_5424_FORMAT, "records", lines.size(), "examples", examples,
-                    "suggested_parser", "Data Splitter with a regex per RFC 5424 part (a translation template with a "
-                                        + "DSParser: find_pipeline_templates)");
+        if (count(firsts, line -> ToolText.match(SYSLOG_5424, line)) >= 0.8 * firsts.size()) {
+            return continued(with(result, "format", SYSLOG_5424_FORMAT, "records", firsts.size(), "examples",
+                    examples, "suggested_parser", "Data Splitter with a regex per RFC 5424 part (a translation "
+                                                  + "template with a DSParser: find_pipeline_templates)"), grouped);
         }
-        if (count(lines, line -> ToolText.match(SYSLOG_3164, line)) >= 0.8 * lines.size()) {
-            return with(result, "format", SYSLOG_3164_FORMAT, "records", lines.size(), "examples", examples,
-                    "suggested_parser", "Data Splitter with a regex for PRI, timestamp, host, tag and message");
+        if (count(firsts, line -> ToolText.match(SYSLOG_3164, line)) >= 0.8 * firsts.size()) {
+            return continued(with(result, "format", SYSLOG_3164_FORMAT, "records", firsts.size(), "examples",
+                    examples, "suggested_parser", "Data Splitter with a regex for PRI, timestamp, host, tag and "
+                                                  + "message"), grouped);
         }
         if (!lines.isEmpty() && count(lines, line -> ToolText.match(CRI_LINE, line)) >= 0.9 * lines.size()) {
             final List<String> records = SplitterDryRun.groupLinesToEnd(lines, SplitterDryRun.CRI_END);
@@ -1398,6 +1414,20 @@ public final class SampleProfiler {
                                         + "split into partial (P) lines ended by its full (F) line "
                                         + "(build_data_splitter infers it); the mapping joins the parts with xpath "
                                         + SplitterDryRun.CRI_JOIN);
+        }
+        final boolean pairsMostly = !firsts.isEmpty() && firsts.subList(0, Math.min(maxRecords, firsts.size())).stream()
+                .filter(line -> keyValues(line).size() >= 3)
+                .count() >= 0.8 * Math.min(maxRecords, firsts.size());
+        if (!pairsMostly) {
+            // No one format: two or more, each with its share of the records (asked for by the user: 10% each).
+            final Map<String, Object> mixed = LineFormats.mixed(grouped == null
+                    ? lines
+                    : grouped.records(), grouped != null);
+            if (mixed != null) {
+                final Map<String, Object> found = with(result, "format", MIXED_LINES);
+                found.putAll(mixed);
+                return continued(found, grouped);
+            }
         }
         final Map.Entry<String, List<String>> multi = multilineRecords(lines);
         if (multi != null) {
@@ -1410,14 +1440,15 @@ public final class SampleProfiler {
                                         + "pattern, starting (?s))");
         }
         final List<Map<String, Object>> pairs = new ArrayList<>();
-        lines.subList(0, Math.min(maxRecords, lines.size())).forEach(line -> pairs.add(keyValues(line)));
-        if (!pairs.isEmpty() && pairs.stream().filter(r -> r.size() >= 3).count() >= 0.8 * pairs.size()) {
-            final Map<String, Object> found = with(result, "format", KEY_VALUE_FORMAT, "records", lines.size(),
+        firsts.subList(0, Math.min(maxRecords, firsts.size())).forEach(line -> pairs.add(keyValues(line)));
+        if (pairsMostly) {
+            final Map<String, Object> found = continued(with(result, "format", KEY_VALUE_FORMAT, "records",
+                    firsts.size(),
                     "fields", inventory(pairs),
                     "suggested_parser", "Data Splitter splitting on spaces then = (a translation template with a "
-                                        + "DSParser: find_pipeline_templates)");
+                                        + "DSParser: find_pipeline_templates)"), grouped);
             final List<Map<String, Object>> bad = new ArrayList<>();
-            final List<String> scanned = lines.subList(0, Math.min(MALFORMED_SCAN, lines.size()));
+            final List<String> scanned = firsts.subList(0, Math.min(MALFORMED_SCAN, firsts.size()));
             for (int n = 0; n < scanned.size(); n++) {
                 if (!ToolText.search(KEY_VALUE, scanned.get(n))) {
                     bad.add(map("line", n + 1, "reason", "holds no key=value pairs", "text",
@@ -1429,6 +1460,22 @@ public final class SampleProfiler {
             return found;
         }
         return null;
+    }
+
+    // A format read a line a record, its records' first lines judged: with lines that continue them, where a
+    // record starts and that the lines after its first are kept as the continuation.
+    private static Map<String, Object> continued(final Map<String, Object> found, final LineFormats.Grouped grouped) {
+        if (grouped == null) {
+            return found;
+        }
+        found.put("record_start", LineFormats.RECORD_LINE_START);
+        found.put(SplitterSpec.CONTINUATION, true);
+        found.put("continued_records", grouped.continued());
+        found.put("continuation_note", grouped.continued() + " of the " + grouped.records().size() + " records run "
+                                       + "over several lines (a stack trace, a wrapped message): each record's first "
+                                       + "line is read by the format, the lines after it kept whole as the field "
+                                       + SplitterSpec.CONTINUATION);
+        return found;
     }
 
     /// @param line A line.

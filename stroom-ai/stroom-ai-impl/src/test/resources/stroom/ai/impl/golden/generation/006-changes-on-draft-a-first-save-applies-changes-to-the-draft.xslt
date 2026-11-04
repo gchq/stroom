@@ -48,12 +48,10 @@
           <xsl:value-of select="if (normalize-space(mcp:quoted_value($body, 'type'))) then mcp:quoted_value($body, 'type')[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="normalize-space(mcp:quoted_value($body, 'logid')) or normalize-space(mcp:quoted_value($body, 'action'))">
-          <Unknown>
-            <xsl:sequence select="mcp:data('logid', mcp:quoted_value($body, 'logid'))"/>
-            <xsl:sequence select="mcp:data('action', mcp:quoted_value($body, 'action'))"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('logid', mcp:quoted_value($body, 'logid'))"/>
+          <xsl:sequence select="mcp:data('action', mcp:quoted_value($body, 'action'))"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

@@ -69,6 +69,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     static final String SPLITTER_ARG = "splitter";
     static final String BUILD_ARG = "build";
     static final String SCHEMA_VERSION_ARG = "schema_version";
+    static final String CONTINUATION_LINES_ARG = "continuation_lines";
+    /// The question put to the user when records carry stack traces.
+    static final String TRACE_QUESTION = "Records carry stack traces. How much of each should its Event keep?";
+    /// The answers, by the lines of each trace they keep (0: all of it).
+    static final Map<String, Integer> TRACE_ANSWERS = traceAnswers();
 
     /// What `stream_ids` is, for the tools that read sample streams in place of their text.
     static final String SAMPLE_STREAMS = "Sample streams to read the data from, in place of its text (e.g. after "
@@ -83,6 +88,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     private final SampleProfiling sampleProfiling;
     private final CurrentTranslations currentTranslations;
     private final SiblingSharedCalls siblingSharedCalls;
+    private final Consent consent;
 
     @Inject
     DraftTranslationMappingTool(final EventVersions eventVersions,
@@ -90,13 +96,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                 final TranslationBuilds builds,
                                 final SampleProfiling sampleProfiling,
                                 final CurrentTranslations currentTranslations,
-                                final SiblingSharedCalls siblingSharedCalls) {
+                                final SiblingSharedCalls siblingSharedCalls,
+                                final Consent consent) {
         this.eventVersions = eventVersions;
         this.sampleStreamTexts = sampleStreamTexts;
         this.builds = builds;
         this.sampleProfiling = sampleProfiling;
         this.currentTranslations = currentTranslations;
         this.siblingSharedCalls = siblingSharedCalls;
+        this.consent = consent;
     }
 
     @Override
@@ -167,8 +175,19 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                + "a fork's versions are its own: give the namespace "
                                                                + "chosen (or a fork document's UUID); a version "
                                                                + "alone is read within it.")
+                        .addIntegerProperty(CONTINUATION_LINES_ARG, "Records with stack traces: the most lines of "
+                                                                    + "each its Event keeps, as the user chose (0: "
+                                                                    + "all of it); asked in a form when left out.")
                         .build())
                 .build();
+    }
+
+    private static Map<String, Integer> traceAnswers() {
+        final Map<String, Integer> answers = new LinkedHashMap<>();
+        answers.put("All of it (recommended)", 0);
+        answers.put("Its first 20 lines", 20);
+        answers.put("Only its first line (the exception)", 1);
+        return answers;
     }
 
     @Override
@@ -225,6 +244,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             notes.addAll(sharedNotes);
             result.put("notes", notes);
         }
+        traceLines(call, context, result, mapping);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
@@ -246,6 +266,32 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");
         return result;
+    }
+
+    // Records with stack traces: how much of each the Events keep, as the user chooses (asked for by the user,
+    // the whole trace by default).
+    private void traceLines(final ToolCall call,
+                            final ToolCallContext context,
+                            final Map<String, Object> result,
+                            final Map<String, Object> mapping) {
+        if (!NullSafe.list((List<?>) result.get("fields_seen")).contains(SplitterSpec.CONTINUATION)) {
+            return;
+        }
+        Integer lines = intArg(call, CONTINUATION_LINES_ARG);
+        if (lines == null) {
+            lines = consent.choose(call, context, NAME, TRACE_QUESTION, List.copyOf(TRACE_ANSWERS.keySet()), null)
+                    .map(TRACE_ANSWERS::get)
+                    .orElse(null);
+        }
+        final List<Object> notes = new ArrayList<>(NullSafe.list((List<?>) result.get("notes")));
+        if (lines == null) {
+            notes.add("Each record's stack trace is kept whole as Data '" + SplitterSpec.CONTINUATION + "'. Ask the "
+                      + "user whether its Events should keep less, and draft again with continuation_lines= the "
+                      + "most lines to keep.");
+        } else if (DraftMapping.withContinuationLines(mapping, lines) > 0) {
+            notes.add("Each record's stack trace is cut to its first " + lines + " line(s), as the user chose.");
+        }
+        result.put("notes", notes);
     }
 
     // A next version drafted from the sample: what the current XSLT looks up is in neither (seen in testing: V1.3

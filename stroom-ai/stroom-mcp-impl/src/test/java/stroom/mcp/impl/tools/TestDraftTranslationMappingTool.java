@@ -67,6 +67,45 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void theUserChoosesHowMuchOfEachStackTraceIsKept() {
+        // Asked for by the user: asked, the whole trace by default.
+        final String traced = "2026-10-11 22:14:01.000 INFO [w1] Request 1 served\n"
+                              + "user=bob action=logout session=s1\n"
+                              + "2026-10-11 22:14:03.123 ERROR [w3] Request 3 failed\n"
+                              + "java.lang.IllegalStateException: request 3 rejected\n"
+                              + "\tat com.example.Service.handle(Service.java:10)\n"
+                              + "\tat com.example.Main.main(Main.java:3)\n"
+                              + "user=carol action=logout session=s2\n"
+                              + "2026-10-11 22:14:04.456 INFO [w4] Request 4 served\n";
+
+        // No forms: kept whole, the agent told to ask.
+        final Map<String, Object> whole = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
+        assertThat(String.valueOf(whole.get("notes"))).contains("kept whole as Data 'continuation'",
+                "continuation_lines=");
+        assertThat(String.valueOf(whole.get("mapping"))).doesNotContain("position() le");
+
+        // In a form: the user's choice.
+        world.forms = true;
+        world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
+        final Map<String, Object> cut = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
+        assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION);
+        assertThat(String.valueOf(cut.get("mapping"))).contains("[position() le 20]");
+        assertThat(String.valueOf(cut.get("notes"))).contains("cut to its first 20 line(s)");
+
+        // Given, nothing is asked.
+        world.asked.clear();
+        final Map<String, Object> given = world.call(tool, Map.of("samples", Map.of("app.log", traced),
+                DraftTranslationMappingTool.CONTINUATION_LINES_ARG, 1));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION);
+        assertThat(String.valueOf(given.get("mapping"))).contains("[position() le 1]");
+
+        // No stack traces, no question.
+        world.asked.clear();
+        world.call(tool, Map.of("samples", Map.of("acme.csv", CSV)));
+        assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION);
+    }
+
+    @Test
     void theDraftIsCheckedAgainstTheSchemaAndKeptForTheSession() {
         // Kept for this session, so the first save sends only what changes (seen in testing: a 50 KB draft,
         // written out whole in one call, never reached the server).

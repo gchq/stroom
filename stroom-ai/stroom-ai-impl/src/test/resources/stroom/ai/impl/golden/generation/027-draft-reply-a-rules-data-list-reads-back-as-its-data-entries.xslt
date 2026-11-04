@@ -160,16 +160,14 @@
           <xsl:value-of select="if (data[@name='event_type']/@value[normalize-space(.)]) then (data[@name='event_type']/@value)[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="data[@name='severity']/@value[normalize-space(.)] or data[@name='protocol']/@value[normalize-space(.)] or data[@name='action']/@value[normalize-space(.)] or data[@name='rule_id']/@value[normalize-space(.)] or data[@name='bytes_sent']/@value[normalize-space(.)] or data[@name='bytes_received']/@value[normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('severity', data[@name='severity']/@value)"/>
-            <xsl:sequence select="mcp:data('protocol', data[@name='protocol']/@value)"/>
-            <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
-            <xsl:sequence select="mcp:data('rule_id', data[@name='rule_id']/@value)"/>
-            <xsl:sequence select="mcp:data('bytes_sent', data[@name='bytes_sent']/@value)"/>
-            <xsl:sequence select="mcp:data('bytes_received', data[@name='bytes_received']/@value)"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('severity', data[@name='severity']/@value)"/>
+          <xsl:sequence select="mcp:data('protocol', data[@name='protocol']/@value)"/>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
+          <xsl:sequence select="mcp:data('rule_id', data[@name='rule_id']/@value)"/>
+          <xsl:sequence select="mcp:data('bytes_sent', data[@name='bytes_sent']/@value)"/>
+          <xsl:sequence select="mcp:data('bytes_received', data[@name='bytes_received']/@value)"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

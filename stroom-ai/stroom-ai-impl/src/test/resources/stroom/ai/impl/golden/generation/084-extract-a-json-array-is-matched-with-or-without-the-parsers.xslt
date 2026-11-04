@@ -35,11 +35,9 @@
       </EventSource>
       <EventDetail>
         <TypeId>x</TypeId>
-        <xsl:if test="$host">
-          <Unknown>
-            <Data Name="h" Value="{$host[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="h" Value="{$host[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

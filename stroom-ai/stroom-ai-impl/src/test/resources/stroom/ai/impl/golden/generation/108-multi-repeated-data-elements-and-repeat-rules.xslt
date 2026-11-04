@@ -72,13 +72,11 @@
       </EventSource>
       <EventDetail>
         <TypeId>x</TypeId>
-        <xsl:if test="exists((*[@key='roles'])[normalize-space(.)])">
-          <Unknown>
-            <xsl:for-each select="*[@key='roles']/*">
-              <Data Name="role" Value="{upper-case(.[1])}"/>
-            </xsl:for-each>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:for-each select="*[@key='roles']/*">
+            <Data Name="role" Value="{upper-case(.[1])}"/>
+          </xsl:for-each>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

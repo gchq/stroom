@@ -178,7 +178,9 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
                                 + "(key_value: values hold spaces unquoted, read from the end; inferred when needed); "
                                 + "blank_line_records: true (a record is a block of lines ended by a blank line); "
                                 + "catch_all: true (a record the spec doesn't match is kept whole as 'unparsed' "
-                                + "instead of an error and lost: agree it with the user)."))
+                                + "instead of an error and lost: agree it with the user). Lines in several formats, "
+                                + "or entries with stack traces: alternatives and continuation, inferred "
+                                + "(stroom://guide/data-splitter)."))
                         .addStringProperty(SAVE_AS_ARG, "Also save the converter in the build under this document "
                                                         + "name (the build this session is on, or `build`), when "
                                                         + "every line parsed.")

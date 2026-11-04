@@ -53,11 +53,9 @@
         <TypeId>
           <xsl:value-of select="if (*[@key='kind'][normalize-space(.)]) then (*[@key='kind'])[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="*[@key='msg'][normalize-space(.)]">
-          <Unknown>
-            <Data Name="msg" Value="{(*[@key='msg'])[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="msg" Value="{(*[@key='msg'])[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
