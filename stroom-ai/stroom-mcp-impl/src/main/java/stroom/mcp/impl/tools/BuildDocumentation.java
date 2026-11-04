@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.data.shared.StreamTypeNames;
@@ -331,40 +332,52 @@ class BuildDocumentation {
     /// themselves).
     ///
     /// @param described The descriptions, with those wanted.
-    /// @return The round.
-    static Map<String, Object> needsDescriptions(final Descriptions described) {
-        final List<Map<String, Object>> fields = new ArrayList<>(described.wanted().values());
+    /// @param unmatched The keys this call gave that described no field.
+    /// @return The round: what to do first (it may be cut short), then the fields, each with its sample values and
+    /// what the schemas say cut short (seen: 28,000 characters for 75 fields, moved to a file, its instructions cut
+    /// mid-sentence where the agent read them).
+    static Map<String, Object> needsDescriptions(final Descriptions described, final List<String> unmatched) {
+        final List<Map<String, Object>> fields = new ArrayList<>();
+        described.wanted().values().forEach(field -> {
+            final Map<String, Object> compact = new LinkedHashMap<>(field);
+            if (compact.get("schemas_say") instanceof final Map<?, ?> says) {
+                final Map<String, Object> cut = new LinkedHashMap<>();
+                says.forEach((schema, said) -> cut.put(String.valueOf(schema), ToolText.head(String.valueOf(said),
+                        SAID_MOST)));
+                compact.put("schemas_say", cut);
+            }
+            fields.add(compact);
+        });
         final boolean shared = fields.stream().anyMatch(field -> JsonValues.truthy(field.get("under")));
         final Map<String, Object> round = new LinkedHashMap<>();
         round.put("status", "needs_descriptions");
-        round.put("fields", fields);
-        round.put("hint", "Nothing is written yet. For each field, say in one short sentence what it means for this "
-                          + "source, for someone searching or reading the data: infer it from the field's name, "
-                          + "where it comes from (from) and its sample values, and the user's source notes where "
-                          + "they say. E.g. a Data value 'subject' under Send with values like 'Invoice 4411' is "
-                          + "'Subject line of the email sent'; a CEF custom slot (cs1, deviceCustomString1) is what "
-                          + "this source puts in it. schemas_say is what the vendor's documentation "
-                          + "(record_source_notes) and the schemas say of it (event-logging for where it comes "
-                          + "from, ECS for an index field, ArcSight's dictionary for a CEF key): build on them where "
-                          + "they fit this source, the vendor's first, and use them where its values add nothing; "
-                          + "never only repeat their generic words, nor where it comes from, which the table shows. "
-                          + "Where the values don't make the meaning clear, say what they look like and that its "
-                          + "meaning is unconfirmed, rather than guess."
-                          + (fields.stream().anyMatch(field -> field.containsKey("was"))
-                ? " A field with was has been described before, when it came from elsewhere: was is what that said; "
-                  + "describe it as it is now."
-                : "")
+        round.put("written", false);
+        round.put("hint", "NOT WRITTEN. Nothing is written yet, nor until every field is described: the "
+                          + "documentation is not done. Call write_documentation again with "
+                          + "field_descriptions={field: description} for "
+                          + "the " + fields.size() + " field(s) below, keyed as listed; the markdown and the "
+                          + "descriptions already given are kept, so give only the new ones. Describe each in one "
+                          + "short sentence for this source, for someone searching the data, from its name, from, "
+                          + "values and the user's source notes; build on schemas_say (the vendor's first) without "
+                          + "only repeating it; where the values don't make it clear, say so rather than guess."
                           + (shared
-                ? " A field with under is read from the same source wherever under lists: a Data value named "
-                  + "Data[@Name='x'] under every element in under, an element named EventDetail/*/x under every "
-                  + "action element in under (Network/Permit, Network/Deny, Alert/Network...). One description "
-                  + "covers it in all of them (only where it means something else in one, describe that one by its "
-                  + "full path too)."
+                ? " A field with under is one description for every element it lists."
                 : "")
-                          + " Then call write_documentation again with the same arguments plus "
-                          + "field_descriptions={field: description}.");
+                          + (fields.stream().anyMatch(field -> field.containsKey("was"))
+                ? " was is what an earlier description said, when the field came from elsewhere: describe it as it "
+                  + "is now."
+                : ""));
+        if (!unmatched.isEmpty()) {
+            round.put("unmatched", unmatched);
+            round.put("unmatched_note", "These keys describe no field, so they were not used: key each as the "
+                                        + "fields list names it.");
+        }
+        round.put("fields", fields);
         return round;
     }
+
+    // The most of each schema's words shown with a field asked for.
+    private static final int SAID_MOST = 160;
 
     /// The doc's new text: its version control rows as they were, and this change pending until the build is promoted,
     /// when the build's changes become one row.
