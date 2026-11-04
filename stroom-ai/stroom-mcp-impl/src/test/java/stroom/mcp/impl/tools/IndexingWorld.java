@@ -97,7 +97,8 @@ final class IndexingWorld {
     /// @return get_field_conventions, on this world.
     GetFieldConventionsTool conventionsTool() {
         return new GetFieldConventionsTool(knowledge, pipelineTemplates, pipelineIndex, world.documentAccess,
-                () -> queryService, processing.feeds.consent, memory, processing.feeds.plan);
+                () -> queryService, processing.feeds.consent, memory, processing.feeds.plan,
+                new PendingDocumentation());
     }
 
     /// @return draft_index_mapping, on this world.

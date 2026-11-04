@@ -140,7 +140,7 @@ class TestStartOnboardingTool {
 
     @Test
     void buildStatusGivesThePlan() {
-        final BuildStatusTool status = new BuildStatusTool(plan);
+        final BuildStatusTool status = new BuildStatusTool(plan, new PendingDocumentation());
         final Map<String, Object> result = BuildToolCalls.json(status.execute(BuildToolCalls.call(
                 BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
         assertThat(result.get("build")).isEqualTo("b");
@@ -155,7 +155,7 @@ class TestStartOnboardingTool {
     @SuppressWarnings("unchecked")
     void buildStatusIsBriefUnlessAskedForInFull() {
         // Seen: its 10 KB result saved to the workspace and called for again and again.
-        final BuildStatusTool status = new BuildStatusTool(plan);
+        final BuildStatusTool status = new BuildStatusTool(plan, new PendingDocumentation());
         final Map<String, Object> brief = BuildToolCalls.json(status.execute(BuildToolCalls.call(
                 BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
         final Map<String, Object> full = BuildToolCalls.json(status.execute(BuildToolCalls.call(
