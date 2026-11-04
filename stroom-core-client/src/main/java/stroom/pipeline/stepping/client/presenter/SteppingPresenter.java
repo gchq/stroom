@@ -97,13 +97,11 @@ import com.gwtplatform.mvp.client.View;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -133,6 +131,9 @@ public class SteppingPresenter
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
+    // Incremented by every step and by terminate, so responses to an earlier step, still in flight, can be told
+    // apart from the current step's and ignored.
+    private int stepSequence;
     // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
     // server materialises and tests records until one matches - so the progress message says "Searching"
     // rather than "Stepping" to set the expectation of a wait proportional to where the next match is.
@@ -570,9 +571,13 @@ public class SteppingPresenter
 
                     updateToggleConsoleBtnVisibility(indicators, elementId);
                 } else {
+                    // The step has data, but none for this element, e.g. stepping stopped at an earlier
+                    // element. Don't leave the previous record's input/output on show as if it were this one's.
                     clearIndicators(elementPresenter, elementId);
+                    clearEditorIO(elementPresenter);
                 }
             } else {
+                // No step data, e.g. stepped past the last record, so keep showing the last record's IO.
                 clearIndicators(elementPresenter, elementId);
             }
         });
@@ -669,6 +674,11 @@ public class SteppingPresenter
         if (isButtonVisible) {
             toggleLogPaneButton.setState(isLogPaneVisible);
         }
+    }
+
+    private void clearEditorIO(final ElementPresenter elementPresenter) {
+        elementPresenter.setInput("", 1, false);
+        elementPresenter.setOutput("", 1, false);
     }
 
     private void refreshEditorIO(final ElementPresenter elementPresenter, final SharedElementData elementData) {
@@ -915,15 +925,21 @@ public class SteppingPresenter
                         .forEach(e -> e.setLoaded(false));
             }
 
-            poll();
+            stepSequence++;
+            poll(stepSequence);
         }
     }
 
-    private void poll() {
+    private void poll(final int sequence) {
         restFactory
                 .create(STEPPING_RESOURCE)
                 .method(res -> res.step(requestBuilder.build()))
                 .onSuccess(response -> {
+                    if (sequence != stepSequence) {
+                        // A response to an earlier step, superseded or terminated since. Applying it would show
+                        // the wrong result, adopt the wrong session id or stop the current step's polling.
+                        return;
+                    }
                     // Adopt the session id whether or not this step finished. A step that resolves on its
                     // first poll would otherwise leave us with no id, so the next press would start a new
                     // server session and re-capture the stream from scratch.
@@ -936,7 +952,7 @@ public class SteppingPresenter
                                                                           ? "Searching... "
                                                                           : "Stepping... ") +
                                                                   getStepLocationText(progressLocation));
-                            poll();
+                            poll(sequence);
                         } else {
                             stop();
                         }
@@ -946,6 +962,9 @@ public class SteppingPresenter
                     }
                 })
                 .onFailure(restError -> {
+                    if (sequence != stepSequence) {
+                        return;
+                    }
                     AlertEvent.fireErrorFromException(SteppingPresenter.this, restError.getException(), null);
                     busyTranslating = false;
                 })
@@ -966,6 +985,8 @@ public class SteppingPresenter
     }
 
     public void terminate() {
+        // Ignore any response to the step being terminated.
+        stepSequence++;
         stop();
         final PipelineStepRequest request = requestBuilder.build();
         if (request.getSessionUuid() != null) {
@@ -1039,7 +1060,6 @@ public class SteppingPresenter
     }
 
     private void readResult(final SteppingResult result) {
-        Optional<String> fatalErrors = Optional.empty();
         try {
             currentResult = result;
             foundRecord = result.isFoundRecord();
@@ -1104,16 +1124,15 @@ public class SteppingPresenter
             // Sync step filters.
             pipelineModel.setStepFilterMap(result.getStepFilterMap());
 
-            if (result.getGeneralErrors() != null && !result.getGeneralErrors().isEmpty()) {
-                final StringBuilder sb = new StringBuilder();
-                for (final String err : result.getGeneralErrors()) {
-                    sb.append(err);
-                    sb.append("\n");
-                }
-            } else {
-                fatalErrors = getFatalErrors(result);
-                fatalErrors.ifPresent(errorText -> {
-                });
+            // Errors raised by an element are shown in that element's log pane and on the pipeline tree.
+            // General errors belong to no element (e.g. the stream could not be captured), so they have
+            // nowhere else to be seen.
+            if (NullSafe.hasItems(result.getGeneralErrors())) {
+                AlertEvent.fireError(
+                        this,
+                        "Some errors occurred during stepping",
+                        String.join("\n", result.getGeneralErrors()),
+                        null);
             }
         } finally {
             updateStepControlButtons();
@@ -1137,31 +1156,6 @@ public class SteppingPresenter
                     currentResult.getFoundLocation(),
                     isFirstStream,
                     isLastStream);
-        }
-    }
-
-    private Optional<String> getFatalErrors(final SteppingResult steppingResult) {
-        if (steppingResult.getStepData() != null
-            && steppingResult.getStepData().getElementMap() != null) {
-            final String txt = steppingResult.getStepData().getElementMap()
-                    .values()
-                    .stream()
-                    .flatMap(sharedElementData -> {
-                        final Set<StoredError> errors = NullSafe.getOrElseGet(
-                                sharedElementData.getIndicators(),
-                                Indicators::getUniqueErrorSet,
-                                HashSet::new);
-                        return errors.stream();
-                    })
-                    .filter(error -> Severity.FATAL_ERROR.equals(error.getSeverity()))
-                    .map(StoredError::toString)
-                    .collect(Collectors.joining("\n"));
-
-            return !txt.isEmpty()
-                    ? Optional.of(txt)
-                    : Optional.empty();
-        } else {
-            return Optional.empty();
         }
     }
 

@@ -30,6 +30,7 @@ import stroom.pipeline.stepping.capture.StreamSweepTestUtil;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprinter;
 import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
 import stroom.pipeline.stepping.read.SessionStepResolver;
+import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
 import stroom.pipeline.stepping.read.SteppableElements;
 import stroom.pipeline.stepping.session.SteppingSession;
 import stroom.pipeline.stepping.session.SteppingSessionRegistry;
@@ -159,6 +160,7 @@ class TestSteppingService {
                 stepDataStoreManager,
                 pipelineDataHolderFactory,
                 Mockito.mock(ElementFingerprinter.class),
+                Mockito.mock(SavedElementCode.class),
                 SteppingConfig::new,
                 sessionStepResolver,
                 sessionRegistry,
@@ -211,6 +213,34 @@ class TestSteppingService {
     }
 
     @Test
+    void testCaptureErrorOnASessionClosedByStopIsIncomplete() {
+        givenAStepCanReachTheResolver();
+        // Stop terminated the capture, which reports the termination as its error.
+        Mockito.when(session.isClosed()).thenReturn(true);
+        Mockito.when(sessionStepResolver.resolve(any(), any(), any(), anyLong()))
+                .thenReturn(captureError("Capture of stream " + META_ID + " was terminated"));
+
+        final SteppingResult result = steppingService.step(stepRequest());
+
+        assertThat(result.isComplete()).isFalse();
+        assertThat(result.getGeneralErrors()).isEmpty();
+    }
+
+    @Test
+    void testCaptureErrorOnAnOpenSessionIsReported() {
+        givenAStepCanReachTheResolver();
+        Mockito.when(session.isClosed()).thenReturn(false);
+        Mockito.when(sessionStepResolver.resolve(any(), any(), any(), anyLong()))
+                .thenReturn(captureError("Unable to create pipeline for stepping capture"));
+
+        final SteppingResult result = steppingService.step(stepRequest());
+
+        assertThat(result.isComplete()).isTrue();
+        assertThat(result.isFoundRecord()).isFalse();
+        assertThat(result.getGeneralErrors()).containsExactly("Unable to create pipeline for stepping capture");
+    }
+
+    @Test
     void testStepFailingOnAnOpenSessionStillFails() {
         givenAStepCanReachTheResolver();
         Mockito.when(session.isClosed()).thenReturn(false);
@@ -234,6 +264,11 @@ class TestSteppingService {
         Mockito.when(session.getSessionId()).thenReturn(SESSION_ID);
         Mockito.when(session.getStreamIdList()).thenReturn(List.of(META_ID));
         Mockito.when(sessionRegistry.getOrCreate(any(), any(), any(), any())).thenReturn(session);
+    }
+
+    // A completed step whose capture failed with the given message.
+    private static SessionStepResult captureError(final String message) {
+        return new SessionStepResult(false, true, null, null, null, message, false);
     }
 
     private PipelineStepRequest stepRequest() {

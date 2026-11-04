@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.api.ImportExportDocument;
@@ -72,6 +73,14 @@ public class IndexStoreImpl
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
         this.serialiser = serialiser;
+    }
+
+    @Override
+    protected DependencyRemapFunction<LuceneIndexDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .defaultExtractionPipeline(dependencyRemapper.remap(doc.getDefaultExtractionPipeline()))
+                .build();
     }
 
     @Override

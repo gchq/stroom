@@ -30,9 +30,18 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 public class ColumnValueCell extends AbstractCell<ColumnValue> {
 
     private final ColumnValueSelection.Builder columnValueSelection;
+    private long availableCount;
 
     public ColumnValueCell(final ColumnValueSelection.Builder columnValueSelection) {
         this.columnValueSelection = columnValueSelection;
+    }
+
+    /// Sets the number of available values across all pages. Available values come first, so the value at
+    /// this index is the first that is not available and has a line drawn above it.
+    ///
+    /// @param availableCount The number of available values.
+    public void setAvailableCount(final long availableCount) {
+        this.availableCount = availableCount;
     }
 
     @Override
@@ -67,7 +76,18 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
                 }
 
                 outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
-            }, Attribute.className("columnValueCell"));
+            }, Attribute.className(getClassName(context, item)));
         }
+    }
+
+    private String getClassName(final Context context, final ColumnValue item) {
+        if (item.isAvailable()) {
+            return "columnValueCell";
+        }
+        // Values not in the table's current rows are faded, with a line above the first of them.
+        if (availableCount > 0 && context.getIndex() == availableCount) {
+            return "columnValueCell columnValueCell-unavailable columnValueCell-firstUnavailable";
+        }
+        return "columnValueCell columnValueCell-unavailable";
     }
 }

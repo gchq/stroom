@@ -32,7 +32,6 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageResponse;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -64,7 +63,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.inject.Provider;
@@ -79,11 +77,11 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     private final CellTable<ColumnValue> cellTable;
     private final ColumnValueSelectionEventManager typeFilterSelectionEventManager;
     private final ColumnValueRowStyles rowStyles;
+    private final ColumnValueSelection.Builder selection = ColumnValueSelection.builder();
+    private final ColumnValueCell columnValueCell = new ColumnValueCell(selection);
 
     private Provider<Element> filterButtonProvider;
     private Provider<ColumnValuesDataSupplier> dataSupplierProvider;
-    private Provider<Map<String, ColumnValueSelection>> selectionProvider;
-    private final ColumnValueSelection.Builder selection = ColumnValueSelection.builder();
     private stroom.query.api.Column column;
     private RestDataProvider<ColumnValue, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
@@ -121,14 +119,12 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     public void init(final Provider<Element> filterButtonProvider,
                      final stroom.query.api.Column column,
                      final Provider<ColumnValuesDataSupplier> dataSupplierProvider,
-                     final Provider<Map<String, ColumnValueSelection>> selectionProvider,
                      final ColumnValueSelection currentSelection,
                      final FilterCellManager filterCellManager,
                      final List<ConditionalFormattingRule> rules) {
         this.filterButtonProvider = filterButtonProvider;
         this.column = column;
         this.dataSupplierProvider = dataSupplierProvider;
-        this.selectionProvider = selectionProvider;
         this.filterCellManager = filterCellManager;
         rowStyles.setConditionalFormattingRules(rules);
 
@@ -154,7 +150,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         this.filterButtonProvider = filterButtonProvider;
         this.column = column;
         this.dataSupplierProvider = dataSupplierProvider;
-        this.selectionProvider = () -> null;
         this.filterCellManager = filterCellManager;
 
         if (currentSelection != null) {
@@ -276,7 +271,7 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
     }
 
     private Column<ColumnValue, ColumnValue> getTickBoxColumn() {
-        return new Column<ColumnValue, ColumnValue>(new ColumnValueCell(selection)) {
+        return new Column<ColumnValue, ColumnValue>(columnValueCell) {
             @Override
             public ColumnValue getValue(final ColumnValue string) {
                 return string;
@@ -302,9 +297,13 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
                     if (dataSupplier != null) {
                         dataSupplier.setTaskMonitorFactory(pagerView);
                         dataSupplier.setNameFilter(nameFilter);
-                        dataSupplier.exec(range, dataConsumer, errorHandler, selectionProvider.get());
+                        dataSupplier.exec(range, columnValues -> {
+                            // The cell draws a line above the first value that is not available.
+                            columnValueCell.setAvailableCount(columnValues.getAvailableCount());
+                            dataConsumer.accept(columnValues);
+                        }, errorHandler);
                     } else {
-                        dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+                        dataConsumer.accept(ColumnValues.empty());
                     }
                 }
             };
@@ -312,10 +311,6 @@ public class ColumnValuesFilterPresenter extends MyPresenterWidget<ColumnValuesF
         } else {
             dataProvider.refresh();
         }
-    }
-
-    public ColumnValueSelection getSelection() {
-        return selection.build();
     }
 
     public interface ColumnValuesFilterView extends View, Focus, HasUiHandlers<ColumnValuesFilterUiHandlers> {

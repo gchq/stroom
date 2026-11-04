@@ -16,10 +16,12 @@
 
 package stroom.docstore.impl.dao;
 
+import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.docstore.impl.Persistence;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.shared.scheduler.CronExpressions;
 
@@ -36,6 +38,12 @@ public class DocStoreDbPersistenceModule extends AbstractModule {
         bind(Persistence.class).to(DBPersistence.class);
         bind(DocDependencyDao.class);
         bind(DocDependencyService.class).to(DocDependencyServiceImpl.class);
+
+        // Make sure the provider set exists even if nothing registers a provider
+        DocDependencyProviderBinder.create(binder());
+        // Default priority, so this runs after content packs are imported
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(DocDependencyRebuildStartup.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PhysicalDeleteOldDocs.class, builder -> builder

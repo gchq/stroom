@@ -23,7 +23,6 @@ import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -164,9 +163,9 @@ public class PathwaysStoreImpl
             return false;
         }
         return directoryExists(sharedRoot.resolve(PlanBConstants.SHARDS_DIR_NAME)
-                       .resolve(doc.getUuid()))
+                .resolve(doc.getUuid()))
                || directoryExists(sharedRoot.resolve(PlanBConstants.QUEUE_DIR_NAME)
-                       .resolve(doc.getUuid()));
+                .resolve(doc.getUuid()));
     }
 
     // Fails closed, which Files.isDirectory would not: it answers "not there" and "could not tell"
@@ -203,7 +202,6 @@ public class PathwaysStoreImpl
         }
     }
 
-    // -------------------------------------------------------------------------
 
     /**
      * Every pathways document's shared path, whoever is asking.

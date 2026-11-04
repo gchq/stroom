@@ -44,10 +44,11 @@ import java.util.TreeMap;
  * persisted stepping IO and to decide what to reprocess when a pipeline is edited.
  * <p>
  * {@code ownFingerprint} = SHA-256 of a deterministic (consistent property order) descriptor of the
- * element: its id, type, its {@link PipelineProperty} rows, its {@link PipelineReference}s and any
- * in-session injected code. {@code cumulativeFingerprint} = SHA-256 of the (ordered) cumulative
- * fingerprints of the element's upstream neighbours plus its own fingerprint, so it changes if and
- * only if the element or anything upstream of it changes.
+ * element: its id, type, its {@link PipelineProperty} rows, its {@link PipelineReference}s, any
+ * in-session injected code and the saved versions of the code it runs otherwise.
+ * {@code cumulativeFingerprint} = SHA-256 of the (ordered) cumulative fingerprints of the element's
+ * upstream neighbours plus its own fingerprint, so it changes if and only if the element or anything
+ * upstream of it changes.
  */
 @Singleton
 public class ElementFingerprinter {
@@ -69,7 +70,22 @@ public class ElementFingerprinter {
      */
     public ElementFingerprints fingerprint(final PipelineData mergedPipelineData,
                                            final Map<String, String> injectedCode) {
+        return fingerprint(mergedPipelineData, injectedCode, null);
+    }
+
+    /// As [#fingerprint(PipelineData, Map)], with the saved versions of the code (XSLT, text converters) the
+    /// elements run when no code is injected for them, so saving that code changes their fingerprints.
+    ///
+    /// @param mergedPipelineData The flattened/merged pipeline data (see `PipelineDataMerger`).
+    /// @param injectedCode       Element id to in-session edited code, may be null.
+    /// @param savedCodeVersions  Element id to the saved versions of the code it refers to, may be null.
+    /// @return The fingerprints of every element.
+    /// @throws IllegalArgumentException if the pipeline contains a cycle.
+    public ElementFingerprints fingerprint(final PipelineData mergedPipelineData,
+                                           final Map<String, String> injectedCode,
+                                           final Map<String, String> savedCodeVersions) {
         final Map<String, String> code = NullSafe.map(injectedCode);
+        final Map<String, String> savedCode = NullSafe.map(savedCodeVersions);
 
         // Index elements by id.
         final Map<String, PipelineElement> elementsById = new HashMap<>();
@@ -103,7 +119,8 @@ public class ElementFingerprinter {
                     element,
                     propertiesByElement.get(element.getId()),
                     referencesByElement.get(element.getId()),
-                    code.get(element.getId())));
+                    code.get(element.getId()),
+                    savedCode.get(element.getId())));
         }
 
         // Cumulative fingerprints (memoised, cycle-guarded).
@@ -119,7 +136,8 @@ public class ElementFingerprinter {
     private String computeOwnFingerprint(final PipelineElement element,
                                          final List<PipelineProperty> properties,
                                          final List<PipelineReference> references,
-                                         final String injectedCode) {
+                                         final String injectedCode,
+                                         final String savedCodeVersion) {
         final List<PipelineProperty> sortedProperties = new ArrayList<>(NullSafe.list(properties));
         sortedProperties.sort(Comparator.naturalOrder());
         final List<PipelineReference> sortedReferences = new ArrayList<>(NullSafe.list(references));
@@ -135,6 +153,10 @@ public class ElementFingerprinter {
         descriptor.put("properties", sortedProperties);
         descriptor.put("references", sortedReferences);
         descriptor.put("code", injectedCode);
+        // Only when there is one, so the fingerprints of elements without saved code are as they were.
+        if (savedCodeVersion != null) {
+            descriptor.put("savedCode", savedCodeVersion);
+        }
 
         final String json = JsonUtil.writeValueAsConsistentString(descriptor, false);
         return sha256Hex(json);

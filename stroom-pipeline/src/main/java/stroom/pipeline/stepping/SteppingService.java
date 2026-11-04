@@ -67,6 +67,7 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -104,6 +105,7 @@ public class SteppingService {
     private final StepDataStoreManager stepDataStoreManager;
     private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final ElementFingerprinter elementFingerprinter;
+    private final SavedElementCode savedElementCode;
     // A Provider, not the object: config is live (the UI can change it, and tests override it per class),
     // and this is a singleton - injecting the object directly would freeze whatever the value was at startup.
     private final Provider<SteppingConfig> steppingConfigProvider;
@@ -134,6 +136,7 @@ public class SteppingService {
                            final StepDataStoreManager stepDataStoreManager,
                            final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final ElementFingerprinter elementFingerprinter,
+                           final SavedElementCode savedElementCode,
                            final Provider<SteppingConfig> steppingConfigProvider,
                            final SessionStepResolver sessionStepResolver,
                            final SteppingSessionRegistry sessionRegistry,
@@ -148,6 +151,7 @@ public class SteppingService {
         this.stepDataStoreManager = stepDataStoreManager;
         this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.elementFingerprinter = elementFingerprinter;
+        this.savedElementCode = savedElementCode;
         this.steppingConfigProvider = steppingConfigProvider;
         this.demandPlanner = new StepDemandPlanner(steppingConfigProvider);
         this.sessionStepResolver = sessionStepResolver;
@@ -334,9 +338,13 @@ public class SteppingService {
      * per session as they are the same for every stream.
      */
     public ElementFingerprints computeFingerprints(final PipelineStepRequest request) {
+        final PipelineData mergedPipelineData = pipelineDataHolderFactory.create(request.getPipelineDoc())
+                .getMergedPipelineData();
+        final Map<String, String> code = NullSafe.map(request.getCode());
         return elementFingerprinter.fingerprint(
-                pipelineDataHolderFactory.create(request.getPipelineDoc()).getMergedPipelineData(),
-                NullSafe.map(request.getCode()));
+                mergedPipelineData,
+                code,
+                savedElementCode.versions(mergedPipelineData, code));
     }
 
     public void deleteCaptureSession(final String sessionId) {
@@ -428,7 +436,7 @@ public class SteppingService {
                     // resolver just needs a sweep signalling the records so it navigates them as usual.
                     // Signalled for the record the DEMAND named, not for the request's reference location -
                     // navigation demands the record next to its reference, and FIRST has no reference at all.
-                    return applyStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded)),
+                    return applyStreamMetadata(signalledSweep(metaId, store, RecordRange.of(demanded), fingerprints),
                             priorSweeps);
                 }
                 if (!decision.fullSweep()) {
@@ -692,7 +700,7 @@ public class SteppingService {
                 return null;
             }
         }
-        return signalledSweep(metaId, store, range);
+        return signalledSweep(metaId, store, range, fingerprints);
     }
 
     /**
@@ -700,8 +708,13 @@ public class SteppingService {
      * just signalled into the watermark so the resolver navigates them exactly as it would a fresh
      * materialisation's.
      */
-    private StreamSweep signalledSweep(final long metaId, final StepDataStore store, final RecordRange range) {
-        final StreamSweep sweep = new StreamSweep(metaId, store);
+    private StreamSweep signalledSweep(final long metaId,
+                                       final StepDataStore store,
+                                       final RecordRange range,
+                                       final ElementFingerprints fingerprints) {
+        // The fingerprints say which code the signalled records were produced under, so the startup
+        // indicators taken from another sweep are only those of elements that ran the same code.
+        final StreamSweep sweep = new StreamSweep(metaId, store, fingerprints);
         sweep.markOnDemand();
         sweep.setDemand(range);
         for (long record = range.firstRecord(); record <= range.lastRecord(); record++) {
@@ -894,6 +907,14 @@ public class SteppingService {
                 // answer as an unfinished step, which a client that has stopped simply drops.
                 LOGGER.debug(() -> LogUtil.message("step() - session {} closed during step: {}",
                         session.getSessionId(), LogUtil.exceptionMessage(e)));
+                return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
+            }
+
+            if (sessionResult.generalError() != null && session.isClosed()) {
+                // As above: a capture that failed because the session was terminated reports the termination
+                // (e.g. "... was terminated"), which is not an error to show the user.
+                LOGGER.debug(() -> LogUtil.message("step() - session {} closed, dropping capture error: {}",
+                        session.getSessionId(), sessionResult.generalError()));
                 return resultMapper.toResult(request, session, SessionStepResult.incomplete(null));
             }
 

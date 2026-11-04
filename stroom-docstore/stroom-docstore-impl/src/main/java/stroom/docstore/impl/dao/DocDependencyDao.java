@@ -129,6 +129,12 @@ public class DocDependencyDao {
     // added to the dependency store.
     private static final Set<String> OWNER_DOC_TYPES = Set.of("Pipeline");
 
+    /// The version of the dependency extraction logic. Each document's `dependency_version` column is
+    /// stamped with this when its edges are written. Increment it when a change to the extraction logic
+    /// means existing edges need rebuilding: every document is then rebuilt once by
+    /// `DocDependencyRebuildStartup` on the next start.
+    public static final int CURRENT_DEPENDENCY_VERSION = 1;
+
     private final DocStoreDbConnProvider connProvider;
     private final ExpressionMapperFactory expressionMapperFactory;
 
@@ -157,42 +163,104 @@ public class DocDependencyDao {
     /**
      * Replace all outgoing dependency edges for the given document.
      * Runs in a transaction: deletes existing edges, then inserts new ones.
+     * Also stamps the document's {@code dependency_version} so the dependency rebuild knows its edges
+     * are current.
      */
     public void setDependencies(final DocRef from, final Set<DocRef> deps) {
-        JooqUtil.transaction(connProvider, context -> {
-            // Delete existing edges for this doc
-            context
-                    .deleteFrom(DOC_DEPENDENCY)
-                    .where(DOC_DEPENDENCY.FROM_UUID.eq(from.getUuid()))
-                    .execute();
+        JooqUtil.transaction(connProvider, context -> writeDependencies(context, from, deps));
+    }
 
-            // Insert new edges
-            if (NullSafe.hasItems(deps)) {
-                final String fromType = NullSafe.nonBlankStringElse(from.getType(), "");
-                final String fromName = NullSafe.nonBlankStringElse(from.getName(), "");
-                for (final DocRef to : deps) {
-                    final String toType = NullSafe.nonBlankStringElse(to.getType(), "");
-                    final String toName = NullSafe.nonBlankStringElse(to.getName(), "");
-                    // Upsert on the (from_uuid, to_uuid) unique key. Use onDuplicateKeyUpdate rather than
-                    // onDuplicateKeyIgnore so any genuine constraint failure surfaces rather than being
-                    // silently swallowed; on a duplicate edge we refresh the type/name columns.
-                    context
-                            .insertInto(DOC_DEPENDENCY)
-                            .set(DOC_DEPENDENCY.FROM_TYPE, fromType)
-                            .set(DOC_DEPENDENCY.FROM_UUID, from.getUuid())
-                            .set(DOC_DEPENDENCY.FROM_NAME, fromName)
-                            .set(DOC_DEPENDENCY.TO_TYPE, toType)
-                            .set(DOC_DEPENDENCY.TO_UUID, to.getUuid())
-                            .set(DOC_DEPENDENCY.TO_NAME, toName)
-                            .onDuplicateKeyUpdate()
-                            .set(DOC_DEPENDENCY.FROM_TYPE, fromType)
-                            .set(DOC_DEPENDENCY.FROM_NAME, fromName)
-                            .set(DOC_DEPENDENCY.TO_TYPE, toType)
-                            .set(DOC_DEPENDENCY.TO_NAME, toName)
-                            .execute();
-                }
+    /// Replace all outgoing dependency edges for a document, but only if the document has not been
+    /// changed since `docVersion` was read. Used by the dependency rebuild, which reads a document and
+    /// extracts its dependencies outside of this transaction. If the document was saved in the meantime,
+    /// that save has already written the correct edges, so they are left alone.
+    ///
+    /// @param from       The document whose edges are being replaced.
+    /// @param docVersion The document version (the `doc.version` column) that the dependencies were
+    ///                   extracted from.
+    /// @param deps       The document's dependencies.
+    /// @return `true` if the edges were written, `false` if the document has since been changed or
+    /// deleted.
+    public boolean setDependenciesIfUnchanged(final DocRef from,
+                                              final String docVersion,
+                                              final Set<DocRef> deps) {
+        return JooqUtil.transactionResult(connProvider, context -> {
+            // Lock the doc row so a concurrent save cannot change the version until we have written
+            final String currentVersion = context
+                    .select(DOC.VERSION)
+                    .from(DOC)
+                    .where(DOC.UUID.eq(from.getUuid()))
+                    .and(DOC.DELETED.isNull())
+                    .forUpdate()
+                    .fetchOne(DOC.VERSION);
+            if (currentVersion == null || !currentVersion.equals(docVersion)) {
+                return false;
             }
+            writeDependencies(context, from, deps);
+            return true;
         });
+    }
+
+    /// Find all non-deleted documents whose dependency edges were not written by the current
+    /// dependency extraction logic, i.e. whose `dependency_version` is null or older than
+    /// [#CURRENT_DEPENDENCY_VERSION].
+    ///
+    /// @return The documents needing a dependency rebuild, each with its current `doc.version`.
+    public List<DocVersion> findDocsWithStaleDependencies() {
+        return JooqUtil.contextResult(connProvider, context -> context
+                        .select(DOC.TYPE, DOC.UUID, DOC.NAME, DOC.VERSION)
+                        .from(DOC)
+                        .where(DOC.DELETED.isNull())
+                        .and(DOC.DEPENDENCY_VERSION.isNull()
+                                .or(DOC.DEPENDENCY_VERSION.lt(CURRENT_DEPENDENCY_VERSION)))
+                        .orderBy(DOC.TYPE, DOC.ID)
+                        .fetch())
+                .map(record -> new DocVersion(
+                        new DocRef(record.get(DOC.TYPE), record.get(DOC.UUID), record.get(DOC.NAME)),
+                        record.get(DOC.VERSION)));
+    }
+
+    private void writeDependencies(final DSLContext context, final DocRef from, final Set<DocRef> deps) {
+        // Delete existing edges for this doc
+        context
+                .deleteFrom(DOC_DEPENDENCY)
+                .where(DOC_DEPENDENCY.FROM_UUID.eq(from.getUuid()))
+                .execute();
+
+        // Insert new edges
+        if (NullSafe.hasItems(deps)) {
+            final String fromType = NullSafe.nonBlankStringElse(from.getType(), "");
+            final String fromName = NullSafe.nonBlankStringElse(from.getName(), "");
+            for (final DocRef to : deps) {
+                final String toType = NullSafe.nonBlankStringElse(to.getType(), "");
+                final String toName = NullSafe.nonBlankStringElse(to.getName(), "");
+                // Upsert on the (from_uuid, to_uuid) unique key. Use onDuplicateKeyUpdate rather than
+                // onDuplicateKeyIgnore so any genuine constraint failure surfaces rather than being
+                // silently swallowed; on a duplicate edge we refresh the type/name columns.
+                context
+                        .insertInto(DOC_DEPENDENCY)
+                        .set(DOC_DEPENDENCY.FROM_TYPE, fromType)
+                        .set(DOC_DEPENDENCY.FROM_UUID, from.getUuid())
+                        .set(DOC_DEPENDENCY.FROM_NAME, fromName)
+                        .set(DOC_DEPENDENCY.TO_TYPE, toType)
+                        .set(DOC_DEPENDENCY.TO_UUID, to.getUuid())
+                        .set(DOC_DEPENDENCY.TO_NAME, toName)
+                        .onDuplicateKeyUpdate()
+                        .set(DOC_DEPENDENCY.FROM_TYPE, fromType)
+                        .set(DOC_DEPENDENCY.FROM_NAME, fromName)
+                        .set(DOC_DEPENDENCY.TO_TYPE, toType)
+                        .set(DOC_DEPENDENCY.TO_NAME, toName)
+                        .execute();
+            }
+        }
+
+        // Record that this doc's edges are current. Sources that are not documents (e.g. processor
+        // filters) have no doc row, so this updates nothing for them.
+        context
+                .update(DOC)
+                .set(DOC.DEPENDENCY_VERSION, CURRENT_DEPENDENCY_VERSION)
+                .where(DOC.UUID.eq(from.getUuid()))
+                .execute();
     }
 
     /**
@@ -479,5 +547,17 @@ public class DocDependencyDao {
                                 r.get(DOC_DEPENDENCY.TO_UUID),
                                 r.get(TO_DOC.NAME)),
                         (a, b) -> a));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A document with its current `doc.version`.
+    ///
+    /// @param docRef  The document.
+    /// @param version The document's version, as held in the `doc.version` column.
+    public record DocVersion(DocRef docRef, String version) {
+
     }
 }

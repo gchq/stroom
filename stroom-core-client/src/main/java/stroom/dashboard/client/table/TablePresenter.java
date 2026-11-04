@@ -1491,6 +1491,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return new TableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
+                getId(),
                 resolveTableSettings(),
                 getDateTimeSettings(),
                 getTableName(getId()),

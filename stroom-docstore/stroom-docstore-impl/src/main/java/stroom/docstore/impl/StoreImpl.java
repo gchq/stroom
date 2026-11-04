@@ -275,6 +275,14 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         }
     }
 
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        // The remap function may perform registry lookups for some doc types, so run as the
+        // processing user, as updateDocDependencies does.
+        return securityContext.asProcessingUserResult(() ->
+                extractDependencies(read(docRef), getDependencyRemapFunction()));
+    }
+
     // ---------------------------------------------------------------------
     // END OF HasDependencies
     // ---------------------------------------------------------------------

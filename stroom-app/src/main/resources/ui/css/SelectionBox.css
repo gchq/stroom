@@ -39,6 +39,15 @@ input.gwt-TextBox.SelectionBox-textBox {
     margin-bottom: 4px;
 }
 
+.multiSelectionBox-list {
+    min-width: 200px;
+    max-height: 400px;
+}
+
+.multiSelectionBox-item .tickBox {
+    flex-shrink: 0;
+}
+
 .SelectionPopup-layout .svgIconBox {
     padding: .2rem;
 }
