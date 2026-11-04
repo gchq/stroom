@@ -32,6 +32,8 @@ read the client's files, and refuses a path with that instruction.
 | Records separated by blank lines | `{"kind": "key_value", "delimiter": "\n", "blank_line_records": true}` |
 | Keep a record the spec doesn't match | add `"catch_all": true` (not delimited): it is kept whole as the field `unparsed` |
 | Lines in several formats (syslog, key=value, timestamped text) | `{"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"}, {"kind": "key_value", "variant": "key_value"}, {"kind": "regex", "variant": "text", "pattern": "^(\\S+ \\S+) (.*)$", "names": ["time", "message"]}], "catch_all": true}` |
+| Lines tied into records by a key (auditd's `msg=audit(...)`) | `{"kind": "key_value", "delimiter": " ", "quote": "\"", "single_quotes": true, "record_key": "(?<!\\S)msg=(\"[^\"]*\"\|[^\\s\"]+)", "key_field": "msg", "line_name": "(?:[^\\s=]+=\\S*\\s+)*?type=\"?([A-Za-z_][\\w.-]*)\"?(?=\\s\|$)", "lead_field": "type"}` (add `"skip_lines": "\\s*[-=*#~_]{3,}[ \\t]*(?=\\n\|$)\|\\s*time->"` for ausearch's output) |
+| Values in single quotes too, some of them pairs | add `"single_quotes": true` (key_value): `a='two words'` read without its quotes; `msg='op=login res=success'` read as its pairs |
 | Entries whose stack traces are kept apart | add `"record_start": <profile's record_start>, "continuation": true`: each record's first line is read by the spec, the lines after it kept whole as `continuation` |
 | Syslog, then delimited columns (Palo Alto) | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "delimited", "delimiter": ",", "header": ["future_use1", "receive_time", ...]}}` |
 | Columns named by a directive line (W3C, IIS, Blue Coat, Zeek) | `{"kind": "delimited", "delimiter": " ", "header": true, "quote": "\"", "comment_prefix": "#", "header_directive": "#Fields:", "directives": ["#Software:", "#Remark:"]}` |
@@ -161,6 +163,33 @@ that is indented, or a frame (`at ...`), cause (`Caused by:`), elision (`... 12 
 traceback, continues the record before it. The profile gives that `record_start` with `continuation: true`; the
 splitter reads each record's first line with its spec and keeps the lines after it whole as `continuation`. Lines
 before the first record start (a stream cut in a trace) are a record of their own.
+
+## Lines tied by a key
+
+Some sources write one event as several lines that share a key: auditd's lines
+`type=SYSCALL msg=audit(1791709234.390:4506): ...` and `type=PATH msg=audit(1791709234.390:4506): ...` are one event. `profile_sample` finds such a key (`record_key`, the
+field `key_field`): a key=value field on nearly every line whose value holds over runs of consecutive lines of
+different kinds, and isn't a time. It also finds the field naming each line (`line_name`, `lead_field`), and says
+how many records the lines make. The line name may come after other fields (an audispd forwarder's `node=web01`
+first, kept). Separator lines between records (ausearch's `----` rows and `time->...` lines) are passed over
+(`skip_lines`). Nothing here is auditd's: any key=value lines tied by a field work (a transaction log's `txn=`, its
+lines named by `step=`), and a spec of another kind (a regex reading text lines) takes `record_key` and `line_name`
+given by hand; only the profile's suggestion is for key=value lines. `build_data_splitter` infers the spec: consecutive lines holding one key are one
+record (a backreference in the record's regex), the key written as `key_field`, the first line's name as
+`lead_field` (the kind of event), and each line's fields nested under its name, read as `SYSCALL/exe` (a line name
+given twice, such as several PATH lines, gives a field per line; a field reads the first, `repeat: true` each). A line
+holding no key is a record of its own. The draft takes the time from an epoch in the key (`epoch_s`) and leaves the
+key and each line's copy of it out of the fields.
+
+Lines of two events written interleaved (auditd under load) are not put back together: Stroom's translation reads
+records in chunks, so no tool can join them safely. The profile warns (`interleaved`), and each such event is read
+as several records; tell the user. `ausearch -i` output (interpreted) is not key=value: ask for raw lines.
+
+Characters XML doesn't allow (control characters other than tab and line ends) are taken out of the text by Stroom's
+parser before the Data Splitter reads it, and by the dry run: `profile_sample` and `build_data_splitter` name them
+(`removed_characters`). Where one separates fields (auditd's ENRICHED format puts `\x1d` before its translated
+fields), a value runs into the next key: put a FindReplaceFilter before the parser that makes them spaces, and build
+the splitter from the sample as it then reads.
 
 ## Lines that are not records
 

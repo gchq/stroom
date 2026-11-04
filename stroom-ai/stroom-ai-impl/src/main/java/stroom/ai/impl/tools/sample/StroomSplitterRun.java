@@ -39,8 +39,10 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.StringReader;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,6 +215,9 @@ public final class StroomSplitterRun {
     private static final class Records extends DefaultHandler {
 
         private final List<Map<String, String>> records = new ArrayList<>();
+        // The data elements open, outermost first: a nested one is named by its path (SYSCALL/exe), as a mapping
+        // field reads it.
+        private final Deque<OpenData> open = new ArrayDeque<>();
         private Map<String, String> current;
 
         @Override
@@ -225,15 +230,24 @@ public final class StroomSplitterRun {
                     : localName;
             if ("record".equals(name)) {
                 current = new LinkedHashMap<>();
+                open.clear();
             } else if ("data".equals(name) && current != null) {
                 final String dataName = attribute(attributes, "name");
                 // A data element with no name (a cell past the heading) is kept as Stroom writes it: unnamed.
                 final String value = attribute(attributes, "value");
-                current.putIfAbsent(dataName == null
+                final String path = (open.isEmpty()
+                        ? ""
+                        : open.peekLast().path + "/") + (dataName == null
                         ? UNNAMED
-                        : dataName, value == null
+                        : dataName);
+                if (!open.isEmpty()) {
+                    open.peekLast().parent = true;
+                }
+                final boolean added = !current.containsKey(path);
+                current.putIfAbsent(path, value == null
                         ? ""
                         : value);
+                open.addLast(new OpenData(path, value == null && added));
             }
         }
 
@@ -256,9 +270,30 @@ public final class StroomSplitterRun {
             final String name = localName == null || localName.isEmpty()
                     ? qName
                     : localName;
+            if ("data".equals(name) && !open.isEmpty()) {
+                final OpenData data = open.removeLast();
+                if (data.parent && data.valueless) {
+                    // Only a parent of other data (a line's name): its children are the fields.
+                    current.remove(data.path);
+                }
+            }
             if ("record".equals(name) && current != null) {
                 records.add(current);
                 current = null;
+            }
+        }
+
+        // A data element open: its path, whether it had no value (and was the first by that path), and whether data
+        // elements are nested in it.
+        private static final class OpenData {
+
+            private final String path;
+            private final boolean valueless;
+            private boolean parent;
+
+            private OpenData(final String path, final boolean valueless) {
+                this.path = path;
+                this.valueless = valueless;
             }
         }
     }

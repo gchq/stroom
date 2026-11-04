@@ -23,10 +23,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +58,10 @@ class TestStroomSplitterRun {
     private static final String TRACE = "java.lang.IllegalStateException: boom\n"
                                         + "\tat com.acme.Foo.bar(Foo.java:12)\n"
                                         + "\tat com.acme.Main.main(Main.java:3)\n";
+
+    private static final SplitterSpec KEYED = SplitterSpec.builder("key_value").delimiter(" ").quote("\"")
+            .recordKey("(?<!\\S)msg=(\"[^\"]*\"|[^\\s\"]+)").keyField("msg")
+            .lineName("\\s*type=\"?([A-Za-z_][\\w.-]*)\"?\\s*").leadField("type").singleQuotes(true).build();
 
     static Stream<Arguments> dryRunAndStroomAgree() {
         return Stream.of(
@@ -109,6 +117,34 @@ class TestStroomSplitterRun {
                         MIXED.toBuilder().recordStart(MIXED_START).continuation(true).catchAll(true).build(),
                         MIXED_LINES.replace("Something failed\n", "Something failed\n" + TRACE)
                         + "2026-10-11 odd\n" + TRACE),
+                Arguments.of("key=value, values in single quotes, one of them pairs",
+                        SplitterSpec.builder("key_value").delimiter(" ").quote("\"").singleQuotes(true).build(),
+                        "a='two words' msg='op=login acct=\"bob\" res=success' b=1\nc=it's d='' e=3\n"),
+                Arguments.of("Lines tied by a key, each under its name (auditd)",
+                        KEYED, "type=SYSCALL msg=audit(1.5:7): exe=\"/bin/ls\" a=1\n"
+                               + "type=PATH msg=audit(1.5:7): item=0 name=\"/bin/ls\"\n"
+                               + "type=PATH msg=audit(1.5:7): item=1 name=\"/lib/ld\"\n"
+                               + "type=USER_LOGIN msg=audit(2.5:8): pid=1 msg='op=login res=success'\n"
+                               + "note=restarted\n"
+                               + "type=EOE msg=audit(2.5:8):\n"),
+                Arguments.of("Lines tied by a key, the generated auditd log",
+                        SplitterDryRun.inferSpec(resource("auditd-lines.log")).spec(), resource("auditd-lines.log")),
+                keyed("auditd-node-lines.log", "auditd forwarded, node= before each line's type"),
+                Arguments.of("Lines tied by a key, auditd ENRICHED with its group separators made spaces",
+                        SplitterDryRun.inferSpec(TestKeyedRecords.enriched()).spec(), TestKeyedRecords.enriched()),
+                keyed("auditd-ausearch-lines.log", "ausearch's output, ---- and time-> lines passed over"),
+                keyed("txn-lines.log", "a transaction log, tied by txn= and named by step="),
+                // Not key=value: a regex reads each line, a bracketed request id ties them, the step names them.
+                Arguments.of("Lines tied by a key, text lines read by a regex",
+                        SplitterSpec.builder("regex").pattern("^(\\S+) (\\w+) \\[(req-\\d+)\\] (\\w+) ?(.*)$")
+                                .names(List.of("time", "level", "request", "step", "message"))
+                                .recordKey("\\[(req-\\d+)\\]").keyField("request")
+                                .lineName("\\S+ \\w+ \\[req-\\d+\\] (\\w+)").leadField("step").build(),
+                        "2026-10-11T10:00:01Z INFO [req-1] receive GET /orders\n"
+                        + "2026-10-11T10:00:01Z INFO [req-1] query 12 rows\n"
+                        + "2026-10-11T10:00:02Z WARN [req-1] respond 200 slow\n"
+                        + "2026-10-11T10:00:03Z INFO [req-2] receive GET /stock\n"
+                        + "2026-10-11T10:00:03Z INFO [req-2] respond 404\n"),
                 Arguments.of("W3C directives",
                         SplitterSpec.builder("delimited").delimiter(" ").header(true).commentPrefix("#")
                                 .headerDirective("#Fields:").build(),
@@ -255,5 +291,18 @@ class TestStroomSplitterRun {
             fields.put(namesAndRegexes[i], namesAndRegexes[i + 1]);
         }
         return fields;
+    }
+
+    private static Arguments keyed(final String fixture, final String name) {
+        final String sample = resource(fixture);
+        return Arguments.of("Lines tied by a key, " + name, SplitterDryRun.inferSpec(sample).spec(), sample);
+    }
+
+    private static String resource(final String name) {
+        try (InputStream in = Objects.requireNonNull(TestStroomSplitterRun.class.getResourceAsStream(name), name)) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
