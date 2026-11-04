@@ -90,16 +90,26 @@ public final class LinkTabPanelStories {
                     }
                     return panel(context, many, null, null, true);
                 })
-                // The tabs shown, the separators between them and the chevron all fit in the bar
+                // The tabs shown, the separators between them and the chevron all fit in the bar;
+                // the chevron looks like a tab, after a "|" as the tabs are
                 .withPlay(play -> {
                     final Query bar = play.querySelector(".tab-bar--link");
-                    play.waitFor(() -> play.expect(play.querySelector(".tab-selector:not(.tab-selector--hidden)"))
-                            .toBeInTheDocument());
-                    play.expect("the chevron ends in the bar", () -> play.querySelector(".tab-selector").right().get()
-                            <= bar.right().get()).toEqual(true);
+                    TabWidgets.expectSelectorLikeTabs(play, ".tab-bar--link");
                     final Query shown = play.querySelectorAll(".tab-bar__tab:not(.tab-bar__tab--hidden)");
                     play.expect("the last tab shown ends in the bar", () -> shown.nth(shown.count().get() - 1)
                             .right().get() <= bar.right().get()).toEqual(true);
+
+                    final Query selector = play.querySelector(".tab-selector");
+                    play.expect("a \"|\" is before the chevron", () -> TabWidgets.beforeContent(
+                            selector.element().get())).toEqual("\"|\"");
+                    // As far from the last tab as a separator's width and the chevron's 2px offset,
+                    // give or take its "|" being centred rather than padded
+                    final Query separator = play.querySelector(".tab-bar__separator");
+                    play.expect("the chevron is a separator's width from the last tab", () -> {
+                        final double gap = selector.left().get() - shown.nth(shown.count().get() - 1).right().get();
+                        final double width = separator.width().get();
+                        return gap >= width && gap <= width + 6;
+                    }).toEqual(true);
                 })
                 // A tab with per-tab extra toolbar widgets, shown only when that tab is active
                 .story("PerTabToolbar", context -> panel(context,

@@ -124,11 +124,12 @@ public final class CurveTabBarStories {
                 .story("ShrinkToFit", context -> demo(context, longTabs(), "proxy", "1000px", false))
                 .withPlay(CurveTabBarStories::playShrinkToFit)
                 // Too many to fit even at about 10 characters each: the rest overflow, and a name
-                // of fewer than 10 characters isn't cut
+                // of fewer than 10 characters isn't cut. The chevron looks like a tab
                 .story("ShrinkThenOverflow", context -> demo(context, longTabs(), "proxy", "560px", false))
                 .withPlay(play -> {
                     play.expect(play.querySelector(SELECTOR_SHOWN)).toBeInTheDocument();
                     play.expect("Welcome is whole", () -> isCut(play, "Welcome")).toEqual(false);
+                    TabWidgets.expectSelectorLikeTabs(play, ".tab-bar--curved");
                 })
                 // A tab that is loading says so: its description, its panel busy, and once it has
                 // been the selected tab for a second, "Loading <name>", then "<name> loaded" when
