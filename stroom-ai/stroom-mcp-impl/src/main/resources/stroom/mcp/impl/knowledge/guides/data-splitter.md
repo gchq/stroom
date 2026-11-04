@@ -21,6 +21,7 @@ read the client's files, and refuses a path with that instruction.
 | Regex, a name per group | `{"kind": "regex", "pattern": "^(\\S+) (\\S+) (.*)$", "names": ["time", "user", "message"]}` |
 | key=value pairs | `{"kind": "key_value", "delimiter": " ", "pair_separator": "=", "quote": "\""}` |
 | Syslog, body parsed further | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "key_value"}}` |
+| LEEF 1.0/2.0, alone or after syslog (`LEEF:2.0\|Vendor\|Product\|Version\|EventID\|^\|src=...^usrName=...`) | inferred: a regex for any syslog header and LEEF's header (`leef_version`, `leef_vendor`, `leef_product`, `leef_product_version`, `leef_event_id`, 2.0's `leef_delimiter`), the attributes read as key=value pairs separated by the delimiter the header declares (a character or its hex, `x5E`) or a tab (1.0) |
 | CEF, alone or after syslog | `{"kind": "cef"}` (a syslog header before it is inferred as `body`) |
 | Records over several lines (Java stack traces) | `{"kind": "regex", "record_start": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}", "pattern": "(?s)^(\\S+ \\S+) +(\\w+) +\\[([^\\]]*)\\] (\\S+) - (.*)$", "names": ["time", "level", "thread", "logger", "message"]}` |
 | Records ending at a marked line (Kubernetes CRI) | `{"kind": "regex", "record_end": "\S+ (?:stdout\|stderr) F ", "pattern": "(?s)^(\S+) (stdout\|stderr) [PF] (.*)$", "names": ["time", "stream", "message"]}` |
