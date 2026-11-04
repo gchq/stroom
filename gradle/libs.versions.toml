@@ -110,7 +110,7 @@ jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } #
 
 jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies
-jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "5.0.1" }
+jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "6.0.1" }
 jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version = "2.0.1" }
 jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" } # version controlled by dropwizard-dependencies
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" } # version controlled by dropwizard-dependencies
