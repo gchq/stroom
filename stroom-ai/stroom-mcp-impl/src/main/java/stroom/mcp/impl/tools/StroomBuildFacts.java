@@ -259,6 +259,21 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public Map<String, String> decisions(final String build) {
+        try {
+            return buildRecords.decisions(build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the decisions of build {}", build, e);
+            return Map.of();
+        }
+    }
+
+    @Override
+    public void rememberDecision(final String build, final String topic, final String decision) {
+        buildRecords.rememberDecision(build, topic, decision);
+    }
+
+    @Override
     public List<Long> referenceStreams(final String feed) {
         return ownStreams(feed, StreamTypeNames.REFERENCE, 5, null).stream()
                 .map(Meta::getId)
