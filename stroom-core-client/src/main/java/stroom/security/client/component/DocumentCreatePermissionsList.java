@@ -120,7 +120,7 @@ public class DocumentCreatePermissionsList extends Component {
                 false,
                 DocumentCreatePermissionsList::getDocTypeIcon).build();
         iconColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        dataGrid.addColumn(iconColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(iconColumn, DataGrid.hiddenHeader("Icon"), ColumnSizeConstants.ICON_COL);
 
         dataGrid.addAutoResizableColumn(new Column<DocumentType, String>(new TextCell()) {
             @Override

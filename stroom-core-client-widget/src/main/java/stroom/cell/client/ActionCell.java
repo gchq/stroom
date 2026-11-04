@@ -72,6 +72,20 @@ public class ActionCell<R> extends AbstractCell<R> {
         this.nameFunction = nameFunction;
     }
 
+    /// What a column of these buttons does, for its header's name when the header shows no text
+    /// (the grid's `ColumnNames`).
+    ///
+    /// @return "Actions" for the "Actions..." button, otherwise its icon's name (e.g. "Clear and
+    ///         rebuild cache"), or null if it has none.
+    public String getColumnName() {
+        if (SvgImage.ELLIPSES_HORIZONTAL.equals(cellIcon.getIcon())) {
+            return "Actions";
+        }
+        return cellIcon.hasName()
+                ? cellIcon.getName()
+                : null;
+    }
+
     @Override
     public void onBrowserEvent(final Context context,
                                final Element parent,

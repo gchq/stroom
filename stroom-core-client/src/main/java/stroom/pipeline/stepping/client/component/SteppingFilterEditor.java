@@ -110,13 +110,13 @@ public class SteppingFilterEditor extends Component {
                 .withStyleName(BLOCK + "__icon-cell icon-wrap")
                 .centerAligned()
                 .build();
-        elementChooser.addColumn(iconColumn, "", ICON_COL_WIDTH);
+        elementChooser.addColumn(iconColumn, DataGrid.hiddenHeader("Type"), ICON_COL_WIDTH);
 
         final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
                         PipelineElement::getDisplayName)
                 .withStyleName(BLOCK + "__text-cell")
                 .build();
-        elementChooser.addAutoResizableColumn(textColumn, "", 100);
+        elementChooser.addAutoResizableColumn(textColumn, DataGrid.hiddenHeader("Element"), 100);
 
         // Only visible if the element has an active filter
         final Function<PipelineElement, String> filterActiveStyleFunc = pipelineElement ->
@@ -131,7 +131,7 @@ public class SteppingFilterEditor extends Component {
                 .withConditionalStyleName(filterActiveStyleFunc)
                 .centerAligned()
                 .build();
-        elementChooser.addColumn(filterIconColumn, "", ICON_COL_WIDTH);
+        elementChooser.addColumn(filterIconColumn, DataGrid.hiddenHeader("Filter"), ICON_COL_WIDTH);
 
         elementChooser.setSelectionModel(elementSelectionModel,
                 new DataGridSelectionEventManager<>(elementChooser, elementSelectionModel, false));

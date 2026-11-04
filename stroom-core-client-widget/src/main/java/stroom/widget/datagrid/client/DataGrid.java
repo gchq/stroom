@@ -408,6 +408,23 @@ public class DataGrid<R> extends Widget
         scheduleRender();
     }
 
+    /// A header that shows nothing but names its column for screen readers, as visually hidden
+    /// text, for a column whose cells speak for themselves (e.g. type icons). A column of tick
+    /// boxes, expanders, info icons or buttons whose header shows no text is named for its kind
+    /// without this ("Select", "Expand", "Info", "Actions", or the button's name), so this is for
+    /// other columns, or one that its kind's name wouldn't describe (e.g. tick boxes that grant a
+    /// permission).
+    ///
+    /// @param name What the column's cells show or do, e.g. "Type" or "Status".
+    /// @return The header.
+    public static Header<?> hiddenHeader(final String name) {
+        return new SafeHtmlHeader(new SafeHtmlBuilder()
+                .appendHtmlConstant("<span class=\"sr-only\">")
+                .appendEscaped(name)
+                .appendHtmlConstant("</span>")
+                .toSafeHtml());
+    }
+
     /// Remove a column.
     ///
     /// @param column The column.

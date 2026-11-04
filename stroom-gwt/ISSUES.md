@@ -1509,11 +1509,15 @@ and Escape stops), now turned on (see Keyboard trap in the code editor).
 reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are
 `treegrid`s of rows, column headers and cells. Checked again (data_grid2, 23 October 2026): a grid
 with no name of its own is named by its table name, the number inputs in cells are named by their
-column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px. Left:
-a grid's first (icon) column has a `columnheader` with no name (`GridHtml.header` draws an empty
-header as it is; seen in `App/Query/QueryResultsTable`). A fix, item 5 of the
-[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW): an icon column's
-header is named after what its icons show (e.g. "Info", "Actions"), visually hidden.
+column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px.
+**Fixed** (3 November 2026), the column headers with no name (item 5 of the
+[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW)): 85 in 45 grids, a
+grid's icon, tick box, expander and action columns. A header that shows no text is named by visually
+hidden text: by its column's kind (`ColumnNames`: "Select", "Expand", "Info", "Actions", or an
+`ActionCell`'s own name such as "Clear and rebuild cache"), or as its screen gives it
+(`DataGrid.hiddenHeader`: "Type", "Status", "Help", "Severity", "Highlight", "From Icon" and the
+like). The workbench runner checks axe's `empty-table-header` rule as well as the WCAG ones, so a new
+unnamed header fails its story.
 
 ### Menu buttons don't say they open a menu
 
@@ -1524,7 +1528,8 @@ with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a
 
 ### Controls with no accessible name
 
-**Fixed**: all those listed here (see Fixed). Left: a grid's first (icon) column has an empty header.
+**Fixed**: all those listed here (see Fixed), and a grid's icon columns' empty headers (see Expression
+terms and tables).
 
 
 ### Missing roles and states

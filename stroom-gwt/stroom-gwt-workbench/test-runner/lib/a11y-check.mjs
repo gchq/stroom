@@ -29,6 +29,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 // e.g. that all content is in landmarks, aren't checked)
 export const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
+// Best-practice rules checked as well: a column header with no name (a grid's column of icons or
+// tick boxes, say), which a screen reader announces as nothing
+export const A11Y_EXTRA_RULES = ['empty-table-header'];
+
 // Where the workbench serves axe-core (fetched by the workbenchFetchAxe task)
 export const AXE_PATH = '/__workbench/axe.min.js';
 
@@ -72,7 +76,7 @@ export async function measureA11y(page, baseUrl) {
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   // The preview also runs axe-core after a play, for the workbench's Accessibility addon, and axe
   // can only run once at a time, so this waits for it to finish
-  const violations = await page.evaluate(async ({ tags, attempts, pauseMillis }) => {
+  const violations = await page.evaluate(async ({ tags, extraRules, attempts, pauseMillis }) => {
     const pause = () => new Promise((resolve) => setTimeout(resolve, pauseMillis));
     const busy = () => {
       const state = window.__sbmAxeState;
@@ -86,6 +90,7 @@ export async function measureA11y(page, baseUrl) {
       try {
         const results = await window.axe.run(document, {
           runOnly: { type: 'tag', values: tags },
+          rules: Object.fromEntries(extraRules.map((rule) => [rule, { enabled: true }])),
           resultTypes: ['violations'],
         });
         return results.violations.map((rule) => ({
@@ -102,7 +107,7 @@ export async function measureA11y(page, baseUrl) {
         await pause();
       }
     }
-  }, { tags: A11Y_TAGS, attempts: AXE_ATTEMPTS, pauseMillis: AXE_PAUSE_MILLIS });
+  }, { tags: A11Y_TAGS, extraRules: A11Y_EXTRA_RULES, attempts: AXE_ATTEMPTS, pauseMillis: AXE_PAUSE_MILLIS });
   return { checked: true, violations };
 }
 

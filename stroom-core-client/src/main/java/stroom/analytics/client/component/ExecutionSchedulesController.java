@@ -198,7 +198,7 @@ public class ExecutionSchedulesController extends ContentTabController {
                             ? CellIcon.of(SvgImage.DOCUMENT_ANALYTIC_RULE, "Analytic Rule")
                             : CellIcon.of(SvgImage.DOCUMENT_REPORT, "Report");
                 }
-            }, "", ColumnSizeConstants.CHECKBOX_COL
+            }, DataGrid.hiddenHeader("Type"), ColumnSizeConstants.CHECKBOX_COL
         );
     }
 
