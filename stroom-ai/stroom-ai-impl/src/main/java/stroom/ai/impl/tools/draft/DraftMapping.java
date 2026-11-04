@@ -80,6 +80,11 @@ public final class DraftMapping {
     private static final String NO_ZONE = "The zone the source writes it in is the user's to say: "
                                           + "draft_translation_mapping asks (timezone=), and Stroom reads it as UTC "
                                           + "until then.";
+    // An epoch time in seconds (ten digits, a fraction allowed) inside a record's key, and the replace that takes it
+    // out.
+    private static final Pattern KEY_EPOCH = Pattern.compile("(?<![\\d.])\\d{10}(?:\\.\\d{1,9})?(?![\\d])");
+    // (XPath's regexes: plain groups, no (?:...).)
+    private static final String KEY_EPOCH_REPLACE = "^\\D*(\\d{10}(\\.\\d{1,9})?).*$";
     /// The field the exception a record's stack trace starts with is extracted as.
     public static final String EXCEPTION_FIELD = "exception";
     /// The field its message is extracted as.
@@ -555,7 +560,10 @@ public final class DraftMapping {
             heldFields = heldXml(heldFields);
             heldFields = heldPairs(heldFields);
             taken.addAll(heldFields);
-            final String timeField = time();
+            final String keyTime = keyedTime();
+            final String timeField = keyTime != null
+                    ? keyTime
+                    : time();
             system(systemName, environment, timeField);
             homes();
             final Kinds kinds = kinds();
@@ -833,6 +841,38 @@ public final class DraftMapping {
 
         private static String patternOf(final String type) {
             return type.substring(TIMESTAMP_PREFIX.length(), type.length() - 1);
+        }
+
+        // Records of lines tied by a key (auditd's msg=audit(1791709234.390:4506):): the key and each line's copy of
+        // it are not fields of the event; an epoch in every key (the envelope's time) is the event's time. Returns
+        // the key field when it gives the time, else null.
+        private String keyedTime() {
+            if (spec == null || spec.recordKey() == null) {
+                return null;
+            }
+            final String keyField = spec.keyField();
+            names.stream()
+                    .filter(name -> name.equals(keyField) || name.endsWith("/" + keyField))
+                    .forEach(taken::add);
+            if (spec.lineName() != null) {
+                // Each line's own name, under itself (SYSCALL/type): the record's is the lead field.
+                names.stream().filter(name -> name.endsWith("/" + spec.leadField())).forEach(taken::add);
+            }
+            final List<String> keys = values.getOrDefault(keyField, List.of()).stream()
+                    .filter(value -> !ToolText.isBlank(value))
+                    .toList();
+            if (keys.isEmpty() || !keys.stream().allMatch(key -> ToolText.search(KEY_EPOCH, key))) {
+                notes.add("Each record is the lines holding one '" + keyField + "' (left out of the fields, as each "
+                          + "line's copy is); it holds no time: map EventTime/TimeCreated from a line's field.");
+                return null;
+            }
+            common.add(dict(PATH, "EventTime/TimeCreated", "xpath", "replace(" + selector(mapping, keyField)
+                                                                     + ", '" + KEY_EPOCH_REPLACE + "', '$1')",
+                    "time_format", "epoch_s"));
+            notes.add("Each record is the lines holding one '" + keyField + "' (e.g. " + keys.getFirst() + "): its "
+                      + "epoch time is EventTime/TimeCreated, and it and each line's copy are left out of the fields; "
+                      + "add the rest of it (an event serial) as Data if the events need it.");
+            return keyField;
         }
 
         // Time: the first timestamp-typed field whose name says time, else the first timestamp-typed field; a

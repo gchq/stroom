@@ -322,18 +322,15 @@ class TestBuildDataSplitterTool {
     }
 
     @Test
-    void recordsStroomWritesWithOtherValuesAreReportedButSaved() {
-        // Stroom takes control characters out of the text; the dry run keeps them.
+    void charactersStroomTakesOutAreTakenOutByTheDryRunTooAndNamed() {
+        // Stroom's parser takes control characters out of the text before the Data Splitter reads it; the dry run
+        // once kept them, so the two disagreed (al\u0007ice against alice).
         final Map<String, Object> splitter = world.call(tool, Map.of("sample",
                 "time,user,action\n2026-10-01T10:00:00Z,al\u0007ice,login\n", "save_as", "ACME-SPLITTER", "build",
                 "acme-v1"));
 
-        assertThat(stroomCheck(splitter)).containsEntry("matches", false).containsEntry("loses_records", false);
-        assertThat((List<Map<String, Object>>) stroomCheck(splitter).get("differences")).singleElement()
-                .satisfies(difference -> {
-                    assertThat(difference.get("dry_run")).isEqualTo(Map.of("user", "al\u0007ice"));
-                    assertThat(difference.get("stroom")).isEqualTo(Map.of("user", "alice"));
-                });
+        assertThat(stroomCheck(splitter)).containsEntry("matches", true);
+        assertThat(String.valueOf(splitter.get("removed_characters"))).contains("\\x07 x1", "FindReplaceFilter");
         assertThat(splitter).containsKey("saved");
     }
 

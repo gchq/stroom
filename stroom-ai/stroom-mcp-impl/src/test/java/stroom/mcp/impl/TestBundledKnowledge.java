@@ -56,6 +56,8 @@ class TestBundledKnowledge {
             "replace_parser", "output_type", "source_pipeline_uuid", "draft_code", "pipeline_uuid", "index_uuid",
             "index_itself", "records_per_stream", "skip_stream_ids", "known_signatures", "expect_events", "filter_id",
             "events_stream_ids",
+            // Data Splitter spec options: lines tied into records by a key, single-quoted values.
+            "record_key", "key_field", "line_name", "lead_field", "single_quotes",
             // A reply's status.
             "index_exists",
             // An Elasticsearch privilege.

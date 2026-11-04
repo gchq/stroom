@@ -195,7 +195,9 @@ public final class ToolText {
     }
 
     /// @return The text's lines without their line ends, as `str.splitlines()`: split at `\n`, `\r`, `\r\n` and
-    /// the other line boundaries Python knows.
+    /// the other line boundaries Python knows, except the information separators (`\x1c` to `\x1e`), which Stroom's
+    /// parsers read as part of a line (seen: auditd's ENRICHED format separates its translated fields with `\x1d`,
+    /// and each line was profiled as two).
     public static List<String> splitlines(final String text) {
         final List<String> lines = new ArrayList<>();
         int start = 0;
@@ -219,8 +221,7 @@ public final class ToolText {
     }
 
     private static boolean isLineBoundary(final char c) {
-        return c == '\n' || c == '\r' || c == 0x0B || c == 0x0C || c == 0x1C || c == 0x1D || c == 0x1E
-               || c == 0x85 || c == 0x2028 || c == 0x2029;
+        return c == '\n' || c == '\r' || c == 0x0B || c == 0x0C || c == 0x85 || c == 0x2028 || c == 0x2029;
     }
 
     /// @return The text's lines that aren't blank: `[line for line in text.splitlines() if line.strip()]`.

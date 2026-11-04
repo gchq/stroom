@@ -78,6 +78,19 @@ import java.util.regex.PatternSyntaxException;
 /// @param carry           An alternatives part: the field its first named field is written as on every record after
 ///                        it (a header's date for the lines after it, kept by the splitter so stepping, which reads a
 ///                        record alone, sees it too); or null.
+/// @param recordKey       A regex found in each line whose one group is the line's key (auditd's `msg=audit(...)`
+///                        envelope): consecutive lines with the same key are one record; a line with none is a record
+///                        of its own. Or null.
+/// @param keyField        With record_key: the field each record's key is written in.
+/// @param lineName        With record_key: a regex matched at each line's start whose one group names the line
+///                        (auditd's `type=SYSCALL`); the rest of the line is read by the spec, its fields nested under
+///                        that name (`SYSCALL/exe`). Or null, the lines' fields all the record's.
+/// @param leadField       With line_name: the field the record's first line's name is written in (the kind of event).
+/// @param skipLines       With record_key: a regex a line matches at its start to be passed over, ending the record
+///                        before it (ausearch's `----` separators and `time->...` lines); or null.
+/// @param singleQuotes    key_value: values may be in single quotes too (`a='two words'`), read without them; a
+///                        single-quoted value made of pairs (auditd's `msg='op=login res=success'`) is read as those
+///                        pairs, the record's own.
 public record SplitterSpec(String kind,
                            String delimiter,
                            boolean headerLine,
@@ -105,7 +118,13 @@ public record SplitterSpec(String kind,
                            String variant,
                            String match,
                            String variantField,
-                           String carry) {
+                           String carry,
+                           String recordKey,
+                           String keyField,
+                           String lineName,
+                           String leadField,
+                           String skipLines,
+                           boolean singleQuotes) {
 
     /// The kinds of spec.
     public static final List<String> KINDS = List.of("delimited", "regex", "key_value", "syslog", "cef", "fields",
@@ -118,6 +137,10 @@ public record SplitterSpec(String kind,
     public static final String VARIANT = "variant";
     /// The kind of a spec reading records in several formats.
     public static final String ALTERNATIVES = "alternatives";
+    /// The field a record's key is written in, unless key_field names another.
+    public static final String RECORD_KEY = "record_key";
+    /// The field a record's first line's name is written in, unless lead_field names another.
+    public static final String LEAD = "lead";
     private static final Pattern VARIANT_NAME = Pattern.compile("[A-Za-z0-9_.-]+");
     // A key=value part's own match, with spaced values (read from the end): a record that starts with a pair. Without
     // them, a record that is pairs from start to end, read by the part's own pair regex: one the part can't read whole
@@ -142,6 +165,28 @@ public record SplitterSpec(String kind,
         fields = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNullElse(fields, Map.of())));
         parts = List.copyOf(Objects.requireNonNullElse(parts, List.of()));
         variantField = Objects.requireNonNullElse(variantField, VARIANT);
+        keyField = Objects.requireNonNullElse(keyField, RECORD_KEY);
+        leadField = Objects.requireNonNullElse(leadField, LEAD);
+        if (recordKey != null && recordKey.isEmpty()) {
+            recordKey = null;
+        }
+        if (lineName != null && lineName.isEmpty()) {
+            lineName = null;
+        }
+        if (skipLines != null && skipLines.isEmpty()) {
+            skipLines = null;
+        }
+        if (skipLines != null && recordKey == null) {
+            throw new IllegalArgumentException("skip_lines passes over the lines between keyed records: give "
+                                               + "record_key with it");
+        }
+        if (skipLines != null) {
+            try {
+                Pattern.compile(skipLines);
+            } catch (final PatternSyntaxException e) {
+                throw new IllegalArgumentException("skip_lines is not a regex: " + e.getDescription());
+            }
+        }
         if (match != null && match.isEmpty()) {
             match = null;
         }
@@ -151,6 +196,11 @@ public record SplitterSpec(String kind,
         checkAdditions(kind, escape, spacedValues, catchAll, blankLineRecords, fields, quote, commentPrefix,
                 recordStart, recordEnd, delimiter);
         checkAlternatives(kind, parts, variantField, delimiter);
+        if (singleQuotes && (!"key_value".equals(kind) || spacedValues)) {
+            throw new IllegalArgumentException("single_quotes is for key_value (without spaced_values)");
+        }
+        checkKeyed(kind, recordKey, keyField, lineName, leadField, recordStart, recordEnd, blankLineRecords,
+                continuation);
         if (continuation && (recordStart == null || recordStart.isEmpty() || "delimited".equals(kind))) {
             throw new IllegalArgumentException("continuation is for records of several lines: give record_start "
                                                + "with it (not delimited)");
@@ -275,6 +325,58 @@ public record SplitterSpec(String kind,
         };
     }
 
+    // record_key and line_name: each a regex of one group; the key the whole spec's way of dividing records, so
+    // not with another; not delimited (a line a record) or alternatives (a part per line's format).
+    private static void checkKeyed(final String kind,
+                                   final String recordKey,
+                                   final String keyField,
+                                   final String lineName,
+                                   final String leadField,
+                                   final String recordStart,
+                                   final String recordEnd,
+                                   final boolean blankLineRecords,
+                                   final boolean continuation) {
+        if (lineName != null && recordKey == null) {
+            throw new IllegalArgumentException("line_name names the lines of a record of several: give record_key "
+                                               + "with it");
+        }
+        if (recordKey == null) {
+            return;
+        }
+        if ("delimited".equals(kind) || ALTERNATIVES.equals(kind)) {
+            throw new IllegalArgumentException("record_key is for the kinds that read one line (not " + kind + ")");
+        }
+        if (recordStart != null || recordEnd != null || blankLineRecords || continuation) {
+            throw new IllegalArgumentException("record_key divides the records: not with record_start, record_end, "
+                                               + "blank_line_records or continuation");
+        }
+        oneGroup("record_key", recordKey);
+        if (lineName != null) {
+            oneGroup("line_name", lineName);
+        }
+        for (final String name : List.of(keyField, leadField)) {
+            if (!VARIANT_NAME.matcher(name).matches()) {
+                throw new IllegalArgumentException("key_field and lead_field are field names (letters, digits, '_', "
+                                                   + "'.' and '-'), not '" + name + "'");
+            }
+        }
+    }
+
+    private static void oneGroup(final String option, final String regex) {
+        final int groups;
+        try {
+            groups = Pattern.compile(regex).matcher("").groupCount();
+        } catch (final PatternSyntaxException e) {
+            throw new IllegalArgumentException(option + " is not a regex: " + e.getDescription());
+        }
+        if (groups != 1) {
+            throw new IllegalArgumentException(option + " needs one capturing group, the " + (option.equals(
+                    "record_key")
+                    ? "key"
+                    : "line's name") + " (use (?:...) for any other), not " + groups);
+        }
+    }
+
     // The checks of escape, spaced_values, catch_all, blank_line_records and the fields kind.
     private static void checkAdditions(final String kind,
                                        final String escape,
@@ -386,7 +488,18 @@ public record SplitterSpec(String kind,
         builder.match = (String) json.get("match");
         builder.variantField = (String) json.get("variant_field");
         builder.carry = (String) json.get("carry");
+        builder.recordKey = (String) json.get("record_key");
+        builder.keyField = (String) json.get("key_field");
+        builder.lineName = (String) json.get("line_name");
+        builder.leadField = (String) json.get("lead_field");
+        builder.skipLines = (String) json.get("skip_lines");
+        builder.singleQuotes = Boolean.TRUE.equals(json.get("single_quotes"));
         return builder.build();
+    }
+
+    /// @return The spec each line of a keyed record is read with: this one without record_key and line_name.
+    public SplitterSpec lineSpec() {
+        return toBuilder().recordKey(null).lineName(null).keyField(null).leadField(null).skipLines(null).build();
     }
 
     /// @return A builder holding this spec's values.
@@ -419,6 +532,12 @@ public record SplitterSpec(String kind,
         builder.match = match;
         builder.variantField = variantField;
         builder.carry = carry;
+        builder.recordKey = recordKey;
+        builder.keyField = keyField;
+        builder.lineName = lineName;
+        builder.leadField = leadField;
+        builder.skipLines = skipLines;
+        builder.singleQuotes = singleQuotes;
         return builder;
     }
 
@@ -461,6 +580,12 @@ public record SplitterSpec(String kind,
         putIf(map, "match", match, match != null);
         putIf(map, "variant_field", variantField, !VARIANT.equals(variantField));
         putIf(map, "carry", carry, carry != null);
+        putIf(map, "record_key", recordKey, recordKey != null);
+        putIf(map, "key_field", keyField, !RECORD_KEY.equals(keyField));
+        putIf(map, "line_name", lineName, lineName != null);
+        putIf(map, "lead_field", leadField, !LEAD.equals(leadField));
+        putIf(map, "skip_lines", skipLines, skipLines != null);
+        putIf(map, "single_quotes", singleQuotes, singleQuotes);
         return map;
     }
 
@@ -506,6 +631,12 @@ public record SplitterSpec(String kind,
         private String match;
         private String variantField = VARIANT;
         private String carry;
+        private String recordKey;
+        private String keyField = RECORD_KEY;
+        private String lineName;
+        private String leadField = LEAD;
+        private String skipLines;
+        private boolean singleQuotes;
 
         private Builder(final String kind) {
             this.kind = kind;
@@ -704,11 +835,42 @@ public record SplitterSpec(String kind,
 
         /// @return The spec.
         /// @throws IllegalArgumentException if it isn't consistent.
+        public Builder recordKey(final String recordKey) {
+            this.recordKey = recordKey;
+            return this;
+        }
+
+        public Builder keyField(final String keyField) {
+            this.keyField = keyField;
+            return this;
+        }
+
+        public Builder lineName(final String lineName) {
+            this.lineName = lineName;
+            return this;
+        }
+
+        public Builder leadField(final String leadField) {
+            this.leadField = leadField;
+            return this;
+        }
+
+        public Builder skipLines(final String skipLines) {
+            this.skipLines = skipLines;
+            return this;
+        }
+
+        public Builder singleQuotes(final boolean singleQuotes) {
+            this.singleQuotes = singleQuotes;
+            return this;
+        }
+
         public SplitterSpec build() {
             return new SplitterSpec(kind, delimiter, headerLine, columns, quote, pattern, names, pairSeparator, rfc,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
-                    variant, match, variantField, carry);
+                    variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
+                    skipLines, singleQuotes);
         }
     }
 }
