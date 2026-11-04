@@ -51,6 +51,8 @@ public class OpenAIModelSettingsViewImpl
     @UiField
     ValueSpinner maxContextWindowTokens;
     @UiField
+    ValueSpinner workingContextTokens;
+    @UiField
     TextBox reasoningEffort;
     @UiField
     Button testModel;
@@ -72,6 +74,8 @@ public class OpenAIModelSettingsViewImpl
 
         maxContextWindowTokens.setMin(0L);
         maxContextWindowTokens.setMax(Integer.MAX_VALUE);
+        workingContextTokens.setMin(0L);
+        workingContextTokens.setMax(Integer.MAX_VALUE);
         embeddingModelDimensions.setMin(0L);
         embeddingModelDimensions.setMax(Integer.MAX_VALUE);
         maxToolDefinitions.setMin(0L);
@@ -116,6 +120,16 @@ public class OpenAIModelSettingsViewImpl
     @Override
     public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
         this.maxContextWindowTokens.setValue(maxContextWindowTokens);
+    }
+
+    @Override
+    public int getWorkingContextTokens() {
+        return workingContextTokens.getIntValue();
+    }
+
+    @Override
+    public void setWorkingContextTokens(final int workingContextTokens) {
+        this.workingContextTokens.setValue(workingContextTokens);
     }
 
     @Override
@@ -174,6 +188,7 @@ public class OpenAIModelSettingsViewImpl
         apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
         maxContextWindowTokens.setEnabled(!readOnly);
+        workingContextTokens.setEnabled(!readOnly);
         reasoningEffort.setEnabled(!readOnly);
         embeddingModelDimensions.setEnabled(!readOnly);
         toolsEnabled.setEnabled(!readOnly);
@@ -204,6 +219,11 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("maxContextWindowTokens")
     public void onMaxContextWindowTokensValueChange(final ValueChangeEvent<Long> event) {
+        fireChange();
+    }
+
+    @UiHandler("workingContextTokens")
+    public void onWorkingContextTokensValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
 
