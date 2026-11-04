@@ -198,6 +198,31 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void eachRecordsZoneMayBeReadFromAField() {
+        // Asked for by the user: a field naming each record's zone, read record by record rather than one zone.
+        final String zoned = "time,tz,user,action\n2026-10-01 10:00:00,Australia/Sydney,bob,login\n"
+                             + "2026-10-01 10:04:00,Europe/London,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(12L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 12", zoned), List.of()));
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "Each record's own zone, from 'tz' (UTC where a record gives "
+                                                     + "none)");
+
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(12)));
+        assertThat(String.valueOf(chosen.get("mapping"))).contains("timezone={field=tz, default=UTC}");
+        assertThat(String.valueOf(chosen.get("notes"))).contains("each record's own zone", "never guess");
+
+        // Given as the argument, with a default other than UTC.
+        world.asked.clear();
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(12), TimeSources.TIMEZONE_ARG,
+                "field:tz|Australia/Sydney")).get("mapping"))).contains("timezone={field=tz, "
+                                                                         + "default=Australia/Sydney}");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(12), TimeSources.TIMEZONE_ARG, "field:tz|AEST")))
+                .extractingByKey("error").asString().contains("a default Stroom reads");
+    }
+
+    @Test
     void theDraftIsCheckedAgainstTheSchemaAndKeptForTheSession() {
         // Kept for this session, so the first save sends only what changes (seen in testing: a 50 KB draft,
         // written out whole in one call, never reached the server).
