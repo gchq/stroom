@@ -42,6 +42,11 @@ final class ConversationShortening {
 
     /// How many of the latest tool results are kept as they are when the conversation is getting too large.
     static final int RECENT_RESULTS_KEPT = 2;
+    /// How many of the latest steps [#rolling] always keeps as they are, results and arguments.
+    static final int ROLLING_KEPT_STEPS = 8;
+    /// The fewest results [#rolling] shortens at once: each change to an earlier message makes the model server
+    /// read the conversation again from there (its prompt cache), so they are shortened a few at a time.
+    static final int ROLLING_BATCH = 4;
 
     /// Tool results shorter than this are never shortened.
     static final int SHORTENED_MIN_CHARS = 300;
@@ -212,6 +217,64 @@ final class ConversationShortening {
         return shortened > 0
                 ? shortened
                 : collapseEarlierSteps(conversation, 1);
+    }
+
+    /// Keeps a run's conversation lean as it goes, whether or not it is near the context window. Seen in testing
+    /// (chat 145): Qwen 3.8 Flash lost its place at 70% of its window, which the budget's shortening (from 80%) never
+    /// reached, three quarters of the tool output it was sent being earlier reads (files, documents, jq, grep). So,
+    /// at every step: a result the same as a later one (a document read twice) is shortened, but the latest; once at
+    /// least [#ROLLING_BATCH] results of steps before the latest `keepSteps` are long, they are shortened, but those
+    /// read for reference (see [ReferenceResults]); and those steps' long arguments are shortened. Every result stays
+    /// stored, for read_turn.
+    ///
+    /// @param conversation The conversation, changed in place.
+    /// @param keepSteps    How many of the latest steps to leave as they are.
+    /// @return How many parts were shortened.
+    static int rolling(final List<ChatMessage> conversation, final int keepSteps) {
+        int shortened = repeatedResults(conversation);
+        final List<Integer> steps = stepIndexes(conversation);
+        if (steps.size() <= keepSteps) {
+            return shortened;
+        }
+        final int kept = steps.get(steps.size() - keepSteps);
+        final List<Integer> aged = new ArrayList<>();
+        for (int i = 0; i < kept; i++) {
+            if (conversation.get(i) instanceof final ToolExecutionResultMessage result
+                && NullSafe.string(result.text()).length() > SHORTENED_MIN_CHARS
+                && !SHORTENED_RESULT.equals(result.text())
+                && !ReferenceResults.isReference(result)) {
+                aged.add(i);
+            }
+        }
+        if (aged.size() >= ROLLING_BATCH) {
+            for (final int index : aged) {
+                final ToolExecutionResultMessage result = (ToolExecutionResultMessage) conversation.get(index);
+                conversation.set(index, ToolExecutionResultMessage.from(result.id(), result.toolName(),
+                        SHORTENED_RESULT));
+            }
+            shortened += aged.size() + shortenToolCallArguments(conversation, keepSteps);
+        }
+        return shortened;
+    }
+
+    // A long result the same as a later one: shortened, the latest kept.
+    private static int repeatedResults(final List<ChatMessage> conversation) {
+        final Set<String> later = new HashSet<>();
+        int shortened = 0;
+        for (int i = conversation.size() - 1; i >= 0; i--) {
+            if (conversation.get(i) instanceof final ToolExecutionResultMessage result) {
+                final String text = NullSafe.string(result.text());
+                if (text.length() <= SHORTENED_MIN_CHARS || SHORTENED_RESULT.equals(text)) {
+                    continue;
+                }
+                if (!later.add(text)) {
+                    conversation.set(i, ToolExecutionResultMessage.from(result.id(), result.toolName(),
+                            SHORTENED_RESULT));
+                    shortened++;
+                }
+            }
+        }
+        return shortened;
     }
 
     /// As [#shrink], without its last step: the earlier steps are kept, with their results shortened.
