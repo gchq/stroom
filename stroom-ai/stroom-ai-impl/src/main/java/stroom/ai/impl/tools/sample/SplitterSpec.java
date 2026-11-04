@@ -335,7 +335,14 @@ public record SplitterSpec(String kind,
             case "cef" -> SplitterDryRun.CEF_PATTERN;
             case "key_value" -> spacedValues
                     ? PAIRS_MATCH
-                    : "(?:" + SplitterDryRun.kvPatterns(this).getFirst() + ")+\\s*$";
+                    : words
+                    // Text around the pairs too, with at least one pair.
+                    ? "(?=[^\\n]*=)(?:" + SplitterDryRun.kvPatterns(this).getFirst() + "|"
+                      + SplitterDryRun.wordsPattern(this) + ")+(?:" + SplitterDryRun.trailingDelimiter(this) + "|\\s*$)"
+                    : "(?:" + SplitterDryRun.kvPatterns(this).getFirst() + ")+(?:"
+                      + (SplitterDryRun.spacedDelimiter(this)
+                    ? SplitterDryRun.trailingDelimiter(this) + "|"
+                    : "") + "\\s*$)";
             case "regex" -> pattern;
             default -> null;
         };

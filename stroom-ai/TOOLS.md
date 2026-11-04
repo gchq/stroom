@@ -3743,7 +3743,9 @@ sample as Stroom's parser does (characters XML forbids taken out) and names what
 a line holding no key joins the record before it, and named markers start sections read whole (`keyed sections`:
 ModSecurity's serial audit log). Text around key=value pairs: `words` keeps each run of text that isn't pairs as the field `words`
 (`withWords` sets it where records fail without it and read with it); the same few words before every record's pairs
-are read as fields of their own by a regex with the pairs as its body (`withPrefix`). Formats shortlist
+are read as fields of their own by a regex with the pairs as its body (`withPrefix`). `pairDelimiter` picks
+", ", "; " or "|" when most pairs after a record's first follow it; such a spaced delimiter reads values to the next
+delimiter, keys holding spaces only straight after it. Formats shortlist
 (formats-shortlist-generator.py, 2026-11-04), as first inferred:
 Check Point Log Exporter reads as RFC 5424 with its pairs left whole in `structured` (no `:`/`;` pair reading);
 iptables, LEEF 1.0/2.0, OpenLDAP slapd and Cisco ISE infer syslog with a key=value body that Stroom refuses (text

@@ -460,7 +460,7 @@ public final class SplitterXml {
                 if (spec.spacedValues()) {
                     return spacedPairsXml(spec, indent);
                 }
-                if (spec.singleQuotes() || spec.words()) {
+                if (spec.singleQuotes() || spec.words() || SplitterDryRun.spacedDelimiter(spec)) {
                     return anchoredPairsXml(spec, indent);
                 }
                 final StringBuilder out = new StringBuilder();
@@ -500,6 +500,11 @@ public final class SplitterXml {
         out.append(indent).append("<regex pattern=\"").append(attr(pair)).append("\">\n")
                 .append(indent).append("  <data name=\"$1\" value=\"$2\" />\n")
                 .append(indent).append("</regex>\n");
+        if (SplitterDryRun.spacedDelimiter(spec)) {
+            // A record of spaced-delimited pairs may end with the delimiter (`..., UserName=alice,`).
+            out.append(indent).append("<regex pattern=\"").append(attr("^" + SplitterDryRun.trailingDelimiter(spec)))
+                    .append("\" />\n");
+        }
         if (spec.words()) {
             out.append(indent).append("<regex pattern=\"").append(attr("^" + SplitterDryRun.wordsPattern(spec)))
                     .append("\">\n")

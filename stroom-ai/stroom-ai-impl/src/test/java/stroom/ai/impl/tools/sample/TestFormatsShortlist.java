@@ -55,6 +55,36 @@ class TestFormatsShortlist {
         assertThat(SplitterDryRun.inferSpec(pairs).spec().words()).isFalse();
     }
 
+    @Test
+    void pairsSeparatedByACommaMayHaveKeysHoldingSpaces() {
+        // Cisco ISE: ", " between pairs, keys holding spaces after it, text before the pairs and a trailing comma.
+        assertThat(inferred("ise-lines.log").body().delimiter()).isEqualTo(", ");
+        final Map<String, String> ise = records("ise-lines.log").stream()
+                .filter(record -> record.containsKey("Device IP Address"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(ise.get(SplitterSpec.WORDS)).startsWith("CISE_").endsWith("Authentication failed");
+        assertThat(ise).containsEntry("UserName", "bob").containsEntry("Device Type",
+                "Device Type#All Device Types#Switch");
+        // A later segment: words before its first key, which holds no space.
+        assertThat(records("ise-lines.log")).anySatisfy(record -> assertThat(record)
+                .containsEntry(SplitterSpec.WORDS, "CISE_Passed_Authentications 0001234501 3 2")
+                .containsEntry("AuthenticationMethod", "MSCHAPV2"));
+        // Postfix: a queue id before the pairs, values running to the next comma.
+        final List<Map<String, String>> postfix = records("postfix-lines.log");
+        assertThat(postfix).anySatisfy(record -> assertThat(record).containsKey("from")
+                .containsKey("size")
+                .containsEntry("nrcpt", "1 (queue active)")
+                .hasEntrySatisfying(SplitterSpec.WORDS, words -> assertThat(words).matches("[0-9A-F]+:")));
+        assertThat(postfix).anySatisfy(record -> assertThat(record.get("status")).startsWith("sent (250 2.0.0 Ok"));
+    }
+
+    private static List<Map<String, String>> records(final String fixture) {
+        final SplitterDryRun.DryRun dryRun = SplitterDryRun.dryRun(inferred(fixture), resource(fixture), 1_000);
+        assertThat(dryRun.unmatchedLines()).as(fixture).isEmpty();
+        return dryRun.records();
+    }
+
     /// Records of a time and a host before their pairs.
     static final String PREFIXED = "2026-09-28T15:00:00Z fw01 action=allow src=10.0.0.5 dst=10.1.2.3 dport=443\n"
                                    + "2026-09-28T15:00:03Z fw02 action=deny src=203.0.113.77 dst=10.0.0.10 dport=22\n"
