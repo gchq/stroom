@@ -133,6 +133,8 @@ final class TranslationWorld {
     final List<String> asked = new ArrayList<>();
     // The same messages, as the consent tests read them.
     final List<String> shown = asked;
+    // Each form's schema, as the user was shown it, in order.
+    final List<Map<String, Object>> formsShown = new ArrayList<>();
     boolean forms;
     // The forms, by their message's start, that can't be shown, so fail the call as Stroom's chat does.
     final Set<String> unshowable = new HashSet<>();
@@ -217,6 +219,7 @@ final class TranslationWorld {
                                             final String intro,
                                             final Map<String, Object> form) {
                         asked.add(intro);
+                        formsShown.add(form);
                         // As the chat refuses them, so no test passes on a form the user would never see.
                         if (form.get("properties") instanceof final Map<?, ?> fields
                             && fields.size() > ElicitationSchema.MAX_FIELDS) {
