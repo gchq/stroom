@@ -85,6 +85,9 @@ public final class SplitterDryRun {
     private static final Pattern BLANK_LINE_RECORDS = Pattern.compile(BLANK_LINE_RECORD);
 
     private static final Pattern CEF = Pattern.compile(CEF_PATTERN);
+    // A section of a sectioned record: its marker line, then the text kept (empty when none).
+    private static final String SECTION_TEXT = "(?s)^[^\\n]*\\n?(.*)$";
+    private static final String SECTION_FIELD = "text";
     // White space between key=value pairs: any.
     private static final String WHITE_SPACE = "\\s";
     /// The variant of a header line giving the date of the lines after it.
@@ -663,6 +666,13 @@ public final class SplitterDryRun {
                 : grouped.records();
         // Each record's first line is what the format reads.
         final List<String> lines = LineFormats.firstLines(records);
+        if (SampleProfiler.KEYED_SECTIONS.equals(format)) {
+            // Each section kept whole under its marker's name, the marker line itself left out.
+            return new Inferred(SplitterSpec.builder("regex").pattern(SECTION_TEXT).names(List.of(SECTION_FIELD))
+                    .recordKey((String) info.get("record_key")).keyField((String) info.get("key_field"))
+                    .lineName((String) info.get("line_name")).leadField((String) info.get("lead_field"))
+                    .joinUnkeyed(true).build(), info);
+        }
         if (SampleProfiler.MIXED_LINES.equals(format)) {
             return new Inferred(mixedSpec(records, info.get("unrecognised") != null), info);
         }
@@ -975,7 +985,10 @@ public final class SplitterDryRun {
         if (spec.blankLineRecords()) {
             lines = blankLineRecords(sample);
         } else if (spec.recordKey() != null) {
-            lines = KeyedRecords.group(lines, spec);
+            // Blank lines kept where lines holding no key join a record (a section's blank lines are its own).
+            lines = KeyedRecords.group(spec.joinUnkeyed()
+                    ? ToolText.splitlines(sample)
+                    : lines, spec);
         } else if (spec.recordStart() != null && !delimited) {
             lines = groupLines(lines, spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {
@@ -1094,7 +1107,9 @@ public final class SplitterDryRun {
         if (spec.blankLineRecords()) {
             records = blankLineRecords(text);
         } else if (spec.recordKey() != null) {
-            records = KeyedRecords.group(ToolText.nonBlankLines(text), spec);
+            records = KeyedRecords.group(spec.joinUnkeyed()
+                    ? ToolText.splitlines(text)
+                    : ToolText.nonBlankLines(text), spec);
         } else if (spec.recordStart() != null && !delimited) {
             records = groupLines(ToolText.nonBlankLines(text), spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {

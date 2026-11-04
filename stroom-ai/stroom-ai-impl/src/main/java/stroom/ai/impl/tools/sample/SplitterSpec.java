@@ -86,6 +86,9 @@ import java.util.regex.PatternSyntaxException;
 ///                        (auditd's `type=SYSCALL`); the rest of the line is read by the spec, its fields nested under
 ///                        that name (`SYSCALL/exe`). Or null, the lines' fields all the record's.
 /// @param leadField       With line_name: the field the record's first line's name is written in (the kind of event).
+/// @param joinUnkeyed     With record_key: a line holding no key joins the record before it (the key only on marker
+///                        lines, as ModSecurity's `--5f005215-B--`); with line_name, each named line and the
+///                        unnamed lines after it are a section, read by the spec as one text under its name.
 /// @param skipLines       With record_key: a regex a line matches at its start to be passed over, ending the record
 ///                        before it (ausearch's `----` separators and `time->...` lines); or null.
 /// @param singleQuotes    key_value: values may be in single quotes too (`a='two words'`), read without them; a
@@ -123,6 +126,7 @@ public record SplitterSpec(String kind,
                            String keyField,
                            String lineName,
                            String leadField,
+                           boolean joinUnkeyed,
                            String skipLines,
                            boolean singleQuotes) {
 
@@ -175,6 +179,9 @@ public record SplitterSpec(String kind,
         }
         if (skipLines != null && skipLines.isEmpty()) {
             skipLines = null;
+        }
+        if (joinUnkeyed && recordKey == null) {
+            throw new IllegalArgumentException("join_unkeyed joins lines to a keyed record: give record_key with it");
         }
         if (skipLines != null && recordKey == null) {
             throw new IllegalArgumentException("skip_lines passes over the lines between keyed records: give "
@@ -492,6 +499,7 @@ public record SplitterSpec(String kind,
         builder.keyField = (String) json.get("key_field");
         builder.lineName = (String) json.get("line_name");
         builder.leadField = (String) json.get("lead_field");
+        builder.joinUnkeyed = Boolean.TRUE.equals(json.get("join_unkeyed"));
         builder.skipLines = (String) json.get("skip_lines");
         builder.singleQuotes = Boolean.TRUE.equals(json.get("single_quotes"));
         return builder.build();
@@ -499,7 +507,8 @@ public record SplitterSpec(String kind,
 
     /// @return The spec each line of a keyed record is read with: this one without record_key and line_name.
     public SplitterSpec lineSpec() {
-        return toBuilder().recordKey(null).lineName(null).keyField(null).leadField(null).skipLines(null).build();
+        return toBuilder().recordKey(null).lineName(null).keyField(null).leadField(null).joinUnkeyed(false)
+                .skipLines(null).build();
     }
 
     /// @return A builder holding this spec's values.
@@ -536,6 +545,7 @@ public record SplitterSpec(String kind,
         builder.keyField = keyField;
         builder.lineName = lineName;
         builder.leadField = leadField;
+        builder.joinUnkeyed = joinUnkeyed;
         builder.skipLines = skipLines;
         builder.singleQuotes = singleQuotes;
         return builder;
@@ -584,6 +594,7 @@ public record SplitterSpec(String kind,
         putIf(map, "key_field", keyField, !RECORD_KEY.equals(keyField));
         putIf(map, "line_name", lineName, lineName != null);
         putIf(map, "lead_field", leadField, !LEAD.equals(leadField));
+        putIf(map, "join_unkeyed", joinUnkeyed, joinUnkeyed);
         putIf(map, "skip_lines", skipLines, skipLines != null);
         putIf(map, "single_quotes", singleQuotes, singleQuotes);
         return map;
@@ -635,6 +646,7 @@ public record SplitterSpec(String kind,
         private String keyField = RECORD_KEY;
         private String lineName;
         private String leadField = LEAD;
+        private boolean joinUnkeyed;
         private String skipLines;
         private boolean singleQuotes;
 
@@ -855,6 +867,11 @@ public record SplitterSpec(String kind,
             return this;
         }
 
+        public Builder joinUnkeyed(final boolean joinUnkeyed) {
+            this.joinUnkeyed = joinUnkeyed;
+            return this;
+        }
+
         public Builder skipLines(final String skipLines) {
             this.skipLines = skipLines;
             return this;
@@ -870,7 +887,7 @@ public record SplitterSpec(String kind,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
                     variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
-                    skipLines, singleQuotes);
+                    joinUnkeyed, skipLines, singleQuotes);
         }
     }
 }

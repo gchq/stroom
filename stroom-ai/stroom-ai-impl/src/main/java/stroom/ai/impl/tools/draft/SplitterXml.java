@@ -229,9 +229,16 @@ public final class SplitterXml {
     private static String keyedLinesXml(final SplitterSpec spec, final String indent, final boolean ids) {
         final SplitterSpec lineSpec = spec.lineSpec();
         final StringBuilder out = new StringBuilder();
+        if (spec.joinUnkeyed()) {
+            // A blank line joined to the record (before any section takes it): passed over.
+            out.append(indent).append("<regex pattern=\"").append(attr("^[^\\S\\n]*\\n")).append("\" />\n");
+        }
         if (spec.lineName() != null) {
+            // A named line, or with join_unkeyed a section: a named line and the unnamed lines after it.
             out.append(indent).append("<regex").append(id(ids, "namedLine")).append(" pattern=\"")
-                    .append(attr(KeyedRecords.namedLineRegex(spec))).append("\">\n")
+                    .append(attr(spec.joinUnkeyed()
+                            ? KeyedRecords.sectionRegex(spec)
+                            : KeyedRecords.namedLineRegex(spec))).append("\">\n")
                     .append(indent).append("  <data name=\"$1\">\n")
                     .append(indent).append("    <group value=\"$2\">\n")
                     .append(recordXml(lineSpec, indent + "      ", false))

@@ -33,6 +33,7 @@ read the client's files, and refuses a path with that instruction.
 | Keep a record the spec doesn't match | add `"catch_all": true` (not delimited): it is kept whole as the field `unparsed` |
 | Lines in several formats (syslog, key=value, timestamped text) | `{"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"}, {"kind": "key_value", "variant": "key_value"}, {"kind": "regex", "variant": "text", "pattern": "^(\\S+ \\S+) (.*)$", "names": ["time", "message"]}], "catch_all": true}` |
 | Lines tied into records by a key (auditd's `msg=audit(...)`) | `{"kind": "key_value", "delimiter": " ", "quote": "\"", "single_quotes": true, "record_key": "(?<!\\S)msg=(\"[^\"]*\"\|[^\\s\"]+)", "key_field": "msg", "line_name": "(?:[^\\s=]+=\\S*\\s+)*?type=\"?([A-Za-z_][\\w.-]*)\"?(?=\\s\|$)", "lead_field": "type"}` (add `"skip_lines": "\\s*[-=*#~_]{3,}[ \\t]*(?=\\n\|$)\|\\s*time->"` for ausearch's output) |
+| Sections between marker lines carrying the key (ModSecurity's `--5f005215-B--`) | `{"kind": "regex", "pattern": "(?s)^[^\\n]*\\n?(.*)$", "names": ["text"], "record_key": "(?<![^\\n])\\-\\-(\\w+)\\-\\w+\\-\\-[ \\t]*(?=\\n\|$)", "line_name": "\\-\\-\\w+\\-(\\w+)\\-\\-[ \\t]*(?=\\n\|$)", "lead_field": "first_section", "join_unkeyed": true}` |
 | Values in single quotes too, some of them pairs | add `"single_quotes": true` (key_value): `a='two words'` read without its quotes; `msg='op=login res=success'` read as its pairs |
 | Entries whose stack traces are kept apart | add `"record_start": <profile's record_start>, "continuation": true`: each record's first line is read by the spec, the lines after it kept whole as `continuation` |
 | Syslog, then delimited columns (Palo Alto) | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "delimited", "delimiter": ",", "header": ["future_use1", "receive_time", ...]}}` |
@@ -184,6 +185,15 @@ key and each line's copy of it out of the fields.
 Lines of two events written interleaved (auditd under load) are not put back together: Stroom's translation reads
 records in chunks, so no tool can join them safely. The profile warns (`interleaved`), and each such event is read
 as several records; tell the user. `ausearch -i` output (interpreted) is not key=value: ask for raw lines.
+
+Some sources put the key only on marker lines, the lines between them part of the record: ModSecurity's serial audit
+log writes each transaction as sections `--5f005215-A--`, `--5f005215-B--` ... `--5f005215-Z--`. `profile_sample`
+says `keyed sections` when lines with no white space, word tokens between punctuation, hold one token over runs
+(the key) and another that differs within a run (the section's name); any marker style of that shape works
+(`[[job-8f2c:extract]]`). The spec adds `join_unkeyed: true`: a line holding no key (a blank one too) joins the
+record before it, and with `line_name` each marker and the lines after it are a section, read by the spec as one text
+under its name (`B/text`, kept whole; the draft reads `Key: value` lines in it as fields). The time is usually inside
+a section: map it with an extract on that section's text.
 
 Characters XML doesn't allow (control characters other than tab and line ends) are taken out of the text by Stroom's
 parser before the Data Splitter reads it, and by the dry run: `profile_sample` and `build_data_splitter` name them
