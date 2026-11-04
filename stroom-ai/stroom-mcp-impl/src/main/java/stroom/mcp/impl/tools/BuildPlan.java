@@ -683,8 +683,10 @@ public class BuildPlan {
         done.put("reference_documented", !referencePipelines.isEmpty() && allNamed(referencePipelines, documented));
         done.put("promoted", false);
 
+        final Set<String> declined = memory.skippedStages(build);
         final List<Map<String, Object>> steps = steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
-                survey != null, existing, !copies.isEmpty() && !ownFeed, stage1, stage2, cefBuild));
+                survey != null, existing, !copies.isEmpty() && !ownFeed, stage1 && !declined.contains(STAGE_EVENTS),
+                stage2 && !declined.contains(STAGE_INDEXING), cefBuild && !declined.contains(STAGE_OUTPUT)));
         final Map<String, Object> next = steps.stream()
                 .filter(step -> "to do".equals(step.get("state")))
                 .findFirst()
@@ -996,7 +998,8 @@ public class BuildPlan {
                     + "find_pipeline_templates stage=discovery and create_indexing_pipeline from the discovery "
                     + "template (stroom://guide/indexing)");
             case "index" -> call("get_field_conventions", args(),
-                    "go straight on, without asking first: it finds the backend and asks the user, in a form, how "
+                    "unless the user said not to index now (then build_status skip_stage=indexing and go on), go "
+                    + "straight on, without asking first: it finds the backend and asks the user, in a form, how "
                     + "the index's fields are named; then draft_index_mapping as its reply says (index_name, "
                     + "events_stream_ids=" + pythonText(events) + "), and create_index_doc with plan= once the user "
                     + "confirms");
@@ -1351,6 +1354,35 @@ public class BuildPlan {
             skipped.addAll(stepsOf(STAGE_OUTPUT));
         }
         return skipped;
+    }
+
+    /// The stages the user may say a build is not to do, by the name build_status takes.
+    static final Map<String, String> SKIPPABLE = Map.of("indexing", STAGE_INDEXING, "cef_output", STAGE_OUTPUT);
+
+    /// Remembers that the user said the build is not to do a stage: its steps are skipped and next goes on past
+    /// them.
+    ///
+    /// @param build The build.
+    /// @param stage A name [#SKIPPABLE] holds.
+    /// @throws ToolRefusal for another.
+    void skipStage(final String build, final String stage) {
+        final String planned = SKIPPABLE.get(stage);
+        if (planned == null) {
+            throw new ToolRefusal("skip_stage is one of " + ToolText.list(SKIPPABLE.keySet().stream().sorted()
+                    .toList()) + ", not '" + stage + "'");
+        }
+        memory.skipStage(build, planned);
+    }
+
+    /// @param build A build.
+    /// @return The stages the user said it is not to do, by the name build_status takes.
+    List<String> skippedByUser(final String build) {
+        final Set<String> declined = memory.skippedStages(build);
+        return SKIPPABLE.entrySet().stream()
+                .filter(entry -> declined.contains(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
     }
 
     private static Set<String> stepsOf(final String stage) {

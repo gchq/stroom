@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// The plan for a build on data already in Stroom: an existing feed's records, a production pipeline's new version
 /// or working copy. Seen in VS Code: `next` said create_feed and upload_sample whatever the build was, so the agent
@@ -169,6 +170,25 @@ class TestBuildPlanOnExistingData {
         final Map<String, Object> result = status();
         assertThat(next(result).get("step")).isEqualTo("index");
         assertThat(state(result, "indexed")).isEqualTo("to do");
+    }
+
+    @Test
+    void aStageTheUserSaidNotToDoIsSkipped() {
+        // Seen in testing (chat 144): told "no indexing at this stage", the plan's next still said to go straight on
+        // to indexing.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"));
+        facts.sources = List.of("ACME");
+        assertThat(state(status(), "index")).isEqualTo("to do");
+
+        plan.skipStage("b", "indexing");
+
+        final Map<String, Object> result = status();
+        for (final String step : List.of("index", "indexing_pipeline", "indexed", "index_documented")) {
+            assertThat(state(result, step)).as(step).isEqualTo("not needed");
+        }
+        assertThat(plan.skippedByUser("b")).containsExactly("indexing");
+        assertThatThrownBy(() -> plan.skipStage("b", "events")).isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("'cef_output', 'indexing'");
     }
 
     @Test
