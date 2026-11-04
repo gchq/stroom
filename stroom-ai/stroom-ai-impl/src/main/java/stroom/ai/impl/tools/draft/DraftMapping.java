@@ -73,6 +73,19 @@ public final class DraftMapping {
     /// and `variants` (each variant's time format, e.g. `HH:mm:ss.SSS`), for the user to say where the date comes
     /// from.
     public static final String DATELESS_TIMES = "dateless_times";
+
+    /// The draft's `time_zones` entry, in a fixed order (Map.of's order differs from one run to the next).
+    ///
+    /// @param examples  Some values of each time read with no zone, by field.
+    /// @param zoneNames The zones a field of zone names holds.
+    /// @return The entry.
+    static Map<String, Object> timeZones(final Map<String, List<String>> examples, final List<String> zoneNames) {
+        final Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("examples", examples);
+        entry.put("zone_names", zoneNames);
+        return entry;
+    }
+
     /// The draft's key for times with no zone or offset: `examples` (some values of each such field, by field) and
     /// `zone_names` (the zones a field of zone names holds), for the user to say the zone the source writes in.
     public static final String TIME_ZONES = "time_zones";
@@ -598,7 +611,7 @@ public final class DraftMapping {
             result.put("notes", notes);
             result.put("unmapped_fields", rest);
             if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
-                result.put(TIME_ZONES, Map.of("examples", timeExamples, "zone_names", List.copyOf(zoneNames)));
+                result.put(TIME_ZONES, timeZones(timeExamples, List.copyOf(zoneNames)));
             }
             result.put("fields_seen", names);
             return result;

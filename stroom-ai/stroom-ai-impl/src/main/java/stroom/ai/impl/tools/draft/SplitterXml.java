@@ -460,8 +460,8 @@ public final class SplitterXml {
                 if (spec.spacedValues()) {
                     return spacedPairsXml(spec, indent);
                 }
-                if (spec.singleQuotes()) {
-                    return singleQuotedPairsXml(spec, indent);
+                if (spec.singleQuotes() || spec.words()) {
+                    return anchoredPairsXml(spec, indent);
                 }
                 final StringBuilder out = new StringBuilder();
                 for (final String pattern : SplitterDryRun.kvPatterns(spec)) {
@@ -477,25 +477,36 @@ public final class SplitterXml {
         }
     }
 
-    // key=value pairs, values in single quotes too: at each place, a single-quoted value of pairs read as the
-    // record's own pairs, another single-quoted value without its quotes, else a pair. Each anchored (^): Stroom
-    // takes a sibling's match anywhere in the text (with an error), not only where it is tried.
-    private static String singleQuotedPairsXml(final SplitterSpec spec, final String indent) {
-        final List<String> quoted = SplitterDryRun.singleQuotedPatterns(spec);
+    // key=value pairs tried in turn at each place: with single_quotes, a single-quoted value of pairs read as the
+    // record's own pairs and another single-quoted value without its quotes; a pair; with words, a run of text that
+    // isn't pairs kept as `words`. Each anchored (^): Stroom takes a sibling's match anywhere in the text (with an
+    // error), not only where it is tried.
+    private static String anchoredPairsXml(final SplitterSpec spec, final String indent) {
         final String pair = "^" + SplitterDryRun.kvPatterns(spec).getFirst();
-        return indent + "<regex pattern=\"" + attr("^" + quoted.getFirst()) + "\">\n"
-               + indent + "  <group value=\"$2\">\n"
-               + indent + "    <regex pattern=\"" + attr(pair) + "\">\n"
-               + indent + "      <data name=\"$1\" value=\"$2\" />\n"
-               + indent + "    </regex>\n"
-               + indent + "  </group>\n"
-               + indent + "</regex>\n"
-               + indent + "<regex pattern=\"" + attr("^" + quoted.getLast()) + "\">\n"
-               + indent + "  <data name=\"$1\" value=\"$2\" />\n"
-               + indent + "</regex>\n"
-               + indent + "<regex pattern=\"" + attr(pair) + "\">\n"
-               + indent + "  <data name=\"$1\" value=\"$2\" />\n"
-               + indent + "</regex>\n";
+        final StringBuilder out = new StringBuilder();
+        if (spec.singleQuotes()) {
+            final List<String> quoted = SplitterDryRun.singleQuotedPatterns(spec);
+            out.append(indent).append("<regex pattern=\"").append(attr("^" + quoted.getFirst())).append("\">\n")
+                    .append(indent).append("  <group value=\"$2\">\n")
+                    .append(indent).append("    <regex pattern=\"").append(attr(pair)).append("\">\n")
+                    .append(indent).append("      <data name=\"$1\" value=\"$2\" />\n")
+                    .append(indent).append("    </regex>\n")
+                    .append(indent).append("  </group>\n")
+                    .append(indent).append("</regex>\n")
+                    .append(indent).append("<regex pattern=\"").append(attr("^" + quoted.getLast())).append("\">\n")
+                    .append(indent).append("  <data name=\"$1\" value=\"$2\" />\n")
+                    .append(indent).append("</regex>\n");
+        }
+        out.append(indent).append("<regex pattern=\"").append(attr(pair)).append("\">\n")
+                .append(indent).append("  <data name=\"$1\" value=\"$2\" />\n")
+                .append(indent).append("</regex>\n");
+        if (spec.words()) {
+            out.append(indent).append("<regex pattern=\"").append(attr("^" + SplitterDryRun.wordsPattern(spec)))
+                    .append("\">\n")
+                    .append(indent).append("  <data name=\"").append(SplitterSpec.WORDS).append("\" value=\"$1\" />\n")
+                    .append(indent).append("</regex>\n");
+        }
+        return out.toString();
     }
 
     // key=value pairs whose values hold the delimiter unquoted: read from the end, where each value comes before

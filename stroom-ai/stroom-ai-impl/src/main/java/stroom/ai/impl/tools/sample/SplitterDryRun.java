@@ -88,6 +88,9 @@ public final class SplitterDryRun {
     // A section of a sectioned record: its marker line, then the text kept (empty when none).
     private static final String SECTION_TEXT = "(?s)^[^\\n]*\\n?(.*)$";
     private static final String SECTION_FIELD = "text";
+    // Words before a record's first pair (group 1), and the rest from that pair (group 2); the most taken as fields.
+    private static final Pattern PREFIX_WORDS = Pattern.compile("((?:[^\\s=\"]+\\s+)+?)([^\\s=\"]+=.*)");
+    private static final int MOST_PREFIX_WORDS = 4;
     // White space between key=value pairs: any.
     private static final String WHITE_SPACE = "\\s";
     /// The variant of a header line giving the date of the lines after it.
@@ -182,6 +185,23 @@ public final class SplitterDryRun {
         final String s = ToolText.escape(spec.pairSeparator());
         final String key = delimiter(spec) + "*([^" + s + delimiterIn(spec) + "'\"]+)" + s + "'";
         return List.of(key + "([^']*" + s + "[^']*)'", key + "([^']*)'");
+    }
+
+    /// The regex for a run of words that aren't pairs (words): tokens holding neither the pair separator, the
+    /// delimiter nor the quote, up to the next pair or the end. Group 1 is the run. Tried after the pair's own.
+    ///
+    /// @param spec A key_value spec.
+    /// @return The regex.
+    public static String wordsPattern(final SplitterSpec spec) {
+        final String d = delimiterIn(spec);
+        final String s = ToolText.escape(spec.pairSeparator());
+        final String q = spec.quote() == null
+                ? ""
+                : ToolText.escape(spec.quote());
+        final String token = "[^" + s + d + q + "]+";
+        final String between = delimiter(spec) + "+";
+        return delimiter(spec) + "*(" + token + "(?:" + between + token + ")*?)(?=" + between + "[^" + s + d + "]+"
+               + s + "|" + delimiter(spec) + "*$)";
     }
 
     /// The regex for one key=value pair whose value may hold the delimiter unquoted, matched along the record
@@ -479,6 +499,9 @@ public final class SplitterDryRun {
         final List<Pattern> quoted = spec.singleQuotes()
                 ? singleQuotedPatterns(spec).stream().map(Pattern::compile).toList()
                 : List.of();
+        final Pattern words = spec.words()
+                ? Pattern.compile(wordsPattern(spec))
+                : null;
         final Map<String, String> fields = new LinkedHashMap<>();
         int at = 0;
         while (at < text.length()) {
@@ -505,6 +528,15 @@ public final class SplitterDryRun {
                 if (m != null && m.end() > at) {
                     found = m;
                     break;
+                }
+            }
+            if (found == null && words != null) {
+                final Matcher run = ToolText.matchFrom(words, new DeadlineCharSequence(text), at);
+                if (run != null && run.end() > at) {
+                    // Text that isn't pairs, kept: the first run, as a field reads the first of several.
+                    fields.putIfAbsent(SplitterSpec.WORDS, ToolText.strip(run.group(1)));
+                    at = run.end();
+                    continue;
                 }
             }
             if (found == null) {
@@ -587,9 +619,9 @@ public final class SplitterDryRun {
         }
         if (!bodies.isEmpty() && pairs >= 0.8 * bodies.size()) {
             final boolean quoted = messages.stream().anyMatch(message -> message.contains("=\""));
-            return SplitterSpec.builder("key_value").delimiter(" ").quote(quoted
+            return withWords(SplitterSpec.builder("key_value").delimiter(" ").quote(quoted
                     ? "\""
-                    : null).spacedValues(!quoted && spacedValues(bodies, " ", "=")).build();
+                    : null).spacedValues(!quoted && spacedValues(bodies, " ", "=")).build(), bodies);
         }
         for (final String delimiter : List.of(",", "|", "\t", ";")) {
             final String quote = bodies.stream().anyMatch(body -> body.contains("\""))
@@ -609,6 +641,68 @@ public final class SplitterDryRun {
             }
         }
         return null;
+    }
+
+    /// A key=value spec that keeps the text between its pairs (words) when some records hold text that isn't pairs
+    /// (a prefix, bare flags, verbs) and are read whole with it; else the spec as it is.
+    ///
+    /// @param spec    A key_value spec.
+    /// @param records The records.
+    /// @return The spec, with words where they read records it can't.
+    static SplitterSpec withWords(final SplitterSpec spec, final List<String> records) {
+        if (spec.spacedValues() || spec.words()) {
+            return spec;
+        }
+        final SplitterSpec prefixed = withPrefix(spec, records);
+        if (prefixed != null) {
+            return prefixed;
+        }
+        final SplitterSpec worded = spec.toBuilder().words(true).build();
+        final boolean needed = records.stream().limit(200)
+                .anyMatch(record -> applyKeyValue(spec, record).isEmpty() && !applyKeyValue(worded, record).isEmpty());
+        return needed
+                ? worded
+                : spec;
+    }
+
+    // Records of the same few words before their pairs and nothing else (08's `2026-09-28T15:00:00Z fw01
+    // action=allow ...`): the words fields of their own (a time named time, others prefix1, prefix2...), the pairs
+    // read by the spec as the body; null unless every record is that.
+    private static SplitterSpec withPrefix(final SplitterSpec spec, final List<String> records) {
+        if (spec.recordKey() != null) {
+            // Lines tied into records: their spec reads each line, not a prefix.
+            return null;
+        }
+        final List<String> sampled = records.stream().filter(record -> !ToolText.isBlank(record)).limit(200).toList();
+        int count = -1;
+        final List<List<String>> prefixes = new ArrayList<>();
+        for (final String record : sampled) {
+            final Matcher prefix = PREFIX_WORDS.matcher(ToolText.strip(record));
+            if (!prefix.lookingAt() || applyKeyValue(spec, prefix.group(2)).isEmpty()) {
+                return null;
+            }
+            final List<String> words = List.of(ToolText.strip(prefix.group(1)).split("\\s+"));
+            if (count >= 0 && words.size() != count) {
+                return null;
+            }
+            count = words.size();
+            prefixes.add(words);
+        }
+        if (count < 1 || count > MOST_PREFIX_WORDS) {
+            return null;
+        }
+        final List<String> names = new ArrayList<>();
+        for (int n = 0; n < count; n++) {
+            final int at = n;
+            final boolean times = prefixes.stream()
+                    .allMatch(words -> TimePatterns.inferTimePattern(words.get(at)) != null);
+            names.add(times && !names.contains("time")
+                    ? "time"
+                    : "prefix" + (n + 1));
+        }
+        names.add("message");
+        return SplitterSpec.builder("regex").pattern("^" + "(\\S+)\\s+".repeat(count) + "(.*)$").names(names)
+                .body(spec).bodyField("message").build();
     }
 
     /// Whether key=value text has values holding the delimiter unquoted (`zones=Zone 1, Zone 2 user=An end user`):
@@ -722,7 +816,7 @@ public final class SplitterDryRun {
             // Values in single quotes as well (auditd's msg='op=login ... res=success'): read without them.
             builder.singleQuotes(lines.subList(0, Math.min(50, lines.size())).stream()
                     .anyMatch(line -> line.contains("='")));
-            return new Inferred(builder.build(), info);
+            return new Inferred(withWords(builder.build(), lines), info);
         }
         if (SampleProfiler.CEF_FORMAT.equals(format)) {
             return new Inferred(cefSpec(lines), info);

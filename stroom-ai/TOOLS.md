@@ -3741,7 +3741,10 @@ separator lines; the profile suggests them for key=value lines and counts keys t
 of, not joined); the draft takes the time from an epoch in the key and leaves the key out. `StroomInput` reads a
 sample as Stroom's parser does (characters XML forbids taken out) and names what it took. With `join_unkeyed`,
 a line holding no key joins the record before it, and named markers start sections read whole (`keyed sections`:
-ModSecurity's serial audit log). Formats shortlist (formats-shortlist-generator.py, 2026-11-04), as inferred today:
+ModSecurity's serial audit log). Text around key=value pairs: `words` keeps each run of text that isn't pairs as the field `words`
+(`withWords` sets it where records fail without it and read with it); the same few words before every record's pairs
+are read as fields of their own by a regex with the pairs as its body (`withPrefix`). Formats shortlist
+(formats-shortlist-generator.py, 2026-11-04), as first inferred:
 Check Point Log Exporter reads as RFC 5424 with its pairs left whole in `structured` (no `:`/`;` pair reading);
 iptables, LEEF 1.0/2.0, OpenLDAP slapd and Cisco ISE infer syslog with a key=value body that Stroom refuses (text
 before the pairs, bare flags, LEEF's header, verbs between pairs, `, ` between pairs, keys holding spaces); Postfix
