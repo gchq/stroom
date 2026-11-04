@@ -166,7 +166,7 @@ class TestRecordSourceNotesTool {
     }
 
     @Test
-    void aCatalogueGuessedFromTheSampleIsRefusedAndNothingRecorded() {
+    void anEventWithAWrongActionElementIsLeftOutAndTheRestRecorded() {
         final ToolResult refused = call("{\"build\": \"fw\", \"source\": \"Firewall\", \"summary\": \"A "
                                         + "firewall.\", \"events\": [{\"event\": \"TRAFFIC-ALLOW\", "
                                         + "\"description\": \"allowed\", \"field\": \"event_type\", \"value\": "
@@ -175,13 +175,12 @@ class TestRecordSourceNotesTool {
                                         + "\"event_type\", \"value\": \"TRAFFIC\", \"event_detail\": "
                                         + "\"Network/Deny\"}]}");
 
-        assertThat(refused.isError()).isTrue();
-        assertThat(refused.text()).startsWith("Nothing recorded; the event catalogue can't be drafted from as it "
-                                              + "is: TRAFFIC-ALLOW: 'Allow' is not an EventDetail action element. "
-                                              + "A connection allowed or denied is Network/Permit or Network/Deny.")
-                .contains("TRAFFIC-ALLOW and TRAFFIC-DENY are both event_type=TRAFFIC")
-                .endsWith(". Correct the events and call again.");
-        assertThat(world.created).isEmpty();
+        // Seen in testing (chat 144): 10,500 characters of notes refused whole for three such events, then sent whole
+        // again. The rest is kept; the wrong one comes back to be sent again, corrected.
+        assertThat(refused.isError()).isFalse();
+        assertThat(refused.text()).contains("\"events\":1", "TRAFFIC-ALLOW: 'Allow' is not an EventDetail action "
+                                                              + "element", "were left out");
+        assertThat(world.created).isNotEmpty();
     }
 
     @Test
@@ -212,7 +211,7 @@ class TestRecordSourceNotesTool {
                                         + "\"event_detail\": \"Allow\"}]}");
 
         assertThat(refused.text()).contains("A: 'Allow' is not an EventDetail action element");
-        Mockito.verify(heldSchemas).eventSchema("3.5.2");
+        Mockito.verify(heldSchemas, Mockito.atLeastOnce()).eventSchema("3.5.2");
         Mockito.verify(heldSchemas, Mockito.never()).eventSchema("4.1.0");
     }
 

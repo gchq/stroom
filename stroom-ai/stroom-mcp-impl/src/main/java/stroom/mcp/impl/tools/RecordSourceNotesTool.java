@@ -173,9 +173,24 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final String source = required(call, SOURCE_ARG);
         final String summary = NullSafe.string(rawArg(call, SUMMARY_ARG));
         final List<Map<String, Object>> givenFields = notes(call, FIELDS_ARG, FIELD_KEYS, FIELD_REQUIRED);
-        final List<Map<String, Object>> givenEvents = notes(call, EVENTS_ARG, EVENT_KEYS, EVENT_REQUIRED);
+        final List<Map<String, Object>> allEvents = notes(call, EVENTS_ARG, EVENT_KEYS, EVENT_REQUIRED);
+        // An event whose action element the schema doesn't have is left out, to be sent again corrected; the rest is
+        // recorded (seen: 10,500 characters of notes refused whole for three such events, then sent whole again).
+        final Function<String, String> detailCheck = detailCheck(context, build);
+        final List<Map<String, Object>> givenEvents = new ArrayList<>();
+        final List<String> eventProblems = new ArrayList<>();
+        for (final Map<String, Object> event : allEvents) {
+            final List<String> problems = SourceNotes.catalogueProblems(List.of(event), detailCheck);
+            if (problems.isEmpty()) {
+                givenEvents.add(event);
+            } else {
+                eventProblems.addAll(problems);
+            }
+        }
         if (!givenEvents.isEmpty()) {
-            final List<String> problems = SourceNotes.catalogueProblems(givenEvents, detailCheck(context, build));
+            // Two events a record can't tell apart are the catalogue's as a whole: nothing recorded (each event's
+            // action element already checked).
+            final List<String> problems = SourceNotes.catalogueProblems(givenEvents, null);
             if (!problems.isEmpty()) {
                 throw new ToolRefusal("Nothing recorded; the event catalogue can't be drafted from as it is: "
                                       + String.join("; ", problems) + ". Correct the events and call again.");
@@ -216,7 +231,14 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (!pathProblems.isEmpty()) {
             result.put("path_problems", pathProblems);
         }
-        result.put("hint", (pathProblems.isEmpty()
+        if (!eventProblems.isEmpty()) {
+            result.put("event_problems", eventProblems);
+        }
+        result.put("hint", (eventProblems.isEmpty()
+                ? ""
+                : eventProblems.size() + " event(s) were left out (event_problems says why): call again with just "
+                  + "those events, corrected (build, source and summary as before); the rest is kept. ")
+                           + (pathProblems.isEmpty()
                 ? ""
                 : pathProblems.size() + " event_logging_path(s) aren't in the event-logging schema and were left "
                   + "out (path_problems says what is allowed where each stops): call again with just those fields "
