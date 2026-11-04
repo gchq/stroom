@@ -85,6 +85,12 @@ public final class SplitterDryRun {
     private static final Pattern BLANK_LINE_RECORDS = Pattern.compile(BLANK_LINE_RECORD);
 
     private static final Pattern CEF = Pattern.compile(CEF_PATTERN);
+    /// The variant of a header line giving the date of the lines after it.
+    public static final String HEADER_VARIANT = "header";
+    /// The field its date is written in.
+    public static final String HEADER_DATE = "date";
+    /// The field the header's date is written in on each record after it.
+    public static final String CARRIED_DATE = "header_date";
     // The most parts a stream's timestamped text is read by, one per shape of its time.
     private static final int MAX_TEXT_PARTS = 6;
     private static final Pattern CEF_PAIR_PATTERN = Pattern.compile(CEF_PAIR);
@@ -358,12 +364,15 @@ public final class SplitterDryRun {
             // Stroom trims a data element's value).
             fields = Map.of(SplitterSpec.UNPARSED, ToolText.strip(first));
         }
-        if (fields == null || newline < 0 || newline == text.length() - 1) {
-            return fields;
+        if (fields == null) {
+            return null;
         }
         final Map<String, String> out = new LinkedHashMap<>(fields);
-        // Trimmed as Stroom trims a data element's value (seen: a cut stack trace's first frame without its tab).
-        out.put(SplitterSpec.CONTINUATION, ToolText.strip(text.substring(newline + 1)));
+        // Trimmed as Stroom trims a data element's value (seen: a cut stack trace's first frame without its tab); a
+        // record of one line has an empty one, as the converter's optional group writes it.
+        out.put(SplitterSpec.CONTINUATION, newline < 0
+                ? ""
+                : ToolText.strip(text.substring(newline + 1)));
         return out;
     }
 
@@ -711,33 +720,40 @@ public final class SplitterDryRun {
     // syslog before key=value, timestamped text last), each read as the format's own spec reads it; catch_all where
     // some records are in none of them.
     private static SplitterSpec mixedSpec(final List<String> records, final boolean unrecognised) {
-        final Map<String, List<String>> byFormat = new LinkedHashMap<>();
-        for (final String format : List.of(SampleProfiler.CEF_FORMAT, SampleProfiler.SYSLOG_5424_FORMAT,
-                SampleProfiler.SYSLOG_3164_FORMAT, SampleProfiler.KEY_VALUE_FORMAT, LineFormats.TIMESTAMPED_TEXT)) {
-            byFormat.put(format, new ArrayList<>());
-        }
-        for (final String first : LineFormats.firstLines(records)) {
-            final String format = LineFormats.formatOf(first);
-            if (format != null) {
-                byFormat.get(format).add(first);
-            }
-        }
+        final LineFormats.Classified classified = LineFormats.classify(records);
         final List<SplitterSpec> parts = new ArrayList<>();
         // Every format the records hold has its part, those under the share that made the stream mixed too (seen: a
-        // twentieth of a stream in CEF, kept unparsed).
-        byFormat.forEach((format, lines) -> {
-            if (!lines.isEmpty()) {
-                if (LineFormats.TIMESTAMPED_TEXT.equals(format)) {
-                    parts.addAll(textParts(lines));
-                } else {
-                    parts.add(partFor(format, lines));
-                }
+        // twentieth of a stream in CEF, kept unparsed). A date header's part comes last, as it reads any line holding
+        // a date.
+        classified.byFormat().forEach((format, held) -> {
+            final List<String> lines = LineFormats.firstLines(held);
+            if (LineFormats.TIMESTAMPED_TEXT.equals(format)) {
+                parts.addAll(textParts(lines));
+            } else if (LineFormats.DATE_HEADER.equals(format)) {
+                parts.add(headerPart(lines));
+            } else {
+                parts.add(partFor(format, lines));
             }
         });
         // catch_all keeps what no part reads: records in no format, and a time of a shape past the parts'.
         return SplitterSpec.builder(SplitterSpec.ALTERNATIVES).parts(parts).catchAll(unrecognised
-                                                                                     || textShapesLeft(byFormat.get(
-                LineFormats.TIMESTAMPED_TEXT))).build();
+                || !classified.unrecognised().isEmpty() || textShapesLeft(LineFormats.firstLines(classified.byFormat()
+                .getOrDefault(LineFormats.TIMESTAMPED_TEXT, List.of())))).build();
+    }
+
+    // A header line giving the date of the lines after it: the date it holds, of the layout most of them use, as the
+    // field date; the rest of the line passed over.
+    private static SplitterSpec headerPart(final List<String> lines) {
+        final Map<String, Integer> dates = new LinkedHashMap<>();
+        lines.forEach(line -> dates.merge(Objects.requireNonNullElse(LineFormats.dateIn(line), ""), 1,
+                Integer::sum));
+        final String date = dates.entrySet().stream()
+                .filter(entry -> !entry.getKey().isEmpty())
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(LineFormats.DATES.getFirst());
+        return SplitterSpec.builder("regex").variant(HEADER_VARIANT).pattern("^.*?(" + date + ").*$")
+                .names(List.of(HEADER_DATE)).carry(CARRIED_DATE).build();
     }
 
     // The part that reads lines of one format, named by it.
@@ -912,11 +928,21 @@ public final class SplitterDryRun {
             }
             lines = lines.subList(1, lines.size());
         }
-        lines = spread(lines, maxRecords);
+        // A part's carried field is the latest value before each record, so every record is read in order first.
+        final List<Map<String, String>> carriedAt = carriedBefore(spec, lines, heading);
+        final List<Integer> positions = new ArrayList<>();
+        for (int n = 0; n < lines.size(); n++) {
+            positions.add(n);
+        }
         final List<Map<String, String>> records = new ArrayList<>();
         final List<String> unmatched = new ArrayList<>();
-        for (final String line : lines) {
-            final Map<String, String> fields = applyRecord(spec, line, heading);
+        for (final int position : spread(positions, maxRecords)) {
+            final String line = lines.get(position);
+            Map<String, String> fields = applyRecord(spec, line, heading);
+            if (fields != null && !fields.isEmpty() && carriedAt != null && carriedAt.get(position) != null) {
+                fields = new LinkedHashMap<>(fields);
+                fields.putAll(carriedAt.get(position));
+            }
             if (fields != null && !fields.isEmpty()) {
                 records.add(fields);
             } else if (spec.catchAll() && !spec.continuation() && !claimed(spec, line)) {
@@ -927,6 +953,39 @@ public final class SplitterDryRun {
             }
         }
         return new DryRun(records, unmatched, fieldNames(records), heading);
+    }
+
+    // For an alternatives spec with a part carrying a field (a header's date), the carried values each record of the
+    // other parts is written with: the latest the carrying part read before it, as the converter's var holds it.
+    // Records before the first carrying record get none. By position (null where none); null for a spec carrying
+    // nothing.
+    private static List<Map<String, String>> carriedBefore(final SplitterSpec spec,
+                                                           final List<String> lines,
+                                                           final List<String> heading) {
+        if (!SplitterSpec.ALTERNATIVES.equals(spec.kind())
+            || spec.parts().stream().noneMatch(part -> part.carry() != null)) {
+            return null;
+        }
+        final Map<String, SplitterSpec> byVariant = new LinkedHashMap<>();
+        spec.parts().forEach(part -> byVariant.put(part.variant(), part));
+        final List<Map<String, String>> out = new ArrayList<>();
+        final Map<String, String> carried = new LinkedHashMap<>();
+        for (final String line : lines) {
+            final Map<String, String> fields = applyRecord(spec, line, heading);
+            final SplitterSpec part = fields == null
+                    ? null
+                    : byVariant.get(fields.get(spec.variantField()));
+            if (part != null && part.carry() != null) {
+                part.names().stream().filter(name -> !name.isEmpty()).findFirst()
+                        .ifPresent(name -> carried.put(part.carry(), ToolText.strip(fields.getOrDefault(name, ""))));
+                out.add(null);
+            } else {
+                out.add(fields != null && !carried.isEmpty()
+                        ? new LinkedHashMap<>(carried)
+                        : null);
+            }
+        }
+        return out;
     }
 
     // As many items as are wanted, spread over them, when there are more.

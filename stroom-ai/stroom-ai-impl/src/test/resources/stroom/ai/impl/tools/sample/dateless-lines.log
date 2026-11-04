@@ -1,0 +1,218 @@
+=== Log opened 2026-10-11 ===
+23:50:09.000 INFO [worker-0] user=alice request 0 done
+23:50:27.007 ERROR [worker-1] user=bob request 1 failed
+java.lang.IllegalStateException: request 1 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:50:45.014 INFO [worker-2] user=bob request 2 done
+23:51:04.021 ERROR [worker-3] user=carol request 3 failed
+java.lang.IllegalStateException: request 3 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:51:14.028 INFO [worker-4] user=alice request 4 done
+23:51:28.035 INFO [worker-5] user=carol request 5 done
+23:51:34.042 WARN [worker-0] user=alice request 6 done
+23:51:54.049 ERROR [worker-1] user=bob request 7 failed
+java.lang.IllegalStateException: request 7 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:52:14.056 INFO [worker-2] user=zoë request 8 done
+23:52:22.063 WARN [worker-3] user=carol request 9 done
+23:52:40.070 INFO [worker-4] user=zoë request 10 done
+23:52:46.077 WARN [worker-5] user=zoë request 11 done
+23:53:04.084 ERROR [worker-0] user=carol request 12 failed
+java.lang.IllegalStateException: request 12 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:53:13.091 INFO [worker-1] user=alice request 13 done
+23:53:25.098 INFO [worker-2] user=alice request 14 done
+23:53:36.105 ERROR [worker-3] user=alice request 15 failed
+java.lang.IllegalStateException: request 15 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:53:53.112 INFO [worker-4] user=zoë request 16 done
+23:53:59.119 INFO [worker-5] user=zoë request 17 done
+23:54:12.126 ERROR [worker-0] user=carol request 18 failed
+java.lang.IllegalStateException: request 18 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:54:27.133 ERROR [worker-1] user=carol request 19 failed
+java.lang.IllegalStateException: request 19 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:54:44.140 INFO [worker-2] user=alice request 20 done
+23:54:55.147 INFO [worker-3] user=alice request 21 done
+23:55:13.154 INFO [worker-4] user=bob request 22 done
+23:55:22.161 INFO [worker-5] user=carol request 23 done
+23:55:41.168 INFO [worker-0] user=bob request 24 done
+23:55:59.175 INFO [worker-1] user=alice request 25 done
+23:56:06.182 INFO [worker-2] user=carol request 26 done
+23:56:11.189 INFO [worker-3] user=zoë request 27 done
+23:56:16.196 INFO [worker-4] user=zoë request 28 done
+23:56:34.203 ERROR [worker-5] user=carol request 29 failed
+java.lang.IllegalStateException: request 29 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:56:42.210 INFO [worker-0] user=zoë request 30 done
+23:56:59.217 ERROR [worker-1] user=alice request 31 failed
+java.lang.IllegalStateException: request 31 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:57:04.224 INFO [worker-2] user=carol request 32 done
+23:57:14.231 WARN [worker-3] user=carol request 33 done
+23:57:27.238 WARN [worker-4] user=carol request 34 done
+23:57:43.245 WARN [worker-5] user=zoë request 35 done
+23:58:00.252 INFO [worker-0] user=carol request 36 done
+23:58:16.259 INFO [worker-1] user=alice request 37 done
+23:58:22.266 ERROR [worker-2] user=bob request 38 failed
+java.lang.IllegalStateException: request 38 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:58:40.273 ERROR [worker-3] user=carol request 39 failed
+java.lang.IllegalStateException: request 39 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:58:59.280 ERROR [worker-4] user=zoë request 40 failed
+java.lang.IllegalStateException: request 40 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:59:14.287 INFO [worker-5] user=bob request 41 done
+23:59:30.294 ERROR [worker-0] user=carol request 42 failed
+java.lang.IllegalStateException: request 42 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+23:59:44.301 INFO [worker-1] user=alice request 43 done
+23:59:57.308 ERROR [worker-2] user=bob request 44 failed
+java.lang.IllegalStateException: request 44 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:00:12.315 ERROR [worker-3] user=bob request 45 failed
+java.lang.IllegalStateException: request 45 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:00:17.322 INFO [worker-4] user=zoë request 46 done
+00:00:28.329 INFO [worker-5] user=carol request 47 done
+00:00:34.336 WARN [worker-0] user=alice request 48 done
+00:00:53.343 INFO [worker-1] user=bob request 49 done
+00:01:08.350 INFO [worker-2] user=carol request 50 done
+00:01:21.357 INFO [worker-3] user=zoë request 51 done
+00:01:34.364 INFO [worker-4] user=zoë request 52 done
+00:01:53.371 INFO [worker-5] user=carol request 53 done
+00:02:02.378 INFO [worker-0] user=carol request 54 done
+00:02:21.385 INFO [worker-1] user=zoë request 55 done
+00:02:28.392 ERROR [worker-2] user=zoë request 56 failed
+java.lang.IllegalStateException: request 56 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:02:38.399 INFO [worker-3] user=bob request 57 done
+00:02:51.406 WARN [worker-4] user=zoë request 58 done
+00:03:10.413 INFO [worker-5] user=zoë request 59 done
+00:03:27.420 INFO [worker-0] user=carol request 60 done
+00:03:40.427 INFO [worker-1] user=bob request 61 done
+00:03:54.434 INFO [worker-2] user=bob request 62 done
+00:04:06.441 INFO [worker-3] user=bob request 63 done
+00:04:18.448 ERROR [worker-4] user=zoë request 64 failed
+java.lang.IllegalStateException: request 64 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:04:26.455 INFO [worker-5] user=carol request 65 done
+00:04:34.462 INFO [worker-0] user=carol request 66 done
+00:04:43.469 WARN [worker-1] user=carol request 67 done
+00:04:51.476 ERROR [worker-2] user=alice request 68 failed
+java.lang.IllegalStateException: request 68 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:05:01.483 INFO [worker-3] user=alice request 69 done
+00:05:07.490 INFO [worker-4] user=carol request 70 done
+00:05:14.497 WARN [worker-5] user=alice request 71 done
+00:05:34.504 INFO [worker-0] user=zoë request 72 done
+00:05:49.511 ERROR [worker-1] user=bob request 73 failed
+java.lang.IllegalStateException: request 73 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:05:58.518 ERROR [worker-2] user=bob request 74 failed
+java.lang.IllegalStateException: request 74 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:06:16.525 INFO [worker-3] user=carol request 75 done
+00:06:34.532 INFO [worker-4] user=zoë request 76 done
+00:06:52.539 INFO [worker-5] user=alice request 77 done
+00:07:06.546 INFO [worker-0] user=alice request 78 done
+00:07:23.553 WARN [worker-1] user=bob request 79 done
+--- Day changed to 2026-10-12 ---
+00:07:32.560 INFO [worker-2] user=bob request 80 done
+00:07:51.567 WARN [worker-3] user=bob request 81 done
+00:07:58.574 INFO [worker-4] user=carol request 82 done
+00:08:13.581 ERROR [worker-5] user=alice request 83 failed
+java.lang.IllegalStateException: request 83 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:08:25.588 INFO [worker-0] user=bob request 84 done
+00:08:32.595 INFO [worker-1] user=carol request 85 done
+00:08:52.602 INFO [worker-2] user=zoë request 86 done
+00:08:57.609 ERROR [worker-3] user=bob request 87 failed
+java.lang.IllegalStateException: request 87 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:09:14.616 INFO [worker-4] user=bob request 88 done
+00:09:25.623 WARN [worker-5] user=bob request 89 done
+00:09:31.630 INFO [worker-0] user=alice request 90 done
+00:09:48.637 INFO [worker-1] user=carol request 91 done
+00:09:53.644 ERROR [worker-2] user=alice request 92 failed
+java.lang.IllegalStateException: request 92 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:10:04.651 WARN [worker-3] user=bob request 93 done
+00:10:21.658 WARN [worker-4] user=carol request 94 done
+00:10:41.665 ERROR [worker-5] user=bob request 95 failed
+java.lang.IllegalStateException: request 95 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:10:59.672 WARN [worker-0] user=bob request 96 done
+00:11:06.679 ERROR [worker-1] user=bob request 97 failed
+java.lang.IllegalStateException: request 97 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:11:14.686 ERROR [worker-2] user=carol request 98 failed
+java.lang.IllegalStateException: request 98 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:11:22.693 WARN [worker-3] user=bob request 99 done
+00:11:29.700 INFO [worker-4] user=zoë request 100 done
+00:11:41.707 ERROR [worker-5] user=bob request 101 failed
+java.lang.IllegalStateException: request 101 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:11:52.714 INFO [worker-0] user=zoë request 102 done
+00:12:07.721 WARN [worker-1] user=bob request 103 done
+00:12:12.728 INFO [worker-2] user=bob request 104 done
+00:12:26.735 INFO [worker-3] user=bob request 105 done
+00:12:32.742 WARN [worker-4] user=zoë request 106 done
+00:12:41.749 INFO [worker-5] user=zoë request 107 done
+00:12:50.756 WARN [worker-0] user=bob request 108 done
+00:12:59.763 INFO [worker-1] user=alice request 109 done
+00:13:05.770 ERROR [worker-2] user=zoë request 110 failed
+java.lang.IllegalStateException: request 110 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:13:15.777 ERROR [worker-3] user=bob request 111 failed
+java.lang.IllegalStateException: request 111 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:13:22.784 INFO [worker-4] user=alice request 112 done
+00:13:36.791 INFO [worker-5] user=alice request 113 done
+00:13:56.798 WARN [worker-0] user=zoë request 114 done
+00:14:14.805 INFO [worker-1] user=alice request 115 done
+00:14:30.812 ERROR [worker-2] user=zoë request 116 failed
+java.lang.IllegalStateException: request 116 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:14:36.819 INFO [worker-3] user=zoë request 117 done
+00:14:43.826 ERROR [worker-4] user=alice request 118 failed
+java.lang.IllegalStateException: request 118 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)
+00:14:59.833 ERROR [worker-5] user=zoë request 119 failed
+java.lang.IllegalStateException: request 119 rejected
+	at com.example.app.Service.handle(Service.java:42)
+	at com.example.app.Main.main(Main.java:7)

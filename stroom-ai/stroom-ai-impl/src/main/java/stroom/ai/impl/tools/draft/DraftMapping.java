@@ -69,6 +69,10 @@ public final class DraftMapping {
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
     private static final int MAX_RULES = 12;
+    /// The draft's key for the variants whose times have no date and no header giving it: `field`, `variant_field`
+    /// and `variants` (each variant's time format, e.g. `HH:mm:ss.SSS`), for the user to say where the date comes
+    /// from.
+    public static final String DATELESS_TIMES = "dateless_times";
     /// The field the exception a record's stack trace starts with is extracted as.
     public static final String EXCEPTION_FIELD = "exception";
     /// The field its message is extracted as.

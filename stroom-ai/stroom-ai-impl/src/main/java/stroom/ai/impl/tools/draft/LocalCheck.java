@@ -1526,11 +1526,39 @@ public final class LocalCheck {
                     final long misfits = values.stream()
                             .filter(v -> TimePatterns.checkTimeFormat(entry.timeFormat(), List.of(v)) != null)
                             .count();
-                    (values.size() - misfits == 0
-                            ? problems
-                            : warnings).add(entry.path() + ": " + message);
+                    if (values.size() - misfits == 0) {
+                        problems.add(entry.path() + ": " + message);
+                    } else {
+                        warnings.add(entry.path() + ": " + message + otherLayouts(entry, values));
+                    }
                 }
             }
+        }
+
+        // The layouts of the values the time format doesn't read, each with an example, and what to do about them:
+        // seen, a stream's times in several layouts, each record of the others written with no time.
+        private static String otherLayouts(final FieldMapping entry, final List<String> values) {
+            final Map<String, String> layouts = new LinkedHashMap<>();
+            for (final String value : values) {
+                if (TimePatterns.checkTimeFormat(entry.timeFormat(), List.of(value)) != null) {
+                    final String layout = TimePatterns.inferTimePattern(value);
+                    layouts.putIfAbsent(layout == null
+                            ? "(not a time)"
+                            : layout, value);
+                }
+                if (layouts.size() == 3) {
+                    break;
+                }
+            }
+            if (layouts.isEmpty()) {
+                return "";
+            }
+            final List<String> said = new ArrayList<>();
+            layouts.forEach((layout, example) -> said.add(layout + " (e.g. " + ToolText.repr(example) + ")"));
+            return ". Values in other layouts: " + String.join(", ", said) + ". Read each layout (a part each in the "
+                   + "splitter, or a rule each with its own time_format); for records whose time still won't parse, "
+                   + "ask the user whether to write the stream's received time instead (time_fallback: "
+                   + "'ReceivedTime'), else they have no time";
         }
 
         private void unread(final Map<Wanted, List<String>> wanted, final List<String> seen,
