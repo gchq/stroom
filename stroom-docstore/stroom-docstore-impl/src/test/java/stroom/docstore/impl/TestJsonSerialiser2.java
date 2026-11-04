@@ -28,8 +28,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.EncodingUtil;
 
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
-import tools.jackson.databind.exc.ValueInstantiationException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -134,7 +134,9 @@ class TestJsonSerialiser2 {
                             serialiser2.read(asset);
                         })
                 .hasMessageContaining("UUID")
-                .isInstanceOf(ValueInstantiationException.class)
+                .isInstanceOf(RuntimeException.class)
+                .extracting(Throwable::getCause,
+                        Assertions.as(InstanceOfAssertFactories.THROWABLE))
                 .hasCauseInstanceOf(DocRef.InvalidDocRefException.class);
     }
 
@@ -173,9 +175,9 @@ class TestJsonSerialiser2 {
                             serialiser2.read(asset);
                         })
                 .hasMessageContaining("type")
-                .isInstanceOf(ValueInstantiationException.class)
+                .isInstanceOf(RuntimeException.class)
+                .extracting(Throwable::getCause,
+                        Assertions.as(InstanceOfAssertFactories.THROWABLE))
                 .hasCauseInstanceOf(DocRef.InvalidDocRefException.class);
     }
-
-
 }
