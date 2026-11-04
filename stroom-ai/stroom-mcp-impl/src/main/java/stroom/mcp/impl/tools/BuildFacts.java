@@ -134,17 +134,6 @@ interface BuildFacts {
     /// named.
     Optional<String> kind(String build);
 
-    /// @param build A build.
-    /// @return The decisions the user made for it, topic to decision; none when it has none.
-    Map<String, String> decisions(String build);
-
-    /// Records a decision the user made for a build, replacing an earlier one on the same topic.
-    ///
-    /// @param build    A build.
-    /// @param topic    What it is about.
-    /// @param decision What the user decided.
-    void rememberDecision(String build, String topic, String decision);
-
     /// @param feed A feed's name.
     /// @return Its Reference streams (a reference-data pipeline's output), newest first; empty when it has none.
     List<Long> referenceStreams(String feed);

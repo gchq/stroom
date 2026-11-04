@@ -40,7 +40,6 @@ final class FakeBuildFacts implements BuildFacts {
     // Raw Reference sample streams of the build's own feed.
     List<Long> ownRawReference = List.of();
     String kind;
-    final Map<String, Map<String, String>> decisions = new LinkedHashMap<>();
     // Each feed's Reference streams, by its name.
     Map<String, List<Long>> referenceStreams = new LinkedHashMap<>();
     // Each pipeline's referenced feeds, by its UUID.
@@ -222,16 +221,6 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public Optional<String> kind(final String build) {
         return Optional.ofNullable(kind);
-    }
-
-    @Override
-    public Map<String, String> decisions(final String build) {
-        return decisions.getOrDefault(build, Map.of());
-    }
-
-    @Override
-    public void rememberDecision(final String build, final String topic, final String decision) {
-        decisions.computeIfAbsent(build, ignored -> new LinkedHashMap<>()).put(topic, decision);
     }
 
     @Override
