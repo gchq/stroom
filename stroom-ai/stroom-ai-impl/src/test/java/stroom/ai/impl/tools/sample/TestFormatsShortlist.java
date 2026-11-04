@@ -126,6 +126,29 @@ class TestFormatsShortlist {
                 .containsEntry("msg", "two words");
     }
 
+    @Test
+    void aKeyInTextLinesIsGivenByHand() {
+        // Not inferred (the user's decision: guessing which token of free text ties lines is guesswork): the guide's
+        // spec for PostgreSQL's session id, given as the agent would.
+        final String sample = resource("postgres-lines.log");
+        final List<Map<String, String>> sessions = SplitterDryRun.dryRun(POSTGRES, sample, 1_000).records();
+        assertThat(sessions).hasSize(50);
+        assertThat(sessions.getFirst()).containsEntry("session", "6713a2f1.1194")
+                .containsEntry("level", "LOG")
+                .containsEntry("LOG/message", "statement: SELECT id, name\n\tFROM users\n\tWHERE name = $1")
+                .containsKey("DETAIL/message");
+        assertThat(SampleProfiler.profile(sample)).doesNotContainKey("record_key");
+    }
+
+    /// The data-splitter guide's spec for PostgreSQL logs tied by session id.
+    static final SplitterSpec POSTGRES = SplitterSpec.builder("regex")
+            .pattern("(?s)^(\\S+ \\S+ \\S+) \\[(\\d+)\\] (\\S+) (\\w+):\\s+(.*)$")
+            .names(List.of("time", "pid", "session", "level", "message"))
+            .recordKey("\\] (\\w+\\.\\w+) ").keyField("session")
+            .lineName("\\S+ \\S+ \\S+ \\[\\d+\\] \\S+ (\\w+):").leadField("level")
+            .joinUnkeyed(true)
+            .build();
+
     private static List<Map<String, String>> records(final String fixture) {
         final SplitterDryRun.DryRun dryRun = SplitterDryRun.dryRun(inferred(fixture), resource(fixture), 1_000);
         assertThat(dryRun.unmatchedLines()).as(fixture).isEmpty();
