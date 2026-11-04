@@ -182,6 +182,10 @@ class McpAgentChat {
                                          + "done, and your turn would have ended there. Do it now: make the call. "
                                          + "If you have in fact finished, give your answer, without saying you'll "
                                          + "do anything more.]";
+    static final String EMPTY_NOTE = "[Your last reply had no answer and called no tool, so nothing was done, and "
+                                     + "your turn would have ended there. A tool call written in your reasoning or "
+                                     + "as text is not made, and its result is not real: make the call through the "
+                                     + "tools, or give your answer.]";
     static final String CUT_OFF_NOTE = "[Your last reply was cut off because the context window filled up. Earlier "
                                        + "steps have been shortened to make room. Carry on with the task from where "
                                        + "you were; if you were writing your answer, write it again in full, more "
@@ -499,6 +503,16 @@ class McpAgentChat {
             storeInterim(chatId, interim);
             run.conversation.add(AiMessage.from(interim));
             run.conversation.add(UserMessage.from(ANNOUNCED_NOTE));
+            return true;
+        }
+        // An empty reply, no answer and no tool call, isn't the answer either. Seen (Qwen 3.8 Flash, chat 145): a
+        // read_file call written in its reasoning as text, with a result it made up, and the run ended with nothing
+        // said until the user typed "continue".
+        if (run.announced < MAX_ANNOUNCED_CONTINUATIONS && NullSafe.isBlankString(aiMessage.text())) {
+            run.announced++;
+            LOGGER.info(() -> "The model's reply for chatId=" + chatId + " had no answer and no tool call; carrying "
+                              + "on");
+            run.conversation.add(UserMessage.from(EMPTY_NOTE));
             return true;
         }
         return false;
