@@ -42,6 +42,7 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -135,21 +136,22 @@ public class S3ClientHelper {
                                     final Map<String, String> tags,
                                     final Map<CIKey, String> s3Metadata,
                                     final S3UploadProperties s3UploadProperties,
-                                    final Path sourceFile) {
+                                    final Path sourceFile,
+                                    final boolean allowOverwrite) {
         NullSafe.requireNonBlankString(key, () -> "key must not be blank");
         NullSafe.requireNonBlankString(bucketName, () -> "bucketName must not be blank");
         Objects.requireNonNull(sourceFile);
 
         try {
-            return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
+            return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile, allowOverwrite);
         } catch (final RuntimeException e) {
-            if (s3ClientConfig.isCreateBuckets()) {
+            if (e instanceof NoSuchBucketException && s3ClientConfig.isCreateBuckets()) {
                 debug("Error uploading: ", bucketName, key, sourceFile, e);
 
                 // If we are creating buckets, then try to create the bucket and upload again.
                 try {
                     createBucket(bucketName);
-                    return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
+                    return tryUpload(bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile, allowOverwrite);
                 } catch (final RuntimeException e2) {
                     error("Error uploading: ", bucketName, key, sourceFile, e2);
                     throw e2;
@@ -166,9 +168,10 @@ public class S3ClientHelper {
                                         final Map<String, String> tags,
                                         final Map<CIKey, String> s3Metadata,
                                         final S3UploadProperties s3UploadProperties,
-                                        final Path sourceFile) {
+                                        final Path sourceFile,
+                                        final boolean allowOverwrite) {
         final PutObjectRequest request = createPutObjectRequest(
-                bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile);
+                bucketName, key, tags, s3Metadata, s3UploadProperties, sourceFile, allowOverwrite);
         logRequest("Uploading: ", bucketName, key, request);
 
         final PutObjectResponse response;
@@ -223,7 +226,18 @@ public class S3ClientHelper {
                     return s3Client.putObject(request, sourceFile);
                 } catch (final Exception e) {
                     debug("Error putting object (sync)", bucketName, key, sourceFile, e);
-                    throw e;
+                    if (e instanceof final S3Exception s3Exception && s3Exception.statusCode() == 412) {
+                        throw new RuntimeException(LogUtil.message(
+                                "You cannot overwrite an existing object, bucket: '{}' and key: '{}', tags: {}",
+                                bucketName, key, tags), e);
+                    } else if (e instanceof final S3Exception s3Exception && s3Exception.statusCode() == 409) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Another process is also trying to write to the same object, " +
+                                "bucket: '{}' and key: '{}', tags: {}",
+                                bucketName, key, tags), e);
+                    } else {
+                        throw e;
+                    }
                 }
             });
         }
@@ -499,6 +513,7 @@ public class S3ClientHelper {
         final DeleteObjectResponse response;
         if (s3ClientConfig.isAsync()) {
             try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                // This will NOT error if the object does not exist
                 response = pooledClient.getClient().deleteObject(request).join();
             } catch (final S3Exception e) {
                 error("Error deleting: ", bucketName, key, e);
@@ -506,6 +521,7 @@ public class S3ClientHelper {
             }
         } else {
             try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+                // This will NOT error if the object does not exist
                 response = pooledClient.getClient().deleteObject(request);
             } catch (final S3Exception e) {
                 error("Error deleting: ", bucketName, key, e);
@@ -605,7 +621,8 @@ public class S3ClientHelper {
                                                     final Map<String, String> tags,
                                                     final Map<CIKey, String> s3Metadata,
                                                     final S3UploadProperties s3UploadProperties,
-                                                    final Path source) {
+                                                    final Path source,
+                                                    final boolean allowOverwrite) {
         Objects.requireNonNull(source);
         LOGGER.debug(
                 "createPutObjectRequest() - bucketName: {}, key: {}, tags: {}, s3Metadata: {}, s3UploadProperties: {}",
@@ -615,6 +632,11 @@ public class S3ClientHelper {
                 .key(key)
                 .tagging(createTags(tags))
                 .metadata(convertS3MetadataMap(s3Metadata));
+
+        if (!allowOverwrite) {
+            // Prevents overwrite
+            builder.ifNoneMatch("*");
+        }
 
         if (s3UploadProperties != null) {
             NullSafe.consumeNonBlankString(s3UploadProperties.cacheControl(), builder::cacheControl);

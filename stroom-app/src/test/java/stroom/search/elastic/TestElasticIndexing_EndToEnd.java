@@ -25,7 +25,6 @@ import stroom.util.shared.Severity;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
@@ -41,7 +40,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// Indexes events to a real Elasticsearch node with an Elasticsearch indexing pipeline, then checks what
 /// the node holds, independently of Stroom's search. See [ElasticTestNode] for how the node is found.
-@Disabled // Elastic end to end tests keep failing the build
 class TestElasticIndexing_EndToEnd extends AbstractCoreIntegrationTest {
 
     @Inject

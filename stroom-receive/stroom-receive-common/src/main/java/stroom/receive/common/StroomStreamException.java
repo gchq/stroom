@@ -71,25 +71,20 @@ public class StroomStreamException extends RuntimeException {
     }
 
     private static RuntimeException unwrap(final Throwable ex, final AttributeMap attributeMap) {
-        if (ex instanceof ZipException) {
-            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
-        } else if (ex instanceof DataFormatException) {
-            return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
-        } else if (ex instanceof AuthenticationException) {
-            return new StroomStreamException(
-                    StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, ex.getMessage());
-        } else if (ex instanceof ContentTooLargeException) {
-            return new StroomStreamException(
-                    StroomStatusCode.CONTENT_TOO_LARGE, attributeMap, ex.getMessage());
-        } else if (ex instanceof final StroomStreamException stroomStreamException) {
-            return stroomStreamException;
-        } else if (ex.getCause() != null) {
-            return unwrap(ex.getCause(), attributeMap);
-        } else if (ex instanceof final RuntimeException runtimeException) {
-            return runtimeException;
-        } else {
-            return new RuntimeException(ex);
-        }
+        return switch (ex) {
+            case final ZipException e -> new StroomStreamException(
+                    StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, e.getMessage());
+            case final DataFormatException e -> new StroomStreamException(
+                    StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, e.getMessage());
+            case final AuthenticationException e -> new StroomStreamException(
+                    StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, e.getMessage());
+            case final ContentTooLargeException e -> new StroomStreamException(
+                    StroomStatusCode.CONTENT_TOO_LARGE, attributeMap, e.getMessage());
+            case final StroomStreamException e -> e;
+            case final Throwable e when e.getCause() != null -> unwrap(e.getCause(), attributeMap);
+            case final RuntimeException e -> e;
+            default -> new RuntimeException(ex);
+        };
     }
 
     public void sendErrorResponse(final HttpServletResponse httpServletResponse) {

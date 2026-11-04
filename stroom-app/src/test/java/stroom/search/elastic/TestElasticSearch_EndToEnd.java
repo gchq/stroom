@@ -30,7 +30,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -43,7 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// Indexes events to a real Elasticsearch node, then searches them through Stroom's search API, as a
 /// dashboard or query would. See [ElasticTestNode] for how the node is found.
-@Disabled // Elastic end to end tests keep failing the build
 class TestElasticSearch_EndToEnd extends AbstractCoreIntegrationTest {
 
     private static final String USER_ID = "UserId";
