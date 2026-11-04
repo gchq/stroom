@@ -632,6 +632,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             warnings.addAll(builds.metaNotSent(b.mapping, request.streamIds()));
         }
         warnings.addAll(TranslationBuilds.zoneNotKept(b.mapping));
+        warnings.addAll(TranslationBuilds.zoneUnknown(b.mapping));
         SplitterSpec splitter = request.splitter();
         boolean inferred = false;
         if (samples != null && !samples.isEmpty() && "data_splitter".equals(b.mapping.input()) && splitter == null) {

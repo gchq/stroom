@@ -84,6 +84,13 @@ public final class TimePatterns {
     /// Infers a Java date pattern that parses a value, e.g. `28/Sep/2026:10:00:00 +0000` gives
     /// `dd/MMM/yyyy:HH:mm:ss Z`. Epoch values give `epoch seconds`, `epoch milliseconds` and so on.
     ///
+    /// @param pattern A Java time pattern.
+    /// @return Whether it reads a zone or an offset (X, x, Z, z, O or V outside quoted text).
+    public static boolean hasZone(final String pattern) {
+        final String unquoted = pattern.replaceAll("'[^']*'", "");
+        return unquoted.chars().anyMatch(c -> "XxZzOV".indexOf(c) >= 0);
+    }
+
     /// @param value A value.
     /// @return The pattern, or null when the value doesn't look like a date and time.
     public static String inferTimePattern(final String value) {

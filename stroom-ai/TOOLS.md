@@ -3735,7 +3735,10 @@ is common, the rest of a variant's common entries go into its rules, and each ru
 the exception it starts with and its message are extract fields (`exception`, `exception_message`), not a kind of
 event, and the trace is carried as Data, whole unless the user chooses less: asked in a form ("All of it", "Its
 first 20 lines", "Only its first line"), or `continuation_lines` (`DraftMapping.withContinuationLines`); without
-forms, kept whole with a note to ask. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked
+forms, kept whole with a note to ask. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
+offset gets no `timezone` from the draft; the user is asked (UTC, a zone a field names, or the offset the gap between
+the latest time and the stream's `ReceivedTime` suggests, rounded to a quarter hour, within 15 hours), or `timezone=`
+gives it; `build_translation_xslt` warns of any still unset. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked
 about ("When Stroom received the stream", "When the stream was created in Stroom", both approximations, or "Leave
 it"), or `time_source=received|created|none`; times with no date and no header giving it (the draft's
 `dateless_times`) are asked about the same way, `date_source=received|created|file_name|none`, the file-name date
