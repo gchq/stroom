@@ -70,7 +70,12 @@ public class S3Appender extends AbstractAppender {
     @SuppressWarnings("ConstantValue")
     private static final boolean DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN = Boolean.parseBoolean(
             DEFAULT_USE_COMPRESSION_PROP_VALUE);
+
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
+
+    public static final String DEFAULT_ALLOW_OVERWRITE = "true";
+    @SuppressWarnings("ConstantValue")
+    public static final boolean DEFAULT_ALLOW_OVERWRITE_BOOLEAN = Boolean.parseBoolean(DEFAULT_ALLOW_OVERWRITE);
 
     private final S3AppenderTempDir s3AppenderTempDir;
     //    private final TemplateCache templateCache;
@@ -89,7 +94,7 @@ public class S3Appender extends AbstractAppender {
     private String contentDisposition;
     private String contentEncoding;
     private String contentType;
-    private boolean allowOverwrite = true;
+    private boolean allowOverwrite = DEFAULT_ALLOW_OVERWRITE;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
@@ -295,9 +300,10 @@ public class S3Appender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Whether to allow overwriting of existing objects. Default is true.",
+            description = "Whether to allow overwriting of existing objects.",
+            defaultValue = DEFAULT_ALLOW_OVERWRITE,
             displayPriority = 13)
-    public void setContentType(final boolean allowOverwrite) {
+    public void setAllowOverwrite(final boolean allowOverwrite) {
         this.allowOverwrite = allowOverwrite;
     }
 }
