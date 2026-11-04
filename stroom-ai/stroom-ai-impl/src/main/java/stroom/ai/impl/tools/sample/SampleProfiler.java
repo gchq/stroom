@@ -80,6 +80,8 @@ public final class SampleProfiler {
             "^(<\\d{1,3}>)?[A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} \\S+ ");
     /// A key=value pair.
     public static final Pattern KEY_VALUE = ToolText.re("(\\w[\\w.-]*)=(\"[^\"]*\"|\\S*)");
+    // A quoted key:"value" pair (Check Point's).
+    private static final Pattern COLON_PAIR = ToolText.re("\\w[\\w.-]*:\"");
     /// The start of a CEF record.
     public static final Pattern CEF = ToolText.re("CEF:\\d+\\|");
     /// Lines read when looking for those that aren't what the rest are (a JSON line cut short, a row short of a
@@ -1433,9 +1435,11 @@ public final class SampleProfiler {
         if (separated != null) {
             return separated;
         }
-        final boolean pairsMostly = !firsts.isEmpty() && firsts.subList(0, Math.min(maxRecords, firsts.size())).stream()
+        final List<String> head = firsts.subList(0, Math.min(maxRecords, firsts.size()));
+        // key=value pairs, or quoted key:"value" pairs (Check Point's).
+        final boolean pairsMostly = !firsts.isEmpty() && (head.stream()
                 .filter(line -> keyValues(line).size() >= 3)
-                .count() >= 0.8 * Math.min(maxRecords, firsts.size());
+                .count() >= 0.8 * head.size() || ":".equals(SplitterDryRun.pairSeparator(head)));
         if (!pairsMostly) {
             // No one format: two or more, each with its share of the records (asked for by the user: 10% each).
             final Map<String, Object> mixed = LineFormats.mixed(grouped == null
@@ -1468,7 +1472,7 @@ public final class SampleProfiler {
             final List<Map<String, Object>> bad = new ArrayList<>();
             final List<String> scanned = firsts.subList(0, Math.min(MALFORMED_SCAN, firsts.size()));
             for (int n = 0; n < scanned.size(); n++) {
-                if (!ToolText.search(KEY_VALUE, scanned.get(n))) {
+                if (!ToolText.search(KEY_VALUE, scanned.get(n)) && !ToolText.search(COLON_PAIR, scanned.get(n))) {
                     bad.add(map("line", n + 1, "reason", "holds no key=value pairs", "text",
                             ToolText.head(scanned.get(n), 160)));
                 }

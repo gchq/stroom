@@ -13086,12 +13086,12 @@
       "field": "sessionid"
      },
      {
-      "path": "EventSource/Generator",
-      "field": "app"
-     },
-     {
       "path": "EventDetail/Description",
       "field": "message"
+     },
+     {
+      "path": "EventSource/Generator",
+      "value": "43_syslog_csv_palo_alto_traffic"
      },
      {
       "path": "EventDetail/TypeId",
@@ -13811,12 +13811,12 @@
       "field": "sessionid"
      },
      {
-      "path": "EventSource/Generator",
-      "field": "app"
-     },
-     {
       "path": "EventDetail/Description",
       "field": "message"
+     },
+     {
+      "path": "EventSource/Generator",
+      "value": "43_syslog_csv_palo_alto_traffic"
      },
      {
       "path": "EventDetail/TypeId",

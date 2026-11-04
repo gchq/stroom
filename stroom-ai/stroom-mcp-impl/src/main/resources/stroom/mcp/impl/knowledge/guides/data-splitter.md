@@ -36,11 +36,16 @@ read the client's files, and refuses a path with that instruction.
 | Sections between marker lines carrying the key (ModSecurity's `--5f005215-B--`) | `{"kind": "regex", "pattern": "(?s)^[^\\n]*\\n?(.*)$", "names": ["text"], "record_key": "(?<![^\\n])\\-\\-(\\w+)\\-\\w+\\-\\-[ \\t]*(?=\\n\|$)", "line_name": "\\-\\-\\w+\\-(\\w+)\\-\\-[ \\t]*(?=\\n\|$)", "lead_field": "first_section", "join_unkeyed": true}` |
 | Text around the pairs (a prefix, bare flags, verbs: iptables' `[12.3] DROP: IN=eth0 ... DF PROTO=TCP SYN`) | add `"words": true` (key_value): each run of text that isn't pairs is kept as the field `words` (given again for each run; a field reads the first, `repeat: true` each) |
 | Pairs separated by `, ` or `; `, keys holding spaces (Cisco ISE's `..., Device IP Address=10.1.2.3, ...`) | `{"kind": "key_value", "delimiter": ", "}` (inferred from what precedes the pairs): a delimiter with white space round it reads values to the next delimiter, keys may hold spaces straight after it, and a trailing delimiter ends a record |
+| Quoted `key:"value"` pairs (Check Point's `action:"Accept"; ifdir:"inbound"`) | `{"kind": "key_value", "pair_separator": ":", "quote": "\"", "delimiter": "; "}` (inferred; in a syslog record's bracketed structured data with an empty message, read there as the body) |
 | The same few words before every record's pairs (`2026-09-28T15:00:00Z fw01 action=allow ...`) | inferred as a regex reading the words as fields (a time as `time`, others `prefix1`, `prefix2`...) with the pairs as its `body` |
 | Values in single quotes too, some of them pairs | add `"single_quotes": true` (key_value): `a='two words'` read without its quotes; `msg='op=login res=success'` read as its pairs |
 | Entries whose stack traces are kept apart | add `"record_start": <profile's record_start>, "continuation": true`: each record's first line is read by the spec, the lines after it kept whole as `continuation` |
 | Syslog, then delimited columns (Palo Alto) | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "delimited", "delimiter": ",", "header": ["future_use1", "receive_time", ...]}}` |
 | Columns named by a directive line (W3C, IIS, Blue Coat, Zeek) | `{"kind": "delimited", "delimiter": " ", "header": true, "quote": "\"", "comment_prefix": "#", "header_directive": "#Fields:", "directives": ["#Software:", "#Remark:"]}` |
+
+A body's field named as one before it (Palo Alto's `app` column after the syslog header's `app`) is a second data
+element of that name: a field reads the first, so read the body's with an xpath (`data[@name='app'][2]/@value`) or
+rename the column.
 
 `body` parses one field further (syslog's `message`, or a regex group) and adds its fields; the recipes below
 are what it writes.
