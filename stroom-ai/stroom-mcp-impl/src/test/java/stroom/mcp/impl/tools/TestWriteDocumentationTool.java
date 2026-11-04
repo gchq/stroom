@@ -275,6 +275,51 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void descriptionsGivenOverSeveralCallsAreKeptUntilTheDocIsWritten() {
+        // Seen in testing (chat 144): descriptions given in batches were lost (kept only with a written doc), keys
+        // without /@Value matched nothing unsaid, the markdown was refused when only descriptions were sent, and
+        // the agent said the documentation was done with nothing written.
+        world.pipeline(BUILD, "Acme", "p");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("index", Map.of())));
+        final List<String> fields = List.of("EventDetail/Send/Data[@Name='subject']/@Value",
+                "EventDetail/Send/Data[@Name='size']/@Value", "EventSource/Generator");
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    final Descriptions described = inv.getArgument(6);
+                    fields.forEach(field -> described.of(field, "src", List.of("v"), "schema words"));
+                    return "section";
+                });
+        final String call = "{\"build\": \"bb\", \"pipeline_uuid\": \"p\", \"change\": \"Created\", "
+                            + "\"stream_ids\": [5]";
+
+        final Map<String, Object> first = world.call(tool, context, call + ", \"markdown\": \"## Purpose and "
+                                                                    + "data\\n\\nMail.\\n\", \"field_descriptions\": "
+                                                                    + "{\"EventSource/Generator\": \"The mailer.\", "
+                                                                    + "\"EventDetail/Send/Data[@Name=\\\"size\\\"]\": "
+                                                                    + "\"Bytes sent.\", \"nothing/here\": \"x\"}}");
+        // Said plainly that nothing is written; a key without /@Value or with double quotes still matches; one
+        // matching nothing is named.
+        assertThat(first).containsEntry("status", "needs_descriptions").containsEntry("written", false)
+                .containsEntry("unmatched", List.of("nothing/here"));
+        assertThat(String.valueOf(first.get("hint"))).startsWith("NOT WRITTEN");
+        assertThat(((List<?>) first.get("fields")).stream()
+                .map(field -> String.valueOf(((Map<?, ?>) field).get("field"))))
+                .containsExactly("EventDetail/Send/Data[@Name='subject']/@Value");
+        assertThat(world.pendingDocs.warning(context.session())).hasValueSatisfying(warning ->
+                assertThat(warning).contains("pipeline 'Acme'", "not written yet"));
+
+        // Only the last description, no markdown: the earlier ones and the markdown are kept.
+        final Map<String, Object> written = world.call(tool, context, call + ", \"field_descriptions\": "
+                                                                      + "{\"EventDetail/Send/Data[@Name='subject']\": "
+                                                                      + "\"Subject line.\"}}");
+
+        assertThat(written).containsKey("uuid").doesNotContainKey("status");
+        assertThat(world.world.body(String.valueOf(written.get("uuid")))).contains("Mail.", "Bytes sent.",
+                "Subject line.", "The mailer.");
+        assertThat(world.pendingDocs.warning(context.session())).isEmpty();
+    }
+
+    @Test
     void anXsltEditedSinceItsMappingIsDocumentedAsItRunsEvenWithTheAgentsOwnSection() {
         // Seen: TWITTER's XSLT saved by hand (save_xslt) with mentions and links in Data arrays, and the Field
         // mapping section generated from the mapping kept before them: links left out, mentions shown joined. The
@@ -402,7 +447,7 @@ class TestWriteDocumentationTool {
         final WriteDocumentationTool withIndexing = new WriteDocumentationTool(world.docs, world.sections, indexing,
                 world.keptMappings, world.pipelineShapes, Mockito.mock(GeneratedDrift.class),
                 world.world.documentAccess, world.places, world.writes, world.world.guard(), world.translation.consent,
-                world.translation.plan);
+                world.translation.plan, world.pendingDocs);
 
         final Map<String, Object> result = world.call(withIndexing, context, "{\"build\": \"bb\", \"index_uuid\": "
                                                                              + "\"i\", \"markdown\": \"" + "## Purpose"

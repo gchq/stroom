@@ -73,11 +73,14 @@ final class DocumentationWorld {
         Mockito.when(keptMappings.keptXslt(anyString())).thenReturn(Optional.empty());
     }
 
+    /// The session's docs not yet written, shared by the tools the world makes.
+    final PendingDocumentation pendingDocs = new PendingDocumentation();
+
     /// @return write_documentation, wired on the world.
     WriteDocumentationTool documentationTool() {
         return new WriteDocumentationTool(docs, sections, indexDocumentation, keptMappings, pipelineShapes,
                 drift, world.documentAccess, places, writes, world.guard(),
-                translation.consent, translation.plan);
+                translation.consent, translation.plan, pendingDocs);
     }
 
     /// @return A pipeline in the build, listed in its documents.
