@@ -78,13 +78,10 @@ public class S3Appender extends AbstractAppender {
     public static final boolean DEFAULT_ALLOW_OVERWRITE_BOOLEAN = Boolean.parseBoolean(DEFAULT_ALLOW_OVERWRITE);
 
     private final S3AppenderTempDir s3AppenderTempDir;
-    //    private final TemplateCache templateCache;
     private final OutputFactory outputFactory;
     private final S3ClientConfigCache s3ClientConfigCache;
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
-    //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
-//    private final S3ClientPool s3ClientPool;
     private final S3ManagerFactory s3ManagerFactory;
     private DocRef s3ConfigRef;
     private String bucketNamePattern;
@@ -94,27 +91,21 @@ public class S3Appender extends AbstractAppender {
     private String contentDisposition;
     private String contentEncoding;
     private String contentType;
-    private boolean allowOverwrite = DEFAULT_ALLOW_OVERWRITE;
+    private boolean allowOverwrite = DEFAULT_ALLOW_OVERWRITE_BOOLEAN;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
                       final MetaDataHolder metaDataHolder,
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
-//                      final TemplateCache templateCache,
                       final S3ClientConfigCache s3ClientConfigCache,
-//                      final S3MetaFieldsMapper s3MetaFieldsMapper,
-//                      final S3ClientPool s3ClientPool,
                       final S3ManagerFactory s3ManagerFactory) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
-//        this.templateCache = templateCache;
         this.s3ClientConfigCache = s3ClientConfigCache;
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
         this.outputFactory = new OutputFactory(metaDataHolder);
-//        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
-//        this.s3ClientPool = s3ClientPool;
         this.s3ManagerFactory = s3ManagerFactory;
 
         // Ensure outputStreamSupport has the defaults for S3Appender
