@@ -41,7 +41,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -152,12 +151,6 @@ public class TableFilterInputController extends DashboardPaneController {
                             filterButtonProvider,
                             column,
                             () -> table.getDataSupplier(column, rules),
-                            () -> columnFilters
-                                    .entrySet()
-                                    .stream()
-                                    .collect(Collectors.toMap(
-                                            Entry::getKey,
-                                            entry -> entry.getValue().getSelection())),
                             column.getColumnValueSelection(),
                             table.getFilterCellManager(),
                             rules);

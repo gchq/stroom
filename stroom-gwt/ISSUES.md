@@ -1081,6 +1081,18 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 
 ## Accessibility
 
+### A column value filter's unavailable values may be too faint
+
+**Reported** (4 November 2026, merging 7.14's #4841 into master). The column value filter lists
+the values the table has, then a line, then the values no row has given its other filters, which can
+still be ticked. 7.14 fades those to 50% opacity (`column-value-cell--unavailable` in
+`column-value-cell.css`), which is likely under 4.5:1 and may fail axe's `color-contrast` in the
+`TableColumnValuesFilterUnavailable` (`App/Editors/DashboardEditor`) and
+`ColumnValuesFilterUnavailable` (`App/Editors/QueryEditor`) stories. Screen readers are told by the
+row's `aria-description` ("Not in the table"), so the fade only has to show it. Opacity was kept
+because it fades a conditional formatting colour evenly; a fix could be italics or the muted text
+colour, as for a pipeline property's default value above.
+
 ### A pipeline property's default value is too faint on its selected row
 
 **Fixed** (28 October 2026, wave 23). On a selected row a default takes the row's text colour, in italics (`pipeline-property.css`); `PipelineEditor` `PropertySourceAfterChange` leaves it selected for the accessibility check. On master too.

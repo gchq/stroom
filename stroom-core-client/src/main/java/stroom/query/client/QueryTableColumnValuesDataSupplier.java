@@ -19,7 +19,6 @@ package stroom.query.client;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
@@ -27,15 +26,13 @@ import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
@@ -51,6 +48,7 @@ public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier
             final RestFactory restFactory,
             final QueryModel searchModel,
             final stroom.query.api.Column column,
+            final QueryTablePreferences queryTablePreferences,
             final List<ConditionalFormattingRule> conditionalFormattingRules) {
         super(column.copy().build(), conditionalFormattingRules);
         this.restFactory = restFactory;
@@ -60,11 +58,14 @@ public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier
         final QueryKey queryKey = searchModel.getCurrentQueryKey();
         final QuerySearchRequest currentSearch = searchModel.getCurrentSearch();
         if (queryKey != null && currentSearch != null) {
+            // The current search holds the preferences from when it started, so use the latest ones. They carry
+            // the filters that decide which values are available.
             querySearchRequest = currentSearch
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(false)
                     .requestedRange(OffsetRange.UNBOUNDED)
+                    .queryTablePreferences(queryTablePreferences)
                     .build();
         }
         searchRequest = querySearchRequest;
@@ -73,10 +74,9 @@ public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier
     @Override
     public void exec(final Range range,
                      final Consumer<ColumnValues> dataConsumer,
-                     final RestErrorHandler errorHandler,
-                     final Map<String, ColumnValueSelection> selections) {
+                     final RestErrorHandler errorHandler) {
         if (searchRequest == null) {
-            dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+            dataConsumer.accept(ColumnValues.empty());
 
         } else {
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
@@ -85,8 +85,7 @@ public class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier
                     getColumn(),
                     getNameFilter(),
                     pageRequest,
-                    getConditionalFormattingRules(),
-                    selections);
+                    getConditionalFormattingRules());
 
             restFactory
                     .create(QUERY_RESOURCE)

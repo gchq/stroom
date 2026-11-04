@@ -27,7 +27,6 @@ import stroom.query.client.result.table.ColumnValueRowStyles;
 import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.query.client.result.table.FilterCellManager;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageResponse;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.popup.client.DialogAction;
@@ -43,10 +42,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /// Filters a table by a column's values ([ColumnValuesFilter]): ticking a value shows the rows that
@@ -62,7 +59,6 @@ public class ColumnValuesFilterController extends Controller {
 
     private Provider<Element> filterButtonProvider;
     private Provider<ColumnValuesDataSupplier> dataSupplierProvider;
-    private Provider<Map<String, ColumnValueSelection>> selectionProvider;
     private stroom.query.api.Column column;
     private RestDataProvider<ColumnValue, ColumnValues> dataProvider;
     private FilterCellManager filterCellManager;
@@ -98,21 +94,18 @@ public class ColumnValuesFilterController extends Controller {
     /// @param filterButtonProvider Gives the table's filter button for the column.
     /// @param column               The column.
     /// @param dataSupplierProvider Gives what fetches the column's values.
-    /// @param selectionProvider    Gives every column's selection, which the values fetched match.
     /// @param currentSelection     The values ticked, or null for all.
     /// @param filterCellManager    Tells the table of the values ticked.
     /// @param rules                The column's conditional formatting, which styles the values.
     public void init(final Provider<Element> filterButtonProvider,
                      final stroom.query.api.Column column,
                      final Provider<ColumnValuesDataSupplier> dataSupplierProvider,
-                     final Provider<Map<String, ColumnValueSelection>> selectionProvider,
                      final ColumnValueSelection currentSelection,
                      final FilterCellManager filterCellManager,
                      final List<ConditionalFormattingRule> rules) {
         this.filterButtonProvider = filterButtonProvider;
         this.column = column;
         this.dataSupplierProvider = dataSupplierProvider;
-        this.selectionProvider = selectionProvider;
         this.filterCellManager = filterCellManager;
         rowStyles.setConditionalFormattingRules(rules);
         setSelection(currentSelection);
@@ -139,7 +132,6 @@ public class ColumnValuesFilterController extends Controller {
         this.filterButtonProvider = filterButtonProvider;
         this.column = column;
         this.dataSupplierProvider = dataSupplierProvider;
-        this.selectionProvider = () -> null;
         this.filterCellManager = filterCellManager;
         setSelection(currentSelection);
         view.clear();
@@ -177,11 +169,6 @@ public class ColumnValuesFilterController extends Controller {
         view.focusFirstValue();
     }
 
-    /// @return The values ticked.
-    public ColumnValueSelection getSelection() {
-        return selection.build();
-    }
-
     /// Fetches the values again.
     public void refresh() {
         if (dataProvider == null) {
@@ -195,9 +182,13 @@ public class ColumnValuesFilterController extends Controller {
                     if (dataSupplier != null) {
                         dataSupplier.setTaskMonitorFactory(view.getTaskMonitor());
                         dataSupplier.setNameFilter(nameFilter);
-                        dataSupplier.exec(range, dataConsumer, errorHandler, selectionProvider.get());
+                        dataSupplier.exec(range, columnValues -> {
+                            // A line is drawn above the first value that is not available
+                            rowStyles.setAvailableCount(columnValues.getAvailableCount());
+                            dataConsumer.accept(columnValues);
+                        }, errorHandler);
                     } else {
-                        dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+                        dataConsumer.accept(ColumnValues.empty());
                     }
                 }
             };

@@ -49,3 +49,9 @@
     width: 400px;
     height: 400px;
 }
+
+/* Separates the values the table has from the rest, which come after it faded
+   (column-value-cell--unavailable) */
+.column-values-filter .column-values-filter__row--first-unavailable {
+    border-top: 1px solid var(--menu-separator__color);
+}

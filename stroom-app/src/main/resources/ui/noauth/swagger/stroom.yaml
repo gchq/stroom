@@ -1709,8 +1709,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DocRefs"
-        description: docRefs
+              $ref: "#/components/schemas/ExportContentRequest"
+        description: request
         required: true
       responses:
         default:
@@ -2803,6 +2803,19 @@ paths:
       summary: Find the duplicate check data for the current analytic
       tags:
       - DuplicateCheck
+  /elasticCluster/v1/getDefaultHttpClientConfig:
+    post:
+      operationId: getElasticClusterDefaultHttpClientConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpClientConfig"
+          description: default response
+      summary: Get default HTTP client configuration
+      tags:
+      - Elastic Clusters
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -5633,22 +5646,27 @@ paths:
         name: nonce
         schema:
           type: string
+          nullable: true
       - in: query
         name: state
         schema:
           type: string
+          nullable: true
       - in: query
         name: prompt
         schema:
           type: string
+          nullable: true
       - in: query
         name: code_challenge
         schema:
           type: string
+          nullable: true
       - in: query
         name: code_challenge_method
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7319,6 +7337,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7395,6 +7414,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7424,6 +7444,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -7450,6 +7471,7 @@ paths:
         name: nodeName
         schema:
           type: string
+          nullable: true
       responses:
         default:
           content:
@@ -12039,6 +12061,8 @@ components:
     ColumnValue:
       type: object
       properties:
+        available:
+          type: boolean
         matchingRule:
           type: string
         value:
@@ -12056,6 +12080,9 @@ components:
     ColumnValues:
       type: object
       properties:
+        availableCount:
+          type: integer
+          format: int64
         filterError:
           $ref: "#/components/schemas/TokenError"
         pageResponse:
@@ -12079,10 +12106,6 @@ components:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/DashboardSearchRequest"
-        selections:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ColumnValueSelection"
     CompletionItem:
       type: object
       discriminator:
@@ -13338,14 +13361,6 @@ components:
           example: 9f6184b4-bd78-48bc-b0cd-6e51a357f6a6
       required:
       - uuid
-    DocRefs:
-      type: object
-      properties:
-        docRefs:
-          type: array
-          items:
-            $ref: "#/components/schemas/DocRef"
-          uniqueItems: true
     DocumentAsset:
       type: object
       properties:
@@ -13476,6 +13491,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - CUT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -13591,6 +13607,7 @@ components:
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PASTE
           - PATHWAYS_CHOICE
           - PATHWAYS_NODE
           - PATHWAYS_SEQUENCE
@@ -13624,6 +13641,7 @@ components:
           - PROPERTIES
           - QUESTION
           - RAW
+          - REDO
           - REFRESH
           - REGEX
           - REMOVE
@@ -13634,6 +13652,7 @@ components:
           - SAVEAS
           - SEARCH
           - SELECTION
+          - SELECT_ALL
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -13929,24 +13948,14 @@ components:
     ElasticConnectionConfig:
       type: object
       properties:
-        apiKeyId:
+        apiKeyName:
           type: string
-        apiKeySecret:
-          type: string
-        caCertificate:
-          type: string
-        connectionTimeoutMillis:
-          type: integer
-          format: int32
         connectionUrls:
           type: array
           items:
             type: string
-        responseTimeoutMillis:
-          type: integer
-          format: int32
-        useAuthentication:
-          type: boolean
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
     ElasticIndexDoc:
       type: object
       properties:
@@ -14516,6 +14525,19 @@ components:
           items:
             type: string
           uniqueItems: true
+    ExportContentRequest:
+      type: object
+      properties:
+        docRefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
+          uniqueItems: true
+        includedTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     ExpressionCriteria:
       type: object
       properties:
@@ -14876,6 +14898,8 @@ components:
           items:
             $ref: "#/components/schemas/ExplorerNodeKey"
           uniqueItems: true
+        refresh:
+          type: boolean
         showAlerts:
           type: boolean
         temporaryOpenedItems:
@@ -17020,6 +17044,12 @@ components:
             $ref: "#/components/schemas/DocRef"
           key:
             type: string
+          multiSelect:
+            type: boolean
+          selectedValues:
+            type: array
+            items:
+              type: string
           useDictionary:
             type: boolean
           value:
@@ -18005,6 +18035,7 @@ components:
           - COLLAPSE_UP
           - CONTENT_STORE
           - COPY
+          - CUT
           - DATABASE
           - DELETE
           - DEPENDENCIES
@@ -18120,6 +18151,7 @@ components:
           - OPEN
           - OPERATOR
           - PASSWORD
+          - PASTE
           - PATHWAYS_CHOICE
           - PATHWAYS_NODE
           - PATHWAYS_SEQUENCE
@@ -18153,6 +18185,7 @@ components:
           - PROPERTIES
           - QUESTION
           - RAW
+          - REDO
           - REFRESH
           - REGEX
           - REMOVE
@@ -18163,6 +18196,7 @@ components:
           - SAVEAS
           - SEARCH
           - SELECTION
+          - SELECT_ALL
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
@@ -18905,10 +18939,6 @@ components:
           $ref: "#/components/schemas/PageRequest"
         searchRequest:
           $ref: "#/components/schemas/QuerySearchRequest"
-        selections:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ColumnValueSelection"
     QueryComponentSettings:
       type: object
       allOf:
@@ -19030,6 +19060,7 @@ components:
             \ with', 'ends with (CS)'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', '!='"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
@@ -22648,7 +22679,16 @@ components:
       - $ref: "#/components/schemas/ComponentSettings"
       - type: object
         properties:
+          format:
+            type: string
+            enum:
+            - TEXT
+            - NUMBER
+            - DATE_TIME
+            - PATTERN
           key:
+            type: string
+          pattern:
             type: string
           value:
             type: string
@@ -23002,9 +23042,6 @@ components:
           type: string
         nodeMonitoring:
           $ref: "#/components/schemas/NodeMonitoringConfig"
-        oncontextmenu:
-          type: string
-          pattern: ^return (true|false);$
         process:
           $ref: "#/components/schemas/ProcessConfig"
         query:
@@ -23246,10 +23283,17 @@ components:
             type: array
             items:
               type: string
+        textContextMenu:
+          type: string
+          enum:
+          - STROOM
+          - BROWSER
         theme:
           type: string
         timeZone:
           $ref: "#/components/schemas/UserTimeZone"
+        visualisationPalette:
+          type: string
     UserRef:
       type: object
       properties:

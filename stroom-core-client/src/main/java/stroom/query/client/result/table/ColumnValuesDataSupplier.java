@@ -19,14 +19,12 @@ package stroom.query.client.result.table;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.Column;
-import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.widget.task.client.TaskMonitorFactory;
 
 import com.google.gwt.view.client.Range;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class ColumnValuesDataSupplier {
@@ -42,16 +40,14 @@ public abstract class ColumnValuesDataSupplier {
         this.conditionalFormattingRules = conditionalFormattingRules;
     }
 
-    /// Fetches a page of the column's values.
+    /// Fetches a page of the column's values, available ones first.
     ///
     /// @param range        The page.
     /// @param dataConsumer Given the page of values.
     /// @param errorHandler Told why it failed.
-    /// @param selections   Every column's selection, which the values fetched match, or null.
     public abstract void exec(Range range,
                               Consumer<ColumnValues> dataConsumer,
-                              RestErrorHandler errorHandler,
-                              Map<String, ColumnValueSelection> selections);
+                              RestErrorHandler errorHandler);
 
     public Column getColumn() {
         return column;

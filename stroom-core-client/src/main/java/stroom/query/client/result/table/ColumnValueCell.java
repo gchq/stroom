@@ -47,7 +47,10 @@ public class ColumnValueCell extends AbstractCell<ColumnValue> {
                 outer.append(TICK_BOX.getPicture(stateOf(columnValueSelection, item)));
 
                 outer.div(item.getValue(), Attribute.className("column-value-cell__text"));
-            }, Attribute.className("column-value-cell"));
+            }, Attribute.className(item.isAvailable()
+                    ? "column-value-cell"
+                    // A value no row in the table has, given its other filters: faded, but it can still be ticked
+                    : "column-value-cell column-value-cell--unavailable"));
         }
     }
 
