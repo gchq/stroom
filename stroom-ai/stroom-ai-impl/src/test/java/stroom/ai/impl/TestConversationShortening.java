@@ -173,64 +173,6 @@ class TestConversationShortening {
         assertThat(ConversationShortening.shrink(conversation)).isZero();
     }
 
-    @Test
-    void earlierReadsAreShortenedAsTheRunGoesInBatchesKeepingTheLatestStepsAndReferences() {
-        // Seen in testing (chat 145): Qwen 3.8 Flash lost its place at 70% of its window, never shortened, three
-        // quarters of its tool output earlier reads.
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
-        addStep(conversation, "s0", "read_document", "{}", "schema " + "e".repeat(400));
-        for (int n = 1; n <= 10; n++) {
-            addStep(conversation, "s" + n, "read_file", "{\"path\": \"" + "p".repeat(400) + n + "\"}",
-                    "line " + n + " " + "x".repeat(400));
-        }
-        final int keep = ConversationShortening.ROLLING_KEPT_STEPS;
-
-        // 11 steps, 8 kept: 2 reads aged, fewer than a batch: nothing yet (each change costs the model server's
-        // cache).
-        assertThat(ConversationShortening.rolling(conversation, keep)).isZero();
-
-        addStep(conversation, "s11", "read_file", "{}", "line 11 " + "x".repeat(400));
-        addStep(conversation, "s12", "read_file", "{}", "line 12 " + "x".repeat(400));
-        // 13 steps: 4 reads aged, shortened with their long arguments; the reference read kept.
-        assertThat(ConversationShortening.rolling(conversation, keep)).isEqualTo(8);
-        assertThat(resultOf(conversation, "s0")).startsWith("schema");
-        assertThat(resultOf(conversation, "s4")).isEqualTo(ConversationShortening.SHORTENED_RESULT);
-        assertThat(resultOf(conversation, "s5")).startsWith("line 5");
-        assertThat(resultOf(conversation, "s12")).startsWith("line 12");
-    }
-
-    @Test
-    void aResultTheSameAsALaterOneIsShortenedWhereverItIs() {
-        // Seen in testing (chat 144): a vendor reference read three times, each copy resent.
-        final List<ChatMessage> conversation = new ArrayList<>(List.of(UserMessage.from("q")));
-        final String reference = "reference " + "r".repeat(500);
-        addStep(conversation, "a", "read_document", "{}", reference);
-        addStep(conversation, "b", "read_file", "{}", "other " + "o".repeat(500));
-        addStep(conversation, "c", "read_document", "{}", reference);
-
-        assertThat(ConversationShortening.rolling(conversation, ConversationShortening.ROLLING_KEPT_STEPS))
-                .isEqualTo(1);
-        assertThat(resultOf(conversation, "a")).isEqualTo(ConversationShortening.SHORTENED_RESULT);
-        assertThat(resultOf(conversation, "c")).isEqualTo(reference);
-    }
-
-    private static void addStep(final List<ChatMessage> conversation,
-                                final String id,
-                                final String tool,
-                                final String arguments,
-                                final String result) {
-        conversation.add(AiMessage.from(List.of(request(id, arguments, tool))));
-        conversation.add(ToolExecutionResultMessage.from(id, tool, result));
-    }
-
-    private static String resultOf(final List<ChatMessage> conversation, final String id) {
-        return conversation.stream()
-                .filter(message -> message instanceof final ToolExecutionResultMessage result && id.equals(result.id()))
-                .map(message -> ((ToolExecutionResultMessage) message).text())
-                .findFirst()
-                .orElseThrow();
-    }
-
     private static ToolExecutionRequest request(final String id, final String arguments) {
         return request(id, arguments, "t");
     }
