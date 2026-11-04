@@ -45,10 +45,12 @@ class BuildStatusTool extends AbstractBuiltInTool {
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
 
     private final BuildPlan plan;
+    private final PendingDocumentation pendingDocs;
 
     @Inject
-    BuildStatusTool(final BuildPlan plan) {
+    BuildStatusTool(final BuildPlan plan, final PendingDocumentation pendingDocs) {
         this.plan = plan;
+        this.pendingDocs = pendingDocs;
     }
 
     @Override
@@ -96,7 +98,10 @@ class BuildStatusTool extends AbstractBuiltInTool {
                                        + "(e.g. 'onboard-acme-door').");
         }
         try {
-            final Map<String, Object> status = plan.status(build, null);
+            final Map<String, Object> status = new LinkedHashMap<>(plan.status(build, null));
+            // A doc write_documentation asked descriptions for and didn't write: not done, whatever else says so.
+            pendingDocs.warning(context.session()).ifPresent(warning -> status.put("documentation_pending",
+                    warning));
             return JsonResults.of(Boolean.parseBoolean(stringArg(call, FULL_ARG))
                     ? status
                     : compact(status));
