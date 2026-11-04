@@ -7,11 +7,11 @@
     <g:FlowPanel styleName="floormap-list">
         <b:Toolbar name="Fact list actions" addStyleNames="floormap-list__toolbar">
             <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add New Object"/>
-            <b:ToolbarButton ui:field="endButton" svg="REMOVE" title="Delete From This Time (keeps history)"
+            <b:ToolbarButton ui:field="endButton" svg="REMOVE" title="Delete From This Time (keeps history)" label="Delete From This Time"
                              enabled="false"/>
-            <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Erase History (delete every version)"
+            <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Erase History (delete every version)" label="Erase History"
                              enabled="false"/>
-            <b:ToolbarToggleButton ui:field="showAllButton" svg="HISTORY" title="Show All (ignore time filter)"/>
+            <b:ToolbarToggleButton ui:field="showAllButton" svg="HISTORY" title="Show All (ignore time filter)" label="Show All"/>
             <b:ToolbarButton ui:field="helpButton" svg="HELP_OUTLINE" title="Fact List help"/>
         </b:Toolbar>
         <dg:DataGrid ui:field="dataGrid" tableName="Facts" addStyleNames="floormap-list__grid"/>

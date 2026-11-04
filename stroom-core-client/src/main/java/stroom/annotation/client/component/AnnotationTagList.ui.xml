@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Tag actions" addStyleNames="default-min-sizes">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Annotation Tag"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Annotation Tag" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Annotation Tag"
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Annotation Tag" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Annotation Tag" label="Delete"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Annotation Tags"/>
     </dg:PagerPanel>

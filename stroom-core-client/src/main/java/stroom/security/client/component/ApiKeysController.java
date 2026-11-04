@@ -81,7 +81,7 @@ public class ApiKeysController extends ContentTabController
         editButton = apiKeysList.getToolbar().button(SvgImage.EDIT, "Edit Selected API Key",
                 this::editSelectedKey);
         editButton.setEnabled(false);
-        deleteButton = apiKeysList.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key",
+        deleteButton = apiKeysList.getToolbar().button(SvgImage.DELETE, "Delete Selected API Key", "Delete",
                 this::deleteSelectedKeys);
         deleteButton.setEnabled(false);
 

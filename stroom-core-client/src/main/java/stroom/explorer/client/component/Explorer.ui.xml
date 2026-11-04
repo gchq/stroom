@@ -13,7 +13,7 @@
                  left out of the tab order (-2, as FocusWidget.onAttach turns -1 back into 0) and
                  hidden from them -->
             <b:Button ui:field="logo" styleName="explorer__logo" tabIndex="-2" ariaHidden="true"/>
-            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet explorer__menu">
+            <b:Toolbar name="Main Menu" addStyleNames="toolbar--quiet explorer__menu toolbar--icons">
                 <b:ToolbarButton ui:field="mainMenuButton" svg="MENU" title="Main Menu" opensMenu="true"/>
             </b:Toolbar>
         </g:FlowPanel>
@@ -25,7 +25,7 @@
             <!-- The explorer's buttons: one toolbar, so one tab stop -->
             <b:Toolbar name="Explorer" addStyleNames="toolbar--navigation">
                 <b:ToolbarButton ui:field="add" svg="ADD" title="New Document" opensMenu="true" enabled="false"/>
-                <b:ToolbarButton ui:field="delete" svg="DELETE" title="Delete Selected Documents" enabled="false"/>
+                <b:ToolbarButton ui:field="delete" svg="DELETE" title="Delete Selected Documents" label="Delete" enabled="false"/>
                 <b:ToolbarToggleButton ui:field="showAlerts" svg="EXCLAMATION" title="Show Alerts"/>
                 <b:ToolbarButton ui:field="locate" svg="LOCATE" title="Locate Current Item" enabled="false"/>
                 <b:ToolbarButton ui:field="expandAll" svg="EXPAND_ALL" title="Expand All Folders"/>

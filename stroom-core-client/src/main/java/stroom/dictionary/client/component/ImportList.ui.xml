@@ -4,8 +4,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel toolbarName="Dictionary actions">
-        <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Imported Dictionary"/>
-        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Imported Dictionary"/>
+        <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Imported Dictionary" label="Add"/>
+        <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Imported Dictionary" label="Remove"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Document References"/>
     </dg:PagerPanel>
 </ui:UiBinder>

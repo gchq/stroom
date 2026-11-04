@@ -10,7 +10,7 @@
                         helpText="The full name of the property, e.g. stroom.ui.namePattern. Use the copy button to copy it.">
             <g:FlowPanel addStyleNames="inline-label-icon">
                 <tx:Label ui:field="name" addStyleNames="text-label--value inline-label-icon__label"/>
-                <b:Toolbar name="Name actions" addStyleNames="global-property-editor__name-actions">
+                <b:Toolbar name="Name actions" addStyleNames="global-property-editor__name-actions toolbar--icons">
                     <b:ToolbarButton ui:field="copyNameButton" svg="COPY" title="Copy Property Name"
                                      addStyleNames="icon-wrap global-property-editor__copy-name"/>
                 </b:Toolbar>
@@ -54,11 +54,11 @@
                         helpText="The value the nodes are actually using: the YAML value if set, otherwise the database value, otherwise the default. A warning icon shows if nodes differ in value or source, or a node could not be checked; select it to see each node's value."
                         screenReaderText="Read only. YAML value, else database value, else default.">
             <g:FlowPanel>
-                <b:Toolbar name="Effective value actions">
+                <b:Toolbar name="Effective value actions" addStyleNames="toolbar--icons">
                     <b:ToolbarButton ui:field="effectiveValueWarnings" svg="ALERT" title="Show Cluster Values"
                                      visible="false"/>
                     <b:ToolbarButton ui:field="effectiveValueInfo" svg="INFO"
-                                     title="Show Cluster Values (all nodes have the same effective value)"
+                                     title="Show Cluster Values (all nodes have the same effective value)" label="Show Cluster Values"
                                      visible="false"/>
                 </b:Toolbar>
                 <form:TextArea ui:field="effectiveValue" readOnly="true"
@@ -69,8 +69,8 @@
                         helpText="The type of value the property takes, which sets the format to use. The help button beside the type name gives details of each type.">
             <g:FlowPanel addStyleNames="global-property-editor__data-type">
                 <tx:Label ui:field="dataType"/>
-                <b:Toolbar name="Data type actions" addStyleNames="global-property-editor__help">
-                    <b:ToolbarButton ui:field="dataTypeHelp" svg="HELP" title="Help on Data Types (opens in new tab)"/>
+                <b:Toolbar name="Data type actions" addStyleNames="global-property-editor__help toolbar--icons">
+                    <b:ToolbarButton ui:field="dataTypeHelp" svg="HELP" title="Help on Data Types (opens in new tab)" label="Help"/>
                 </b:Toolbar>
             </g:FlowPanel>
         </form:FormGroup>

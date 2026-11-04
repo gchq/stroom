@@ -122,7 +122,8 @@ public class UserPreferencesEditorController extends Controller {
             read(userPreferences);
             ControllerDialog.showOnce(opener, this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(PopupSize.resizable(640, 588, 533, 588))
+                    // Tall enough for the Theme tab, its longest (with Toolbar Buttons)
+                    .popupSize(PopupSize.resizable(640, 648, 533, 648))
                     .caption("User Preferences")
                     .onShow(e -> themePreferences.focus())
                     .onHideRequest(this::onHideRequest)

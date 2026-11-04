@@ -111,7 +111,7 @@ public class AnnotationTabs extends TabbedController<Annotation> {
                     description = documentationTabProvider.get();
                     description.followReadOnly();
                     description.setAddButtonsFirst(toolbar -> {
-                        saveButton = toolbar.button(SvgImage.SAVE, "Save Annotation Description",
+                        saveButton = toolbar.button(SvgImage.SAVE, "Save Annotation Description", "Save",
                                 this::saveDescription);
                         saveButton.setEnabled(descriptionDirty);
                     });

@@ -91,7 +91,8 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
-        downloadButton = getToolbar().button(SvgImage.DOWNLOAD, "Download Dictionary Words", this::download);
+        downloadButton = getToolbar().button(SvgImage.DOWNLOAD, "Download Dictionary Words",
+                "Download", this::download);
         downloadButton.setEnabled(false);
 
         addTab(WORDS,

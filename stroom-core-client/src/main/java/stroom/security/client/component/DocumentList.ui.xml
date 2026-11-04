@@ -5,10 +5,10 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Document permission actions">
-        <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Documents to Apply Permission Changes To"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Permissions For Selected Document"
+        <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Documents to Apply Permission Changes To" label="Filter Documents"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Permissions For Selected Document" label="Edit Permissions"
                          enabled="false"/>
-        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Permissions For Filtered Documents"
+        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Permissions For Filtered Documents" label="Batch Edit"
                          enabled="false"/>
         <dg:DataGrid ui:field="resultList" pageSize="100" profile="LISTBOX" accessibleName="Documents"
                      striped="true"/>

@@ -7,7 +7,7 @@
     <g:FlowPanel styleName="floormap-list">
         <b:Toolbar name="Group actions" addStyleNames="floormap-list__toolbar">
             <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Group"/>
-            <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Group (name, colour and members)"
+            <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Group (name, colour and members)" label="Edit Group"
                              enabled="false"/>
             <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Group" enabled="false"/>
         </b:Toolbar>

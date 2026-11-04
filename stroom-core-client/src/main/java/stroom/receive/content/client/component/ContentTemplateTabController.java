@@ -130,10 +130,10 @@ public class ContentTemplateTabController extends ContentTabController
                 this::onAddBelow);
         editButton = contentTemplateList.getToolbar().button(SvgImage.EDIT, "Edit Selected Template", this::onEdit);
         editButton.setEnabled(false);
-        copyButton = contentTemplateList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template",
+        copyButton = contentTemplateList.getToolbar().button(SvgImage.COPY, "Duplicate Selected Template", "Duplicate",
                 this::onCopy);
         copyButton.setEnabled(false);
-        deleteButton = contentTemplateList.getToolbar().button(SvgImage.DELETE, "Delete Selected Template",
+        deleteButton = contentTemplateList.getToolbar().button(SvgImage.DELETE, "Delete Selected Template", "Delete",
                 this::onDelete);
         deleteButton.setEnabled(false);
         moveUpButton = contentTemplateList.getToolbar().button(SvgImage.UP, "Move Template Up", this::onMoveUp);

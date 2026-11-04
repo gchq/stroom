@@ -5,7 +5,7 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel toolbarName="Script actions">
         <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Script Dependency"/>
-        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Script Dependency"
+        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Script Dependency" label="Remove"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Script Dependencies"/>
     </dg:PagerPanel>

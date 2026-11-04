@@ -19,6 +19,13 @@
                         screenReaderText="Comfortable or Compact.">
             <item:SelectionBox ui:field="density" addStyleNames="w-100"/>
         </form:FormGroup>
+        <!-- Toolbar Buttons -->
+        <form:FormGroup identity="userPreferencesToolbarDisplay"
+                        label="Toolbar Buttons"
+                        helpText="How the buttons in toolbars are shown: as Icons, with each button's name as its tooltip; as Icons and Text, each with a short name beside it; or as Text alone. Buttons that don't fit their toolbar go in its More menu. Buttons in or beside fields stay icons. Default is Icons."
+                        screenReaderText="Icons, Icons and Text, or Text.">
+            <item:SelectionBox ui:field="toolbarDisplay" addStyleNames="w-100"/>
+        </form:FormGroup>
         <!-- Font -->
         <form:FormGroup identity="userPreferencesFont"
                         label="Font"

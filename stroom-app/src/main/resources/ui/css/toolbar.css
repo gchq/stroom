@@ -68,6 +68,28 @@
     background-color: var(--border-color);
 }
 
+/* Where the user's toolbar display preference shows text, an action toolbar may be narrower than
+   its buttons, which it then fits by moving those at its end into its More menu (Toolbar.fit). A
+   toolbar kept to icons whatever the preference (toolbar--icons, e.g. a pager's arrows and the main
+   toolbar's buttons), in or beside a field (toolbar--control) or part of what it sits in
+   (toolbar--text-colour) isn't */
+.toolbar-display--icons-and-text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons),
+.toolbar-display--text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons) {
+    min-width: 0;
+}
+
+/* Text alone: the buttons, which have borders then (toolbar-button.css), 4px apart, so that they
+   look like buttons side by side rather than one strip */
+.toolbar-display--text .toolbar:not(.toolbar--control):not(.toolbar--text-colour):not(.toolbar--icons) {
+    gap: 4px;
+}
+
+/* A button or separator that doesn't fit the toolbar, in its More menu instead, and the More button
+   (the toolbar's last) while every button fits (Toolbar.fit) */
+.toolbar__item--overflowed {
+    display: none !important;
+}
+
 /* A toolbar pushed to the end of its row, e.g. a floor map editor's help toolbar */
 .toolbar--end {
     margin-left: auto;

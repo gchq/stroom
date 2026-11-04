@@ -269,7 +269,7 @@ public class QueryResultTableController
                 pressed -> toggleShowValueFilters());
 
         // Reset button
-        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset Table Customisation",
+        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset Table Customisation", "Reset",
                 this::resetTableCustomisation);
 
         // Annotate

@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Profile actions" addStyleNames="default-min-sizes">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Processor Profile"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor Profile" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processor Profiles"
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor Profile" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processor Profiles" label="Delete"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Processor Profiles"/>
     </dg:PagerPanel>

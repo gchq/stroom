@@ -12,7 +12,7 @@
             <b:ToolbarButton ui:field="addToGroupButton" svg="ADD" title="Add to Group" opensMenu="true"
                              enabled="false"/>
             <b:ToolbarToggleButton ui:field="showFactsButton" svg="LOCATE"
-                                   title="Show Facts (objects, backgrounds and areas)"/>
+                                   title="Show Facts (objects, backgrounds and areas)" label="Show Facts"/>
         </b:Toolbar>
         <dg:DataGrid ui:field="dataGrid" tableName="Tracking" addStyleNames="floormap-list__grid"/>
     </g:FlowPanel>

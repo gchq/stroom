@@ -178,7 +178,7 @@ public class DocumentationTabController extends Controller implements HasToolbar
             }
             editModeButton = toolbar.toggle(SvgImage.EDIT, "Edit Documentation", pressed -> toggleEditMode());
             editModeButton.setPressed(editMode);
-            toolbar.button(SvgImage.HELP, "Help with Documentation (opens in new tab)", this::showHelp);
+            toolbar.button(SvgImage.HELP, "Help with Documentation (opens in new tab)", "Help", this::showHelp);
         }
         return toolbar;
     }

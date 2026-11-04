@@ -1805,12 +1805,32 @@ split panel is left. The floor map's views (its editor and map, added since, mov
 
 ### Toolbars can't show their buttons' names as text
 
-**Open** (30 October 2026, moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
-(later)): toolbars are icon only; a button's name is its tooltip and what a screen reader
-announces. The agreed preference (icons only, text only, or icons and text) isn't implemented:
-nothing has a `toolbar-button__label` or a `toolbar-display--*` page class. The design says what it
-needs: a label element in `ToolbarButton`, the preference applied as a page class as the theme and
-density are (`ThemeCssUtil.getCurrentPreferenceClasses`), and wider buttons when they show text.
+**Fixed** (4 November 2026; COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference;
+`Widgets/Buttons/ToolbarDisplay`). The user's Toolbar Buttons preference (User Preferences, Theme)
+shows an action toolbar's buttons as icons (the default), icons and text, or text, the text-only
+buttons bordered; 114 buttons have short labels, the rest show their names; buttons that don't fit
+go into a More menu. `TestToolbarButtonLabels` checks each label is the start of its name.
+
+Found 30 October 2026 (moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
+(later)): toolbars were icons only; a button's name is its tooltip and what a screen reader
+announces. The agreed preference (icons only, text only, or icons and text) wasn't implemented.
+
+**Decided** (4 November 2026, the user's choices): a preference of three, icons only (the default,
+as now), icons and text, or text only, on User Preferences' Theme tab beside Density
+(`UserPreferences`).
+
+* **Labels:** a button shows a short label (e.g. "Edit", "Batch Edit"), written for it, that its
+  name starts with, so that its screen reader name still contains what it shows (WCAG 2.5.3, label
+  in name); its name stays its tooltip. A button whose name is already short shows its name.
+  Measured: about 195 buttons in 50 toolbars; names average 19 characters, 57 are over 25 (up to
+  61, "Show Cluster Values (all nodes have the same effective value)").
+* **No room:** buttons that don't fit go into a "More" (⋯) menu at the end of the toolbar, as tabs
+  overflow into the » selector, so every button stays reachable.
+* **Scope:** action toolbars (a document's, a list's, a dialog's, a pane's) follow it; buttons in or
+  beside fields (quick filter help, show password, a spinner's arrows), the pager's arrows, window
+  options and the main toolbar's icons stay icons only.
+* **Text only:** no icons anywhere; a button whose icon shows a state says it in its label instead,
+  as its name already does ("Pause" / "Resume", "Disable" / "Enable").
 
 ### Text size and high contrast (#3695)
 

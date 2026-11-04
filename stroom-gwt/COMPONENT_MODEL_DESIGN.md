@@ -353,15 +353,20 @@ save.setEnabled(dirty);
 - **A name for every group.** `Toolbar`'s constructor requires the name that is announced with `role="toolbar"`.
 - **Groups apart on a row are a `ToolbarRow`.** A row lays out named toolbars with space between them, e.g. a list's actions at the start and its pager at the end, each its own tab stop.
 
-### Display preference (later)
+### Display preference
 
-(ISSUES.md: Toolbars can't show their buttons' names as text)
+(ISSUES.md: Toolbars can't show their buttons' names as text; built 4 November 2026)
 
-Toolbars are icon only for now: every button shows its icon, and its name is its tooltip (shown on hover and, by `FocusTooltip`, on keyboard focus) and what a screen reader announces. Some users would find text easier, so a user preference should later choose how toolbars are shown: icons only, text only, or icons and text. Each `ToolbarButton` already has the text (its name), so this needs only:
+Every button's name is its tooltip (shown on hover and, by `FocusTooltip`, on keyboard focus) and what a screen reader announces. The user's Toolbar Buttons preference (User Preferences, Theme; `UserPreferences.ToolbarDisplay`) chooses how an action toolbar shows its buttons: Icons (the default), Icons and Text, or Text.
 
-- a label element in the button (`toolbar-button__label`), holding its name, hidden while icons only;
-- the preference applied as a class on the page, as the theme and density preferences already are (`ThemeCssUtil.getCurrentPreferenceClasses`), e.g. `toolbar-display--text`, which `toolbar.css` reads to show the label, the icon or both;
-- wider buttons when they show text, so `target-size` and the arrow keys are unaffected.
+- **The label.** A `ToolbarButton` holds a label (`toolbar-button__label`, hidden from screen readers, which read the name). It shows the name, or a shorter label (`label="Edit"` in a template, `setLabel`, or `Toolbar.button(icon, name, label, onClick)`) where the name is long, e.g. "Edit" for "Edit Selected Index Field". The name must start with the label, so that what a button shows is in what a screen reader reads (WCAG 2.5.3, label in name); `TestToolbarButtonLabels` checks every label in the templates and in `Toolbar.button` calls. Labels follow a rule: names of 22 characters or fewer show whole; longer ones show their verb (and what it acts on, where that tells two buttons apart, e.g. "Show Tasks", "Batch Edit"), cut before "Selected", a preposition or a bracket.
+- **The page class.** The preference is a class on the page, as the theme and density are (`ThemeCssUtil.getToolbarDisplayClass`: `toolbar-display--icons-and-text` or `toolbar-display--text`; none for icons), which `toolbar-button.css` reads to show the label beside the icon or in its place. Any ancestor will do, so a story can set it on its own panel.
+- **Kept to icons.** A toolbar in or beside a field (`toolbar--control`), part of what it sits in (`toolbar--text-colour`) or marked `toolbar--icons` (a pager's arrows, the main toolbar and sidebar toggle, the main menu, the calendar's arrows, the quick filter, a property's field buttons, the API key's copy button, the tags' move buttons, the floor map's playback, Ask Stroom AI's message actions) shows icons whatever the preference.
+- **Text alone has borders.** With no icons, a button at rest has a 1px border (the border colour; faded with it while disabled; a pressed button has its fill instead), and buttons are 4px apart, so that they read as buttons rather than text, e.g. under a row of link tabs, which are text too (the user's choice, 4 November 2026, over a faint resting fill, which barely showed in the dark theme and left less room for the hover's change).
+- **A pressed button's label** is in its icon's flipped colour, on the pressed fill.
+- **No room.** A button with text is wider (24px high still, so `target-size` and the arrow keys are unaffected), and an action toolbar may be narrower than its buttons (`min-width: 0` while text shows). `Toolbar.fit` then moves the buttons at its end into a More (⋯) menu, a button it adds at its end only while some don't fit (code counts a toolbar's widgets), and fits again when the toolbar's size or the page's classes change.
+
+(`Widgets/Buttons/ToolbarDisplay` shows each, and an overflowing toolbar.)
 
 Buttons that act on one piece of content and are labelled (e.g. the Copy button under each chat reply) are not toolbars: they stay ordinary buttons, a tab stop each.
 

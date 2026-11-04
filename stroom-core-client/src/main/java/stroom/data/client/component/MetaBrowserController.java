@@ -136,29 +136,32 @@ public class MetaBrowserController
 
         // Process
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = metaList.getToolbar().button(SvgImage.PROCESS, "Process Selected Streams",
+            streamListProcess = metaList.getToolbar().button(SvgImage.PROCESS, "Process Selected Streams", "Process",
                     () -> metaList.process());
             streamListProcess.setEnabled(false);
             streamRelationListProcess = metaRelationList.getToolbar().button(SvgImage.PROCESS,
                     "Process Selected Related Streams",
+                    "Process",
                     () -> metaRelationList.process());
             streamRelationListProcess.setEnabled(false);
         }
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(AppPermission.DELETE_DATA_PERMISSION)) {
-            streamListDelete = metaList.getToolbar().button(SvgImage.DELETE, "Delete Selected Streams",
+            streamListDelete = metaList.getToolbar().button(SvgImage.DELETE, "Delete Selected Streams", "Delete",
                     () -> metaList.delete());
             streamListDelete.setEnabled(false);
             streamRelationListDelete = metaRelationList.getToolbar().button(SvgImage.DELETE,
                     "Delete Selected Related Streams",
+                    "Delete",
                     () -> metaRelationList.delete());
             streamRelationListDelete.setEnabled(false);
-            streamListRestore = metaList.getToolbar().button(SvgImage.UNDO, "Restore Selected Streams",
+            streamListRestore = metaList.getToolbar().button(SvgImage.UNDO, "Restore Selected Streams", "Restore",
                     () -> metaList.restore());
             streamListRestore.setEnabled(false);
             streamRelationListRestore = metaRelationList.getToolbar().button(SvgImage.UNDO,
                     "Restore Selected Related Streams",
+                    "Restore",
                     () -> metaRelationList.restore());
             streamRelationListRestore.setEnabled(false);
         }
@@ -166,16 +169,19 @@ public class MetaBrowserController
         // Selection information
         streamListInfo = metaList.getToolbar().button(SvgImage.INFO,
                 "Show Summary of Selected Streams",
+                "Show Summary",
                 () -> metaList.info());
 
         // Download
         if (securityContext.hasAppPermission(AppPermission.EXPORT_DATA_PERMISSION)) {
             streamListDownload = metaList.getToolbar().button(SvgImage.DOWNLOAD,
                     "Download Selected Streams",
+                    "Download",
                     () -> metaList.download());
             streamListDownload.setEnabled(false);
             streamRelationListDownload = metaRelationList.getToolbar().button(SvgImage.DOWNLOAD,
                     "Download Selected Related Streams",
+                    "Download",
                     () -> metaRelationList.download());
             streamRelationListDownload.setEnabled(false);
         }

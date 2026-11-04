@@ -6,8 +6,8 @@
     <dg:PagerPanel toolbarName="Feed dependency actions"
                    addStyleNames="control-box">
         <b:ToolbarButton ui:field="addButton" svg="ADD" title="New Feed Dependency"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Feed Dependency" enabled="false"/>
-        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Feed Dependency"
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Feed Dependency" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Feed Dependency" label="Remove"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Feed Dependencies" multiLine="true"/>
     </dg:PagerPanel>
