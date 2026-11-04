@@ -1170,9 +1170,11 @@ public final class SampleProfiler {
     /// @return Its profile.
     /// @throws ToolRefusal if it starts as JSON and isn't JSON.
     public static Map<String, Object> profile(final String sample, final int maxRecords) {
-        final String text = ToolText.strip(sample, "\uFEFF\r\n ");
+        // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
+        final String text = ToolText.strip(StroomInput.asParsed(sample), "\uFEFF\r\n ");
         final List<String> lines = ToolText.nonBlankLines(text);
         final Map<String, Object> result = map("characters", ToolText.len(sample), "lines", lines.size());
+        StroomInput.removedNote(List.of(sample)).ifPresent(note -> result.put("removed_characters", note));
         if (text.startsWith("<") && !ToolText.match(SYSLOG_5424, text) && !ToolText.match(SYSLOG_3164, text)) {
             final Map<String, Object> xml = profileXml(text, result, maxRecords);
             if (xml != null) {
@@ -1415,6 +1417,10 @@ public final class SampleProfiler {
                                         + "(build_data_splitter infers it); the mapping joins the parts with xpath "
                                         + SplitterDryRun.CRI_JOIN);
         }
+        final Map<String, Object> separated = separatedKeyedLines(text, lines, result, maxRecords);
+        if (separated != null) {
+            return separated;
+        }
         final boolean pairsMostly = !firsts.isEmpty() && firsts.subList(0, Math.min(maxRecords, firsts.size())).stream()
                 .filter(line -> keyValues(line).size() >= 3)
                 .count() >= 0.8 * Math.min(maxRecords, firsts.size());
@@ -1457,9 +1463,51 @@ public final class SampleProfiler {
             }
             found.putAll(malformed(bad, "Stroom's Data Splitter writes no record for such a line and reports it as "
                                         + "content its expressions failed to match"));
+            if (grouped == null) {
+                keyed(found, firsts);
+            }
             return found;
         }
         return null;
+    }
+
+    // Key=value lines tied into records by a key, with separator lines between the records (ausearch's ---- and
+    // time->...): profiled without them, and they are passed over (skip_lines). Null unless the rest are such lines.
+    private static Map<String, Object> separatedKeyedLines(final String text,
+                                                           final List<String> lines,
+                                                           final Map<String, Object> result,
+                                                           final int maxRecords) {
+        final String skip = KeyedRecords.separators(lines);
+        if (skip == null) {
+            return null;
+        }
+        final Pattern skipped = Pattern.compile(skip);
+        final List<String> kept = lines.stream().filter(line -> !skipped.matcher(line).lookingAt()).toList();
+        final Map<String, Object> found = profileLines(text, kept, new LinkedHashMap<>(result), maxRecords);
+        if (found == null || found.get("record_key") == null) {
+            return null;
+        }
+        found.put("skip_lines", skip);
+        found.put("skipped_lines", lines.size() - kept.size());
+        return found;
+    }
+
+    // Lines tied into records by a key each holds (auditd's msg=audit(...) envelope): the key, the field naming each
+    // line, and how many records the lines make.
+    private static void keyed(final Map<String, Object> found, final List<String> lines) {
+        final Map<String, Object> keyed = KeyedRecords.suggest(lines);
+        if (keyed == null) {
+            return;
+        }
+        found.put("lines", lines.size());
+        found.putAll(keyed);
+        found.put("suggested_parser", "Data Splitter for key=value lines tied into records by the field '"
+                                      + keyed.get("key_field") + "': consecutive lines with one value are one record"
+                                      + (keyed.get("lead_field") == null
+                ? ""
+                : ", each line's fields under its " + keyed.get("lead_field") + " (e.g. SYSCALL/exe), the first "
+                  + "line's " + keyed.get("lead_field") + " the record's")
+                                      + " (build_data_splitter infers record_key and line_name)");
     }
 
     // A format read a line a record, its records' first lines judged: with lines that continue them, where a

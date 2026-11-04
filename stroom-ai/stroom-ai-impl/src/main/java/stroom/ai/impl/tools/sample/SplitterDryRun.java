@@ -85,6 +85,8 @@ public final class SplitterDryRun {
     private static final Pattern BLANK_LINE_RECORDS = Pattern.compile(BLANK_LINE_RECORD);
 
     private static final Pattern CEF = Pattern.compile(CEF_PATTERN);
+    // White space between key=value pairs: any.
+    private static final String WHITE_SPACE = "\\s";
     /// The variant of a header line giving the date of the lines after it.
     public static final String HEADER_VARIANT = "header";
     /// The field its date is written in.
@@ -139,9 +141,7 @@ public final class SplitterDryRun {
     /// @param spec A key_value spec.
     /// @return The regexes.
     public static List<String> kvPatterns(final SplitterSpec spec) {
-        final String d = ToolText.isBlank(spec.delimiter())
-                ? "\\s"
-                : ToolText.escape(spec.delimiter());
+        final String d = delimiterIn(spec);
         final String s = ToolText.escape(spec.pairSeparator());
         final String key = "[^" + s + d + "]+";
         if (spec.quote() != null) {
@@ -149,10 +149,36 @@ public final class SplitterDryRun {
             // match.
             // A quoted value may hold the quote escaped (msg="said \"hi\""): kept as written.
             final String q = ToolText.escape(spec.quote());
-            return List.of(d + "*(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q + "\\\\])*(?=" + q
-                           + ")|(?<!" + q + ")[^" + d + q + "]*)" + q + "?");
+            return List.of(delimiter(spec) + "*(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q
+                           + "\\\\])*(?=" + q + ")|(?<!" + q + ")[^" + d + q + "]*)" + q + "?");
         }
-        return List.of(d + "*(" + key + ")" + s + "([^" + d + "]*)");
+        return List.of(delimiter(spec) + "*(" + key + ")" + s + "([^" + d + "]*)");
+    }
+
+    // A key_value spec's delimiter as a regex, and as a character class's content.
+    private static String delimiter(final SplitterSpec spec) {
+        return ToolText.isBlank(spec.delimiter())
+                ? WHITE_SPACE
+                : ToolText.escape(spec.delimiter());
+    }
+
+    private static String delimiterIn(final SplitterSpec spec) {
+        return ToolText.isBlank(spec.delimiter())
+                ? WHITE_SPACE
+                : ToolText.escape(spec.delimiter());
+    }
+
+    /// The regexes for a single-quoted key=value value (single_quotes), tried before the pair's own at each place:
+    /// the first a value made of pairs (auditd's `msg='op=login res=success'`, group 2 read as pairs), the second any
+    /// other (group 2 the value without its quotes). Matched from the place they are tried at: the converter anchors
+    /// them (`^`), as Stroom takes a sibling's match anywhere in the text, with an error.
+    ///
+    /// @param spec A key_value spec.
+    /// @return The two regexes.
+    public static List<String> singleQuotedPatterns(final SplitterSpec spec) {
+        final String s = ToolText.escape(spec.pairSeparator());
+        final String key = delimiter(spec) + "*([^" + s + delimiterIn(spec) + "'\"]+)" + s + "'";
+        return List.of(key + "([^']*" + s + "[^']*)'", key + "([^']*)'");
     }
 
     /// The regex for one key=value pair whose value may hold the delimiter unquoted, matched along the record
@@ -250,6 +276,9 @@ public final class SplitterDryRun {
     /// @return The fields, or null when the record doesn't match (no data elements would be written).
     public static Map<String, String> applyRecord(final SplitterSpec spec, final String text,
                                                   final List<String> heading) {
+        if (spec.recordKey() != null) {
+            return KeyedRecords.apply(spec, text);
+        }
         if (spec.continuation()) {
             return withContinuation(spec, text, heading);
         }
@@ -444,9 +473,29 @@ public final class SplitterDryRun {
         }
         final List<Pattern> patterns = new ArrayList<>();
         kvPatterns(spec).forEach(p -> patterns.add(Pattern.compile(p)));
+        final List<Pattern> quoted = spec.singleQuotes()
+                ? singleQuotedPatterns(spec).stream().map(Pattern::compile).toList()
+                : List.of();
         final Map<String, String> fields = new LinkedHashMap<>();
         int at = 0;
         while (at < text.length()) {
+            final Matcher pairs = quoted.isEmpty()
+                    ? null
+                    : ToolText.matchFrom(quoted.getFirst(), new DeadlineCharSequence(text), at);
+            if (pairs != null) {
+                // A single-quoted value of pairs: the record's own pairs, after those before it.
+                applyKeyValue(spec, pairs.group(2)).forEach(fields::putIfAbsent);
+                at = pairs.end();
+                continue;
+            }
+            final Matcher single = quoted.isEmpty()
+                    ? null
+                    : ToolText.matchFrom(quoted.getLast(), new DeadlineCharSequence(text), at);
+            if (single != null) {
+                fields.putIfAbsent(single.group(1), ToolText.strip(single.group(2)));
+                at = single.end();
+                continue;
+            }
             Matcher found = null;
             for (final Pattern pattern : patterns) {
                 final Matcher m = ToolText.matchFrom(pattern, new DeadlineCharSequence(text), at);
@@ -592,7 +641,8 @@ public final class SplitterDryRun {
     /// text, which needs a regex from a human) and the sample's profile.
     public static Inferred inferSpec(final String sample) {
         final Map<String, Object> info = SampleProfiler.profile(sample);
-        final Inferred inferred = inferFormat(sample, info);
+        // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
+        final Inferred inferred = inferFormat(StroomInput.asParsed(sample), info);
         if (inferred.spec() == null || !Boolean.TRUE.equals(info.get(SplitterSpec.CONTINUATION))) {
             return inferred;
         }
@@ -647,9 +697,22 @@ public final class SplitterDryRun {
         if (SampleProfiler.KEY_VALUE_FORMAT.equals(format)) {
             final boolean quoted = lines.subList(0, Math.min(50, lines.size())).stream()
                     .anyMatch(line -> line.contains("=\""));
-            return new Inferred(SplitterSpec.builder("key_value").delimiter(" ").pairSeparator("=").quote(quoted
-                    ? "\""
-                    : null).spacedValues(!quoted && spacedValues(lines, " ", "=")).build(), info);
+            final SplitterSpec.Builder builder = SplitterSpec.builder("key_value").delimiter(" ").pairSeparator("=")
+                    .quote(quoted
+                            ? "\""
+                            : null)
+                    .spacedValues(!quoted && spacedValues(lines, " ", "="));
+            if (info.get("record_key") instanceof final String key) {
+                // Lines tied into records by a key (auditd): each line's fields under its name, the lines between
+                // records (ausearch's separators) passed over.
+                builder.recordKey(key).keyField((String) info.get("key_field"))
+                        .lineName((String) info.get("line_name")).leadField((String) info.get("lead_field"))
+                        .skipLines((String) info.get("skip_lines"));
+            }
+            // Values in single quotes as well (auditd's msg='op=login ... res=success'): read without them.
+            builder.singleQuotes(lines.subList(0, Math.min(50, lines.size())).stream()
+                    .anyMatch(line -> line.contains("='")));
+            return new Inferred(builder.build(), info);
         }
         if (SampleProfiler.CEF_FORMAT.equals(format)) {
             return new Inferred(cefSpec(lines), info);
@@ -877,7 +940,9 @@ public final class SplitterDryRun {
     /// @return The records, the lines that match nothing, the field names seen, and the heading.
     /// @throws PatternTimeoutException if the spec's patterns take too long to match.
     public static DryRun dryRun(final SplitterSpec spec, final String sample, final int maxRecords) {
-        return SafePattern.limited(patterns(spec), () -> dryRunLimited(spec, sample, maxRecords));
+        // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
+        final String read = StroomInput.asParsed(sample);
+        return SafePattern.limited(patterns(spec), () -> dryRunLimited(spec, read, maxRecords));
     }
 
     // The patterns a spec gives, for the message if they take too long.
@@ -887,7 +952,7 @@ public final class SplitterDryRun {
         for (int n = 0; n < specs.size(); n++) {
             final SplitterSpec part = specs.get(n);
             final List<String> parts = new ArrayList<>(Arrays.asList(part.recordStart(), part.recordEnd(),
-                    part.pattern(), part.match()));
+                    part.pattern(), part.match(), part.recordKey(), part.lineName()));
             parts.addAll(part.fields().values());
             for (final String pattern : parts) {
                 if (pattern != null && !patterns.contains(pattern)) {
@@ -909,6 +974,8 @@ public final class SplitterDryRun {
         final boolean delimited = "delimited".equals(spec.kind());
         if (spec.blankLineRecords()) {
             lines = blankLineRecords(sample);
+        } else if (spec.recordKey() != null) {
+            lines = KeyedRecords.group(lines, spec);
         } else if (spec.recordStart() != null && !delimited) {
             lines = groupLines(lines, spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {
@@ -1026,6 +1093,8 @@ public final class SplitterDryRun {
         final List<String> records;
         if (spec.blankLineRecords()) {
             records = blankLineRecords(text);
+        } else if (spec.recordKey() != null) {
+            records = KeyedRecords.group(ToolText.nonBlankLines(text), spec);
         } else if (spec.recordStart() != null && !delimited) {
             records = groupLines(ToolText.nonBlankLines(text), spec.recordStart());
         } else if (spec.recordEnd() != null && !delimited) {

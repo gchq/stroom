@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.KeyedRecords;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.pipeline.xml.converter.ds3.RootFactory;
@@ -126,6 +127,10 @@ public final class SplitterXml {
                    + "    <group" + id(ids, "fields") + " value=\"$1\">\n" + recordXml(spec, "      ", ids)
                    + catchAllXml(spec, "      ", ids) + "    </group>\n  </regex>\n" + DS_TAIL;
         }
+        if (hasText(spec.recordKey())) {
+            return DS_HEAD + blankLineXml("  ", ids) + skippedLineXml(spec, "  ", ids) + keyedXml(spec, "  ", ids)
+                   + DS_TAIL;
+        }
         if ((hasText(spec.recordStart()) || hasText(spec.recordEnd())) && !delimited) {
             final String pattern = hasText(spec.recordStart())
                     ? recordRegex(spec.recordStart())
@@ -184,6 +189,64 @@ public final class SplitterXml {
                + indent + "  <data name=\"" + SplitterSpec.CONTINUATION + "\" value=\"$2\" />\n"
                + indent + "  <group value=\"$1\">\n" + recordXml(spec, inner, ids) + catchAllXml(spec, inner, false)
                + indent + "  </group>\n" + indent + "</regex>\n";
+    }
+
+    // A line skip_lines passes over (ausearch's ---- and time->...): taken with no data written, so no record.
+    private static String skippedLineXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        return spec.skipLines() == null
+                ? ""
+                : indent + "<regex" + id(ids, "skipped") + " pattern=\"" + attr(KeyedRecords.skippedLineRegex(spec))
+                  + "\" />\n";
+    }
+
+    // A record of the lines holding one key (KeyedRecords): its key and first line's name written, each line read in
+    // turn. A line holding no key is a record of its own, read the same way.
+    private static String keyedXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        final String inner = indent + "    ";
+        final StringBuilder out = new StringBuilder();
+        out.append(indent).append("<regex").append(id(ids, "record")).append(" pattern=\"")
+                .append(attr(KeyedRecords.recordRegex(spec))).append("\">\n")
+                .append(indent).append("  <data name=\"").append(attr(spec.keyField())).append("\" value=\"$")
+                .append(KeyedRecords.keyGroup(spec)).append("\" />\n");
+        if (spec.lineName() != null) {
+            out.append(indent).append("  <data name=\"").append(attr(spec.leadField())).append("\" value=\"$2\" />\n");
+        }
+        out.append(indent).append("  <group").append(id(ids, "fields")).append(" value=\"$1\">\n")
+                .append(keyedLinesXml(spec, inner, ids))
+                .append(indent).append("  </group>\n")
+                .append(indent).append("</regex>\n")
+                .append(indent).append("<regex").append(id(ids, "loneLine")).append(" pattern=\"")
+                .append(attr(KeyedRecords.LONE_LINE)).append("\">\n")
+                .append(indent).append("  <group value=\"$1\">\n")
+                .append(keyedLinesXml(spec, inner, false))
+                .append(indent).append("  </group>\n")
+                .append(indent).append("</regex>\n");
+        return out.toString();
+    }
+
+    // Each line of a keyed record read by the spec; with line_name, its fields nested under the line's name, and a
+    // line not starting with a name read as it is.
+    private static String keyedLinesXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        final SplitterSpec lineSpec = spec.lineSpec();
+        final StringBuilder out = new StringBuilder();
+        if (spec.lineName() != null) {
+            out.append(indent).append("<regex").append(id(ids, "namedLine")).append(" pattern=\"")
+                    .append(attr(KeyedRecords.namedLineRegex(spec))).append("\">\n")
+                    .append(indent).append("  <data name=\"$1\">\n")
+                    .append(indent).append("    <group value=\"$2\">\n")
+                    .append(recordXml(lineSpec, indent + "      ", false))
+                    .append(catchAllXml(lineSpec, indent + "      ", false))
+                    .append(indent).append("    </group>\n")
+                    .append(indent).append("  </data>\n")
+                    .append(indent).append("</regex>\n");
+        }
+        return out.append(indent).append("<regex").append(id(ids, "line")).append(" pattern=\"")
+                .append(attr(KeyedRecords.LONE_LINE)).append("\">\n")
+                .append(indent).append("  <group value=\"$1\">\n")
+                .append(recordXml(lineSpec, indent + "    ", false))
+                .append(catchAllXml(lineSpec, indent + "    ", false))
+                .append(indent).append("  </group>\n")
+                .append(indent).append("</regex>\n").toString();
     }
 
     // Each part a regex that takes the record when its match fits the record's start, writes its variant, and reads
@@ -390,6 +453,9 @@ public final class SplitterXml {
                 if (spec.spacedValues()) {
                     return spacedPairsXml(spec, indent);
                 }
+                if (spec.singleQuotes()) {
+                    return singleQuotedPairsXml(spec, indent);
+                }
                 final StringBuilder out = new StringBuilder();
                 for (final String pattern : SplitterDryRun.kvPatterns(spec)) {
                     out.append(indent).append("<regex pattern=\"").append(attr(pattern)).append("\">\n")
@@ -402,6 +468,27 @@ public final class SplitterXml {
                 return delimitedXml(spec, indent);
             }
         }
+    }
+
+    // key=value pairs, values in single quotes too: at each place, a single-quoted value of pairs read as the
+    // record's own pairs, another single-quoted value without its quotes, else a pair. Each anchored (^): Stroom
+    // takes a sibling's match anywhere in the text (with an error), not only where it is tried.
+    private static String singleQuotedPairsXml(final SplitterSpec spec, final String indent) {
+        final List<String> quoted = SplitterDryRun.singleQuotedPatterns(spec);
+        final String pair = "^" + SplitterDryRun.kvPatterns(spec).getFirst();
+        return indent + "<regex pattern=\"" + attr("^" + quoted.getFirst()) + "\">\n"
+               + indent + "  <group value=\"$2\">\n"
+               + indent + "    <regex pattern=\"" + attr(pair) + "\">\n"
+               + indent + "      <data name=\"$1\" value=\"$2\" />\n"
+               + indent + "    </regex>\n"
+               + indent + "  </group>\n"
+               + indent + "</regex>\n"
+               + indent + "<regex pattern=\"" + attr("^" + quoted.getLast()) + "\">\n"
+               + indent + "  <data name=\"$1\" value=\"$2\" />\n"
+               + indent + "</regex>\n"
+               + indent + "<regex pattern=\"" + attr(pair) + "\">\n"
+               + indent + "  <data name=\"$1\" value=\"$2\" />\n"
+               + indent + "</regex>\n";
     }
 
     // key=value pairs whose values hold the delimiter unquoted: read from the end, where each value comes before

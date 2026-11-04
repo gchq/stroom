@@ -3735,7 +3735,11 @@ is common, the rest of a variant's common entries go into its rules, and each ru
 the exception it starts with and its message are extract fields (`exception`, `exception_message`), not a kind of
 event, and the trace is carried as Data, whole unless the user chooses less: asked in a form ("All of it", "Its
 first 20 lines", "Only its first line"), or `continuation_lines` (`DraftMapping.withContinuationLines`); without
-forms, kept whole with a note to ask. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
+forms, kept whole with a note to ask. Keyed records (`KeyedRecords`): a spec's `record_key` ties consecutive
+lines holding one key into a record, `line_name` nests each line's fields under its name, `skip_lines` passes over
+separator lines; the profile suggests them for key=value lines and counts keys that come back (interleaved, warned
+of, not joined); the draft takes the time from an epoch in the key and leaves the key out. `StroomInput` reads a
+sample as Stroom's parser does (characters XML forbids taken out) and names what it took. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
 offset gets no `timezone` from the draft; the user is asked (UTC, a zone a field names, or the offset the gap between
 the latest time and the stream's `ReceivedTime` suggests, rounded to a quarter hour, within 15 hours), or `timezone=`
 gives it; `build_translation_xslt` warns of any still unset. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked

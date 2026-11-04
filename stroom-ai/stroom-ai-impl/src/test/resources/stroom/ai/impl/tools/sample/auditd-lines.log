@@ -1,0 +1,529 @@
+type=USER_LOGIN msg=audit(1791709202.136:4501): pid=4281 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.105 addr=10.1.2.105 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709203.800:4502): pid=4532 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.45 addr=10.1.1.45 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709210.711:4503): pid=6700 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.21 addr=10.1.0.21 terminal=ssh res=success'
+type=USER_START msg=audit(1791709220.565:4504): pid=3647 uid=0 auid=1002 ses=5 msg='op=PAM:session_open acct="carol" exe="/usr/sbin/sshd" hostname=10.1.1.179 addr=10.1.1.179 terminal=ssh res=success'
+type=USER_END msg=audit(1791709227.299:4505): pid=2634 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.189 addr=10.1.3.189 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709234.390:4506): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1703 pid=5565 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709234.390:4506): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709234.390:4506): cwd="/home/carol"
+type=PATH msg=audit(1791709234.390:4506): item=0 name="/usr/bin/sudo" inode=37412 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709234.390:4506): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=69237 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709234.390:4506): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709234.390:4506):
+type=SYSCALL msg=audit(1791709235.606:4507): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1012 pid=7427 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709235.606:4507): argc=1 a0="id"
+type=CWD msg=audit(1791709235.606:4507): cwd="/home/alice"
+type=PATH msg=audit(1791709235.606:4507): item=0 name="/usr/bin/id" inode=28375 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709235.606:4507): proctitle=6964
+type=EOE msg=audit(1791709235.606:4507):
+type=SYSCALL msg=audit(1791709242.717:4508): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=941 pid=5282 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709242.717:4508): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709242.717:4508): cwd="/home/bob"
+type=PATH msg=audit(1791709242.717:4508): item=0 name="/usr/bin/sudo" inode=15730 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709242.717:4508): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=20828 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709242.717:4508): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709242.717:4508):
+type=SYSCALL msg=audit(1791709243.931:4509): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=927 pid=5914 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709243.931:4509): argc=1 a0="id"
+type=CWD msg=audit(1791709243.931:4509): cwd="/home/alice"
+type=PATH msg=audit(1791709243.931:4509): item=0 name="/usr/bin/id" inode=76447 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709243.931:4509): proctitle=6964
+type=EOE msg=audit(1791709243.931:4509):
+type=USER_END msg=audit(1791709249.681:4510): pid=4364 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.90 addr=10.1.2.90 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709257.136:4511): pid=9371 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.194 addr=10.1.2.194 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709265.501:4512): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1639 pid=2232 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709265.501:4512): argc=1 a0="id"
+type=CWD msg=audit(1791709265.501:4512): cwd="/home/carol"
+type=PATH msg=audit(1791709265.501:4512): item=0 name="/usr/bin/id" inode=79144 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709265.501:4512): proctitle=6964
+type=EOE msg=audit(1791709265.501:4512):
+type=CRED_ACQ msg=audit(1791709274.881:4513): pid=2615 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.94 addr=10.1.1.94 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709281.176:4514): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1881 pid=7651 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709281.176:4514): argc=1 a0="id"
+type=CWD msg=audit(1791709281.176:4514): cwd="/home/bob"
+type=PATH msg=audit(1791709281.176:4514): item=0 name="/usr/bin/id" inode=67883 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709281.176:4514): proctitle=6964
+type=EOE msg=audit(1791709281.176:4514):
+type=USER_AUTH msg=audit(1791709288.917:4515): pid=9396 uid=0 auid=1000 ses=3 msg='op=PAM:authentication acct="alice" exe="/usr/sbin/sshd" hostname=10.1.3.190 addr=10.1.3.190 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709296.719:4516): pid=5015 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.198 addr=10.1.1.198 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709301.947:4517): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=922 pid=7942 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709301.947:4517): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709301.947:4517): cwd="/home/carol"
+type=PATH msg=audit(1791709301.947:4517): item=0 name="/usr/bin/cat" inode=80215 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709301.947:4517): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709301.947:4517):
+type=USER_LOGIN msg=audit(1791709311.272:4518): pid=5028 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.0.23 addr=10.1.0.23 terminal=ssh res=failed'
+type=CRED_ACQ msg=audit(1791709318.218:4519): pid=7588 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.36 addr=10.1.2.36 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709326.708:4520): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1751 pid=5876 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709326.708:4520): argc=1 a0="id"
+type=CWD msg=audit(1791709326.708:4520): cwd="/home/carol"
+type=PATH msg=audit(1791709326.708:4520): item=0 name="/usr/bin/id" inode=83330 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709326.708:4520): proctitle=6964
+type=EOE msg=audit(1791709326.708:4520):
+type=CRED_ACQ msg=audit(1791709334.995:4521): pid=3446 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.56 addr=10.1.3.56 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709338.750:4522): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1471 pid=4977 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709338.750:4522): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709338.750:4522): cwd="/home/carol"
+type=PATH msg=audit(1791709338.750:4522): item=0 name="/usr/bin/sudo" inode=71685 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709338.750:4522): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=23942 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709338.750:4522): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709338.750:4522):
+type=CRED_ACQ msg=audit(1791709342.126:4523): pid=4952 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.228 addr=10.1.2.228 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709348.415:4524): pid=4045 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.135 addr=10.1.2.135 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709350.916:4525): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1106 pid=7155 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709350.916:4525): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709350.916:4525): cwd="/home/bob"
+type=PATH msg=audit(1791709350.916:4525): item=0 name="/usr/bin/sudo" inode=48486 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709350.916:4525): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=19106 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709350.916:4525): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709350.916:4525):
+type=SYSCALL msg=audit(1791709355.871:4526): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1586 pid=3396 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709355.871:4526): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709355.871:4526): cwd="/home/bob"
+type=PATH msg=audit(1791709355.871:4526): item=0 name="/usr/bin/ls" inode=90280 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709355.871:4526): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=28199 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709355.871:4526): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709355.871:4526):
+type=SYSCALL msg=audit(1791709361.605:4527): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1140 pid=3867 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709361.605:4527): argc=1 a0="id"
+type=CWD msg=audit(1791709361.605:4527): cwd="/home/carol"
+type=PATH msg=audit(1791709361.605:4527): item=0 name="/usr/bin/id" inode=71737 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709361.605:4527): proctitle=6964
+type=EOE msg=audit(1791709361.605:4527):
+type=SYSCALL msg=audit(1791709370.859:4528): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1626 pid=7746 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709370.859:4528): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709370.859:4528): cwd="/home/alice"
+type=PATH msg=audit(1791709370.859:4528): item=0 name="/usr/bin/cat" inode=69879 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709370.859:4528): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709370.859:4528):
+type=SYSCALL msg=audit(1791709378.800:4529): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1523 pid=7977 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709378.800:4529): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709378.800:4529): cwd="/home/carol"
+type=PATH msg=audit(1791709378.800:4529): item=0 name="/usr/bin/cat" inode=61017 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709378.800:4529): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709378.800:4529):
+type=SYSCALL msg=audit(1791709388.606:4530): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1666 pid=8828 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709388.606:4530): argc=1 a0="id"
+type=CWD msg=audit(1791709388.606:4530): cwd="/home/alice"
+type=PATH msg=audit(1791709388.606:4530): item=0 name="/usr/bin/id" inode=87070 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709388.606:4530): proctitle=6964
+type=EOE msg=audit(1791709388.606:4530):
+type=SYSCALL msg=audit(1791709393.045:4531): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1954 pid=4241 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709393.045:4531): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709393.045:4531): cwd="/home/bob"
+type=PATH msg=audit(1791709393.045:4531): item=0 name="/usr/bin/sudo" inode=73730 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709393.045:4531): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=70810 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709393.045:4531): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709393.045:4531):
+type=SYSCALL msg=audit(1791709399.796:4532): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1847 pid=7653 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709399.796:4532): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709399.796:4532): cwd="/home/carol"
+type=PATH msg=audit(1791709399.796:4532): item=0 name="/usr/bin/sudo" inode=13647 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709399.796:4532): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=61833 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709399.796:4532): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709399.796:4532):
+type=SYSCALL msg=audit(1791709409.605:4533): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1285 pid=8637 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709409.605:4533): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709409.605:4533): cwd="/home/carol"
+type=PATH msg=audit(1791709409.605:4533): item=0 name="/usr/bin/ls" inode=64526 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709409.605:4533): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=98705 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709409.605:4533): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709409.605:4533):
+type=CRED_ACQ msg=audit(1791709416.707:4534): pid=6492 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.10 addr=10.1.0.10 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709422.870:4535): pid=9005 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.39 addr=10.1.2.39 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709429.507:4536): pid=3186 uid=0 auid=1001 ses=4 msg='op=PAM:authentication acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.29 addr=10.1.3.29 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709431.442:4537): pid=3569 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.107 addr=10.1.0.107 terminal=ssh res=success'
+type=USER_START msg=audit(1791709436.874:4538): pid=3290 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.0.46 addr=10.1.0.46 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709438.820:4539): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1710 pid=4377 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709438.820:4539): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709438.820:4539): cwd="/home/alice"
+type=PATH msg=audit(1791709438.820:4539): item=0 name="/usr/bin/sudo" inode=50903 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709438.820:4539): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=70543 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709438.820:4539): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709438.820:4539):
+type=USER_START msg=audit(1791709447.859:4540): pid=8048 uid=0 auid=1002 ses=5 msg='op=PAM:session_open acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.30 addr=10.1.3.30 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709449.364:4541): pid=7506 uid=0 auid=1001 ses=4 msg='op=PAM:authentication acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.137 addr=10.1.2.137 terminal=ssh res=failed'
+type=CRED_ACQ msg=audit(1791709453.592:4542): pid=2577 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.89 addr=10.1.2.89 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709458.540:4543): pid=8308 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.195 addr=10.1.0.195 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709465.578:4544): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1898 pid=9039 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709465.578:4544): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709465.578:4544): cwd="/home/carol"
+type=PATH msg=audit(1791709465.578:4544): item=0 name="/usr/bin/sudo" inode=80207 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709465.578:4544): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=58084 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709465.578:4544): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709465.578:4544):
+type=USER_START msg=audit(1791709473.701:4545): pid=2738 uid=0 auid=1001 ses=4 msg='op=PAM:session_open acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.76 addr=10.1.3.76 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709482.235:4546): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1960 pid=3838 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709482.235:4546): argc=1 a0="id"
+type=CWD msg=audit(1791709482.235:4546): cwd="/home/bob"
+type=PATH msg=audit(1791709482.235:4546): item=0 name="/usr/bin/id" inode=18658 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709482.235:4546): proctitle=6964
+type=EOE msg=audit(1791709482.235:4546):
+type=USER_END msg=audit(1791709485.551:4547): pid=3856 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.49 addr=10.1.3.49 terminal=ssh res=success'
+type=USER_LOGIN msg=audit(1791709493.580:4548): pid=8226 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.180 addr=10.1.2.180 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709494.728:4549): pid=7476 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.108 addr=10.1.2.108 terminal=ssh res=success'
+type=USER_START msg=audit(1791709495.850:4550): pid=4758 uid=0 auid=1001 ses=4 msg='op=PAM:session_open acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.155 addr=10.1.0.155 terminal=ssh res=success'
+type=USER_END msg=audit(1791709497.852:4551): pid=4925 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.134 addr=10.1.3.134 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709507.848:4552): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1412 pid=2857 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709507.848:4552): argc=1 a0="id"
+type=CWD msg=audit(1791709507.848:4552): cwd="/home/carol"
+type=PATH msg=audit(1791709507.848:4552): item=0 name="/usr/bin/id" inode=46210 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709507.848:4552): proctitle=6964
+type=EOE msg=audit(1791709507.848:4552):
+type=USER_LOGIN msg=audit(1791709516.277:4553): pid=6010 uid=0 auid=1001 ses=4 msg='op=login acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.240 addr=10.1.2.240 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709519.433:4554): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1756 pid=7981 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709519.433:4554): argc=1 a0="id"
+type=CWD msg=audit(1791709519.433:4554): cwd="/home/carol"
+type=PATH msg=audit(1791709519.433:4554): item=0 name="/usr/bin/id" inode=81287 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709519.433:4554): proctitle=6964
+type=EOE msg=audit(1791709519.433:4554):
+type=USER_END msg=audit(1791709522.096:4555): pid=2593 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.1.157 addr=10.1.1.157 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709524.490:4556): pid=4735 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.205 addr=10.1.0.205 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709526.670:4557): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1454 pid=2253 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709526.670:4557): argc=1 a0="id"
+type=CWD msg=audit(1791709526.670:4557): cwd="/home/carol"
+type=PATH msg=audit(1791709526.670:4557): item=0 name="/usr/bin/id" inode=91291 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709526.670:4557): proctitle=6964
+type=EOE msg=audit(1791709526.670:4557):
+type=CRED_ACQ msg=audit(1791709529.767:4558): pid=9579 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.197 addr=10.1.1.197 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709535.428:4559): pid=8741 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.70 addr=10.1.2.70 terminal=ssh res=success'
+type=USER_START msg=audit(1791709539.761:4560): pid=6748 uid=0 auid=1001 ses=4 msg='op=PAM:session_open acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.127 addr=10.1.2.127 terminal=ssh res=success'
+type=USER_END msg=audit(1791709542.249:4561): pid=8670 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.1.233 addr=10.1.1.233 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709545.584:4562): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1191 pid=7511 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709545.584:4562): argc=1 a0="id"
+type=CWD msg=audit(1791709545.584:4562): cwd="/home/alice"
+type=PATH msg=audit(1791709545.584:4562): item=0 name="/usr/bin/id" inode=49615 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709545.584:4562): proctitle=6964
+type=EOE msg=audit(1791709545.584:4562):
+type=CRED_ACQ msg=audit(1791709549.122:4563): pid=4281 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.214 addr=10.1.2.214 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709556.973:4564): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=996 pid=7970 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709556.973:4564): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709556.973:4564): cwd="/home/carol"
+type=PATH msg=audit(1791709556.973:4564): item=0 name="/usr/bin/cat" inode=85293 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709556.973:4564): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709556.973:4564):
+type=CRED_ACQ msg=audit(1791709559.074:4565): pid=4527 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.47 addr=10.1.2.47 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709560.581:4566): pid=5115 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.32 addr=10.1.3.32 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709561.942:4567): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1425 pid=7765 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709561.942:4567): argc=1 a0="id"
+type=CWD msg=audit(1791709561.942:4567): cwd="/home/alice"
+type=PATH msg=audit(1791709561.942:4567): item=0 name="/usr/bin/id" inode=54406 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709561.942:4567): proctitle=6964
+type=EOE msg=audit(1791709561.942:4567):
+type=SYSCALL msg=audit(1791709571.030:4568): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1047 pid=3451 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709571.030:4568): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709571.030:4568): cwd="/home/alice"
+type=PATH msg=audit(1791709571.030:4568): item=0 name="/usr/bin/sudo" inode=28087 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709571.030:4568): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=69111 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709571.030:4568): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709571.030:4568):
+type=SYSCALL msg=audit(1791709572.824:4569): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1074 pid=8273 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709572.824:4569): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709572.824:4569): cwd="/home/carol"
+type=PATH msg=audit(1791709572.824:4569): item=0 name="/usr/bin/sudo" inode=22210 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709572.824:4569): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=23938 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709572.824:4569): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709572.824:4569):
+type=SYSCALL msg=audit(1791709574.713:4570): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1609 pid=9430 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709574.713:4570): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709574.713:4570): cwd="/home/bob"
+type=PATH msg=audit(1791709574.713:4570): item=0 name="/usr/bin/ls" inode=46414 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709574.713:4570): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=32383 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709574.713:4570): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709574.713:4570):
+type=USER_END msg=audit(1791709580.179:4571): pid=2791 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.110 addr=10.1.0.110 terminal=ssh res=success'
+type=USER_START msg=audit(1791709589.649:4572): pid=5344 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.90 addr=10.1.2.90 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709598.207:4573): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1321 pid=2048 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709598.207:4573): argc=1 a0="id"
+type=CWD msg=audit(1791709598.207:4573): cwd="/home/carol"
+type=PATH msg=audit(1791709598.207:4573): item=0 name="/usr/bin/id" inode=73122 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709598.207:4573): proctitle=6964
+type=EOE msg=audit(1791709598.207:4573):
+type=SYSCALL msg=audit(1791709602.302:4574): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1462 pid=7924 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709602.302:4574): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709602.302:4574): cwd="/home/carol"
+type=PATH msg=audit(1791709602.302:4574): item=0 name="/usr/bin/sudo" inode=28120 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709602.302:4574): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=45582 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709602.302:4574): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709602.302:4574):
+type=USER_END msg=audit(1791709609.417:4575): pid=4887 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.1.210 addr=10.1.1.210 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709615.665:4576): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1926 pid=8016 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709615.665:4576): argc=2 a0="cat" a1="/etc/hosts"
+type=USER_LOGIN msg=audit(1791709623.223:4577): pid=3774 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.162 addr=10.1.0.162 terminal=ssh res=success'
+type=CWD msg=audit(1791709615.665:4576): cwd="/home/carol"
+type=PATH msg=audit(1791709615.665:4576): item=0 name="/usr/bin/cat" inode=43812 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709615.665:4576): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709615.665:4576):
+type=USER_LOGIN msg=audit(1791709631.381:4578): pid=2537 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.170 addr=10.1.0.170 terminal=ssh res=success'
+type=USER_START msg=audit(1791709640.921:4579): pid=7035 uid=0 auid=1002 ses=5 msg='op=PAM:session_open acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.198 addr=10.1.3.198 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709644.514:4580): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=989 pid=3091 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709644.514:4580): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709644.514:4580): cwd="/home/alice"
+type=PATH msg=audit(1791709644.514:4580): item=0 name="/usr/bin/ls" inode=76464 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709644.514:4580): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=29245 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709644.514:4580): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709644.514:4580):
+type=CRED_ACQ msg=audit(1791709650.758:4581): pid=9389 uid=0 auid=1002 ses=5 msg='op=PAM:setcred acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.37 addr=10.1.0.37 terminal=ssh res=success'
+type=USER_END msg=audit(1791709655.493:4582): pid=2613 uid=0 auid=1000 ses=3 msg='op=PAM:session_close acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.221 addr=10.1.1.221 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709661.061:4583): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1079 pid=8459 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709661.061:4583): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709661.061:4583): cwd="/home/bob"
+type=PATH msg=audit(1791709661.061:4583): item=0 name="/usr/bin/cat" inode=26740 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709661.061:4583): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709661.061:4583):
+type=USER_START msg=audit(1791709664.675:4584): pid=7680 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.246 addr=10.1.1.246 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709666.257:4585): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1727 pid=4082 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709666.257:4585): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709666.257:4585): cwd="/home/bob"
+type=PATH msg=audit(1791709666.257:4585): item=0 name="/usr/bin/ls" inode=20550 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709666.257:4585): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=77094 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709666.257:4585): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709666.257:4585):
+type=USER_END msg=audit(1791709669.477:4586): pid=2739 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.176 addr=10.1.3.176 terminal=ssh res=success'
+type=USER_END msg=audit(1791709672.448:4587): pid=2125 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.190 addr=10.1.3.190 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709677.883:4588): pid=8449 uid=0 auid=1000 ses=3 msg='op=PAM:setcred acct="alice" exe="/usr/sbin/sshd" hostname=10.1.3.158 addr=10.1.3.158 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709687.000:4589): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1258 pid=9960 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709687.000:4589): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709687.000:4589): cwd="/home/carol"
+type=PATH msg=audit(1791709687.000:4589): item=0 name="/usr/bin/cat" inode=13342 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709687.000:4589): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709687.000:4589):
+type=USER_START msg=audit(1791709696.317:4590): pid=6263 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.3.237 addr=10.1.3.237 terminal=ssh res=success'
+type=USER_END msg=audit(1791709705.067:4591): pid=9099 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.3.149 addr=10.1.3.149 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709709.329:4592): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1350 pid=3231 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709709.329:4592): argc=1 a0="id"
+type=CWD msg=audit(1791709709.329:4592): cwd="/home/bob"
+type=PATH msg=audit(1791709709.329:4592): item=0 name="/usr/bin/id" inode=49465 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709709.329:4592): proctitle=6964
+type=EOE msg=audit(1791709709.329:4592):
+type=CRED_ACQ msg=audit(1791709713.922:4593): pid=8655 uid=0 auid=1002 ses=5 msg='op=PAM:setcred acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.63 addr=10.1.0.63 terminal=ssh res=success'
+type=USER_START msg=audit(1791709719.956:4594): pid=8584 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.130 addr=10.1.1.130 terminal=ssh res=success'
+type=USER_END msg=audit(1791709727.659:4595): pid=4014 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.1.106 addr=10.1.1.106 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709735.668:4596): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1394 pid=6808 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709735.668:4596): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709735.668:4596): cwd="/home/bob"
+type=PATH msg=audit(1791709735.668:4596): item=0 name="/usr/bin/cat" inode=58307 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709735.668:4596): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709735.668:4596):
+type=SYSCALL msg=audit(1791709739.139:4597): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1945 pid=8423 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709739.139:4597): argc=1 a0="id"
+type=CWD msg=audit(1791709739.139:4597): cwd="/home/alice"
+type=PATH msg=audit(1791709739.139:4597): item=0 name="/usr/bin/id" inode=47061 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709739.139:4597): proctitle=6964
+type=EOE msg=audit(1791709739.139:4597):
+type=USER_END msg=audit(1791709743.875:4598): pid=2379 uid=0 auid=1000 ses=3 msg='op=PAM:session_close acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.215 addr=10.1.2.215 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709749.950:4599): pid=7574 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.1.184 addr=10.1.1.184 terminal=ssh res=success'
+type=USER_END msg=audit(1791709759.715:4600): pid=8495 uid=0 auid=1000 ses=3 msg='op=PAM:session_close acct="alice" exe="/usr/sbin/sshd" hostname=10.1.1.22 addr=10.1.1.22 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709765.630:4601): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1827 pid=7919 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709765.630:4601): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709765.630:4601): cwd="/home/bob"
+type=PATH msg=audit(1791709765.630:4601): item=0 name="/usr/bin/cat" inode=46108 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709765.630:4601): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709765.630:4601):
+type=USER_AUTH msg=audit(1791709772.146:4602): pid=8787 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.40 addr=10.1.2.40 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709773.386:4603): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1323 pid=5668 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709773.386:4603): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709773.386:4603): cwd="/home/alice"
+type=PATH msg=audit(1791709773.386:4603): item=0 name="/usr/bin/cat" inode=76270 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709773.386:4603): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709773.386:4603):
+type=SYSCALL msg=audit(1791709780.138:4604): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1855 pid=4001 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709780.138:4604): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709780.138:4604): cwd="/home/bob"
+type=PATH msg=audit(1791709780.138:4604): item=0 name="/usr/bin/sudo" inode=18352 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709780.138:4604): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=58171 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709780.138:4604): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709780.138:4604):
+type=USER_END msg=audit(1791709783.004:4605): pid=5444 uid=0 auid=1000 ses=3 msg='op=PAM:session_close acct="alice" exe="/usr/sbin/sshd" hostname=10.1.3.117 addr=10.1.3.117 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709784.351:4606): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1155 pid=8043 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709784.351:4606): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709784.351:4606): cwd="/home/bob"
+type=PATH msg=audit(1791709784.351:4606): item=0 name="/usr/bin/sudo" inode=15770 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709784.351:4606): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=99079 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709784.351:4606): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709784.351:4606):
+type=USER_END msg=audit(1791709788.024:4607): pid=6519 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.0.171 addr=10.1.0.171 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791709789.535:4608): pid=5064 uid=0 auid=1000 ses=3 msg='op=PAM:authentication acct="alice" exe="/usr/sbin/sshd" hostname=10.1.3.245 addr=10.1.3.245 terminal=ssh res=failed'
+type=SYSCALL msg=audit(1791709797.827:4609): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1723 pid=6333 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709797.827:4609): argc=1 a0="id"
+type=CWD msg=audit(1791709797.827:4609): cwd="/home/alice"
+type=PATH msg=audit(1791709797.827:4609): item=0 name="/usr/bin/id" inode=79082 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709797.827:4609): proctitle=6964
+type=EOE msg=audit(1791709797.827:4609):
+type=SYSCALL msg=audit(1791709804.227:4610): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1716 pid=8281 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709804.227:4610): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709804.227:4610): cwd="/home/carol"
+type=PATH msg=audit(1791709804.227:4610): item=0 name="/usr/bin/cat" inode=27931 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709804.227:4610): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709804.227:4610):
+type=SYSCALL msg=audit(1791709809.489:4611): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1060 pid=2012 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709809.489:4611): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709809.489:4611): cwd="/home/carol"
+type=PATH msg=audit(1791709809.489:4611): item=0 name="/usr/bin/cat" inode=33652 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709809.489:4611): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709809.489:4611):
+type=SYSCALL msg=audit(1791709818.627:4612): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1470 pid=6883 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709818.627:4612): argc=1 a0="id"
+type=CWD msg=audit(1791709818.627:4612): cwd="/home/carol"
+type=PATH msg=audit(1791709818.627:4612): item=0 name="/usr/bin/id" inode=94293 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709818.627:4612): proctitle=6964
+type=EOE msg=audit(1791709818.627:4612):
+type=SYSCALL msg=audit(1791709826.213:4613): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1874 pid=2552 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709826.213:4613): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709826.213:4613): cwd="/home/alice"
+type=PATH msg=audit(1791709826.213:4613): item=0 name="/usr/bin/cat" inode=75457 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709826.213:4613): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709826.213:4613):
+type=SYSCALL msg=audit(1791709834.589:4614): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1246 pid=8066 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709834.589:4614): argc=1 a0="id"
+type=CWD msg=audit(1791709834.589:4614): cwd="/home/carol"
+type=PATH msg=audit(1791709834.589:4614): item=0 name="/usr/bin/id" inode=60804 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709834.589:4614): proctitle=6964
+type=EOE msg=audit(1791709834.589:4614):
+type=USER_END msg=audit(1791709837.737:4615): pid=4821 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.32 addr=10.1.0.32 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709840.581:4616): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1525 pid=7326 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709840.581:4616): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709840.581:4616): cwd="/home/alice"
+type=PATH msg=audit(1791709840.581:4616): item=0 name="/usr/bin/ls" inode=78134 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709840.581:4616): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=56976 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709840.581:4616): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709840.581:4616):
+type=SYSCALL msg=audit(1791709847.532:4617): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1758 pid=9802 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709847.532:4617): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709847.532:4617): cwd="/home/bob"
+type=PATH msg=audit(1791709847.532:4617): item=0 name="/usr/bin/sudo" inode=55992 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709847.532:4617): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=88734 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709847.532:4617): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709847.532:4617):
+type=SYSCALL msg=audit(1791709854.654:4618): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1098 pid=4278 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709854.654:4618): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709854.654:4618): cwd="/home/alice"
+type=PATH msg=audit(1791709854.654:4618): item=0 name="/usr/bin/sudo" inode=30534 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709854.654:4618): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=19905 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709854.654:4618): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709854.654:4618):
+type=USER_AUTH msg=audit(1791709862.119:4619): pid=2355 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.154 addr=10.1.2.154 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709867.086:4620): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1028 pid=6427 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709867.086:4620): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709867.086:4620): cwd="/home/alice"
+type=PATH msg=audit(1791709867.086:4620): item=0 name="/usr/bin/ls" inode=46026 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709867.086:4620): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=37450 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709867.086:4620): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709867.086:4620):
+type=SYSCALL msg=audit(1791709876.297:4621): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1330 pid=7683 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709876.297:4621): argc=1 a0="id"
+type=CWD msg=audit(1791709876.297:4621): cwd="/home/carol"
+type=PATH msg=audit(1791709876.297:4621): item=0 name="/usr/bin/id" inode=89260 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709876.297:4621): proctitle=6964
+type=EOE msg=audit(1791709876.297:4621):
+type=CRED_ACQ msg=audit(1791709882.723:4622): pid=4595 uid=0 auid=1002 ses=5 msg='op=PAM:setcred acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.21 addr=10.1.0.21 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709883.989:4623): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1872 pid=2849 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709883.989:4623): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709883.989:4623): cwd="/home/alice"
+type=PATH msg=audit(1791709883.989:4623): item=0 name="/usr/bin/cat" inode=24826 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709883.989:4623): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709883.989:4623):
+type=SYSCALL msg=audit(1791709888.312:4624): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1710 pid=4476 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709888.312:4624): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709888.312:4624): cwd="/home/bob"
+type=PATH msg=audit(1791709888.312:4624): item=0 name="/usr/bin/cat" inode=22352 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709888.312:4624): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709888.312:4624):
+type=USER_END msg=audit(1791709896.174:4625): pid=3102 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.1.220 addr=10.1.1.220 terminal=ssh res=success'
+type=USER_END msg=audit(1791709903.520:4626): pid=3589 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.131 addr=10.1.2.131 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709912.382:4627): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1336 pid=9848 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709912.382:4627): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709912.382:4627): cwd="/home/carol"
+type=PATH msg=audit(1791709912.382:4627): item=0 name="/usr/bin/sudo" inode=65166 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709912.382:4627): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=20145 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709912.382:4627): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709912.382:4627):
+type=USER_LOGIN msg=audit(1791709921.378:4628): pid=7290 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.21 addr=10.1.0.21 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709922.799:4629): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1755 pid=4401 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="ls" exe="/usr/bin/ls" key="exec"
+type=EXECVE msg=audit(1791709922.799:4629): argc=2 a0="ls" a1="-la"
+type=CWD msg=audit(1791709922.799:4629): cwd="/home/carol"
+type=PATH msg=audit(1791709922.799:4629): item=0 name="/usr/bin/ls" inode=59550 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709922.799:4629): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=36114 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709922.799:4629): proctitle=6C73202D6C61
+type=EOE msg=audit(1791709922.799:4629):
+type=USER_START msg=audit(1791709925.969:4630): pid=8174 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.0.170 addr=10.1.0.170 terminal=ssh res=success'
+type=CRED_ACQ msg=audit(1791709932.072:4631): pid=9182 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.20 addr=10.1.2.20 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709940.286:4632): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1790 pid=3387 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709940.286:4632): argc=1 a0="id"
+type=CWD msg=audit(1791709940.286:4632): cwd="/home/bob"
+type=PATH msg=audit(1791709940.286:4632): item=0 name="/usr/bin/id" inode=65146 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709940.286:4632): proctitle=6964
+type=EOE msg=audit(1791709940.286:4632):
+type=CRED_ACQ msg=audit(1791709947.368:4633): pid=6194 uid=0 auid=1002 ses=5 msg='op=PAM:setcred acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.183 addr=10.1.0.183 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709955.182:4634): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1181 pid=3919 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791709955.182:4634): argc=1 a0="id"
+type=CWD msg=audit(1791709955.182:4634): cwd="/home/carol"
+type=PATH msg=audit(1791709955.182:4634): item=0 name="/usr/bin/id" inode=95940 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709955.182:4634): proctitle=6964
+type=EOE msg=audit(1791709955.182:4634):
+type=SYSCALL msg=audit(1791709961.015:4635): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1551 pid=8726 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709961.015:4635): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709961.015:4635): cwd="/home/carol"
+type=PATH msg=audit(1791709961.015:4635): item=0 name="/usr/bin/sudo" inode=33517 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709961.015:4635): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=94586 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709961.015:4635): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709961.015:4635):
+type=USER_LOGIN msg=audit(1791709964.565:4636): pid=5751 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.44 addr=10.1.2.44 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709969.494:4637): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1380 pid=4372 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709969.494:4637): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709969.494:4637): cwd="/home/carol"
+type=PATH msg=audit(1791709969.494:4637): item=0 name="/usr/bin/sudo" inode=77761 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709969.494:4637): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=85856 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709969.494:4637): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709969.494:4637):
+type=USER_LOGIN msg=audit(1791709975.301:4638): pid=2853 uid=0 auid=1002 ses=5 msg='op=login acct="carol" exe="/usr/sbin/sshd" hostname=10.1.2.242 addr=10.1.2.242 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709983.763:4639): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1590 pid=5338 auid=1001 uid=0 gid=0 euid=0 tty=pts0 ses=4 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791709983.763:4639): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791709983.763:4639): cwd="/home/bob"
+type=PATH msg=audit(1791709983.763:4639): item=0 name="/usr/bin/sudo" inode=92752 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791709983.763:4639): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=33580 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709983.763:4639): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791709983.763:4639):
+type=USER_START msg=audit(1791709991.404:4640): pid=4061 uid=0 auid=1000 ses=3 msg='op=PAM:session_open acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.78 addr=10.1.2.78 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791709997.656:4641): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1609 pid=5374 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791709997.656:4641): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791709997.656:4641): cwd="/home/alice"
+type=PATH msg=audit(1791709997.656:4641): item=0 name="/usr/bin/cat" inode=53438 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791709997.656:4641): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791709997.656:4641):
+type=SYSCALL msg=audit(1791710005.611:4642): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=2 ppid=1402 pid=3179 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" key="exec"
+type=EXECVE msg=audit(1791710005.611:4642): argc=4 a0="sudo" a1="systemctl" a2="restart" a3="nginx"
+type=CWD msg=audit(1791710005.611:4642): cwd="/home/alice"
+type=PATH msg=audit(1791710005.611:4642): item=0 name="/usr/bin/sudo" inode=88344 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PATH msg=audit(1791710005.611:4642): item=1 name="/lib64/ld-linux-x86-64.so.2" inode=67879 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791710005.611:4642): proctitle=7375646F2073797374656D63746C2072657374617274206E67696E78
+type=EOE msg=audit(1791710005.611:4642):
+type=USER_END msg=audit(1791710007.686:4643): pid=3927 uid=0 auid=1002 ses=5 msg='op=PAM:session_close acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.222 addr=10.1.0.222 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791710017.166:4644): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1651 pid=8066 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791710017.166:4644): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791710017.166:4644): cwd="/home/carol"
+type=PATH msg=audit(1791710017.166:4644): item=0 name="/usr/bin/cat" inode=87365 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791710017.166:4644): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791710017.166:4644):
+type=CRED_ACQ msg=audit(1791710018.956:4645): pid=4984 uid=0 auid=1001 ses=4 msg='op=PAM:setcred acct="bob" exe="/usr/sbin/sshd" hostname=10.1.2.214 addr=10.1.2.214 terminal=ssh res=success'
+type=USER_AUTH msg=audit(1791710026.988:4646): pid=3326 uid=0 auid=1002 ses=5 msg='op=PAM:authentication acct="carol" exe="/usr/sbin/sshd" hostname=10.1.0.45 addr=10.1.0.45 terminal=ssh res=success'
+type=SYSCALL msg=audit(1791710033.417:4647): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1533 pid=4628 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791710033.417:4647): argc=1 a0="id"
+type=CWD msg=audit(1791710033.417:4647): cwd="/home/carol"
+type=PATH msg=audit(1791710033.417:4647): item=0 name="/usr/bin/id" inode=15351 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791710033.417:4647): proctitle=6964
+type=EOE msg=audit(1791710033.417:4647):
+type=SYSCALL msg=audit(1791710034.707:4648): arch=c000003e syscall=59 success=yes exit=0 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=961 pid=4886 auid=1002 uid=0 gid=0 euid=0 tty=pts0 ses=5 comm="id" exe="/usr/bin/id" key="exec"
+type=EXECVE msg=audit(1791710034.707:4648): argc=1 a0="id"
+type=CWD msg=audit(1791710034.707:4648): cwd="/home/carol"
+type=PATH msg=audit(1791710034.707:4648): item=0 name="/usr/bin/id" inode=14165 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791710034.707:4648): proctitle=6964
+type=EOE msg=audit(1791710034.707:4648):
+type=SYSCALL msg=audit(1791710035.850:4649): arch=c000003e syscall=59 success=no exit=-13 a0=55d1 a1=55d2 a2=55d3 a3=0 items=1 ppid=1103 pid=6429 auid=1000 uid=0 gid=0 euid=0 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="exec"
+type=EXECVE msg=audit(1791710035.850:4649): argc=2 a0="cat" a1="/etc/hosts"
+type=CWD msg=audit(1791710035.850:4649): cwd="/home/alice"
+type=PATH msg=audit(1791710035.850:4649): item=0 name="/usr/bin/cat" inode=12758 dev=fd:00 mode=0100755 ouid=0 ogid=0 rdev=00:00 nametype=NORMAL
+type=PROCTITLE msg=audit(1791710035.850:4649): proctitle=636174202F6574632F686F737473
+type=EOE msg=audit(1791710035.850:4649):
+type=USER_LOGIN msg=audit(1791710042.318:4650): pid=6075 uid=0 auid=1000 ses=3 msg='op=login acct="alice" exe="/usr/sbin/sshd" hostname=10.1.2.243 addr=10.1.2.243 terminal=ssh res=success'
+type=USER_END msg=audit(1791710048.281:4651): pid=9337 uid=0 auid=1001 ses=4 msg='op=PAM:session_close acct="bob" exe="/usr/sbin/sshd" hostname=10.1.3.114 addr=10.1.3.114 terminal=ssh res=success'
