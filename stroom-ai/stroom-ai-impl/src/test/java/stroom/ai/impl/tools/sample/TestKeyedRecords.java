@@ -179,10 +179,67 @@ class TestKeyedRecords {
         });
         samples.put("mixed-lines.log", resource("mixed-lines.log"));
         samples.put("dateless-lines.log", resource("dateless-lines.log"));
+        // The formats shortlist (formats-shortlist-generator.py) whose lines aren't tied: key/value variations, and
+        // logs whose ties interleave too much to be one record (Postfix's queue ids).
+        for (final String name : List.of("checkpoint", "iptables", "leef1", "leef2", "postfix", "postgres")) {
+            samples.put(name + "-lines.log", resource(name + "-lines.log"));
+        }
 
         samples.forEach((name, text) -> assertThat(SampleProfiler.profile(text)).as(name)
                 .doesNotContainKey("record_key")
                 .doesNotContainKey("skip_lines"));
+    }
+
+    @Test
+    void sectionsBetweenMarkersCarryingTheKeyAreOneRecord() {
+        // ModSecurity's serial audit log: --id-A-- ... --id-Z--, the id only on the markers, each section's lines
+        // (blank ones too) the section's.
+        final String sample = resource("modsec-lines.log");
+        final Map<String, Object> profile = SampleProfiler.profile(sample);
+        assertThat(profile).containsEntry("format", SampleProfiler.KEYED_SECTIONS)
+                .containsEntry("records", 40)
+                .containsEntry("join_unkeyed", true);
+
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+        final SplitterDryRun.DryRun dryRun = SplitterDryRun.dryRun(spec, sample, 1_000);
+        assertThat(dryRun.unmatchedLines()).isEmpty();
+        assertThat(dryRun.records()).hasSize(40)
+                .allSatisfy(record -> assertThat(record).containsKeys("record_key", "A/text", "B/text", "Z/text"));
+        final Map<String, String> blocked = dryRun.records().stream()
+                .filter(record -> record.containsKey("H/text"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(blocked.get("B/text")).startsWith("GET /login.php").contains("\nUser-Agent: sqlmap/1.7");
+        assertThat(blocked.get("H/text")).contains("[id \"942100\"]", "\nAction: Intercepted (phase 2)");
+    }
+
+    @Test
+    void sectionsOfAnotherMarkerStyleAreRecordsToo() {
+        // Not ModSecurity's: [[job-ID:STEP]] markers, the job id the key, the step each section's name.
+        final String sample = sectioned();
+        final Map<String, Object> profile = SampleProfiler.profile(sample);
+        assertThat(profile).containsEntry("format", SampleProfiler.KEYED_SECTIONS).containsEntry("records", 8);
+
+        final SplitterSpec spec = SplitterDryRun.inferSpec(sample).spec();
+        assertThat(SplitterDryRun.dryRun(spec, sample).records().getFirst())
+                .containsEntry("record_key", "8f20")
+                .containsEntry("first_section", "extract")
+                .containsEntry("extract/text", "rows read: 120\nsource: orders.csv")
+                .containsEntry("load/text", "rows written: 118");
+    }
+
+    /// @return A log of jobs in sections between [[job-ID:STEP]] markers.
+    static String sectioned() {
+        final StringBuilder out = new StringBuilder();
+        for (int n = 0; n < 8; n++) {
+            final String id = Integer.toHexString(0x8f20 + n * 7);
+            out.append("[[job-").append(id).append(":extract]]\nrows read: 120\nsource: orders.csv\n\n")
+                    .append("[[job-").append(id).append(":load]]\nrows written: 118\n");
+            if (n % 2 == 0) {
+                out.append("[[job-").append(id).append(":report]]\nstatus: ok\n");
+            }
+        }
+        return out.toString();
     }
 
     @Test
