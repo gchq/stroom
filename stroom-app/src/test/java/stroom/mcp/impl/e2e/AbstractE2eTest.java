@@ -593,7 +593,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                 "pipeline_uuid", pipelineUuid,
                 "markdown", "# " + pipelineName + "\n\n## Purpose and data\n\n" + sample.format()
                             + " sample for the translation e2e test.\n\n"
-                            // Written by hand (no mapping kept with the XSLT), so the section is too.
+                            // Written by hand (no mapping kept with the XSLT): the section is generated from
+                            // the Events it writes, replacing this one.
                             + "## Field mapping\n\n| XPath | From |\n| --- | --- |\n"
                             + "| `EventSource/User/Id` | the user field |\n",
                 "change", "Created"));
@@ -601,6 +602,10 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         final String text = documentation(docUuid);
         assertThat(text).as("documentation written to the doc's body: %s chars", text.length())
                 .contains("translation e2e test", "## Version control");
+        assertThat(text).as("the Field mapping generated from the Events the hand-written XSLT writes")
+                .contains("The XSLT was written by hand", "### Common fields", "### Event types",
+                        "`EventTime/TimeCreated`")
+                .doesNotContain("| `EventSource/User/Id` | the user field |");
         return new Onboarded(build, feed, raw, pipelineUuid, pipelineName, uuidOf(xslt), docUuid, eventsId);
     }
 
