@@ -31,12 +31,24 @@ public class LinkTabBar extends AbstractTabBar {
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
+    private final Element tabList;
+
     public LinkTabBar() {
         this(new Parts());
     }
 
     private LinkTabBar(final Parts parts) {
         super(BINDER.createAndBindUi(parts), parts.tabList);
+        tabList = parts.tabList;
+    }
+
+    /// The tab list's width, as the tabs are placed in it: the bar's, less the padding the bar has
+    /// around it for the tabs' focus rings (tab-bar.css).
+    ///
+    /// @return The tab list's width.
+    @Override
+    protected int getTabSpaceWidth() {
+        return tabList.getOffsetWidth();
     }
 
     @Override

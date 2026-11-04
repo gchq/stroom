@@ -123,11 +123,16 @@ textarea:where(:not(.text-field))[aria-invalid="true"] {
 
 /* The text field: */
 
-/* Its size, at a class's weight, which a screen's own rules for a field (e.g. width: 100%) outweigh */
 .text-field {
-    width: 200px;
     margin: 0;
     outline: none !important;
+}
+
+/* Its size, at no weight (:where()), so that any class sizing a field outweighs it, wherever its
+   sheet comes in app.css: a layout helper (max, which comes before this sheet), a screen's own rule
+   or a modifier below */
+:where(.text-field) {
+    width: 200px;
 }
 
 /* Its look, at an element and a class's weight for a text box (a text area's is a class's) */
@@ -207,12 +212,16 @@ input.text-field:where(:-webkit-autofill, :-webkit-autofill:hover, :-webkit-auto
     width: 400px;
 }
 
-/* A text area: several lines, scrolling when there are more, at a fixed height a screen can change */
+/* A text area: several lines, scrolling when there are more, at a fixed height a screen can change
+   (at no weight, as the width above) */
 .text-field--multiline {
     display: block;
-    height: 80px;
     overflow-y: auto;
     resize: none;
+}
+
+:where(.text-field--multiline) {
+    height: 80px;
 }
 
 /* A read-only text area's scroll bar shows its field through it */

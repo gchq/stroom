@@ -203,7 +203,7 @@ public class FloorMapGroups extends Component {
         };
         //noinspection unused index, val
         highlightColumn.setFieldUpdater((index, group, val) -> onToggleHighlight.accept(group));
-        dataGrid.addColumn(highlightColumn, "", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(highlightColumn, DataGrid.hiddenHeader("Highlight"), ColumnSizeConstants.ICON_COL);
 
         // Name, led by a swatch in the group's highlight colour
         dataGrid.addResizableColumn(new Column<>(new SafeHtmlCell()) {

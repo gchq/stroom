@@ -19,7 +19,9 @@
    pickers), named BEM style (block, block__element): a button showing the chosen value
    (drop-down__value), with the "…" icon at its end (drop-down__icon). A problem with the value is
    shown as a form shows what is wrong with a field: the picker is aria-invalid, and the message is in
-   its form group's feedback, or a line of its own under it (drop-down__feedback).
+   its form group's feedback, or a line of its own under it (drop-down__feedback), or, for a picker
+   with no room for a line (drop-down--problem-tooltip, unstyled, which FocusTooltip looks for), its
+   tooltip.
    It draws the field with the shared stroom-control class, whose disabled class gives it the
    disabled look every field has; read only, its value is greyed (drop-down--read-only).
    The button and its feedback line are held by a wrapper (drop-down__wrapper) with no box of its
@@ -91,9 +93,15 @@
     border: thin solid var(--focus-border--invalid) !important;
 }
 
+/* With the keyboard focus, the red ring an invalid text field has */
+.drop-down[aria-invalid="true"]:focus-visible {
+    box-shadow: var(--focus-shadow--invalid);
+}
+
+/* Its margin clears the picker's focus ring (a 4px box-shadow), as a form group's message does */
 .drop-down__feedback {
     display: block;
-    margin-top: 0.2rem;
+    margin-top: .25rem;
     font-size: 80%;
     color: var(--feedback);
 }

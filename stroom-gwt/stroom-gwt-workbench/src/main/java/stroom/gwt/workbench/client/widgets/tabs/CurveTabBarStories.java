@@ -28,10 +28,12 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.tab.client.CurveTabBar;
 import stroom.widget.tab.client.TabBar;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.task.client.SimpleTask;
+import stroom.widget.task.client.TaskMonitor;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
@@ -63,6 +65,10 @@ public final class CurveTabBarStories {
     // Each menu item's content is a `menu__item` (the item, with `role="menuitem"`, is its cell)
     private static final String MENU_ITEM = ".menu__item";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
+    // A document name of 50 characters, the most a tab once showed before cutting it
+    private static final String FIFTY_CHARACTERS = "Firewall Events Translation to Common Schema v2.10";
+    private static final String LONG_NAME =
+            "Corporate Proxy Server Access Logs Translation Pipeline for the Event Logging Schema";
 
     private CurveTabBarStories() {
         // Static utility
@@ -104,7 +110,150 @@ public final class CurveTabBarStories {
                 // A single, non-closable tab (no `tab-bar--multiple`, no overflow chevron)
                 .story("SingleTab", context -> demo(context,
                         List.of(new StoryTab("welcome", "Welcome", "Welcome", null, false)),
-                        "welcome", null, false));
+                        "welcome", null, false))
+                // A long name is cut short with an ellipsis where it is drawn, but not in its text,
+                // so a screen reader reads all of it; the one before it shows where 50 characters
+                // were cut before
+                .story("LongName", context -> demo(context, List.of(
+                                new StoryTab("fifty", FIFTY_CHARACTERS, "Feed", SvgImage.DOCUMENT_FEED, true),
+                                new StoryTab("long", LONG_NAME, "Pipeline", SvgImage.DOCUMENT_PIPELINE, true)),
+                        "long", null, false))
+                .withPlay(CurveTabBarStories::playLongName)
+                // Long names that don't all fit are cut, the widest first, then alike, so that the
+                // tabs fit rather than overflow; a short name keeps its width
+                .story("ShrinkToFit", context -> demo(context, longTabs(), "proxy", "1000px", false))
+                .withPlay(CurveTabBarStories::playShrinkToFit)
+                // Too many to fit even at about 10 characters each: the rest overflow, and a name
+                // of fewer than 10 characters isn't cut. The chevron looks like a tab
+                .story("ShrinkThenOverflow", context -> demo(context, longTabs(), "proxy", "560px", false))
+                .withPlay(play -> {
+                    play.expect(play.querySelector(SELECTOR_SHOWN)).toBeInTheDocument();
+                    play.expect("Welcome is whole", () -> isCut(play, "Welcome")).toEqual(false);
+                    TabWidgets.expectSelectorLikeTabs(play, ".tab-bar--curved");
+                })
+                // A tab that is loading says so: its description, its panel busy, and once it has
+                // been the selected tab for a second, "Loading <name>", then "<name> loaded" when
+                // it is (the Finish Loading button ends its load); moved, as by dragging it (the
+                // Move to Start button), it still shows its load
+                .story("Loading", CurveTabBarStories::loading)
+                .withPlay(CurveTabBarStories::playLoading);
+    }
+
+    private static List<StoryTab> longTabs() {
+        return List.of(
+                new StoryTab("welcome", "Welcome", "Welcome", null, false),
+                new StoryTab("proxy", LONG_NAME, "Pipeline", SvgImage.DOCUMENT_PIPELINE, true),
+                new StoryTab("fifty", FIFTY_CHARACTERS, "XSLT", SvgImage.DOCUMENT_XSLT, true),
+                new StoryTab("feed", "Firewall Events from the Perimeter Gateways", "Feed",
+                        SvgImage.DOCUMENT_FEED, true),
+                new StoryTab("dash", "Security Operations Overview Dashboard", "Dashboard",
+                        SvgImage.DOCUMENT_DASHBOARD, true));
+    }
+
+    // Every tab shows, none in the selector; the long names are cut alike, and Welcome isn't
+    private static void playShrinkToFit(final Play play) {
+        play.expect(play.getAllByRole("tab")).toHaveLength(5);
+        play.expect(play.querySelector(OVERFLOWED)).not().toBeInTheDocument();
+        play.expect(play.querySelector(SELECTOR_SHOWN)).not().toBeInTheDocument();
+        play.expect("the long names are cut", () -> isCut(play, LONG_NAME) && isCut(play, FIFTY_CHARACTERS))
+                .toEqual(true);
+        play.expect("Welcome is whole", () -> isCut(play, "Welcome")).toEqual(false);
+        play.expect("the long names are cut alike", () -> labelWidth(play, LONG_NAME)
+                == labelWidth(play, FIFTY_CHARACTERS)).toEqual(true);
+    }
+
+    private static Element label(final Play play, final String tabName) {
+        return play.within(play.getByRole("tab", tabName)).querySelector(".tab-bar__label").element().get();
+    }
+
+    private static boolean isCut(final Play play, final String tabName) {
+        final Element label = label(play, tabName);
+        return label.getScrollWidth() > label.getClientWidth();
+    }
+
+    private static int labelWidth(final Play play, final String tabName) {
+        return label(play, tabName).getClientWidth();
+    }
+
+    // The bar with its panel, an unselected tab loading, and a button that ends its load
+    private static Widget loading(final StoryContext context) {
+        final ScreenHarness harness = TabWidgets.menuHarness(context);
+        final CurveTabBar tabBar = new CurveTabBar();
+        final StoryTab feed = new StoryTab("feed", "EVENTS_FEED", "Feed", SvgImage.DOCUMENT_FEED, true);
+        final StoryTab pipe = new StoryTab("pipe", "Event Processing", "Pipeline", SvgImage.DOCUMENT_PIPELINE, true);
+        harness.addRegistration(tabBar.addSelectionHandler(event -> tabBar.selectTab(event.getSelectedItem())));
+        tabBar.addTab(feed);
+        tabBar.addTab(pipe);
+        tabBar.selectTab(feed);
+
+        final SimplePanel panel = new SimplePanel(TabWidgets.pane("A document's content.", "16px", "0.85rem"));
+        panel.getElement().getStyle().setProperty("height", "120px");
+        tabBar.setTabPanel(panel.getElement());
+
+        final TaskMonitor monitor = tabBar.getTab(pipe).createTaskMonitor();
+        final SimpleTask task = new SimpleTask("Loading");
+        monitor.onStart(task);
+        final Button finish = new Button();
+        finish.setText("Finish Loading");
+        harness.addRegistration(finish.addClickHandler(event -> monitor.onEnd(task)));
+        // As dragging it there does (DraggableTabBar)
+        final Button move = new Button();
+        move.setText("Move to Start");
+        harness.addRegistration(move.addClickHandler(event -> tabBar.moveTab(pipe, 0)));
+
+        // CurveTabLayout's tab bar row, as demo makes it
+        final SimplePanel tabBarOuter = new SimplePanel(tabBar);
+        tabBarOuter.setStyleName("curve-tab-layout__tab-bar-outer");
+        final FlowPanel tabBarContainer = new FlowPanel();
+        tabBarContainer.setStyleName("curve-tab-layout__bar");
+        tabBarContainer.add(tabBarOuter);
+        final FlowPanel frame = new FlowPanel();
+        frame.add(tabBarContainer);
+        frame.add(panel);
+        frame.add(finish);
+        frame.add(move);
+        harness.add(frame);
+        return harness.asWidget();
+    }
+
+    private static void playLoading(final Play play) {
+        final Query pipe = play.getByRole("tab", "Event Processing");
+        final Query status = play.getByRole("status");
+        final Query panel = play.getByRole("tabpanel");
+        // Loading out of sight: said only on the tab
+        play.expect(pipe).toHaveAccessibleDescription("Loading");
+        play.expect(play.getByRole("tab", "EVENTS_FEED")).not().toHaveAccessibleDescription();
+        play.expect(panel).not().toHaveAttribute("aria-busy");
+        play.expect(status).toHaveTextContent("");
+
+        // Selected, it is waited on: nothing is said until it has gone on for a second
+        play.click(pipe);
+        play.expect(panel).toHaveAttribute("aria-busy", "true");
+        play.expect(status).toHaveTextContent("");
+        play.waitFor(3000, () -> play.expect(status).toHaveTextContent("Loading Event Processing"));
+
+        // Moved (as by dragging), it is still the tab its load reports to: still loading, its
+        // spinner showing (a move once made the tab again, and the new one never heard of the load)
+        play.click(play.getByRole("button", "Move to Start"));
+        play.expect(play.getAllByRole("tab").first()).toHaveTextContent("Event Processing");
+        play.expect(pipe).toHaveAccessibleDescription("Loading");
+        play.expect(play.within(pipe).querySelector(".busy-spinner--active")).toBeInTheDocument();
+
+        play.click(play.getByRole("button", "Finish Loading"));
+        play.expect(status).toHaveTextContent("Event Processing loaded");
+        play.expect(pipe).not().toHaveAccessibleDescription();
+        play.expect(panel).not().toHaveAttribute("aria-busy");
+    }
+
+    // The long tab is named by all of its name, though its label is cut short
+    private static void playLongName(final Play play) {
+        final Query tab = play.getByRole("tab", LONG_NAME);
+        play.expect(tab).toBeInTheDocument();
+        final Query label = play.within(tab).querySelector(".tab-bar__label");
+        play.expect("the label is cut short", () -> {
+            final Element element = label.element().get();
+            return element.getScrollWidth() > element.getClientWidth();
+        }).toEqual(true);
     }
 
     // The tabs are a tab list with one tab stop. The arrow keys move the focus between them (not
@@ -213,18 +362,21 @@ public final class CurveTabBarStories {
 
     private static void playOverflowAlgorithm(final Play play) {
         // GWT's overflow algorithm (AbstractTabBar.getDisplayableTabs) is private and measures the
-        // tabs, so this lays out real tab bars with tabs fixed at 100px and the selector at 40px,
-        // and reads which tabs the bar shows.
+        // tabs, so this lays out real tab bars with tabs fixed at 100px (6px apart) and the selector
+        // at 40px, and reads which tabs the bar shows. The chevron takes 48px: the gap after the
+        // last tab, the selector's 2px offset, and the selector.
 
-        // From centre 'a', only 'a','b' fit in 250px once 40px is reserved for the chevron
-        play.expect("overflow from 'a'", () -> overflow(4, 250, "a", "a")).toEqual(List.of("c", "d"));
+        // From centre 'a', only 'a','b' fit in 260px once 48px is reserved for the chevron
+        play.expect("overflow from 'a'", () -> overflow(4, 260, "a", "a")).toEqual(List.of("c", "d"));
         // Centre 'c': 'd' was selected more recently than 'b', so the walk keeps 'd'
-        play.expect("overflow from 'c' after 'd'", () -> overflow(5, 250, "d", "c"))
+        play.expect("overflow from 'c' after 'd'", () -> overflow(5, 260, "d", "c"))
                 .toEqual(List.of("a", "b", "e"));
         // Fit-from-start fallback (no selection, no recent tab): fills from the left
-        play.expect("overflow with no selection", () -> overflow(3, 250)).toEqual(List.of("c"));
+        play.expect("overflow with no selection", () -> overflow(3, 260)).toEqual(List.of("c"));
         // Everything fits: no chevron reserved, nothing overflows
-        play.expect("overflow when all fit", () -> overflow(2, 250, "a", "a")).toEqual(List.of());
+        play.expect("overflow when all fit", () -> overflow(2, 260, "a", "a")).toEqual(List.of());
+        // The chevron isn't drawn past the bar: in 250px, 'a','b' and the chevron (to 254px) don't fit
+        play.expect("the chevron fits the bar", () -> overflow(4, 250, "a", "a")).toEqual(List.of("b", "c", "d"));
     }
 
     /// Lays out a real tab bar of the given width with `tabCount` tabs (`a`, `b`, ...) 100px

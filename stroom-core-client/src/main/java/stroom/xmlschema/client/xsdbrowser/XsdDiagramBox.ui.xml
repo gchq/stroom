@@ -6,6 +6,7 @@
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
              xmlns:v="urn:import:stroom.xmlschema.client.xsdbrowser"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <g:FlowPanel styleName="xsd-browser__outer-box">
@@ -16,7 +17,8 @@
                     <tx:Label ui:field="titleText" addStyleNames="xsd-browser__box-title-text"/>
                 </g:FlowPanel>
             </v:ClickPanel>
-            <g:ScrollPanel ui:field="content" addStyleNames="xsd-browser__box-content" visible="false"/>
+            <layout:ScrollPane ui:field="content" fitContent="true" addStyleNames="xsd-browser__box-content"
+                                role="region" visible="false"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

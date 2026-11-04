@@ -25,7 +25,8 @@
     user-select: none;
 }
 
+/* No room of its own around its tabs: the tab bar's own padding (tab-bar.css) is nearly as much */
 .query-editor__results-outer {
-    padding: 5px 5px 0 5px;
+    padding: 0;
     z-index: 5;
 }

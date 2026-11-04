@@ -17,6 +17,7 @@
 package stroom.widget.text.client;
 
 import stroom.widget.component.client.Component;
+import stroom.widget.layout.client.ScrollPane;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,6 +32,8 @@ public class HtmlPane extends Component {
     private static final Binder BINDER = GWT.create(Binder.class);
 
     @UiField
+    ScrollPane scroll;
+    @UiField
     HTMLPanel content;
 
     public HtmlPane() {
@@ -44,6 +47,13 @@ public class HtmlPane extends Component {
         content.getElement().setInnerHTML(html == null
                 ? ""
                 : html);
+    }
+
+
+    /// @param ariaLabel What the pane shows, for screen readers, which announce it when it is a tab
+    ///                  stop ("Text" unless given).
+    public void setAriaLabel(final String ariaLabel) {
+        scroll.setAriaLabel(ariaLabel);
     }
 
 

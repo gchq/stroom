@@ -29,6 +29,7 @@ import stroom.util.shared.TextRange;
 import stroom.widget.component.client.Component;
 import stroom.widget.contextmenu.client.ContextMenuManager;
 import stroom.widget.contextmenu.client.TextEditTarget;
+import stroom.widget.layout.client.ScrollPane;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.text.client.Html;
 import stroom.widget.util.client.GlobalResizeObserver;
@@ -42,7 +43,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
@@ -68,7 +68,7 @@ public class CodeEditor extends Component {
     @UiField
     AceEditorPane editor;
     @UiField
-    ScrollPanel errorPanel;
+    ScrollPane errorPanel;
     @UiField
     Html errorText;
     @UiField

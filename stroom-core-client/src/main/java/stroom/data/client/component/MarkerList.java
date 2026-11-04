@@ -146,7 +146,7 @@ public class MarkerList extends Component {
                             return null;
                     }
                 })
-                .build(), "", ColumnSizeConstants.ICON_COL);
+                .build(), DataGrid.hiddenHeader("Severity"), ColumnSizeConstants.ICON_COL);
     }
 
     private void addElementId() {

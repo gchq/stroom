@@ -39,7 +39,9 @@
     flex-shrink: 0;
     align-items: center;
     justify-content: flex-end;
-    gap: 10px;
+    /* With the toolbars' 4px of padding, their buttons are 14px apart from one toolbar to the next,
+       as they were */
+    gap: 6px;
 }
 
 /* The log pane toggle and the step's progress, in a slot of a fixed width so that the pipeline bar

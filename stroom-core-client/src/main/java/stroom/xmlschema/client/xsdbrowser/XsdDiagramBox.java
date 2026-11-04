@@ -16,6 +16,7 @@
 
 package stroom.xmlschema.client.xsdbrowser;
 
+import stroom.widget.layout.client.ScrollPane;
 import stroom.widget.text.client.Label;
 import stroom.widget.util.client.DoubleSelectTester;
 
@@ -23,7 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,7 +40,7 @@ public class XsdDiagramBox extends Composite implements SelectableItem {
     @UiField
     Label titleText;
     @UiField
-    ScrollPanel content;
+    ScrollPane content;
 
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private boolean selected;
@@ -74,6 +74,8 @@ public class XsdDiagramBox extends Composite implements SelectableItem {
         // Any content below the title takes the rest of the height
         if (content != null) {
             this.content.setWidget(content);
+            // Named after its box, for a screen reader to announce when it is a tab stop
+            this.content.setAriaLabel(titleText);
             this.content.setVisible(true);
         }
 

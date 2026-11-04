@@ -179,15 +179,15 @@ public final class UserGroupsScreenStories {
                     final Play screen = play.screen();
                     play.findAllByText("Administrators");
                     play.findByText("Alice A Anderson");
-                    // The master grid: the user/group icon column ('/'), Display Name (sorted
-                    // ascending) and Full Name.
+                    // The master grid: the user/group icon column ('/' between its icons, and named
+                    // "Type" for screen readers), Display Name (sorted ascending) and Full Name.
                     // GWT's sortable headers have role="button", not "columnheader", so their names are
                     // read from the header cells' name holders
                     final Play master = masterGrid(play);
                     final Value<List<String>> names = master.querySelectorAll(".data-grid__sort-name")
                             .textContents();
                     play.expect("the first three column headings", () -> trimmed(names.get()).subList(0, 3))
-                            .toEqual(List.of("/", "Display Name", "Full Name"));
+                            .toEqual(List.of("/ Type", "Display Name", "Full Name"));
                     play.expect(master.getByText("Display Name").closest(StroomDom.GRID_HEADER_CELL))
                             .toHaveAttribute("aria-sort", "ascending");
                     // Create, Edit, Delete in the master grid's pager toolbar
@@ -292,7 +292,7 @@ public final class UserGroupsScreenStories {
     private static List<String> trimmed(final List<String> texts) {
         final List<String> trimmed = new ArrayList<>();
         for (final String text : texts) {
-            trimmed.add(text.trim());
+            trimmed.add(text.trim().replaceAll("\\s+", " "));
         }
         return trimmed;
     }

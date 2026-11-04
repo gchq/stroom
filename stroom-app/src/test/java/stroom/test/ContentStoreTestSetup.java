@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Pulls Content Store items into Stroom for integration tests
@@ -323,14 +324,16 @@ public class ContentStoreTestSetup {
         }
     }
 
-    /**
-     * Installs all the content packs for SetupSampleData.
-     *
-     * @throws RuntimeException if something goes wrong.
-     */
-    public void installSampleDataPacks() throws RuntimeException {
+    /// Installs all the content packs for SetupSampleData, except those given, which it installs
+    /// from elsewhere (e.g. the visualisations, from their released pack).
+    ///
+    /// @param excludedPackIds The IDs of the content packs not to install.
+    /// @throws RuntimeException if something goes wrong.
+    public void installSampleDataPacks(final Set<String> excludedPackIds) throws RuntimeException {
         this.cacheContentStore();
-        install(samplePackIds);
+        install(samplePackIds.stream()
+                .filter(id -> !excludedPackIds.contains(id))
+                .toList());
     }
 
     /**

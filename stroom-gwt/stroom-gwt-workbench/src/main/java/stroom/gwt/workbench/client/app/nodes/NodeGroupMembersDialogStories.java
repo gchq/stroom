@@ -85,11 +85,12 @@ public final class NodeGroupMembersDialogStories {
                     final Play screen = play.screen();
                     screen.findByText("Edit Node Group - Indexers");
                     screen.findByText("node1");
-                    // GWT column order: tickbox, Status, Name, Cluster Base Endpoint
+                    // GWT column order: tickbox (named "Select" for screen readers only), Status, Name,
+                    // Cluster Base Endpoint
                     // GWT's sortable headers (Name, Cluster Base Endpoint) have role="button", so the
                     // headers are the table's <th> cells
                     play.expect(screen.querySelectorAll("thead th, [data-hcol]").textContents())
-                            .toEqual(List.of("", "Status", "Name", "Cluster Base Endpoint"));
+                            .toEqual(List.of("Select", "Status", "Name", "Cluster Base Endpoint"));
                     // The grid's rows are <tr> elements with no role attribute
                     play.expect(screen.within(row(screen, "node1")).getByText("http://node1:8080/stroom"))
                             .toBeInTheDocument();

@@ -67,13 +67,13 @@ final class GridHtml<R> {
     // when the header is rendered; null for a column whose header gives none
     private String[] tickBoxNames = new String[0];
 
+    // A cell's role attribute and a space after it, or nothing (see setCellRole)
+    private String cellRoleAttribute = "role=\"gridcell\" ";
+
     /// @param columnModel The grid's columns.
     /// @param headers     The columns' headers.
     /// @param sortList    The grid's sort list.
     /// @param keys        Gives a row's key from the row and its absolute index.
-    // A cell's role attribute and a space after it, or nothing (see setCellRole)
-    private String cellRoleAttribute = "role=\"gridcell\" ";
-
     GridHtml(final ColumnModel<Column<R, ?>> columnModel,
              final Map<Column<R, ?>, Header<?>> headers,
              final ColumnSortList sortList,
@@ -116,26 +116,40 @@ final class GridHtml<R> {
                         : "none") + "\"");
             }
             sb.appendHtmlConstant(">");
+            final SafeHtmlBuilder content = new SafeHtmlBuilder();
             if (header != null) {
-                final Context context = new Context(0, i, header.getKey());
-                if (sortable) {
-                    sb.appendHtmlConstant("<div class=\"data-grid__sort\">"
-                                          + "<div class=\"data-grid__sort-name\">");
-                    header.render(context, sb);
-                    sb.appendHtmlConstant("</div>");
-                    if (sorted) {
-                        final HtmlBuilder icon = new HtmlBuilder();
-                        SortIcon.append(icon, ascending, sortIndex + 1);
-                        sb.append(icon.toSafeHtml());
-                    }
-                    sb.appendHtmlConstant("</div>");
-                } else {
-                    header.render(context, sb);
-                }
+                header.render(new Context(0, i, header.getKey()), content);
             }
+            final SafeHtml headerHtml = content.toSafeHtml();
+            if (sortable && header != null) {
+                sb.appendHtmlConstant("<div class=\"data-grid__sort\">"
+                                      + "<div class=\"data-grid__sort-name\">");
+                sb.append(headerHtml);
+                sb.appendHtmlConstant("</div>");
+                if (sorted) {
+                    final HtmlBuilder icon = new HtmlBuilder();
+                    SortIcon.append(icon, ascending, sortIndex + 1);
+                    sb.append(icon.toSafeHtml());
+                }
+                sb.appendHtmlConstant("</div>");
+            } else {
+                sb.append(headerHtml);
+            }
+            appendHiddenName(column, headerHtml, sb);
             sb.appendHtmlConstant("</div>");
         }
         return sb.toSafeHtml();
+    }
+
+    // A header that shows no text (a column of tick boxes or info icons, say) is named for screen
+    // readers by visually hidden text, its kind's name (ColumnNames), so that no column header is
+    // nameless; a column of another kind is given one by its header (DataGrid.hiddenHeader)
+    private void appendHiddenName(final Column<R, ?> column, final SafeHtml headerHtml, final SafeHtmlBuilder sb) {
+        final String text = TableText.normaliseWhitespace(DataGridDom.textOfHtml(headerHtml.asString()));
+        final String name = ColumnNames.hiddenName(text, ColumnNames.forKind(column));
+        if (name != null) {
+            sb.appendHtmlConstant("<span class=\"sr-only\">").appendEscaped(name).appendHtmlConstant("</span>");
+        }
     }
 
     /// @param cellRole A cell's role (see [DataGridProfile#getCellRole()]), or null for none.

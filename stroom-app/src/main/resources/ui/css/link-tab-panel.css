@@ -18,12 +18,14 @@
    A link tab panel (stroom.document.client.editor.LinkTabPanel), named BEM style. Its rules were in `components.css`.
 */
 
+/* No padding before its tab bar, whose own padding (tab-bar.css) is nearly the room it left its tabs;
+   after its toolbar and status, as before */
 .link-tab-panel {
     display: flex;
     align-items: center;
     gap: 10px;
     min-height: 25px;
-    padding: 0 5px;
+    padding: 0 5px 0 0;
 }
 
 /* Flush with the panel's edge (LinkTabPanel.setFlush): the tab bar alone sets the row's height, as
@@ -32,6 +34,14 @@
     display: block;
     min-height: 0;
     padding: 0;
+}
+
+/* Its tab bar's room below its tabs (for their focus rings) overlaps whatever is under the panel,
+   e.g. a document's toolbar, whose own padding is room for focus rings too, so the panel is no
+   higher than it need be; as heavy as, and after, a dialog's tab bar's margin (tab-bar.css), which
+   it overrides */
+.link-tab-panel .link-tab-panel__middle {
+    margin-bottom: -4px;
 }
 
 .link-tab-panel__middle {

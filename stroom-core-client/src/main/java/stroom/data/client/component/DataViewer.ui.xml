@@ -14,7 +14,7 @@
             <g:FlowPanel styleName="max dock-container-vertical">
                 <g:FlowPanel styleName="dock-container-horizontal dock-min data-viewer__tab-bar">
                     <g:FlowPanel styleName="dock-max data-viewer__tab-bar-outer">
-                        <tab:LinkTabBar ui:field="tabBar"
+                        <tab:LinkTabBar ui:field="tabBar" accessibleName="Data views"
                                         addStyleNames="max data-viewer__tab-bar-inner"/>
                     </g:FlowPanel>
                     <g:HTMLPanel styleName="dock-min data-viewer__right-panel">

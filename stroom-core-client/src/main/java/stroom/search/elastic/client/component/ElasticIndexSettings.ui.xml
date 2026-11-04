@@ -31,7 +31,7 @@
         <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices"
                         helpText="Number of slices to query at the same time when retrieving search results. Increasing this can speed up retrieval from large indices. 1 to 1000. Default is 1."
                         screenReaderText="1 to 1000. Default is 1.">
-            <valuespinner:ValueSpinner ui:field="searchSlices" addStyleNames="value-spinner--narrow"
+            <valuespinner:ValueSpinner ui:field="searchSlices"
                                        minValue="1" maxValue="1000"
                                        title="Number of concurrent threads to use to retrieve search results.&#10;
                                        Increasing this value can speed up retrieval for larger indices."/>
@@ -39,7 +39,7 @@
         <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size"
                         helpText="Number of documents to retrieve in each scroll batch when searching. 1 to 1,000,000. Default is 1000."
                         screenReaderText="Documents per batch, 1 to 1,000,000. Default is 1000.">
-            <valuespinner:ValueSpinner ui:field="searchScrollSize" addStyleNames="value-spinner--narrow"
+            <valuespinner:ValueSpinner ui:field="searchScrollSize"
                                        minValue="1" maxValue="1000000"
                                        title="How many results to retrieve each batch"/>
         </form:FormGroup>

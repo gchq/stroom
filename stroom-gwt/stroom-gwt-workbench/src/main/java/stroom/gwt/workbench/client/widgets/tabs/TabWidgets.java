@@ -20,11 +20,14 @@ package stroom.gwt.workbench.client.widgets.tabs;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.StoryContent;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.tab.client.TabData;
 import stroom.widget.text.client.Html;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -63,6 +66,55 @@ final class TabWidgets {
         }
         return pane;
     }
+
+    /// Checks that a bar's overflow selector, once shown, looks like the bar's tabs: as high and
+    /// in line with them, its arrows and its count on their labels' line, and inside the bar. (Its
+    /// hover and focus ring, which need real input, are checked in `test-runner/lib/real-input/tabs.mjs`.)
+    ///
+    /// @param play        The play.
+    /// @param barSelector The bar's CSS selector, e.g. `.tab-bar--curved`.
+    static void expectSelectorLikeTabs(final Play play, final String barSelector) {
+        final Query bar = play.querySelector(barSelector);
+        final Query selector = play.querySelector(barSelector + " .tab-selector");
+        play.waitFor(() -> play.expect(play.querySelector(barSelector + " .tab-selector:not(.tab-selector--hidden)"))
+                .toBeInTheDocument());
+        final Query tab = play.querySelector(barSelector + " .tab-bar__tab:not(.tab-bar__tab--hidden)");
+        final Query label = play.within(tab).querySelector(".tab-bar__label");
+        final Query arrows = play.within(selector).querySelector(".tab-selector__arrows svg");
+        final Query count = play.within(selector).querySelector(".tab-selector__count");
+
+        play.expect("the selector is as high as a tab", () -> near(selector.height().get(), tab.height().get(), 0.5))
+                .toEqual(true);
+        play.expect("the selector is in line with the tabs", () -> near(selector.top().get(), tab.top().get(), 0.5))
+                .toEqual(true);
+        // On the labels' line: the middle of the count's text and of the arrows, as of a label's text
+        play.expect("the count is on the labels' line", () -> near(
+                textMiddle(count.element().get()), textMiddle(label.element().get()), 1.5)).toEqual(true);
+        play.expect("the arrows are on the labels' line", () -> near(
+                (arrows.top().get() + arrows.bottom().get()) / 2, textMiddle(label.element().get()), 1.5))
+                .toEqual(true);
+        play.expect("the selector ends in the bar", () -> selector.right().get() <= bar.right().get())
+                .toEqual(true);
+    }
+
+    private static boolean near(final double value, final double expected, final double within) {
+        return Math.abs(value - expected) <= within;
+    }
+
+    /// @param element An element.
+    /// @return What its `::before` draws (its computed `content`, e.g. `"|"` with the quotes), or
+    ///         `none`.
+    static native String beforeContent(Element element) /*-{
+        return element.ownerDocument.defaultView.getComputedStyle(element, '::before').content;
+    }-*/;
+
+    // The vertical middle of an element's text, as drawn (not its box, which padding moves)
+    private static native double textMiddle(Element element) /*-{
+        var range = element.ownerDocument.createRange();
+        range.selectNodeContents(element);
+        var rect = range.getBoundingClientRect();
+        return (rect.top + rect.bottom) / 2;
+    }-*/;
 
     /// A controller showing a widget, as tab content.
     ///

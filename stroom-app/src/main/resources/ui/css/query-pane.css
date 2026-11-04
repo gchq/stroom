@@ -17,7 +17,8 @@
 /* A dashboard's query pane (QueryPane) */
 
 .query-pane__buttons {
-    padding: 0 5px;
+    /* 5px to its toolbar's buttons, with the toolbar's 4px of padding */
+    padding: 0 3px;
 }
 
 .query-pane__expression-tree {

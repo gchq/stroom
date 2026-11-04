@@ -23,6 +23,7 @@ import stroom.document.client.editor.TabbedController;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -65,6 +66,16 @@ public final class LinkTabPanelStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // Basic tab panel with internal selection state
                 .story("Basic", context -> panel(context, sampleTabs(), null, null, false))
+                // Each tab shows only text, so its panel is a tab stop (TabPanelTabStop): Tab from
+                // the tab list reaches the selected tab's content, named by its tab
+                .withPlay(play -> {
+                    final Query panel = play.getByRole("tabpanel", "Data");
+                    play.expect(panel).toHaveAttribute("tabindex", "0");
+                    play.tab();
+                    play.expect(play.getByRole("tab", "Data")).toHaveFocus();
+                    play.tab();
+                    play.expect(panel).toHaveFocus();
+                })
                 // With a global toolbar (Save / Save As) between the tab bar and content
                 .story("WithToolbar", context -> panel(context, sampleTabs(), null,
                         documentActions(true), false))
@@ -78,6 +89,27 @@ public final class LinkTabPanelStories {
                         many.add("Tab " + i);
                     }
                     return panel(context, many, null, null, true);
+                })
+                // The tabs shown, the separators between them and the chevron all fit in the bar;
+                // the chevron looks like a tab, after a "|" as the tabs are
+                .withPlay(play -> {
+                    final Query bar = play.querySelector(".tab-bar--link");
+                    TabWidgets.expectSelectorLikeTabs(play, ".tab-bar--link");
+                    final Query shown = play.querySelectorAll(".tab-bar__tab:not(.tab-bar__tab--hidden)");
+                    play.expect("the last tab shown ends in the bar", () -> shown.nth(shown.count().get() - 1)
+                            .right().get() <= bar.right().get()).toEqual(true);
+
+                    final Query selector = play.querySelector(".tab-selector");
+                    play.expect("a \"|\" is before the chevron", () -> TabWidgets.beforeContent(
+                            selector.element().get())).toEqual("\"|\"");
+                    // As far from the last tab as a separator's width and the chevron's 2px offset,
+                    // give or take its "|" being centred rather than padded
+                    final Query separator = play.querySelector(".tab-bar__separator");
+                    play.expect("the chevron is a separator's width from the last tab", () -> {
+                        final double gap = selector.left().get() - shown.nth(shown.count().get() - 1).right().get();
+                        final double width = separator.width().get();
+                        return gap >= width && gap <= width + 6;
+                    }).toEqual(true);
                 })
                 // A tab with per-tab extra toolbar widgets, shown only when that tab is active
                 .story("PerTabToolbar", context -> panel(context,

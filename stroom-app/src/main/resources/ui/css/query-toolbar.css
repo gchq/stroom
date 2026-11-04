@@ -7,7 +7,8 @@
     display: flex;
     flex-direction: row-reverse;
     flex-grow: 1;
-    padding: 0 5px;
+    /* 5px to its toolbars' buttons, with the toolbars' 4px of padding */
+    padding: 0 3px;
 }
 
 .query-toolbar__inner {
@@ -17,9 +18,10 @@
     justify-content: space-between;
 }
 
-/* Holds the errors button, which sits in the row as if on its own */
+/* Holds the errors button, which sits in the row as if on its own: as wide in the row as the button,
+   its padding (for the button's focus ring) reaching over the room beside it */
 .query-toolbar__errors {
-    margin: 0;
+    margin: 0 -4px;
 }
 
 /* No errors: the button keeps its place, so the toolbar doesn't shift, but visibility (not

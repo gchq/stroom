@@ -29,7 +29,7 @@
 }
 
 .curve-tab-layout__tab-bar-outer {
-    height: 33px;
+    height: 32px;
     margin-right: 95px;
     flex-grow: 1;
 }
@@ -47,8 +47,8 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-/* The Hide Sidebar button's toolbar, with room before it for its focus ring, which the pane it is
-   in would otherwise cut off */
+/* The Hide Sidebar button's toolbar, 6px from the pane's edge as it was (the toolbar's padding
+   holds its focus ring) */
 .curve-tab-layout__bar > .curve-tab-layout__toolbar {
-    margin: 0 2px 0 6px;
+    margin: 0 0 0 2px;
 }

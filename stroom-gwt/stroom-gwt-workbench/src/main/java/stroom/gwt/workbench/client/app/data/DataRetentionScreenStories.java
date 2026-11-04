@@ -253,10 +253,10 @@ public final class DataRetentionScreenStories {
                     // so the toggle isn't needed; the rule and type rows show the subtotal (42 + 8)
                     play.waitFor(() -> play.expect(play.getAllByText("50").count())
                             .toBeGreaterThanOrEqual(1));
-                    // The full column set, behind an expander column
+                    // The full column set, behind an expander column (named for screen readers only)
                     play.expect(play.within(impactGrid(play)).querySelectorAll(StroomDom.GRID_HEADER_CELL)
                             .textContents()).toEqual(List.of(
-                            "", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
+                            "Expand", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
                     // An active rule with no deletes still shows, as a 0 count row.
                     // GWT builds the rows from the fetched rules' active rules,
                     // which don't include the UI only 'Default Retain All Forever Rule', so its 0 count

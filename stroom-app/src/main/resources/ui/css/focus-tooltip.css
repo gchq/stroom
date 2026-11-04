@@ -15,8 +15,8 @@
  */
 
 /*
-   The focus tooltip (stroom.widget.tooltip.client.FocusTooltip): an icon button's name, shown
-   beside it when it has the keyboard focus. Named BEM style (block, block__element,
+   The focus tooltip (stroom.widget.tooltip.client.FocusTooltip): an icon button's name, or a
+   picker's problem, shown beside it when it has the keyboard focus. Named BEM style (block, block__element,
    block--modifier).
 */
 
@@ -34,13 +34,13 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     font-size: 12px;
     line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* Wrapped, at its own line breaks too, so a long text (e.g. a picker's problem) is all seen */
+    white-space: pre-line;
+    overflow-wrap: anywhere;
     pointer-events: none;
 }
 
-/* Shown while an icon button has the keyboard focus */
+/* Shown while an icon button, or a picker with a problem in its tooltip, has the keyboard focus */
 .focus-tooltip--shown {
     display: block;
 }

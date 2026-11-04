@@ -21,13 +21,13 @@ import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.TextBox;
+import stroom.widget.layout.client.ScrollPane;
 import stroom.widget.text.client.Label;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Consumer;
@@ -49,7 +49,7 @@ public class QueryDataTab extends Component {
     @UiField
     ToolbarButton createDashboard;
     @UiField
-    ScrollPanel errorContainer;
+    ScrollPane errorContainer;
     @UiField
     Label errorLabel;
     @UiField

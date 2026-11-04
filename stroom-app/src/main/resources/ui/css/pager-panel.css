@@ -29,7 +29,8 @@
 
 /* A results table's (result-table.css) bar, inset from its sides */
 .result-table .pager-panel__bar {
-    padding: 0 5px;
+    /* 5px to its toolbars' buttons, with the toolbars' 4px of padding */
+    padding: 0 3px;
 }
 
 /* The part that holds the list, scrolling */

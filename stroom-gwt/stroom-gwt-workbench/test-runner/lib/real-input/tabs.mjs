@@ -15,7 +15,8 @@
  */
 
 // Real input checks for tab bars (see index.mjs): keyboard focus draws a tab's ring in the focus
-// colour, and a mouse click doesn't; and tabbing back into a bar lands on its selected tab.
+// colour, and a mouse click doesn't; tabbing back into a bar lands on its selected tab; and the
+// overflow selector is filled on hover and ringed on keyboard focus as a tab is.
 
 import assert from 'node:assert/strict';
 
@@ -60,18 +61,76 @@ async function expectTabStopReturnsToSelected(page) {
   assert.equal(await selected(), 'true', 'tabbing back into the bar lands on the selected tab');
 }
 
+// What draws a tab's ring: its ::after, on its edge (tab-bar.css), a document tab's as a link tab's
+function ringColour(element) {
+  const after = getComputedStyle(element, '::after');
+  return after.content === 'none' ? 'none' : after.borderTopColor;
+}
+
+// The whole of the focused element's ring (its ::after): its line, the band outside it and its corners
+function focusedRing(page) {
+  return page.evaluate(() => {
+    const after = getComputedStyle(document.activeElement, '::after');
+    return {
+      content: after.content,
+      line: `${after.borderTopWidth} ${after.borderTopStyle} ${after.borderTopColor}`,
+      band: after.boxShadow,
+      corners: after.borderTopLeftRadius,
+    };
+  });
+}
+
+// A colour variable, as a computed background colour
+function backgroundOf(page, variable) {
+  return page.evaluate((name) => {
+    const probe = document.createElement('div');
+    probe.style.backgroundColor = `var(${name})`;
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  }, variable);
+}
+
+// The overflow selector looks like a tab where real input shows it (the rest is the story's play,
+// TabWidgets.expectSelectorLikeTabs): a hover fills it as a hovered document tab is filled, and
+// keyboard focus draws a tab's ring on it. The focus goes to it as a user's would: from the tab
+// stop, Right then Home to the first tab shown (whose ring is the one to match), then Left.
+async function expectSelectorLooksLikeTab(page, bar) {
+  const selector = page.locator(`${bar} .tab-selector`);
+  await page.mouse.move(0, 0);
+  const rest = await selector.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await selector.hover();
+  const hovered = await selector.evaluate((element) => getComputedStyle(element).backgroundColor);
+  assert.notEqual(hovered, rest, 'hovering the selector fills it');
+  assert.equal(hovered, await backgroundOf(page, '--curve-tab__background-color--hover'),
+    'the selector is filled as a hovered document tab is');
+  await page.mouse.move(0, 0);
+
+  await page.locator(`${bar} [role="tab"][tabindex="0"]`).focus();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Home');
+  const tabRing = await focusedRing(page);
+  assert.notEqual(tabRing.content, 'none', 'a tab focused from the keyboard shows its ring');
+  await page.keyboard.press('ArrowLeft');
+  assert.ok(await selector.evaluate((element) => element === document.activeElement),
+    'Left from the first tab shown focuses the selector');
+  assert.deepEqual(await focusedRing(page), tabRing, 'the selector\'s focus ring is a tab\'s');
+}
+
 export const CHECKS = {
-  // A document tab's ring is a box shadow inside it
   'widgets-tabs-curvetabbar--basic': async (page) => {
-    await expectRingOnKeyboardOnly(page, { click: 2, next: 3 }, (element) => getComputedStyle(element).boxShadow);
+    await expectRingOnKeyboardOnly(page, { click: 2, next: 3 }, ringColour);
     await expectTabStopReturnsToSelected(page);
   },
-  // A link tab's ring is drawn around its label (by ::after)
   'widgets-tabs-linktabpanel--basic': async (page) => {
-    await expectRingOnKeyboardOnly(page, { click: 0, next: 1 }, (element) => {
-      const after = getComputedStyle(element, '::after');
-      return after.content === 'none' ? 'none' : after.borderTopColor;
-    });
+    await expectRingOnKeyboardOnly(page, { click: 0, next: 1 }, ringColour);
     await expectTabStopReturnsToSelected(page);
+  },
+  'widgets-tabs-curvetabbar--shrink-then-overflow': async (page) => {
+    await expectSelectorLooksLikeTab(page, '.tab-bar--curved');
+  },
+  'widgets-tabs-linktabpanel--overflow': async (page) => {
+    await expectSelectorLooksLikeTab(page, '.tab-bar--link');
   },
 };

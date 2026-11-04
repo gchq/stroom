@@ -99,6 +99,7 @@ import stroom.gwt.workbench.client.app.index.IndexVolumesScreenStories;
 import stroom.gwt.workbench.client.app.index.SolrIndexEditorStories;
 import stroom.gwt.workbench.client.app.main.AboutDialogStories;
 import stroom.gwt.workbench.client.app.main.ApiErrorAlertHostStories;
+import stroom.gwt.workbench.client.app.main.AppPageStories;
 import stroom.gwt.workbench.client.app.main.AppShellStories;
 import stroom.gwt.workbench.client.app.main.ContentTabPaneStories;
 import stroom.gwt.workbench.client.app.main.LinkPageStories;
@@ -192,6 +193,8 @@ public final class AppStories {
         ApiKeysScreenStories.addTo(registry);
         // App/Main/AppPermissionsScreen
         AppPermissionsScreenStories.addTo(registry);
+        // App/Main/AppPage
+        AppPageStories.addTo(registry);
         // App/Main/AppShell
         AppShellStories.addTo(registry);
         // App/Main/BeginSteppingDialog

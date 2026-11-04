@@ -18,13 +18,15 @@
    The data retention rules screen (stroom.receive.rules.client.component.DataRetention), named BEM style. Its rules were in `components.css`.
 */
 
+/* Its tabs are 10px in from the left, 4px of it the tab bar's own padding (tab-bar.css), which also
+   holds their focus rings above and below; the room below overlaps the toolbar's own padding
+   under it (room for focus rings too), so the toolbar moves less */
 .data-retention__tab-bar-outer {
-    padding-left: 10px;
-    padding-right: 3px;
-    padding-top: 1px;
-    /* Keeps the toolbar below clear of the tabs: a tab under 24px high needs 12px from its centre to
-       its neighbours (WCAG 2.5.8), which the toolbar was half a pixel short of */
-    padding-bottom: 1px;
+    padding-left: 6px;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: -4px;
 }
 
 .data-retention__tab-bar-inner {

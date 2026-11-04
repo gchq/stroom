@@ -51,6 +51,8 @@ public class UsersAndGroupsHelper {
     public static final String COL_NAME_FULL_NAME = "Full Name";
     public static final String COL_NAME_UNIQUE_USER_ID = "Unique User ID";
     public static final String COL_NAME_ENABLED = "Enabled";
+    // The hidden name of the column of user and group icons
+    private static final String COL_NAME_TYPE = "Type";
 
     private UsersAndGroupsHelper() {
     }
@@ -68,9 +70,15 @@ public class UsersAndGroupsHelper {
                                     "",
                                     icon,
                                     iconClassName));
+                            appendHiddenTypeName(divBuilder);
                         },
                         Attribute.className("data-grid__icon-header"))
                 .toSafeHtml();
+    }
+
+    // The column of user and group icons is named for screen readers, as its header shows only icons
+    private static void appendHiddenTypeName(final HtmlBuilder builder) {
+        builder.span(COL_NAME_TYPE, Attribute.className("sr-only"));
     }
 
     public static SafeHtml buildUserAndGroupIconHeader() {
@@ -82,11 +90,13 @@ public class UsersAndGroupsHelper {
                                     "",
                                     SvgImage.USER,
                                     iconClassName));
-                            divBuilder.append("/");
+                            // Hidden from screen readers, which read the column's name (Type)
+                            divBuilder.span("/", new Attribute("aria-hidden", "true"));
                             divBuilder.append(SvgImageUtil.toSafeHtml(
                                     "",
                                     SvgImage.USERS,
                                     iconClassName));
+                            appendHiddenTypeName(divBuilder);
                         },
                         Attribute.className("data-grid__icon-header"))
                 .toSafeHtml();

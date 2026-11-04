@@ -282,6 +282,12 @@ public final class PipelineEditorStories {
                     .route(RequestMatcher.post(LAYERS_PATH).withJsonBodyContaining("{\"uuid\": \"parent2\"}"),
                             RestReply.json("[" + BASE_B + "]"))
                     .post(LAYERS_PATH, RestReply.json(INHERIT_LAYERS)));
+    // As FIXTURES, with the parent pipeline not found when its name is checked (decorated)
+    private static final RestFixtures PARENT_NOT_FOUND_FIXTURES = fixtures(DOC, NO_ROWS, NO_ROWS,
+            RestFixtures.builder()
+                    .route(RequestMatcher.post(TreeFixtures.DECORATE)
+                            .withJsonBodyContaining("{\"docRef\": {\"uuid\": \"parent\"}}"), RestReply.noContent())
+                    .post(LAYERS_PATH, RestReply.json(LAYERS)));
     private static final RestFixtures REF_FIXTURES = fixtures(REF_DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(REF_LAYERS)));
     private static final RestFixtures COMPLEX_FIXTURES = fixtures(COMPLEX_DOC, STREAMS, NO_ROWS,
@@ -614,9 +620,11 @@ public final class PipelineEditorStories {
                     play.expect(copy).toHaveStyle("position", "absolute");
                     play.expect(copy).toHaveStyle("opacity", "0.5");
 
-                    // Over nothing, nothing is marked; back over decoration, it is again
-                    play.fireEvent().mouseMove(streamAppender,
-                            EventInit.create().relativeTo(streamAppender, 0, 120).buttons(1));
+                    // Over nothing (the tree's space under translation), nothing is marked; back over
+                    // decoration, it is again
+                    final Query translation = elementBox(tree, "translation");
+                    play.fireEvent().mouseMove(translation,
+                            EventInit.create().relativeTo(translation, 0, 50).buttons(1));
                     play.waitFor(() -> play.expect(play.querySelectorAll("." + HOTSPOT + ", ." + REFUSED))
                             .toHaveLength(0));
                     play.fireEvent().mouseMove(decoration, EventInit.create().atCentreOf(decoration).buttons(1));
@@ -984,6 +992,28 @@ public final class PipelineEditorStories {
                                     .toSpyMatcher()));
                     play.findByText("Parser B");
                     play.expect(play.queryByText("Parser A")).toBeNull();
+                    expectNoProblems(play);
+                })
+                // A parent that can't be found (deleted, or the user can't see it): Inherit From is a
+                // form group, so the problem shows under the picker as any field's does, and the
+                // element buttons under it stay where they are
+                .story("InheritFromNotFound", context -> render(context, PARENT_NOT_FOUND_FIXTURES))
+                .withPlay(play -> {
+                    openStructure(play);
+                    // Named by its label and value (the help button's name also starts with the label)
+                    final Query picker = play.getByRole("button", "Inherit From Parent");
+                    play.waitFor(() -> play.expect(picker).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(play.querySelector(".form-group__feedback")).toHaveTextContent(TextMatch.containing(
+                            "'Parent' can't be found, or you don't have permission to see it."));
+                    play.expect(picker).toHaveAccessibleDescription(TextMatch.containing("doesn't exist"));
+                    // The picker's own feedback line stays hidden
+                    play.expect(play.querySelector(".drop-down__feedback")).not().toBeVisible();
+                    // Back from the first element button, so the focus is the keyboard's
+                    // (:focus-visible), for the screenshot: the red ring clear of the message
+                    final Query add = play.getByRole("button", "Add New Pipeline Element");
+                    play.run("focus Add New Pipeline Element", () -> add.element().get().focus());
+                    play.tab(true);
+                    play.expect(picker).toHaveFocus();
                     expectNoProblems(play);
                 })
                 // Saving with another dirty document (code edited while stepping) opens the picker;
