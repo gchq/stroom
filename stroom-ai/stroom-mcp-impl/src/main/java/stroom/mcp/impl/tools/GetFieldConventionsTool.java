@@ -85,6 +85,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
     private final Consent consent;
     private final IndexingMemory memory;
     private final BuildPlan plan;
+    private final PendingDocumentation pendingDocs;
 
     @Inject
     GetFieldConventionsTool(final AgentKnowledge knowledge,
@@ -94,7 +95,8 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
                             final Provider<QueryService> queryServiceProvider,
                             final Consent consent,
                             final IndexingMemory memory,
-                            final BuildPlan plan) {
+                            final BuildPlan plan,
+                            final PendingDocumentation pendingDocs) {
         this.knowledge = knowledge;
         this.pipelineTemplates = pipelineTemplates;
         this.pipelineIndex = pipelineIndex;
@@ -103,6 +105,7 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
         this.consent = consent;
         this.memory = memory;
         this.plan = plan;
+        this.pendingDocs = pendingDocs;
     }
 
     @Override
@@ -145,6 +148,11 @@ class GetFieldConventionsTool extends AbstractBuiltInTool {
 
     @Override
     public ToolResult execute(final ToolCall call, final ToolCallContext context) {
+        // Indexing waits for the translation's documentation (seen: asked for the backend, the doc unwritten).
+        final Optional<String> undocumented = pendingDocs.warning(context.session());
+        if (undocumented.isPresent()) {
+            return JsonResults.refused(undocumented.get());
+        }
         try {
             final String backend = stringArg(call, BACKEND_ARG);
             if (backend != null && !FieldPlans.BACKENDS.contains(backend)) {
