@@ -41,11 +41,9 @@
       </EventSource>
       <EventDetail>
         <TypeId>Other</TypeId>
-        <xsl:if test="(granted)[normalize-space(.)]">
-          <Unknown>
-            <Data Name="granted" Value="{(granted)[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="granted" Value="{(granted)[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

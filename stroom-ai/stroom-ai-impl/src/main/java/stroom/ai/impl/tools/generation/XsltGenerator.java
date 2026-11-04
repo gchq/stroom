@@ -1216,7 +1216,13 @@ public final class XsltGenerator {
         final String test = testOf(node);
         final Map<String, String> used = scope;
         scope = outer;
-        final boolean guarded = isSet(test) && !test.equals(enclosing);
+        // EventDetail/Unknown is never guarded: the schema requires an action element, so leaving it out when its
+        // Data are all empty fails the Event, where Unknown (all of whose content is optional) written empty is valid.
+        // Seen: text records with no stack trace, their Unknown's only Data the trace's, written with no action
+        // element.
+        final boolean unknown = node.leaf == null && "Unknown".equals(node.child.name())
+                                && "EventDetail".equals(parent.localName());
+        final boolean guarded = !unknown && isSet(test) && !test.equals(enclosing);
         if (guarded) {
             used.forEach(scope::putIfAbsent);
         }

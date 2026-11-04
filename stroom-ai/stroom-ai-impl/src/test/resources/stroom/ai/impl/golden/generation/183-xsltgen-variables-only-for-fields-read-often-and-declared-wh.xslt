@@ -45,11 +45,9 @@
             <TypeId>
               <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
             </TypeId>
-            <xsl:if test="$action">
-              <Unknown>
-                <Data Name="action" Value="{$action[1]}"/>
-              </Unknown>
-            </xsl:if>
+            <Unknown>
+              <Data Name="action" Value="{$action[1]}"/>
+            </Unknown>
           </EventDetail>
         </Event>
       </xsl:otherwise>

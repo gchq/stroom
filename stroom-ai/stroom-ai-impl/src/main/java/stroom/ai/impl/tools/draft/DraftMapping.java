@@ -69,6 +69,15 @@ public final class DraftMapping {
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
     private static final int MAX_RULES = 12;
+    /// The field the exception a record's stack trace starts with is extracted as.
+    public static final String EXCEPTION_FIELD = "exception";
+    /// The field its message is extracted as.
+    public static final String EXCEPTION_MESSAGE_FIELD = "exception_message";
+    // The exception a stack trace starts with (java.lang.IllegalStateException: boom), in XPath's regex dialect,
+    // which the extraction runs in; the message to the end of its line.
+    private static final String EXCEPTION_REGEX = "^([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)+(?:Exception|Error"
+                                                  + "|Throwable))(?::\\s*(.*))?";
+    private static final Pattern EXCEPTION = Pattern.compile(EXCEPTION_REGEX);
     // Values that say a field has nothing (syslog's NILVALUE).
     private static final Set<String> NIL = Set.of("-", "", "null", "none", "n/a");
     // Windows security log event IDs that are logons and logoffs (seen: 4624 and 4634 drafted as Unknown).
@@ -145,9 +154,15 @@ public final class DraftMapping {
                                             final Function<String, String> detailCheck,
                                             final SplitterSpec splitter) {
         final Map<String, String> named = SampleTexts.asNamedSamples(samples, null);
-        return new Drafting(records(named, splitter), sourceName == null
+        final Records read = records(named, splitter);
+        final String source = sourceName == null
                 ? ""
-                : sourceName).draft(systemName, environment, sourceNotes, detailCheck);
+                : sourceName;
+        if (read.spec() != null && SplitterSpec.ALTERNATIVES.equals(read.spec().kind())) {
+            return VariantDrafts.draft(read, variant -> new Drafting(variant, source)
+                    .draft(systemName, environment, sourceNotes, detailCheck));
+        }
+        return new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck);
     }
 
     /// The sample's records as the draft reads them.
@@ -357,6 +372,37 @@ public final class DraftMapping {
         return last.toLowerCase(Locale.ROOT);
     }
 
+    /// A drafted mapping with each entry that carries a record's continuation (its stack trace) cut to its first
+    /// lines, as the user chose: the whole trace is kept unless they choose less.
+    ///
+    /// @param mapping A drafted mapping, as JSON-like values.
+    /// @param lines   The most lines of each trace to keep; 0 or less keeps it whole.
+    /// @return How many entries were cut.
+    @SuppressWarnings("unchecked")
+    public static int withContinuationLines(final Map<String, Object> mapping, final int lines) {
+        if (lines <= 0) {
+            return 0;
+        }
+        final String cut = "string-join(tokenize(" + selector(mapping, SplitterSpec.CONTINUATION) + ", '\\n')"
+                           + "[position() le " + lines + "], codepoints-to-string(10))";
+        int changed = 0;
+        final List<Map<String, Object>> entries = new ArrayList<>(
+                (List<Map<String, Object>>) mapping.getOrDefault("common", List.of()));
+        for (final Object rule : (List<Object>) mapping.getOrDefault(EVENTS, List.of())) {
+            if (rule instanceof final Map<?, ?> map && map.get(FIELDS) instanceof final List<?> fields) {
+                fields.forEach(field -> entries.add((Map<String, Object>) field));
+            }
+        }
+        for (final Map<String, Object> entry : entries) {
+            if (SplitterSpec.CONTINUATION.equals(entry.get(FIELD))) {
+                entry.remove(FIELD);
+                entry.put("xpath", cut);
+                changed++;
+            }
+        }
+        return changed;
+    }
+
     // The XPath for an input field, as the generator writes it for the mapping's input kind.
     private static String selector(final Map<String, Object> mapping, final String field) {
         if (DATA_SPLITTER.equals(mapping.get("input"))) {
@@ -488,6 +534,7 @@ public final class DraftMapping {
                 });
                 shapes.add(shape);
             }
+            heldContinuation();
             survey();
             List<String> heldFields = heldJson();
             heldFields = heldXml(heldFields);
@@ -529,6 +576,36 @@ public final class DraftMapping {
             result.put("unmapped_fields", rest);
             result.put("fields_seen", names);
             return result;
+        }
+
+        // Records whose lines after the first (a stack trace) are kept as the continuation: the exception its first
+        // line names, and its message, are fields of their own through extract; the trace itself is carried as Data,
+        // whole unless the user chooses to keep less ([DraftMapping#withContinuationLines]).
+        @SuppressWarnings("unchecked")
+        private void heldContinuation() {
+            boolean any = false;
+            for (final Map<String, Object> record : records) {
+                if (record.get(SplitterSpec.CONTINUATION) instanceof final String text) {
+                    final Matcher matcher = EXCEPTION.matcher(text);
+                    if (matcher.lookingAt()) {
+                        any = true;
+                        record.put(EXCEPTION_FIELD, matcher.group(1));
+                        if (matcher.group(2) != null) {
+                            record.put(EXCEPTION_MESSAGE_FIELD, matcher.group(2));
+                        }
+                    }
+                }
+            }
+            if (!any) {
+                return;
+            }
+            ((List<Map<String, Object>>) mapping.computeIfAbsent(EXTRACT, k -> new ArrayList<>()))
+                    .add(dict(FIELD, SplitterSpec.CONTINUATION, "regex", EXCEPTION_REGEX, NAMES,
+                            List.of(EXCEPTION_FIELD, EXCEPTION_MESSAGE_FIELD)));
+            notes.add("Records run over several lines (stack traces): the exception the trace starts with and its "
+                      + "message are fields of their own (" + EXCEPTION_FIELD + ", " + EXCEPTION_MESSAGE_FIELD
+                      + ", through extract), and the trace is carried whole as Data '" + SplitterSpec.CONTINUATION
+                      + "'. The exception is not a kind of event: rules come from the records' own fields.");
         }
 
         private void input() {
@@ -965,8 +1042,8 @@ public final class DraftMapping {
             final List<String> namings = naming == null
                     ? List.of()
                     : covering(naming, this::namesKinds);
-            if (naming != null) {
-                common.add(readFrom(dict(PATH, "EventDetail/TypeId", FIELD, naming), namings));
+            if (!namings.isEmpty()) {
+                common.add(readFrom(dict(PATH, "EventDetail/TypeId", FIELD, namings.getFirst()), namings));
             }
             final List<String> rest = names.stream()
                     .filter(n -> !taken.contains(n) && !"empty".equals(type(n)))

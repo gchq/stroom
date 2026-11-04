@@ -1,0 +1,1813 @@
+	at com.example.app.Worker.run(Worker.java:41)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+<134>Oct 11 00:00:00 db01 CEF:0|Acme|Gateway|2.1|100|Allowed request|3|src=10.2.0.1 suser=dave act=allowed
+<13>Oct 11 00:00:07 gw-edge app[101]: user=dave action=login src=10.0.1.1
+10/11/2026 00:00:14 AUDIT o'brien opened report-2.pdf
+10/11/2026 00:00:21 AUDIT o'brien opened report-3.pdf
+[2026-10-11 00:00:28] INFO [worker-4] Request 4 served in 4ms 	 trailing   
+<13>Oct 11 00:00:35 web02 app[105]: user=erin action=logout src=10.0.5.5
+CEF:0|Acme|Gateway|2.1|106|Blocked request \| rule 2|5|src=10.2.6.1 suser=o'brien act=blocked msg=policy 1 matched a\=b
+11/Oct/2026:00:00:49 +1000 INFO [worker-7] Request 7 served in 7ms key=value inside text
+"alice","login","2026-10-11 10:00:00"
+2026-10-11T00:01:03.009+10:00 WARN [worker-9] Request 9 served in 9ms path='/tmp/a b'
+    retrying in 0 seconds (attempt 2 of 5)
+2026-10-11 00:01:10.010 DEBUG [worker-10] Request 10 served in 10ms 	 trailing   
+<13>Oct 11 00:01:17 web01 app[111]: user=zoë action=login src=10.0.11.11
+<13>Oct 11 00:01:24 gw-edge app[112]: user=frank action=login src=10.0.12.12
+<13>Oct 11 00:01:31 db01 app[113]: user=erin action=login src=10.0.13.13
+2026-10-11 00:01:38.014 ERROR [worker-2] Request 14 failed path='/tmp/a b'
+com.example.app.RequestRejectedError: request 3619 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+2026-10-11 00:01:45.015 DEBUG [worker-3] Request 15 served in 15ms
+2026-10-11T00:01:52.016+10:00 INFO [worker-4] Request 16 served in 16ms key=value inside text
+[2026-10-11 00:01:59] INFO [worker-5] Request 17 served in 17ms 	 trailing   
+[2026-10-11 00:02:06] INFO [worker-6] Request 18 served in 18ms
+user=erin action=share session=s19 bytes=247 note="idle timeout"
+<13>Oct 11 00:02:20 web02 app[120]: user=erin action=logout src=10.0.20.20
+<86>Oct 11 00:02:27 web01 sshd[2021]: Connection from 10.1.21.21 port 40021 closed
+10/11/2026 00:02:34 AUDIT o'brien opened report-22.pdf
+2026-10-11 00:02:41.023 ERROR [worker-11] Request 23 failed "quoted \"reason\" here"
+java.util.concurrent.TimeoutException: request 1089 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+<13>Oct 11 00:02:48 db01 app[124]: user=alice action=update msg="changed the policy" id=24
+<165>1 2026-10-11T00:02:55.025Z gw-edge billing 3025 ID4 [meta seq="25"] Invoice 25 issued
+<13>Oct 11 00:03:02 web02 app[126]: user=dave action=logout src=10.0.26.26
+2026-10-11 00:03:09.027 INFO [worker-3] Request 27 served in 27ms
+user=frank action=logout session=s28 bytes=364 owner='single quoted'
+<13>Oct 11 00:03:23 gw-edge app[129]: user=bob action=update msg="changed the password" id=29
+user=zoë action=logout session=s30 bytes=390
+2026-10-11 00:03:37.031 INFO [worker-7] Request 31 served in 31ms
+user=dave action=logout session=s32 bytes=416
+<86>Oct 11 00:03:51 web02 sshd[2033]: Connection from 10.1.33.33 port 40033 closed
+<134>Oct 11 00:03:58 db01 CEF:0|Acme|Gateway|2.1|107|Allowed request|3|src=10.2.34.1 suser=frank act=allowed
+<13>Oct 11 00:04:05 db01 app[135]: user=alice action=update msg="changed the policy" id=35
+<13>Oct 11 00:04:12 web01 app[136]: user=carol action=logout src=10.0.36.36
+2026-10-11 00:04:19.037 INFO [worker-1] Request 37 served in 37ms
+2026-10-11 00:04:26.038 DEBUG [worker-2] Request 38 served in 38ms path='/tmp/a b'
+<86>Oct 11 00:04:33 web01 sshd[2039]: Connection from 10.1.39.39 port 40039 closed
+<86>Oct 11 00:04:40 web02 sshd[2040]: Connection from 10.1.40.40 port 40040 closed
+2026-10-11 00:04:47.041 WARN [worker-5] Request 41 served in 41ms key=value inside text
+2026-10-11 00:04:54.042 INFO [worker-6] Request 42 served in 42ms
+<13>Oct 11 00:05:01 web01 app[143]: user=alice action=update msg="changed the policy" id=43
+2026-10-11T00:05:08.044+10:00 ERROR [worker-8] Request 44 failed key=value inside text
+com.example.app.RequestRejectedError: request 1560 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+2026-10-11 00:05:15.045 INFO [worker-9] Request 45 served in 45ms
+<garbled >
+<86>Oct 11 00:05:29 web02 sshd[2047]: Connection from 10.1.47.47 port 40047 closed
+<13>Oct 11 00:05:36 web01 app[148]: user=bob action=logout src=10.0.48.48
+10/11/2026 00:05:43 AUDIT dave opened report-49.pdf
+CEF:0|Acme|Gateway|2.1|105|Blocked request \| rule 2|5|src=10.2.50.1 suser=frank act=blocked msg=policy 0 matched a\=b
+
+2026-10-11 00:06:04.052 DEBUG [worker-4] Request 52 served in 52ms
+[2026-10-11 00:06:11] WARN [worker-5] Request 53 served in 53ms "quoted \"reason\" here"
+    retrying in 8 seconds (attempt 2 of 5)
+<13>Oct 11 00:06:18 db01 app[104]: user=alice action=update msg="changed the policy" id=54
+####
+2026-10-11 00:06:32.056 DEBUG [worker-8] Request 56 served in 56ms path='/tmp/a b'
+
+<13>Oct 11 00:06:46 gw-edge app[108]: user=o'brien action=update msg="changed the policy" id=58
+<13>Oct 11 00:06:53 web02 app[109]: user=o'brien action=update msg="changed the role" id=59
+10/11/2026 00:07:00 AUDIT frank opened report-60.pdf
+<86>Oct 11 00:07:07 web02 sshd[2061]: Connection from 10.1.61.61 port 40061 closed
+10/11/2026 00:07:14 AUDIT carol opened report-62.pdf
+10/11/2026 00:07:21 AUDIT alice opened report-63.pdf
+<86>Oct 11 00:07:28 db01 sshd[2064]: Connection from 10.1.64.64 port 40064 closed
+<13>Oct 11 00:07:35 db01 app[115]: user=frank action=login src=10.0.65.65
+2026-10-11 00:07:42.066 INFO [worker-6] Request 66 served in 66ms "quoted \"reason\" here"
+2026-10-11T00:07:49.067+10:00 INFO [worker-7] Request 67 served in 67ms
+2026-10-11T00:07:56.068+10:00 INFO [worker-8] Request 68 served in 68ms
+<13>Oct 11 00:08:03 web01 app[119]: user=bob action=login src=10.0.69.69
+10/11/2026 00:08:10 AUDIT erin opened report-70.pdf
+user=alice action=logout session=s71 bytes=923
+<134>Oct 11 00:08:24 gw-edge CEF:0|Acme|Gateway|2.1|100|Allowed request|3|src=10.2.72.1 suser=alice act=allowed
+
+2026-10-11T00:08:38.074+10:00 INFO [worker-2] Request 74 served in 74ms 	 trailing   
+<13>Oct 11 00:08:45 gw-edge app[125]: user=o'brien action=logout src=10.0.75.75
+<13>Oct 11 00:08:52 gw-edge app[126]: user=carol action=logout src=10.0.76.76
+10/11/2026 00:08:59 AUDIT o'brien opened report-77.pdf
+2026-10-11T00:09:06.078+10:00 INFO [worker-6] Request 78 served in 78ms key=value inside text
+2026-10-11 00:09:13.079 DEBUG [worker-7] Request 79 served in 79ms key=value inside text
+CEF:0|Acme|Gateway|2.1|108|Blocked request \| rule 0|5|src=10.2.80.1 suser=alice act=blocked msg=policy 0 matched a\=b
+<86>Oct 11 00:09:27 web01 sshd[2081]: Connection from 10.1.81.81 port 40081 closed
+2026-10-11T00:09:34.082+10:00 WARN [worker-10] Request 82 served in 82ms 	 trailing   
+<13>Oct 11 00:09:41 web01 app[133]: user=frank action=logout src=10.0.83.83
+2026-10-11T00:09:48.084+10:00 ERROR [worker-0] Request 84 failed 	 trailing   
+java.util.concurrent.TimeoutException: request 3896 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 5 more
+Caused by: java.net.SocketException: broken pipe
+	at java.base/sun.nio.ch.Net.poll(Net.java:12)
+	... 3 common frames omitted
+<13>Oct 11 00:09:55 gw-edge app[135]: user=dave action=update msg="changed the password" id=85
+user=zoë action=logout session=s86 bytes=1118 query="a=b&c=d|e=f"
+<165>1 2026-10-11T00:10:09.087Z db01 billing 3007 ID3 [meta seq="87"] Invoice 87 issued
+<13>Oct 11 00:10:16 db01 app[138]: user=erin action=update msg="changed the policy" id=88
+2026-10-11T00:10:23.089+10:00 INFO [worker-5] Request 89 served in 89ms key=value inside text
+2026-10-11 00:10:30.090 DEBUG [worker-6] Request 90 served in 90ms key=value inside text
+<13>Oct 11 00:10:37 web01 app[141]: user=bob action=login src=10.0.91.91
+<13>Oct 11 00:10:44 web02 app[142]: user=o'brien action=update msg="changed the password" id=92
+2026-10-11 00:10:51.093 INFO [worker-9] Request 93 served in 93ms
+<13>Oct 11 00:10:58 gw-edge app[144]: user=alice action=logout src=10.0.94.94
+<13>Oct 11 00:11:05 web02 app[145]: user=dave action=login src=10.0.95.95
+2026-10-11T00:11:12.096+10:00 WARN [worker-0] Request 96 served in 96ms
+2026-10-11 00:11:19.097 ERROR [worker-1] Request 97 failed key=value inside text
+java.util.concurrent.TimeoutException: request 396 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+10/11/2026 00:11:26 AUDIT o'brien opened report-98.pdf
+2026-10-11 00:11:33.099 INFO [worker-3] Request 99 served in 99ms "quoted \"reason\" here"
+2026-10-11T00:11:40.100+10:00 INFO [worker-4] Request 100 served in 100ms "quoted \"reason\" here"
+
+2026-10-11 00:11:54.102 ERROR [worker-6] Request 102 failed path='/tmp/a b'
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+10/11/2026 00:12:01 AUDIT frank opened report-103.pdf
+11/Oct/2026:00:12:08 +1000 INFO [worker-8] Request 104 served in 104ms path='/tmp/a b'
+<86>Oct 11 00:12:15 gw-edge sshd[2015]: Connection from 10.1.105.5 port 40105 closed
+<165>1 2026-10-11T00:12:22.106Z db01 billing 3026 ID1 [meta seq="106"] Invoice 106 issued
+<13>Oct 11 00:12:29 gw-edge app[107]: user=zoë action=logout src=10.0.107.107
+<13>Oct 11 00:12:36 db01 app[108]: user=zoë action=update msg="changed the policy" id=108
+<13>Oct 11 00:12:43 web02 app[109]: user=carol action=update msg="changed the policy" id=109
+user=o'brien action=share session=s110 bytes=1430
+user=o'brien action=share session=s111 bytes=1443 note="idle timeout"
+<13>Oct 11 00:13:04 web01 app[112]: user=alice action=logout src=10.0.112.112
+2026-10-11T00:13:11.113+10:00 ERROR [worker-5] Request 113 failed 	 trailing   
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+2026-10-11 00:13:18.114 INFO [worker-6] Request 114 served in 114ms
+[2026-10-11 00:13:25] WARN [worker-7] Request 115 served in 115ms "quoted \"reason\" here"
+11/Oct/2026:00:13:32 +1000 ERROR [worker-8] Request 116 failed path='/tmp/a b'
+com.example.app.RequestRejectedError: request 4745 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+<86>Oct 11 00:13:39 gw-edge sshd[2027]: Connection from 10.1.117.17 port 40117 closed
+<134>Oct 11 00:13:46 gw-edge CEF:0|Acme|Gateway|2.1|101|Allowed request|3|src=10.2.118.1 suser=dave act=allowed
+user=o'brien action=download session=s119 bytes=1547
+user=carol action=logout session=s120 bytes=1560 note="unterminated value
+2026-10-11 00:14:07.121 INFO [worker-1] Request 121 served in 121ms "quoted \"reason\" here"
+2026-10-11T00:14:14.122+10:00 INFO [worker-2] Request 122 served in 122ms path='/tmp/a b'
+[2026-10-11 00:14:21] DEBUG [worker-3] Request 123 served in 123ms 	 trailing   
+[2026-10-11 00:14:28] INFO [worker-4] Request 124 served in 124ms key=value inside text
+2026-10-11 00:14:35.125 DEBUG [worker-5] Request 125 served in 125ms
+<86>Oct 11 00:14:42 web01 sshd[2036]: Connection from 10.1.126.26 port 40126 closed
+<13>Oct 11 00:14:49 web01 app[127]: user=carol action=logout src=10.0.127.127
+2026-10-11T00:14:56.128+10:00 INFO [worker-8] Request 128 served in 128ms
+2026-10-11T00:15:03.129+10:00 INFO [worker-9] Request 129 served in 129ms path='/tmp/a b'
+<13>Oct 11 00:15:10 gw-edge app[130]: user=dave action=update msg="changed the password" id=130
+<86>Oct 11 00:15:17 web01 sshd[2041]: Connection from 10.1.131.31 port 40131 closed
+[2026-10-11 00:15:24] ERROR [worker-0] Request 132 failed key=value inside text
+java.lang.IllegalStateException: request 8510 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 16 more
+ok
+2026-10-11 00:15:38.134 ERROR [worker-2] Request 134 failed
+java.lang.IllegalStateException: request 8669 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+11/Oct/2026:00:15:45 +1000 ERROR [worker-3] Request 135 failed
+java.lang.IllegalStateException: request 9574 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 8 more
+Caused by: java.net.SocketException: broken pipe
+	at java.base/sun.nio.ch.Net.poll(Net.java:12)
+	... 3 common frames omitted
+2026-10-11 00:15:52.136 WARN [worker-4] Request 136 served in 136ms key=value inside text
+    retrying in 1 seconds (attempt 1 of 5)
+<165>1 2026-10-11T00:15:59.137Z web02 billing 3017 ID4 [meta seq="137"] Invoice 137 issued
+11/Oct/2026:00:16:06 +1000 INFO [worker-6] Request 138 served in 138ms "quoted \"reason\" here"
+user=o'brien action=logout session=s139 bytes=1807 note="idle timeout"
+11/Oct/2026:00:16:20 +1000 WARN [worker-8] Request 140 served in 140ms
+    retrying in 5 seconds (attempt 1 of 5)
+2026-10-11T00:16:27.141+10:00 ERROR [worker-9] Request 141 failed key=value inside text
+java.io.IOException: request 3028 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+"alice","login","2026-10-11 10:00:00"
+ok
+<13>Oct 11 00:16:48 db01 app[144]: user=zoë action=logout src=10.0.144.144
+11/Oct/2026:00:16:55 +1000 INFO [worker-1] Request 145 served in 145ms
+<13>Oct 11 00:17:02 gw-edge app[146]: user=dave action=logout src=10.0.146.146
+
+CEF:0|Acme|Gateway|2.1|104|Blocked request \| rule 0|5|src=10.2.148.1 suser=dave act=blocked msg=policy 3 matched a\=b
+11/Oct/2026:00:17:23 +1000 ERROR [worker-5] Request 149 failed "quoted \"reason\" here"
+java.io.IOException: request 1287 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 19 more
+[2026-10-11 00:17:30] DEBUG [worker-6] Request 150 served in 150ms 	 trailing   
+<86>Oct 11 00:17:37 db01 sshd[2061]: Connection from 10.1.151.51 port 40151 closed
+<13>Oct 11 00:17:44 web01 app[102]: user=frank action=login src=10.0.152.152
+user=alice action=share session=s153 bytes=1989
+user=bob action=share session=s154 bytes=2002
+<13>Oct 11 00:18:05 web01 app[105]: user=dave action=logout src=10.0.155.155
+<165>1 2026-10-11T00:18:12.156Z web01 billing 3036 ID2 [meta seq="156"] Invoice 156 issued
+2026-10-11T00:18:19.157+10:00 ERROR [worker-1] Request 157 failed
+java.io.IOException: request 6126 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 14 more
+<13>Oct 11 00:18:26 web02 app[108]: user=bob action=logout src=10.0.158.158
+2026-10-11T00:18:33.159+10:00 DEBUG [worker-3] Request 159 served in 159ms
+<86>Oct 11 00:18:40 web01 sshd[2070]: Connection from 10.1.160.60 port 40160 closed
+<13>Oct 11 00:18:47 gw-edge app[111]: user=carol action=logout src=10.0.161.161
+10/11/2026 00:18:54 AUDIT dave opened report-162.pdf
+<134>Oct 11 00:19:01 web02 CEF:0|Acme|Gateway|2.1|101|Allowed request|3|src=10.2.163.1 suser=alice act=allowed
+10/11/2026 00:19:08 AUDIT dave opened report-164.pdf
+2026-10-11 00:19:15.165 DEBUG [worker-9] Request 165 served in 165ms
+[2026-10-11 00:19:22] INFO [worker-10] Request 166 served in 166ms path='/tmp/a b'
+<86>Oct 11 00:19:29 db01 sshd[2077]: Connection from 10.1.167.67 port 40167 closed
+2026-10-11 00:19:36.168 INFO [worker-0] Request 168 served in 168ms path='/tmp/a b'
+<13>Oct 11 00:19:43 db01 app[119]: user=zoë action=logout src=10.0.169.169
+2026-10-11T00:19:50.170+10:00 INFO [worker-2] Request 170 served in 170ms
+2026-10-11 00:19:57.171 WARN [worker-3] Request 171 served in 171ms
+    retrying in 0 seconds (attempt 4 of 5)
+2026-10-11T00:20:04.172+10:00 INFO [worker-4] Request 172 served in 172ms
+2026-10-11 00:20:11.173 INFO [worker-5] Request 173 served in 173ms 	 trailing   
+<13>Oct 11 00:20:18 web01 app[124]: user=carol action=update msg="changed the role" id=174
+<13>Oct 11 00:20:25 gw-edge app[125]: user=bob action=update msg="changed the policy" id=175
+col1	col2	col3
+CEF:0|Acme|Gateway|2.1|106|Blocked request \| rule 1|5|src=10.2.177.1 suser=frank act=blocked msg=policy 2 matched a\=b
+2026-10-11 00:20:46.178 ERROR [worker-10] Request 178 failed "quoted \"reason\" here"
+com.example.app.RequestRejectedError: request 4989 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 13 more
+Caused by: java.net.SocketException: broken pipe
+	at java.base/sun.nio.ch.Net.poll(Net.java:12)
+	... 3 common frames omitted
+user=dave action=download session=s179 bytes=2327 note="user requested"
+<86>Oct 11 00:21:00 web02 sshd[2000]: Connection from 10.1.180.80 port 40180 closed
+<86>Oct 11 00:21:07 web01 sshd[2001]: Connection from 10.1.181.81 port 40181 closed
+11/Oct/2026:00:21:14 +1000 DEBUG [worker-2] Request 182 served in 182ms key=value inside text
+11/Oct/2026:00:21:21 +1000 DEBUG [worker-3] Request 183 served in 183ms 	 trailing   
+10/11/2026 00:21:28 AUDIT zoë opened report-184.pdf
+2026-10-11 00:21:35.185 DEBUG [worker-5] Request 185 served in 185ms
+<13>Oct 11 00:21:42 db01 app[136]: user=frank action=logout src=10.0.186.186
+user=erin action=logout session=s187 bytes=2431
+[2026-10-11 00:21:56] INFO [worker-8] Request 188 served in 188ms "quoted \"reason\" here"
+<13>Oct 11 00:22:03 web02 app[139]: user=carol action=update msg="changed the role" id=189
+<13>Oct 11 00:22:10 gw-edge app[140]: user=carol action=login src=10.0.190.190
+<86>Oct 11 00:22:17 gw-edge sshd[2011]: Connection from 10.1.191.91 port 40191 closed
+2026-10-11 00:22:24.192 INFO [worker-0] Request 192 served in 192ms key=value inside text
+<13>Oct 11 00:22:31 web02 app[143]: user=zoë action=update msg="changed the role" id=193
+2026-10-11 00:22:38.194 INFO [worker-2] Request 194 served in 194ms
+<86>Oct 11 00:22:45 web01 sshd[2015]: Connection from 10.1.195.95 port 40195 closed
+10/11/2026 00:22:52 AUDIT erin opened report-196.pdf
+2026-10-11T00:22:59.197+10:00 INFO [worker-5] Request 197 served in 197ms "quoted \"reason\" here"
+2026-10-11 00:23:06.198 DEBUG [worker-6] Request 198 served in 198ms 	 trailing   
+<86>Oct 11 00:23:13 db01 sshd[2019]: Connection from 10.1.199.99 port 40199 closed
+10/11/2026 00:23:20 AUDIT carol opened report-200.pdf
+10/11/2026 00:23:27 AUDIT frank opened report-201.pdf
+2026-10-11 00:23:34.202 INFO [worker-10] Request 202 served in 202ms path='/tmp/a b'
+
+2026-10-11 00:23:48.204 WARN [worker-0] Request 204 served in 204ms 	 trailing   
+<13>Oct 11 00:23:55 gw-edge app[105]: user=o'brien action=update msg="changed the password" id=205
+user=carol action=share session=s206 bytes=2678 note="idle timeout"
+user=o'brien action=logout session=s207 bytes=2691 path="C:\Program Files\Acme\app.exe"
+<165>1 2026-10-11T00:24:16.208Z web01 billing 3008 ID5 [meta seq="208"] Invoice 208 issued
+2026-10-11 00:24:23.209 ERROR [worker-5] Request 209 failed "quoted \"reason\" here"
+java.util.concurrent.TimeoutException: request 897 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+user=carol action=logout session=s210 bytes=2730
+
+2026-10-11 00:24:44.212 WARN [worker-8] Request 212 served in 212ms
+user=frank action=logout session=s213 bytes=2769 msg="said \"hi\" twice"
+user=dave action=logout session=s214 bytes=2782 note="unterminated value
+<86>Oct 11 00:25:05 web01 sshd[2035]: Connection from 10.1.215.15 port 40215 closed
+11/Oct/2026:00:25:12 +1000 DEBUG [worker-0] Request 216 served in 216ms "quoted \"reason\" here"
+11/Oct/2026:00:25:19 +1000 INFO [worker-1] Request 217 served in 217ms
+user=carol action=share session=s218 bytes=2834
+10/11/2026 00:25:33 AUDIT o'brien opened report-219.pdf
+user=alice action=logout session=s220 bytes=2860
+<134>Oct 11 00:25:47 db01 CEF:0|Acme|Gateway|2.1|105|Allowed request|3|src=10.2.221.1 suser=erin act=allowed
+<13>Oct 11 00:25:54 web01 app[122]: user=frank action=update msg="changed the role" id=222
+<165>1 2026-10-11T00:26:01.223Z web01 billing 3023 ID6 [meta seq="223"] Invoice 223 issued
+2026-10-11T00:26:08.224+10:00 INFO [worker-8] Request 224 served in 224ms path='/tmp/a b'
+2026-10-11 00:26:15.225 ERROR [worker-9] Request 225 failed 	 trailing   
+java.util.concurrent.TimeoutException: request 6890 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+	at com.example.app.Service21.handle(Service21.java:31)
+	at com.example.app.Service22.handle(Service22.java:32)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 23 more
+2026-10-11T00:26:22.226+10:00 INFO [worker-10] Request 226 served in 226ms "quoted \"reason\" here"
+2026-10-11 00:26:29.227 ERROR [worker-11] Request 227 failed key=value inside text
+java.io.IOException: request 745 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+2026-10-11 00:26:36.228 INFO [worker-0] Request 228 served in 228ms key=value inside text
+<13>Oct 11 00:26:43 gw-edge app[129]: user=dave action=update msg="changed the policy" id=229
+[2026-10-11 00:26:50] INFO [worker-2] Request 230 served in 230ms "quoted \"reason\" here"
+user=dave action=share session=s231 bytes=3003
+<165>1 2026-10-11T00:27:04.232Z web01 billing 3032 ID1 [meta seq="232"] Invoice 232 issued
+2026-10-11 00:27:11.233 WARN [worker-5] Request 233 served in 233ms
+<86>Oct 11 00:27:18 gw-edge sshd[2054]: Connection from 10.1.234.34 port 40234 closed
+user=carol action=logout session=s235 bytes=3055
+<13>Oct 11 00:27:32 gw-edge app[136]: user=o'brien action=update msg="changed the role" id=236
+2026-10-11 00:27:39.237 WARN [worker-9] Request 237 served in 237ms "quoted \"reason\" here"
+    retrying in 3 seconds (attempt 2 of 5)
+<13>Oct 11 00:27:46 gw-edge app[138]: user=o'brien action=logout src=10.0.238.38
+<13>Oct 11 00:27:53 gw-edge app[139]: user=carol action=logout src=10.0.239.39
+<13>Oct 11 00:28:00 db01 app[140]: user=o'brien action=login src=10.0.240.40
+<86>Oct 11 00:28:07 db01 sshd[2061]: Connection from 10.1.241.41 port 40241 closed
+10/11/2026 00:28:14 AUDIT o'brien opened report-242.pdf
+
+10/11/2026 00:28:28 AUDIT carol opened report-244.pdf
+<165>1 2026-10-11T00:28:35.245Z db01 billing 3005 ID0 [meta seq="245"] Invoice 245 issued
+<13>Oct 11 00:28:42 db01 app[146]: user=o'brien action=update msg="changed the password" id=246
+11/Oct/2026:00:28:49 +1000 INFO [worker-7] Request 247 served in 247ms "quoted \"reason\" here"
+<13>Oct 11 00:28:56 db01 app[148]: user=bob action=login src=10.0.248.48
+<86>Oct 11 00:29:03 db01 sshd[2069]: Connection from 10.1.249.49 port 40249 closed
+2026-10-11T00:29:10.250+10:00 WARN [worker-10] Request 250 served in 250ms
+<13>Oct 11 00:29:17 web02 app[101]: user=erin action=login src=10.0.251.51
+user=frank action=download session=s252 bytes=3276 query="a=b&c=d|e=f"
+user=o'brien action=logout session=s253 bytes=3289 msg="said \"hi\" twice"
+2026-10-11T00:29:38.254+10:00 ERROR [worker-2] Request 254 failed 	 trailing   
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+<86>Oct 11 00:29:45 gw-edge sshd[2075]: Connection from 10.1.255.55 port 40255 closed
+<13>Oct 11 00:29:52 db01 app[106]: user=bob action=logout src=10.0.0.56
+2026-10-11 00:29:59.257 WARN [worker-5] Request 257 served in 257ms path='/tmp/a b'
+<13>Oct 11 00:30:06 web02 app[108]: user=alice action=logout src=10.0.2.58
+user=erin action=download session=s259 bytes=3367 note="session ended"
+<13>Oct 11 00:30:20 web02 app[110]: user=zoë action=logout src=10.0.4.60
+[2026-10-11 00:30:27] INFO [worker-9] Request 261 served in 261ms
+<86>Oct 11 00:30:34 web02 sshd[2082]: Connection from 10.1.6.62 port 40262 closed
+
+<165>1 2026-10-11T00:30:48.264Z gw-edge billing 3024 ID5 [meta seq="264"] Invoice 264 issued
+<86>Oct 11 00:30:55 gw-edge sshd[2085]: Connection from 10.1.9.65 port 40265 closed
+<13>Oct 11 00:31:02 web01 app[116]: user=dave action=login src=10.0.10.66
+11/Oct/2026:00:31:09 +1000 INFO [worker-3] Request 267 served in 267ms key=value inside text
+2026-10-11 00:31:16.268 WARN [worker-4] Request 268 served in 268ms path='/tmp/a b'
+    retrying in 7 seconds (attempt 1 of 5)
+user=alice action=download session=s269 bytes=3497
+user=o'brien action=download session=s270 bytes=3510 msg="said \"hi\" twice"
+<13>Oct 11 00:31:37 web02 app[121]: user=o'brien action=update msg="changed the role" id=271
+<13>Oct 11 00:31:44 web01 app[122]: user=dave action=update msg="changed the policy" id=272
+2026-10-11 00:31:51.273 DEBUG [worker-9] Request 273 served in 273ms
+CEF:0|Acme|Gateway|2.1|104|Blocked request \| rule 2|5|src=10.2.18.1 suser=o'brien act=blocked msg=policy 4 matched a\=b
+"alice","login","2026-10-11 10:00:00"
+user=dave action=download session=s276 bytes=3588 note="idle timeout"
+<13>Oct 11 00:32:19 gw-edge app[127]: user=alice action=logout src=10.0.21.77
+10/11/2026 00:32:26 AUDIT frank opened report-278.pdf
+<garbled >
+<165>1 2026-10-11T00:32:40.280Z web01 billing 3000 ID0 [meta seq="280"] Invoice 280 issued
+2026-10-11 00:32:47.281 DEBUG [worker-5] Request 281 served in 281ms "quoted \"reason\" here"
+2026-10-11T00:32:54.282+10:00 DEBUG [worker-6] Request 282 served in 282ms "quoted \"reason\" here"
+<86>Oct 11 00:33:01 web02 sshd[2013]: Connection from 10.1.27.83 port 40283 closed
+<86>Oct 11 00:33:08 gw-edge sshd[2014]: Connection from 10.1.28.84 port 40284 closed
+<86>Oct 11 00:33:15 web02 sshd[2015]: Connection from 10.1.29.85 port 40285 closed
+11/Oct/2026:00:33:22 +1000 ERROR [worker-10] Request 286 failed
+com.example.app.RequestRejectedError: request 6826 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	Suppressed: java.io.IOException: close failed
+		at com.example.io.Stream.close(Stream.java:5)
+		... 15 more
+CEF:0|Acme|Gateway|2.1|108|Blocked request \| rule 3|5|src=10.2.31.1 suser=carol act=blocked msg=policy 2 matched a\=b
+<13>Oct 11 00:33:36 db01 app[138]: user=dave action=logout src=10.0.32.88
+<165>1 2026-10-11T00:33:43.289Z web01 billing 3009 ID2 [meta seq="289"] Invoice 289 issued
+<13>Oct 11 00:33:50 gw-edge app[140]: user=bob action=update msg="changed the role" id=290
+2026-10-11 00:33:57.291 WARN [worker-3] Request 291 served in 291ms
+    retrying in 3 seconds (attempt 4 of 5)
+<13>Oct 11 00:34:04 db01 app[142]: user=dave action=login src=10.0.36.92
+<13>Oct 11 00:34:11 gw-edge app[143]: user=o'brien action=logout src=10.0.37.93
+2026-10-11 00:34:18.294 WARN [worker-6] Request 294 served in 294ms path='/tmp/a b'
+<86>Oct 11 00:34:25 web02 sshd[2025]: Connection from 10.1.39.95 port 40295 closed
+<13>Oct 11 00:34:32 web02 app[146]: user=o'brien action=update msg="changed the role" id=296
+<13>Oct 11 00:34:39 web01 app[147]: user=alice action=update msg="changed the policy" id=297
+user=zoë action=logout session=s298 bytes=3874
+<86>Oct 11 00:34:53 db01 sshd[2029]: Connection from 10.1.43.99 port 40299 closed
+<garbled >
+10/11/2026 00:35:07 AUDIT frank opened report-301.pdf
+<165>1 2026-10-11T00:35:14.302Z gw-edge billing 3022 ID1 [meta seq="302"] Invoice 302 issued
+<13>Oct 11 00:35:21 web02 app[103]: user=frank action=update msg="changed the policy" id=303
+2026-10-11 00:35:28.304 DEBUG [worker-4] Request 304 served in 4ms
+2026-10-11 00:35:35.305 DEBUG [worker-5] Request 305 served in 5ms
+<13>Oct 11 00:35:42 web01 app[106]: user=o'brien action=update msg="changed the role" id=306
+<165>1 2026-10-11T00:35:49.307Z web01 billing 3027 ID6 [meta seq="307"] Invoice 307 issued
+10/11/2026 00:35:56 AUDIT o'brien opened report-308.pdf
+[2026-10-11 00:36:03] DEBUG [worker-9] Request 309 served in 9ms
+2026-10-11 00:36:10.310 WARN [worker-10] Request 310 served in 10ms 	 trailing   
+    retrying in 4 seconds (attempt 3 of 5)
+user=alice action=download session=s311 bytes=4043
+user=o'brien action=share session=s312 bytes=4056 owner='single quoted'
+<13>Oct 11 00:36:31 gw-edge app[113]: user=zoë action=login src=10.0.57.113
+2026-10-11T00:36:38.314+10:00 WARN [worker-2] Request 314 served in 14ms
+    retrying in 8 seconds (attempt 3 of 5)
+2026-10-11T00:36:45.315+10:00 INFO [worker-3] Request 315 served in 15ms
+"unbalanced quote at start
+2026-10-11 00:36:59.317 WARN [worker-5] Request 317 served in 17ms
+    retrying in 2 seconds (attempt 2 of 5)
+<13>Oct 11 00:37:06 web01 app[118]: user=erin action=update msg="changed the policy" id=318
+<13>Oct 11 00:37:13 web02 app[119]: user=zoë action=login src=10.0.63.119
+<165>1 2026-10-11T00:37:20.320Z web02 billing 3000 ID5 [meta seq="320"] Invoice 320 issued
+<13>Oct 11 00:37:27 gw-edge app[121]: user=bob action=update msg="changed the password" id=321
+user=erin action=logout session=s322 bytes=4186 note="idle timeout"
+<86>Oct 11 00:37:41 gw-edge sshd[2053]: Connection from 10.1.67.23 port 40323 closed
+[2026-10-11 00:37:48] DEBUG [worker-0] Request 324 served in 24ms path='/tmp/a b'
+<13>Oct 11 00:37:55 web01 app[125]: user=zoë action=logout src=10.0.69.125
+10/11/2026 00:38:02 AUDIT zoë opened report-326.pdf
+11/Oct/2026:00:38:09 +1000 DEBUG [worker-3] Request 327 served in 27ms key=value inside text
+11/Oct/2026:00:38:16 +1000 ERROR [worker-4] Request 328 failed key=value inside text
+java.util.concurrent.TimeoutException: request 556 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+	at com.example.app.Service21.handle(Service21.java:31)
+	at com.example.app.Service22.handle(Service22.java:32)
+	at com.example.app.Service23.handle(Service23.java:33)
+11/Oct/2026:00:38:23 +1000 INFO [worker-5] Request 329 served in 29ms "quoted \"reason\" here"
+<13>Oct 11 00:38:30 web02 app[130]: user=erin action=login src=10.0.74.130
+2026-10-11T00:38:37.331+10:00 INFO [worker-7] Request 331 served in 31ms
+<13>Oct 11 00:38:44 web01 app[132]: user=erin action=login src=10.0.76.132
+
+user=dave action=download session=s334 bytes=4342
+11/Oct/2026:00:39:05 +1000 WARN [worker-11] Request 335 served in 35ms
+user=dave action=share session=s336 bytes=4368
+2026-10-11T00:39:19.337+10:00 DEBUG [worker-1] Request 337 served in 37ms key=value inside text
+2026-10-11 00:39:26.338 INFO [worker-2] Request 338 served in 38ms 	 trailing   
+11/Oct/2026:00:39:33 +1000 INFO [worker-3] Request 339 served in 39ms key=value inside text
+11/Oct/2026:00:39:40 +1000 INFO [worker-4] Request 340 served in 40ms
+<86>Oct 11 00:39:47 web02 sshd[2071]: Connection from 10.1.85.41 port 40341 closed
+10/11/2026 00:39:54 AUDIT erin opened report-342.pdf
+11/Oct/2026:00:40:01 +1000 INFO [worker-7] Request 343 served in 43ms
+<13>Oct 11 00:40:08 web02 app[144]: user=frank action=logout src=10.0.88.144
+<165>1 2026-10-11T00:40:15.345Z web01 billing 3025 ID2 [meta seq="345"] Invoice 345 issued
+<165>1 2026-10-11T00:40:22.346Z gw-edge billing 3026 ID3 [meta seq="346"] Invoice 346 issued
+11/Oct/2026:00:40:29 +1000 INFO [worker-11] Request 347 served in 47ms
+<13>Oct 11 00:40:36 web01 app[148]: user=o'brien action=login src=10.0.92.148
+CEF:0|Acme|Gateway|2.1|107|Blocked request \| rule 1|5|src=10.2.93.1 suser=zoë act=blocked msg=policy 4 matched a\=b
+2026-10-11 00:40:50.350 INFO [worker-2] Request 350 served in 50ms
+<13>Oct 11 00:40:57 gw-edge app[101]: user=carol action=logout src=10.0.95.151
+<13>Oct 11 00:41:04 gw-edge app[102]: user=zoë action=logout src=10.0.96.152
+2026-10-11 00:41:11.353 WARN [worker-5] Request 353 served in 53ms key=value inside text
+    retrying in 2 seconds (attempt 2 of 5)
+<13>Oct 11 00:41:18 web01 app[104]: user=o'brien action=logout src=10.0.98.154
+[2026-10-11 00:41:25] ERROR [worker-7] Request 355 failed key=value inside text
+java.io.IOException: request 9926 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+2026-10-11 00:41:32.356 ERROR [worker-8] Request 356 failed 	 trailing   
+java.util.concurrent.TimeoutException: request 7622 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	Suppressed: java.io.IOException: close failed
+		at com.example.io.Stream.close(Stream.java:5)
+		... 9 more
+<13>Oct 11 00:41:39 web01 app[107]: user=erin action=update msg="changed the policy" id=357
+<13>Oct 11 00:41:46 web01 app[108]: user=o'brien action=login src=10.0.102.158
+10/11/2026 00:41:53 AUDIT frank opened report-359.pdf
+user=frank action=logout session=s360 bytes=4680
+<13>Oct 11 00:42:07 gw-edge app[111]: user=bob action=update msg="changed the password" id=361
+2026-10-11 00:42:14.362 WARN [worker-2] Request 362 served in 62ms
+<86>Oct 11 00:42:21 web02 sshd[2003]: Connection from 10.1.107.63 port 40363 closed
+<13>Oct 11 00:42:28 gw-edge app[114]: user=zoë action=logout src=10.0.108.164
+user=frank action=download session=s365 bytes=4745
+2026-10-11 00:42:42.366 WARN [worker-6] Request 366 served in 66ms key=value inside text
+user=o'brien action=download session=s367 bytes=4771 note="idle timeout"
+
+10/11/2026 00:43:03 AUDIT o'brien opened report-369.pdf
+<13>Oct 11 00:43:10 db01 app[120]: user=frank action=update msg="changed the policy" id=370
+user=erin action=download session=s371 bytes=4823 note="unterminated value
+<165>1 2026-10-11T00:43:24.372Z gw-edge billing 3012 ID1 [meta seq="372"] Invoice 372 issued
+<165>1 2026-10-11T00:43:31.373Z db01 billing 3013 ID2 [meta seq="373"] Invoice 373 issued
+11/Oct/2026:00:43:38 +1000 INFO [worker-2] Request 374 served in 74ms 	 trailing   
+<13>Oct 11 00:43:45 gw-edge app[125]: user=o'brien action=logout src=10.0.119.175
+<13>Oct 11 00:43:52 web02 app[126]: user=frank action=update msg="changed the password" id=376
+<165>1 2026-10-11T00:43:59.377Z gw-edge billing 3017 ID6 [meta seq="377"] Invoice 377 issued
+2026-10-11 00:44:06.378 WARN [worker-6] Request 378 served in 78ms path='/tmp/a b'
+    retrying in 0 seconds (attempt 3 of 5)
+<165>1 2026-10-11T00:44:13.379Z db01 billing 3019 ID1 [meta seq="379"] Invoice 379 issued
+10/11/2026 00:44:20 AUDIT alice opened report-380.pdf
+2026-10-11 00:44:27.381 DEBUG [worker-9] Request 381 served in 81ms "quoted \"reason\" here"
+<13>Oct 11 00:44:34 gw-edge app[132]: user=alice action=logout src=10.0.126.182
+user=o'brien action=download session=s383 bytes=4979
+2026-10-11T00:44:48.384+10:00 INFO [worker-0] Request 384 served in 84ms 	 trailing   
+2026-10-11 00:44:55.385 INFO [worker-1] Request 385 served in 85ms "quoted \"reason\" here"
+10/11/2026 00:45:02 AUDIT erin opened report-386.pdf
+[2026-10-11 00:45:09] ERROR [worker-3] Request 387 failed
+java.util.concurrent.TimeoutException: request 8940 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 7 more
+<13>Oct 11 00:45:16 web01 app[138]: user=frank action=login src=10.0.132.188
+<13>Oct 11 00:45:23 gw-edge app[139]: user=o'brien action=logout src=10.0.133.189
+10/11/2026 00:45:30 AUDIT dave opened report-390.pdf
+<165>1 2026-10-11T00:45:37.391Z web01 billing 3031 ID6 [meta seq="391"] Invoice 391 issued
+<13>Oct 11 00:45:44 web02 app[142]: user=zoë action=logout src=10.0.136.192
+[2026-10-11 00:45:51] DEBUG [worker-9] Request 393 served in 93ms
+<13>Oct 11 00:45:58 db01 app[144]: user=carol action=login src=10.0.138.194
+<13>Oct 11 00:46:05 web01 app[145]: user=carol action=logout src=10.0.139.195
+<13>Oct 11 00:46:12 db01 app[146]: user=dave action=login src=10.0.140.196
+user=zoë action=download session=s397 bytes=5161 path="C:\Program Files\Acme\app.exe"
+<165>1 2026-10-11T00:46:26.398Z gw-edge billing 3038 ID6 [meta seq="398"] Invoice 398 issued
+11/Oct/2026:00:46:33 +1000 INFO [worker-3] Request 399 served in 99ms key=value inside text
+<86>Oct 11 00:46:40 web02 sshd[2040]: Connection from 10.1.144.0 port 40400 closed
+[2026-10-11 00:46:47] INFO [worker-5] Request 401 served in 101ms 	 trailing   
+2026-10-11T00:46:54.402+10:00 INFO [worker-6] Request 402 served in 102ms 	 trailing   
+<13>Oct 11 00:47:01 web02 app[103]: user=o'brien action=logout src=10.0.147.3
+
+<13>Oct 11 00:47:15 gw-edge app[105]: user=frank action=logout src=10.0.149.5
+user=zoë action=logout session=s406 bytes=5278
+<13>Oct 11 00:47:29 web02 app[107]: user=bob action=login src=10.0.151.7
+heartbeat
+<86>Oct 11 00:47:43 web02 sshd[2049]: Connection from 10.1.153.9 port 40409 closed
+2026-10-11 00:47:50.410 ERROR [worker-2] Request 410 failed 	 trailing   
+com.example.app.RequestRejectedError: request 9395 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+<13>Oct 11 00:47:57 web02 app[111]: user=frank action=login src=10.0.155.11
+<13>Oct 11 00:48:04 web02 app[112]: user=o'brien action=logout src=10.0.156.12
+<13>Oct 11 00:48:11 web02 app[113]: user=bob action=login src=10.0.157.13
+<13>Oct 11 00:48:18 web02 app[114]: user=dave action=login src=10.0.158.14
+[2026-10-11 00:48:25] INFO [worker-7] Request 415 served in 115ms
+10/11/2026 00:48:32 AUDIT bob opened report-416.pdf
+10/11/2026 00:48:39 AUDIT o'brien opened report-417.pdf
+2026-10-11T00:48:46.418+10:00 INFO [worker-10] Request 418 served in 118ms 	 trailing   
+<13>Oct 11 00:48:53 web01 app[119]: user=o'brien action=update msg="changed the policy" id=419
+2026-10-11 00:49:00.420 INFO [worker-0] Request 420 served in 120ms 	 trailing   
+11/Oct/2026:00:49:07 +1000 ERROR [worker-1] Request 421 failed 	 trailing   
+java.util.concurrent.TimeoutException: request 9858 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 12 more
+2026-10-11 00:49:14.422 ERROR [worker-2] Request 422 failed
+java.util.concurrent.TimeoutException: request 9547 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+<165>1 2026-10-11T00:49:21.423Z web01 billing 3023 ID3 [meta seq="423"] Invoice 423 issued
+[2026-10-11 00:49:28] INFO [worker-4] Request 424 served in 124ms
+user=dave action=logout session=s425 bytes=5525
+<86>Oct 11 00:49:42 gw-edge sshd[2066]: Connection from 10.1.170.26 port 40426 closed
+[2026-10-11 00:49:49] DEBUG [worker-7] Request 427 served in 127ms
+[2026-10-11 00:49:56] DEBUG [worker-8] Request 428 served in 128ms
+
+2026-10-11 00:50:10.430 INFO [worker-10] Request 430 served in 130ms
+<165>1 2026-10-11T00:50:17.431Z web01 billing 3031 ID4 [meta seq="431"] Invoice 431 issued
+<13>Oct 11 00:50:24 gw-edge app[132]: user=dave action=login src=10.0.176.32
+user=zoë action=logout session=s433 bytes=5629 path="C:\Program Files\Acme\app.exe"
+10/11/2026 00:50:38 AUDIT erin opened report-434.pdf
+10/11/2026 00:50:45 AUDIT carol opened report-435.pdf
+<86>Oct 11 00:50:52 web01 sshd[2076]: Connection from 10.1.180.36 port 40436 closed
+11/Oct/2026:00:50:59 +1000 DEBUG [worker-5] Request 437 served in 137ms "quoted \"reason\" here"
+11/Oct/2026:00:51:06 +1000 ERROR [worker-6] Request 438 failed key=value inside text
+com.example.app.RequestRejectedError: request 5622 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+user=zoë action=logout session=s439 bytes=5707 owner='single quoted'
+<86>Oct 11 00:51:20 db01 sshd[2080]: Connection from 10.1.184.40 port 40440 closed
+
+[2026-10-11 00:51:34] INFO [worker-10] Request 442 served in 142ms "quoted \"reason\" here"
+<86>Oct 11 00:51:41 db01 sshd[2083]: Connection from 10.1.187.43 port 40443 closed
+user=bob action=logout session=s444 bytes=5772 query="a=b&c=d|e=f"
+10/11/2026 00:51:55 AUDIT erin opened report-445.pdf
+user=carol action=logout session=s446 bytes=5798 note="session ended"
+<13>Oct 11 00:52:09 web02 app[147]: user=frank action=update msg="changed the policy" id=447
+user=erin action=share session=s448 bytes=5824 note="session ended"
+2026-10-11 00:52:23.449 INFO [worker-5] Request 449 served in 149ms key=value inside text
+[2026-10-11 00:52:30] WARN [worker-6] Request 450 served in 150ms path='/tmp/a b'
+    retrying in 0 seconds (attempt 3 of 5)
+<13>Oct 11 00:52:37 db01 app[101]: user=frank action=logout src=10.0.195.51
+<86>Oct 11 00:52:44 web02 sshd[2002]: Connection from 10.1.196.52 port 40452 closed
+[2026-10-11 00:52:51] INFO [worker-9] Request 453 served in 153ms 	 trailing   
+user=dave action=share session=s454 bytes=5902
+user=zoë action=share session=s455 bytes=5915 msg="said \"hi\" twice"
+2026-10-11T00:53:12.456+10:00 ERROR [worker-0] Request 456 failed 	 trailing   
+com.example.app.RequestRejectedError: request 800 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+<165>1 2026-10-11T00:53:19.457Z db01 billing 3017 ID2 [meta seq="457"] Invoice 457 issued
+11/Oct/2026:00:53:26 +1000 INFO [worker-2] Request 458 served in 158ms
+
+<13>Oct 11 00:53:40 web01 app[110]: user=o'brien action=update msg="changed the role" id=460
+<13>Oct 11 00:53:47 db01 app[111]: user=zoë action=update msg="changed the policy" id=461
+2026-10-11 00:53:54.462 INFO [worker-6] Request 462 served in 162ms "quoted \"reason\" here"
+2026-10-11T00:54:01.463+10:00 WARN [worker-7] Request 463 served in 163ms
+[2026-10-11 00:54:08] ERROR [worker-8] Request 464 failed
+com.example.app.RequestRejectedError: request 7202 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 5 more
+11/Oct/2026:00:54:15 +1000 ERROR [worker-9] Request 465 failed key=value inside text
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+CEF:0|Acme|Gateway|2.1|107|Blocked request \| rule 2|5|src=10.2.210.1 suser=o'brien act=blocked msg=policy 1 matched a\=b
+2026-10-11T00:54:29.467+10:00 INFO [worker-11] Request 467 served in 167ms "quoted \"reason\" here"
+10/11/2026 00:54:36 AUDIT bob opened report-468.pdf
+<134>Oct 11 00:54:43 gw-edge CEF:0|Acme|Gateway|2.1|101|Allowed request|3|src=10.2.213.1 suser=o'brien act=allowed
+<13>Oct 11 00:54:50 web02 app[120]: user=bob action=login src=10.0.214.70
+<13>Oct 11 00:54:57 web02 app[121]: user=erin action=update msg="changed the password" id=471
+10/11/2026 00:55:04 AUDIT dave opened report-472.pdf
+<13>Oct 11 00:55:11 gw-edge app[123]: user=bob action=logout src=10.0.217.73
+2026-10-11T00:55:18.474+10:00 DEBUG [worker-6] Request 474 served in 174ms
+2026-10-11 00:55:25.475 INFO [worker-7] Request 475 served in 175ms path='/tmp/a b'
+<13>Oct 11 00:55:32 db01 app[126]: user=bob action=update msg="changed the role" id=476
+2026-10-11T00:55:39.477+10:00 INFO [worker-9] Request 477 served in 177ms
+[2026-10-11 00:55:46] ERROR [worker-10] Request 478 failed "quoted \"reason\" here"
+java.io.IOException: request 6391 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+user=carol action=share session=s479 bytes=6227 query="a=b&c=d|e=f"
+2026-10-11T00:56:00.480+10:00 INFO [worker-0] Request 480 served in 180ms
+11/Oct/2026:00:56:07 +1000 WARN [worker-1] Request 481 served in 181ms "quoted \"reason\" here"
+<13>Oct 11 00:56:14 db01 app[132]: user=carol action=logout src=10.0.226.82
+<165>1 2026-10-11T00:56:21.483Z web01 billing 3003 ID0 [meta seq="483"] Invoice 483 issued
+<13>Oct 11 00:56:28 db01 app[134]: user=carol action=login src=10.0.228.84
+10/11/2026 00:56:35 AUDIT frank opened report-485.pdf
+<13>Oct 11 00:56:42 db01 app[136]: user=bob action=logout src=10.0.230.86
+user=dave action=logout session=s487 bytes=6331
+user=carol action=logout session=s488 bytes=6344
+<165>1 2026-10-11T00:57:03.489Z db01 billing 3009 ID6 [meta seq="489"] Invoice 489 issued
+user=bob action=download session=s490 bytes=6370 query="a=b&c=d|e=f"
+<13>Oct 11 00:57:17 web01 app[141]: user=carol action=login src=10.0.235.91
+<13>Oct 11 00:57:24 web01 app[142]: user=dave action=logout src=10.0.236.92
+2026-10-11 00:57:31.493 DEBUG [worker-1] Request 493 served in 193ms 	 trailing   
+<165>1 2026-10-11T00:57:38.494Z web01 billing 3014 ID4 [meta seq="494"] Invoice 494 issued
+<13>Oct 11 00:57:45 web02 app[145]: user=dave action=logout src=10.0.239.95
+11/Oct/2026:00:57:52 +1000 INFO [worker-4] Request 496 served in 196ms
+user=bob action=download session=s497 bytes=6461
+<13>Oct 11 00:58:06 gw-edge app[148]: user=o'brien action=logout src=10.0.242.98
+2026-10-11 00:58:13.499 INFO [worker-7] Request 499 served in 199ms
+<86>Oct 11 00:58:20 web01 sshd[2050]: Connection from 10.1.244.0 port 40500 closed
+user=bulk action=upload payload=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+<13>Oct 11 00:58:27 web01 app[101]: user=o'brien action=update msg="changed the policy" id=501
+[2026-10-11 00:58:34] INFO [worker-10] Request 502 served in 202ms "quoted \"reason\" here"
+2026-10-11 00:58:41.503 WARN [worker-11] Request 503 served in 203ms
+<13>Oct 11 00:58:48 web02 app[104]: user=o'brien action=login src=10.0.248.104
+<13>Oct 11 00:58:55 web01 app[105]: user=erin action=login src=10.0.249.105
+<86>Oct 11 00:59:02 db01 sshd[2056]: Connection from 10.1.250.6 port 40506 closed
+user=dave action=download session=s507 bytes=6591
+user=erin action=logout session=s508 bytes=6604
+<165>1 2026-10-11T00:59:23.509Z gw-edge billing 3029 ID5 [meta seq="509"] Invoice 509 issued
+<13>Oct 11 00:59:30 web02 app[110]: user=o'brien action=login src=10.0.254.110
+11/Oct/2026:00:59:37 +1000 DEBUG [worker-7] Request 511 served in 211ms
+<134>Oct 11 00:59:44 db01 CEF:0|Acme|Gateway|2.1|108|Allowed request|3|src=10.2.0.1 suser=o'brien act=allowed
+<86>Oct 11 00:59:51 db01 sshd[2063]: Connection from 10.1.1.13 port 40513 closed
+<86>Oct 11 00:59:58 web01 sshd[2064]: Connection from 10.1.2.14 port 40514 closed
+user=bob action=download session=s515 bytes=6695 msg="said \"hi\" twice"
+user=bob action=download session=s516 bytes=6708 msg="said \"hi\" twice"
+<86>Oct 11 01:00:19 web02 sshd[2067]: Connection from 10.1.5.17 port 40517 closed
+<13>Oct 11 01:00:26 web01 app[118]: user=o'brien action=update msg="changed the role" id=518
+2026-10-11 01:00:33.519 INFO [worker-3] Request 519 served in 219ms "quoted \"reason\" here"
+<13>Oct 11 01:00:40 web02 app[120]: user=carol action=login src=10.0.8.120
+user=carol action=download session=s521 bytes=6773 note="user requested"
+10/11/2026 01:00:54 AUDIT zoë opened report-522.pdf
+
+<13>Oct 11 01:01:08 db01 app[124]: user=erin action=logout src=10.0.12.124
+user=dave action=logout session=s525 bytes=6825 note="session ended"
+CEF:0|Acme|Gateway|2.1|104|Blocked request \| rule 2|5|src=10.2.14.1 suser=carol act=blocked msg=policy 1 matched a\=b
+user=o'brien action=download session=s527 bytes=6851 note="session ended"
+<13>Oct 11 01:01:36 gw-edge app[128]: user=bob action=login src=10.0.16.128
+11/Oct/2026:01:01:43 +1000 ERROR [worker-1] Request 529 failed key=value inside text
+java.io.IOException: request 8622 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+user=carol action=share session=s530 bytes=6890 path="C:\Program Files\Acme\app.exe"
+<13>Oct 11 01:01:57 web02 app[131]: user=frank action=login src=10.0.19.131
+user=zoë action=logout session=s532 bytes=6916 note="idle timeout"
+<13>Oct 11 01:02:11 web02 app[133]: user=alice action=logout src=10.0.21.133
+<13>Oct 11 01:02:18 db01 app[134]: user=zoë action=update msg="changed the password" id=534
+10/11/2026 01:02:25 AUDIT erin opened report-535.pdf
+11/Oct/2026:01:02:32 +1000 INFO [worker-8] Request 536 served in 236ms key=value inside text
+<165>1 2026-10-11T01:02:39.537Z web01 billing 3017 ID5 [meta seq="537"] Invoice 537 issued
+user=erin action=download session=s538 bytes=6994
+<13>Oct 11 01:02:53 web02 app[139]: user=dave action=logout src=10.0.27.139
+<134>Oct 11 01:03:00 web01 CEF:0|Acme|Gateway|2.1|100|Allowed request|3|src=10.2.28.1 suser=frank act=allowed
+2026-10-11T01:03:07.541+10:00 INFO [worker-1] Request 541 served in 241ms "quoted \"reason\" here"
+<13>Oct 11 01:03:14 db01 app[142]: user=frank action=update msg="changed the policy" id=542
+10/11/2026 01:03:21 AUDIT bob opened report-543.pdf
+<86>Oct 11 01:03:28 web01 sshd[2004]: Connection from 10.1.32.44 port 40544 closed
+<86>Oct 11 01:03:35 web01 sshd[2005]: Connection from 10.1.33.45 port 40545 closed
+2026-10-11 01:03:42.546 DEBUG [worker-6] Request 546 served in 246ms path='/tmp/a b'
+2026-10-11 01:03:49.547 DEBUG [worker-7] Request 547 served in 247ms
+
+2026-10-11T01:04:03.549+10:00 INFO [worker-9] Request 549 served in 249ms 	 trailing   
+<86>Oct 11 01:04:10 db01 sshd[2010]: Connection from 10.1.38.50 port 40550 closed
+2026-10-11 01:04:17.551 INFO [worker-11] Request 551 served in 251ms path='/tmp/a b'
+####
+2026-10-11 01:04:31.553 INFO [worker-1] Request 553 served in 253ms key=value inside text
+<134>Oct 11 01:04:38 web02 CEF:0|Acme|Gateway|2.1|105|Allowed request|3|src=10.2.42.1 suser=dave act=allowed
+user=erin action=share session=s555 bytes=7215 msg="said \"hi\" twice"
+11/Oct/2026:01:04:52 +1000 INFO [worker-4] Request 556 served in 256ms 	 trailing   
+10/11/2026 01:04:59 AUDIT o'brien opened report-557.pdf
+<165>1 2026-10-11T01:05:06.558Z db01 billing 3038 ID5 [meta seq="558"] Invoice 558 issued
+<165>1 2026-10-11T01:05:13.559Z db01 billing 3039 ID6 [meta seq="559"] Invoice 559 issued
+2026-10-11 01:05:20.560 WARN [worker-8] Request 560 served in 260ms 	 trailing   
+<13>Oct 11 01:05:27 db01 app[111]: user=carol action=login src=10.0.49.161
+<13>Oct 11 01:05:34 web01 app[112]: user=frank action=update msg="changed the role" id=562
+[2026-10-11 01:05:41] INFO [worker-11] Request 563 served in 263ms
+[2026-10-11 01:05:48] WARN [worker-0] Request 564 served in 264ms "quoted \"reason\" here"
+<13>Oct 11 01:05:55 web02 app[115]: user=frank action=update msg="changed the policy" id=565
+[2026-10-11 01:06:02] INFO [worker-2] Request 566 served in 266ms 	 trailing   
+<165>1 2026-10-11T01:06:09.567Z db01 billing 3007 ID0 [meta seq="567"] Invoice 567 issued
+<13>Oct 11 01:06:16 web01 app[118]: user=carol action=update msg="changed the password" id=568
+<86>Oct 11 01:06:23 db01 sshd[2029]: Connection from 10.1.57.69 port 40569 closed
+user=bob action=logout session=s570 bytes=7410 path="C:\Program Files\Acme\app.exe"
+<garbled >
+<13>Oct 11 01:06:44 db01 app[122]: user=dave action=login src=10.0.60.172
+<13>Oct 11 01:06:51 web01 app[123]: user=o'brien action=logout src=10.0.61.173
+2026-10-11 01:06:58.574 DEBUG [worker-10] Request 574 served in 274ms 	 trailing   
+11/Oct/2026:01:07:05 +1000 WARN [worker-11] Request 575 served in 275ms 	 trailing   
+    retrying in 8 seconds (attempt 4 of 5)
+10/11/2026 01:07:12 AUDIT frank opened report-576.pdf
+[2026-10-11 01:07:19] WARN [worker-1] Request 577 served in 277ms 	 trailing   
+<165>1 2026-10-11T01:07:26.578Z web01 billing 3018 ID4 [meta seq="578"] Invoice 578 issued
+heartbeat
+CEF:0|Acme|Gateway|2.1|104|Blocked request \| rule 0|5|src=10.2.68.1 suser=carol act=blocked msg=policy 0 matched a\=b
+2026-10-11 01:07:47.581 DEBUG [worker-5] Request 581 served in 281ms
+<13>Oct 11 01:07:54 web01 app[132]: user=o'brien action=update msg="changed the password" id=582
+"unbalanced quote at start
+<134>Oct 11 01:08:08 db01 CEF:0|Acme|Gateway|2.1|108|Allowed request|3|src=10.2.72.1 suser=bob act=allowed
+<13>Oct 11 01:08:15 db01 app[135]: user=dave action=login src=10.0.73.185
+10/11/2026 01:08:22 AUDIT zoë opened report-586.pdf
+<86>Oct 11 01:08:29 web02 sshd[2047]: Connection from 10.1.75.87 port 40587 closed
+<13>Oct 11 01:08:36 db01 app[138]: user=bob action=logout src=10.0.76.188
+10/11/2026 01:08:43 AUDIT bob opened report-589.pdf
+user=erin action=download session=s590 bytes=7670 msg="said \"hi\" twice"
+2026-10-11T01:08:57.591+10:00 WARN [worker-3] Request 591 served in 291ms
+    retrying in 6 seconds (attempt 4 of 5)
+<13>Oct 11 01:09:04 db01 app[142]: user=frank action=login src=10.0.80.192
+<13>Oct 11 01:09:11 web02 app[143]: user=dave action=login src=10.0.81.193
+user=dave action=logout session=s594 bytes=7722 path="C:\Program Files\Acme\app.exe"
+<86>Oct 11 01:09:25 web02 sshd[2055]: Connection from 10.1.83.95 port 40595 closed
+<86>Oct 11 01:09:32 gw-edge sshd[2056]: Connection from 10.1.84.96 port 40596 closed
+11/Oct/2026:01:09:39 +1000 WARN [worker-9] Request 597 served in 297ms 	 trailing   
+2026-10-11 01:09:46.598 DEBUG [worker-10] Request 598 served in 298ms path='/tmp/a b'
+10/11/2026 01:09:53 AUDIT alice opened report-599.pdf
+user=o'brien action=download session=s600 bytes=7800
+<165>1 2026-10-11T01:10:07.601Z web01 billing 3001 ID6 [meta seq="601"] Invoice 601 issued
+<13>Oct 11 01:10:14 gw-edge app[102]: user=carol action=update msg="changed the policy" id=602
+<13>Oct 11 01:10:21 web01 app[103]: user=erin action=update msg="changed the password" id=603
+<13>Oct 11 01:10:28 web02 app[104]: user=alice action=login src=10.0.92.4
+<13>Oct 11 01:10:35 web01 app[105]: user=bob action=login src=10.0.93.5
+2026-10-11 01:10:42.606 INFO [worker-6] Request 606 served in 6ms
+user=alice action=share session=s607 bytes=7891
+2026-10-11T01:10:56.608+10:00 INFO [worker-8] Request 608 served in 8ms "quoted \"reason\" here"
+user=dave action=share session=s609 bytes=7917 owner='single quoted'
+user=dave action=share session=s610 bytes=7930 note="session ended"
+"unbalanced quote at start
+[2026-10-11 01:11:24] INFO [worker-0] Request 612 served in 12ms key=value inside text
+user=o'brien action=logout session=s613 bytes=7969 note="user requested"
+2026-10-11T01:11:38.614+10:00 DEBUG [worker-2] Request 614 served in 14ms "quoted \"reason\" here"
+<13>Oct 11 01:11:45 web01 app[115]: user=bob action=update msg="changed the policy" id=615
+[2026-10-11 01:11:52] INFO [worker-4] Request 616 served in 16ms key=value inside text
+<165>1 2026-10-11T01:11:59.617Z web02 billing 3017 ID1 [meta seq="617"] Invoice 617 issued
+<13>Oct 11 01:12:06 db01 app[118]: user=o'brien action=update msg="changed the policy" id=618
+<134>Oct 11 01:12:13 gw-edge CEF:0|Acme|Gateway|2.1|107|Allowed request|3|src=10.2.107.1 suser=erin act=allowed
+user=erin action=download session=s620 bytes=8060
+user=alice action=share session=s621 bytes=8073 query="a=b&c=d|e=f"
+<13>Oct 11 01:12:34 web02 app[122]: user=zoë action=logout src=10.0.110.22
+user=o'brien action=download session=s623 bytes=8099 note="session ended"
+<165>1 2026-10-11T01:12:48.624Z gw-edge billing 3024 ID1 [meta seq="624"] Invoice 624 issued
+<86>Oct 11 01:12:55 gw-edge sshd[2085]: Connection from 10.1.113.25 port 40625 closed
+<165>1 2026-10-11T01:13:02.626Z web02 billing 3026 ID3 [meta seq="626"] Invoice 626 issued
+<86>Oct 11 01:13:09 web01 sshd[2087]: Connection from 10.1.115.27 port 40627 closed
+user=carol action=logout session=s628 bytes=8164
+<13>Oct 11 01:13:23 db01 app[129]: user=bob action=login src=10.0.117.29
+user=carol action=logout session=s630 bytes=8190
+CEF:0|Acme|Gateway|2.1|101|Blocked request \| rule 3|5|src=10.2.119.1 suser=frank act=blocked msg=policy 1 matched a\=b
+<13>Oct 11 01:13:44 web01 app[132]: user=frank action=logout src=10.0.120.32
+<13>Oct 11 01:13:51 gw-edge app[133]: user=alice action=logout src=10.0.121.33
+user=erin action=logout session=s634 bytes=8242
+11/Oct/2026:01:14:05 +1000 INFO [worker-11] Request 635 served in 35ms key=value inside text
+[2026-10-11 01:14:12] INFO [worker-0] Request 636 served in 36ms path='/tmp/a b'
+user=carol action=logout session=s637 bytes=8281
+10/11/2026 01:14:26 AUDIT erin opened report-638.pdf
+<86>Oct 11 01:14:33 web01 sshd[2009]: Connection from 10.1.127.39 port 40639 closed
+2026-10-11 01:14:40.640 ERROR [worker-4] Request 640 failed key=value inside text
+com.example.app.RequestRejectedError: request 9430 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 18 more
+<134>Oct 11 01:14:47 web01 CEF:0|Acme|Gateway|2.1|102|Allowed request|3|src=10.2.129.1 suser=carol act=allowed
+####
+<13>Oct 11 01:15:01 db01 app[143]: user=alice action=logout src=10.0.131.43
+<13>Oct 11 01:15:08 web01 app[144]: user=erin action=update msg="changed the policy" id=644
+user=frank action=share session=s645 bytes=8385
+2026-10-11 01:15:22.646 DEBUG [worker-10] Request 646 served in 46ms
+2026-10-11T01:15:29.647+10:00 INFO [worker-11] Request 647 served in 47ms key=value inside text
+2026-10-11T01:15:36.648+10:00 WARN [worker-0] Request 648 served in 48ms path='/tmp/a b'
+user=alice action=logout session=s649 bytes=8437 query="a=b&c=d|e=f"
+11/Oct/2026:01:15:50 +1000 DEBUG [worker-2] Request 650 served in 50ms "quoted \"reason\" here"
+[2026-10-11 01:15:57] DEBUG [worker-3] Request 651 served in 51ms
+<13>Oct 11 01:16:04 web01 app[102]: user=dave action=update msg="changed the password" id=652
+<13>Oct 11 01:16:11 web01 app[103]: user=bob action=logout src=10.0.141.53
+<13>Oct 11 01:16:18 gw-edge app[104]: user=erin action=update msg="changed the role" id=654
+11/Oct/2026:01:16:25 +1000 INFO [worker-7] Request 655 served in 55ms "quoted \"reason\" here"
+<13>Oct 11 01:16:32 gw-edge app[106]: user=carol action=update msg="changed the role" id=656
+<13>Oct 11 01:16:39 web02 app[107]: user=carol action=login src=10.0.145.57
+user=alice action=logout session=s658 bytes=8554 note="unterminated value
+[2026-10-11 01:16:53] DEBUG [worker-11] Request 659 served in 59ms path='/tmp/a b'
+[2026-10-11 01:17:00] DEBUG [worker-0] Request 660 served in 60ms
+2026-10-11T01:17:07.661+10:00 INFO [worker-1] Request 661 served in 61ms 	 trailing   
+user=zoë action=share session=s662 bytes=8606
+[2026-10-11 01:17:21] INFO [worker-3] Request 663 served in 63ms
+2026-10-11 01:17:28.664 DEBUG [worker-4] Request 664 served in 64ms key=value inside text
+2026-10-11T01:17:35.665+10:00 WARN [worker-5] Request 665 served in 65ms
+    retrying in 8 seconds (attempt 2 of 5)
+<13>Oct 11 01:17:42 db01 app[116]: user=alice action=update msg="changed the role" id=666
+2026-10-11T01:17:49.667+10:00 INFO [worker-7] Request 667 served in 67ms key=value inside text
+<165>1 2026-10-11T01:17:56.668Z web02 billing 3028 ID3 [meta seq="668"] Invoice 668 issued
+2026-10-11T01:18:03.669+10:00 WARN [worker-9] Request 669 served in 69ms
+2026-10-11 01:18:10.670 INFO [worker-10] Request 670 served in 70ms path='/tmp/a b'
+2026-10-11 01:18:17.671 INFO [worker-11] Request 671 served in 71ms "quoted \"reason\" here"
+<13>Oct 11 01:18:24 web02 app[122]: user=dave action=update msg="changed the role" id=672
+11/Oct/2026:01:18:31 +1000 ERROR [worker-1] Request 673 failed path='/tmp/a b'
+java.util.concurrent.TimeoutException: request 7169 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+	at com.example.app.Service21.handle(Service21.java:31)
+	at com.example.app.Service22.handle(Service22.java:32)
+	at com.example.app.Service23.handle(Service23.java:33)
+	at com.example.app.Service24.handle(Service24.java:34)
+10/11/2026 01:18:38 AUDIT alice opened report-674.pdf
+user=o'brien action=download session=s675 bytes=8775
+2026-10-11 01:18:52.676 INFO [worker-4] Request 676 served in 76ms key=value inside text
+"alice","login","2026-10-11 10:00:00"
+
+11/Oct/2026:01:19:13 +1000 DEBUG [worker-7] Request 679 served in 79ms
+user=bob action=logout session=s680 bytes=8840 note="user requested"
+
+CEF:0|Acme|Gateway|2.1|107|Blocked request \| rule 2|5|src=10.2.170.1 suser=frank act=blocked msg=policy 2 matched a\=b
+<garbled >
+<13>Oct 11 01:19:48 web02 app[134]: user=zoë action=login src=10.0.172.84
+<13>Oct 11 01:19:55 db01 app[135]: user=alice action=login src=10.0.173.85
+user=bob action=logout session=s686 bytes=8918 owner='single quoted'
+
+<165>1 2026-10-11T01:20:16.688Z web01 billing 3008 ID2 [meta seq="688"] Invoice 688 issued
+<13>Oct 11 01:20:23 web02 app[139]: user=o'brien action=update msg="changed the password" id=689
+2026-10-11T01:20:30.690+10:00 ERROR [worker-6] Request 690 failed
+java.io.IOException: request 9596 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+2026-10-11T01:20:37.691+10:00 ERROR [worker-7] Request 691 failed
+java.io.IOException: request 9290 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 13 more
+Caused by: java.net.SocketException: broken pipe
+	at java.base/sun.nio.ch.Net.poll(Net.java:12)
+	... 3 common frames omitted
+<13>Oct 11 01:20:44 web01 app[142]: user=dave action=update msg="changed the role" id=692
+2026-10-11 01:20:51.693 WARN [worker-9] Request 693 served in 93ms "quoted \"reason\" here"
+    retrying in 0 seconds (attempt 2 of 5)
+2026-10-11T01:20:58.694+10:00 INFO [worker-10] Request 694 served in 94ms 	 trailing   
+2026-10-11 01:21:05.695 INFO [worker-11] Request 695 served in 95ms 	 trailing   
+CEF:0|Acme|Gateway|2.1|103|Blocked request \| rule 0|5|src=10.2.184.1 suser=bob act=blocked msg=policy 1 matched a\=b
+11/Oct/2026:01:21:19 +1000 INFO [worker-1] Request 697 served in 97ms key=value inside text
+10/11/2026 01:21:26 AUDIT o'brien opened report-698.pdf
+10/11/2026 01:21:33 AUDIT frank opened report-699.pdf
+<13>Oct 11 01:21:40 gw-edge app[100]: user=erin action=logout src=10.0.188.100
+user=dave action=logout session=s701 bytes=9113
+<13>Oct 11 01:21:54 web02 app[102]: user=carol action=update msg="changed the role" id=702
+2026-10-11T01:22:01.703+10:00 INFO [worker-7] Request 703 served in 103ms key=value inside text
+<13>Oct 11 01:22:08 web02 app[104]: user=alice action=login src=10.0.192.104
+user=o'brien action=download session=s705 bytes=9165
+11/Oct/2026:01:22:22 +1000 INFO [worker-10] Request 706 served in 106ms key=value inside text
+
+<165>1 2026-10-11T01:22:36.708Z db01 billing 3028 ID1 [meta seq="708"] Invoice 708 issued
+user=dave action=download session=s709 bytes=9217 note="unterminated value
+<134>Oct 11 01:22:50 gw-edge CEF:0|Acme|Gateway|2.1|108|Allowed request|3|src=10.2.198.1 suser=dave act=allowed
+[2026-10-11 01:22:57] INFO [worker-3] Request 711 served in 111ms 	 trailing   
+<13>Oct 11 01:23:04 db01 app[112]: user=zoë action=login src=10.0.200.112
+
+<86>Oct 11 01:23:18 web02 sshd[2084]: Connection from 10.1.202.14 port 40714 closed
+2026-10-11 01:23:25.715 WARN [worker-7] Request 715 served in 115ms
+<165>1 2026-10-11T01:23:32.716Z web01 billing 3036 ID2 [meta seq="716"] Invoice 716 issued
+<134>Oct 11 01:23:39 web02 CEF:0|Acme|Gateway|2.1|106|Allowed request|3|src=10.2.205.1 suser=bob act=allowed
+2026-10-11 01:23:46.718 INFO [worker-10] Request 718 served in 118ms key=value inside text
+user=o'brien action=download session=s719 bytes=9347
+2026-10-11 01:24:00.720 INFO [worker-0] Request 720 served in 120ms key=value inside text
+user=zoë action=download session=s721 bytes=9373 msg="said \"hi\" twice"
+11/Oct/2026:01:24:14 +1000 DEBUG [worker-2] Request 722 served in 122ms 	 trailing   
+<13>Oct 11 01:24:21 gw-edge app[123]: user=dave action=update msg="changed the policy" id=723
+<13>Oct 11 01:24:28 gw-edge app[124]: user=bob action=logout src=10.0.212.124
+<13>Oct 11 01:24:35 gw-edge app[125]: user=frank action=login src=10.0.213.125
+11/Oct/2026:01:24:42 +1000 INFO [worker-6] Request 726 served in 126ms path='/tmp/a b'
+heartbeat
+<13>Oct 11 01:24:56 web01 app[128]: user=alice action=update msg="changed the password" id=728
+11/Oct/2026:01:25:03 +1000 ERROR [worker-9] Request 729 failed key=value inside text
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+user=bob action=logout session=s730 bytes=9490 note="idle timeout"
+2026-10-11 01:25:17.731 WARN [worker-11] Request 731 served in 131ms
+<13>Oct 11 01:25:24 gw-edge app[132]: user=bob action=logout src=10.0.220.132
+2026-10-11T01:25:31.733+10:00 INFO [worker-1] Request 733 served in 133ms key=value inside text
+user=dave action=download session=s734 bytes=9542
+<13>Oct 11 01:25:45 db01 app[135]: user=alice action=update msg="changed the role" id=735
+11/Oct/2026:01:25:52 +1000 ERROR [worker-4] Request 736 failed 	 trailing   
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+[2026-10-11 01:25:59] DEBUG [worker-5] Request 737 served in 137ms
+[2026-10-11 01:26:06] ERROR [worker-6] Request 738 failed 	 trailing   
+com.example.app.RequestRejectedError: request 626 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 11 more
+<13>Oct 11 01:26:13 web02 app[139]: user=dave action=logout src=10.0.227.139
+####
+2026-10-11T01:26:27.741+10:00 ERROR [worker-9] Request 741 failed
+java.io.IOException: request 170 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+<86>Oct 11 01:26:34 db01 sshd[2022]: Connection from 10.1.230.42 port 40742 closed
+--- log rotated ---
+10/11/2026 01:26:48 AUDIT frank opened report-744.pdf
+user=dave action=download session=s745 bytes=9685
+11/Oct/2026:01:27:02 +1000 INFO [worker-2] Request 746 served in 146ms
+2026-10-11 01:27:09.747 WARN [worker-3] Request 747 served in 147ms "quoted \"reason\" here"
+
+user=alice action=share session=s749 bytes=9737 query="a=b&c=d|e=f"
+<13>Oct 11 01:27:30 web01 app[100]: user=frank action=update msg="changed the policy" id=750
+user=alice action=logout session=s751 bytes=9763
+<13>Oct 11 01:27:44 gw-edge app[102]: user=o'brien action=logout src=10.0.240.152
+user=o'brien action=download session=s753 bytes=9789 note="user requested"
+user=erin action=logout session=s754 bytes=9802 note="unterminated value
+[2026-10-11 01:28:05] DEBUG [worker-11] Request 755 served in 155ms
+user=alice action=download session=s756 bytes=9828
+<165>1 2026-10-11T01:28:19.757Z web01 billing 3037 ID1 [meta seq="757"] Invoice 757 issued
+2026-10-11 01:28:26.758 ERROR [worker-2] Request 758 failed key=value inside text
+java.lang.IllegalStateException: request 6780 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+2026-10-11 01:28:33.759 INFO [worker-3] Request 759 served in 159ms key=value inside text
+2026-10-11 01:28:40.760 WARN [worker-4] Request 760 served in 160ms 	 trailing   
+    retrying in 4 seconds (attempt 1 of 5)
+[2026-10-11 01:28:47] WARN [worker-5] Request 761 served in 161ms key=value inside text
+    retrying in 5 seconds (attempt 2 of 5)
+<13>Oct 11 01:28:54 gw-edge app[112]: user=zoë action=update msg="changed the role" id=762
+2026-10-11 01:29:01.763 DEBUG [worker-7] Request 763 served in 163ms "quoted \"reason\" here"
+user=frank action=download session=s764 bytes=9932 note="session ended"
+[2026-10-11 01:29:15] WARN [worker-9] Request 765 served in 165ms
+    retrying in 0 seconds (attempt 2 of 5)
+<13>Oct 11 01:29:22 web01 app[116]: user=bob action=update msg="changed the role" id=766
+2026-10-11 01:29:29.767 DEBUG [worker-11] Request 767 served in 167ms
+CEF:0|Acme|Gateway|2.1|103|Blocked request \| rule 0|5|src=10.2.0.1 suser=carol act=blocked msg=policy 3 matched a\=b
+<13>Oct 11 01:29:43 web01 app[119]: user=erin action=logout src=10.0.1.169
+<134>Oct 11 01:29:50 db01 CEF:0|Acme|Gateway|2.1|105|Allowed request|3|src=10.2.2.1 suser=o'brien act=allowed
+<165>1 2026-10-11T01:29:57.771Z gw-edge billing 3011 ID1 [meta seq="771"] Invoice 771 issued
+11/Oct/2026:01:30:04 +1000 DEBUG [worker-4] Request 772 served in 172ms
+2026-10-11 01:30:11.773 INFO [worker-5] Request 773 served in 173ms
+"unbalanced quote at start
+2026-10-11 01:30:25.775 WARN [worker-7] Request 775 served in 175ms key=value inside text
+<13>Oct 11 01:30:32 gw-edge app[126]: user=o'brien action=update msg="changed the password" id=776
+2026-10-11 01:30:39.777 DEBUG [worker-9] Request 777 served in 177ms path='/tmp/a b'
+2026-10-11 01:30:46.778 INFO [worker-10] Request 778 served in 178ms 	 trailing   
+[2026-10-11 01:30:53] DEBUG [worker-11] Request 779 served in 179ms key=value inside text
+2026-10-11T01:31:00.780+10:00 DEBUG [worker-0] Request 780 served in 180ms path='/tmp/a b'
+2026-10-11 01:31:07.781 DEBUG [worker-1] Request 781 served in 181ms
+user=dave action=share session=s782 bytes=10166 path="C:\Program Files\Acme\app.exe"
+<13>Oct 11 01:31:21 web01 app[133]: user=bob action=login src=10.0.15.183
+2026-10-11 01:31:28.784 DEBUG [worker-4] Request 784 served in 184ms key=value inside text
+[2026-10-11 01:31:35] INFO [worker-5] Request 785 served in 185ms
+11/Oct/2026:01:31:42 +1000 DEBUG [worker-6] Request 786 served in 186ms
+user=dave action=share session=s787 bytes=10231 path="C:\Program Files\Acme\app.exe"
+10/11/2026 01:31:56 AUDIT o'brien opened report-788.pdf
+2026-10-11T01:32:03.789+10:00 INFO [worker-9] Request 789 served in 189ms
+<13>Oct 11 01:32:10 web01 app[140]: user=erin action=login src=10.0.22.190
+11/Oct/2026:01:32:17 +1000 WARN [worker-11] Request 791 served in 191ms
+<13>Oct 11 01:32:24 db01 app[142]: user=carol action=login src=10.0.24.192
+2026-10-11 01:32:31.793 INFO [worker-1] Request 793 served in 193ms
+<13>Oct 11 01:32:38 web02 app[144]: user=alice action=logout src=10.0.26.194
+user=bob action=download session=s795 bytes=10335
+11/Oct/2026:01:32:52 +1000 WARN [worker-4] Request 796 served in 196ms 	 trailing   
+    retrying in 4 seconds (attempt 1 of 5)
+<86>Oct 11 01:32:59 db01 sshd[2077]: Connection from 10.1.29.97 port 40797 closed
+<13>Oct 11 01:33:06 web01 app[148]: user=zoë action=logout src=10.0.30.198
+2026-10-11 01:33:13.799 ERROR [worker-7] Request 799 failed
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+CEF:0|Acme|Gateway|2.1|108|Blocked request \| rule 0|5|src=10.2.32.1 suser=zoë act=blocked msg=policy 0 matched a\=b
+<13>Oct 11 01:33:27 web01 app[101]: user=zoë action=update msg="changed the policy" id=801
+<13>Oct 11 01:33:34 gw-edge app[102]: user=erin action=update msg="changed the role" id=802
+<86>Oct 11 01:33:41 db01 sshd[2083]: Connection from 10.1.35.3 port 40803 closed
+CEF:0|Acme|Gateway|2.1|103|Blocked request \| rule 0|5|src=10.2.36.1 suser=bob act=blocked msg=policy 4 matched a\=b
+<86>Oct 11 01:33:55 gw-edge sshd[2085]: Connection from 10.1.37.5 port 40805 closed
+[2026-10-11 01:34:02] INFO [worker-2] Request 806 served in 206ms
+<134>Oct 11 01:34:09 web02 CEF:0|Acme|Gateway|2.1|106|Allowed request|3|src=10.2.39.1 suser=zoë act=allowed
+2026-10-11 01:34:16.808 INFO [worker-4] Request 808 served in 208ms
+10/11/2026 01:34:23 AUDIT erin opened report-809.pdf
+<13>Oct 11 01:34:30 db01 app[110]: user=zoë action=login src=10.0.42.10
+<13>Oct 11 01:34:37 gw-edge app[111]: user=o'brien action=login src=10.0.43.11
+user=o'brien action=share session=s812 bytes=10556
+2026-10-11 01:34:51.813 DEBUG [worker-9] Request 813 served in 213ms
+CEF:0|Acme|Gateway|2.1|104|Blocked request \| rule 2|5|src=10.2.46.1 suser=carol act=blocked msg=policy 4 matched a\=b
+<13>Oct 11 01:35:05 gw-edge app[115]: user=dave action=login src=10.0.47.15
+<13>Oct 11 01:35:12 gw-edge app[116]: user=carol action=login src=10.0.48.16
+user=erin action=download session=s817 bytes=10621 note="user requested"
+10/11/2026 01:35:26 AUDIT erin opened report-818.pdf
+user=carol action=download session=s819 bytes=10647
+user=bob action=download session=s820 bytes=10660
+user=bob action=share session=s821 bytes=10673
+2026-10-11T01:35:54.822+10:00 WARN [worker-6] Request 822 served in 222ms 	 trailing   
+
+user=bob action=logout session=s824 bytes=10712
+2026-10-11 01:36:15.825 INFO [worker-9] Request 825 served in 225ms "quoted \"reason\" here"
+<86>Oct 11 01:36:22 gw-edge sshd[2016]: Connection from 10.1.58.26 port 40826 closed
+<86>Oct 11 01:36:29 gw-edge sshd[2017]: Connection from 10.1.59.27 port 40827 closed
+user=carol action=share session=s828 bytes=10764 path="C:\Program Files\Acme\app.exe"
+<13>Oct 11 01:36:43 db01 app[129]: user=zoë action=logout src=10.0.61.29
+
+2026-10-11T01:36:57.831+10:00 INFO [worker-3] Request 831 served in 231ms path='/tmp/a b'
+<13>Oct 11 01:37:04 web02 app[132]: user=alice action=login src=10.0.64.32
+2026-10-11T01:37:11.833+10:00 DEBUG [worker-5] Request 833 served in 233ms 	 trailing   
+<13>Oct 11 01:37:18 db01 app[134]: user=zoë action=logout src=10.0.66.34
+<13>Oct 11 01:37:25 web02 app[135]: user=alice action=update msg="changed the policy" id=835
+11/Oct/2026:01:37:32 +1000 INFO [worker-8] Request 836 served in 236ms key=value inside text
+user=o'brien action=logout session=s837 bytes=10881
+<13>Oct 11 01:37:46 web02 app[138]: user=alice action=login src=10.0.70.38
+2026-10-11 01:37:53.839 INFO [worker-11] Request 839 served in 239ms
+2026-10-11 01:38:00.840 WARN [worker-0] Request 840 served in 240ms
+2026-10-11T01:38:07.841+10:00 INFO [worker-1] Request 841 served in 241ms
+10/11/2026 01:38:14 AUDIT alice opened report-842.pdf
+<13>Oct 11 01:38:21 db01 app[143]: user=carol action=login src=10.0.75.43
+<86>Oct 11 01:38:28 gw-edge sshd[2034]: Connection from 10.1.76.44 port 40844 closed
+<13>Oct 11 01:38:35 web02 app[145]: user=alice action=logout src=10.0.77.45
+[2026-10-11 01:38:42] DEBUG [worker-6] Request 846 served in 246ms "quoted \"reason\" here"
+2026-10-11 01:38:49.847 WARN [worker-7] Request 847 served in 247ms path='/tmp/a b'
+2026-10-11 01:38:56.848 ERROR [worker-8] Request 848 failed 	 trailing   
+java.util.concurrent.TimeoutException: request 9851 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+<13>Oct 11 01:39:03 db01 app[149]: user=erin action=logout src=10.0.81.49
+<86>Oct 11 01:39:10 gw-edge sshd[2040]: Connection from 10.1.82.50 port 40850 closed
+user=zoë action=download session=s851 bytes=11063 query="a=b&c=d|e=f"
+<86>Oct 11 01:39:24 gw-edge sshd[2042]: Connection from 10.1.84.52 port 40852 closed
+user=dave action=share session=s853 bytes=11089 path="C:\Program Files\Acme\app.exe"
+<13>Oct 11 01:39:38 web01 app[104]: user=zoë action=login src=10.0.86.54
+11/Oct/2026:01:39:45 +1000 WARN [worker-3] Request 855 served in 255ms
+    retrying in 0 seconds (attempt 4 of 5)
+
+<13>Oct 11 01:39:59 gw-edge app[107]: user=alice action=logout src=10.0.89.57
+CEF:0|Acme|Gateway|2.1|103|Blocked request \| rule 2|5|src=10.2.90.1 suser=o'brien act=blocked msg=policy 3 matched a\=b
+<13>Oct 11 01:40:13 db01 app[109]: user=erin action=logout src=10.0.91.59
+<165>1 2026-10-11T01:40:20.860Z gw-edge billing 3020 ID6 [meta seq="860"] Invoice 860 issued
+2026-10-11 01:40:27.861 INFO [worker-9] Request 861 served in 261ms
+<13>Oct 11 01:40:34 gw-edge app[112]: user=erin action=logout src=10.0.94.62
+<13>Oct 11 01:40:41 gw-edge app[113]: user=alice action=login src=10.0.95.63
+11/Oct/2026:01:40:48 +1000 DEBUG [worker-0] Request 864 served in 264ms "quoted \"reason\" here"
+[2026-10-11 01:40:55] WARN [worker-1] Request 865 served in 265ms
+2026-10-11 01:41:02.866 WARN [worker-2] Request 866 served in 266ms
+    retrying in 2 seconds (attempt 3 of 5)
+user=o'brien action=logout session=s867 bytes=11271 note="idle timeout"
+<86>Oct 11 01:41:16 gw-edge sshd[2058]: Connection from 10.1.100.68 port 40868 closed
+<165>1 2026-10-11T01:41:23.869Z web02 billing 3029 ID1 [meta seq="869"] Invoice 869 issued
+2026-10-11T01:41:30.870+10:00 ERROR [worker-6] Request 870 failed
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+10/11/2026 01:41:37 AUDIT erin opened report-871.pdf
+2026-10-11T01:41:44.872+10:00 DEBUG [worker-8] Request 872 served in 272ms key=value inside text
+<86>Oct 11 01:41:51 web02 sshd[2063]: Connection from 10.1.105.73 port 40873 closed
+<garbled >
+2026-10-11T01:42:05.875+10:00 INFO [worker-11] Request 875 served in 275ms "quoted \"reason\" here"
+2026-10-11T01:42:12.876+10:00 DEBUG [worker-0] Request 876 served in 276ms path='/tmp/a b'
+11/Oct/2026:01:42:19 +1000 WARN [worker-1] Request 877 served in 277ms
+<86>Oct 11 01:42:26 db01 sshd[2068]: Connection from 10.1.110.78 port 40878 closed
+<134>Oct 11 01:42:33 web01 CEF:0|Acme|Gateway|2.1|106|Allowed request|3|src=10.2.111.1 suser=alice act=allowed
+2026-10-11T01:42:40.880+10:00 INFO [worker-4] Request 880 served in 280ms
+<13>Oct 11 01:42:47 gw-edge app[131]: user=carol action=login src=10.0.113.81
+
+2026-10-11 01:43:01.883 INFO [worker-7] Request 883 served in 283ms path='/tmp/a b'
+<13>Oct 11 01:43:08 web02 app[134]: user=bob action=login src=10.0.116.84
+10/11/2026 01:43:15 AUDIT dave opened report-885.pdf
+2026-10-11 01:43:22.886 INFO [worker-10] Request 886 served in 286ms
+10/11/2026 01:43:29 AUDIT frank opened report-887.pdf
+<165>1 2026-10-11T01:43:36.888Z web02 billing 3008 ID6 [meta seq="888"] Invoice 888 issued
+<13>Oct 11 01:43:43 web01 app[139]: user=frank action=logout src=10.0.121.89
+2026-10-11 01:43:50.890 INFO [worker-2] Request 890 served in 290ms 	 trailing   
+11/Oct/2026:01:43:57 +1000 WARN [worker-3] Request 891 served in 291ms key=value inside text
+<13>Oct 11 01:44:04 web01 app[142]: user=alice action=login src=10.0.124.92
+10/11/2026 01:44:11 AUDIT erin opened report-893.pdf
+user=zoë action=download session=s894 bytes=11622
+user=dave action=download session=s895 bytes=11635 note="session ended"
+2026-10-11 01:44:32.896 DEBUG [worker-8] Request 896 served in 296ms key=value inside text
+10/11/2026 01:44:39 AUDIT zoë opened report-897.pdf
+user=frank action=share session=s898 bytes=11674
+<86>Oct 11 01:44:53 gw-edge sshd[2089]: Connection from 10.1.131.99 port 40899 closed
+10/11/2026 01:45:00 AUDIT frank opened report-900.pdf
+<86>Oct 11 01:45:07 db01 sshd[2001]: Connection from 10.1.133.1 port 40901 closed
+[2026-10-11 01:45:14] DEBUG [worker-2] Request 902 served in 2ms "quoted \"reason\" here"
+<13>Oct 11 01:45:21 gw-edge app[103]: user=erin action=login src=10.0.135.103
+[2026-10-11 01:45:28] ERROR [worker-4] Request 904 failed
+java.io.IOException: request 1742 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+<13>Oct 11 01:45:35 web01 app[105]: user=dave action=login src=10.0.137.105
+user=erin action=share session=s906 bytes=11778
+user=o'brien action=share session=s907 bytes=11791
+<13>Oct 11 01:45:56 db01 app[108]: user=alice action=login src=10.0.140.108
+[2026-10-11 01:46:03] ERROR [worker-9] Request 909 failed path='/tmp/a b'
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+<13>Oct 11 01:46:10 web02 app[110]: user=bob action=login src=10.0.142.110
+10/11/2026 01:46:17 AUDIT frank opened report-911.pdf
+<165>1 2026-10-11T01:46:24.912Z db01 billing 3032 ID2 [meta seq="912"] Invoice 912 issued
+2026-10-11T01:46:31.913+10:00 WARN [worker-1] Request 913 served in 13ms "quoted \"reason\" here"
+[2026-10-11 01:46:38] INFO [worker-2] Request 914 served in 14ms key=value inside text
+<13>Oct 11 01:46:45 web02 app[115]: user=erin action=login src=10.0.147.115
+<13>Oct 11 01:46:52 gw-edge app[116]: user=erin action=update msg="changed the password" id=916
+<13>Oct 11 01:46:59 web02 app[117]: user=dave action=update msg="changed the role" id=917
+<13>Oct 11 01:47:06 db01 app[118]: user=o'brien action=update msg="changed the password" id=918
+<86>Oct 11 01:47:13 db01 sshd[2019]: Connection from 10.1.151.19 port 40919 closed
+####
+user=erin action=download session=s921 bytes=11973 msg="said \"hi\" twice"
+<13>Oct 11 01:47:34 web02 app[122]: user=frank action=update msg="changed the role" id=922
+user=alice action=download session=s923 bytes=11999
+user=dave action=logout session=s924 bytes=12012
+2026-10-11 01:47:55.925 DEBUG [worker-1] Request 925 served in 25ms path='/tmp/a b'
+ok
+<13>Oct 11 01:48:09 web01 app[127]: user=alice action=logout src=10.0.159.127
+2026-10-11T01:48:16.928+10:00 ERROR [worker-4] Request 928 failed
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+10/11/2026 01:48:23 AUDIT bob opened report-929.pdf
+CEF:0|Acme|Gateway|2.1|103|Blocked request \| rule 2|5|src=10.2.162.1 suser=erin act=blocked msg=policy 0 matched a\=b
+<13>Oct 11 01:48:37 web01 app[131]: user=bob action=update msg="changed the password" id=931
+<86>Oct 11 01:48:44 gw-edge sshd[2032]: Connection from 10.1.164.32 port 40932 closed
+2026-10-11 01:48:51.933 INFO [worker-9] Request 933 served in 33ms
+11/Oct/2026:01:48:58 +1000 INFO [worker-10] Request 934 served in 34ms "quoted \"reason\" here"
+2026-10-11 01:49:05.935 INFO [worker-11] Request 935 served in 35ms
+
+<165>1 2026-10-11T01:49:19.937Z web01 billing 3017 ID6 [meta seq="937"] Invoice 937 issued
+ok
+2026-10-11 01:49:33.939 DEBUG [worker-3] Request 939 served in 39ms key=value inside text
+2026-10-11T01:49:40.940+10:00 DEBUG [worker-4] Request 940 served in 40ms key=value inside text
+2026-10-11 01:49:47.941 WARN [worker-5] Request 941 served in 41ms "quoted \"reason\" here"
+10/11/2026 01:49:54 AUDIT carol opened report-942.pdf
+user=alice action=share session=s943 bytes=12259 msg="said \"hi\" twice"
+<134>Oct 11 01:50:08 db01 CEF:0|Acme|Gateway|2.1|108|Allowed request|3|src=10.2.176.1 suser=erin act=allowed
+<13>Oct 11 01:50:15 web01 app[145]: user=bob action=logout src=10.0.177.145
+10/11/2026 01:50:22 AUDIT zoë opened report-946.pdf
+[2026-10-11 01:50:29] WARN [worker-11] Request 947 served in 47ms 	 trailing   
+11/Oct/2026:01:50:36 +1000 ERROR [worker-0] Request 948 failed
+com.example.app.RequestRejectedError: request 1385 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+	at com.example.app.Service21.handle(Service21.java:31)
+	at com.example.app.Service22.handle(Service22.java:32)
+	at com.example.app.Service23.handle(Service23.java:33)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 24 more
+10/11/2026 01:50:43 AUDIT dave opened report-949.pdf
+<134>Oct 11 01:50:50 db01 CEF:0|Acme|Gateway|2.1|105|Allowed request|3|src=10.2.182.1 suser=alice act=allowed
+2026-10-11T01:50:57.951+10:00 ERROR [worker-3] Request 951 failed key=value inside text
+java.io.IOException: request 9240 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	Suppressed: java.io.IOException: close failed
+		at com.example.io.Stream.close(Stream.java:5)
+		... 11 more
+user=o'brien action=download session=s952 bytes=12376 msg="said \"hi\" twice"
+<13>Oct 11 01:51:11 gw-edge app[103]: user=alice action=logout src=10.0.185.153
+user=carol action=share session=s954 bytes=12402
+2026-10-11T01:51:25.955+10:00 DEBUG [worker-7] Request 955 served in 55ms "quoted \"reason\" here"
+"unbalanced quote at start
+user=zoë action=download session=s957 bytes=12441
+
+<garbled >
+2026-10-11T01:52:00.960+10:00 ERROR [worker-0] Request 960 failed path='/tmp/a b'
+java.io.IOException: request 3179 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+	at com.example.app.Service21.handle(Service21.java:31)
+	at com.example.app.Service22.handle(Service22.java:32)
+<165>1 2026-10-11T01:52:07.961Z gw-edge billing 3001 ID2 [meta seq="961"] Invoice 961 issued
+<13>Oct 11 01:52:14 gw-edge app[112]: user=o'brien action=update msg="changed the policy" id=962
+<13>Oct 11 01:52:21 web02 app[113]: user=carol action=update msg="changed the role" id=963
+user=zoë action=logout session=s964 bytes=12532 msg="said \"hi\" twice"
+<13>Oct 11 01:52:35 web01 app[115]: user=zoë action=logout src=10.0.197.165
+[2026-10-11 01:52:42] ERROR [worker-6] Request 966 failed key=value inside text
+java.lang.IllegalStateException: request 790 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+<86>Oct 11 01:52:49 gw-edge sshd[2067]: Connection from 10.1.199.67 port 40967 closed
+<13>Oct 11 01:52:56 gw-edge app[118]: user=erin action=login src=10.0.200.168
+2026-10-11 01:53:03.969 INFO [worker-9] Request 969 served in 69ms "quoted \"reason\" here"
+[2026-10-11 01:53:10] ERROR [worker-10] Request 970 failed
+com.example.app.RequestRejectedError: request 8635 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 16 more
+<86>Oct 11 01:53:17 web01 sshd[2071]: Connection from 10.1.203.71 port 40971 closed
+11/Oct/2026:01:53:24 +1000 INFO [worker-0] Request 972 served in 72ms key=value inside text
+
+2026-10-11T01:53:38.974+10:00 ERROR [worker-2] Request 974 failed
+java.lang.IllegalStateException: request 684 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+	at com.example.app.Service18.handle(Service18.java:28)
+	at com.example.app.Service19.handle(Service19.java:29)
+	at com.example.app.Service20.handle(Service20.java:30)
+2026-10-11 01:53:45.975 INFO [worker-3] Request 975 served in 75ms key=value inside text
+user=bob action=share session=s976 bytes=12688 path="C:\Program Files\Acme\app.exe"
+2026-10-11T01:53:59.977+10:00 INFO [worker-5] Request 977 served in 77ms "quoted \"reason\" here"
+<13>Oct 11 01:54:06 web02 app[128]: user=dave action=login src=10.0.210.178
+11/Oct/2026:01:54:13 +1000 INFO [worker-7] Request 979 served in 79ms
+<86>Oct 11 01:54:20 gw-edge sshd[2080]: Connection from 10.1.212.80 port 40980 closed
+user=erin action=share session=s981 bytes=12753
+"alice","login","2026-10-11 10:00:00"
+<86>Oct 11 01:54:41 gw-edge sshd[2083]: Connection from 10.1.215.83 port 40983 closed
+2026-10-11T01:54:48.984+10:00 WARN [worker-0] Request 984 served in 84ms 	 trailing   
+2026-10-11T01:54:55.985+10:00 ERROR [worker-1] Request 985 failed
+java.util.concurrent.TimeoutException: request 4572 rejected
+	at com.example.app.Service0.handle(Service0.java:10)
+	at com.example.app.Service1.handle(Service1.java:11)
+	at com.example.app.Service2.handle(Service2.java:12)
+	at com.example.app.Service3.handle(Service3.java:13)
+	at com.example.app.Service4.handle(Service4.java:14)
+	at com.example.app.Service5.handle(Service5.java:15)
+	at com.example.app.Service6.handle(Service6.java:16)
+	at com.example.app.Service7.handle(Service7.java:17)
+	at com.example.app.Service8.handle(Service8.java:18)
+	at com.example.app.Service9.handle(Service9.java:19)
+	at com.example.app.Service10.handle(Service10.java:20)
+	at com.example.app.Service11.handle(Service11.java:21)
+	at com.example.app.Service12.handle(Service12.java:22)
+	at com.example.app.Service13.handle(Service13.java:23)
+	at com.example.app.Service14.handle(Service14.java:24)
+	at com.example.app.Service15.handle(Service15.java:25)
+	at com.example.app.Service16.handle(Service16.java:26)
+	at com.example.app.Service17.handle(Service17.java:27)
+Caused by: java.sql.SQLException: connection reset
+	at com.example.db.Pool.get(Pool.java:88)
+	... 18 more
+user=dave action=download session=s986 bytes=12818
+<86>Oct 11 01:55:09 db01 sshd[2087]: Connection from 10.1.219.87 port 40987 closed
+<165>1 2026-10-11T01:55:16.988Z gw-edge billing 3028 ID1 [meta seq="988"] Invoice 988 issued
+2026-10-11 01:55:23.989 WARN [worker-5] Request 989 served in 89ms key=value inside text
+<13>Oct 11 01:55:30 web02 app[140]: user=carol action=update msg="changed the password" id=990
+
+11/Oct/2026:01:55:44 +1000 INFO [worker-8] Request 992 served in 92ms "quoted \"reason\" here"
+2026-10-11 01:55:51.993 ERROR [worker-9] Request 993 failed path='/tmp/a b'
+Traceback (most recent call last):
+  File "/srv/app/handler.py", line 42, in handle
+    result = process(request)
+  File "/srv/app/process.py", line 7, in process
+    raise ValueError("bad input")
+ValueError: bad input
+<13>Oct 11 01:55:58 db01 app[144]: user=dave action=logout src=10.0.226.194
+<165>1 2026-10-11T01:56:05.995Z web02 billing 3035 ID1 [meta seq="995"] Invoice 995 issued
+<13>Oct 11 01:56:12 web01 app[146]: user=carol action=logout src=10.0.228.196
+
+2026-10-11T01:56:26.998+10:00 WARN [worker-2] Request 998 served in 98ms
+2026-10-11 01:56:33.999 INFO [worker-3] Request 999 served in 99ms "quoted \"reason\" here"

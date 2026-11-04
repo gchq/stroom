@@ -193,13 +193,11 @@
           <xsl:value-of select="if (data[@name='event_type']/@value[normalize-space(.)]) then (data[@name='event_type']/@value)[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="data[@name='protocol']/@value[normalize-space(.)] or data[@name='action']/@value[normalize-space(.)] or data[@name='rule_id']/@value[normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('protocol', data[@name='protocol']/@value)"/>
-            <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
-            <xsl:sequence select="mcp:data('rule_id', data[@name='rule_id']/@value)"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('protocol', data[@name='protocol']/@value)"/>
+          <xsl:sequence select="mcp:data('action', data[@name='action']/@value)"/>
+          <xsl:sequence select="mcp:data('rule_id', data[@name='rule_id']/@value)"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

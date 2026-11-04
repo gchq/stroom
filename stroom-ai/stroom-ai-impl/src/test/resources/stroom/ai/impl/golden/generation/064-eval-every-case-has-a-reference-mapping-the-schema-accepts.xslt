@@ -365,13 +365,11 @@
           <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="($msg_user_parts/fn:match//fn:group[@nr=2])[normalize-space(.)] or $action or ($msg_user_parts/fn:match//fn:group[@nr=5])[normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('Category', $msg_user_parts/fn:match//fn:group[@nr=2])"/>
-            <xsl:sequence select="mcp:data('Action', $action)"/>
-            <xsl:sequence select="mcp:data('ItemId', $msg_user_parts/fn:match//fn:group[@nr=5])"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('Category', $msg_user_parts/fn:match//fn:group[@nr=2])"/>
+          <xsl:sequence select="mcp:data('Action', $action)"/>
+          <xsl:sequence select="mcp:data('ItemId', $msg_user_parts/fn:match//fn:group[@nr=5])"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

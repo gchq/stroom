@@ -125,6 +125,12 @@ public final class RecordSplitter {
                                     final boolean truncated) {
         final String format = (String) info.get("format");
         final List<String> first = lines.subList(0, Math.min(maxRecords, lines.size()));
+        if (Boolean.TRUE.equals(info.get(SplitterSpec.CONTINUATION))) {
+            // An entry and the lines that continue it (a stack trace): one record, signed by its first line, not a
+            // shape per frame.
+            return grouped(format, SplitterDryRun.groupLines(lines, (String) info.get("record_start")), maxRecords,
+                    truncated);
+        }
         if (SampleProfiler.MULTI_LINE.equals(format)) {
             // Records of several lines (a stack trace under its entry): grouped from where each starts.
             return grouped(format, SplitterDryRun.groupLines(lines, (String) info.get("record_start")), maxRecords,

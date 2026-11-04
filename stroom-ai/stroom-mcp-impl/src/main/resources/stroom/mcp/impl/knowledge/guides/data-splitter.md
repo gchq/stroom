@@ -31,6 +31,8 @@ read the client's files, and refuses a path with that instruction.
 | Labelled fields anywhere, in any order | `{"kind": "fields", "fields": {"user": "user=(\\S+)", "src": "src=(\\S+)"}}` |
 | Records separated by blank lines | `{"kind": "key_value", "delimiter": "\n", "blank_line_records": true}` |
 | Keep a record the spec doesn't match | add `"catch_all": true` (not delimited): it is kept whole as the field `unparsed` |
+| Lines in several formats (syslog, key=value, timestamped text) | `{"kind": "alternatives", "parts": [{"kind": "syslog", "variant": "syslog"}, {"kind": "key_value", "variant": "key_value"}, {"kind": "regex", "variant": "text", "pattern": "^(\\S+ \\S+) (.*)$", "names": ["time", "message"]}], "catch_all": true}` |
+| Entries whose stack traces are kept apart | add `"record_start": <profile's record_start>, "continuation": true`: each record's first line is read by the spec, the lines after it kept whole as `continuation` |
 | Syslog, then delimited columns (Palo Alto) | `{"kind": "syslog", "rfc": "rfc3164", "body": {"kind": "delimited", "delimiter": ",", "header": ["future_use1", "receive_time", ...]}}` |
 | Columns named by a directive line (W3C, IIS, Blue Coat, Zeek) | `{"kind": "delimited", "delimiter": " ", "header": true, "quote": "\"", "comment_prefix": "#", "header_directive": "#Fields:", "directives": ["#Software:", "#Remark:"]}` |
 
@@ -131,6 +133,27 @@ xpath `replace(data[@name='message']/@value, '\n\S+ (stdout|stderr) [PF] ', '')`
 
 Quoted values that hold new lines (a CSV comment over two lines) are another case: `quoted_newlines: true` ends a
 record at a new line outside quotes only (`profile_sample` sets it when the sample has one).
+
+## Lines in several formats
+
+One stream can hold records in several formats: syslog lines, key=value lines and plain timestamped log lines
+together. `profile_sample` says `mixed lines`, with each format's share of the records (`line_formats`; two or more
+formats of at least a tenth each) and the records no format fits (`unrecognised`); a stream mostly of one format is
+that format. `build_data_splitter` infers an `alternatives` spec: a part per format the records hold (a format under a tenth of
+them too; timestamped text a part per shape of its time, so each has one time format), tried in order, the first
+whose `match` fits a record's start reading it (a part's kind has its own match: a syslog header, CEF's, key=value
+pairs from start to end, a regex's own pattern; a `fields` part needs one). A key=value line the part can't read
+whole (an unclosed quote) is not the part's: it goes on to the next part, or `catch_all`. Each record is written with its part's `variant`
+(`variant_field`, `variant` by default), and the mapping's rules tell the formats apart by it (`when` the variant
+`equals` ...). A record a part's match fits but the part can't read is an error, not passed to the next part; with
+`catch_all`, a record no part's match fits is kept as `unparsed`. Syslog messages some key=value and some not are
+read the same way, by a body of two parts (`message_format`). Fix a part rather than writing the XSLT by hand.
+
+Stack traces are grouped with their entry first, so a format is judged on records, not on the trace's lines: a line
+that is indented, or a frame (`at ...`), cause (`Caused by:`), elision (`... 12 more`), exception line or Python
+traceback, continues the record before it. The profile gives that `record_start` with `continuation: true`; the
+splitter reads each record's first line with its spec and keeps the lines after it whole as `continuation`. Lines
+before the first record start (a stream cut in a trace) are a record of their own.
 
 ## Lines that are not records
 

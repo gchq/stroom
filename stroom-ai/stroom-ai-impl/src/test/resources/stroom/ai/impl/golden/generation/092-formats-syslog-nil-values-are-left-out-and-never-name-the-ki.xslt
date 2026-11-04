@@ -81,28 +81,26 @@
         <TypeId>
           <xsl:value-of select="if (data[@name='action']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]) then (data[@name='action']/@value)[1] else 'other'"/>
         </TypeId>
-        <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
-        <xsl:variable name="user_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])user=([^\s,;&quot;]*)')"/>
-        <xsl:variable name="proto_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])proto=([^\s,;&quot;]*)')"/>
-        <xsl:variable name="dport_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])dport=([^\s,;&quot;]*)')"/>
-        <xsl:variable name="dst_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])dst=([^\s,;&quot;]*)')"/>
-        <xsl:variable name="src_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])src=([^\s,;&quot;]*)')"/>
-        <xsl:variable name="action_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])action=([^\s,;&quot;]*)')"/>
-        <xsl:if test="data[@name='pri']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))] or data[@name='pid']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))] or data[@name='msgid']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))] or data[@name='structured']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))] or data[@name='proto']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))] or $action_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))] or $src_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))] or $dst_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))] or $dport_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))] or $proto_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))] or $user_2_parts/fn:match//fn:group[@nr=1][normalize-space(.)][not(normalize-space(.) = ('-'))]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('pri', data[@name='pri']/@value)"/>
-            <xsl:sequence select="mcp:data('pid', data[@name='pid']/@value)"/>
-            <xsl:sequence select="mcp:data('msgid', data[@name='msgid']/@value)"/>
-            <xsl:sequence select="mcp:data('structured', data[@name='structured']/@value)"/>
-            <xsl:sequence select="mcp:data('proto', data[@name='proto']/@value)"/>
-            <xsl:sequence select="mcp:data('action_2', $action_2_parts/fn:match//fn:group[@nr=1])"/>
-            <xsl:sequence select="mcp:data('src_2', $src_2_parts/fn:match//fn:group[@nr=1])"/>
-            <xsl:sequence select="mcp:data('dst_2', $dst_2_parts/fn:match//fn:group[@nr=1])"/>
-            <xsl:sequence select="mcp:data('dport_2', $dport_2_parts/fn:match//fn:group[@nr=1])"/>
-            <xsl:sequence select="mcp:data('proto_2', $proto_2_parts/fn:match//fn:group[@nr=1])"/>
-            <xsl:sequence select="mcp:data('user_2', $user_2_parts/fn:match//fn:group[@nr=1])"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('pri', data[@name='pri']/@value)"/>
+          <xsl:sequence select="mcp:data('pid', data[@name='pid']/@value)"/>
+          <xsl:sequence select="mcp:data('msgid', data[@name='msgid']/@value)"/>
+          <xsl:sequence select="mcp:data('structured', data[@name='structured']/@value)"/>
+          <xsl:sequence select="mcp:data('proto', data[@name='proto']/@value)"/>
+          <xsl:variable name="message" select="data[@name='message']/@value[normalize-space(.)][not(normalize-space(.) = ('-'))]"/>
+          <xsl:variable name="action_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])action=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('action_2', $action_2_parts/fn:match//fn:group[@nr=1])"/>
+          <xsl:variable name="src_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])src=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('src_2', $src_2_parts/fn:match//fn:group[@nr=1])"/>
+          <xsl:variable name="dst_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])dst=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('dst_2', $dst_2_parts/fn:match//fn:group[@nr=1])"/>
+          <xsl:variable name="dport_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])dport=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('dport_2', $dport_2_parts/fn:match//fn:group[@nr=1])"/>
+          <xsl:variable name="proto_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])proto=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('proto_2', $proto_2_parts/fn:match//fn:group[@nr=1])"/>
+          <xsl:variable name="user_2_parts" select="analyze-string(string($message[1]), '(?:^|[\s,;])user=([^\s,;&quot;]*)')"/>
+          <xsl:sequence select="mcp:data('user_2', $user_2_parts/fn:match//fn:group[@nr=1])"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

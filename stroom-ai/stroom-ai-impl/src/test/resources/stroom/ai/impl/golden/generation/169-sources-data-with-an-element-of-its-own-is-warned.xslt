@@ -29,11 +29,9 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>vip</TypeId>
-        <xsl:if test="data[@name='user']/@value[normalize-space(.)]">
-          <Unknown>
-            <Data Name="u" Value="{(data[@name='user']/@value)[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="u" Value="{(data[@name='user']/@value)[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
@@ -44,13 +42,10 @@
       <xsl:apply-templates select="." mode="event_source"/>
       <EventDetail>
         <TypeId>x</TypeId>
-        <xsl:variable name="user" select="data[@name='user']/@value[normalize-space(.)]"/>
-        <xsl:if test="$user">
-          <Unknown>
-            <Data Name="u" Value="{$user[1]}"/>
-            <Data Name="source_ip" Value="{$user[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="u" Value="{(data[@name='user']/@value)[1]}"/>
+          <Data Name="source_ip" Value="{(data[@name='user']/@value)[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
