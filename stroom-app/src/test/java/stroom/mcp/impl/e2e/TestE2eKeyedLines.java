@@ -96,6 +96,57 @@ class TestE2eKeyedLines extends AbstractE2eTest {
         assertThat(times.getFirst()).isEqualTo("2026-10-11T09:00:02.136Z");
     }
 
+    @Test
+    void aModSecurityAuditLogsTransactionsAreEachOneEvent() {
+        // Sections between --id-X-- markers, the id only on the markers (formats-shortlist-generator.py): 40
+        // transactions, the blocked ones with an H section.
+        final String build = "modsec-lines";
+        final String feed = "MODSEC-LINES";
+        final String sample = textResource("modsec-lines.log");
+        createFeed(build, feed);
+        final long raw = number(json("upload_sample", args("feed", feed, "sample", sample)).get("stream_id"));
+        final Map<String, Object> ds = json("build_data_splitter", args("stream_ids", List.of(raw),
+                "save_as", feed, "build", build));
+        dump("build_data_splitter", ds);
+        assertThat(number(ds.get("records"))).isEqualTo(40);
+        assertThat(ds.get("saved")).as("saved: %s", ds.get("not_saved")).isNotNull();
+        final Object splitter = ds.get("spec");
+        assertThat(((Map<String, Object>) splitter).get("join_unkeyed")).isEqualTo(true);
+
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
+                "source_name", "ModSecurity", "system_name", "ModSecurity", "environment", "Test",
+                "splitter", splitter));
+        dump("draft_translation_mapping", draft);
+        // The time is in the A section's text, which the draft leaves to the agent: the stream's received time
+        // stands in for the test.
+        final Map<String, Object> mapping = decide(map(draft, "mapping"));
+        final List<Object> common = new ArrayList<>((List<Object>) mapping.get("common"));
+        common.add(Map.of("path", "EventTime/TimeCreated", "meta", "ReceivedTime"));
+        mapping.put("common", common);
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", mapping,
+                "schema_version", draft.get("schema_version"), "stream_ids", List.of(raw), "splitter", splitter,
+                "build", build, "name", feed + "-Events"));
+        assertThat(saved).as("saved: %s", saved.get("problems")).containsEntry("ok", true);
+        final String pipelineUuid = (String) json("create_pipeline", args("build", build, "name", feed + "-Events",
+                "template_uuid", templateUuid("translation", "Event Data (Text)"))).get("uuid");
+        final Map<String, Object> stepped = json("step_sample", args("pipeline_uuid", pipelineUuid,
+                "stream_ids", List.of(raw)));
+        assertThat(stepped).as("stepped in Stroom: %s", stepped.get("groups")).containsEntry("verdict", "clean");
+
+        final Map<String, Object> gate = process(pipelineUuid, List.of(raw));
+        assertThat(gate).as("processed: %s", gate.get("streams")).containsEntry("gate", "pass");
+        final long eventsId = number(((List<?>) list(gate, "streams").getFirst().get("events")).getFirst());
+        int events = 0;
+        Object from = 0;
+        while (from != null) {
+            final Map<String, Object> page = json("fetch_events", args("streamId", eventsId, "firstRecord", from,
+                    "recordCount", 200));
+            events += ((List<?>) page.get("records")).size();
+            from = page.get("next_first_record");
+        }
+        assertThat(events).isEqualTo(40);
+    }
+
     private static String timeOf(final String events) {
         final Matcher time = TIME_CREATED.matcher(events);
         return time.find()

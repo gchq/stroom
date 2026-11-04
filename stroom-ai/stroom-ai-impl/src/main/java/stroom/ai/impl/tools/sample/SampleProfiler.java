@@ -70,6 +70,8 @@ public final class SampleProfiler {
     public static final String UNKNOWN_TEXT = "unknown text";
     /// Records in several formats (syslog, key=value, timestamped text...), each with its share.
     public static final String MIXED_LINES = "mixed lines";
+    /// Records of sections between marker lines that carry the record's key (ModSecurity's serial audit log).
+    public static final String KEYED_SECTIONS = "keyed sections";
 
     /// The start of an RFC 5424 syslog line.
     public static final Pattern SYSLOG_5424 = ToolText.re("^<\\d{1,3}>1 \\S+ \\S+ \\S+ \\S+ \\S+");
@@ -1381,6 +1383,16 @@ public final class SampleProfiler {
                                                     final List<String> lines,
                                                     final Map<String, Object> result,
                                                     final int maxRecords) {
+        final Map<String, Object> sections = KeyedRecords.sections(lines);
+        if (sections != null) {
+            final Map<String, Object> found = with(result, "format", KEYED_SECTIONS);
+            found.putAll(sections);
+            found.put("suggested_parser", "Data Splitter for records of sections between marker lines that carry the "
+                                          + "record's key: the lines from a key's first marker to the next key's are "
+                                          + "one record, each section kept whole under its marker's name (e.g. B/text) "
+                                          + "(build_data_splitter infers record_key, line_name and join_unkeyed)");
+            return found;
+        }
         final LineFormats.Grouped grouped = LineFormats.group(lines);
         final List<String> firsts = grouped == null
                 ? lines

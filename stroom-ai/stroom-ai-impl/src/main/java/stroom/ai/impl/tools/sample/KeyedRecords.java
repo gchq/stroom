@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.workspace.SafePattern;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,11 @@ public final class KeyedRecords {
     private static final double COME_BACK = 0.1;
     private static final double KINDS_DIFFER = 0.8;
     private static final Pattern LINE_NAME = Pattern.compile("[A-Za-z_][\\w.-]*");
+    // A marker line between sections: no white space, word tokens between punctuation, punctuation at both ends.
+    private static final Pattern MARKER = Pattern.compile("[^\\w\\s]+\\w+(?:[^\\w\\s]+\\w+)+[^\\w\\s]+");
+    private static final Pattern WORD = Pattern.compile("\\w+");
+    /// The field a sectioned record's first section's name is written in.
+    public static final String SECTION = "first_section";
     // A separator row (----, ====), and a line labelled with an arrow (time->...).
     private static final Pattern SEPARATOR_ROW = Pattern.compile("\\s*[-=*#~_]{3,}[ \\t]*(?=\\n|$)");
     private static final Pattern ARROW_LINE = Pattern.compile("\\s*([A-Za-z_]\\w*)->");
@@ -57,7 +63,8 @@ public final class KeyedRecords {
     }
 
     /// The Data Splitter regex taking one keyed record: a line holding the key, then each line after it holding the
-    /// same key. `$1` is the record; with line_name, `$2` is its first line's name; the key is [#keyGroup].
+    /// same key (with join_unkeyed, or holding no key). `$1` is the record; with line_name, `$2` is its first line's
+    /// name; the key is [#keyGroup].
     ///
     /// @param spec A spec with record_key.
     /// @return The regex.
@@ -69,7 +76,19 @@ public final class KeyedRecords {
         final String lead = spec.lineName() == null
                 ? ""
                 : "(?=" + spec.lineName() + ")";
-        return "^(" + lead + "[^\\n]*?" + key + "[^\\n]*(?:\\n[^\\n]*?" + back + "[^\\n]*)*)\\n?";
+        final String later = spec.joinUnkeyed()
+                ? "(?:[^\\n]*?" + back + "[^\\n]*|(?![^\\n]*?" + key + ")[^\\n]*)"
+                : "[^\\n]*?" + back + "[^\\n]*";
+        return "^(" + lead + "[^\\n]*?" + key + "[^\\n]*(?:\\n" + later + ")*)\\n?";
+    }
+
+    /// The Data Splitter regex taking one section of a keyed record (join_unkeyed with line_name): a named line and
+    /// the unnamed lines after it. `$1` the name, `$2` the section, which the spec reads.
+    ///
+    /// @param spec A spec with join_unkeyed and line_name.
+    /// @return The regex.
+    public static String sectionRegex(final SplitterSpec spec) {
+        return "^(?=" + spec.lineName() + ")([^\\n]*(?:\\n(?!" + spec.lineName() + ")[^\\n]*)*)\\n?";
     }
 
     /// The Data Splitter regex taking a line skip_lines passes over, writing nothing.
@@ -137,19 +156,31 @@ public final class KeyedRecords {
                 : SafePattern.compile(spec.skipLines(), 0);
         final List<String> records = new ArrayList<>();
         String last = null;
+        // Whether the last record is keyed and open: with join_unkeyed, a line holding no key (a blank one too)
+        // joins it.
+        boolean open = false;
         for (final String line : lines) {
             if (skip != null && SafePattern.matcher(skip, line).lookingAt()) {
                 // Passed over (a separator): the record before it ends.
                 last = null;
+                open = false;
                 continue;
             }
-            final String found = keyOf(key, line);
-            if (found != null && found.equals(last)) {
+            final boolean blank = ToolText.isBlank(line);
+            final String found = blank
+                    ? null
+                    : keyOf(key, line);
+            if (found != null && found.equals(last)
+                || found == null && spec.joinUnkeyed() && open) {
                 records.set(records.size() - 1, records.getLast() + "\n" + line);
-            } else {
-                records.add(line);
+                continue;
             }
+            if (blank) {
+                continue;
+            }
+            records.add(line);
             last = found;
+            open = found != null;
         }
         return records;
     }
@@ -172,32 +203,128 @@ public final class KeyedRecords {
         final Pattern named = spec.lineName() == null
                 ? null
                 : SafePattern.compile(namedLineRegex(spec), 0);
-        boolean first = true;
+        final boolean sections = spec.joinUnkeyed() && named != null;
+        // Each part the spec reads, with its name (null for none): a line, or with sections a named line and the
+        // unnamed lines after it.
+        final List<String> names = new ArrayList<>();
+        final List<String> parts = new ArrayList<>();
         for (final String line : lines) {
-            if (ToolText.isBlank(line)) {
-                continue;
-            }
             final Matcher name = named == null
                     ? null
                     : SafePattern.matcher(named, line);
             final boolean isNamed = name != null && name.lookingAt();
-            if (isNamed && first && key != null) {
-                fields.put(spec.leadField(), ToolText.strip(name.group(1)));
+            if (sections && !isNamed && !names.isEmpty() && names.getLast() != null) {
+                parts.set(parts.size() - 1, parts.getLast() + "\n" + line);
+            } else if (!ToolText.isBlank(line)) {
+                names.add(isNamed
+                        ? ToolText.strip(name.group(1))
+                        : null);
+                parts.add(line);
             }
-            first = false;
-            final Map<String, String> read = SplitterDryRun.applyRecord(lineSpec, line, null);
-            final Map<String, String> lineFields = read == null && lineSpec.catchAll()
-                    ? Map.of(SplitterSpec.UNPARSED, ToolText.strip(line))
+        }
+        for (int n = 0; n < parts.size(); n++) {
+            if (n == 0 && names.getFirst() != null && key != null) {
+                fields.put(spec.leadField(), names.getFirst());
+            }
+            final String part = parts.get(n);
+            final Map<String, String> read = SplitterDryRun.applyRecord(lineSpec, part, null);
+            final Map<String, String> partFields = read == null && lineSpec.catchAll()
+                    ? Map.of(SplitterSpec.UNPARSED, ToolText.strip(part))
                     : read;
-            if (lineFields == null) {
+            if (partFields == null) {
                 return null;
             }
-            final String prefix = isNamed
-                    ? ToolText.strip(name.group(1)) + "/"
-                    : "";
-            lineFields.forEach((field, value) -> fields.putIfAbsent(prefix + field, value));
+            final String prefix = names.get(n) == null
+                    ? ""
+                    : names.get(n) + "/";
+            partFields.forEach((field, value) -> fields.putIfAbsent(prefix + field, value));
         }
         return fields;
+    }
+
+    /// Records whose key is only on marker lines between sections (ModSecurity's serial audit log: `--5f005215-A--`,
+    /// `--5f005215-B--` ... `--5f005215-Z--`, the lines between them part of the transaction): lines with no white
+    /// space, word tokens between punctuation at both ends, one token holding over runs of such lines (the key) and
+    /// another differing within a run (the section's name).
+    ///
+    /// @param lines The lines.
+    /// @return `record_key`, `key_field`, `line_name`, `lead_field`, `join_unkeyed`, `records`, `sections_per_record`
+    /// and any interleaving warning; or null when the lines have no such markers.
+    public static Map<String, Object> sections(final List<String> lines) {
+        final Map<String, List<String>> byShape = new LinkedHashMap<>();
+        for (final String line : lines) {
+            final String marker = ToolText.strip(line);
+            if (MARKER.matcher(marker).matches()) {
+                byShape.computeIfAbsent(WORD.matcher(marker).replaceAll("W"), shape -> new ArrayList<>()).add(marker);
+            }
+        }
+        final List<String> markers = byShape.values().stream()
+                .max(Comparator.comparingInt(List::size))
+                .orElse(List.of());
+        if (markers.size() < MIN_LINES) {
+            return null;
+        }
+        // Each marker's word tokens as fields t1, t2, ...: the key and name found as for key=value lines.
+        final List<Map<String, String>> tokens = new ArrayList<>();
+        for (final String marker : markers) {
+            final Map<String, String> found = new LinkedHashMap<>();
+            final Matcher word = WORD.matcher(marker);
+            while (word.find()) {
+                found.put("t" + (found.size() + 1), word.group());
+            }
+            tokens.add(found);
+        }
+        final List<String> nameKeys = nameKeys(tokens, markers.size());
+        Candidate best = null;
+        for (final String column : tokens.getFirst().keySet()) {
+            if (nameKeys.contains(column)) {
+                continue;
+            }
+            final Candidate candidate = candidate(column, tokens, nameKeys);
+            if (candidate != null && (best == null || candidate.joined().size() > best.joined().size())) {
+                best = candidate;
+            }
+        }
+        final String nameColumn = best == null
+                ? null
+                : nameKey(nameKeys, best.joined());
+        if (nameColumn == null) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        // At a line's start (whatever came before it in the text), to the line's end.
+        out.put("record_key", "(?<![^\\n])" + markerRegex(markers.getFirst(), best.key()) + "[ \\t]*(?=\\n|$)");
+        out.put("key_field", SplitterSpec.RECORD_KEY);
+        out.put("line_name", markerRegex(markers.getFirst(), nameColumn) + "[ \\t]*(?=\\n|$)");
+        out.put("lead_field", SECTION);
+        out.put("join_unkeyed", true);
+        out.put("records", best.runs());
+        out.put("sections_per_record", Math.round(10.0 * markers.size() / best.runs()) / 10.0);
+        if (best.interleaved() > 0) {
+            out.put("interleaved", best.interleaved());
+            out.put("interleaved_warning", best.interleaved() + " key(s) come back after another's sections: each "
+                                           + "such record is read as several. Putting them back together is not "
+                                           + "supported: say so to the user.");
+        }
+        return out;
+    }
+
+    // A marker as a regex: its punctuation as written, its word tokens any word, the one in `column` (t1, t2, ...)
+    // the group.
+    private static String markerRegex(final String marker, final String column) {
+        final StringBuilder out = new StringBuilder();
+        final Matcher word = WORD.matcher(marker);
+        int at = 0;
+        int n = 0;
+        while (word.find()) {
+            out.append(ToolText.escape(marker.substring(at, word.start())));
+            n++;
+            out.append(("t" + n).equals(column)
+                    ? "(\\w+)"
+                    : "\\w+");
+            at = word.end();
+        }
+        return out.append(ToolText.escape(marker.substring(at))).toString();
     }
 
     /// The key that ties lines into records, when the lines have one: a key=value field on nearly every line whose
