@@ -141,6 +141,8 @@ class TestStroomSplitterRun {
                 Arguments.of("Quoted key:\"value\" pairs separated by \"; \"",
                         SplitterSpec.builder("key_value").pairSeparator(":").quote("\"").delimiter("; ").build(),
                         "action:\"Accept\"; src:\"10.1.2.3\"; rule_name:\"Allow web; and more\"\n"),
+                Arguments.of("Text lines tied by a key given by hand (the guide's PostgreSQL spec)",
+                        TestFormatsShortlist.POSTGRES, TestFormatsShortlist.resource("postgres-lines.log")),
                 Arguments.of("key=value, text around the pairs kept as words",
                         SplitterSpec.builder("key_value").delimiter(" ").quote("\"").words(true).build(),
                         "[12.3] DROP: IN=eth0 OUT= DF PROTO=TCP SYN URGP=0\nconn=1 op=0 BIND dn=\"uid=a\" x=1\n"),

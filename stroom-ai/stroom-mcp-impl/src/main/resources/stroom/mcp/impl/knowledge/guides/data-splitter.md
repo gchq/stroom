@@ -191,6 +191,18 @@ given twice, such as several PATH lines, gives a field per line; a field reads t
 holding no key is a record of its own. The draft takes the time from an epoch in the key (`epoch_s`) and leaves the
 key and each line's copy of it out of the fields.
 
+The profile suggests a key only for key=value lines and marker lines. When one event's lines share a key held some
+other way (a session or request id in text lines: PostgreSQL's `[4512] 6713a2f1.1190 LOG: ...` then `... DETAIL:
+...`, a bracketed `[req-42]`, Cisco ISE's message id before its segment number), give the spec yourself:
+`record_key` is a regex whose one group is the key, found anywhere in the line (anchor it as the line's layout
+needs), and `line_name` a regex at the line's start whose one group names the line (`LOG`, `DETAIL`), with the
+spec reading each line, e.g. `{"kind": "regex", "pattern": "(?s)^(\\S+ \\S+ \\S+) \\[(\\d+)\\] (\\S+) (\\w+):\\s+(.*)$",
+"names": ["time", "pid", "session", "level", "message"], "record_key": "\\] (\\w+\\.\\w+) ", "key_field": "session",
+"line_name": "\\S+ \\S+ \\S+ \\[\\d+\\] \\S+ (\\w+):", "lead_field": "level", "join_unkeyed": true}`
+(each line's fields under its level: `LOG/message`, `DETAIL/message`). Ask the user which value ties an event's
+lines when it isn't plain; `build_data_splitter` checks it against the sample and Stroom's parser. Lines holding no
+key (PostgreSQL's SQL continued on tab-indented lines) join the line before them with `join_unkeyed`.
+
 Lines of two events written interleaved (auditd under load) are not put back together: Stroom's translation reads
 records in chunks, so no tool can join them safely. The profile warns (`interleaved`), and each such event is read
 as several records; tell the user. `ausearch -i` output (interpreted) is not key=value: ask for raw lines.
