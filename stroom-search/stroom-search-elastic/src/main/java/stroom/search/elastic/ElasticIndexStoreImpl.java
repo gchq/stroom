@@ -64,11 +64,12 @@ public class ElasticIndexStoreImpl
 
     @Override
     protected DependencyRemapFunction<ElasticIndexDoc> getDependencyRemapFunction() {
-        return (doc, dependencyRemapper) -> {
-            dependencyRemapper.remap(doc.getClusterRef());
-            dependencyRemapper.remap(doc.getVectorGenerationModelRef());
-            dependencyRemapper.remap(doc.getRerankModelRef());
-            return doc;
-        };
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .clusterRef(dependencyRemapper.remap(doc.getClusterRef()))
+                .vectorGenerationModelRef(dependencyRemapper.remap(doc.getVectorGenerationModelRef()))
+                .rerankModelRef(dependencyRemapper.remap(doc.getRerankModelRef()))
+                .defaultExtractionPipeline(dependencyRemapper.remap(doc.getDefaultExtractionPipeline()))
+                .build();
     }
 }

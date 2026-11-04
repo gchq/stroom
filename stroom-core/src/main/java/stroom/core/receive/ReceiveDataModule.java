@@ -16,6 +16,7 @@
 
 package stroom.core.receive;
 
+import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.receive.common.CertificateExtractorImpl;
 import stroom.receive.common.ContentAutoCreationAttrMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
@@ -37,6 +38,8 @@ public class ReceiveDataModule extends AbstractModule {
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(ContentTemplateStore.class).to(ContentTemplateStoreImpl.class);
+        DocDependencyProviderBinder.create(binder())
+                .bind(ContentTemplateStoreImpl.class);
         bind(ContentTemplateService.class).to(ContentTemplateServiceImpl.class);
 
         RestResourcesBinder.create(binder())

@@ -139,6 +139,7 @@ class AnalyticRuleStoreImpl
     protected DependencyRemapFunction<AnalyticRuleDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final AnalyticRuleDoc.Builder builder = doc.copy();
+            AnalyticFeedDependencies.remap(doc, builder, dependencyRemapper);
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {

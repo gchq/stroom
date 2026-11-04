@@ -17,6 +17,7 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.docstore.api.DocDependencyProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
@@ -31,6 +32,8 @@ public class DataRetentionModule extends AbstractModule {
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
         bind(DataRetentionRulesProvider.class).to(DataRetentionRulesServiceImpl.class);
+        DocDependencyProviderBinder.create(binder())
+                .bind(DataRetentionRulesServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DataRetentionRulesResourceImpl.class);

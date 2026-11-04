@@ -20,6 +20,7 @@ import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.security.api.SecurityContext;
@@ -53,6 +54,14 @@ class DataGenStoreImpl
                 DataGenDoc::builder,
                 DataGenDoc::copy);
         this.dataGenProcessorsProvider = dataGenProcessorsProvider;
+    }
+
+    @Override
+    protected DependencyRemapFunction<DataGenDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .feed(dependencyRemapper.remap(doc.getFeed()))
+                .build();
     }
 
     @Override

@@ -20,6 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
 import stroom.query.api.datasource.ConditionSet;
@@ -177,16 +178,26 @@ public class ReceiveDataRuleSetStoreImpl
     @Override
     protected DependencyRemapFunction<ReceiveDataRules> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
-            final List<ReceiveDataRule> templates = doc.getRules();
-            if (NullSafe.hasItems(templates)) {
-                templates.forEach(receiveDataRule -> {
-                    if (receiveDataRule.getExpression() != null) {
-                        dependencyRemapper.remapExpression(receiveDataRule.getExpression());
-                    }
-                });
+            final List<ReceiveDataRule> rules = doc.getRules();
+            if (NullSafe.hasItems(rules)) {
+                final List<ReceiveDataRule> remappedRules = rules
+                        .stream()
+                        .map(rule -> remapRule(rule, dependencyRemapper))
+                        .toList();
+                return doc.copy().rules(remappedRules).build();
             }
             return doc;
         };
+    }
+
+    private ReceiveDataRule remapRule(final ReceiveDataRule rule,
+                                      final DependencyRemapper dependencyRemapper) {
+        if (rule.getExpression() == null) {
+            return rule;
+        }
+        return rule.copy()
+                .withExpression(dependencyRemapper.remapExpression(rule.getExpression()))
+                .build();
     }
 
     @Override

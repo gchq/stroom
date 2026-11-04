@@ -21,6 +21,7 @@ import stroom.test.common.MockMetrics;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class TestLoadingStroomCacheImpl {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLoadingStroomCacheImpl.class);
 
     private static final String NAME = "My Cache";
+    private static final String REFRESH_AFTER_WRITE = "RefreshAfterWrite";
     protected static final int ALL_MONTHS_COUNT = 12;
 
     private LoadingStroomCache<Integer, String> cache;
@@ -300,6 +302,18 @@ class TestLoadingStroomCacheImpl {
                 .isEqualTo(null);
         assertThat(cache.size())
                 .isEqualTo(0);
+    }
+
+    @Test
+    void testRefreshAfterWrite_isConfigured() {
+        cacheConfig = cacheConfig.copy()
+                .refreshAfterWrite(StroomDuration.ofMillis(300))
+                .build();
+
+        cache.rebuild();
+
+        assertThat(cache.getCacheInfo().getMap())
+                .containsEntry(REFRESH_AFTER_WRITE, "300ms");
     }
 
     public CacheConfig getCacheConfig() {

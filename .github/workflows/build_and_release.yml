@@ -10,9 +10,9 @@ jobs:
     env:
       # Static env vars
 
-      # Github runners limited to 2 cores, 7Gb RAM
-      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-      MAX_WORKERS: 3
+      # Github runners limited to 4 cores, 16Gb RAM
+      # https://docs.github.com/en/actions/reference/runners/github-hosted-runners
+      MAX_WORKERS: 4
       # Fixed ssh-agent socket so multiple steps can use the same agent
       # if needs be
       SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
@@ -25,14 +25,14 @@ jobs:
           # Set this so it gets the annotated commit, not the commit being tagged.
           # Which means we can get the release msg
           # See https://github.com/actions/runner/issues/712
-          ref: ${{ github.ref }} 
+          ref: ${{ github.ref }}
 
         # Make sure the wrapper jar has not been tampered with
       - name: Validate gradle wrapper jar
         id: validate_gradle_wrapper
         uses: gradle/actions/wrapper-validation@v6
 
-        # Set variables in github's special env file which are then automatically 
+        # Set variables in github's special env file which are then automatically
         # read into env vars in each subsequent step
       - name: Set Environment Variables
         id: set_env_var

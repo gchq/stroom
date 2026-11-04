@@ -18,7 +18,6 @@ package stroom.proxy.app.security;
 
 import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
@@ -40,13 +39,10 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
             CheckType.CHECK);
     private static final AppPermissionSet ADMIN_APP_PERMISSIONS = AppPermission.ADMINISTRATOR.asAppPermissionSet();
 
-    private final UserIdentityFactory userIdentityFactory;
     private final ProxyApiKeyService proxyApiKeyService;
 
     @Inject
-    public ProxySecurityContextImpl(final UserIdentityFactory userIdentityFactory,
-                                    final ProxyApiKeyService proxyApiKeyService) {
-        this.userIdentityFactory = userIdentityFactory;
+    public ProxySecurityContextImpl(final ProxyApiKeyService proxyApiKeyService) {
         this.proxyApiKeyService = proxyApiKeyService;
     }
 
@@ -132,12 +128,13 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
 
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
-        return asUserResult(userIdentityFactory.getServiceUserIdentity(), supplier);
+        // The processing user has no token as downstream calls use the configured auth method
+        return asUserResult(ProxyProcessingUserIdentity.INSTANCE, supplier);
     }
 
     @Override
     public void asProcessingUser(final Runnable runnable) {
-        asUser(userIdentityFactory.getServiceUserIdentity(), runnable);
+        asUser(ProxyProcessingUserIdentity.INSTANCE, runnable);
     }
 
     @Override
@@ -193,12 +190,10 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
     }
 
     private boolean isProcessingUser(final UserIdentity userIdentity) {
-        return userIdentityFactory.isServiceUser(userIdentity);
+        return userIdentity == ProxyProcessingUserIdentity.INSTANCE;
     }
 
     private void pushUser(final UserIdentity userIdentity) {
-        // Before we push the user see if we need to refresh the user token.
-//        userIdentityFactory.refresh(userIdentity);
         // Push the user.
         ProxyCurrentUserState.push(userIdentity);
     }

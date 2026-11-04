@@ -134,7 +134,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
      */
     private Optional<UserIdentity> getInsecureTestServiceUserIdentity(final HttpServletRequest request) {
         return insecureTestCredentials.matches(request)
-                ? Optional.of(getServiceUserIdentity())
+                ? Optional.of(ProxyProcessingUserIdentity.INSTANCE)
                 : Optional.empty();
     }
 

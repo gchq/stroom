@@ -17,6 +17,7 @@
 package stroom.pathways.impl;
 
 import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.security.api.SecurityContext;
@@ -39,5 +40,14 @@ public class PathwaysStoreImpl
                 PathwaysDoc.TYPE,
                 PathwaysDoc::builder,
                 PathwaysDoc::copy);
+    }
+
+    @Override
+    protected DependencyRemapFunction<PathwaysDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .tracesDocRef(dependencyRemapper.remap(doc.getTracesDocRef()))
+                .infoFeed(dependencyRemapper.remap(doc.getInfoFeed()))
+                .build();
     }
 }

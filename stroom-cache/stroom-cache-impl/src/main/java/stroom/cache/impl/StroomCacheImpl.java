@@ -40,4 +40,9 @@ class StroomCacheImpl<K, V> extends AbstractStroomCache<K, V> {
     Cache<K, V> createCacheFromBuilder(final Caffeine<K, V> cacheBuilder) {
         return cacheBuilder.build();
     }
+
+    @Override
+    boolean isLoadingCache() {
+        return false;
+    }
 }
