@@ -205,13 +205,16 @@ final class VariantDrafts {
         result.put(NOTES, notes);
         result.put("unmapped_fields", new ArrayList<>(unmapped));
         if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
-            result.put(DraftMapping.TIME_ZONES, Map.of("examples", timeExamples, "zone_names",
-                    List.copyOf(zoneNames)));
+            result.put(DraftMapping.TIME_ZONES, DraftMapping.timeZones(timeExamples, List.copyOf(zoneNames)));
         }
         if (!datelessRules.isEmpty()) {
             // For the user to say where the date comes from (draft_translation_mapping asks).
-            result.put(DraftMapping.DATELESS_TIMES, Map.of("field", TIME, "variant_field", field, "variants",
-                    datelessRules));
+            // In a fixed order (Map.of's differs from one run to the next).
+            final Map<String, Object> dateless = new LinkedHashMap<>();
+            dateless.put("field", TIME);
+            dateless.put("variant_field", field);
+            dateless.put("variants", datelessRules);
+            result.put(DraftMapping.DATELESS_TIMES, dateless);
         }
         result.put("fields_seen", new ArrayList<>(seen));
         return result;

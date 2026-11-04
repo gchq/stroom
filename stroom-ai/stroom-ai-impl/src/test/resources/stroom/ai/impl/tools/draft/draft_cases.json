@@ -728,7 +728,42 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
+    "extract": [
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])TTY=([^\\s,;\"]*)",
+      "names": [
+       "tty"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])PWD=([^\\s,;\"]*)",
+      "names": [
+       "pwd"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])USER=([^\\s,;\"]*)",
+      "names": [
+       "user"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])COMMAND=([^\\s,;\"]*)",
+      "names": [
+       "command"
+      ]
+     }
+    ],
     "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "MMM dd HH:mm:ss"
+     },
      {
       "path": "EventSource/System/Name",
       "value": "07_syslog3164_sudo"
@@ -738,17 +773,77 @@
       "value": "TODO e.g. Prod"
      },
      {
+      "path": "EventSource/Device/HostName",
+      "field": "host"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "USER"
+     },
+     {
       "path": "EventSource/Generator",
-      "value": "07_syslog3164_sudo"
+      "field": "app"
      }
     ],
     "events": [
      {
-      "name": "other",
+      "name": "command",
       "fields": [
        {
         "path": "EventDetail/TypeId",
-        "value": "Other"
+        "value": "Command"
+       },
+       {
+        "path": "EventDetail/Process/Action",
+        "value": "Execute"
+       },
+       {
+        "path": "EventDetail/Process/Type",
+        "value": "Application"
+       },
+       {
+        "path": "EventDetail/Process/Command",
+        "field": "COMMAND"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "pri",
+        "field": "pri"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "words",
+        "field": "words"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "TTY",
+        "field": "TTY"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "PWD",
+        "field": "PWD"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "tty",
+        "field": "tty"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "pwd",
+        "field": "pwd"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "user",
+        "field": "user"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "command",
+        "field": "command"
        }
       ]
      }
@@ -759,20 +854,57 @@
     "kind": "syslog",
     "body": {
      "kind": "key_value",
-     "delimiter": " "
+     "delimiter": " ",
+     "words": true
     }
    },
    "format": "syslog rfc3164",
-   "records": 0,
+   "records": 3,
    "kinds": [],
    "notes": [
-    "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
+    "'message' holds key/value pairs: 4 keys are fields of their own through pairs ('tty', 'pwd', 'user', 'command'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+    "Every record runs a command ('COMMAND'): drafted as Process (Action Execute, Type Application). Check it, and split the program from its arguments (Process/Arguments) if you want them apart."
    ],
-   "unmapped_fields": [],
-   "fields_seen": []
+   "unmapped_fields": [
+    "pri",
+    "words",
+    "TTY",
+    "PWD",
+    "COMMAND",
+    "tty",
+    "pwd",
+    "user",
+    "command"
+   ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Sep 28 14:00:01",
+      "Sep 28 14:10:44",
+      "Sep  8 09:03:07"
+     ]
+    },
+    "zone_names": []
+   },
+   "fields_seen": [
+    "pri",
+    "time",
+    "host",
+    "app",
+    "pid",
+    "message",
+    "words",
+    "TTY",
+    "PWD",
+    "USER",
+    "COMMAND",
+    "tty",
+    "pwd",
+    "user",
+    "command"
+   ]
   }
  },
  {
@@ -785,7 +917,49 @@
   "result": {
    "mapping": {
     "input": "data_splitter",
+    "extract": [
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])action=([^\\s,;\"]*)",
+      "names": [
+       "action_2"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])src=([^\\s,;\"]*)",
+      "names": [
+       "src_2"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])dst=([^\\s,;\"]*)",
+      "names": [
+       "dst_2"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])dport=([^\\s,;\"]*)",
+      "names": [
+       "dport_2"
+      ]
+     },
+     {
+      "field": "message",
+      "regex": "(?:^|[\\s,;])proto=([^\\s,;\"]*)",
+      "names": [
+       "proto_2"
+      ]
+     }
+    ],
     "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+     },
      {
       "path": "EventSource/System/Name",
       "value": "08_kv_firewall"
@@ -795,17 +969,187 @@
       "value": "TODO e.g. Prod"
      },
      {
+      "path": "EventSource/Client/IPAddress",
+      "field": "src"
+     },
+     {
+      "path": "EventSource/Server/IPAddress",
+      "field": "dst"
+     },
+     {
+      "path": "EventSource/Server/Port",
+      "field": "dport"
+     },
+     {
       "path": "EventSource/Generator",
       "value": "08_kv_firewall"
+     },
+     {
+      "path": "EventDetail/TypeId",
+      "field": "action"
      }
     ],
     "events": [
      {
+      "name": "permitted",
+      "when": [
+       {
+        "field": "action",
+        "equals": "allow"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Network/Permit/Source/Device/IPAddress",
+        "field": "src"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Source/TransportProtocol",
+        "field": "proto",
+        "map": {
+         "tcp": "TCP",
+         "udp": "UDP"
+        },
+        "default": "Other"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Destination/Device/IPAddress",
+        "field": "dst"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Destination/Port",
+        "field": "dport"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "prefix2",
+        "field": "prefix2"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "action_2",
+        "field": "action_2"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Source/Data",
+        "data_name": "src_2",
+        "field": "src_2"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Destination/Data",
+        "data_name": "dst_2",
+        "field": "dst_2"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "dport_2",
+        "field": "dport_2"
+       },
+       {
+        "path": "EventDetail/Network/Permit/Data",
+        "data_name": "proto_2",
+        "field": "proto_2"
+       }
+      ]
+     },
+     {
+      "name": "denied",
+      "when": [
+       {
+        "field": "action",
+        "equals": "deny"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Network/Deny/Source/Device/IPAddress",
+        "field": "src"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Source/TransportProtocol",
+        "field": "proto",
+        "map": {
+         "tcp": "TCP"
+        },
+        "default": "Other"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Destination/Device/IPAddress",
+        "field": "dst"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Destination/Port",
+        "field": "dport"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Data",
+        "data_name": "prefix2",
+        "field": "prefix2"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Data",
+        "data_name": "action_2",
+        "field": "action_2"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Source/Data",
+        "data_name": "src_2",
+        "field": "src_2"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Destination/Data",
+        "data_name": "dst_2",
+        "field": "dst_2"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Data",
+        "data_name": "dport_2",
+        "field": "dport_2"
+       },
+       {
+        "path": "EventDetail/Network/Deny/Data",
+        "data_name": "proto_2",
+        "field": "proto_2"
+       }
+      ]
+     },
+     {
       "name": "other",
       "fields": [
        {
-        "path": "EventDetail/TypeId",
-        "value": "Other"
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "prefix2",
+        "field": "prefix2"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "proto",
+        "field": "proto"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "action_2",
+        "field": "action_2"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "src_2",
+        "field": "src_2"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "dst_2",
+        "field": "dst_2"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "dport_2",
+        "field": "dport_2"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "proto_2",
+        "field": "proto_2"
        }
       ]
      }
@@ -813,20 +1157,55 @@
    },
    "source_notes": null,
    "splitter": {
-    "kind": "key_value",
-    "delimiter": " "
+    "kind": "regex",
+    "pattern": "^(\\S+)\\s+(\\S+)\\s+(.*)$",
+    "names": [
+     "time",
+     "prefix2",
+     "message"
+    ],
+    "body": {
+     "kind": "key_value",
+     "delimiter": " "
+    }
    },
    "format": "key=value",
-   "records": 0,
-   "kinds": [],
+   "records": 3,
+   "kinds": [
+    "allow",
+    "deny"
+   ],
    "notes": [
-    "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
+    "'message' holds key/value pairs: 5 keys are fields of their own through pairs ('action_2', 'src_2', 'dst_2', 'dport_2', 'proto_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+    "Drafted from the sample's values (check them): allow: Network/Permit for action allow; deny: Network/Deny for action deny.",
+    "One rule per value of 'action' (allow, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
-   "unmapped_fields": [],
-   "fields_seen": []
+   "unmapped_fields": [
+    "prefix2",
+    "proto",
+    "action_2",
+    "src_2",
+    "dst_2",
+    "dport_2",
+    "proto_2"
+   ],
+   "fields_seen": [
+    "time",
+    "prefix2",
+    "message",
+    "action",
+    "src",
+    "dst",
+    "dport",
+    "proto",
+    "action_2",
+    "src_2",
+    "dst_2",
+    "dport_2",
+    "proto_2"
+   ]
   }
  },
  {

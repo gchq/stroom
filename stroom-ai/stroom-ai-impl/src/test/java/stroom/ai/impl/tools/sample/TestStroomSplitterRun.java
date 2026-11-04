@@ -134,13 +134,13 @@ class TestStroomSplitterRun {
                         SplitterDryRun.inferSpec(TestKeyedRecords.enriched()).spec(), TestKeyedRecords.enriched()),
                 keyed("auditd-ausearch-lines.log", "ausearch's output, ---- and time-> lines passed over"),
                 keyed("txn-lines.log", "a transaction log, tied by txn= and named by step="),
-                keyed("modsec-lines.log", "sections between ModSecurity's --id-X-- markers"),
                 Arguments.of("Lines tied by a key, sections between [[job-ID:STEP]] markers",
                         SplitterDryRun.inferSpec(TestKeyedRecords.sectioned()).spec(), TestKeyedRecords.sectioned()),
-                // The formats shortlist's others as inferred today (formats-shortlist-generator.py).
-                keyed("checkpoint-lines.log", "no: Check Point, RFC 5424 with its pairs as structured data"),
-                keyed("postfix-lines.log", "no: Postfix, syslog with key=value and text messages"),
-                keyed("postgres-lines.log", "no: PostgreSQL, records over several lines"),
+                Arguments.of("key=value after the same few words, the words fields of their own",
+                        SplitterDryRun.inferSpec(TestFormatsShortlist.PREFIXED).spec(), TestFormatsShortlist.PREFIXED),
+                Arguments.of("key=value, text around the pairs kept as words",
+                        SplitterSpec.builder("key_value").delimiter(" ").quote("\"").words(true).build(),
+                        "[12.3] DROP: IN=eth0 OUT= DF PROTO=TCP SYN URGP=0\nconn=1 op=0 BIND dn=\"uid=a\" x=1\n"),
                 // Not key=value: a regex reads each line, a bracketed request id ties them, the step names them.
                 Arguments.of("Lines tied by a key, text lines read by a regex",
                         SplitterSpec.builder("regex").pattern("^(\\S+) (\\w+) \\[(req-\\d+)\\] (\\w+) ?(.*)$")
@@ -298,6 +298,20 @@ class TestStroomSplitterRun {
             fields.put(namesAndRegexes[i], namesAndRegexes[i + 1]);
         }
         return fields;
+    }
+
+    // Each of the formats shortlist (formats-shortlist-generator.py) as inferred.
+    static Stream<Arguments> theFormatsShortlistAgrees() {
+        return TestFormatsShortlist.fixtures().stream().map(name -> {
+            final String sample = TestFormatsShortlist.resource(name + "-lines.log");
+            return Arguments.of(name, SplitterDryRun.inferSpec(sample).spec(), sample);
+        });
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource
+    void theFormatsShortlistAgrees(final String name, final SplitterSpec spec, final String sample) {
+        dryRunAndStroomAgree(name, spec, sample);
     }
 
     private static Arguments keyed(final String fixture, final String name) {

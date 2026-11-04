@@ -91,6 +91,9 @@ import java.util.regex.PatternSyntaxException;
 ///                        unnamed lines after it are a section, read by the spec as one text under its name.
 /// @param skipLines       With record_key: a regex a line matches at its start to be passed over, ending the record
 ///                        before it (ausearch's `----` separators and `time->...` lines); or null.
+/// @param words           key_value: text that isn't pairs (a prefix, bare flags, verbs between pairs: iptables'
+///                        `[12.3] DROP: IN=eth0 ... DF PROTO=TCP`) is kept, each run of such words as the field
+///                        [#WORDS] (given again for each run), rather than an error and the record lost.
 /// @param singleQuotes    key_value: values may be in single quotes too (`a='two words'`), read without them; a
 ///                        single-quoted value made of pairs (auditd's `msg='op=login res=success'`) is read as those
 ///                        pairs, the record's own.
@@ -128,6 +131,7 @@ public record SplitterSpec(String kind,
                            String leadField,
                            boolean joinUnkeyed,
                            String skipLines,
+                           boolean words,
                            boolean singleQuotes) {
 
     /// The kinds of spec.
@@ -141,6 +145,8 @@ public record SplitterSpec(String kind,
     public static final String VARIANT = "variant";
     /// The kind of a spec reading records in several formats.
     public static final String ALTERNATIVES = "alternatives";
+    /// The field words keeps each run of text that isn't pairs in.
+    public static final String WORDS = "words";
     /// The field a record's key is written in, unless key_field names another.
     public static final String RECORD_KEY = "record_key";
     /// The field a record's first line's name is written in, unless lead_field names another.
@@ -203,6 +209,9 @@ public record SplitterSpec(String kind,
         checkAdditions(kind, escape, spacedValues, catchAll, blankLineRecords, fields, quote, commentPrefix,
                 recordStart, recordEnd, delimiter);
         checkAlternatives(kind, parts, variantField, delimiter);
+        if (words && (!"key_value".equals(kind) || spacedValues)) {
+            throw new IllegalArgumentException("words is for key_value (without spaced_values)");
+        }
         if (singleQuotes && (!"key_value".equals(kind) || spacedValues)) {
             throw new IllegalArgumentException("single_quotes is for key_value (without spaced_values)");
         }
@@ -501,6 +510,7 @@ public record SplitterSpec(String kind,
         builder.leadField = (String) json.get("lead_field");
         builder.joinUnkeyed = Boolean.TRUE.equals(json.get("join_unkeyed"));
         builder.skipLines = (String) json.get("skip_lines");
+        builder.words = Boolean.TRUE.equals(json.get("words"));
         builder.singleQuotes = Boolean.TRUE.equals(json.get("single_quotes"));
         return builder.build();
     }
@@ -547,6 +557,7 @@ public record SplitterSpec(String kind,
         builder.leadField = leadField;
         builder.joinUnkeyed = joinUnkeyed;
         builder.skipLines = skipLines;
+        builder.words = words;
         builder.singleQuotes = singleQuotes;
         return builder;
     }
@@ -596,6 +607,7 @@ public record SplitterSpec(String kind,
         putIf(map, "lead_field", leadField, !LEAD.equals(leadField));
         putIf(map, "join_unkeyed", joinUnkeyed, joinUnkeyed);
         putIf(map, "skip_lines", skipLines, skipLines != null);
+        putIf(map, "words", words, words);
         putIf(map, "single_quotes", singleQuotes, singleQuotes);
         return map;
     }
@@ -648,6 +660,7 @@ public record SplitterSpec(String kind,
         private String leadField = LEAD;
         private boolean joinUnkeyed;
         private String skipLines;
+        private boolean words;
         private boolean singleQuotes;
 
         private Builder(final String kind) {
@@ -877,6 +890,11 @@ public record SplitterSpec(String kind,
             return this;
         }
 
+        public Builder words(final boolean words) {
+            this.words = words;
+            return this;
+        }
+
         public Builder singleQuotes(final boolean singleQuotes) {
             this.singleQuotes = singleQuotes;
             return this;
@@ -887,7 +905,7 @@ public record SplitterSpec(String kind,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
                     variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
-                    joinUnkeyed, skipLines, singleQuotes);
+                    joinUnkeyed, skipLines, words, singleQuotes);
         }
     }
 }
