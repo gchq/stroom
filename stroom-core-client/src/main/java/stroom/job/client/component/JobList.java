@@ -128,7 +128,7 @@ public class JobList extends Component {
                                 NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .withBrowserEventHandler((context, elem, row, event) -> onHelp.accept(row))
                         .build(),
-                "<br/>", ColumnSizeConstants.ICON_COL);
+                DataGrid.hiddenHeader("Help"), ColumnSizeConstants.ICON_COL);
 
         // Description col, allow for null rows
         dataGrid.addAutoResizableColumn(

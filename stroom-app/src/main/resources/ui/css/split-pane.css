@@ -88,20 +88,20 @@
 
 /* A splitter's line, drawn by ::before: 1px across, in the middle of the splitter. A thin
    splitter's always shows; a regular splitter's (in the middle of its gap) only while it is
-   hovered, dragged or has the keyboard focus */
+   hovered, pressed, dragged or has the keyboard focus. Its colours change as a scrollbar's thumb
+   does (data-grid.css), fading in */
 .split-pane__splitter::before {
     content: "";
     position: absolute;
     inset: 0 calc(50% - 0.5px);
+    transition: background-color .5s;
 }
 
 .split-pane--vertical > .split-pane__splitter::before {
     inset: calc(50% - 0.5px) 0;
 }
 
-.split-pane--thin > .split-pane__splitter::before,
-.split-pane__splitter:hover::before,
-.split-pane__splitter:active::before {
+.split-pane--thin > .split-pane__splitter::before {
     background-color: var(--split-pane__splitter-colour);
 }
 
@@ -110,45 +110,26 @@
     --split-pane__splitter-colour: var(--navigation__splitter__line-color);
 }
 
-/* A splitter's handle, drawn by ::after: a short rounded bar across the middle of its line,
-   shown while it is hovered, and lighter (darker in the light theme) while it is dragged. It is
-   5px across, an odd width, so it is centred on the line, 2px either side (the splitter is the
-   7px it can be grabbed by, so its middle less 2.5px is a whole pixel) */
-.split-pane__splitter {
-    --split-pane__handle-length: min(56px, 100%);
+/* Hovered, the line is 3px across, a hovered scrollbar thumb's colour, and pressed or dragged, the
+   dragged thumb's (the splitter is the 7px it can be grabbed by, so its middle less 1.5px is a
+   whole pixel) */
+.split-pane__splitter:hover::before,
+.split-pane__splitter:active::before {
+    inset: 0 calc(50% - 1.5px);
+    background-color: var(--splitter__line-color--hover);
 }
 
-.split-pane__splitter::after {
-    content: "";
-    position: absolute;
-    top: calc(50% - var(--split-pane__handle-length) / 2);
-    left: calc(50% - 2.5px);
-    width: 5px;
-    height: var(--split-pane__handle-length);
-    border-radius: 2.5px;
-    background-color: var(--splitter__handle-color);
-    visibility: hidden;
+.split-pane--vertical > .split-pane__splitter:hover::before,
+.split-pane--vertical > .split-pane__splitter:active::before {
+    inset: calc(50% - 1.5px) 0;
 }
 
-.split-pane--vertical > .split-pane__splitter::after {
-    top: calc(50% - 2.5px);
-    left: calc(50% - var(--split-pane__handle-length) / 2);
-    width: var(--split-pane__handle-length);
-    height: 5px;
-}
-
-.split-pane__splitter:hover::after,
-.split-pane__splitter:active::after {
-    visibility: visible;
-}
-
-.split-pane__splitter:active::after {
-    background-color: var(--splitter__handle-color--active);
+.split-pane__splitter:active::before {
+    background-color: var(--splitter__line-color--active);
 }
 
 /* With the keyboard focus, the line is drawn in the focus colour, with the focus ring either side
-   of it (as the app draws focus, e.g. a toolbar button's), and the handle shows in the focus
-   colour too, without a ring of its own */
+   of it (as the app draws focus, e.g. a toolbar button's) */
 .split-pane__splitter:focus-visible {
     outline: none;
 }
@@ -156,11 +137,6 @@
 .split-pane__splitter:focus-visible::before {
     background-color: var(--splitter__focus-color);
     box-shadow: var(--focus-shadow);
-}
-
-.split-pane__splitter:focus-visible::after {
-    visibility: visible;
-    background-color: var(--splitter__focus-color);
 }
 
 /* While a splitter is dragged (the one state that is a modifier), its cursor shows everywhere,
@@ -179,23 +155,19 @@
 }
 
 /* In forced colours (e.g. Windows high contrast) backgrounds are replaced, which would leave a
-   splitter's line and handle invisible, so they are drawn in system colours instead */
+   splitter's line invisible, so it is drawn in system colours instead */
 @media (forced-colors: active) {
-    .split-pane__splitter::before,
-    .split-pane__splitter::after {
+    .split-pane__splitter::before {
         forced-color-adjust: none;
     }
 
     .split-pane--thin > .split-pane__splitter::before,
-    .split-pane__splitter:hover::before,
-    .split-pane__splitter:active::before,
-    .split-pane__splitter::after {
+    .split-pane__splitter:hover::before {
         background-color: CanvasText;
     }
 
-    .split-pane__splitter:active::after,
-    .split-pane__splitter:focus-visible::before,
-    .split-pane__splitter:focus-visible::after {
+    .split-pane__splitter:active::before,
+    .split-pane__splitter:focus-visible::before {
         background-color: Highlight;
         box-shadow: none;
     }

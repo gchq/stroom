@@ -4,13 +4,22 @@
              xmlns:v="urn:import:stroom.widget.button.client"
              xmlns:dd="urn:import:stroom.widget.dropdowntree.client"
              xmlns:ps="urn:import:stroom.pipeline.structure.client.component"
-             xmlns:tx="urn:import:stroom.widget.text.client">
+             xmlns:form="urn:import:stroom.widget.form.client">
     <!-- A pipeline's Structure tab (pipeline-structure.css): its elements above their properties
          and pipeline references -->
     <g:SimplePanel addStyleNames="dock-container-vertical">
         <split:SplitPane vertical="true" thin="true" sizes="40%, *"
                          names="Pipeline elements, Properties and references" addStyleNames="dock-max">
             <g:FlowPanel styleName="max dock-container-vertical">
+                <!-- The pipeline it inherits from, a form group so that a problem with it (e.g. the
+                     parent can't be found) is shown under it as any field's is -->
+                <g:FlowPanel styleName="dock-min form-padding">
+                    <form:FormGroup identity="pipelineStructureInheritFrom" label="Inherit From"
+                                    helpText="The pipeline this one is based on. Its elements and their properties are used as they are, unless this pipeline adds to, changes or removes them; the inherited elements are shown faded.">
+                        <dd:DropDownBox ui:field="inherit"/>
+                    </form:FormGroup>
+                </g:FlowPanel>
+                <!-- The buttons for the elements, then View Source -->
                 <g:FlowPanel styleName="dock-min pipeline-structure__bar">
                     <v:Toolbar name="Pipeline elements">
                         <v:ToolbarButton ui:field="add" svg="ADD" title="Add New Pipeline Element"/>
@@ -21,15 +30,9 @@
                         <v:ToolbarButton ui:field="restore" svg="UNDO" title="Restore Pipeline Element"
                                          enabled="false"/>
                     </v:Toolbar>
-                    <g:FlowPanel styleName="pipeline-structure__bar-right">
-                        <tx:Label text="Inherit From: " styleName="text-label pipeline-structure__label"/>
-                        <g:SimplePanel>
-                            <dd:DropDownBox ui:field="inherit"/>
-                        </g:SimplePanel>
-                        <v:Toolbar name="Pipeline source" addStyleNames="pipeline-structure__view-source">
-                            <v:ToolbarButton ui:field="viewSource" svg="CODE" title="View Source"/>
-                        </v:Toolbar>
-                    </g:FlowPanel>
+                    <v:Toolbar name="Pipeline source" addStyleNames="pipeline-structure__view-source">
+                        <v:ToolbarButton ui:field="viewSource" svg="CODE" title="View Source"/>
+                    </v:Toolbar>
                 </g:FlowPanel>
                 <split:ScrollPane addStyleNames="dock-max pipeline-structure__tree-container">
                     <ps:PipelineTree ui:field="tree"/>

@@ -24,19 +24,16 @@
    The data grid's spinner (ValueSpinnerCell) is the value-spinner--cell variant, at the end.
 */
 
-/* The spinner: its field, and under it any feedback. A width given to the spinner (e.g.
-   width="200px", w-100 or dock-max) is the field's */
+/* The spinner: its field, and under it any feedback. As wide as a text field (text-field.css), so
+   its largest values fit beside its arrows. A width given to the spinner (e.g. width="200px", w-100
+   or dock-max) is the field's */
 .value-spinner {
     display: inline-block;
-    width: 96px;
+    width: 200px;
     vertical-align: middle;
 }
 
-.stroom-font-size-large .value-spinner {
-    width: 104px;
-}
-
-/* A narrow spinner, and a wide one, e.g. for a large number; at any text size */
+/* A narrow spinner, for a value of a few digits, and a wide one, as wide as the default */
 .value-spinner.value-spinner--narrow {
     width: 80px;
 }
@@ -139,12 +136,19 @@
     display: block;
     width: max-content;
     max-width: 20rem;
+    margin-top: .25rem;
     font-size: 80%;
     color: var(--feedback);
 }
 
 .value-spinner__feedback:empty {
     display: none;
+}
+
+/* In the Select Record dialog (item-selection.css), wrapped to the field's width, as the dialog is
+   little wider than the field and would cut off a message wider than it */
+.item-selection .value-spinner__feedback {
+    width: auto;
 }
 
 /* The data grid's spinner (ValueSpinnerCell), a variant with no ARIA meaning: as wide as its cell,

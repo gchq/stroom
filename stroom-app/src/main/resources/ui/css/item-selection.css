@@ -20,9 +20,10 @@
    -countLabel (components.css).
 */
 
+/* "of N" level with the number in the field, not centred on the field and any message under it */
 .item-selection {
     display: flex;
-    align-items: center;
+    align-items: baseline;
 }
 
 .item-selection__count {

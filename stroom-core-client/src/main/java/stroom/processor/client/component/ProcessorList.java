@@ -279,7 +279,7 @@ public class ProcessorList extends Component {
                 }
                 return icon;
             }
-        }, "", ColumnSizeConstants.ICON_COL);
+        }, DataGrid.hiddenHeader("Type"), ColumnSizeConstants.ICON_COL);
     }
 
     private void addPipelineColumn() {

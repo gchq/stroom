@@ -19,19 +19,30 @@ package stroom.test;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
 import stroom.importexport.impl.ContentPackImportConfig;
+import stroom.importexport.impl.ImportExportService;
+import stroom.importexport.shared.ImportSettings;
 import stroom.task.api.TaskManager;
+import stroom.test.common.util.test.ContentPackZip;
 import stroom.test.common.util.test.ContentPackZipDownloader;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.yaml.YamlFileUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -49,8 +60,17 @@ import java.nio.file.Path;
  * that is available in content packs.
  * <p>
  * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
+ * <p>
+ * The content packs come from the Content Store, except the visualisations, which come from the
+ * released pack that content-packs.json names (as Stroom's Docker and zip builds get it): the
+ * Content Store's entry is the visualisations repository's main branch, the old pack.
  */
 public final class SetupSampleData {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SetupSampleData.class);
+
+    // The visualisations' pack, by its id in the Content Store and its name in content-packs.json
+    private static final String VISUALISATIONS_PACK = "stroom-visualisations";
 
     @Inject
     private TaskManager taskManager;
@@ -58,6 +78,8 @@ public final class SetupSampleData {
     private CommonTestControl commonTestControl;
     @Inject
     private ContentStoreTestSetup devSetup;
+    @Inject
+    private ImportExportService importExportService;
     @Inject
     private SetupSampleDataProcess setupSampleDataBean;
 
@@ -89,14 +111,31 @@ public final class SetupSampleData {
         // Setup the DB ready to load content and data.
         commonTestControl.setup(null);
 
-        // Pull in content packs from the content store
-        devSetup.installSampleDataPacks();
+        // Pull in content packs from the content store, and the released visualisations
+        devSetup.installSampleDataPacks(Set.of(VISUALISATIONS_PACK));
+        installVisualisations();
 
         // Load the sample data and content from the 'samples' dirs
         setupSampleDataBean.run(true);
 
         // Stop task manager
         taskManager.shutdown();
+    }
+
+    // Imports the visualisations' released pack, as content-packs.json names it (downloaded into the
+    // content pack download directory, unless it is there already), with its assets
+    private void installVisualisations() {
+        final ContentPackZip pack = ReleasedContentPacks.find(
+                Path.of(ReleasedContentPacks.DEFINITION_FILE), VISUALISATIONS_PACK);
+        final Path downloadDir = Path.of(FileUtil.replaceHome(ContentPackZipDownloader.CONTENT_PACK_DOWNLOAD_DIR));
+        try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            Files.createDirectories(downloadDir);
+            final Path zip = ContentPackZipDownloader.downloadContentPackZip(pack, downloadDir, httpClient);
+            LOGGER.info("Importing visualisations {} from {}", pack, zip);
+            importExportService.importConfig(zip, ImportSettings.auto(), new ArrayList<>());
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static void downloadContent(final Path contentPacksDefinition,

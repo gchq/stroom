@@ -231,8 +231,10 @@ General button styles
   box-shadow: var(--button__base-shadow),var(--button__base-inset-shadow);
 }
 
+/* Busy (Button.setLoading): faded, as it can't be pressed until its action has finished */
 .button.button--loading {
   opacity: 0.8;
+  cursor: progress;
 }
 
 .button .button__spinner {
@@ -346,6 +348,13 @@ Contained buttons
   background-color: var(--button--contained-green__background-color--hover);
 }
 
+/* With the keyboard focus, a green border and ring, as a secondary button's are its own colour */
+.button--contained-green:focus {
+  border-color: var(--focus-border--green);
+  outline: 0;
+  box-shadow: var(--focus-shadow--green);
+}
+
 .button--contained.button--disabled {
   box-shadow: none;
   color: var(--button--contained__color--disabled);
@@ -386,6 +395,15 @@ styles: only that content shows, as the button's own text
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Pressed (held with the mouse, or with Space): a dark layer over the button's colour, under its
+   text (the content is drawn over the ripple's container), so pressing is a step darker than
+   hovering in the light theme, and back towards the normal colour in the dark, where hovering
+   lightens. Its white text only gains contrast. Not while it can't be pressed */
+.button:active:not(.button--disabled):not(.button--loading) > .button__ripple-container {
+  background-color: rgba(0, 0, 0, .12);
+  border-radius: inherit;
 }
 
 .button__ripple {
@@ -497,13 +515,19 @@ styles: only that content shows, as the button's own text
   --button--contained__background-color: #3a3e47; /*var(--grey-800); /* material grey 800 */
   --button--contained__background-color--hover: #434751; /*var(--grey-700); /* material grey 700 *//*var(--grey-900); /* material grey 900 */
 
+  /* In the dark theme hover lightens, as it does the neutral buttons: each colour is the darker of
+     its light theme pair, and its hover the lighter, which is the lightest with 4.5:1 for the white
+     text (blue-700 4.6:1, green-800 5.1:1; green-700 is only 4.1:1) */
   --button--contained-primary__color: var(--white);
-  --button--contained-primary__background-color: var(--blue-700); /* material blue 700 */
-  --button--contained-primary__background-color--hover: var(--blue-800); /* material blue 800 */
+  --button--contained-primary__background-color: var(--blue-800); /* material blue 800 */
+  --button--contained-primary__background-color--hover: var(--blue-700); /* material blue 700 */
 
   --button--contained-secondary__color: var(--white);
   --button--contained-secondary__background-color: var(--pink-800); /* material pink 800  */
   --button--contained-secondary__background-color--hover: var(--pink-700); /* material pink 700  */
+
+  --button--contained-green__background-color: var(--green-900); /* material green 900 */
+  --button--contained-green__background-color--hover: var(--green-800); /* material green 800 */
 
   --button--contained__color--disabled: rgba(var(--white-rgb), 0.26);
   --button--contained__background-color--disabled: rgba(var(--white-rgb), 0.12);

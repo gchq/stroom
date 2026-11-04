@@ -2,6 +2,7 @@
 <!-- A Solr index's fields, with New, Edit, Remove and a pager, above its schema's synchronisation state -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <g:FlowPanel styleName="dock-container-vertical">
@@ -14,11 +15,11 @@
                 <dg:DataGrid ui:field="dataGrid" tableName="Solr Index Fields"/>
             </dg:PagerPanel>
         </g:SimplePanel>
-        <g:ScrollPanel styleName="dock-min">
+        <layout:ScrollPane fitContent="true" addStyleNames="dock-min" role="region" ariaLabel="Synchronisation state">
             <g:HTMLPanel styleName="solr-index-field-list__sync-state">
                 <div ui:field="lastSynchronised"><b>Last synchronised:</b> <span ui:field="lastSynchronisedTime"/></div>
                 <div ui:field="messages"/>
             </g:HTMLPanel>
-        </g:ScrollPanel>
+        </layout:ScrollPane>
     </g:FlowPanel>
 </ui:UiBinder>

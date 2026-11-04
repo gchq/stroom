@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:layout="urn:import:stroom.widget.layout.client"
              xmlns:e="urn:import:stroom.editor.client.ace"
              xmlns:tx="urn:import:stroom.widget.text.client">
     <!--
@@ -10,9 +11,10 @@
     <g:FlowPanel styleName="code-editor max dock-container-horizontal">
         <g:FlowPanel ui:field="content" styleName="code-editor__text dock-max">
             <e:AceEditorPane ui:field="editor" styleName="code-editor__ace"/>
-            <g:ScrollPanel ui:field="errorPanel" styleName="code-editor__load-error-container max" visible="false">
+            <layout:ScrollPane ui:field="errorPanel" addStyleNames="code-editor__load-error-container max" visible="false"
+                               role="region" ariaLabel="Load error">
                 <tx:Html ui:field="errorText" styleName="code-editor__load-error"/>
-            </g:ScrollPanel>
+            </layout:ScrollPane>
         </g:FlowPanel>
         <e:OverviewBar ui:field="rightBar" styleName="code-editor__overview dock-min"/>
     </g:FlowPanel>

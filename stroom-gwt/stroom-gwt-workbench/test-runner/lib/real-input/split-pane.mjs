@@ -115,20 +115,22 @@ function expectContrast(measured, theme) {
 
 export const CHECKS = {
   // A mouse press gives the splitter the focus as the pointer's, not the keyboard's: it shows the
-  // dragged handle while held, not the keyboard focus colour, before and after (once a regression:
+  // dragged line while held, not the keyboard focus colour, before and after (once a regression:
   // focusing it from script made the press show as keyboard focus)
   'widgets-layout-splitpanecontent--regular-table-and-editor': async (page) => {
     const splitter = page.locator(SPLITTER).first();
     const box = await splitter.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
+    // The line fades to its dragged colour (split-pane.css's transition)
+    await page.waitForTimeout(700);
     const held = await splitter.evaluate((element) => ({
       focused: element === document.activeElement,
       focusVisible: element.matches(':focus-visible'),
-      colour: getComputedStyle(element, '::after').backgroundColor,
+      colour: getComputedStyle(element, '::before').backgroundColor,
       highlight: (() => {
         const probe = document.createElement('div');
-        probe.style.backgroundColor = 'var(--splitter__handle-color--active)';
+        probe.style.backgroundColor = 'var(--splitter__line-color--active)';
         document.body.append(probe);
         const colour = getComputedStyle(probe).backgroundColor;
         probe.remove();
@@ -138,7 +140,7 @@ export const CHECKS = {
     await page.mouse.up();
     assert.ok(held.focused, 'a press gives the splitter the focus');
     assert.ok(!held.focusVisible, 'a press doesn\'t show as keyboard focus');
-    assert.equal(held.colour, held.highlight, 'the held splitter shows the dragged handle colour');
+    assert.equal(held.colour, held.highlight, 'the held splitter shows the dragged line colour');
     assert.ok(!(await splitter.evaluate((element) => element.matches(':focus-visible'))),
       'after the press it still doesn\'t show as keyboard focus');
   },

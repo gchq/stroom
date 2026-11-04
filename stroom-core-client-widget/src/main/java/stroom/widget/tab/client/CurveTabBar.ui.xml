@@ -1,11 +1,15 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <!--
-  The document tabs' bar (tab-bar.css): its tab list, named for what it holds, which the tabs go in.
-  The bar adds its overflow selector after it when made, hidden until some tabs don't fit (an
-  element root like this one can't declare a widget; see AbstractTabBar).
+  The document tabs' bar (tab-bar.css): its tab list, named for what it holds, which the tabs go in,
+  and, hidden, where screen readers are told that the selected tab is loading and has loaded, and
+  what a loading tab is described by (outside the tabs, whose text is their name). The
+  bar adds its overflow selector after them when made, hidden until some tabs don't fit (an element
+  root like this one can't declare a widget; see AbstractTabBar).
 -->
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder">
     <div class="tab-bar tab-bar--curved">
         <div ui:field="tabList" class="tab-bar__tabs" role="tablist" aria-label="Open documents"></div>
+        <div ui:field="loadStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+        <span ui:field="loadDescription" class="sr-only" aria-hidden="true">Loading</span>
     </div>
 </ui:UiBinder>

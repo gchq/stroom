@@ -62,10 +62,10 @@
     align-items: center;
 }
 
-/* The Main Menu button's toolbar, with room after it for its focus ring, which the explorer would
-   otherwise cut off */
+/* The Main Menu button's toolbar, 6px from the explorer's edge as it was (the toolbar's padding
+   holds its focus ring) */
 .explorer__title-bar > .explorer__menu {
-    margin: 0 6px 0 0;
+    margin: 0 2px 0 0;
 }
 
 .explorer__logo {
@@ -89,8 +89,10 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    margin: 0.25rem;
-    margin-top: 0;
+    /* Its toolbar's padding (4px, for its buttons' focus rings) is the room the row's own margin
+       was at the sides and below; above, it is drawn up over the gap under the filter, so the
+       buttons stay where they were */
+    margin: -4px 0 0;
 }
 
 /* The busy spinner shows, without fading in, once loading has taken 250ms, so quick loads don't

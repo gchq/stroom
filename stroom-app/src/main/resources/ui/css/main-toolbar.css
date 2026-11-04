@@ -26,8 +26,9 @@
     top: 0;
     right: 0;
     z-index: 1;
-    height: 33px;
-    padding: 0 4px 0 0;
+    height: 32px;
+    /* 6px to its last button, with the toolbar's 4px of padding */
+    padding: 0 2px 0 0;
     box-sizing: border-box;
     display: flex;
     gap: 0;

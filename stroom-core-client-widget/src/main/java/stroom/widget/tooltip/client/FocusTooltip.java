@@ -18,20 +18,23 @@ package stroom.widget.tooltip.client;
 
 /// Shows an icon button's name beside it when it has the keyboard focus, as browsers only show a
 /// `title` tooltip on mouse hover. Without it, a keyboard user moving along a toolbar of icons
-/// sees no names (WCAG 2.4.7 and 1.4.13).
+/// sees no names (WCAG 2.4.7 and 1.4.13). It shows a picker's problem the same way, where the
+/// problem is the picker's tooltip (`DropDownBox.setProblemInTooltip`).
 ///
 /// One tooltip serves the whole page. It is shown when an icon button (`.toolbar-button`, or a
-/// floating action button's face) gets focus from the keyboard (`:focus-visible`), with the
-/// button's `title` (else its `aria-label`), unless the last input was a pointer, and hidden when
-/// the focus leaves, on Escape, when the page scrolls or is resized, and on a mouse press. Mouse
-/// users keep the browser's own `title` tooltip. The tooltip is for sight only (`aria-hidden`):
-/// screen readers already hear the name.
+/// floating action button's face) or a picker with a problem in its tooltip gets focus from the
+/// keyboard (`:focus-visible`), with its `title` (else its `aria-label`), unless the last input
+/// was a pointer, and hidden when the focus leaves, on Escape, when the page scrolls or is resized,
+/// and on a mouse press. Mouse users keep the browser's own `title` tooltip. The tooltip is for
+/// sight only (`aria-hidden`): screen readers already hear the name (and a picker's problem, which
+/// describes it).
 ///
 /// Its listeners are on the document for the life of the page, installed once by the button
-/// classes ([#install()]), and refer to no widget, so there is nothing to release.
+/// classes and pickers ([#install()]), and refer to no widget, so there is nothing to release.
 public final class FocusTooltip {
 
-    private static final String BUTTON_SELECTOR = ".toolbar-button, .fab-button > .fab-button__face";
+    private static final String BUTTON_SELECTOR = ".toolbar-button, .fab-button > .fab-button__face, "
+            + ".drop-down--problem-tooltip[aria-invalid=\"true\"]";
 
     private static boolean installed;
 

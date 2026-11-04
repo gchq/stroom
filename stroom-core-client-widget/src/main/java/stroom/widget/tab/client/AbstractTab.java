@@ -23,6 +23,8 @@ import stroom.widget.task.client.TaskMonitorFactory;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 
+import java.util.function.Consumer;
+
 /// A tab of a tab bar, a component with a template whose root is the tab (`role="tab"`).
 public abstract class AbstractTab extends Composite implements TaskMonitorFactory {
 
@@ -42,6 +44,17 @@ public abstract class AbstractTab extends Composite implements TaskMonitorFactor
 
     protected Element getCloseElement() {
         return null;
+    }
+
+    /// @return Whether the tab shows that what it holds is loading; never, unless it has a spinner.
+    public boolean isBusy() {
+        return false;
+    }
+
+    /// @param onBusyChange Told when the tab starts or stops showing that what it holds is loading
+    ///                     (true when it starts), e.g. for its bar to tell screen readers; or null.
+    public void setOnBusyChange(final Consumer<Boolean> onBusyChange) {
+        // A tab with no spinner never shows it
     }
 
     @Override

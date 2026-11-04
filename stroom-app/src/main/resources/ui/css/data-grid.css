@@ -39,7 +39,7 @@
    Modifiers of the grid, none with an ARIA attribute: --virtual (only the rows in view are drawn),
    --contain (a long page in natural mode), --selectable (it has a selection model), --no-header,
    --empty (no rows, with a message to show), --dragging, --resizing, --scroll-timeline (the thumbs
-   follow scroll-driven animations).
+   follow scroll-driven animations), --h-gutter and --v-gutter (room left for a track that shows).
 
    What the grid works out as it lays itself out is set as custom properties on the part they
    place, not as inline styles: --data-grid__head-height, --data-grid__content-height,
@@ -435,6 +435,17 @@
 /* Nothing to scroll */
 .data-grid__track.data-grid__track--hidden {
     display: none;
+}
+
+/* Room for a track that shows (OverlayScrollbars), the track's width, so nothing is left under it
+   once scrolled to the end: under the rows for the horizontal track, and at the end of each row's
+   last cell for the vertical one (the cell's, so columns that fill the grid still fit it) */
+.data-grid--h-gutter > .data-grid__scroller {
+    padding-bottom: 12px;
+}
+
+.data-grid--v-gutter > .data-grid__scroller > .data-grid__content > .data-grid__body > .data-grid__row > .data-grid__cell:last-child {
+    padding-right: 12px;
 }
 
 .data-grid__thumb {

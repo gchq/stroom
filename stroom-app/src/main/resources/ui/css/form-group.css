@@ -37,11 +37,13 @@
     margin-top: 0.3em;
 }
 
-/* The group's validation message, under its control. It keeps no space for itself while empty. */
+/* The group's validation message, under its control. It keeps no space for itself while empty. Its
+   margin clears the control's focus ring (a 4px box-shadow, --focus-shadow), which would otherwise
+   draw over the top of the message. */
 .form-group__feedback {
     display: block;
     width: 100%;
-    margin-top: 0;
+    margin-top: .25rem;
     font-size: 80%;
     color: var(--feedback);
 }
@@ -50,7 +52,6 @@
    form doesn't move as messages come and go (the sign-in pages and the name dialog): the message's
    own line, or an empty one of the same height while there is none */
 .form-group--reserve-feedback > .form-group__feedback {
-    margin-top: .25rem;
     min-height: 16px;
 }
 

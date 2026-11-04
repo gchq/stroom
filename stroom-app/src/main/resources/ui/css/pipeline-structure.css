@@ -16,25 +16,10 @@
 
 /* A pipeline's Structure tab (PipelineStructure). */
 
-/* The Inherit From label */
-.pipeline-structure__label {
-    margin: 0 10px 0 15px;
-    vertical-align: top;
-    white-space: nowrap;
-}
-
-/* The bar above the elements: their buttons, then Inherit From and View Source */
+/* The bar above the elements, under Inherit From: their buttons, then View Source */
 .pipeline-structure__bar {
     display: flex;
     flex-direction: row;
-}
-
-.pipeline-structure__bar-right {
-    padding: 0 4px;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    flex-grow: 1;
 }
 
 .pipeline-structure__bar div {

@@ -134,7 +134,7 @@ public class DependencyList extends Component {
         dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getFrom()))
                         .build(),
-                "<br/>",
+                DataGrid.hiddenHeader("From Icon"),
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
@@ -157,13 +157,13 @@ public class DependencyList extends Component {
                 COL_WIDTH_NAME);
 
         // From (action menu))
-        addActionButtonColumn(Dependency::getFrom, "", 40);
+        addActionButtonColumn(Dependency::getFrom, "From Actions", 40);
 
         // To (Icon)
         dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getTo()))
                         .build(),
-                "<br/>",
+                DataGrid.hiddenHeader("To Icon"),
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
@@ -185,7 +185,7 @@ public class DependencyList extends Component {
                 COL_WIDTH_NAME);
 
         // To (action menu)
-        addActionButtonColumn(Dependency::getTo, "", 40);
+        addActionButtonColumn(Dependency::getTo, "To Actions", 40);
 
         // Status
         dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
@@ -205,7 +205,7 @@ public class DependencyList extends Component {
                 docRefSelector,
                 () -> actionCell
         ).build();
-        dataGrid.addColumn(actionColumn, name, width);
+        dataGrid.addColumn(actionColumn, DataGrid.hiddenHeader(name), width);
     }
 
     // Shown as Stroom's other menus are, so that it is named and takes the focus

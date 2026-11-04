@@ -28,6 +28,8 @@
     --focus-shadow--invalid: 0 0 0 4px rgba(var(--invalid-rgb), .3);
     --focus-border--secondary: var(--pink-300);
     --focus-shadow--secondary: 0 0 0 4px rgba(240, 98, 146, .3); /* pink-300 */
+    --focus-border--green: var(--green-300);
+    --focus-shadow--green: 0 0 0 4px rgba(129, 199, 132, .3); /* green-300 */
 
     /* Main body text colour in the app */
     --text-color: #dce4e5;
@@ -178,7 +180,9 @@
     --scrollbar-thumb__border-color: transparent;
     --scrollbar-thumb__background-color: #5c5c5c;
     --scrollbar-thumb__background-color--hover: #8d8d8d;
-    --scrollbar-thumb__background-color--active: #979797;
+    /* Pressed or dragged, a thumb (and a splitter's line) is in the focus colour, to stand out from
+       hovered */
+    --scrollbar-thumb__background-color--active: var(--focus-border);
 
 
     /**
@@ -201,9 +205,9 @@
        enough to sit with the borders reaches 3:1, so a splitter is found by its cursor and its
        keyboard focus, which is at least 3:1 against the panes beside it (WCAG 1.4.11) */
     --splitter__line-color: var(--border-color);
-    /* A thin splitter's handle, shown on hover, and while dragged */
-    --splitter__handle-color: var(--grey-600);
-    --splitter__handle-color--active: var(--grey-400);
+    /* A splitter's line, hovered, and pressed or dragged: a scrollbar thumb's colours */
+    --splitter__line-color--hover: var(--scrollbar-thumb__background-color--hover);
+    --splitter__line-color--active: var(--scrollbar-thumb__background-color--active);
     --splitter__focus-color: var(--blue-300);
 
     /* Main curve tabs */

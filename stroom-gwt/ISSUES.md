@@ -84,6 +84,21 @@ presenter.
 
 ## Wrong values and failures
 
+### Signing in failed with "A widget that has an existing parent widget may not be added to the detach list"
+
+**Fixed** (4 November 2026; reported by another developer, who saw it straight after clicking to
+sign in, in a build with assertions on). A task that starts before sign-in has finished (e.g.
+"Fetching permissions…") shows the host page's loading message: `AppPageController.onTaskStart`
+calls `AppPage.showWorking`, which made the message (`#loading`) a widget with `RootPanel.get`,
+then its text (`#loadingText`, inside it in `app.html`) another. GWT refuses a root panel inside
+another, with an `AssertionError` where assertions are on (Super Dev Mode, draft compiles), wrapped
+in an `UmbrellaException`. `AppPage` (its loading message and its text, and `#logo`) and
+`AbstractSignInPageController.hideLoading` now change the host page's elements as elements
+(`Document.getElementById`), skipping any the page hasn't got. The workbench compiles without
+assertions, so a story couldn't see the error; `App/Main/AppPage` `HostPageLoading` instead checks
+the elements aren't made widgets (an attached widget's element has GWT's `__listener`), and that the
+message is shown with its text, hidden, and the logo hidden. It failed before the fix.
+
 ### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
 
 **Confirmed** (by the classpath, and a unit test that tried). The app runs SolrJ 9.10.1, which is
@@ -466,6 +481,12 @@ run of 22 October 2026 (1,538 stories).
   wave 10): in a run of 37 stories with 24 workers the Fields tab had lost its focus ring (161
   pixels differed); it matched its baseline when its six stories were run again alone. A guess:
   under load the focus moves before the screenshot is taken.
+* `App/Visualisations/Force3D` `ViewKeys` (flaky; found 4 November 2026, in a full run): its first
+  attempt failed a camera check (3.0 where under 0.5 was expected), then it passed on retry. A 3D
+  force layout is animated, so a guess is that it hadn't settled. Nothing in that run touched it.
+* `App/Visualisations/Tree` `Keyboard` screenshot (found 4 November 2026): its tooltip was a few
+  pixels from its baseline in two full runs (about 600 pixels differed) and matched when its group
+  was run again alone; nothing in those runs touched the visualisation.
 * Screenshots that differ from run to run, whatever changed (found 24 October 2026, comparing two
   diffs against one baseline): the force layout visualisations (`App/Visualisations/Force`,
   `Force2d`, `Force3d`; 39 to 70 of them, by different amounts each time, as their layouts are
@@ -1509,11 +1530,15 @@ and Escape stops), now turned on (see Keyboard trap in the code editor).
 reached and edited from the keyboard (`Widgets/Query/ExpressionBuilder` `Keyboard*`). Tables are
 `treegrid`s of rows, column headers and cells. Checked again (data_grid2, 23 October 2026): a grid
 with no name of its own is named by its table name, the number inputs in cells are named by their
-column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px. Left:
-a grid's first (icon) column has a `columnheader` with no name (`GridHtml.header` draws an empty
-header as it is; seen in `App/Query/QueryResultsTable`). A fix, item 5 of the
-[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW): an icon column's
-header is named after what its icons show (e.g. "Info", "Actions"), visually hidden.
+column's heading (`ValueSpinnerCell`), and the quick filter's buttons, help included, are 24px.
+**Fixed** (3 November 2026), the column headers with no name (item 5 of the
+[data grid completion design](https://claude.ai/artifact/JhmrPgGYipwy3ihPPQFPgW)): 85 in 45 grids, a
+grid's icon, tick box, expander and action columns. A header that shows no text is named by visually
+hidden text: by its column's kind (`ColumnNames`: "Select", "Expand", "Info", "Actions", or an
+`ActionCell`'s own name such as "Clear and rebuild cache"), or as its screen gives it
+(`DataGrid.hiddenHeader`: "Type", "Status", "Help", "Severity", "Highlight", "From Icon" and the
+like). The workbench runner checks axe's `empty-table-header` rule as well as the WCAG ones, so a new
+unnamed header fails its story.
 
 ### Menu buttons don't say they open a menu
 
@@ -1524,7 +1549,8 @@ with a button marked by `ToolbarButton.setOpensMenu`, `MenuOpener.mark` or, in a
 
 ### Controls with no accessible name
 
-**Fixed**: all those listed here (see Fixed). Left: a grid's first (icon) column has an empty header.
+**Fixed**: all those listed here (see Fixed), and a grid's icon columns' empty headers (see Expression
+terms and tables).
 
 
 ### Missing roles and states
@@ -1649,22 +1675,89 @@ says the same of the data grid, the date and time boxes, the overlays and the co
 
 ### Tab bars: link tabs too small and unnamed, document tab names cut, loading not announced
 
-**Open** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs):
-left from the tab bars' retrofit (`AbstractTabBar`, shared by both bars):
+**Fixed** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs;
+the first point fixed 3 November 2026, the rest 4 November 2026): left from the tab bars' retrofit (`AbstractTabBar`,
+shared by both bars):
 
-* A link tab is about 16px tall (its label's text: `tab-bar.css` `.tab-bar--link`, sized by the
-  invisible `tab-bar__strut`), under WCAG 2.5.8's 24px. It passes axe only where nothing is close
-  enough beside it (the Data Retention one that didn't was fixed by 1px more room below its bar,
+* **Fixed** (3 November 2026; "Toolbar buttons' and tabs' focus rings are cut off"): a link tab
+  is 24px high, a 24px target (WCAG 2.5.8). It was about 16px tall (its label's text:
+  `tab-bar.css` `.tab-bar--link`, sized by the invisible `tab-bar__strut`), under 24px, and passed
+  axe only where nothing was close enough beside it (the Data Retention one that didn't was fixed by
+  1px more room below its bar,
   A11Y.md batch 5).
-* A link tab bar's `tablist` has no name (`LinkTabBar.ui.xml:10`), where the document tabs' is
-  "Open documents" (`CurveTabBar.ui.xml:9`); `AbstractTabBar.setAccessibleName` (line 683) is there,
-  but nothing calls it.
-* A document tab's name is cut at 50 characters with "..." (`CurveTab.MAX_TEXT_LENGTH`, lines 41
-  and 86); the whole name is its tooltip, but a screen reader hears the shortened one.
-* A tab panel holding nothing focusable isn't a tab stop (`AbstractTabBar.setTabPanel` gives it
-  only its role).
-* A document tab's loading isn't announced: its spinner is a `SmallBusySpinner` (`CurveTab.java:50`),
-  which says nothing (see "The small busy spinner says nothing").
+* **Fixed** (4 November 2026, the user's naming): a link tab bar's `tablist` had no name, where
+  the document tabs' is "Open documents". Each is now "<what it shows> views", to tell it from the
+  other tab lists on the screen: a document editor's from its document type ("Pipeline views",
+  `TabbedController.read`), and the others in their templates ("Data Retention views", "Pane views"
+  for a dashboard pane, "Settings views" for a pane's settings and Ask Stroom AI's, "Column filter
+  views", "Query result views", "Preferences views", "Data views").
+* **Fixed** (4 November 2026): a document tab's name was cut at 50 characters with "..." in its
+  text, so a screen reader heard the shortened one. It is cut where it is drawn instead (`tab-bar.css`,
+  an ellipsis at 42ch, about the same place), so its name is all of it (`CurveTabBar` `LongName`).
+* **Fixed** (4 November 2026): a tab panel holding nothing focusable wasn't a tab stop, so Tab from
+  the tab list passed over the selected tab's content. It is one while it holds no tab stop of its
+  own, as the ARIA tabs pattern asks, checked whenever what it holds changes (`TabPanelTabStop`, a
+  `MutationObserver`), with an inset focus ring (`tab-bar__panel`; `LinkTabPanel` `Basic`).
+* **Fixed** (4 November 2026, the user's decisions): a document tab's loading wasn't announced, as
+  its spinner, a `SmallBusySpinner`, says nothing (see "The small busy spinner says nothing"). Now
+  only the selected tab's loading is announced, the one the user is waiting on, and only once it has
+  gone on for a second, so quick loads and tabs loading out of sight say nothing: "Loading <name>",
+  then "<name> loaded" when it is (only if its loading was said), in a polite status region in the
+  bar (`CurveTabBar.ui.xml`; `TabLoadAnnouncements` decides, `AbstractTabBar` runs the delay). While
+  it loads, a tab's description is "Loading" (heard after its name; one hidden element in the bar,
+  outside the tabs, as a tab's text is its name and is read by code too), and while the selected one
+  loads its panel is `aria-busy` (`CurveTabBar` `Loading`).
+
+### Document tabs don't shrink to fit
+
+**Fixed** (4 November 2026, the user's design). Raised 4 November 2026: the document tabs kept their
+natural width (a long name up to about 50 characters, 42ch), so a few long names filled the bar and
+the rest overflowed into the » selector, where most apps' tabs shrink first.
+
+Now, when they don't all fit, their labels are cut, the widest first, down to the next widest, then
+all alike, as a browser's tabs shrink (a 400px name shrinks to a 200px one's width, then both
+shrink together; the selected tab too), but no narrower than about 10 characters (`10ch`, so it
+follows the text's size; a shorter name is never cut). Past that the tabs that still don't fit
+overflow into the selector, as before. The bar works out the cap (`TabLabelCap`, from the labels'
+text widths, less each tab's icon, close cross and padding and the gaps) and sets it as
+`--tab-bar__label-cap` (`CurveTabBar.fitTabs`, called by `AbstractTabBar.onResize` before it
+picks the tabs shown); the stylesheet clamps it (`tab-bar.css`). Link tabs, short fixed names, keep
+their width. The bar is also laid out again once the page's fonts have loaded, as the tabs' widths
+change then though the bar's size doesn't (the `Overflow` story's keyboard check failed without it,
+the bar having been laid out with the fallback font; done for every tab bar, `AbstractTabBar.onLoad`).
+(`CurveTabBar` `ShrinkToFit`, `ShrinkThenOverflow`.)
+
+The » selector now looks like a tab (the user's design, 4 November 2026): a document tab's shape,
+height, background and hover, with no border of its own, and a tab's focus ring (a line on its edge
+and a band outside it, where it had an inset ring); the number of tabs hidden is on the arrows'
+line, in the tab's text size, where it sat below it in a smaller one (`tab-selector.css`).
+
+### A document tab dragged to a new place no longer shows its loading
+
+**Fixed** (4 November 2026). Found the same day reading the code for the loading announcements:
+dragging a document tab to reorder it (`DraggableTabBar` → `AbstractTabBar.moveTab`) removed its
+widget and made a new one (`createTab`), but a document's requests report to the tab widget it was
+opened with (`ContentTabPaneController.TabTaskMonitorFactory` keeps it). So after a move, the tab's
+spinner never showed, and its loading was never described or announced. Now a move puts the same
+tab in its new place, keeping its spinner, description and id (which names the panel). `CurveTabBar`
+`Loading` moves the loading tab (Move to Start) and checks it still says "Loading" with its spinner
+showing; it failed before the fix.
+
+### A link tab bar's overflow selector is drawn outside its bar
+
+**Fixed** (4 November 2026). Found the same day while restyling the selector (already in the
+baseline): in `LinkTabPanel` `Overflow` (a 320px box), the tabs shown ran to about 362px and the »
+selector was placed at 364px, past the bar's 338px. The room was right (the tab list's 305px); the
+walk that picks the tabs shown (`AbstractTabBar.getDisplayableTabs`) was wrong. It counted each
+tab and the gap between tabs, but not the "|" separators between link tabs (15px each), so six
+43px tabs and the selector (285px by its count) took 333px and more. Nor did it count the room
+before the selector: the last tab's gap, the selector's 2px offset and a link selector's 4px margin
+(a document bar's selector could hang 8px past the bar). Link tabs were 8px narrower before the
+3 November change, so it showed less. The walk now counts a separator between tabs (measured on one
+made for the purpose) and the selector's whole room. `LinkTabPanel` `Overflow` checks the last tab
+shown and the selector end in the bar, and `CurveTabBar` `OverflowAlgorithm` that the selector
+isn't drawn past the bar (its other cases are in a 260px bar, from 250px, to keep their results);
+both failed before the fix.
 
 ### The small busy spinner says nothing
 
@@ -1674,6 +1767,12 @@ left from the tab bars' retrofit (`AbstractTabBar`, shared by both bars):
 "Loading...") has no role and no status text, so a document tab's, the explorer's and Ask Stroom
 AI's loading aren't announced. Also left there: `.sr-only`, a general utility, lives in
 `spinner.css`.
+
+**Fixed for document tabs** (4 November 2026; "Tab bars: link tabs too small…"): the spinner tells
+its owner when it starts and stops (`SmallBusySpinner.setOnBusyChange`), and a document tab's bar
+announces its selected tab's loading. Still open: the explorer's, and Ask Stroom AI's, which is
+waiting on changes to the AI window from another branch (its answers aren't announced either: it
+has no live region).
 
 ### The pager's page boxes are unnamed and reached only by the mouse
 
@@ -1716,7 +1815,9 @@ density are (`ThemeCssUtil.getCurrentPreferenceClasses`), and wider buttons when
 ### Text size and high contrast (#3695)
 
 **Deferred** (30 October 2026, moved from A11Y.md § Batch 5): two parts of GitHub #3695, tracked
-apart since 23 October 2026.
+apart since 23 October 2026. The issue's other items (from a 2023 comment: stepping, menus, the
+dashboard's scroll bar, the term editor's drop-down and more) are listed one by one in A11Y.md
+§ Batch 5, "#3695 item by item" (4 November 2026).
 
 * **Large text: fonts don't scale.** Waits for the whole-app text size pass, with the user's text
   size preference (text size and spacing, e.g. the stepping bar's fixed-size chevrons; and the
@@ -1734,6 +1835,167 @@ rows a custom text and background colour (`CustomRowStyleEditor`), and nothing w
 don't meet WCAG's contrast ratio. The baseline entry that showed it was the story's own fault (a
 background with no text colour) and is fixed; a warning in the custom style dialog isn't done.
 
+### A field's focus ring and its validation message
+
+**Fixed in part** (2 November 2026). A focused field's ring is a 4px `box-shadow`
+(`--focus-shadow`, `--focus-shadow--invalid`), which takes no space, so it drew over the top of the
+form group's message (`form-group__feedback`, `margin-top: 0`). That message, and a spinner's own
+(`value-spinner__feedback`), now have `margin-top: .25rem`. A group with a message is taller than
+one without (by the message's line); only `form-group--reserve-feedback` groups keep the same
+spacing, and that stays as it is.
+
+**Fixed** (2 November 2026) for a picker outside a form group, seen on the pipeline's Inherit From
+(its message shown in the browser as `DropDownBox.showProblem` shows it): its own message
+(`drop-down__feedback`) had `margin-top: 0.2rem`, a little less than the ring, and is now `.25rem`;
+an invalid picker's ring was blue and is now red, as an invalid text field's is. Inherit From itself
+was in the bar of element buttons, where the message made the bar taller (31px to 48px) and moved
+the centred label and buttons down 8.5px, and the pane (`split-pane__pane`, `overflow: hidden`) cut
+off the top of its ring. It is now a form group above that bar (`PipelineStructure.ui.xml`), so its
+message is the group's; `PipelineEditor` `InheritFromNotFound` shows it, with the keyboard focus.
+
+**Checked** (2 November 2026): the other pickers and spinners that show their own message outside a
+form group. Ask Stroom AI's model picker (`AskStroomAi.ui.xml`) is fine: its ring clears its message.
+The floor map's image pickers (`FloorMapLayerStyle.ui.xml`, `FloorMapObjectEdit.ui.xml`) and the
+dashboard list input's (`ListInput.ui.xml`) never show one (their controllers don't report a
+problem). Find in Content's pattern uses the form group's message class, so the fix above covers it.
+
+**Fixed** (2 November 2026, the user's design): the expression term's document and user pickers
+(`TermEditor.ui.xml`, in a row of the tree). The message went beside the picker in the row, where the
+tree cut it off, and the keyboard focus drew the blue focus border inside the red ring. The row has
+no room for a line, so a picker can now show its problem as its tooltip
+(`DropDownBox.setProblemInTooltip`, `problemInTooltip="true"`): the red border, a red focus border
+with the keyboard focus (`term-editor.css`), the message as its `title` and its description for
+screen readers. `FocusTooltip` shows it with the keyboard focus too, and now wraps long text (it cut
+it off with an ellipsis). `ExpressionBuilder` `DocumentNotFound` shows it.
+
+**Fixed** (2 November 2026): the Select Record dialog's item number (`ItemSelection.ui.xml`). A
+spinner's message is as wide as its text up to 20rem (`value-spinner.css`), and the dialog is little
+wider than the field, so it cut off the message ("…a whole number from 1 to"). In this dialog the
+message now wraps to the field's width, and "of N" is level with the number rather than centred on
+the field and the message (`item-selection.css`). A spinner elsewhere in a narrow space would need
+the same; making every spinner's message fit the space around it would need container queries.
+
+### Text buttons' colours in their states
+
+**Fixed** (2 November 2026): a green button (`button--contained-green`, e.g. a dialog's Accept and
+New) had the blue focus border and ring, as it had no focus rule of its own. It now has a green one
+(`--focus-border--green`, `--focus-shadow--green`: green-900 in the light theme, green-300 in the
+dark, as a secondary button's are pink-800 and pink-300). `Widgets/Buttons/ButtonStates` shows each
+colour enabled, disabled and loading, and hovered, pressed and with the keyboard focus (the real
+input checks in `test-runner/lib/real-input/buttons.mjs`), for the screenshot comparison.
+
+**Fixed** (2 November 2026, found by that sheet): a loading button (`Button.setLoading`,
+`button--loading`) was faded (`opacity: 0.8`), as a disabled one is, but could still be pressed, so
+its action could run again (e.g. Git Push, Test Connection, Send Test Email; only Sign In disabled
+itself too). The fade took its white text below 4.5:1 (primary and green in both themes, secondary
+in the light). A loading button now can't be pressed (a click, Enter or Space runs nothing, and a
+press shows no ripple), is `aria-disabled` as well as `aria-busy`, keeps the focus, and shows the
+progress cursor; being inactive, its faded text is exempt from the contrast rule. `Button`
+`Loading` shows it.
+
+**Fixed** (2 November 2026, the user's decision): in the dark theme hovering darkened the primary
+and green buttons but lightened the secondary and the neutral ones. The dark theme now has each
+colour's pair the other way round (blue-800 to blue-700, green-900 to green-800), so hover lightens
+every button there, as it darkens every button in the light theme; both colours of each pair keep
+4.5:1 for the white text (green-700, at 4.1:1, can't be used).
+
+**Fixed** (2 November 2026, the user's decision): pressed looked the same as hovered, the only press
+feedback being the ripple (`button--down` only took away a faint top highlight). A pressed button
+(`:active`, the mouse or a held Space) now has a 12% black layer over its colour, under its text
+(on the ripple's container), so it is a step darker than hovered in the light theme, and back
+towards its normal colour in the dark; its white text only gains contrast. The colours had no
+further shade to use (green-900 is the darkest green; blue-700 and green-800 the lightest with
+4.5:1). `ButtonStates` `PressedX` show it.
+
+**Kept** (2 November 2026): a loading button's fade (now that it can't be pressed) is lighter in the
+light theme and darker in the dark, as it shows the page through.
+
+### Toolbar buttons' and tabs' focus rings are cut off
+
+**Fixed** (3 November 2026, for toolbars, link tabs and document tabs, below). Found 2 November
+2026, measured: a toolbar has a 2px margin (`toolbar.css`) but a
+toolbar button's focus band reaches 4px, and a link tab's ring reaches 5px above and below it and
+8px either side (`tab-bar.css`, a line outside the tab and a 4px band) in an 18px bar, so where
+something around them hides its overflow the ring is cut. A scan of the first story of each App/
+and Screens/ component (157 stories) found 870 of 1,498 visible toolbar buttons cut, almost all by
+2px at the top (`tab-layout__content` 471, `split-pane__pane` 148, `overflow-hidden` panels), and
+13 of 345 link tabs (e.g. the data viewer's, by `data-viewer__tab-bar-outer`).
+
+**Fixed for toolbars** (2 November 2026, the user's decision): a toolbar now has 4px of padding in
+place of its 2px margin (`toolbar.css`), so it holds its buttons' rings and nothing around it can
+cut them (the same scan: 1 of 1,496 cut, a button scrolled half out of view). A toolbar over or in
+a field, or in line with text, has none, as the field or text holds it (`toolbar--control`,
+`quick-filter__toolbar`, `password-box__toolbar`, `ai-message__toolbar`); nor does a toolbar in a
+toolbar. Where the room around a toolbar was its screen's own, the screen gives back the 2px, so
+the buttons stay where they were: the explorer's toolbar row and menu, the Hide Sidebar button, the
+query pane's and query toolbar's bars, a results table's and a visualisation's bars, the main
+toolbar, Ask Stroom AI's header, a dialog's window options, a dashboard pane's buttons and the
+stepping controls. Elsewhere (a document's toolbar, a list's bar, a link tab bar's toolbar, all
+against an edge that hides overflow, which is where rings were cut) the buttons move 2px in and the
+bar is 4px higher. Measured by putting the old rules back with an injected style and comparing each
+button's place.
+
+**Fixed for link tabs** (3 November 2026, the user's decision, as for toolbars): a link tab is now
+24px high and 4px wider than its label either side (a 24px target, WCAG 2.5.8), its ring on its
+edge, and a link bar has 4px of padding round its tabs for the ring's band (32px high, from 18px;
+`tab-bar.css`, the overflow selector in line, `LinkTabBar.getTabSpaceWidth` fitting tabs to the tab
+list). The room the bar's containers had becomes the bar's padding, so the tabs stay close to where
+they were (measured on the 345 link tabs in the first story of each App/ and Screens/ component):
+a document's tab bar (`link-tab-panel`) +3px across and -1px down, its 4px below overlapping the
+toolbar's padding under it, so what follows moves 1-3px; a dashboard pane's (`tab-layout`) 0 across
+and -3px; a dialog's (User Preferences) +3px down, its fields where they were; the query results',
+the data viewer's and data retention's +3-4px across, data retention's toolbar 8px lower. The bar's
+invisible strut, which gives it its height, now takes no clicks: transparent (opacity), it was drawn
+over the tabs and took clicks on the start of the first tab (a real-input check found it once it was
+a whole row). The remaining rings counted as cut are rounding (under 1px, the floor map's bars) or
+a results pane squeezed below its bar at 720px high, as before. Fewer link tabs fit a narrow bar, as
+each is 8px wider (`LinkTabPanel` `Overflow`: 6 of 9, from 8). A link tab's label is centred 1px low
+(its line's room for descenders left its letters 1px high); the "|" between tabs isn't, as it
+reaches below the baseline.
+
+**Fixed for document tabs** (3 November 2026, the user's design): the document tab bar
+(`CurveTabLayout`) is 32px high, from 33px, as is the main toolbar at its right, so its 24px tabs
+(from 29px) line up with the Hide Sidebar, Ask Stroom AI and main menu buttons, 4px into the bar, the
+bar's 4px above and below holding their rings' band. A tab's focus ring is a link tab's (one rule
+for both). A selected tab's line is drawn under the tab (`::before`), on the bar's bottom edge over
+the line along it, as it was, and the tab's width whether focused or not; with the keyboard focus
+it is drawn over the ring's band, so the band doesn't tint it. A tab's close cross was a 17px icon
+in a 27 by 18px target that reached past the tab's edge; it is a 24px target with a toolbar button's hover and pressed fills, 3px clear
+of the label (a closeable tab is 4px wider; one that can't be closed keeps its width), and the busy
+spinner is centred where the cross is. The overflow selector is 24px high, in line with the tabs.
+
+### A scroll pane that overflows can't be scrolled from the keyboard
+
+**Fixed** (3 November 2026) for Stroom's `ScrollPane`, and (4 November 2026) for the panes of text
+that used GWT's own `ScrollPanel`.
+
+Found 2 November 2026, shown by the toolbars' padding: when its content is taller than it, a scroll
+pane (`scroll-pane`) scrolls but can't take the focus, so a keyboard user can't scroll it (axe
+`scrollable-region-focusable`). `PipelineEditor` `Processors` shows it: the processor's details
+(309px) no longer fit its pane (307px) now that the toolbar above is 4px higher; at other window
+sizes it was already so.
+
+The fix: a `ScrollPane` is a tab stop while its content is bigger than it and holds nothing that
+takes the focus (tabbing to something in it scrolls it), checked whenever it or its content changes
+size (`ScrollPaneTabStop`). `setFocusable` still forces it either way. With the keyboard focus its
+scrollbars show it: the thumb in the focus colour on a track tinted the focus ring's colour (in
+Firefox, whose scrollbars can hide until scrolled, also the focus ring inside its edge, as a
+`scroll-region` shows). Processors' two panes are named
+regions ("Processor information", "Processor filter"); `Processors` passes again. A pane that may
+become a tab stop should be given a name (`role="region"`, `ariaLabel`), or a screen reader
+announces nothing when it is reached.
+
+Then (4 November 2026) the 13 templates that used GWT's `ScrollPanel` (`g:ScrollPanel`): the seven
+that scroll only text are `ScrollPane`s, each a named region: `HtmlPane` ("Text", the data
+viewer's "Info"), `Splash` ("Terms"), `CodeEditor`'s load error ("Load error"), `QueryDataTab`'s
+error ("Query error"), `ElasticIndexFieldList` ("Field list status"), `SolrIndexFieldList`
+("Synchronisation state") and `XsdDiagramBox`'s content (its box's title). The four sized by their
+own classes or content rather than filling their parent fit it (`fitContent`, `scroll-pane--fit`).
+The other six are left as `ScrollPanel`s, as what they scroll takes the focus (an expression tree,
+a grid, tick boxes, buttons), and tabbing to it scrolls them: `QueryHistory`, `QueryFavourites`,
+`ExpressionEditor`, `FloorMapGroupEdit`, `FloorMapLayers` and `TypeFilter`. The six regions made
+focusable by hand in Batch 4 (A11Y.md) still use `scroll-region`.
+
 ### GitHub issues loosely related to accessibility
 
 **Open** (30 October 2026, moved from A11Y.md § Batch 7): open GitHub issues about reading and help,
@@ -1743,6 +2005,9 @@ not yet worked on.
   explorer tree has no disabled look).~~ **Kept wontfix** (30 October 2026, the user's decision).
 * **#5847**: nothing says that jobs are disabled for the whole cluster.
 * **#5743**: the Info pane's keys have no help.
+* **#3265** (found 4 November 2026): restructure the main menu to make it more logical and more
+  accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
+  its accessibility as such.
 
 ## Copy-paste mistakes and typos
 
@@ -2103,6 +2368,56 @@ this extends it to every handler. When counted (wave 13), the converted componen
   `git grep -l "@UiHandler" -- '*/client/component/*.java'` (the presenters' views still being
   converted are moved by their waves).
 * Until then, new and converted components already follow this.
+
+### Sample data installs the old visualisations, with no assets
+
+**Fixed** (3 November 2026), not yet run against a database: `SetupSampleData` now leaves the
+Content Store's `stroom-visualisations` entry out (`ContentStoreTestSetup.installSampleDataPacks`
+takes the packs to leave out) and imports the zip that `content-packs.json` names instead, downloaded
+into `~/.stroom/contentPackDownload` unless it is there already, through `ImportExportService`, so
+with its assets (`ReleasedContentPacks`, `TestReleasedContentPacks`). The in-app Content Store still
+offers the old pack, as `stroom-content` lists it.
+
+**Confirmed** (3 November 2026). A database made with `./gradlew setupSampleData` has the legacy
+visualisations, not the 8.0 pack that `content-packs.json` names (`v8.0-beta.3`), and no asset
+files. `SetupSampleData` never reads `content-packs.json` (its `downloadContent` is never called):
+`ContentStoreTestSetup.installSampleDataPacks` installs every pack listed in `stroom-content`'s
+remote `source/content-store.yml` and `sample-source/content-store.yml`, from git, and their
+`stroom-visualisations` entry is `stroom-visualisations-dev` branch `main`, `war/stroom_content/`,
+the old pack (the 8.0 pack is on the `8.0` branch, released as zips). Seen by the user as dashboards
+in the sample data drawing old visualisations, which also hid some splitter lines beside them (see
+below). Possible fixes: have `SetupSampleData` install the visualisations from `content-packs.json`'s
+release zip (the dead `downloadContent` and `ContentPackZipDownloader` already do this for the
+Docker and zip builds) in place of the content store's git entry; or point `stroom-content`'s entry
+at the `8.0` branch, which would change the in-app Content Store for every Stroom too. The first
+was chosen.
+
+Related, **Reported**: a splitter's 1px line is drawn on the first pixel of the panel after it
+(`LayoutSizes` puts it at the end of the panel before, where the next starts), and a visualisation's
+frame covers that panel's content on the page's body. In the workbench the splitter is above the
+frame (`SplitterAboveVisualisation`), but only for a vertical splitter, with nothing around the
+dashboard; a visualisation that paints its own background could still hide a line where that
+doesn't hold, e.g. a horizontal splitter, nested splits, or a stacking context around the dashboard
+in the app. Not yet checked with the old visualisations.
+
+### Text fields asking for `max` kept their default size
+
+**Fixed** (3 November 2026). The upload dialog's Meta Data area (`DataUpload`, `addStyleNames="max"`)
+was 200px by 80px in a 400px wide group, as was any text field sized only by `max`: `.max`
+(layout-helpers.css) and `.text-field` / `.text-field--multiline` (text-field.css) are each one
+class, and app.css imports text-field.css later, so its default size won. `w-100` (`!important`) and
+screens' own rules loaded later weren't affected. The defaults are now at no weight
+(`:where(.text-field)`, `:where(.text-field--multiline)`), so any class sizing a field wins wherever
+its sheet comes.
+
+### Value spinners too narrow for their values
+
+**Fixed** (3 November 2026). A spinner's default width was 96px (80px narrow), of which the arrows
+take 54px, so its field showed three or four digits: 8 spinners in the stories couldn't show their
+largest value (e.g. the processor filter's Max Processing Tasks, the processor profile's thread
+limits, the OpenAI model's token counts, Elastic's slices and scroll size). A spinner is now as wide
+as a text field (200px), and those four narrow ones are the default width. `value-spinner--narrow`
+is for a value of a few digits; `value-spinner--wide` is now the default width.
 
 ## Smaller oddities
 

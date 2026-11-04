@@ -37,7 +37,8 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    margin: 0;
+    /* Into the row's padding by its own 4px, so its buttons stay 5px from the end */
+    margin: 0 -4px 0 0;
 }
 
 .ask-stroom-ai__middle {

@@ -47,10 +47,14 @@
     min-height: 31px;
 }
 
+/* No room of its own around its tabs, and drawn 4px into the bar's padding above and before it: the
+   tab bar's padding (tab-bar.css) is the room its tabs had, so they stay where they were, their
+   focus rings still inside the bar */
 .tab-layout .tab-layout__tab-container {
     display: flex;
     flex-grow: 1;
-	padding: 0.25rem;
+	padding: 0;
+	margin: -4px 0 0 -4px;
 }
 
 .tab-layout .tab-layout__tab-bar {
@@ -66,6 +70,9 @@
 }
 
 .tab-layout .tab-layout__buttons {
+	/* As big in the bar as it was (its padding 2px more each side than its old margin), so its
+	   buttons stay where they were */
+	margin: -2px;
 	z-index: 5;
 	opacity: 0;
 	transition: opacity 0.3s;

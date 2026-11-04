@@ -312,7 +312,7 @@ public final class ViewStateStories {
         grid.addColumn(DataGridUtil.cellIconColumnBuilder(true,
                                 (Job job) -> CellIcon.of(SvgImage.DELETE, "Delete", editable))
                         .build(),
-                DataGridUtil.headingBuilder("").build(),
+                DataGrid.hiddenHeader("Delete"),
                 ColumnSizeConstants.ICON_COL);
         grid.setRowData(0, List.of(new Job("Data Retention", true, 20), new Job("XX Processor", false, 5)));
         grid.setRowCount(2, true);

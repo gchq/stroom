@@ -90,9 +90,11 @@
     align-items: center;
 }
 
-/* The toolbars of an attachment's View data and a message's Delete, in line with the text */
+/* The toolbars of an attachment's View data and a message's Delete, in line with the text: the
+   message holds them, so they need no room of their own for their buttons' focus rings */
 .ai-message__toolbar {
     margin: 0;
+    padding: 0;
 }
 
 /* A details message's summary icon, the size of a toolbar button's, as it was drawn */

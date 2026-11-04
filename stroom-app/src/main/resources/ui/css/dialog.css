@@ -136,6 +136,9 @@
    (toolbar--text-colour), as part of the window rather than an action of the dialog */
 .dialog__toolbar {
     align-self: center;
+    /* As wide in the title bar as it was (its padding 2px more each side than its old margin), so
+       the button, and a dialog sized to its content, stay as they were */
+    margin: 0 -2px;
 }
 
 /* Being moved or resized from the keyboard (modifiers with no ARIA attribute): the focus border and

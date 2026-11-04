@@ -28,6 +28,8 @@ import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -38,6 +40,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -76,6 +79,13 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     private static final String TAB_LEFT = "--tab-bar__left";
     private static final String SELECTOR_HIDDEN = "tab-selector--hidden";
     private static final String SELECTOR_LEFT = "--tab-selector__left";
+    // How far the overflow selector is placed after the last tab shown (and its gap)
+    private static final int SELECTOR_OFFSET = 2;
+    // The panel the tabs show, which shows its keyboard focus (tab-bar.css)
+    private static final String PANEL = "tab-bar__panel";
+    // How long the selected tab must have been loading before screen readers are told
+    // (TabLoadAnnouncements), so that quick loads say nothing
+    private static final int LOAD_DELAY_MILLIS = 1000;
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final ArrayList<TabData> tabs = new ArrayList<>();
@@ -92,8 +102,17 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
     private final Element tabList;
     private Element tabPanel;
+    // Watches the panel for whether it should be a tab stop (TabPanelTabStop)
+    private JavaScriptObject tabPanelWatcher;
     private Consumer<TabData> onSelect;
     private Consumer<TabData> onClose;
+    private final TabLoadAnnouncements<TabData> loadAnnouncements = new TabLoadAnnouncements<>();
+    private final Timer loadDelay = new Timer() {
+        @Override
+        public void run() {
+            onLoadDelayElapsed();
+        }
+    };
 
     /// @param root    The bar's element, from its template.
     /// @param tabList The tab list in it (`role="tablist"`), which the tabs and separators go in.
@@ -135,6 +154,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
         final AbstractTab tab = createTab(tabData);
         initTabElement(tab.getElement());
+        watchLoading(tabData, tab);
         setOverflowed(tab.getElement(), true);
         insert(tab, tabList, insertIndex, true);
         tabWidgetMap.put(tabData, tab);
@@ -162,6 +182,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
             recentTabs.remove(tabData);
+            loadAnnouncements.removed(tabData);
 
             final int nextSelected = Math.max(0, tabIndex - 1);
             if (Objects.equals(keyboardSelectedTab, tabData)) {
@@ -195,16 +216,13 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     @Override
     public void moveTab(final TabData tabData, final int tabPos) {
-        final Widget tabWidget = tabWidgetMap.get(tabData);
-        if (tabWidget != null) {
-            remove(tabWidget);
-            tabWidgetMap.remove(tabData);
+        final AbstractTab tab = tabWidgetMap.get(tabData);
+        if (tab != null) {
+            // The same tab is moved, not made again: what it holds reports its loading to it (its
+            // spinner, e.g. ContentTabPaneController's), and its id names the panel
+            remove(tab);
             tabs.remove(tabData);
-
-            final AbstractTab tab = createTab(tabData);
-            initTabElement(tab.getElement());
             insert(tab, tabList, tabPos, true);
-            tabWidgetMap.put(tabData, tab);
             tabs.add(tabPos, tabData);
 
             onResize();
@@ -221,6 +239,9 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             remove(tab);
         }
         removeSeparators();
+        for (final TabData tabData : tabs) {
+            loadAnnouncements.removed(tabData);
+        }
         tabWidgetMap.clear();
         tabs.clear();
         recentTabs.clear();
@@ -295,6 +316,11 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             recentTabs.addFirst(tabData);
         }
         updateTabPanelLabel();
+        updateTabPanelBusy();
+        // A tab selected while it is loading is waited on as one that has just started
+        if (tabData != null && loadAnnouncements.startWaiting(tabData, isLoading(tabData), true)) {
+            loadDelay.schedule(LOAD_DELAY_MILLIS);
+        }
     }
 
     @Override
@@ -322,11 +348,38 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     }
 
     @Override
+    protected void onLoad() {
+        super.onLoad();
+        // Laid out again once the page's fonts have loaded, as the tabs' widths, which the tabs
+        // shown depend on, change then but the bar's size doesn't
+        whenFontsLoaded(() -> {
+            if (isAttached()) {
+                onResize();
+            }
+        });
+    }
+
+    private static native void whenFontsLoaded(Runnable runnable) /*-{
+        if ($doc.fonts && $doc.fonts.ready) {
+            $doc.fonts.ready.then($entry(function () {
+                runnable.@java.lang.Runnable::run()();
+            }));
+        }
+    }-*/;
+
+    @Override
     public void onResize() {
         overflowTabCount = 0;
 
         // Figure out how many tabs are not visible because they overflow the bar width.
         if (getElement().getOffsetWidth() > 0) {
+            // Shrunk to fit first, if the bar shrinks its tabs, so that as many show as can
+            final List<AbstractTab> shown = tabs.stream()
+                    .map(this::getTab)
+                    .filter(tab -> tab != null && !tab.isHidden())
+                    .collect(Collectors.toList());
+            fitTabs(shown, getTabSpaceWidth() - getTabSpacing() * Math.max(0, shown.size() - 1));
+
             final Set<TabData> displayableTabs = getDisplayableTabs();
 
             final int tabCount = tabs.stream().map(this::getTab).filter(Predicate.not(AbstractTab::isHidden))
@@ -398,7 +451,7 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
             }
         }
 
-        x += 2;
+        x += SELECTOR_OFFSET;
         setOverflowTabCount(x, overflowTabCount);
 
         return tabIndexElement;
@@ -410,9 +463,10 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
      * Hidden tabs are pre-filtered so the walk logic operates on a clean list.
      */
     private Set<TabData> getDisplayableTabs() {
-        final int selectorWidth = getTabSelector().getOffsetWidth();
-        final int totalWidth = getElement().getOffsetWidth();
-        final int tabGap = getTabGap();
+        final int selectorWidth = getSelectorRoom();
+        final int totalWidth = getTabSpaceWidth();
+        // Between two tabs: their gap and any separator (as buildTabBar places them)
+        final int tabGap = getTabSpacing();
 
         // Pre-filter: only consider non-hidden tabs
         final List<TabData> candidateTabs = tabs.stream()
@@ -690,12 +744,20 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     @Override
     public void setTabPanel(final Element panel) {
+        if (tabPanel != null) {
+            TabPanelTabStop.unwatch(tabPanel, tabPanelWatcher);
+            tabPanel.removeClassName(PANEL);
+            tabPanelWatcher = null;
+        }
         tabPanel = panel;
         if (panel != null) {
             panel.setAttribute("role", "tabpanel");
+            panel.addClassName(PANEL);
             if (panel.getId() == null || panel.getId().isEmpty()) {
                 panel.setId(DOM.createUniqueId());
             }
+            // A tab stop while it holds none of its own
+            tabPanelWatcher = TabPanelTabStop.watch(panel);
         }
         for (final AbstractTab tab : tabWidgetMap.values()) {
             setControls(tab.getElement());
@@ -721,6 +783,101 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     // The selected state, which a tab's look is styled by (tab-bar.css)
     private void setSelectedState(final AbstractTab tab, final boolean selected) {
         tab.getElement().setAttribute("aria-selected", String.valueOf(selected));
+    }
+
+    /// @return Where screen readers are told that the selected tab is loading and has loaded (a
+    /// polite `status` live region, there from the start, as one added with its text already in
+    /// it isn't reliably read), or null for a bar that doesn't tell them.
+    protected Element getLoadStatus() {
+        return null;
+    }
+
+    /// Shrinks the tabs to fit the bar, if the bar does, before the bar works out which ones show:
+    /// those that still don't fit overflow into its selector. By default tabs keep their width.
+    ///
+    /// @param tabs      The tabs that may show (not hidden), in order.
+    /// @param available The room they have: the bar's, less the gaps between them.
+    protected void fitTabs(final List<AbstractTab> tabs, final int available) {
+        // Tabs keep their width
+    }
+
+    /// @return What a loading tab is described by for screen readers ("Loading", heard after its
+    /// name; `aria-describedby`), hidden and outside the tabs, as a tab's text is its name; or
+    /// null for a bar that doesn't describe them.
+    protected Element getLoadDescription() {
+        return null;
+    }
+
+    private void watchLoading(final TabData tabData, final AbstractTab tab) {
+        tab.setOnBusyChange(busy -> onTabLoading(tabData, busy));
+    }
+
+    private boolean isLoading(final TabData tabData) {
+        final AbstractTab tab = tabData == null
+                ? null
+                : getTab(tabData);
+        return tab != null && tab.isBusy();
+    }
+
+    // A tab has started or stopped loading
+    private void onTabLoading(final TabData tabData, final boolean busy) {
+        describeLoading(tabData, busy);
+        if (Objects.equals(tabData, selectedTab)) {
+            updateTabPanelBusy();
+        }
+        if (busy) {
+            if (loadAnnouncements.startWaiting(tabData, true, Objects.equals(tabData, selectedTab))) {
+                loadDelay.schedule(LOAD_DELAY_MILLIS);
+            }
+        } else if (loadAnnouncements.finished(tabData)) {
+            announceLoading(tabData.getLabel() + " loaded");
+        }
+    }
+
+    private void describeLoading(final TabData tabData, final boolean busy) {
+        final Element description = getLoadDescription();
+        final AbstractTab tab = getTab(tabData);
+        if (description != null && tab != null) {
+            if (busy) {
+                tab.getElement().setAttribute("aria-describedby", description.getId());
+            } else {
+                tab.getElement().removeAttribute("aria-describedby");
+            }
+        }
+    }
+
+    private void onLoadDelayElapsed() {
+        final TabData tabData = loadAnnouncements.getWaiting();
+        if (loadAnnouncements.delayElapsed(tabData,
+                isLoading(tabData),
+                Objects.equals(tabData, selectedTab))) {
+            announceLoading("Loading " + tabData.getLabel());
+        }
+    }
+
+    private void announceLoading(final String text) {
+        final Element status = getLoadStatus();
+        if (status == null) {
+            return;
+        }
+        if (text.equals(status.getInnerText())) {
+            // The same text again is only read if it changes, so it is cleared first
+            status.setInnerText("");
+            Scheduler.get().scheduleDeferred(() -> status.setInnerText(text));
+        } else {
+            status.setInnerText(text);
+        }
+    }
+
+    // The panel is busy while the selected tab is loading
+    private void updateTabPanelBusy() {
+        if (tabPanel != null) {
+            if (isLoading(selectedTab)) {
+                tabPanel.setAttribute("aria-busy", "true");
+            } else {
+                tabPanel.removeAttribute("aria-busy");
+            }
+        }
     }
 
     // The panel is named by the selected tab
@@ -1047,6 +1204,42 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     protected int getTabGap() {
         return 0;
+    }
+
+    // The room between two tabs: their gap and the separator between them, if the bar has them
+    private int getTabSpacing() {
+        return getTabGap() + getSeparatorWidth();
+    }
+
+    // A separator's width, measured on one put in the tab list for the purpose, or 0 if the bar
+    // has none
+    private int getSeparatorWidth() {
+        final Element separator = createSeparator();
+        if (separator == null) {
+            return 0;
+        }
+        tabList.appendChild(separator);
+        final int width = separator.getOffsetWidth();
+        tabList.removeChild(separator);
+        return width;
+    }
+
+    // The room the overflow selector takes after the last tab shown: the last tab's gap, the
+    // selector's offset, and the selector with its margin before it (tab-selector.css)
+    private int getSelectorRoom() {
+        final Element selector = getTabSelector().getElement();
+        return getTabGap() + SELECTOR_OFFSET + marginLeft(selector) + selector.getOffsetWidth();
+    }
+
+    private static native int marginLeft(Element element) /*-{
+        return Math.ceil(parseFloat($wnd.getComputedStyle(element).marginLeft) || 0);
+    }-*/;
+
+    /// The width the bar's tabs, and its overflow selector, must fit in.
+    ///
+    /// @return By default the bar's width.
+    protected int getTabSpaceWidth() {
+        return getElement().getOffsetWidth();
     }
 
     private enum Direction {

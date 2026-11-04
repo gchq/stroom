@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client;
 import stroom.gwt.workbench.client.widgets.aceeditor.AceEditorFormatStories;
 import stroom.gwt.workbench.client.widgets.actionmenucell.ActionMenuCellStories;
 import stroom.gwt.workbench.client.widgets.buttons.ButtonGroupStories;
+import stroom.gwt.workbench.client.widgets.buttons.ButtonStateStories;
 import stroom.gwt.workbench.client.widgets.buttons.ButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.FabButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.RefreshButtonStories;
@@ -192,6 +193,8 @@ public final class WidgetsStories {
         ToolbarStories.addTo(registry);
         // Widgets/Buttons/ToolbarButtonStates
         ToolbarButtonStateStories.addTo(registry);
+        // Widgets/Buttons/ButtonStates
+        ButtonStateStories.addTo(registry);
         // Widgets/Date & Time/CalendarGrid
         CalendarGridStories.addTo(registry);
         // Widgets/Date & Time/DateTimePicker

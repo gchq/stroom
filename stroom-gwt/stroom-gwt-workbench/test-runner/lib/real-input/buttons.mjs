@@ -15,7 +15,8 @@
  */
 
 // Real input checks for buttons and toolbars (see index.mjs): floating action buttons, toolbar
-// button states (hovered and focused, for their screenshots) and a toolbar crossed with real keys.
+// button and text button states (hovered, pressed and focused, for their screenshots) and a toolbar
+// crossed with real keys.
 
 import assert from 'node:assert/strict';
 
@@ -55,6 +56,15 @@ async function hoverTarget(page) {
   assert.ok(await target.evaluate((element) => element.matches(':hover')), 'the button is hovered');
 }
 
+// Presses the mouse button on the story's button (data-testid="target") and holds it, so its
+// screenshot shows :active
+async function pressTarget(page) {
+  await hoverTarget(page);
+  await page.mouse.down();
+  const target = page.getByTestId('target');
+  assert.ok(await target.evaluate((element) => element.matches(':active')), 'the button is pressed');
+}
+
 // Tabs to the story's button (data-testid="target"), so its screenshot shows :focus-visible
 async function focusTarget(page) {
   await page.evaluate(() => document.activeElement?.blur());
@@ -82,6 +92,13 @@ export const CHECKS = {
   'widgets-buttons-toolbarbuttonstates--hovered-disabled': hoverTarget,
   'widgets-buttons-toolbarbuttonstates--focus-visible': focusTarget,
   'widgets-buttons-toolbarbuttonstates--focus-visible-on': focusTarget,
+  // Text buttons of each colour hovered, pressed or focused, for screenshots
+  // (Widgets/Buttons/ButtonStates)
+  ...Object.fromEntries(['default', 'primary', 'secondary', 'green'].flatMap((colour) => [
+    [`widgets-buttons-buttonstates--hovered-${colour}`, hoverTarget],
+    [`widgets-buttons-buttonstates--pressed-${colour}`, pressTarget],
+    [`widgets-buttons-buttonstates--focus-visible-${colour}`, focusTarget],
+  ])),
 
   // A toolbar of Save, Save As, a separator and a Show Filters toggle (Widgets/Buttons/Toolbar)
   'widgets-buttons-toolbar--real-input': async (page) => {

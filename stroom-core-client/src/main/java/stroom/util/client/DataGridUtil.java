@@ -43,6 +43,7 @@ import stroom.widget.datagrid.client.ColSpec;
 import stroom.widget.datagrid.client.ColumnBuilder;
 import stroom.widget.datagrid.client.ColumnSizeConstants;
 import stroom.widget.datagrid.client.CopyTextCell;
+import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.GridDisplay;
 import stroom.widget.datagrid.client.HasContextMenus;
 import stroom.widget.datagrid.client.HasContextMenusCell;
@@ -219,7 +220,7 @@ public class DataGridUtil {
 
         view.addColumn(
                 svgStatusColumn(statusIconExtractor),
-                "",
+                DataGrid.hiddenHeader("Status"),
                 ColumnSizeConstants.ICON_COL);
     }
 

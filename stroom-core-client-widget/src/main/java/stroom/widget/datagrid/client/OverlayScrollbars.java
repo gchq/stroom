@@ -16,6 +16,7 @@
 
 package stroom.widget.datagrid.client;
 
+import stroom.widget.datagrid.client.model.ScrollGutters;
 import stroom.widget.datagrid.client.model.ScrollThumb;
 import stroom.widget.util.client.CssProperties;
 
@@ -37,13 +38,23 @@ import java.util.function.IntSupplier;
 /// Where the browser supports CSS scroll-driven animations, the thumbs follow the scroll position
 /// with no script, so [#update()] need only be called when the content or the grid's size changes,
 /// and once a scroll has ended. Elsewhere it must be called as the grid scrolls.
+///
+/// While a track shows, the grid leaves room for it, so nothing is left under it once scrolled to
+/// the end: a gutter under the rows for the horizontal track, and one at the end of every row's
+/// last cell for the vertical track (a cell's, not the rows', so columns that fill the grid's width
+/// still fit it).
 final class OverlayScrollbars {
 
     private static final int MIN_THUMB_LENGTH = 28;
+    // A track's width, which its gutter matches (data-grid.css)
+    private static final int GUTTER = 12;
     private static final String ACTIVE_CLASS_NAME = "data-grid__thumb--active";
     private static final String SCROLL_TIMELINE_CLASS_NAME = "data-grid--scroll-timeline";
     // A track with nothing to scroll
     private static final String TRACK_HIDDEN_CLASS_NAME = "data-grid__track--hidden";
+    // Room left under the rows for the horizontal track, and in the last cells for the vertical one
+    private static final String H_GUTTER_CLASS_NAME = "data-grid--h-gutter";
+    private static final String V_GUTTER_CLASS_NAME = "data-grid--v-gutter";
     private static final boolean SCROLL_TIMELINE = supportsScrollTimeline();
 
     private final Element root;
@@ -124,6 +135,7 @@ final class OverlayScrollbars {
 
     /// Size and place the thumbs for the scroller's current size and scroll position.
     void update() {
+        updateGutters();
         final ScrollThumb v = verticalThumb();
         final ScrollThumb h = horizontalThumb();
 
@@ -145,12 +157,28 @@ final class OverlayScrollbars {
         CssProperties.set(hThumb, "--data-grid__h-thumb-position", h.getPosition() + "px");
     }
 
-    private static void setHidden(final Element track, final boolean hidden) {
-        if (hidden) {
-            track.addClassName(TRACK_HIDDEN_CLASS_NAME);
+    // Leave room for each track that will show
+    private void updateGutters() {
+        final ScrollGutters gutters = ScrollGutters.compute(scroller.getScrollWidth(),
+                scroller.getClientWidth(),
+                scroller.getScrollHeight(),
+                scroller.getClientHeight(),
+                root.hasClassName(H_GUTTER_CLASS_NAME),
+                GUTTER);
+        setClass(root, H_GUTTER_CLASS_NAME, gutters.horizontal());
+        setClass(root, V_GUTTER_CLASS_NAME, gutters.vertical());
+    }
+
+    private static void setClass(final Element element, final String className, final boolean set) {
+        if (set) {
+            element.addClassName(className);
         } else {
-            track.removeClassName(TRACK_HIDDEN_CLASS_NAME);
+            element.removeClassName(className);
         }
+    }
+
+    private static void setHidden(final Element track, final boolean hidden) {
+        setClass(track, TRACK_HIDDEN_CLASS_NAME, hidden);
     }
 
     private ScrollThumb verticalThumb() {

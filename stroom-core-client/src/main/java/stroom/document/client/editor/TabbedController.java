@@ -17,6 +17,8 @@
 package stroom.document.client.editor;
 
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.editor.HasToolbar;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.widget.button.client.Toolbar;
@@ -103,6 +105,7 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
     public final void read(final DocRef docRef, final D document) {
         this.docRef = docRef;
         this.document = Objects.requireNonNull(document, "document");
+        view.setAccessibleName(tabsName(docRef));
         beforeRead(docRef, document);
         for (final Tab<?> tab : allTabs) {
             tab.read(docRef, document);
@@ -138,6 +141,18 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
     /// annotation's number and title; null by default.
     public String getTabLabel() {
         return null;
+    }
+
+    // The tabs' name for screen readers, from the type of what is shown, e.g. "Pipeline views"
+    private static String tabsName(final DocRef docRef) {
+        if (docRef == null || docRef.getType() == null) {
+            return null;
+        }
+        final DocumentType documentType = DocumentTypeRegistry.get(docRef.getType());
+        final String type = documentType == null
+                ? docRef.getType()
+                : documentType.getDisplayType();
+        return type + " views";
     }
 
     /// @return What is shown, as it was read, or null before it is read.

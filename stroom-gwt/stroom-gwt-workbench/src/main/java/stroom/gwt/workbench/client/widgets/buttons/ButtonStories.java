@@ -102,15 +102,28 @@ public final class ButtonStories {
                 // Loading state, click to toggle (auto-resets after 2 s)
                 .story("Loading", ButtonStories::loading)
                 // While loading, its spinner spins; once loading has ended and the spinner has
-                // shrunk away it stops, so an idle button's spinner costs nothing (#5299)
+                // shrunk away it stops, so an idle button's spinner costs nothing (#5299). While
+                // loading it can't be pressed, by click or key, so its action can't run twice
                 .withPlay(play -> {
                     final Query button = play.getByRole("button", "Submit");
                     play.expect(button).not().toHaveClass("button--spinning");
                     play.click(button);
                     play.expect(button).toHaveClass("button--loading");
                     play.expect(button).toHaveClass("button--spinning");
+                    play.expect(button).toHaveAttribute("aria-disabled", "true");
+                    play.expect(button).toHaveAttribute("aria-busy", "true");
+                    play.click(button);
+                    play.keyboard("{Enter}");
+                    play.keyboard(" ");
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalledTimes(1);
+                    // It keeps the focus while it is busy
+                    play.expect(button).toHaveFocus();
                     play.waitFor(4000, () -> play.expect(button).not().toHaveClass("button--loading"));
+                    play.expect(button).not().toHaveAttribute("aria-disabled");
                     play.waitFor(() -> play.expect(button).not().toHaveClass("button--spinning"));
+                    // Pressable again once it has finished
+                    play.click(button);
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalledTimes(2);
                 })
                 .story("Disabled", context -> {
                     final Button disabledDefault = button(context, "Disabled default", null);
