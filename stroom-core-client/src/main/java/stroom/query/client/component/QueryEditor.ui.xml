@@ -21,7 +21,7 @@
         <g:SimplePanel styleName="max">
             <g:FlowPanel styleName="query-editor__results max dock-container-vertical">
                 <g:SimplePanel styleName="query-editor__results-outer">
-                    <tab:LinkTabBar ui:field="tabBar" addStyleNames="dock-min"/>
+                    <tab:LinkTabBar ui:field="tabBar" accessibleName="Query result views" addStyleNames="dock-min"/>
                 </g:SimplePanel>
                 <c:LayerContainer ui:field="layerContainer" styleName="dock-max"/>
             </g:FlowPanel>

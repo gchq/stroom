@@ -63,6 +63,10 @@ public final class CurveTabBarStories {
     // Each menu item's content is a `menu__item` (the item, with `role="menuitem"`, is its cell)
     private static final String MENU_ITEM = ".menu__item";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
+    // A document name of 50 characters, the most a tab once showed before cutting it
+    private static final String FIFTY_CHARACTERS = "Firewall Events Translation to Common Schema v2.10";
+    private static final String LONG_NAME =
+            "Corporate Proxy Server Access Logs Translation Pipeline for the Event Logging Schema";
 
     private CurveTabBarStories() {
         // Static utility
@@ -104,7 +108,26 @@ public final class CurveTabBarStories {
                 // A single, non-closable tab (no `tab-bar--multiple`, no overflow chevron)
                 .story("SingleTab", context -> demo(context,
                         List.of(new StoryTab("welcome", "Welcome", "Welcome", null, false)),
-                        "welcome", null, false));
+                        "welcome", null, false))
+                // A long name is cut short with an ellipsis where it is drawn, but not in its text,
+                // so a screen reader reads all of it; the one before it shows where 50 characters
+                // were cut before
+                .story("LongName", context -> demo(context, List.of(
+                                new StoryTab("fifty", FIFTY_CHARACTERS, "Feed", SvgImage.DOCUMENT_FEED, true),
+                                new StoryTab("long", LONG_NAME, "Pipeline", SvgImage.DOCUMENT_PIPELINE, true)),
+                        "long", null, false))
+                .withPlay(CurveTabBarStories::playLongName);
+    }
+
+    // The long tab is named by all of its name, though its label is cut short
+    private static void playLongName(final Play play) {
+        final Query tab = play.getByRole("tab", LONG_NAME);
+        play.expect(tab).toBeInTheDocument();
+        final Query label = play.within(tab).querySelector(".tab-bar__label");
+        play.expect("the label is cut short", () -> {
+            final Element element = label.element().get();
+            return element.getScrollWidth() > element.getClientWidth();
+        }).toEqual(true);
     }
 
     // The tabs are a tab list with one tab stop. The arrow keys move the focus between them (not

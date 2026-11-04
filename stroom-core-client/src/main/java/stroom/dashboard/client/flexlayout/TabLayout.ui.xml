@@ -11,7 +11,7 @@
             <g:FlowPanel styleName="tab-layout__content-inner">
                 <g:FlowPanel styleName="tab-layout__bar-outer">
                     <g:FlowPanel styleName="tab-layout__tab-container">
-                        <tab:LinkTabBar ui:field="tabBar" addStyleNames="dock-max tab-layout__tab-bar"/>
+                        <tab:LinkTabBar ui:field="tabBar" accessibleName="Pane views" addStyleNames="dock-max tab-layout__tab-bar"/>
                     </g:FlowPanel>
                     <!-- Shown when the pane is hovered over or has the focus (tabLayout-buttons) -->
                     <b:Toolbar name="Pane actions" addStyleNames="dock-min tab-layout__buttons icon-colour__grey">

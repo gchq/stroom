@@ -38,8 +38,9 @@
 
 /* Its tab bar's room below its tabs (for their focus rings) overlaps whatever is under the panel,
    e.g. a document's toolbar, whose own padding is room for focus rings too, so the panel is no
-   higher than it need be */
-.link-tab-panel > .tab-bar--link {
+   higher than it need be; as heavy as, and after, a dialog's tab bar's margin (tab-bar.css), which
+   it overrides */
+.link-tab-panel .link-tab-panel__middle {
     margin-bottom: -4px;
 }
 

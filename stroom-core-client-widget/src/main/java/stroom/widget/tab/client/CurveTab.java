@@ -38,7 +38,6 @@ import java.util.Objects;
 public class CurveTab extends AbstractTab {
 
     private static final Binder BINDER = GWT.create(Binder.class);
-    private static final int MAX_TEXT_LENGTH = 50;
 
     @UiField
     AriaPanel iconPanel;
@@ -80,13 +79,13 @@ public class CurveTab extends AbstractTab {
         return label.getText();
     }
 
+    /// Shows the tab's name. A long one is cut short with an ellipsis where it is drawn
+    /// (`tab-bar.css`), not in its text, so that its name for screen readers is all of it.
+    ///
+    /// @param text The name.
     @Override
     public void setText(final String text) {
-        if (text.length() > MAX_TEXT_LENGTH) {
-            label.setText(text.substring(0, MAX_TEXT_LENGTH) + "...");
-        } else {
-            label.setText(text);
-        }
+        label.setText(text);
     }
 
     @Override

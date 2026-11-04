@@ -81,6 +81,14 @@ public class LinkTabPanel extends Component {
         return tabBar;
     }
 
+    /// Names the tabs for screen readers, e.g. "Pipeline views", to tell them from the other tab
+    /// lists on the screen (e.g. the open documents').
+    ///
+    /// @param name The name, or null for none.
+    public void setAccessibleName(final String name) {
+        tabBar.setAccessibleName(name);
+    }
+
     /// Focuses the tabs' tab stop, the selected tab, even before the tabs have been laid out.
     ///
     /// @return Whether it was focused: not if the tabs aren't shown.

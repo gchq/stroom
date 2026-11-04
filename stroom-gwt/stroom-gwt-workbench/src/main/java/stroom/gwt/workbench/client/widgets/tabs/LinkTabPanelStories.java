@@ -23,6 +23,7 @@ import stroom.document.client.editor.TabbedController;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -65,6 +66,16 @@ public final class LinkTabPanelStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // Basic tab panel with internal selection state
                 .story("Basic", context -> panel(context, sampleTabs(), null, null, false))
+                // Each tab shows only text, so its panel is a tab stop (TabPanelTabStop): Tab from
+                // the tab list reaches the selected tab's content, named by its tab
+                .withPlay(play -> {
+                    final Query panel = play.getByRole("tabpanel", "Data");
+                    play.expect(panel).toHaveAttribute("tabindex", "0");
+                    play.tab();
+                    play.expect(play.getByRole("tab", "Data")).toHaveFocus();
+                    play.tab();
+                    play.expect(panel).toHaveFocus();
+                })
                 // With a global toolbar (Save / Save As) between the tab bar and content
                 .story("WithToolbar", context -> panel(context, sampleTabs(), null,
                         documentActions(true), false))

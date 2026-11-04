@@ -1654,20 +1654,29 @@ says the same of the data grid, the date and time boxes, the overlays and the co
 
 ### Tab bars: link tabs too small and unnamed, document tab names cut, loading not announced
 
-**Open** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs):
-left from the tab bars' retrofit (`AbstractTabBar`, shared by both bars):
+**Open** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs;
+the first point fixed 3 November 2026, the next three 4 November 2026): left from the tab bars' retrofit (`AbstractTabBar`,
+shared by both bars):
 
-* A link tab is about 16px tall (its label's text: `tab-bar.css` `.tab-bar--link`, sized by the
-  invisible `tab-bar__strut`), under WCAG 2.5.8's 24px. It passes axe only where nothing is close
-  enough beside it (the Data Retention one that didn't was fixed by 1px more room below its bar,
+* **Fixed** (3 November 2026; "Toolbar buttons' and tabs' focus rings are cut off"): a link tab
+  is 24px high, a 24px target (WCAG 2.5.8). It was about 16px tall (its label's text:
+  `tab-bar.css` `.tab-bar--link`, sized by the invisible `tab-bar__strut`), under 24px, and passed
+  axe only where nothing was close enough beside it (the Data Retention one that didn't was fixed by
+  1px more room below its bar,
   A11Y.md batch 5).
-* A link tab bar's `tablist` has no name (`LinkTabBar.ui.xml:10`), where the document tabs' is
-  "Open documents" (`CurveTabBar.ui.xml:9`); `AbstractTabBar.setAccessibleName` (line 683) is there,
-  but nothing calls it.
-* A document tab's name is cut at 50 characters with "..." (`CurveTab.MAX_TEXT_LENGTH`, lines 41
-  and 86); the whole name is its tooltip, but a screen reader hears the shortened one.
-* A tab panel holding nothing focusable isn't a tab stop (`AbstractTabBar.setTabPanel` gives it
-  only its role).
+* **Fixed** (4 November 2026, the user's naming): a link tab bar's `tablist` had no name, where
+  the document tabs' is "Open documents". Each is now "<what it shows> views", to tell it from the
+  other tab lists on the screen: a document editor's from its document type ("Pipeline views",
+  `TabbedController.read`), and the others in their templates ("Data Retention views", "Pane views"
+  for a dashboard pane, "Settings views" for a pane's settings and Ask Stroom AI's, "Column filter
+  views", "Query result views", "Preferences views", "Data views").
+* **Fixed** (4 November 2026): a document tab's name was cut at 50 characters with "..." in its
+  text, so a screen reader heard the shortened one. It is cut where it is drawn instead (`tab-bar.css`,
+  an ellipsis at 42ch, about the same place), so its name is all of it (`CurveTabBar` `LongName`).
+* **Fixed** (4 November 2026): a tab panel holding nothing focusable wasn't a tab stop, so Tab from
+  the tab list passed over the selected tab's content. It is one while it holds no tab stop of its
+  own, as the ARIA tabs pattern asks, checked whenever what it holds changes (`TabPanelTabStop`, a
+  `MutationObserver`), with an inset focus ring (`tab-bar__panel`; `LinkTabPanel` `Basic`).
 * A document tab's loading isn't announced: its spinner is a `SmallBusySpinner` (`CurveTab.java:50`),
   which says nothing (see "The small busy spinner says nothing").
 
@@ -1816,7 +1825,8 @@ light theme and darker in the dark, as it shows the page through.
 
 ### Toolbar buttons' and tabs' focus rings are cut off
 
-**Open** (2 November 2026, measured, not decided): a toolbar has a 2px margin (`toolbar.css`) but a
+**Fixed** (3 November 2026, for toolbars, link tabs and document tabs, below). Found 2 November
+2026, measured: a toolbar has a 2px margin (`toolbar.css`) but a
 toolbar button's focus band reaches 4px, and a link tab's ring reaches 5px above and below it and
 8px either side (`tab-bar.css`, a line outside the tab and a 4px band) in an 18px bar, so where
 something around them hides its overflow the ring is cut. A scan of the first story of each App/

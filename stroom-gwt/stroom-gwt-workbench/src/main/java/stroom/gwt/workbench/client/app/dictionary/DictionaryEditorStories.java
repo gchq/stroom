@@ -184,6 +184,8 @@ public final class DictionaryEditorStories {
                             "Words", "Imports", "Effective Words", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(tab(play, label)).toBeInTheDocument());
                     }
+                    // Named after the document's type, to tell them from other tab lists
+                    play.expect(play.getByRole("tablist", "Dictionary views")).toBeInTheDocument();
                     // The toolbar's Save button starts disabled (clean on load); ToolbarButton
                     // marks it with the 'disabled' class
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");

@@ -147,9 +147,14 @@
     height: 18px;
 }
 
+/* A long name is cut short with an ellipsis (about 50 characters), here rather than in its text, so
+   that a screen reader reads all of it (CurveTab.setText); its tooltip shows all of it too */
 .tab-bar--curved .tab-bar__label {
     position: relative;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 42ch;
     padding: 1px;
     user-select: none;
     opacity: 0.8;
@@ -385,4 +390,11 @@
         forced-color-adjust: none;
         background-color: Highlight;
     }
+}
+
+/* The panel the tabs show (AbstractTabBar.setTabPanel), a tab stop while it holds none of its own
+   (TabPanelTabStop): its focus ring is inset, as it fills its space and hides what overflows it */
+.tab-bar__panel:focus-visible {
+    outline: none;
+    box-shadow: inset var(--focus-shadow);
 }

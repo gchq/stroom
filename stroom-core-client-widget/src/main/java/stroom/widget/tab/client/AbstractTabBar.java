@@ -28,6 +28,7 @@ import stroom.widget.util.client.CssProperties;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -76,6 +77,8 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     private static final String TAB_LEFT = "--tab-bar__left";
     private static final String SELECTOR_HIDDEN = "tab-selector--hidden";
     private static final String SELECTOR_LEFT = "--tab-selector__left";
+    // The panel the tabs show, which shows its keyboard focus (tab-bar.css)
+    private static final String PANEL = "tab-bar__panel";
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final ArrayList<TabData> tabs = new ArrayList<>();
@@ -92,6 +95,8 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
     private final Element tabList;
     private Element tabPanel;
+    // Watches the panel for whether it should be a tab stop (TabPanelTabStop)
+    private JavaScriptObject tabPanelWatcher;
     private Consumer<TabData> onSelect;
     private Consumer<TabData> onClose;
 
@@ -690,12 +695,20 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     @Override
     public void setTabPanel(final Element panel) {
+        if (tabPanel != null) {
+            TabPanelTabStop.unwatch(tabPanel, tabPanelWatcher);
+            tabPanel.removeClassName(PANEL);
+            tabPanelWatcher = null;
+        }
         tabPanel = panel;
         if (panel != null) {
             panel.setAttribute("role", "tabpanel");
+            panel.addClassName(PANEL);
             if (panel.getId() == null || panel.getId().isEmpty()) {
                 panel.setId(DOM.createUniqueId());
             }
+            // A tab stop while it holds none of its own
+            tabPanelWatcher = TabPanelTabStop.watch(panel);
         }
         for (final AbstractTab tab : tabWidgetMap.values()) {
             setControls(tab.getElement());
