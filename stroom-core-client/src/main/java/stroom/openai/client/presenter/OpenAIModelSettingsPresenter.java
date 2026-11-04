@@ -107,7 +107,6 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         }
         getView().setModelId(model.getModelId());
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
-        getView().setWorkingContextTokens(model.getWorkingContextTokens());
         getView().setReasoningEffort(model.getReasoningEffort());
         getView().setEmbeddingModelDimensions(model.getEmbeddingModelDimensions());
         getView().setToolsEnabled(model.isToolsEnabled());
@@ -137,7 +136,6 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
                         Credential::getName))
                 .modelId(getView().getModelId())
                 .maxContextWindowTokens(getView().getMaxContextWindowTokens())
-                .workingContextTokens(getView().getWorkingContextTokens())
                 .reasoningEffort(getView().getReasoningEffort())
                 .embeddingModelDimensions(getView().getEmbeddingModelDimensions())
                 .toolsEnabled(getView().isToolsEnabled())
@@ -173,10 +171,6 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         int getMaxContextWindowTokens();
 
         void setMaxContextWindowTokens(int maxContextWindowTokens);
-
-        int getWorkingContextTokens();
-
-        void setWorkingContextTokens(int workingContextTokens);
 
         String getReasoningEffort();
 

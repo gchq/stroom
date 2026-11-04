@@ -73,7 +73,6 @@ public class TestAskStroomAi {
                 apiKey,
                 modelId,
                 1000,
-                0,
                 null,
                 null,
                 null,
