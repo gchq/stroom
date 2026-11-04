@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// A [SplitterSpec] inferred from a sample and run on it locally, as the Data Splitter generated from it would run in
 /// Stroom: the records as name to value, the lines that match nothing, and the field names seen (what a mapping's
@@ -91,6 +92,12 @@ public final class SplitterDryRun {
     // Words before a record's first pair (group 1), and the rest from that pair (group 2); the most taken as fields.
     private static final Pattern PREFIX_WORDS = Pattern.compile("((?:[^\\s=\"]+\\s+)+?)([^\\s=\"]+=.*)");
     private static final int MOST_PREFIX_WORDS = 4;
+    private static final String TAB = "\t";
+    // A LEEF record's start: any prefix (group 1), its version (2) and, for 2.0, the declared delimiter (3).
+    private static final Pattern LEEF_HEAD = Pattern.compile(
+            "^(.*?)LEEF:(\\d\\.\\d)\\|(?:(?:\\\\.|[^|\\\\])*\\|){4}(?:([^|]{0,4})\\|)?");
+    private static final Pattern LEEF_HEX = Pattern.compile("(?:0?x)([0-9A-Fa-f]{2})");
+    private static final String LEEF_ATTRIBUTES = "leef_attributes";
     // A quoted key:"value" pair's start.
     private static final Pattern COLON_PAIR = Pattern.compile("\\w[\\w.-]*:\"");
     // A syslog record's structured data in brackets, read as a body where it holds the pairs (its message empty).
@@ -169,6 +176,9 @@ public final class SplitterDryRun {
     // A key_value spec's delimiter as a regex, and as a character class's content. A delimiter with white space
     // round it (", ") is its other characters with any white space round them.
     private static String delimiter(final SplitterSpec spec) {
+        if (TAB.equals(spec.delimiter())) {
+            return "\\t";
+        }
         if (spacedDelimiter(spec)) {
             return "(?:\\s*" + ToolText.escape(ToolText.strip(spec.delimiter())) + "\\s*)";
         }
@@ -178,6 +188,10 @@ public final class SplitterDryRun {
     }
 
     private static String delimiterIn(final SplitterSpec spec) {
+        if (TAB.equals(spec.delimiter())) {
+            // A tab alone: values may hold spaces (LEEF 1.0's devTime=Oct 11 2026 10:12:12).
+            return "\\t";
+        }
         if (spacedDelimiter(spec)) {
             return ToolText.escape(ToolText.strip(spec.delimiter()));
         }
@@ -946,6 +960,9 @@ public final class SplitterDryRun {
         if (SampleProfiler.CEF_FORMAT.equals(format)) {
             return new Inferred(cefSpec(lines), info);
         }
+        if (SampleProfiler.LEEF_FORMAT.equals(format)) {
+            return new Inferred(leefSpec(lines), info);
+        }
         if (SampleProfiler.CRI.equals(format)) {
             // Kubernetes CRI: a record ends at its 'F' line; the parts after the first carry their own prefixes,
             // which the mapping takes out to join them (CRI_JOIN).
@@ -1159,6 +1176,72 @@ public final class SplitterDryRun {
     }
 
     // A syslog header before CEF: the first header pattern that fits every line's text before CEF.
+    // LEEF (IBM QRadar's Log Event Extended Format): `LEEF:2.0|Vendor|Product|Version|EventID|^|key=value^...`, the
+    // attributes' delimiter declared in the header (2.0: a character or its hex, x5E) or a tab (1.0), after any
+    // syslog header (read as CEF's prefix is). A regex reading the prefix and the header, the attributes its body.
+    private static SplitterSpec leefSpec(final List<String> lines) {
+        final List<String> prefixes = new ArrayList<>();
+        final List<String> declared = new ArrayList<>();
+        int second = 0;
+        for (final String line : lines) {
+            final Matcher m = LEEF_HEAD.matcher(line);
+            if (m.lookingAt()) {
+                prefixes.add(m.group(1));
+                if (m.group(2).startsWith("2")) {
+                    second++;
+                    declared.add(Objects.requireNonNullElse(m.group(3), ""));
+                }
+            }
+        }
+        final boolean two = second > prefixes.size() / 2;
+        final String delimiter = two
+                ? leefDelimiter(declared.stream()
+                .collect(Collectors.groupingBy(d -> d, LinkedHashMap::new, Collectors.counting()))
+                .entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(""))
+                : TAB;
+        final List<String> names = new ArrayList<>();
+        String prefix = "";
+        if (prefixes.stream().anyMatch(text -> !ToolText.isBlank(text))) {
+            Map.Entry<String, List<String>> chosen = CEF_PREFIXES.getLast();
+            for (final Map.Entry<String, List<String>> candidate : CEF_PREFIXES) {
+                final Pattern pattern = Pattern.compile(candidate.getKey());
+                if (prefixes.stream().allMatch(text -> pattern.matcher(text).lookingAt())) {
+                    chosen = candidate;
+                    break;
+                }
+            }
+            // The prefix's own regex, unanchored at its end, then the header after any white space.
+            prefix = chosen.getKey().substring(1, chosen.getKey().length() - "\\s*$".length()) + "\\s*";
+            names.addAll(chosen.getValue());
+        }
+        final String field = "((?:\\\\.|[^|\\\\])*)\\|";
+        names.addAll(List.of("leef_version", "leef_vendor", "leef_product", "leef_product_version", "leef_event_id"));
+        if (two) {
+            names.add("leef_delimiter");
+        }
+        names.add(LEEF_ATTRIBUTES);
+        final SplitterSpec attributes = SplitterSpec.builder("key_value").delimiter(delimiter).build();
+        return SplitterSpec.builder("regex")
+                .pattern("^" + prefix + "LEEF:(\\d\\.\\d)\\|" + field.repeat(4) + (two
+                        ? "([^|]{0,4})\\|"
+                        : "") + "(.*)$")
+                .names(names)
+                .body(attributes)
+                .bodyField(LEEF_ATTRIBUTES)
+                .build();
+    }
+
+    // A LEEF 2.0 header's declared delimiter: a character, or its hex (x5E, 0x5E); a tab when none.
+    private static String leefDelimiter(final String declared) {
+        final Matcher hex = LEEF_HEX.matcher(declared);
+        if (hex.matches()) {
+            return String.valueOf((char) Integer.parseInt(hex.group(1), 16));
+        }
+        return declared.isEmpty()
+                ? TAB
+                : declared;
+    }
+
     private static SplitterSpec cefSpec(final List<String> lines) {
         final List<String> prefixes = new ArrayList<>();
         for (final String line : lines) {
