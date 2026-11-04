@@ -261,7 +261,7 @@ public class MetaPresenter
         if (streamListUpload != null) {
             registerHandler(streamListUpload.addClickHandler(event -> {
                 if (MouseUtil.isPrimary(event)) {
-                    streamUploadPresenter.get().show(MetaPresenter.this, feedRef);
+                    streamUploadPresenter.get().show(feedRef, MetaPresenter.this::refresh);
                 }
             }));
         }

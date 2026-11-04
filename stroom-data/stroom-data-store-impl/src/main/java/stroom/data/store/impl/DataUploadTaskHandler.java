@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl;
 
+import stroom.data.shared.UploadFeedSource;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -66,14 +67,41 @@ public class DataUploadTaskHandler {
         this.receiptIdGenerator = receiptIdGenerator;
     }
 
+    /// Uploads a data file into the stream store.
+    ///
+    /// @param fileName       The name of the uploaded file. Used to decide whether the file is a zip,
+    ///                       a gzip or a flat file.
+    /// @param file           The uploaded file.
+    /// @param feedName       The feed selected in the upload dialog.
+    /// @param streamTypeName The stream type selected in the upload dialog.
+    /// @param effectiveMs    The effective time to set on the streams, or null.
+    /// @param metaData       Extra meta data entered in the upload dialog, or null.
+    /// @param feedSource     Whether every stream goes into `feedName` or into the feed named in its
+    ///                       own `.meta`/`.manifest` entry.
     public void uploadData(final String fileName,
                            final Path file,
                            final String feedName,
                            final String streamTypeName,
                            final Long effectiveMs,
-                           final String metaData) {
+                           final String metaData,
+                           final UploadFeedSource feedSource) {
         taskContextFactory.context("Upload Data", taskContext ->
-                uploadData(taskContext, fileName, file, feedName, streamTypeName, effectiveMs, metaData)).run();
+                uploadData(taskContext,
+                        fileName,
+                        file,
+                        feedName,
+                        streamTypeName,
+                        effectiveMs,
+                        metaData,
+                        feedSource)).run();
+    }
+
+    /// @param fileName The name of an uploaded file.
+    /// @return True if the file will be uploaded as a zip, i.e. its name ends in `.zip`
+    /// (ignoring case).
+    static boolean isZipFile(final String fileName) {
+        return fileName != null
+               && fileName.toUpperCase().endsWith(FILE_SEPARATOR + StandardHeaderArguments.COMPRESSION_ZIP);
     }
 
     private void uploadData(final TaskContext taskContext,
@@ -82,7 +110,8 @@ public class DataUploadTaskHandler {
                             final String feedName,
                             final String typeName,
                             final Long effectiveMs,
-                            final String metaData) {
+                            final String metaData,
+                            final UploadFeedSource feedSource) {
         securityContext.secure(() -> {
             taskContext.info(() -> fileName);
             if (feedName == null) {
@@ -98,8 +127,11 @@ public class DataUploadTaskHandler {
             final String name = fileName.toUpperCase();
             final Instant receivedTime = Instant.now();
 
-            // Create an attribute map that will override all other attributes.
-            final AttributeMap attributeMap = new AttributeMap(true);
+            // When the selected feed wins, create an attribute map that will override all
+            // other attributes. Otherwise, the values in the zip's .meta/.manifest entries win
+            // and the values here are only used where the zip doesn't set them.
+            final boolean overrideEmbeddedMeta = feedSource != UploadFeedSource.ZIP_FEEDS;
+            final AttributeMap attributeMap = new AttributeMap(overrideEmbeddedMeta);
             if (NullSafe.isNonBlankString(metaData)) {
                 try {
                     AttributeMapUtil.read(metaData.getBytes(StreamUtil.DEFAULT_CHARSET), attributeMap);
@@ -123,7 +155,7 @@ public class DataUploadTaskHandler {
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(taskContext, "Uploading");
 
-            if (name.endsWith(FILE_SEPARATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
+            if (isZipFile(fileName)) {
                 attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
                 uploadZipFile(file, feedName, typeName, attributeMap, progressHandler);
 

@@ -38,6 +38,8 @@ public class UploadDataRequest {
     private final String metaData;
     @JsonProperty
     private final String fileName;
+    @JsonProperty
+    private final UploadFeedSource feedSource;
 
     @JsonCreator
     public UploadDataRequest(@JsonProperty("key") final ResourceKey key,
@@ -45,13 +47,18 @@ public class UploadDataRequest {
                              @JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("effectiveMs") final Long effectiveMs,
                              @JsonProperty("metaData") final String metaData,
-                             @JsonProperty("fileName") final String fileName) {
+                             @JsonProperty("fileName") final String fileName,
+                             @JsonProperty("feedSource") final UploadFeedSource feedSource) {
         this.key = key;
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.effectiveMs = effectiveMs;
         this.metaData = metaData;
         this.fileName = fileName;
+        // Older callers don't send a feed source, so default to the feed they named.
+        this.feedSource = feedSource != null
+                ? feedSource
+                : UploadFeedSource.SELECTED_FEED;
     }
 
     public ResourceKey getKey() {
@@ -76,5 +83,10 @@ public class UploadDataRequest {
 
     public String getFileName() {
         return fileName;
+    }
+
+    /// @return Where the feed for each uploaded stream comes from. Never null.
+    public UploadFeedSource getFeedSource() {
+        return feedSource;
     }
 }

@@ -18,6 +18,7 @@ package stroom.data.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.data.client.DataPreviewTabPlugin;
+import stroom.data.client.DataUploadPlugin;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.CharacterNavigatorPresenter;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
@@ -87,6 +88,7 @@ public class StreamStoreModule extends PluginModule {
 
         bindPlugin(SourceTabPlugin.class);
         bindPlugin(DataPreviewTabPlugin.class);
+        bindPlugin(DataUploadPlugin.class);
 
         bind(DelegatingAceCompleter.class).asEagerSingleton();
 

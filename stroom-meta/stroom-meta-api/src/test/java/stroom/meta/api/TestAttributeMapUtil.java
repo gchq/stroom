@@ -96,6 +96,32 @@ class TestAttributeMapUtil {
         assertThat(outputDateTime).isEqualTo(expectedDateTime);
     }
 
+    @Test
+    void testCloneAllowable_keepsOverrideFlag() {
+        final AttributeMap attributeMap = new AttributeMap(true);
+        attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
+
+        final AttributeMap clone = AttributeMapUtil.cloneAllowable(attributeMap);
+
+        assertThat(clone.isOverrideEmbeddedMeta())
+                .isTrue();
+        assertThat(clone.get(StandardHeaderArguments.FEED))
+                .isEqualTo("MY_FEED");
+    }
+
+    @Test
+    void testCloneAllowable_keepsNoOverrideFlag() {
+        final AttributeMap attributeMap = new AttributeMap(false);
+        attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
+
+        final AttributeMap clone = AttributeMapUtil.cloneAllowable(attributeMap);
+
+        assertThat(clone.isOverrideEmbeddedMeta())
+                .isFalse();
+        assertThat(clone.get(StandardHeaderArguments.FEED))
+                .isEqualTo("MY_FEED");
+    }
+
     @TestFactory
     Stream<DynamicTest> testCreate_fromString() {
         final AttributeMap attributeMap1 = new AttributeMap(Map.of(
