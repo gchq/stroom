@@ -681,7 +681,7 @@ public final class QueryEditorStories {
 
                     final Query deltaRow = screen.getByText("delta").closest(".data-grid__row");
                     play.expect(deltaRow).toHaveClass("column-values-filter__row--first-unavailable");
-                    play.expect(deltaRow).toHaveStyle("border-top-width", "1px");
+                    play.expect(deltaRow).toHaveStyle("margin-top", "9px");
                     play.expect(deltaRow).toHaveAttribute("aria-description", "Not in the table");
                     play.expect(screen.getByText("delta")).toHaveStyle("opacity", "0.6");
 

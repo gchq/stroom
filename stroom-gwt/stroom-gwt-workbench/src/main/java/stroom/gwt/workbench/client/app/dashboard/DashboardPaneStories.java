@@ -454,13 +454,17 @@ public final class DashboardPaneStories {
 
                     // The first not in the table has the line above it
                     play.expect(valueRow(screen, "gamma")).toHaveClass(FIRST_UNAVAILABLE);
-                    play.expect(valueRow(screen, "gamma")).toHaveStyle("border-top-width", "1px");
+                    // A 9px gap with the line in its middle, in the tick boxes' border colour (the
+                    // dark theme's #696d77), which can be seen
+                    play.expect(valueRow(screen, "gamma")).toHaveStyle("margin-top", "9px");
+                    play.expect("the line is drawn in the tick boxes' border colour", () -> lineColour(
+                            valueRow(screen, "gamma").element().get())).toBe("rgb(105, 109, 119)");
                     play.expect(valueRow(screen, "gamma")).toHaveAttribute("aria-description", NOT_IN_TABLE);
                     play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.6");
 
                     // The next is faded, without a line
                     play.expect(valueRow(screen, "delta")).not().toHaveClass(FIRST_UNAVAILABLE);
-                    play.expect(valueRow(screen, "delta")).toHaveStyle("border-top-width", "0px");
+                    play.expect(valueRow(screen, "delta")).toHaveStyle("margin-top", "0px");
                     play.expect(valueRow(screen, "delta")).toHaveAttribute("aria-description", NOT_IN_TABLE);
                     play.expect(valueText(screen, "delta")).toHaveStyle("opacity", "0.6");
 
@@ -987,6 +991,11 @@ public final class DashboardPaneStories {
         }
         return count;
     }
+
+    // The colour of the line drawn above a row (its ::before's top border), e.g. a column value's
+    private static native String lineColour(Element row) /*-{
+        return row.ownerDocument.defaultView.getComputedStyle(row, '::before').borderTopColor;
+    }-*/;
 
     // Whether the second element comes after the first in the page
     private static native boolean follows(Element first, Element second) /*-{
