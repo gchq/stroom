@@ -282,9 +282,9 @@ class TestSplitterXml extends DraftFixtures {
         final SplitterSpec spec = SplitterSpec.builder("regex").recordStart("\\d{4}-\\d{2}-\\d{2}")
                 .pattern("(?s)^(\\S+) (.*)$").names(List.of("time", "message")).build();
         final String xml = SplitterXml.generateSplitter(spec);
-        assertThat(xml).contains("<regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2}).*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2})"
+        assertThat(xml).contains("<regex pattern=\"(?sm)^((?:\\d{4}-\\d{2}-\\d{2})?.*?)\\n?(?=^(?:\\d{4}-\\d{2}-\\d{2})"
                                  + "|\\z)\">", "<group value=\"$1\">");
-        assertThat(SplitterXml.recordRegex("x")).isEqualTo("(?sm)^((?:x).*?)\\n?(?=^(?:x)|\\z)");
+        assertThat(SplitterXml.recordRegex("x")).isEqualTo("(?sm)^((?:x)?.*?)\\n?(?=^(?:x)|\\z)");
     }
 
     @Test

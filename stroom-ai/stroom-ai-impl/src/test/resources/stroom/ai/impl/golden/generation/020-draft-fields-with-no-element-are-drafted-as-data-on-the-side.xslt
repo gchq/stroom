@@ -82,16 +82,14 @@
         <TypeId>
           <xsl:value-of select="if (data[@name='event']/@value[normalize-space(.)]) then (data[@name='event']/@value)[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="data[@name='conn_id']/@value[normalize-space(.)] or data[@name='proto']/@value[normalize-space(.)] or data[@name='source_zone']/@value[normalize-space(.)] or data[@name='destination_zone']/@value[normalize-space(.)] or data[@name='destination_key']/@value[normalize-space(.)] or data[@name='tls_ja3']/@value[normalize-space(.)] or data[@name='policy']/@value[normalize-space(.)] or data[@name='bytes_in']/@value[normalize-space(.)] or data[@name='bytes_out']/@value[normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('conn_id', data[@name='conn_id']/@value)"/>
-            <xsl:sequence select="mcp:data('proto', data[@name='proto']/@value)"/>
-            <xsl:sequence select="mcp:data('source_zone', data[@name='source_zone']/@value)"/>
-            <xsl:sequence select="mcp:data('destination_zone', data[@name='destination_zone']/@value)"/>
-            <xsl:sequence select="mcp:data('destination_key', data[@name='destination_key']/@value)"/>
-            <xsl:apply-templates select="." mode="data_tls_ja_3_to_bytes_out"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('conn_id', data[@name='conn_id']/@value)"/>
+          <xsl:sequence select="mcp:data('proto', data[@name='proto']/@value)"/>
+          <xsl:sequence select="mcp:data('source_zone', data[@name='source_zone']/@value)"/>
+          <xsl:sequence select="mcp:data('destination_zone', data[@name='destination_zone']/@value)"/>
+          <xsl:sequence select="mcp:data('destination_key', data[@name='destination_key']/@value)"/>
+          <xsl:apply-templates select="." mode="data_tls_ja_3_to_bytes_out"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

@@ -57,13 +57,11 @@
         <TypeId>
           <xsl:value-of select="if ($action) then $action[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="$action">
-          <Unknown>
-            <Data Name="action">
-              <xsl:attribute name="Value" select="$action[1]"/>
-            </Data>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="action">
+            <xsl:attribute name="Value" select="$action[1]"/>
+          </Data>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

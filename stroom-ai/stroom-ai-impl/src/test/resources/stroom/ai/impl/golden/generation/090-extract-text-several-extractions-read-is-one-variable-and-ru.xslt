@@ -70,11 +70,9 @@
       <EventDetail>
         <TypeId>other</TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="*[@key='message'][normalize-space(.)]">
-          <Unknown>
-            <Data Name="message" Value="{(*[@key='message'])[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="message" Value="{(*[@key='message'])[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

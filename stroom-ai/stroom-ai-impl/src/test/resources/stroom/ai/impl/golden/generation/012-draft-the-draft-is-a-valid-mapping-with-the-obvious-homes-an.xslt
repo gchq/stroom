@@ -108,11 +108,9 @@
           <xsl:value-of select="if (*[@key='event_type'][normalize-space(.)]) then (*[@key='event_type'])[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="*[@key='severity'][normalize-space(.)] or *[@key='protocol'][normalize-space(.)] or *[@key='action'][normalize-space(.)] or *[@key='rule_id'][normalize-space(.)] or *[@key='bytes_sent'][normalize-space(.)] or *[@key='bytes_received'][normalize-space(.)]">
-          <Unknown>
-            <xsl:apply-templates select="." mode="data_severity_to_bytes_received"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:apply-templates select="." mode="data_severity_to_bytes_received"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

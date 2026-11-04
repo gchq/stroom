@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,8 +67,8 @@ public final class SplitterDryRun {
     public static final List<String> CEF_NAMES = List.of("cef_version", "cef_vendor", "cef_product",
             "cef_device_version", "cef_signature_id", "cef_name", "cef_severity");
     /// One pair of a CEF extension: its value may hold spaces, and runs to the next ` key=` (an = inside one is
-    /// escaped \=).
-    public static final String CEF_PAIR = "\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s]+=|\\s*$)";
+    /// escaped \=, so a key holds no backslash: seen, `msg=policy matched a\=b` cut at `a\=` as if it were a key).
+    public static final String CEF_PAIR = "\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s\\\\]+=|\\s*$)";
     /// The syslog headers a CEF line may follow, without their message, and the names of their groups.
     public static final List<Map.Entry<String, List<String>>> CEF_PREFIXES = List.of(
             Map.entry("^(?:<(\\d+)>)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\])\\s*$",
@@ -84,6 +85,8 @@ public final class SplitterDryRun {
     private static final Pattern BLANK_LINE_RECORDS = Pattern.compile(BLANK_LINE_RECORD);
 
     private static final Pattern CEF = Pattern.compile(CEF_PATTERN);
+    // The most parts a stream's timestamped text is read by, one per shape of its time.
+    private static final int MAX_TEXT_PARTS = 6;
     private static final Pattern CEF_PAIR_PATTERN = Pattern.compile(CEF_PAIR);
 
     private SplitterDryRun() {
@@ -138,9 +141,10 @@ public final class SplitterDryRun {
         if (spec.quote() != null) {
             // Stroom neither tries a group's regexes in turn at each place nor lets a value name a group that didn't
             // match.
+            // A quoted value may hold the quote escaped (msg="said \"hi\""): kept as written.
             final String q = ToolText.escape(spec.quote());
-            return List.of(d + "*(" + key + ")" + s + q + "?((?<=" + q + ")[^" + q + "]*(?=" + q + ")|(?<!" + q
-                           + ")[^" + d + q + "]*)" + q + "?");
+            return List.of(d + "*(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q + "\\\\])*(?=" + q
+                           + ")|(?<!" + q + ")[^" + d + q + "]*)" + q + "?");
         }
         return List.of(d + "*(" + key + ")" + s + "([^" + d + "]*)");
     }
@@ -240,6 +244,12 @@ public final class SplitterDryRun {
     /// @return The fields, or null when the record doesn't match (no data elements would be written).
     public static Map<String, String> applyRecord(final SplitterSpec spec, final String text,
                                                   final List<String> heading) {
+        if (spec.continuation()) {
+            return withContinuation(spec, text, heading);
+        }
+        if (SplitterSpec.ALTERNATIVES.equals(spec.kind())) {
+            return applyAlternatives(spec, text);
+        }
         SplitterSpec applied = spec;
         if ("syslog".equals(spec.kind())) {
             final boolean rfc5424 = "rfc5424".equals(spec.rfc());
@@ -270,9 +280,10 @@ public final class SplitterDryRun {
             for (int n = 1; n <= applied.names().size(); n++) {
                 final String name = applied.names().get(n - 1);
                 if (!name.isEmpty() && n <= m.groupCount()) {
+                    // Trimmed, as Stroom trims a data element's value (seen: a message's trailing spaces).
                     fields.put(name, m.group(n) == null
                             ? ""
-                            : m.group(n));
+                            : ToolText.strip(m.group(n)));
                 }
             }
         } else if ("key_value".equals(applied.kind())) {
@@ -329,6 +340,66 @@ public final class SplitterDryRun {
             }
         }
         return fields;
+    }
+
+    // A record's first line read by the spec, the lines after it kept whole, as the converter's continuation
+    // regex divides them.
+    private static Map<String, String> withContinuation(final SplitterSpec spec,
+                                                        final String text,
+                                                        final List<String> heading) {
+        final int newline = text.indexOf('\n');
+        final SplitterSpec firstLine = spec.toBuilder().continuation(false).recordStart(null).catchAll(false).build();
+        final String first = newline < 0
+                ? text
+                : text.substring(0, newline);
+        Map<String, String> fields = applyRecord(firstLine, first, heading);
+        if (fields == null && spec.catchAll() && !claimed(firstLine, first) && !ToolText.isBlank(first)) {
+            // The converter's catch-all, inside the first line's group: the first line kept whole (trimmed, as
+            // Stroom trims a data element's value).
+            fields = Map.of(SplitterSpec.UNPARSED, ToolText.strip(first));
+        }
+        if (fields == null || newline < 0 || newline == text.length() - 1) {
+            return fields;
+        }
+        final Map<String, String> out = new LinkedHashMap<>(fields);
+        // Trimmed as Stroom trims a data element's value (seen: a cut stack trace's first frame without its tab).
+        out.put(SplitterSpec.CONTINUATION, ToolText.strip(text.substring(newline + 1)));
+        return out;
+    }
+
+    /// Whether a record is an alternatives part's to read (its match fits the record's start), so that a record the
+    /// part can't read is an error, not kept by catch_all, as Stroom reports it.
+    ///
+    /// @param spec A spec.
+    /// @param text A record.
+    /// @return True for an alternatives spec one of whose parts' match fits; false otherwise.
+    static boolean claimed(final SplitterSpec spec, final String text) {
+        if (!SplitterSpec.ALTERNATIVES.equals(spec.kind())) {
+            return false;
+        }
+        final String first = spec.continuation() && text.indexOf('\n') >= 0
+                ? text.substring(0, text.indexOf('\n'))
+                : text;
+        return spec.parts().stream()
+                .anyMatch(part -> SafePattern.matcher(SafePattern.compile(part.guard(), 0), first).lookingAt());
+    }
+
+    // The first part whose match fits the record's start reads it, its variant written first; a record that part
+    // can't read is not given to the next (Stroom reports it), and one no part's match fits is unmatched.
+    private static Map<String, String> applyAlternatives(final SplitterSpec spec, final String text) {
+        for (final SplitterSpec part : spec.parts()) {
+            if (SafePattern.matcher(SafePattern.compile(part.guard(), 0), text).lookingAt()) {
+                final Map<String, String> read = applyRecord(part, text, null);
+                if (read == null) {
+                    return null;
+                }
+                final Map<String, String> out = new LinkedHashMap<>();
+                out.put(spec.variantField(), part.variant());
+                out.putAll(read);
+                return out;
+            }
+        }
+        return null;
     }
 
     private static Map<String, String> applyCef(final SplitterSpec spec, final String text) {
@@ -512,8 +583,30 @@ public final class SplitterDryRun {
     /// text, which needs a regex from a human) and the sample's profile.
     public static Inferred inferSpec(final String sample) {
         final Map<String, Object> info = SampleProfiler.profile(sample);
+        final Inferred inferred = inferFormat(sample, info);
+        if (inferred.spec() == null || !Boolean.TRUE.equals(info.get(SplitterSpec.CONTINUATION))) {
+            return inferred;
+        }
+        // Records over several lines (an entry and its stack trace): the first line read by the format, the rest
+        // kept as the continuation.
+        return new Inferred(inferred.spec().toBuilder().recordStart(LineFormats.RECORD_LINE_START).continuation(true)
+                .build(), info);
+    }
+
+    private static Inferred inferFormat(final String sample, final Map<String, Object> info) {
         final String format = (String) info.get("format");
-        final List<String> lines = ToolText.nonBlankLines(sample);
+        final List<String> all = ToolText.nonBlankLines(sample);
+        final LineFormats.Grouped grouped = Boolean.TRUE.equals(info.get(SplitterSpec.CONTINUATION))
+                ? LineFormats.group(all)
+                : null;
+        final List<String> records = grouped == null
+                ? all
+                : grouped.records();
+        // Each record's first line is what the format reads.
+        final List<String> lines = LineFormats.firstLines(records);
+        if (SampleProfiler.MIXED_LINES.equals(format)) {
+            return new Inferred(mixedSpec(records, info.get("unrecognised") != null), info);
+        }
         final boolean delimited = SampleProfiler.DELIMITED.equals(format);
         if (delimited && info.get("header_directive") != null) {
             return new Inferred(SplitterSpec.builder("delimited")
@@ -575,12 +668,154 @@ public final class SplitterDryRun {
             final String rfc = format.endsWith("3164")
                     ? "rfc3164"
                     : "rfc5424";
-            final SplitterSpec head = SplitterSpec.builder("syslog").rfc(rfc).build();
-            final List<String> messages = new ArrayList<>();
-            dryRun(head, sample).records().forEach(record -> messages.add(record.getOrDefault("message", "")));
-            return new Inferred(SplitterSpec.builder("syslog").rfc(rfc).body(bodySpec(messages)).build(), info);
+            return new Inferred(syslogSpec(rfc, lines).build(), info);
         }
         return new Inferred(null, info);
+    }
+
+    // A syslog spec for lines of its header, its messages' body read as they are: key=value, delimited, or (some
+    // key=value, some not) each by its own part.
+    private static SplitterSpec.Builder syslogSpec(final String rfc, final List<String> lines) {
+        final SplitterSpec head = SplitterSpec.builder("syslog").rfc(rfc).build();
+        final List<String> messages = new ArrayList<>();
+        dryRun(head, String.join("\n", lines)).records()
+                .forEach(record -> messages.add(record.getOrDefault("message", "")));
+        SplitterSpec body = bodySpec(messages);
+        if (body == null) {
+            body = mixedBody(messages);
+        }
+        return SplitterSpec.builder("syslog").rfc(rfc).body(body);
+    }
+
+    // Messages some of which are key=value pairs (two or more) and some not, each a share of them: a key=value part,
+    // then the rest kept as text, their variant in message_format.
+    private static SplitterSpec mixedBody(final List<String> messages) {
+        final List<String> bodies = messages.stream().filter(message -> !ToolText.isBlank(message)).toList();
+        final long pairs = bodies.stream()
+                .filter(body -> ToolText.findallGroups(SampleProfiler.KEY_VALUE, body).size() >= 2)
+                .count();
+        if (bodies.isEmpty() || pairs < LineFormats.MIXED_SHARE * bodies.size()
+            || bodies.size() - pairs < LineFormats.MIXED_SHARE * bodies.size()) {
+            return null;
+        }
+        final boolean quoted = bodies.stream().anyMatch(body -> body.contains("=\""));
+        return SplitterSpec.builder(SplitterSpec.ALTERNATIVES).variantField("message_format").parts(List.of(
+                SplitterSpec.builder("key_value").variant("key_value").delimiter(" ").quote(quoted
+                        ? "\""
+                        : null).build(),
+                SplitterSpec.builder("regex").variant("text").pattern("(?s)^(.*)$").names(List.of("text"))
+                        .build())).build();
+    }
+
+    // Records in several formats: a part per format, in the order a record is best told apart (CEF before syslog,
+    // syslog before key=value, timestamped text last), each read as the format's own spec reads it; catch_all where
+    // some records are in none of them.
+    private static SplitterSpec mixedSpec(final List<String> records, final boolean unrecognised) {
+        final Map<String, List<String>> byFormat = new LinkedHashMap<>();
+        for (final String format : List.of(SampleProfiler.CEF_FORMAT, SampleProfiler.SYSLOG_5424_FORMAT,
+                SampleProfiler.SYSLOG_3164_FORMAT, SampleProfiler.KEY_VALUE_FORMAT, LineFormats.TIMESTAMPED_TEXT)) {
+            byFormat.put(format, new ArrayList<>());
+        }
+        for (final String first : LineFormats.firstLines(records)) {
+            final String format = LineFormats.formatOf(first);
+            if (format != null) {
+                byFormat.get(format).add(first);
+            }
+        }
+        final List<SplitterSpec> parts = new ArrayList<>();
+        // Every format the records hold has its part, those under the share that made the stream mixed too (seen: a
+        // twentieth of a stream in CEF, kept unparsed).
+        byFormat.forEach((format, lines) -> {
+            if (!lines.isEmpty()) {
+                if (LineFormats.TIMESTAMPED_TEXT.equals(format)) {
+                    parts.addAll(textParts(lines));
+                } else {
+                    parts.add(partFor(format, lines));
+                }
+            }
+        });
+        // catch_all keeps what no part reads: records in no format, and a time of a shape past the parts'.
+        return SplitterSpec.builder(SplitterSpec.ALTERNATIVES).parts(parts).catchAll(unrecognised
+                                                                                     || textShapesLeft(byFormat.get(
+                LineFormats.TIMESTAMPED_TEXT))).build();
+    }
+
+    // The part that reads lines of one format, named by it.
+    private static SplitterSpec partFor(final String format, final List<String> lines) {
+        return switch (format) {
+            case SampleProfiler.CEF_FORMAT -> cefSpec(lines).toBuilder().variant("cef").build();
+            case SampleProfiler.SYSLOG_5424_FORMAT -> syslogSpec("rfc5424", lines).variant("syslog_5424").build();
+            case SampleProfiler.SYSLOG_3164_FORMAT -> syslogSpec("rfc3164", lines).variant("syslog").build();
+            case SampleProfiler.KEY_VALUE_FORMAT -> {
+                final boolean quoted = lines.stream().anyMatch(line -> line.contains("=\""));
+                yield SplitterSpec.builder("key_value").variant("key_value").delimiter(" ").quote(quoted
+                        ? "\""
+                        : null).spacedValues(!quoted && spacedValues(lines, " ", "=")).build();
+            }
+            default -> throw new IllegalArgumentException("No part reads " + format);
+        };
+    }
+
+    // Timestamped text: a part per shape of its time (each shape its own time format, for the mapping: 2026-10-11
+    // 22:14:00.123 and 2026-10-11T22:14:00.123+10:00 apart), the most used first and named text, the others text_2,
+    // text_3...; at most MAX_TEXT_PARTS, the rest kept by catch_all. Each reads the time, and the rest as the message
+    // (its own pattern is the model's to give).
+    private static List<SplitterSpec> textParts(final List<String> lines) {
+        final List<String> patterns = textShapes(lines).stream().limit(MAX_TEXT_PARTS).toList();
+        final List<SplitterSpec> parts = new ArrayList<>();
+        for (int n = 0; n < patterns.size(); n++) {
+            parts.add(SplitterSpec.builder("regex").variant(n == 0
+                    ? "text"
+                    : "text_" + (n + 1)).pattern(patterns.get(n)).names(List.of("time", "message")).build());
+        }
+        return parts;
+    }
+
+    // Each shape of time timestamped text has, as the regex reading such a line (the time, then the message), the
+    // most used first.
+    private static List<String> textShapes(final List<String> lines) {
+        final Map<String, Integer> shapes = new LinkedHashMap<>();
+        for (final String line : lines) {
+            final String start = LineFormats.timeStart(line);
+            if (start == null) {
+                continue;
+            }
+            final boolean bracketed = start.startsWith("\\[");
+            final Matcher token = Pattern.compile(bracketed
+                    ? "^\\[([^\\]]+)\\]"
+                    : "^(" + start + "\\S*(?: [+-]\\d{4})?)(?=\\s)").matcher(line);
+            if (token.find()) {
+                shapes.merge((bracketed
+                        ? "^\\[("
+                        : "^(") + shapeOf(token.group(1)) + (bracketed
+                        ? ")\\]"
+                        : ")") + "\\s+(.*)$", 1, Integer::sum);
+            }
+        }
+        return shapes.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    // Whether timestamped text has more shapes of time than it gets parts.
+    private static boolean textShapesLeft(final List<String> lines) {
+        return textShapes(lines).size() > MAX_TEXT_PARTS;
+    }
+
+    // A regex of a time's shape: each digit a digit, each letter a letter, every other character itself.
+    private static String shapeOf(final String time) {
+        final StringBuilder shape = new StringBuilder();
+        for (final char c : time.toCharArray()) {
+            if (Character.isDigit(c)) {
+                shape.append("\\d");
+            } else if (Character.isLetter(c)) {
+                shape.append("[A-Za-z]");
+            } else {
+                shape.append(ToolText.escape(String.valueOf(c)));
+            }
+        }
+        return shape.toString();
     }
 
     // A syslog header before CEF: the first header pattern that fits every line's text before CEF.
@@ -632,15 +867,21 @@ public final class SplitterDryRun {
     // The patterns a spec gives, for the message if they take too long.
     private static String patterns(final SplitterSpec spec) {
         final List<String> patterns = new ArrayList<>();
-        for (SplitterSpec part = spec; part != null; part = part.body()) {
+        final List<SplitterSpec> specs = new ArrayList<>(List.of(spec));
+        for (int n = 0; n < specs.size(); n++) {
+            final SplitterSpec part = specs.get(n);
             final List<String> parts = new ArrayList<>(Arrays.asList(part.recordStart(), part.recordEnd(),
-                    part.pattern()));
+                    part.pattern(), part.match()));
             parts.addAll(part.fields().values());
             for (final String pattern : parts) {
                 if (pattern != null && !patterns.contains(pattern)) {
                     patterns.add(pattern);
                 }
             }
+            if (part.body() != null) {
+                specs.add(part.body());
+            }
+            specs.addAll(part.parts());
         }
         return patterns.isEmpty()
                 ? null
@@ -678,7 +919,7 @@ public final class SplitterDryRun {
             final Map<String, String> fields = applyRecord(spec, line, heading);
             if (fields != null && !fields.isEmpty()) {
                 records.add(fields);
-            } else if (spec.catchAll()) {
+            } else if (spec.catchAll() && !spec.continuation() && !claimed(spec, line)) {
                 // Kept whole, as the converter's catch-all writes it.
                 records.add(Map.of(SplitterSpec.UNPARSED, ToolText.rstrip(line, "\n")));
             } else {

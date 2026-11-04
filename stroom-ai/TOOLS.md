@@ -3727,7 +3727,15 @@ zone). `ActionRules` reads each kind's own records for its action: connections a
 Network/Permit or Deny, logons and logoffs Authenticate, configuration changes Update, a service started or
 stopped Process, health and state records Alert. With `build`, the build's source notes (record_source_notes) are
 followed: catalogued events become rules with their action element, checked against the schema
-(`SourceNotes.detailProblem`; unchecked rather than ignored when the schema can't be read).
+(`SourceNotes.detailProblem`; unchecked rather than ignored when the schema can't be read). Records read by an
+`alternatives` splitter (`VariantDrafts`): each variant's records are drafted on their own, as a stream of that one
+format would be (its own time field and format, homes and kinds), then put together: what every variant writes alike
+is common, the rest of a variant's common entries go into its rules, and each rule is `when` its variant equals it
+(the records no part read, `when` it is absent), named `<variant>_<rule>`; notes are each variant's, prefixed. Records with a `continuation` (a stack trace):
+the exception it starts with and its message are extract fields (`exception`, `exception_message`), not a kind of
+event, and the trace is carried as Data, whole unless the user chooses less: asked in a form ("All of it", "Its
+first 20 lines", "Only its first line"), or `continuation_lines` (`DraftMapping.withContinuationLines`); without
+forms, kept whole with a note to ask.
 
 The user chooses the event-logging version first (`EventVersions.target`), before anything is read. The draft is
 compacted (`MappingCompaction.compactRules`, `compactPairs`) so it fits a reply: a rule's leftover fields as its
@@ -3979,7 +3987,14 @@ key_value (with `spaced_values`: pairs read from the end, for unquoted values ho
 groups, syslog (RFC 5424 or 3164) with a parsed body, and `fields` (each field by its own regex, any order); options
 `record_start`, `record_end`, `quoted_newlines`, `comment_prefix`, `header_directive`, `directives`,
 `blank_line_records` and `catch_all` (a record the spec doesn't match kept whole as `unparsed`, to agree with the
-user). The converter (`SplitterXml.converter`) gives each part an `id` Stroom's errors name and passes over blank
+user); `alternatives` (`parts`, each with a `variant` and its kind's own `match` or one given, tried in order, the
+first whose match fits a record's start reading it, the variant written in `variant_field`; inferred for `mixed
+lines`, a part for every format the records hold, timestamped text a part per shape of its time; a syslog body of
+key=value and text messages likewise, as `message_format`; a key=value part's own match is pairs from start to end, so
+a line it can't read whole goes to the next part or `catch_all`); and `continuation` (with
+`record_start`: a record's first line read by the spec, the lines after it kept whole, trimmed as Stroom trims, as
+`continuation`; inferred where lines continue entries). A record a part's match fits but the part can't read is an
+error, as Stroom reports it, not given to the next part or kept by `catch_all`. The converter (`SplitterXml.converter`) gives each part an `id` Stroom's errors name and passes over blank
 lines, which Stroom otherwise writes as records of empty fields.
 
 The converter is also run by Stroom's own Data Splitter parser on each sample text (`StroomSplitterRun`), as

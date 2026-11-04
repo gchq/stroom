@@ -38,6 +38,22 @@ class TestStroomSplitterRun {
     private static final SplitterSpec CSV = SplitterSpec.builder("delimited").delimiter(",").header(true)
             .quote("\"").build();
     private static final DataSplitterSchema SCHEMA = DataSplitterSchemas.held();
+    private static final String SYSLOG_START = "(?:<\\d{1,3}>)?[A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2} ";
+    private static final String MIXED_START = SYSLOG_START + "|\\w[\\w.-]*=|\\d{4}-\\d{2}-\\d{2} ";
+    // Syslog with key=value messages, key=value lines and timestamped text lines, in one stream.
+    private static final SplitterSpec MIXED = SplitterSpec.builder(SplitterSpec.ALTERNATIVES).parts(List.of(
+            SplitterSpec.builder("syslog").variant("syslog")
+                    .body(SplitterSpec.builder("key_value").delimiter(" ").build()).build(),
+            SplitterSpec.builder("key_value").variant("key_value").delimiter(" ").build(),
+            SplitterSpec.builder("regex").variant("text").pattern("^(\\d{4}-\\d{2}-\\d{2} \\S+) (\\S+) (.*)$")
+                    .names(List.of("time", "level", "message")).build())).build();
+    private static final String MIXED_LINES = "<13>Oct 11 22:14:15 host1 app[42]: user=alice action=login\n"
+                                              + "user=bob action=logout src=10.0.0.1\n"
+                                              + "2026-10-11 22:14:17 ERROR Something failed\n"
+                                              + "<13>Oct 11 22:14:18 host1 app[42]: user=carol action=login\n";
+    private static final String TRACE = "java.lang.IllegalStateException: boom\n"
+                                        + "\tat com.acme.Foo.bar(Foo.java:12)\n"
+                                        + "\tat com.acme.Main.main(Main.java:3)\n";
 
     static Stream<Arguments> dryRunAndStroomAgree() {
         return Stream.of(
@@ -80,6 +96,19 @@ class TestStroomSplitterRun {
                         SplitterSpec.builder("regex").recordStart("\\d{4}-\\d{2}-\\d{2}")
                                 .pattern("(?s)^(\\S+) (.*)$").names(List.of("time", "message")).build(),
                         "2026-10-01 first\n  at line two\n2026-10-02 second\n"),
+                Arguments.of("Lines in several formats, each read by its own part",
+                        MIXED, MIXED_LINES),
+                Arguments.of("Lines in several formats, one no part reads kept",
+                        MIXED.toBuilder().catchAll(true).build(), MIXED_LINES + "nothing any part reads\n"),
+                Arguments.of("Syslog whose entries carry stack traces",
+                        SplitterSpec.builder("syslog").rfc("rfc3164").recordStart(SYSLOG_START).continuation(true)
+                                .body(SplitterSpec.builder("key_value").delimiter(" ").build()).build(),
+                        "<13>Oct 11 22:14:15 host1 app[42]: user=alice action=login\n"
+                        + TRACE + "<13>Oct 11 22:14:16 host1 app[42]: user=bob action=logout\n"),
+                Arguments.of("Lines in several formats, with stack traces",
+                        MIXED.toBuilder().recordStart(MIXED_START).continuation(true).catchAll(true).build(),
+                        MIXED_LINES.replace("Something failed\n", "Something failed\n" + TRACE)
+                        + "2026-10-11 odd\n" + TRACE),
                 Arguments.of("W3C directives",
                         SplitterSpec.builder("delimited").delimiter(" ").header(true).commentPrefix("#")
                                 .headerDirective("#Fields:").build(),

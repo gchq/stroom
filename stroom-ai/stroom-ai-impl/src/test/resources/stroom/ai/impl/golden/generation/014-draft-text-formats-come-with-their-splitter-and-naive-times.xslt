@@ -73,11 +73,9 @@
         <TypeId>
           <xsl:value-of select="if (data[@name='action']/@value[normalize-space(.)]) then (data[@name='action']/@value)[1] else 'other'"/>
         </TypeId>
-        <xsl:if test="data[@name='logid']/@value[normalize-space(.)]">
-          <Unknown>
-            <Data Name="logid" Value="{(data[@name='logid']/@value)[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="logid" Value="{(data[@name='logid']/@value)[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

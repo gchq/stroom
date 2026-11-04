@@ -58,11 +58,9 @@
       </EventSource>
       <EventDetail>
         <TypeId>Other</TypeId>
-        <xsl:if test="$time">
-          <Unknown>
-            <Data Name="time" Value="{$time[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="time" Value="{$time[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
