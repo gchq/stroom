@@ -184,6 +184,10 @@ class TranslationBuilds {
         return result;
     }
 
+    // The keys stroom:meta() computes for any stream rather than reading its receipt headers.
+    private static final Set<String> COMPUTED_META = Set.of("feed", "streamtype", "pipeline", "createdtime",
+            "effectivetime");
+
     /// Stream meta the mapping reads (stroom:meta('Name')) that no sample stream carries: the element would stay
     /// empty. Compared with the streams' own attributes, whatever the header is called.
     ///
@@ -201,6 +205,8 @@ class TranslationBuilds {
                 wanted.add(matcher.group(1));
             }
         });
+        // Computed by stroom:meta() itself, whatever the stream carries (StreamMetaDataProvider).
+        wanted.removeIf(name -> COMPUTED_META.contains(name.toLowerCase(Locale.ROOT)));
         if (wanted.isEmpty()) {
             return List.of();
         }
@@ -224,7 +230,9 @@ class TranslationBuilds {
                              + (carried.isEmpty()
                         ? "none"
                         : String.join(", ", carried)) + "): the element stays empty unless the source sends it as a "
-                             + "header")
+                             + "header. A sample uploaded as a plain file through Stroom's UI carries none of its "
+                             + "original headers: use the feed's own streams, or upload a zip of the stream's parts "
+                             + "(its data with its .meta), or type the attribute into the upload's Meta box")
                 .toList();
     }
 

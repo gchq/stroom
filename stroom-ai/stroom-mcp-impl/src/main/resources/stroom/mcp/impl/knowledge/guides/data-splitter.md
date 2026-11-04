@@ -149,6 +149,13 @@ whole (an unclosed quote) is not the part's: it goes on to the next part, or `ca
 `catch_all`, a record no part's match fits is kept as `unparsed`. Syslog messages some key=value and some not are
 read the same way, by a body of two parts (`message_format`). Fix a part rather than writing the XSLT by hand.
 
+Lines holding only a time of day (`22:14:03.123 INFO ...`) are timestamped text too, read by their own part. A
+header line holding a date for the lines after it (`=== Log opened 2026-10-11 ===`) is a `date header`, read by a
+last part (variant `header`, its date as `date`) whatever its share, with `"carry": "header_date"`: the splitter
+writes the date on every record after it (a var, read as `$carryN$1[0]`), so stepping a line alone sees it too
+(mapping guide, Times). Without a header, the profile says the times have no date, and the draft asks where it
+comes from.
+
 Stack traces are grouped with their entry first, so a format is judged on records, not on the trace's lines: a line
 that is indented, or a frame (`at ...`), cause (`Caused by:`), elision (`... 12 more`), exception line or Python
 traceback, continues the record before it. The profile gives that `record_start` with `continuation: true`; the

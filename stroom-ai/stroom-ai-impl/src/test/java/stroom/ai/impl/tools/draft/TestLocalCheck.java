@@ -77,6 +77,23 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void timesInAnotherLayoutAreNamedWithWhatToDo() {
+        // Seen: a stream's times in two layouts, the second's records each written with an empty time.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts", "time_format": "yyyy-MM-dd HH:mm:ss"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"ts": "2026-10-01 10:00:00"}
+                {"ts": "01/Oct/2026:10:00:01 +1000"}""", null);
+
+        assertThat(warnings(LocalCheck.checkMapping(mapping, records))).anySatisfy(warning -> assertThat(warning)
+                .startsWith("EventTime/TimeCreated: time_format 'yyyy-MM-dd HH:mm:ss' does not match")
+                .contains("Values in other layouts: dd/MMM/yyyy:HH:mm:ss Z (e.g. '01/Oct/2026:10:00:01 +1000')")
+                .contains("time_fallback: 'ReceivedTime'"));
+    }
+
+    @Test
     void theMappingIsCheckedAgainstTheSampleBeforeStepping() {
         final TranslationMapping mapping = mapping(json("""
                 {"input": "json", "json_layout": "lines", "common": [

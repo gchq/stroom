@@ -849,10 +849,52 @@ public final class XsltGenerator {
     private void writeValue(final XmlElement element, final FieldMapping entry) {
         if (entry.value() != null) {
             element.setText(entry.value());
+        } else if (entry.rollover()) {
+            writeRolledOver(element, entry);
+        } else if (isSet(entry.timeFallback())) {
+            writeWithFallback(element, entry);
         } else {
             warnOfSeveral(element, entry);
             element.addElement(XSL, "value-of", "select", valueExpression(entry));
         }
+    }
+
+    // A time of day on a date that doesn't move on by itself (a header's date joined with each line's time): a time
+    // earlier than the one before it on the same date is the next day. The stream's last time and the days added are
+    // one value kept with stroom:put, read before and written after, the put's argument depending on both, so
+    // Saxon's lazy evaluation can't reorder them. A new date (a new header) starts again at no days. Stroom's own
+    // completion of a dateless time moves it back a month instead.
+    private void writeRolledOver(final XmlElement element, final FieldMapping entry) {
+        final String key = XPathText.literal("mcp-rollover:" + entry.strippedPath());
+        element.addElement(XSL, "variable", "name", "mcp_iso", "select", "string(" + valueExpression(entry) + ")");
+        final XmlElement choose = element.addElement(XSL, "choose");
+        choose.addElement(XSL, "when", "test", "$mcp_iso = ''");
+        final XmlElement otherwise = choose.addElement(XSL, "otherwise");
+        otherwise.addElement(XSL, "variable", "name", "mcp_state", "select",
+                "tokenize(string(stroom:get(" + key + ")), '\\|')");
+        otherwise.addElement(XSL, "variable", "name", "mcp_days", "select",
+                "if (count($mcp_state) lt 2 or substring($mcp_state[1], 1, 10) ne substring($mcp_iso, 1, 10)) then 0 "
+                + "else xs:integer($mcp_state[2]) + (if ($mcp_iso lt $mcp_state[1]) then 1 else 0)");
+        otherwise.addElement(XSL, "value-of", "select", "stroom:put(" + key + ", concat($mcp_iso, '|', $mcp_days))");
+        otherwise.addElement(XSL, "value-of", "select",
+                "if ($mcp_days eq 0) then $mcp_iso else format-dateTime(xs:dateTime($mcp_iso) + $mcp_days * "
+                + "xs:dayTimeDuration('P1D'), '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z')");
+    }
+
+    // A time that doesn't parse (Stroom's format-date gives nothing) written as the stream meta time the user agreed
+    // to, with a warning naming the record, in place of an empty time the schema refuses.
+    private void writeWithFallback(final XmlElement element, final FieldMapping entry) {
+        element.addElement(XSL, "variable", "name", "mcp_time", "select", "string(" + valueExpression(entry) + ")");
+        final XmlElement choose = element.addElement(XSL, "choose");
+        choose.addElement(XSL, "when", "test", "$mcp_time != ''").addElement(XSL, "value-of", "select", "$mcp_time");
+        final XmlElement otherwise = choose.addElement(XSL, "otherwise");
+        otherwise.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat("
+                                                        + XPathText.literal(entry.strippedPath() + ": the time didn't "
+                                                                            + "parse, so the stream's "
+                                                                            + entry.timeFallback()
+                                                                            + " is written, record ")
+                                                        + ", stroom:record-no()))");
+        otherwise.addElement(XSL, "value-of", "select", "stroom:meta(" + XPathText.literal(entry.timeFallback()) + ")");
     }
 
     // A warning logged where an entry without repeat reads several values from its own xpath: the first is written.
