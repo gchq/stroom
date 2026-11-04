@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.validation.XmlTrees;
+import stroom.util.date.DateFormatterCache;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.ExtensionFunctionCall;
@@ -349,6 +350,15 @@ class XsltRuns extends GenerationFixtures {
                     : item.getStringValue();
         }
 
+        // A zone as Stroom's format-date reads it: one it doesn't read is UTC (Stroom warns).
+        private static ZoneId zoneOf(final String zone) {
+            try {
+                return DateFormatterCache.getZoneId(zone);
+            } catch (final RuntimeException e) {
+                return ZoneOffset.UTC;
+            }
+        }
+
         private static String parse(final String value, final String pattern, final String zone) {
             try {
                 final TemporalAccessor parsed = DateTimeFormatter.ofPattern(pattern).parse(value);
@@ -356,9 +366,9 @@ class XsltRuns extends GenerationFixtures {
                 if (parsed.isSupported(ChronoField.OFFSET_SECONDS)) {
                     instant = Instant.from(parsed);
                 } else if (parsed.isSupported(ChronoField.HOUR_OF_DAY)) {
-                    instant = LocalDateTime.from(parsed).atZone(ZoneId.of(zone)).toInstant();
+                    instant = LocalDateTime.from(parsed).atZone(zoneOf(zone)).toInstant();
                 } else {
-                    instant = LocalDate.from(parsed).atStartOfDay(ZoneId.of(zone)).toInstant();
+                    instant = LocalDate.from(parsed).atStartOfDay(zoneOf(zone)).toInstant();
                 }
                 return ISO.format(instant);
             } catch (final DateTimeException e) {

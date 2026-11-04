@@ -134,6 +134,8 @@ final class VariantDrafts {
         final List<Object> kinds = new ArrayList<>();
         final Map<String, List<String>> timeExamples = new LinkedHashMap<>();
         final Set<String> zoneNames = new LinkedHashSet<>();
+        // A variant's field of zone names (the first found).
+        final String[] zoneField = new String[1];
         // The variants whose times have no date and no header to give it, with their time's format.
         final Map<String, String> datelessRules = new LinkedHashMap<>();
         Object sourceNotes = null;
@@ -179,6 +181,9 @@ final class VariantDrafts {
             if (drafted.result().get(DraftMapping.TIME_ZONES) instanceof final Map<?, ?> zones) {
                 timeExamples.putAll((Map<String, List<String>>) zones.get("examples"));
                 zoneNames.addAll((List<String>) zones.get("zone_names"));
+                if (zoneField[0] == null && zones.get("zone_field") instanceof final String named) {
+                    zoneField[0] = named;
+                }
             }
             seen.addAll((List<String>) drafted.result().getOrDefault("fields_seen", List.of()));
             kinds.addAll((List<Object>) drafted.result().getOrDefault("kinds", List.of()));
@@ -205,7 +210,8 @@ final class VariantDrafts {
         result.put(NOTES, notes);
         result.put("unmapped_fields", new ArrayList<>(unmapped));
         if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
-            result.put(DraftMapping.TIME_ZONES, DraftMapping.timeZones(timeExamples, List.copyOf(zoneNames)));
+            result.put(DraftMapping.TIME_ZONES, DraftMapping.timeZones(timeExamples, List.copyOf(zoneNames),
+                    zoneField[0]));
         }
         if (!datelessRules.isEmpty()) {
             // For the user to say where the date comes from (draft_translation_mapping asks).

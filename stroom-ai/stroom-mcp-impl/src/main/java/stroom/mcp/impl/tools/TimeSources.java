@@ -21,11 +21,11 @@ import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.generation.ZoneSource;
 import stroom.ai.impl.tools.sample.TimePatterns;
 
-import java.time.DateTimeException;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -53,8 +53,11 @@ final class TimeSources {
     /// The question put when times have no zone.
     static final String ZONE_QUESTION = "Some times have no time zone or offset. Which zone does the source write "
                                         + "them in?";
-    /// The argument giving the answer to [#ZONE_QUESTION]: an IANA name or an offset.
+    /// The argument giving the answer to [#ZONE_QUESTION]: an IANA name or an offset, or `field:NAME` or
+    /// `meta:NAME` (`|ZONE` the default, UTC when none) for each record's own zone.
     static final String TIMEZONE_ARG = "timezone";
+    private static final String FIELD_SOURCE = "field:";
+    private static final String META_SOURCE = "meta:";
 
     private static final String TIME_CREATED = "EventTime/TimeCreated";
     private static final String RECEIVED = "received";
@@ -128,6 +131,11 @@ final class TimeSources {
                 : Map.of();
         final Map<String, String> answers = new LinkedHashMap<>();
         answers.put("UTC", "UTC");
+        if (found.get("zone_field") instanceof final String field) {
+            // Asked for by the user: each record's zone read from it, not one zone for all.
+            answers.put("Each record's own zone, from '" + field + "' (UTC where a record gives none)",
+                    FIELD_SOURCE + field);
+        }
         for (final Object zone : JsonValues.listOrEmpty(found.get("zone_names"))) {
             answers.putIfAbsent("The zone the records name: " + zone, String.valueOf(zone));
         }
@@ -144,6 +152,18 @@ final class TimeSources {
                       + "(e.g. Australia/Sydney) or offset (+10:00). Until then Stroom reads them as UTC.");
             return;
         }
+        final Map<String, Object> source = zoneSource(chosen);
+        if (source != null) {
+            zoneless.forEach(entry -> entry.put("timezone", new LinkedHashMap<>(source)));
+            notes.add("The times read from " + where + " are read in each record's own zone, from "
+                      + (source.containsKey("field")
+                    ? "field '" + source.get("field") + "'"
+                    : "stream meta '" + source.get("meta") + "'") + " (" + source.get("default") + " where it gives "
+                      + "none), as the user chose. build_translation_xslt names the sample's zones Stroom doesn't "
+                      + "read (abbreviations such as AEST): ask the user what each is and add it to the timezone's "
+                      + "map; never guess one that names more than one zone (IST, CST).");
+            return;
+        }
         zoneless.forEach(entry -> entry.put("timezone", chosen));
         notes.add("The times read from " + where + " are read in " + chosen + ", as the user chose.");
     }
@@ -157,17 +177,49 @@ final class TimeSources {
         final Object given = ToolArgs.raw(call, TIMEZONE_ARG);
         if (given != null) {
             final String zone = String.valueOf(given).strip();
-            try {
-                ZoneId.of(zone);
-            } catch (final DateTimeException e) {
-                throw new ToolRefusal("timezone '" + zone + "' is not a time zone: give an IANA name (e.g. "
-                                      + "Australia/Sydney, UTC) or an offset (+10:00)");
+            if (zone.startsWith(FIELD_SOURCE) || zone.startsWith(META_SOURCE)) {
+                zoneSource(zone);
+                return zone;
+            }
+            if (ZoneSource.unreadable(zone)) {
+                throw new ToolRefusal("timezone '" + zone + "' is not a time zone Stroom reads: give an IANA name "
+                                      + "(e.g. Australia/Sydney, UTC), an offset (+10:00), or field:NAME or "
+                                      + "meta:NAME for each record's own zone (field:tz|UTC for a default other "
+                                      + "than UTC)");
             }
             return zone;
         }
         return consent.choose(call, context, action, ZONE_QUESTION, List.copyOf(answers.keySet()), null)
                 .map(answers::get)
                 .orElse(null);
+    }
+
+    // A zone read record by record, as timezone= or the form gives it (field:NAME or meta:NAME, `|ZONE` the default,
+    // UTC when none): the mapping's timezone object; null for a fixed zone.
+    private static Map<String, Object> zoneSource(final String chosen) {
+        final boolean field = chosen.startsWith(FIELD_SOURCE);
+        if (!field && !chosen.startsWith(META_SOURCE)) {
+            return null;
+        }
+        final String rest = chosen.substring((field
+                ? FIELD_SOURCE
+                : META_SOURCE).length());
+        final String name = ToolText.strip(rest.contains("|")
+                ? rest.substring(0, rest.indexOf('|'))
+                : rest);
+        final String defaultZone = rest.contains("|")
+                ? ToolText.strip(rest.substring(rest.indexOf('|') + 1))
+                : "UTC";
+        if (name.isEmpty() || ZoneSource.unreadable(defaultZone)) {
+            throw new ToolRefusal("timezone " + chosen + ": give field:NAME or meta:NAME, with |ZONE for a default "
+                                  + "Stroom reads (e.g. field:tz|Australia/Sydney)");
+        }
+        final Map<String, Object> source = new LinkedHashMap<>();
+        source.put(field
+                ? "field"
+                : "meta", name);
+        source.put("default", defaultZone);
+        return source;
     }
 
     // The TimeCreated entries read with a pattern that has no zone, and no timezone given.
