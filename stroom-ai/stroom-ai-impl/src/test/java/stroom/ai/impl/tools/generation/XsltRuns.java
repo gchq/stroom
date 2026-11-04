@@ -31,6 +31,7 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.Xslt30Transformer;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.value.EmptySequence;
 import net.sf.saxon.value.SequenceType;
 import net.sf.saxon.value.StringValue;
 import org.xml.sax.SAXException;
@@ -49,6 +50,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +70,8 @@ class XsltRuns extends GenerationFixtures {
                                        + "<xsl:function name=\"stroom:record-no\"><xsl:sequence select=\"0\"/>"
                                        + "</xsl:function>";
     static final String XSL = XmlTrees.XSL;
+    /// The time the stream stroom:meta speaks of was received and created.
+    static final String RECEIVED = "2026-10-12T08:00:00.000Z";
     static final String EVT = XsltGenerator.EVT;
 
     XsltRuns() {
@@ -93,6 +97,13 @@ class XsltRuns extends GenerationFixtures {
         try {
             final Processor processor = new Processor(false);
             processor.registerExtensionFunction(new FormatDateStub());
+            // One map for the run (the stream), as Stroom's TaskScopeMap holds put values for one pipeline process.
+            final Map<String, String> kept = new HashMap<>();
+            processor.registerExtensionFunction(new KeptValueStub("put", kept));
+            processor.registerExtensionFunction(new KeptValueStub("get", kept));
+            // stroom:meta, as a stream received and created at RECEIVED gives it.
+            final Map<String, String> meta = new HashMap<>(Map.of("ReceivedTime", RECEIVED, "CreatedTime", RECEIVED));
+            processor.registerExtensionFunction(new KeptValueStub("meta", meta));
             final XsltCompiler compiler = processor.newXsltCompiler();
             compiler.setURIResolver((href, base) -> imports.containsKey(href)
                     ? new StreamSource(new StringReader(imports.get(href)), "urn:import:" + href.replace(" ", "%20"))
@@ -211,6 +222,67 @@ class XsltRuns extends GenerationFixtures {
             n++;
         }
         return n;
+    }
+
+    // stroom:put(key, value), giving an empty sequence, and stroom:get(key), giving the value or an empty sequence,
+    // as Stroom's are; like Stroom's, they don't declare side effects, so a test sees what Saxon's evaluation order
+    // does to them.
+    private static final class KeptValueStub extends ExtensionFunctionDefinition {
+
+        private final String name;
+        private final Map<String, String> kept;
+
+        private KeptValueStub(final String name, final Map<String, String> kept) {
+            this.name = name;
+            this.kept = kept;
+        }
+
+        @Override
+        public StructuredQName getFunctionQName() {
+            return new StructuredQName("stroom", "stroom", name);
+        }
+
+        @Override
+        public int getMinimumNumberOfArguments() {
+            return "put".equals(name)
+                    ? 2
+                    : 1;
+        }
+
+        @Override
+        public int getMaximumNumberOfArguments() {
+            return getMinimumNumberOfArguments();
+        }
+
+        @Override
+        public SequenceType[] getArgumentTypes() {
+            return new SequenceType[]{SequenceType.OPTIONAL_STRING, SequenceType.OPTIONAL_STRING};
+        }
+
+        @Override
+        public SequenceType getResultType(final SequenceType[] suppliedArgumentTypes) {
+            return "put".equals(name)
+                    ? SequenceType.EMPTY_SEQUENCE
+                    : SequenceType.OPTIONAL_STRING;
+        }
+
+        @Override
+        public ExtensionFunctionCall makeCallExpression() {
+            return new ExtensionFunctionCall() {
+                @Override
+                public Sequence call(final XPathContext context, final Sequence[] arguments) throws XPathException {
+                    final String key = FormatDateStub.text(arguments, 0);
+                    if ("put".equals(name)) {
+                        kept.put(key, FormatDateStub.text(arguments, 1));
+                        return EmptySequence.getInstance();
+                    }
+                    final String value = kept.get(key);
+                    return value == null
+                            ? EmptySequence.getInstance()
+                            : new StringValue(value);
+                }
+            };
+        }
     }
 
     // stroom:format-date as the generated XSLT calls it, close enough to Stroom's for the generator's tests: one

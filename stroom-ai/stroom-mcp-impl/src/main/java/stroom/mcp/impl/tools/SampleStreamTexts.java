@@ -32,6 +32,9 @@ import stroom.meta.shared.Status;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -47,6 +50,8 @@ import java.util.Optional;
 /// Sample streams' raw text, read in place of text sent by the client, so a sample passes through the model once
 /// (upload_sample) however many tools then read it.
 class SampleStreamTexts {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SampleStreamTexts.class);
 
     /// What is said to a user without the View Data permission.
     static final String NO_VIEW_DATA = "You don't have permission to view data, so the sample streams can't be "
@@ -94,6 +99,23 @@ class SampleStreamTexts {
             }
         }
         return new Texts(texts, notes);
+    }
+
+    /// @param streamId A sample stream.
+    /// @return Its receipt headers (what `stroom:meta()` reads, e.g. `RemoteFile`), or none when they can't be read.
+    Map<String, String> receiptHeaders(final long streamId) {
+        try {
+            final Object attributes = streamReader.streamAttributes(streamId).get("attributes");
+            final Map<String, String> headers = new LinkedHashMap<>();
+            if (attributes instanceof final Map<?, ?> map) {
+                map.forEach((key, value) -> headers.put(String.valueOf(key), String.valueOf(value)));
+            }
+            return headers;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Stream {}'s receipt headers can't be read: {}", streamId,
+                    e.getMessage()));
+            return Map.of();
+        }
     }
 
     /// Building and validating pipelines uses only a feed's own streams: refuses any older than its feed, which

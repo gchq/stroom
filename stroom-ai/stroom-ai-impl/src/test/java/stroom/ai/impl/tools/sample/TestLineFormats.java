@@ -162,6 +162,31 @@ class TestLineFormats {
     }
 
     @Test
+    void timesWithNoDateAreReadWithTheHeaderThatGivesIt() {
+        // dateless-lines-generator.py: a "Log opened 2026-10-11" header, 120 time-only lines with stack traces, a
+        // "Day changed to 2026-10-12" header part-way.
+        final String dateless = resource("dateless-lines.log");
+        final Map<String, Object> profile = SampleProfiler.profile(dateless);
+        assertThat(profile).containsEntry("format", SampleProfiler.MIXED_LINES).containsEntry("records", 122);
+        assertThat(String.valueOf(profile.get("dateless_times"))).contains("a header line gives it");
+        assertThat(list(profile.get("line_formats"))).extracting(format -> format.get("format"))
+                .containsExactly(LineFormats.TIMESTAMPED_TEXT, LineFormats.DATE_HEADER);
+
+        final SplitterSpec spec = SplitterDryRun.inferSpec(dateless).spec();
+        assertThat(spec.parts().getLast().variant()).isEqualTo(SplitterDryRun.HEADER_VARIANT);
+        final StroomSplitterRun.Result stroom = StroomSplitterRun.run(SCHEMA, SplitterXml.converter(spec),
+                List.of(dateless)).getFirst();
+        assertThat(stroom.errors()).isEmpty();
+        assertThat(stroom.records()).hasSize(122).isEqualTo(SplitterDryRun.dryRun(spec, dateless).records());
+        assertThat(stroom.records()).filteredOn(record -> SplitterDryRun.HEADER_VARIANT.equals(record.get(
+                SplitterSpec.VARIANT))).extracting(record -> record.get(SplitterDryRun.HEADER_DATE))
+                .containsExactly("2026-10-11", "2026-10-12");
+        // A time with no date at all, no header: still read apart, for the user to say where the date comes from.
+        final Map<String, Object> headless = SampleProfiler.profile("23:59:30 a\n00:00:10 b\n00:01:00 c\n");
+        assertThat(String.valueOf(headless.get("dateless_times"))).contains("ask the user where the date");
+    }
+
+    @Test
     void syslogWhoseStackTracesOutnumberItsEntriesIsStillSyslog() {
         // Before, nine lines in ten were frames: no format reached its share of the lines, and it was text.
         final StringBuilder text = new StringBuilder();

@@ -44,10 +44,18 @@ public final class LineFormats {
                                                    + "|Traceback \\(most recent call last\\):)\\S";
     /// The format of a line that is timestamped text: a time, then free text.
     public static final String TIMESTAMPED_TEXT = "timestamped text";
+    /// The format of a line holding a date for the lines after it whose times have none (a file's header).
+    public static final String DATE_HEADER = "date header";
+    /// A time of day with no date, at a line's start.
+    public static final String TIME_ONLY = "\\d{2}:\\d{2}:\\d{2}";
+    /// The dates a header line may hold.
+    public static final List<String> DATES = List.of("\\d{4}-\\d{2}-\\d{2}", "\\d{1,2}/\\d{1,2}/\\d{4}",
+            "\\d{1,2}\\.\\d{1,2}\\.\\d{4}", "\\d{1,2} [A-Z][a-z]{2} \\d{4}", "[A-Z][a-z]{2} \\d{1,2},? \\d{4}");
     /// The share of records each of two or more formats needs for a stream to be of mixed lines.
     public static final double MIXED_SHARE = 0.1;
 
     private static final Pattern STARTS = ToolText.re("^(?:" + RECORD_LINE_START + ")");
+    private static final Pattern TIME_ONLY_START = ToolText.re("^" + TIME_ONLY + "(?:[.,]\\d+)?\\s");
     private static final int EXAMPLES = 2;
     private static final Pattern PAIR_START = ToolText.re("^\\s*[A-Za-z_][\\w.-]*=");
 
@@ -115,14 +123,64 @@ public final class LineFormats {
     }
 
     /// @param line A line.
-    /// @return The [SampleProfiler#RECORD_STARTS] regex it starts with, or null.
+    /// @return The [SampleProfiler#RECORD_STARTS] regex it starts with, else [#TIME_ONLY] for a time with no date,
+    /// or null.
     public static String timeStart(final String line) {
         for (final String start : SampleProfiler.RECORD_STARTS) {
             if (ToolText.match(ToolText.re(start), line)) {
                 return start;
             }
         }
+        return ToolText.match(TIME_ONLY_START, line)
+                ? TIME_ONLY
+                : null;
+    }
+
+    /// @param line A line.
+    /// @return The regex of the date it holds (not at its start as a record's time), e.g. a header's
+    /// `Log opened 2026-10-11`; or null.
+    public static String dateIn(final String line) {
+        for (final String date : DATES) {
+            if (ToolText.search(ToolText.re(date), line)) {
+                return date;
+            }
+        }
         return null;
+    }
+
+    /// The records by format: [#formatOf]'s, and [#DATE_HEADER] for records holding a date where other records'
+    /// times have none (a file's header giving the date of the lines after it).
+    ///
+    /// @param records The records.
+    /// @return Each format's records, in a fixed order (CEF, syslog, key=value, timestamped text, date header), and
+    /// those in none.
+    public static Classified classify(final List<String> records) {
+        final Map<String, List<String>> byFormat = new LinkedHashMap<>();
+        for (final String format : List.of(SampleProfiler.CEF_FORMAT, SampleProfiler.SYSLOG_5424_FORMAT,
+                SampleProfiler.SYSLOG_3164_FORMAT, SampleProfiler.KEY_VALUE_FORMAT, TIMESTAMPED_TEXT, DATE_HEADER)) {
+            byFormat.put(format, new ArrayList<>());
+        }
+        final List<String> none = new ArrayList<>();
+        for (final String record : records) {
+            final String format = formatOf(firstLines(List.of(record)).getFirst());
+            if (format == null) {
+                none.add(record);
+            } else {
+                byFormat.get(format).add(record);
+            }
+        }
+        final boolean dateless = byFormat.get(TIMESTAMPED_TEXT).stream()
+                .anyMatch(record -> TIME_ONLY.equals(timeStart(record)));
+        final List<String> unrecognised = new ArrayList<>();
+        for (final String record : none) {
+            if (dateless && dateIn(firstLines(List.of(record)).getFirst()) != null) {
+                byFormat.get(DATE_HEADER).add(record);
+            } else {
+                unrecognised.add(record);
+            }
+        }
+        byFormat.values().removeIf(List::isEmpty);
+        return new Classified(byFormat, unrecognised, dateless);
     }
 
     /// The profile of a stream whose records come in several formats: two or more of [#formatOf]'s each the format of
@@ -134,22 +192,17 @@ public final class LineFormats {
     /// `unrecognised` (`records` and `examples` of the records no format fits), `records`; or null when no two
     /// formats have their share.
     public static Map<String, Object> mixed(final List<String> records, final boolean grouped) {
-        final Map<String, List<String>> byFormat = new LinkedHashMap<>();
-        final List<String> unrecognised = new ArrayList<>();
-        for (final String record : records) {
-            final String first = firstLines(List.of(record)).getFirst();
-            final String format = formatOf(first);
-            if (format == null) {
-                unrecognised.add(record);
-            } else {
-                byFormat.computeIfAbsent(format, key -> new ArrayList<>()).add(record);
-            }
-        }
+        final Classified classified = classify(records);
+        final Map<String, List<String>> byFormat = classified.byFormat();
+        final List<String> unrecognised = classified.unrecognised();
         final List<Map.Entry<String, List<String>>> shared = byFormat.entrySet().stream()
                 .filter(entry -> entry.getValue().size() >= MIXED_SHARE * records.size())
                 .sorted((a, b) -> Integer.compare(b.getValue().size(), a.getValue().size()))
                 .toList();
-        if (shared.size() < 2) {
+        // Times with no date: read by their own part (with a header giving the date, whatever the header's share: it
+        // is a line or two), so the date can be joined with them; otherwise the text would be no format at all.
+        final boolean headed = classified.dateless() && byFormat.containsKey(DATE_HEADER);
+        if (shared.size() < 2 && !classified.dateless()) {
             return null;
         }
         final List<Map<String, Object>> formats = new ArrayList<>();
@@ -166,6 +219,13 @@ public final class LineFormats {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("records", records.size());
         out.put("line_formats", formats);
+        if (classified.dateless()) {
+            out.put("dateless_times", headed
+                    ? "Some records' times have no date; a header line gives it (date header): its date is kept "
+                      + "for the records after it, each time joined with it and rolled over midnight"
+                    : "Some records' times have no date, and no header line gives one: ask the user where the date "
+                      + "comes from (the file name, the stream's received or created time)");
+        }
         if (!unrecognised.isEmpty()) {
             out.put("unrecognised", Map.of("records", unrecognised.size(), "examples", examples(unrecognised)));
         }
@@ -201,6 +261,15 @@ public final class LineFormats {
 
     // --------------------------------------------------------------------------------
 
+
+    /// A stream's records by format.
+    ///
+    /// @param byFormat     Each format's records, in [#classify]'s order, formats with none left out.
+    /// @param unrecognised The records in no format.
+    /// @param dateless     Whether some timestamped records' times have no date.
+    public record Classified(Map<String, List<String>> byFormat, List<String> unrecognised, boolean dateless) {
+
+    }
 
     /// A sample's lines grouped into records.
     ///

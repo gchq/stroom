@@ -69,10 +69,8 @@ public final class SplitterXml {
     private static final String DELIMITED = "delimited";
     private static final String FIELDS = "fields";
     private static final String NEW_LINE = "\n";
-    // A record of several lines: its first line, and the lines after it.
-    private static final String CONTINUED_RECORD = "^([^\\n]*)\\n((?s:.+))$";
-    // A record of one line.
-    private static final String ONE_LINE_RECORD = "^([^\\n]*)$";
+    // A record: its first line, and the lines after it, if any.
+    private static final String CONTINUED_RECORD = "^([^\\n]*)(?:\\n((?s:.+)))?$";
     // The buffer sizes written are rounded up to this.
     private static final int BUFFER_STEP = 10_000;
     private static final Pattern DATA_SPLITTER_TAG = Pattern.compile("<dataSplitter\\b[^>]*>");
@@ -176,37 +174,66 @@ public final class SplitterXml {
                 : "";
     }
 
-    // A record of several lines whose first is read by the spec: the lines after it kept whole as `continuation`,
-    // the first line read (or, with catch_all, kept as `unparsed` when the spec can't read it); a record of one
-    // line read alone. As SplitterDryRun's continuation divides them.
+    // A record whose first line is read by the spec, the lines after it (if any) kept whole as `continuation`, the
+    // first line read (or, with catch_all, kept as `unparsed` when the spec can't read it). One regex for records of
+    // one line and of several, so the spec's parts are written once (a carried var has one id in a converter). As
+    // SplitterDryRun's continuation divides them.
     private static String continuationXml(final SplitterSpec spec, final String indent, final boolean ids) {
         final String inner = indent + "    ";
         return indent + "<regex" + id(ids, "continued") + " pattern=\"" + attr(CONTINUED_RECORD) + "\">\n"
                + indent + "  <data name=\"" + SplitterSpec.CONTINUATION + "\" value=\"$2\" />\n"
                + indent + "  <group value=\"$1\">\n" + recordXml(spec, inner, ids) + catchAllXml(spec, inner, false)
-               + indent + "  </group>\n" + indent + "</regex>\n"
-               + indent + "<regex" + id(ids, "oneLine") + " pattern=\"" + attr(ONE_LINE_RECORD) + "\">\n"
-               + indent + "  <group value=\"$1\">\n" + recordXml(spec, inner, false)
-               + catchAllXml(spec, inner, false) + indent + "  </group>\n" + indent + "</regex>\n";
+               + indent + "  </group>\n" + indent + "</regex>\n";
     }
 
     // Each part a regex that takes the record when its match fits the record's start, writes its variant, and reads
     // the record with the part's spec; tried in order, the first that fits reads it. The record's group opens first,
     // so it is $1 whatever groups the match has.
     private static String alternativesXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        // A part's carried field (a header's date): kept in a var by its regex, and written on every other part's
+        // records from the var's latest value ([0]: Data Splitter stores a var at its own match count, and a bare
+        // reference reads the referring record's count, finding nothing).
+        final Map<String, String> carried = new LinkedHashMap<>();
+        for (int n = 0; n < spec.parts().size(); n++) {
+            final SplitterSpec part = spec.parts().get(n);
+            if (part.carry() != null) {
+                carried.put(part.carry(), "$carry" + (n + 1) + "$" + (firstNamed(part) + 1) + "[0]");
+            }
+        }
         final StringBuilder out = new StringBuilder();
         for (int n = 0; n < spec.parts().size(); n++) {
             final SplitterSpec part = spec.parts().get(n);
             out.append(indent).append("<regex").append(id(ids, "part" + (n + 1))).append(" pattern=\"")
                     .append(attr("^((?=" + part.guard() + ")(?s:.*))$")).append("\">\n")
                     .append(indent).append("  <data name=\"").append(attr(spec.variantField())).append("\" value=\"")
-                    .append(attr(part.variant())).append("\" />\n")
-                    .append(indent).append("  <group value=\"$1\">\n")
-                    .append(recordXml(part, indent + "    ", false))
+                    .append(attr(part.variant())).append("\" />\n");
+            if (part.carry() == null) {
+                carried.forEach((name, value) -> out.append(indent).append("  <data name=\"").append(attr(name))
+                        .append("\" value=\"").append(value).append("\" />\n"));
+            }
+            String inner = recordXml(part, indent + "    ", false);
+            if (part.carry() != null) {
+                // The var in the part's own regex: its groups are the record's fields.
+                final int open = inner.indexOf(">\n") + 2;
+                inner = inner.substring(0, open) + indent + "      <var id=\"carry" + (n + 1) + "\" />\n"
+                        + inner.substring(open);
+            }
+            out.append(indent).append("  <group value=\"$1\">\n")
+                    .append(inner)
                     .append(indent).append("  </group>\n")
                     .append(indent).append("</regex>\n");
         }
         return out.toString();
+    }
+
+    // The index of a regex part's first named group.
+    private static int firstNamed(final SplitterSpec part) {
+        for (int n = 0; n < part.names().size(); n++) {
+            if (!part.names().get(n).isEmpty()) {
+                return n;
+            }
+        }
+        return 0;
     }
 
     // With catch_all, a record the spec didn't match kept whole as `unparsed` (without its new line), instead of
