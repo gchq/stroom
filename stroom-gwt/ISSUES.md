@@ -84,6 +84,21 @@ presenter.
 
 ## Wrong values and failures
 
+### Signing in failed with "A widget that has an existing parent widget may not be added to the detach list"
+
+**Fixed** (4 November 2026; reported by another developer, who saw it straight after clicking to
+sign in, in a build with assertions on). A task that starts before sign-in has finished (e.g.
+"Fetching permissions…") shows the host page's loading message: `AppPageController.onTaskStart`
+calls `AppPage.showWorking`, which made the message (`#loading`) a widget with `RootPanel.get`,
+then its text (`#loadingText`, inside it in `app.html`) another. GWT refuses a root panel inside
+another, with an `AssertionError` where assertions are on (Super Dev Mode, draft compiles), wrapped
+in an `UmbrellaException`. `AppPage` (its loading message and its text, and `#logo`) and
+`AbstractSignInPageController.hideLoading` now change the host page's elements as elements
+(`Document.getElementById`), skipping any the page hasn't got. The workbench compiles without
+assertions, so a story couldn't see the error; `App/Main/AppPage` `HostPageLoading` instead checks
+the elements aren't made widgets (an attached widget's element has GWT's `__listener`), and that the
+message is shown with its text, hidden, and the logo hidden. It failed before the fix.
+
 ### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
 
 **Confirmed** (by the classpath, and a unit test that tried). The app runs SolrJ 9.10.1, which is

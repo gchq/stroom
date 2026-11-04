@@ -19,8 +19,8 @@ package stroom.security.identity.client.component;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.Page;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// A page Stroom shows in place of the app, before the user has signed in: the sign in, password
@@ -46,9 +46,12 @@ public abstract class AbstractSignInPageController extends Controller {
     /// focusing the first field. A workbench story calls it once it has added the page to itself.
     public abstract void onShown();
 
-    /// Hides the host page's loading message (its `#loading` element).
+    /// Hides the host page's loading message (its `#loading` element), if the page has one. It is
+    /// changed as an element, not made a widget (`RootPanel.get`), as `AppPage` does.
     protected final void hideLoading() {
-        final Element loading = RootPanel.get("loading").getElement();
-        loading.addClassName(LOADING_HIDDEN);
+        final Element loading = Document.get().getElementById("loading");
+        if (loading != null) {
+            loading.addClassName(LOADING_HIDDEN);
+        }
     }
 }
