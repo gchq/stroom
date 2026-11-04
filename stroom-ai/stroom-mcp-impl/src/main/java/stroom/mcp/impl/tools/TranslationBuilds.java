@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.TimePatterns;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
@@ -233,6 +234,23 @@ class TranslationBuilds {
                              + "header. A sample uploaded as a plain file through Stroom's UI carries none of its "
                              + "original headers: use the feed's own streams, or upload a zip of the stream's parts "
                              + "(its data with its .meta), or type the attribute into the upload's Meta box")
+                .toList();
+    }
+
+    /// Times read with no zone or offset and no timezone: Stroom reads them as UTC, which the source may not write.
+    /// Asked for by the user: never assumed, so said until the user has given the zone.
+    ///
+    /// @param mapping The mapping.
+    /// @return A warning for each.
+    static List<String> zoneUnknown(final TranslationMapping mapping) {
+        return mapping.allEntries().stream()
+                .filter(e -> e.path().endsWith("TimeCreated") && NullSafe.isNonEmptyString(e.timeFormat())
+                             && !e.timeFormat().startsWith("epoch") && !TimePatterns.hasZone(e.timeFormat())
+                             && NullSafe.isBlankString(e.timezone()) && NullSafe.isBlankString(e.timeFallback()))
+                .map(e -> e.path() + " is read with no time zone or offset and no timezone, so Stroom reads it as "
+                          + "UTC: ask the user which zone the source writes in, and set timezone (an IANA name, "
+                          + "e.g. Australia/Sydney, or +10:00)")
+                .distinct()
                 .toList();
     }
 

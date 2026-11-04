@@ -132,6 +132,8 @@ final class VariantDrafts {
         final Set<String> unmapped = new LinkedHashSet<>();
         final Set<String> seen = new LinkedHashSet<>(List.of(field));
         final List<Object> kinds = new ArrayList<>();
+        final Map<String, List<String>> timeExamples = new LinkedHashMap<>();
+        final Set<String> zoneNames = new LinkedHashSet<>();
         // The variants whose times have no date and no header to give it, with their time's format.
         final Map<String, String> datelessRules = new LinkedHashMap<>();
         Object sourceNotes = null;
@@ -174,6 +176,10 @@ final class VariantDrafts {
                 }
             }
             unmapped.addAll((List<String>) drafted.result().getOrDefault("unmapped_fields", List.of()));
+            if (drafted.result().get(DraftMapping.TIME_ZONES) instanceof final Map<?, ?> zones) {
+                timeExamples.putAll((Map<String, List<String>>) zones.get("examples"));
+                zoneNames.addAll((List<String>) zones.get("zone_names"));
+            }
             seen.addAll((List<String>) drafted.result().getOrDefault("fields_seen", List.of()));
             kinds.addAll((List<Object>) drafted.result().getOrDefault("kinds", List.of()));
             if (sourceNotes == null) {
@@ -198,6 +204,10 @@ final class VariantDrafts {
         result.put("kinds", kinds);
         result.put(NOTES, notes);
         result.put("unmapped_fields", new ArrayList<>(unmapped));
+        if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
+            result.put(DraftMapping.TIME_ZONES, Map.of("examples", timeExamples, "zone_names",
+                    List.copyOf(zoneNames)));
+        }
         if (!datelessRules.isEmpty()) {
             // For the user to say where the date comes from (draft_translation_mapping asks).
             result.put(DraftMapping.DATELESS_TIMES, Map.of("field", TIME, "variant_field", field, "variants",
@@ -258,7 +268,6 @@ final class VariantDrafts {
         entry.put("xpath", "concat(data[@name='" + HEADER_DATE + "']/@value, ' ', data[@name='" + TIME
                            + "']/@value)");
         entry.put("time_format", pattern);
-        entry.put("timezone", "UTC");
         entry.put("rollover", true);
         return Optional.of(entry);
     }

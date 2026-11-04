@@ -13,8 +13,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -129,7 +128,7 @@
     "logout"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -138,6 +137,16 @@
     "gateway",
     "result"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-09-28 08:01:12",
+      "2026-09-28 08:03:40",
+      "2026-09-28 09:15:02"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "user",
@@ -932,8 +941,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "@time",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -1002,11 +1010,21 @@
     "unlock"
    ],
    "notes": [
-    "'@time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'@time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of '@action' (lock, unlock), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [],
+   "time_zones": {
+    "examples": {
+     "@time": [
+      "2026-09-28 17:00:00",
+      "2026-09-28 17:20:41",
+      "2026-09-28 17:45:03"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "@time",
     "@user",
@@ -3264,8 +3282,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM  d HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM  d HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -3704,7 +3721,7 @@
     "logout"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow; block: Network/Deny for act block.",
@@ -3724,6 +3741,18 @@
     "fname",
     "fileHash"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct  2 09:00:01",
+      "Oct  2 09:00:40",
+      "Oct  2 09:02:13",
+      "Oct  2 09:03:55",
+      "Oct  2 09:04:10"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -5261,8 +5290,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "col1",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -5306,7 +5334,7 @@
    "records": 5,
    "kinds": [],
    "notes": [
-    "'col1' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -5314,6 +5342,18 @@
    "unmapped_fields": [
     "col2"
    ],
+   "time_zones": {
+    "examples": {
+     "col1": [
+      "2026-10-02 08:00:01",
+      "2026-10-02 08:00:09",
+      "2026-10-02 08:05:00",
+      "2026-10-02 08:30:12",
+      "2026-10-02 09:12:44"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "col1",
     "col2"
@@ -5343,8 +5383,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss,SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss,SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -5400,7 +5439,7 @@
    "records": 5,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
@@ -5410,6 +5449,18 @@
     "level",
     "component"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-02 08:00:01,123",
+      "2026-10-02 08:00:09,456",
+      "2026-10-02 08:05:00,001",
+      "2026-10-02 08:30:12,789",
+      "2026-10-02 09:12:44,010"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "level",
@@ -6983,6 +7034,12 @@
     "dc",
     "EventData/Data[@Name='ShareName']"
    ],
+   "time_zones": {
+    "examples": {},
+    "zone_names": [
+     "Logon/Logoff"
+    ]
+   },
    "fields_seen": [
     "System/Provider/@Name",
     "System/EventID",
@@ -10171,8 +10228,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM  d HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM  d HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -10420,7 +10476,7 @@
     "allow"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
@@ -10438,6 +10494,18 @@
     "request",
     "cat"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct  2 09:00:00",
+      "Oct  2 09:00:07",
+      "Oct  2 09:00:14",
+      "Oct  2 09:00:21",
+      "Oct  2 09:00:28"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -10475,8 +10543,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM  d HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM  d HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -10724,7 +10791,7 @@
     "login"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
@@ -10742,6 +10809,18 @@
     "request",
     "cat"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct  2 09:00:00",
+      "Oct  2 09:00:07",
+      "Oct  2 09:00:14",
+      "Oct  2 09:00:21",
+      "Oct  2 09:00:28"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -10923,8 +11002,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "#Start-Date",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -11106,7 +11184,7 @@
    "records": 144,
    "kinds": [],
    "notes": [
-    "'#Start-Date' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'#Start-Date' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -11140,6 +11218,18 @@
     "sc-bytes",
     "cs-bytes"
    ],
+   "time_zones": {
+    "examples": {
+     "#Start-Date": [
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:00"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "#Software",
     "#Version",
@@ -11456,8 +11546,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "col1",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -11501,7 +11590,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "'col1' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -11509,6 +11598,18 @@
    "unmapped_fields": [
     "col2"
    ],
+   "time_zones": {
+    "examples": {
+     "col1": [
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:02",
+      "2026-10-11 08:00:05",
+      "2026-10-11 08:00:08",
+      "2026-10-11 08:00:10"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "col1",
     "col2"
@@ -11540,8 +11641,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss,SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss,SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -11599,7 +11699,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
@@ -11609,6 +11709,18 @@
     "level",
     "thread"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00,000",
+      "2026-10-11 08:00:02,731",
+      "2026-10-11 08:00:05,462",
+      "2026-10-11 08:00:08,193",
+      "2026-10-11 08:00:10,924"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "level",
@@ -11643,8 +11755,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss,SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss,SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -11702,7 +11813,7 @@
    "records": 150,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
@@ -11712,6 +11823,18 @@
     "level",
     "thread"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00,000",
+      "2026-10-11 08:00:02,731",
+      "2026-10-11 08:00:05,462",
+      "2026-10-11 08:00:08,193",
+      "2026-10-11 08:00:10,924"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "level",
@@ -12007,8 +12130,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -12338,7 +12460,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -12392,6 +12514,18 @@
     "col46",
     "col47"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct 11 08:00:00",
+      "Oct 11 08:00:05",
+      "Oct 11 08:00:10",
+      "Oct 11 08:00:15",
+      "Oct 11 08:00:20"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -12519,8 +12653,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -13060,7 +13193,7 @@
     "TRAFFIC"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
@@ -13107,6 +13240,18 @@
     "pkts_received",
     "session_end_reason"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct 11 08:00:00",
+      "Oct 11 08:00:05",
+      "Oct 11 08:00:10",
+      "Oct 11 08:00:15",
+      "Oct 11 08:00:20"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -13233,8 +13378,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -13774,7 +13918,7 @@
     "TRAFFIC"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
@@ -13821,6 +13965,18 @@
     "pkts_received",
     "session_end_reason"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct 11 08:00:00",
+      "Oct 11 08:00:05",
+      "Oct 11 08:00:10",
+      "Oct 11 08:00:15",
+      "Oct 11 08:00:20"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -13891,8 +14047,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "col1",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -13955,7 +14110,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "'col1' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -13966,6 +14121,18 @@
     "col4",
     "col5"
    ],
+   "time_zones": {
+    "examples": {
+     "col1": [
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:19",
+      "2026-10-11 08:00:38",
+      "2026-10-11 08:00:57",
+      "2026-10-11 08:01:16"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "col1",
     "col2",
@@ -13999,8 +14166,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -14107,7 +14273,7 @@
     "PASSWORD_CHANGE"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (LOGIN, PASSWORD_CHANGE), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -14115,6 +14281,18 @@
    "unmapped_fields": [
     "result"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:19",
+      "2026-10-11 08:00:38",
+      "2026-10-11 08:00:57",
+      "2026-10-11 08:01:16"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "user",
@@ -14148,8 +14326,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -14281,7 +14458,7 @@
     "LOGOUT"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (LOGIN, PASSWORD_CHANGE, LOGOUT), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -14289,6 +14466,18 @@
    "unmapped_fields": [
     "result"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00",
+      "2026-10-11 08:00:19",
+      "2026-10-11 08:00:38",
+      "2026-10-11 08:00:57",
+      "2026-10-11 08:01:16"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "user",
@@ -17804,8 +17993,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss.SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss.SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -17855,13 +18043,23 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00.000",
+      "2026-10-11 08:00:04.137",
+      "2026-10-11 08:00:08.274"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "message"
@@ -17895,8 +18093,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss.SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss.SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -17970,7 +18167,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
@@ -17982,6 +18179,16 @@
     "database",
     "level"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00.000",
+      "2026-10-11 08:00:04.137",
+      "2026-10-11 08:00:08.274"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "zone",
@@ -18020,8 +18227,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss.SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss.SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -18095,7 +18301,7 @@
    "records": 55,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
@@ -18107,6 +18313,18 @@
     "database",
     "level"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-11 08:00:00.000",
+      "2026-10-11 08:00:04.137",
+      "2026-10-11 08:00:08.274",
+      "2026-10-11 08:00:12.411",
+      "2026-10-11 08:00:16.548"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "time",
     "zone",
@@ -19277,8 +19495,7 @@
      {
       "path": "EventTime/TimeCreated",
       "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -19395,7 +19612,7 @@
     "deny"
    ],
    "notes": [
-    "'date' and 'time' are joined for EventTime/TimeCreated, read as UTC: change timezone if the source writes local time.",
+    "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): accept: Network/Permit for action accept; deny: Network/Deny for action deny.",
     "One rule per value of 'action' (accept, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -20067,8 +20284,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -20174,7 +20390,7 @@
    "kinds": [],
    "notes": [
     "'message' holds key/value pairs: 4 keys are fields of their own through pairs ('tty_2', 'pwd_2', 'user_2', 'command_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Every record runs a command ('command'): drafted as Process (Action Execute, Type Application), the account it runs as in EventSource/RunAs. Check it, and split the program from its arguments (Process/Arguments) if you want them apart."
    ],
    "unmapped_fields": [
@@ -20187,6 +20403,15 @@
     "user_2",
     "command_2"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Sep 28 14:00:01",
+      "Sep 28 14:10:44"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -23724,8 +23949,7 @@
      {
       "path": "EventTime/TimeCreated",
       "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
-      "time_format": "yyyy-MM-dd HH:mm:ss.SSS",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss.SSS"
      },
      {
       "path": "EventSource/System/Name",
@@ -23811,7 +24035,7 @@
     "logout"
    ],
    "notes": [
-    "'date' and 'time' are joined for EventTime/TimeCreated, read as UTC: change timezone if the source writes local time.",
+    "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -23841,8 +24065,7 @@
      {
       "path": "EventTime/TimeCreated",
       "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -23887,7 +24110,7 @@
    "records": 2,
    "kinds": [],
    "notes": [
-    "'date' and 'time' are joined for EventTime/TimeCreated, read as UTC: change timezone if the source writes local time.",
+    "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -23999,8 +24222,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/Device/Location/TimeZoneName",
@@ -24049,12 +24271,24 @@
    "records": 2,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "'tz' holds time zone names: kept as EventSource/Device/Location/TimeZoneName; if the times have no zone of their own, read them in it (timezone on EventTime/TimeCreated).",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "2026-10-01 18:00:00",
+      "2026-10-01 18:01:00"
+     ]
+    },
+    "zone_names": [
+     "Australia/Sydney",
+     "Europe/London"
+    ]
+   },
    "fields_seen": [
     "time",
     "tz",
@@ -24635,8 +24869,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM  d HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM  d HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -24689,7 +24922,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -24698,6 +24931,16 @@
     "pri",
     "pid"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct  1 08:00:00",
+      "Oct  1 08:05:00",
+      "Oct  1 08:07:00"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -25378,8 +25621,7 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "time",
-      "time_format": "MMM  d HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "MMM  d HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -25639,7 +25881,7 @@
     "failed"
    ],
    "notes": [
-    "'time' has no time zone: timezone is set to UTC; change it if the source writes local time.",
+    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): failed: Alert for act failed.",
@@ -25654,6 +25896,16 @@
     "cef_name",
     "cef_severity"
    ],
+   "time_zones": {
+    "examples": {
+     "time": [
+      "Oct  1 08:00:00",
+      "Oct  1 08:05:00",
+      "Oct  1 08:07:00"
+     ]
+    },
+    "zone_names": []
+   },
    "fields_seen": [
     "pri",
     "time",
@@ -25686,8 +25938,7 @@
      {
       "path": "EventTime/TimeCreated",
       "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
-      "time_format": "yyyy-MM-dd HH:mm:ss",
-      "timezone": "UTC"
+      "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -25793,7 +26044,7 @@
     "traffic"
    ],
    "notes": [
-    "'date' and 'time' are joined for EventTime/TimeCreated, read as UTC: change timezone if the source writes local time.",
+    "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): traffic: Network/Permit for action accept; Network/Deny for action deny.",
     "One rule per value of 'type' (traffic), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."

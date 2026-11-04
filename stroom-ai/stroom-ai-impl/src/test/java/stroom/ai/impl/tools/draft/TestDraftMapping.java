@@ -231,11 +231,12 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(byPath.get("EventSource/Server/Port").get("field")).isEqualTo("dstport");
         assertThat(byPath.get("EventDetail/TypeId").get("field")).isEqualTo("action");
         assertThat(draft.get("kinds")).isEqualTo(List.of("accept", "deny"));
-        // FortiOS splits date= and time=: the draft joins them, read as UTC until the user says otherwise.
+        // FortiOS splits date= and time=: the draft joins them, with no zone assumed (the user says it).
         assertThat(byPath.get("EventTime/TimeCreated")).isEqualTo(map("path", "EventTime/TimeCreated",
                 "xpath", "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
-                "time_format", "yyyy-MM-dd HH:mm:ss", "timezone", "UTC"));
-        assertThat(notes(draft)).anyMatch(n -> n.contains("'date' and 'time' are joined"));
+                "time_format", "yyyy-MM-dd HH:mm:ss"));
+        assertThat(notes(draft)).anyMatch(n -> n.contains("'date' and 'time' are joined")
+                                               && n.contains("the user's to say"));
         // accept and deny between addresses are Network/Permit and Network/Deny, so nothing is left to decide.
         assertThat(rules(draft).keySet()).containsExactly("permitted", "denied", "other");
         assertThat(generate(mappingOf(draft), SCHEMA, "4.1.0").ok()).isTrue();

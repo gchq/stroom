@@ -73,6 +73,13 @@ public final class DraftMapping {
     /// and `variants` (each variant's time format, e.g. `HH:mm:ss.SSS`), for the user to say where the date comes
     /// from.
     public static final String DATELESS_TIMES = "dateless_times";
+    /// The draft's key for times with no zone or offset: `examples` (some values of each such field, by field) and
+    /// `zone_names` (the zones a field of zone names holds), for the user to say the zone the source writes in.
+    public static final String TIME_ZONES = "time_zones";
+    // What the notes say of a time with no zone.
+    private static final String NO_ZONE = "The zone the source writes it in is the user's to say: "
+                                          + "draft_translation_mapping asks (timezone=), and Stroom reads it as UTC "
+                                          + "until then.";
     /// The field the exception a record's stack trace starts with is extracted as.
     public static final String EXCEPTION_FIELD = "exception";
     /// The field its message is extracted as.
@@ -507,6 +514,10 @@ public final class DraftMapping {
         private List<String> names = new ArrayList<>();
         private Map<String, List<String>> values = new LinkedHashMap<>();
         private Map<String, String> types = new LinkedHashMap<>();
+        // The values of each time read with no zone or offset, and the zone names a field holds: for the user to
+        // say the zone in.
+        private final Map<String, List<String>> timeExamples = new LinkedHashMap<>();
+        private final Set<String> zoneNames = new LinkedHashSet<>();
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
@@ -578,6 +589,9 @@ public final class DraftMapping {
             result.put("kinds", kinds.kinds());
             result.put("notes", notes);
             result.put("unmapped_fields", rest);
+            if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
+                result.put(TIME_ZONES, Map.of("examples", timeExamples, "zone_names", List.copyOf(zoneNames)));
+            }
             result.put("fields_seen", names);
             return result;
         }
@@ -886,11 +900,10 @@ public final class DraftMapping {
             }
             common.add(dict(PATH, "EventTime/TimeCreated",
                     "xpath", "concat(" + selector(mapping, timeField) + ", ' ', " + selector(mapping, clock) + ")",
-                    "time_format", datePattern + " HH:mm" + seconds, "timezone", "UTC"));
+                    "time_format", datePattern + " HH:mm" + seconds));
             taken.add(timeField);
             taken.add(clock);
-            notes.add("'" + timeField + "' and '" + clock + "' are joined for EventTime/TimeCreated, read as UTC: "
-                      + "change timezone if the source writes local time.");
+            notes.add("'" + timeField + "' and '" + clock + "' are joined for EventTime/TimeCreated. " + NO_ZONE);
         }
 
         @SuppressWarnings("unchecked")
@@ -903,11 +916,10 @@ public final class DraftMapping {
                 entry.put("time_format", TimePatterns.EPOCH_NAMES.get(pattern));
             } else {
                 entry.put("time_format", pattern);
-                if (!(pattern.contains("X") || pattern.contains("Z") || pattern.contains("z")
-                      || pattern.contains("O") || pattern.contains("V"))) {
-                    entry.put("timezone", "UTC");
-                    notes.add("'" + timeField + "' has no time zone: timezone is set to UTC; change it if the "
-                              + "source writes local time.");
+                if (!TimePatterns.hasZone(pattern)) {
+                    // The zone the source writes in is the user's to say: never assumed (asked for by the user).
+                    timeExamples.put(timeField, values.get(timeField).stream().limit(5).toList());
+                    notes.add("'" + timeField + "' has no time zone or offset. " + NO_ZONE);
                 }
             }
             common.add(entry);
@@ -936,6 +948,10 @@ public final class DraftMapping {
                 // event.
                 common.add(dict(PATH, TIME_ZONE_PATH, FIELD, zoneField));
                 taken.add(zoneField);
+                zoneNames.addAll(new LinkedHashSet<>(values.get(zoneField).stream()
+                        .filter(v -> !ToolText.isBlank(v))
+                        .map(ToolText::strip)
+                        .toList()));
                 notes.add("'" + zoneField + "' holds time zone names: kept as " + TIME_ZONE_PATH + "; if the times "
                           + "have no zone of their own, read them in it (timezone on EventTime/TimeCreated).");
             }
