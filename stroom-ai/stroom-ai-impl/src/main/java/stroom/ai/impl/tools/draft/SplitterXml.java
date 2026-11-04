@@ -69,6 +69,10 @@ public final class SplitterXml {
     private static final String DELIMITED = "delimited";
     private static final String FIELDS = "fields";
     private static final String NEW_LINE = "\n";
+    // A record of several lines: its first line, and the lines after it.
+    private static final String CONTINUED_RECORD = "^([^\\n]*)\\n((?s:.+))$";
+    // A record of one line.
+    private static final String ONE_LINE_RECORD = "^([^\\n]*)$";
     // The buffer sizes written are rounded up to this.
     private static final int BUFFER_STEP = 10_000;
     private static final Pattern DATA_SPLITTER_TAG = Pattern.compile("<dataSplitter\\b[^>]*>");
@@ -128,9 +132,12 @@ public final class SplitterXml {
             final String pattern = hasText(spec.recordStart())
                     ? recordRegex(spec.recordStart())
                     : recordEndRegex(spec.recordEnd());
+            final String inside = spec.continuation()
+                    ? continuationXml(spec, "      ", ids)
+                    : recordXml(spec, "      ", ids) + catchAllXml(spec, "      ", ids);
             return DS_HEAD + "  <regex" + id(ids, "record") + " pattern=\"" + attr(pattern) + "\">\n"
-                   + "    <group" + id(ids, "fields") + " value=\"$1\">\n" + recordXml(spec, "      ", ids)
-                   + catchAllXml(spec, "      ", ids) + "    </group>\n  </regex>\n" + DS_TAIL;
+                   + "    <group" + id(ids, "fields") + " value=\"$1\">\n" + inside + "    </group>\n  </regex>\n"
+                   + DS_TAIL;
         }
         // A new line inside quotes is part of the value when quoted_newlines says so: the records' own split
         // ignores it.
@@ -169,6 +176,39 @@ public final class SplitterXml {
                 : "";
     }
 
+    // A record of several lines whose first is read by the spec: the lines after it kept whole as `continuation`,
+    // the first line read (or, with catch_all, kept as `unparsed` when the spec can't read it); a record of one
+    // line read alone. As SplitterDryRun's continuation divides them.
+    private static String continuationXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        final String inner = indent + "    ";
+        return indent + "<regex" + id(ids, "continued") + " pattern=\"" + attr(CONTINUED_RECORD) + "\">\n"
+               + indent + "  <data name=\"" + SplitterSpec.CONTINUATION + "\" value=\"$2\" />\n"
+               + indent + "  <group value=\"$1\">\n" + recordXml(spec, inner, ids) + catchAllXml(spec, inner, false)
+               + indent + "  </group>\n" + indent + "</regex>\n"
+               + indent + "<regex" + id(ids, "oneLine") + " pattern=\"" + attr(ONE_LINE_RECORD) + "\">\n"
+               + indent + "  <group value=\"$1\">\n" + recordXml(spec, inner, false)
+               + catchAllXml(spec, inner, false) + indent + "  </group>\n" + indent + "</regex>\n";
+    }
+
+    // Each part a regex that takes the record when its match fits the record's start, writes its variant, and reads
+    // the record with the part's spec; tried in order, the first that fits reads it. The record's group opens first,
+    // so it is $1 whatever groups the match has.
+    private static String alternativesXml(final SplitterSpec spec, final String indent, final boolean ids) {
+        final StringBuilder out = new StringBuilder();
+        for (int n = 0; n < spec.parts().size(); n++) {
+            final SplitterSpec part = spec.parts().get(n);
+            out.append(indent).append("<regex").append(id(ids, "part" + (n + 1))).append(" pattern=\"")
+                    .append(attr("^((?=" + part.guard() + ")(?s:.*))$")).append("\">\n")
+                    .append(indent).append("  <data name=\"").append(attr(spec.variantField())).append("\" value=\"")
+                    .append(attr(part.variant())).append("\" />\n")
+                    .append(indent).append("  <group value=\"$1\">\n")
+                    .append(recordXml(part, indent + "    ", false))
+                    .append(indent).append("  </group>\n")
+                    .append(indent).append("</regex>\n");
+        }
+        return out.toString();
+    }
+
     // With catch_all, a record the spec didn't match kept whole as `unparsed` (without its new line), instead of
     // an error and the record lost. The fields kind keeps its own (what no field took).
     private static String catchAllXml(final SplitterSpec spec, final String indent, final boolean ids) {
@@ -188,9 +228,10 @@ public final class SplitterXml {
 
     /// @param start A regex the first line of a record matches at its start.
     /// @return The regex taking one record of several lines: from a line that starts one to the next such line, or
-    /// the end.
+    /// the end. Lines before the first that starts one (a stream cut in a stack trace) are a record of their own, as
+    /// the dry run groups them; before, Stroom reported them as content no expression matched.
     public static String recordRegex(final String start) {
-        return "(?sm)^((?:" + start + ").*?)\\n?(?=^(?:" + start + ")|\\z)";
+        return "(?sm)^((?:" + start + ")?.*?)\\n?(?=^(?:" + start + ")|\\z)";
     }
 
     /// @param end A regex the last line of a record matches at its start.
@@ -310,6 +351,9 @@ public final class SplitterXml {
             }
             case "cef" -> {
                 return cefXml(spec, indent, ids);
+            }
+            case SplitterSpec.ALTERNATIVES -> {
+                return alternativesXml(spec, indent, ids);
             }
             case "key_value" -> {
                 // One regex, matched again and again along the text: a pair each time, a quoted value without its

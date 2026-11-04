@@ -158,11 +158,9 @@
           <xsl:value-of select="if ($kind_parts/fn:match//fn:group[@nr=1][normalize-space(.)]) then ($kind_parts/fn:match//fn:group[@nr=1])[1] else 'other'"/>
         </TypeId>
         <xsl:apply-templates select="." mode="description"/>
-        <xsl:if test="*[@key='severity'][normalize-space(.)]">
-          <Unknown>
-            <Data Name="severity" Value="{(*[@key='severity'])[1]}"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <Data Name="severity" Value="{(*[@key='severity'])[1]}"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>

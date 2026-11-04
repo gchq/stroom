@@ -87,12 +87,10 @@
         <TypeId>
           <xsl:value-of select="if (exists(((*[@key='event_type'], mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'])[normalize-space(.)][1])[normalize-space(.)])) then ((*[@key='event_type'], mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='event_type'])[normalize-space(.)][1]) else 'other'"/>
         </TypeId>
-        <xsl:if test="*[@key='level'][normalize-space(.)] or mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'][normalize-space(.)]">
-          <Unknown>
-            <xsl:sequence select="mcp:data('level', *[@key='level'])"/>
-            <xsl:sequence select="mcp:data('message.timestamp', mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'])"/>
-          </Unknown>
-        </xsl:if>
+        <Unknown>
+          <xsl:sequence select="mcp:data('level', *[@key='level'])"/>
+          <xsl:sequence select="mcp:data('message.timestamp', mcp:json-to-xml((*[@key='message'])[1])/*/*[@key='timestamp'])"/>
+        </Unknown>
       </EventDetail>
     </Event>
   </xsl:template>
