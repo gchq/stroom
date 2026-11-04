@@ -197,7 +197,7 @@ class IndexDocumentation {
         if (!described.wanted().isEmpty()) {
             // Nothing is written yet: the call made again with the descriptions asks the user again, as no id that
             // would let it skip the form is given to the agent.
-            return BuildDocumentation.needsDescriptions(described);
+            return BuildDocumentation.needsDescriptions(described, List.of());
         }
         if (!described.given().isEmpty()) {
             section = section.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
