@@ -18,29 +18,17 @@ import java.nio.file.Files
 
 ext.moduleName = 'stroom.dashboard.gwt'
 
-def getSysPropertyOrDefault = { propName, defaultValue ->
-    def val
-    if (System.hasProperty(propName)
-            && System.getProperty(propName) != "unspecified"
-            && System.getProperty(propName) != "") {
-        val = System.getProperty(propName)
-        logger.info("Using property [${propName}] with value [${val}]")
-    } else {
-        val = defaultValue
-        logger.info("Property [${propName}] has no value, using default value [${val}]")
-    }
-    return val
-}
-
 def resourcesDir = project(':stroom-app').file('src/main/resources')
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/dashboard"
 
-def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
-logger.info('javaIoTmpDir: ' + javaIoTmpDir)
-// Append the rootDir so gwt builds from different dirs don't conflict
-def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/dashboard-gwt_build"
-gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+// The GWT build directory, under this project's build directory rather than java.io.tmpdir: /tmp is
+// often a RAM-backed tmpfs, which the copied sources and the compile's scratch directories (tmp, work,
+// deploy, extra) fill. Override with -PgwtBuildDir=<dir>, which the app and dashboard compiles share,
+// each in its own directory under it.
+def gwtBuildDir = findProperty('gwtBuildDir')
+        ? "${findProperty('gwtBuildDir')}/dashboard-gwt_build"
+        : layout.buildDirectory.dir('gwt').get().asFile.toString()
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
 def gwtTmpDir = "${gwtBuildDir}/tmp"

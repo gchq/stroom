@@ -114,16 +114,6 @@ if (localYamlFile.exists()) {
     }
 }
 
-// Convert the abs root project dir into a string that can be used as a dir
-// to allow us to have a dir for multiple repo instances that don't conflict
-// e.g. 'home+dev+git_work+gchq+stroom'
-ext.rootProjectAbsPathStr = project.rootProject.rootDir
-        .toPath()
-        .toAbsolutePath()
-        .toString()
-        .replaceAll("^/", "")
-        .replaceAll("/", "+")
-
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
         minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '50M'),

@@ -809,12 +809,17 @@ def withProcessTree = { Process process, Closure body ->
 
 // Runs a command in the test runner's directory, showing its output as it runs, and returns its
 // exit code. The output is read on another thread, so that this one can be interrupted if the
-// build is cancelled, which stops the command and everything it started.
+// build is cancelled, which stops the command and everything it started. Its temporary files (each
+// browser's profile) go under the build directory, not /tmp, which is often a RAM-backed tmpfs.
 def runInTestRunnerDir = { List command ->
-    def process = new ProcessBuilder(command.collect { it.toString() })
+    def runnerTmpDir = new File(workbenchTestDir, 'tmp')
+    project.delete(runnerTmpDir)
+    runnerTmpDir.mkdirs()
+    def processBuilder = new ProcessBuilder(command.collect { it.toString() })
             .directory(testRunnerDir)
             .redirectErrorStream(true)
-            .start()
+    processBuilder.environment().put('TMPDIR', runnerTmpDir.absolutePath)
+    def process = processBuilder.start()
     return withProcessTree(process) {
         def lines = new java.util.concurrent.LinkedBlockingQueue<java.util.Optional<String>>()
         def reader = new Thread({
@@ -1141,8 +1146,12 @@ tasks.register('workbenchTest') {
                 def classpathArgs = classpathArguments(sourceSets.main.runtimeClasspath.asPath,
                         new File(workbenchTestDir, 'server-classpath.args'))
                 def serverLog = new File(workbenchTestDir, 'server.log')
+                // The server's temporary files go under the build directory, not /tmp (a tmpfs)
+                def serverTmpDir = new File(workbenchTestDir, 'server-tmp')
+                serverTmpDir.mkdirs()
                 // The same roots as workbenchServe (see there), and the token's
-                def serverCommand = [javaExecutable] + classpathArgs + [
+                def serverCommand = [javaExecutable, "-Djava.io.tmpdir=${serverTmpDir.absolutePath}"] +
+                        classpathArgs + [
                         'stroom.gwt.workbench.framework.server.WorkbenchServer',
                         port.toString(),
                         "--content-root=${visualisationsContentDir}",
