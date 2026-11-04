@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.StroomInput;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.ai.impl.workspace.PatternTimeoutException;
 import stroom.ai.shared.AiToolCategory;
@@ -276,6 +277,7 @@ class BuildDataSplitterTool extends AbstractBuiltInTool {
             }
         }
         carriageReturns.ifPresent(note -> result.put("line_endings", note));
+        StroomInput.removedNote(texts).ifPresent(note -> result.put("removed_characters", note));
         if (result.get("spans_lines") instanceof final Long spanning) {
             result.put("hint", spanning + " record(s) of the sample streams have a quoted value holding a line break: "
                                + "read line by line, each is split in two, its second part's values in the wrong "
