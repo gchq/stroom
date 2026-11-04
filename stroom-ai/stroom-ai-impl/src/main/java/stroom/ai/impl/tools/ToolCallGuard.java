@@ -86,6 +86,11 @@ public class ToolCallGuard {
     private static final Pattern TRANSIENT = Pattern.compile(
             "call again|timed? ?out|temporar|unavailable|could not connect|connection|\\b50[234]\\b|try again",
             Pattern.CASE_INSENSITIVE);
+    // The user's answer, not a failure: a form declined, unanswered or superseded (seen in testing, chat 145: told
+    // "no indexing for now" as the backend form showed, get_field_conventions was answered "The same arguments as a
+    // call that already failed (2 times): change them. Step back...").
+    private static final Pattern USERS_ANSWER = Pattern.compile(
+            "^(The user made no choice|The user did not agree|The user chose not to answer|The user answered)");
     private static final Map<String, String> ADVICE = Map.of(
             "build_translation_xslt",
             "Start again from a clean mapping instead of patching this one: draft_translation_mapping with the "
@@ -240,7 +245,7 @@ public class ToolCallGuard {
                           final String digest,
                           final String message,
                           final String advice) {
-        if (TRANSIENT.matcher(message).find()) {
+        if (TRANSIENT.matcher(message).find() || USERS_ANSWER.matcher(message).find()) {
             return null;
         }
         synchronized (failures) {
