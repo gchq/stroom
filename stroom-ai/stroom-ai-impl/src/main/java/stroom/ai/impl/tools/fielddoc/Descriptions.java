@@ -150,6 +150,11 @@ public final class Descriptions {
         return out;
     }
 
+    /// @return The keys of the descriptions given that described a field.
+    public Set<String> matched() {
+        return Set.copyOf(used.keySet());
+    }
+
     /// @return True if the fields not yet described are collected.
     public boolean ask() {
         return ask;

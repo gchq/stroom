@@ -72,6 +72,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     static final String DOCUMENT_MISSING_FIELDS_ARG = "document_missing_fields";
     static final String EVALUATION_ARG = "evaluation";
     static final String FIELD_DESCRIPTIONS_ARG = "field_descriptions";
+    // A path ending in a Data value without its /@Value.
+    private static final Pattern DATA_NAMED = Pattern.compile("/Data\\[@Name='[^']*'\\]$");
     static final String FIELD_MAPPING_LAYOUT_ARG = "field_mapping_layout";
     /// What an evaluation report's name ends with: `<pipeline> - Evaluation`.
     static final String EVALUATION = " - Evaluation";
@@ -95,6 +97,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
     private final WriteGuard guard;
     private final Consent consent;
     private final BuildPlan plan;
+    private final PendingDocumentation pendingDocs;
 
     @Inject
     WriteDocumentationTool(final BuildDocumentation docs,
@@ -108,7 +111,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                            final DocumentWrites writes,
                            final WriteGuard guard,
                            final Consent consent,
-                           final BuildPlan plan) {
+                           final BuildPlan plan,
+                           final PendingDocumentation pendingDocs) {
         this.docs = docs;
         this.sections = sections;
         this.indexDocumentation = indexDocumentation;
@@ -121,6 +125,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         this.guard = guard;
         this.consent = consent;
         this.plan = plan;
+        this.pendingDocs = pendingDocs;
     }
 
     @Override
@@ -277,8 +282,16 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                   + "(allow_unknown), whose form shows what the records hold; or map them to their "
                                   + "action element. Save the XSLT from its mapping there.");
         }
-        final String body = DocumentationVersions.bodyOf(DocumentationText.sectionLevels(NullSafe.string(
-                rawArg(call, MARKDOWN_ARG))));
+        String markdown = NullSafe.string(rawArg(call, MARKDOWN_ARG));
+        final String documented = stringArg(call, PIPELINE_UUID_ARG);
+        if (markdown.isBlank() && documented != null && stringArg(call, INDEX_UUID_ARG) == null) {
+            // Only descriptions given: the markdown of the call that asked for them (seen: refused, then sent whole
+            // again).
+            markdown = pendingDocs.of(context.session(), documented)
+                    .map(PendingDocumentation.Pending::markdown)
+                    .orElse("");
+        }
+        final String body = DocumentationVersions.bodyOf(DocumentationText.sectionLevels(markdown));
         if (body.isBlank()) {
             throw new ToolRefusal("The documentation is empty: give the full text in markdown, with the sections in "
                                   + "stroom://guide");
@@ -342,6 +355,10 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 ? placed.existing()
                 : placed.beside();
         final Map<String, String> given = new LinkedHashMap<>(docs.keptDescriptions(previous));
+        // And those given by earlier calls that wrote nothing (seen: lost, every field asked for again).
+        given.putAll(pendingDocs.of(context.session(), pipelineUuid)
+                .map(PendingDocumentation.Pending::descriptions)
+                .orElse(Map.of()));
         given.putAll(request.descriptions());
         // Where each kept one's field came from: one whose field comes from elsewhere now is asked for again (the
         // ones given in this call are of the fields as they are).
@@ -397,7 +414,15 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                     : sections.writtenEventsSection(context, request.build(), pipelineUuid, streamIds,
                             laid.layout(), described);
             if (!described.wanted().isEmpty()) {
-                return BuildDocumentation.needsDescriptions(described);
+                final Map<String, String> sofar = new LinkedHashMap<>(pendingDocs.of(context.session(), pipelineUuid)
+                        .map(PendingDocumentation.Pending::descriptions)
+                        .orElse(Map.of()));
+                sofar.putAll(request.descriptions());
+                pendingDocs.remember(context.session(), pipelineUuid, pipeline.getName(), request.body(), sofar);
+                final List<String> unmatched = request.descriptions().keySet().stream()
+                        .filter(key -> !described.matched().contains(key))
+                        .toList();
+                return BuildDocumentation.needsDescriptions(described, unmatched);
             }
             if (!described.given().isEmpty()) {
                 generated = generated.stripTrailing() + "\n\n" + FieldDocs.descriptionsBlock(described.given());
@@ -492,6 +517,7 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             doc = guard.createFilled(DocumentationDoc.TYPE, placed.name(), request.build(), writer::write, false,
                     pipelineShapes.role(pipelineUuid));
         }
+        pendingDocs.written(context.session(), pipelineUuid);
         final DocRef docRef = new DocRef(DocumentationDoc.TYPE, doc.getUuid(), doc.getName());
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", DocumentationDoc.TYPE);
@@ -686,10 +712,19 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
             throw new ToolRefusal(NOT_AN_OBJECT);
         }
         final Map<String, String> out = new LinkedHashMap<>();
-        map.forEach((field, description) -> out.put(String.valueOf(field), description == null
+        map.forEach((field, description) -> out.put(descriptionKey(String.valueOf(field)), description == null
                 ? ""
                 : String.valueOf(description)));
         return out;
+    }
+
+    // A field's key as the descriptions are matched by it: a Data value's path with its /@Value (seen: given
+    // without it, 28 descriptions matched nothing and were asked for again), single quotes round a name.
+    static String descriptionKey(final String key) {
+        final String quoted = ToolText.strip(key).replaceAll("\\[@Name=\"([^\"]*)\"\\]", "[@Name='$1']");
+        return quoted.contains("/") && DATA_NAMED.matcher(quoted).find()
+                ? quoted + "/@Value"
+                : quoted;
     }
 
     private static String text(final Object value) {
