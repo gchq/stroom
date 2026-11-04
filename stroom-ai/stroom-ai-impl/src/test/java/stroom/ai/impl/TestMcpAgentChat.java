@@ -1964,6 +1964,21 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void anEmptyReplyIsCarriedOnFrom() {
+        // Seen (Qwen 3.8 Flash, chat 145): a tool call written in its reasoning as text, no answer and no call; the run
+        // ended with nothing said until the user typed "continue".
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = scriptedModel(requests, noopCall("1"), text(""), noopCall("2"),
+                text("The documentation is written."));
+
+        final ChatResponse response = chatWithNoop(model);
+
+        assertThat(response.aiMessage().text()).isEqualTo("The documentation is written.");
+        assertThat(requests).hasSize(4);
+        assertThat(requests.get(2).messages().getLast()).isEqualTo(UserMessage.from(McpAgentChat.EMPTY_NOTE));
+    }
+
+    @Test
     void repliesThatOnlySayWhatComesNextAreCarriedOnFromAtMostTwiceInARow() {
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = scriptedModel(requests,
