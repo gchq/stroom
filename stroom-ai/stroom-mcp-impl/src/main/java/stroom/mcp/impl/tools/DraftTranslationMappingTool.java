@@ -183,6 +183,10 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                         + "it: received, created, file_name or none, "
                                                                         + "as the user chose; asked in a form when "
                                                                         + "left out.")
+                        .addStringProperty(TimeSources.TIMEZONE_ARG, "Times with no zone or offset: the zone the "
+                                                                     + "source writes them in, as the user said (an "
+                                                                     + "IANA name or +10:00); asked in a form when "
+                                                                     + "left out.")
                         .addIntegerProperty(CONTINUATION_LINES_ARG, "Records with stack traces: the most lines of "
                                                                     + "each its Event keeps, as the user chose (0: "
                                                                     + "all of it); asked in a form when left out.")
@@ -254,10 +258,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         }
         traceLines(call, context, result, mapping);
         // Records with no time, or times with no date: where they come from is the user's to say.
-        TimeSources.apply(call, context, consent, NAME, result, mapping, streamIds.stream()
-                .map(id -> sampleStreamTexts.receiptHeaders(id).get("RemoteFile"))
-                .filter(name -> name != null && !name.isBlank())
-                .toList());
+        final List<Map<String, String>> headers = streamIds.stream().map(sampleStreamTexts::receiptHeaders).toList();
+        TimeSources.apply(call, context, consent, NAME, result, mapping, headerValues(headers, "RemoteFile"),
+                headerValues(headers, "ReceivedTime"));
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
@@ -305,6 +308,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             notes.add("Each record's stack trace is cut to its first " + lines + " line(s), as the user chose.");
         }
         result.put("notes", notes);
+    }
+
+    // A receipt header's values across the sample streams, those they carry.
+    private static List<String> headerValues(final List<Map<String, String>> headers, final String name) {
+        return headers.stream()
+                .map(header -> header.get(name))
+                .filter(value -> value != null && !value.isBlank())
+                .toList();
     }
 
     // A next version drafted from the sample: what the current XSLT looks up is in neither (seen in testing: V1.3

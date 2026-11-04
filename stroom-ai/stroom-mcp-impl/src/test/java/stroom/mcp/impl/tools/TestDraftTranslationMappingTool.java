@@ -89,6 +89,7 @@ class TestDraftTranslationMappingTool {
         world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
         // Its key=value lines have no time: left for the agent to map here.
         world.answers.put(TimeSources.TIME_QUESTION, "Leave it: I'll say which field");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
         final Map<String, Object> cut = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
         assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION);
         assertThat(String.valueOf(cut.get("mapping"))).contains("[position() le 20]");
@@ -150,6 +151,7 @@ class TestDraftTranslationMappingTool {
 
         world.forms = true;
         world.answers.put(TimeSources.DATE_QUESTION, "The date in the file's name (e.g. app-2026-10-11.log)");
+        world.answers.put(TimeSources.ZONE_QUESTION, "UTC");
         final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(9)));
         assertThat(String.valueOf(chosen.get("mapping")))
                 .contains("replace(stroom:meta('RemoteFile'), '^.*?(\\d{4}-\\d{2}-\\d{2}).*$', '$1')")
@@ -162,6 +164,37 @@ class TestDraftTranslationMappingTool {
                 .containsEntry("error", "date_source is one of received, created, none");
         assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(9), TimeSources.DATE_SOURCE_ARG,
                 "received")).get("mapping"))).contains("substring(stroom:meta('ReceivedTime'), 1, 10)");
+    }
+
+    @Test
+    void theUserSaysWhichZoneTimesWithNoneAreIn() {
+        // Asked for by the user: a time with no zone or offset is never assumed to be UTC.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(11L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 11", local), List.of()));
+        // Received five minutes after its last event, in UTC: the source writes +10:00.
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(11L)).thenReturn(Map.of("ReceivedTime",
+                "2026-10-01T00:09:00.000Z"));
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(11)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("have no time zone or offset", "never assume UTC",
+                "timezone=");
+        assertThat(String.valueOf(asked.get("mapping"))).doesNotContain("timezone");
+
+        world.forms = true;
+        world.answers.put(TimeSources.ZONE_QUESTION, "+10:00 (a guess: the sample's latest time is about 10 hours "
+                                                     + "ahead of when Stroom received it)");
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(11)));
+        assertThat(String.valueOf(chosen.get("mapping"))).contains("timezone=+10:00");
+        assertThat(String.valueOf(world.formsShown.getLast())).contains("UTC", "+10:00 (a guess",
+                "Another zone: I'll name it");
+
+        world.asked.clear();
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(11), TimeSources.TIMEZONE_ARG,
+                "Australia/Sydney")).get("mapping"))).contains("timezone=Australia/Sydney");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(11), TimeSources.TIMEZONE_ARG, "Sydney")))
+                .extractingByKey("error").asString().contains("is not a time zone");
     }
 
     @Test

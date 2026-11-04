@@ -70,8 +70,11 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 
 `time_format` is a Java time pattern with letters that aren't pattern letters quoted:
 `yyyy-MM-dd'T'HH:mm:ss.SSSX`. An epoch time is named, never described: `epoch_s` (seconds, a fraction allowed),
-`epoch_ms`, `epoch_us`, `epoch_ns`. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`) only for a time that
-carries no zone or offset of its own. `profile_sample` and the draft give the pattern the sample's values fit.
+`epoch_ms`, `epoch_us`, `epoch_ns`. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`, or an offset, `+10:00`) only for a time that
+carries no zone or offset of its own, and never assumed: the zone is the user's to say. The draft asks, offering UTC,
+a zone the records name, and an offset guessed from the gap between the sample's latest time and when Stroom received
+it (`timezone=` gives the answer); left unset, Stroom reads the time as UTC and the build warns. `profile_sample` and
+the draft give the pattern the sample's values fit.
 
 Where a time is incomplete, the user says where the rest comes from; the draft asks (`time_source`,
 `date_source`) and writes the answer. Never `stroom:current-time()` (processing time), and never Stroom's own
