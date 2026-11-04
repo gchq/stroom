@@ -22,7 +22,10 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.draft.DraftMapping;
+import stroom.ai.impl.tools.sample.TimePatterns;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,7 +38,8 @@ import java.util.regex.Pattern;
 /// is an approximation of when its events happened, so it is offered, not defaulted; a date in the file's name is
 /// offered when the sample streams' `RemoteFile` holds one.
 ///
-/// A date joined with each record's time of day is rolled over midnight (`rollover`), as a log's lines cross it.
+/// A date joined with each record's time of day is rolled over midnight (`rollover`), as a log's lines cross it. A
+/// time read with no zone or offset is read in the zone the user says (`timezone`), never assumed to be UTC.
 final class TimeSources {
 
     /// The question put when records give no time.
@@ -46,6 +50,11 @@ final class TimeSources {
     static final String TIME_SOURCE_ARG = "time_source";
     /// The argument giving the answer to [#DATE_QUESTION]: `received`, `created`, `file_name` or `none`.
     static final String DATE_SOURCE_ARG = "date_source";
+    /// The question put when times have no zone.
+    static final String ZONE_QUESTION = "Some times have no time zone or offset. Which zone does the source write "
+                                        + "them in?";
+    /// The argument giving the answer to [#ZONE_QUESTION]: an IANA name or an offset.
+    static final String TIMEZONE_ARG = "timezone";
 
     private static final String TIME_CREATED = "EventTime/TimeCreated";
     private static final String RECEIVED = "received";
@@ -69,6 +78,7 @@ final class TimeSources {
     /// @param result    The draft's result (its `dateless_times` and `notes`).
     /// @param mapping   The draft's mapping, changed in place.
     /// @param fileNames The sample streams' `RemoteFile` headers.
+    /// @param received  The sample streams' `ReceivedTime` headers.
     @SuppressWarnings("unchecked")
     static void apply(final ToolCall call,
                       final ToolCallContext context,
@@ -76,7 +86,8 @@ final class TimeSources {
                       final String action,
                       final Map<String, Object> result,
                       final Map<String, Object> mapping,
-                      final List<String> fileNames) {
+                      final List<String> fileNames,
+                      final List<String> received) {
         final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
         final Map<String, Object> dateless = result.get(DraftMapping.DATELESS_TIMES) instanceof final Map<?, ?> map
                 ? (Map<String, Object>) map
@@ -93,7 +104,82 @@ final class TimeSources {
         if (!timeless.isEmpty()) {
             times(call, context, consent, action, mapping, timeless, notes);
         }
+        zones(call, context, consent, action, result, mapping, received, notes);
         result.put("notes", notes);
+    }
+
+    // The zone of times read with no zone or offset: the user's to say (asked for by the user), never assumed. A
+    // zone a field names, and an offset guessed from when Stroom received the sample, are offered.
+    @SuppressWarnings("unchecked")
+    private static void zones(final ToolCall call,
+                              final ToolCallContext context,
+                              final Consent consent,
+                              final String action,
+                              final Map<String, Object> result,
+                              final Map<String, Object> mapping,
+                              final List<String> received,
+                              final List<Object> notes) {
+        final List<Map<String, Object>> zoneless = zoneless(mapping);
+        if (zoneless.isEmpty()) {
+            return;
+        }
+        final Map<String, Object> found = result.get(DraftMapping.TIME_ZONES) instanceof final Map<?, ?> map
+                ? (Map<String, Object>) map
+                : Map.of();
+        final Map<String, String> answers = new LinkedHashMap<>();
+        answers.put("UTC", "UTC");
+        for (final Object zone : JsonValues.listOrEmpty(found.get("zone_names"))) {
+            answers.putIfAbsent("The zone the records name: " + zone, String.valueOf(zone));
+        }
+        TimeZones.guess(zoneless, (Map<String, List<String>>) found.getOrDefault("examples", Map.of()), received)
+                .ifPresent(guess -> answers.putIfAbsent(guess.label(), guess.offset()));
+        answers.put("Another zone: I'll name it", NONE);
+        final String chosen = chosenZone(call, context, consent, action, answers);
+        final String where = String.join(", ", zoneless.stream().map(entry -> "'" + TimeZones.readFrom(entry) + "'")
+                .distinct()
+                .toList());
+        if (chosen == null || NONE.equals(chosen)) {
+            notes.add("The times read from " + where + " have no time zone or offset: ask the user which zone the "
+                      + "source writes them in (never assume UTC), and draft again with timezone= its IANA name "
+                      + "(e.g. Australia/Sydney) or offset (+10:00). Until then Stroom reads them as UTC.");
+            return;
+        }
+        zoneless.forEach(entry -> entry.put("timezone", chosen));
+        notes.add("The times read from " + where + " are read in " + chosen + ", as the user chose.");
+    }
+
+    // The answer given as timezone=, else asked in a form; null when neither (no forms).
+    private static String chosenZone(final ToolCall call,
+                                     final ToolCallContext context,
+                                     final Consent consent,
+                                     final String action,
+                                     final Map<String, String> answers) {
+        final Object given = ToolArgs.raw(call, TIMEZONE_ARG);
+        if (given != null) {
+            final String zone = String.valueOf(given).strip();
+            try {
+                ZoneId.of(zone);
+            } catch (final DateTimeException e) {
+                throw new ToolRefusal("timezone '" + zone + "' is not a time zone: give an IANA name (e.g. "
+                                      + "Australia/Sydney, UTC) or an offset (+10:00)");
+            }
+            return zone;
+        }
+        return consent.choose(call, context, action, ZONE_QUESTION, List.copyOf(answers.keySet()), null)
+                .map(answers::get)
+                .orElse(null);
+    }
+
+    // The TimeCreated entries read with a pattern that has no zone, and no timezone given.
+    private static List<Map<String, Object>> zoneless(final Map<String, Object> mapping) {
+        final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
+        JsonValues.maps(mapping.get("events")).forEach(rule -> entries.addAll(JsonValues.maps(rule.get("fields"))));
+        return entries.stream()
+                .filter(entry -> TIME_CREATED.equals(entry.get("path")))
+                .filter(entry -> entry.get("time_format") instanceof final String format && !format.startsWith(
+                        "epoch") && !TimePatterns.hasZone(format))
+                .filter(entry -> entry.get("timezone") == null)
+                .toList();
     }
 
     // The date for times that have none: joined with each, rolled over midnight.
@@ -135,7 +221,6 @@ final class TimeSources {
             entry.put("path", TIME_CREATED);
             entry.put("xpath", "concat(" + date + ", ' ', data[@name='" + field + "']/@value)");
             entry.put("time_format", "yyyy-MM-dd " + format);
-            entry.put("timezone", "UTC");
             entry.put("rollover", true);
             setTime(rule, entry);
         }
