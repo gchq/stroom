@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.InstructionRules;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -149,7 +150,10 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                     + "(stream_ids)."))
                         .addStringProperty(SOURCE_NAME_ARG, "The source, e.g. 'Acme door controller': names the "
                                                             + "system and generator until the user confirms them.")
-                        .addStringProperty(SYSTEM_NAME_ARG, "EventSource/System/Name, if the user has said.")
+                        .addStringProperty(SYSTEM_NAME_ARG, "EventSource/System/Name, if the user has said: one "
+                                                            + "name, or for a stream of several products a JSON "
+                                                            + "object of each variant's, e.g. {\"cef\": "
+                                                            + "\"SecureGate\"}.")
                         .addStringProperty(ENVIRONMENT_ARG, "EventSource/System/Environment, if the user has said, "
                                                             + "e.g. Prod.")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(SAMPLE_STREAMS))
@@ -262,6 +266,12 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final List<Map<String, String>> headers = streamIds.stream().map(sampleStreamTexts::receiptHeaders).toList();
         TimeSources.apply(call, context, consent, NAME, result, mapping, headerValues(headers, "RemoteFile"),
                 headerValues(headers, "ReceivedTime"));
+        // Several formats, each its own rules: a System/Name each, unless one was given (seen: one name for five
+        // products).
+        final List<Object> systemNotes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
+        SystemNames.apply(mapping, variantFieldOf(result.get("splitter")), ToolArgs.raw(call, SYSTEM_NAME_ARG),
+                systemNotes);
+        result.put("notes", systemNotes);
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
@@ -311,6 +321,16 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         result.put("notes", notes);
     }
 
+    // The field an alternatives splitter writes each record's variant in, or null for one of one format.
+    private static String variantFieldOf(final Object splitter) {
+        if (splitter instanceof final Map<?, ?> spec && SplitterSpec.ALTERNATIVES.equals(spec.get("kind"))) {
+            return spec.get("variant_field") == null
+                    ? SplitterSpec.VARIANT
+                    : String.valueOf(spec.get("variant_field"));
+        }
+        return null;
+    }
+
     // A receipt header's values across the sample streams, those they carry.
     private static List<String> headerValues(final List<Map<String, String>> headers, final String name) {
         return headers.stream()
@@ -340,7 +360,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(ToolArgs.raw(call,
                 SPLITTER_ARG));
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
-                stringArg(call, SYSTEM_NAME_ARG), stringArg(call, ENVIRONMENT_ARG), sourceNotes, detailCheck,
+                SystemNames.single(ToolArgs.raw(call, SYSTEM_NAME_ARG)), stringArg(call, ENVIRONMENT_ARG), sourceNotes,
+                detailCheck,
                 splitter));
     }
 
