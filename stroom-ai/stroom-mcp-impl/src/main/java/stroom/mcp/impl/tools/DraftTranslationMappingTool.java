@@ -185,8 +185,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                         + "left out.")
                         .addStringProperty(TimeSources.TIMEZONE_ARG, "Times with no zone or offset: the zone the "
                                                                      + "source writes them in, as the user said (an "
-                                                                     + "IANA name or +10:00); asked in a form when "
-                                                                     + "left out.")
+                                                                     + "IANA name or +10:00), or field:NAME / "
+                                                                     + "meta:NAME for each record's own (|ZONE the "
+                                                                     + "default); asked in a form when left out.")
                         .addIntegerProperty(CONTINUATION_LINES_ARG, "Records with stack traces: the most lines of "
                                                                     + "each its Event keeps, as the user chose (0: "
                                                                     + "all of it); asked in a form when left out.")

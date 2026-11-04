@@ -73,7 +73,14 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 `epoch_ms`, `epoch_us`, `epoch_ns`. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`, or an offset, `+10:00`) only for a time that
 carries no zone or offset of its own, and never assumed: the zone is the user's to say. The draft asks, offering UTC,
 a zone the records name, and an offset guessed from the gap between the sample's latest time and when Stroom received
-it (`timezone=` gives the answer); left unset, Stroom reads the time as UTC and the build warns. `profile_sample` and
+it (`timezone=` gives the answer); left unset, Stroom reads the time as UTC and the build warns. Where each record
+says its own zone, `timezone` is an object naming where: `{"field": "tz", "default": "UTC"}` or `{"meta":
+"TimeZone", "default": "Australia/Sydney"}` (`timezone=field:tz` or `meta:TimeZone`, `|ZONE` the default, in the
+draft). Stroom reads IANA names, `UTC`, `Z` and offsets (`+10:00`, `+1000`, `UTC+10`); `+5:30` and `+10.5` are
+written as it reads them; other values (abbreviations such as `AEST`; `IST` and `CST` name more than one zone) go in
+its `map`, as the user says what each is: `{"field": "tz", "map": {"AEST": "Australia/Sydney"}, "default": "UTC"}`.
+`default` is the zone where a record gives none. `build_translation_xslt` names the sample's zones Stroom wouldn't
+read; in processing one it can't read is read as UTC, with Stroom's warning naming the record. `profile_sample` and
 the draft give the pattern the sample's values fit.
 
 Where a time is incomplete, the user says where the rest comes from; the draft asks (`time_source`,

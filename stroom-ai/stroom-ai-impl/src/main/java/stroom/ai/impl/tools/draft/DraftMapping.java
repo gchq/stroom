@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
+import stroom.ai.impl.tools.generation.ZoneSource;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SampleTexts;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -78,11 +79,17 @@ public final class DraftMapping {
     ///
     /// @param examples  Some values of each time read with no zone, by field.
     /// @param zoneNames The zones a field of zone names holds.
+    /// @param zoneField That field, or null.
     /// @return The entry.
-    static Map<String, Object> timeZones(final Map<String, List<String>> examples, final List<String> zoneNames) {
+    static Map<String, Object> timeZones(final Map<String, List<String>> examples,
+                                         final List<String> zoneNames,
+                                         final String zoneField) {
         final Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("examples", examples);
         entry.put("zone_names", zoneNames);
+        if (zoneField != null) {
+            entry.put("zone_field", zoneField);
+        }
         return entry;
     }
 
@@ -536,6 +543,8 @@ public final class DraftMapping {
         // say the zone in.
         private final Map<String, List<String>> timeExamples = new LinkedHashMap<>();
         private final Set<String> zoneNames = new LinkedHashSet<>();
+        // The field holding zone names, for each record's zone to be read from it.
+        private String zoneFieldName;
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
@@ -611,7 +620,7 @@ public final class DraftMapping {
             result.put("notes", notes);
             result.put("unmapped_fields", rest);
             if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
-                result.put(TIME_ZONES, timeZones(timeExamples, List.copyOf(zoneNames)));
+                result.put(TIME_ZONES, timeZones(timeExamples, List.copyOf(zoneNames), zoneFieldName));
             }
             result.put("fields_seen", names);
             return result;
@@ -992,7 +1001,10 @@ public final class DraftMapping {
             final String zoneField = names.stream()
                     .filter(n -> !taken.contains(n) && !values.get(n).isEmpty()
                                  && values.get(n).stream().filter(v -> !ToolText.isBlank(v))
-                                         .allMatch(v -> ToolText.fullmatch(ZONE_NAME, ToolText.strip(v)))
+                                         .allMatch(v -> ToolText.fullmatch(ZONE_NAME, ToolText.strip(v))
+                                                        // A zone Stroom reads, not any Word/Word (seen: Windows'
+                                                        // CategoryId, Logon/Logoff, taken for zone names).
+                                                        && !ZoneSource.unreadable(ToolText.strip(v)))
                                  && values.get(n).stream().anyMatch(v -> !ToolText.isBlank(v)))
                     .findFirst()
                     .orElse(null);
@@ -1001,6 +1013,7 @@ public final class DraftMapping {
                 // event.
                 common.add(dict(PATH, TIME_ZONE_PATH, FIELD, zoneField));
                 taken.add(zoneField);
+                zoneFieldName = zoneField;
                 zoneNames.addAll(new LinkedHashSet<>(values.get(zoneField).stream()
                         .filter(v -> !ToolText.isBlank(v))
                         .map(ToolText::strip)

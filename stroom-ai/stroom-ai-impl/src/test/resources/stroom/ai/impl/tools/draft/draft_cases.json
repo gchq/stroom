@@ -7279,10 +7279,6 @@
       "time_format": "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX"
      },
      {
-      "path": "EventSource/Device/Location/TimeZoneName",
-      "field": "EventData/Data[@Name='CategoryId']"
-     },
-     {
       "path": "EventSource/System/Name",
       "value": "32_xml_fragments_windows_many"
      },
@@ -7372,6 +7368,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='CategoryId']",
+        "field": "EventData/Data[@Name='CategoryId']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='AuditPolicyChanges']",
         "field": "EventData/Data[@Name='AuditPolicyChanges']"
        },
@@ -7406,7 +7407,6 @@
    "kinds": [],
    "notes": [
     "'EventData/Data[@Name='MemberName']' holds key/value pairs: 3 keys are fields of their own through pairs ('cn', 'ou', 'dc'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "'EventData/Data[@Name='CategoryId']' holds time zone names: kept as EventSource/Device/Location/TimeZoneName; if the times have no zone of their own, read them in it (timezone on EventTime/TimeCreated).",
     "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -7422,18 +7422,13 @@
     "EventData/Data[@Name='CommandLine']",
     "EventData/Data[@Name='ServiceName']",
     "EventData/Data[@Name='ServiceFileName']",
+    "EventData/Data[@Name='CategoryId']",
     "EventData/Data[@Name='AuditPolicyChanges']",
     "cn",
     "ou",
     "dc",
     "EventData/Data[@Name='ShareName']"
    ],
-   "time_zones": {
-    "examples": {},
-    "zone_names": [
-     "Logon/Logoff"
-    ]
-   },
    "fields_seen": [
     "System/Provider/@Name",
     "System/EventID",
@@ -24681,7 +24676,8 @@
     "zone_names": [
      "Australia/Sydney",
      "Europe/London"
-    ]
+    ],
+    "zone_field": "tz"
    },
    "fields_seen": [
     "time",
