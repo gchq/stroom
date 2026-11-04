@@ -16,6 +16,8 @@
 
 package stroom.search.elastic.template;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
+import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.ComponentTemplate;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.IndexTemplate;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.OverlappingTemplate;
@@ -56,6 +58,9 @@ import java.util.stream.Collectors;
 /// Each call can fail on its own, most often for want of privileges, so each part reports its own
 /// outcome and a failed part never stops the others being returned. Only a cluster that cannot be reached
 /// at all fails the whole read.
+///
+/// It also says whether an index name already stands for something on the cluster, and how many documents it
+/// holds ([#presence]), from the same `_resolve/index` request.
 public class ElasticIndexTemplateService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexTemplateService.class);
@@ -89,6 +94,52 @@ public class ElasticIndexTemplateService {
                 resolved.message(),
                 indexTemplate,
                 componentTemplates);
+    }
+
+    /// Says whether an index name already stands for something on the cluster (a data stream, an index or an
+    /// alias), and how many documents it holds. A cluster that refuses or answers unreadably gives
+    /// [State#UNKNOWN], never [State#ABSENT].
+    ///
+    /// @param indexName  An index name, as an indexing pipeline writes to it.
+    /// @param elasticGet Makes the GET requests to the cluster.
+    /// @return What the name stands for, or why that isn't known.
+    /// @throws IOException If the cluster could not be reached at all.
+    public Presence presence(final String indexName, final ElasticGet elasticGet) throws IOException {
+        final ElasticGetResponse response = elasticGet.get("/_resolve/index/" + encode(indexName));
+        if (!response.isSuccess()) {
+            return response.statusCode() == HTTP_NOT_FOUND
+                    ? Presence.absent()
+                    : Presence.unknown(errorMessage(response));
+        }
+        final ResolvedNames names;
+        try {
+            names = resolvedNames(JsonUtil.getMapper().readTree(response.body()));
+        } catch (final JacksonException e) {
+            return Presence.unknown(unreadableMessage("_resolve/index", e));
+        }
+        if (names.isEmpty()) {
+            return Presence.absent();
+        }
+        classifyAliasTargets(names, elasticGet);
+        final ElasticGetResponse counted = elasticGet.get("/" + encode(indexName) + "/_count");
+        Long documents = null;
+        String message = null;
+        if (counted.isSuccess()) {
+            try {
+                final OptionalLong count = toLong(JsonUtil.getMapper().readTree(counted.body()).path("count"));
+                if (count.isPresent()) {
+                    documents = count.getAsLong();
+                } else {
+                    message = "The _count response from Elasticsearch gave no count";
+                }
+            } catch (final JacksonException e) {
+                message = unreadableMessage("_count", e);
+            }
+        } else {
+            message = LogUtil.message("Its documents couldn't be counted: {}", errorMessage(counted));
+        }
+        return new Presence(State.PRESENT, names.dataStreams(), names.indices(), names.aliases(), documents,
+                message);
     }
 
     /// Whether a name matches an Elasticsearch index pattern, as Elasticsearch matches them: `*` stands for
@@ -171,6 +222,51 @@ public class ElasticIndexTemplateService {
             }
         }
         return candidates;
+    }
+
+    // An alias's targets, which Elasticsearch names without saying which are data streams (deleted as one, not as an
+    // index), each resolved on its own; one that can't be is taken for an index.
+    private void classifyAliasTargets(final ResolvedNames names, final ElasticGet elasticGet) throws IOException {
+        for (final String target : names.aliasTargets()) {
+            final ElasticGetResponse response = elasticGet.get("/_resolve/index/" + encode(target));
+            boolean dataStream = false;
+            if (response.isSuccess()) {
+                try {
+                    dataStream = !JsonUtil.getMapper().readTree(response.body()).path("data_streams").isEmpty();
+                } catch (final JacksonException e) {
+                    LOGGER.debug("Unable to read what alias target '{}' is: {}", target, e.getMessage());
+                }
+            }
+            addIfAbsent(dataStream
+                    ? names.dataStreams()
+                    : names.indices(), target);
+        }
+    }
+
+    // What a _resolve/index answer names, by kind: a backing index stands for its data stream, as an indexing
+    // pipeline writing to the name writes to the data stream; an alias, by name, with what it points at among the
+    // data streams and indices (what is dropped to empty it).
+    private ResolvedNames resolvedNames(final JsonNode root) {
+        final List<String> dataStreams = new ArrayList<>();
+        final List<String> indices = new ArrayList<>();
+        final List<String> aliases = new ArrayList<>();
+        root.path("data_streams").forEach(dataStream -> addIfNamed(dataStreams, dataStream.path("name")));
+        for (final JsonNode index : root.path("indices")) {
+            final String dataStream = stringOrNull(index.path("data_stream"));
+            if (dataStream != null) {
+                addIfAbsent(dataStreams, dataStream);
+            } else {
+                addIfNamed(indices, index.path("name"));
+            }
+        }
+        final List<String> aliasTargets = new ArrayList<>();
+        for (final JsonNode alias : root.path("aliases")) {
+            addIfNamed(aliases, alias.path("name"));
+            alias.path("data_streams").forEach(dataStream -> addIfNamed(dataStreams, dataStream));
+            alias.path("indices").forEach(target -> addIfNamed(aliasTargets, target));
+        }
+        aliasTargets.removeIf(target -> dataStreams.contains(target) || indices.contains(target));
+        return new ResolvedNames(dataStreams, indices, aliases, aliasTargets);
     }
 
     // Creation dates of the concrete indices the index name stands for. Empty if they cannot be read, in
@@ -398,6 +494,17 @@ public class ElasticIndexTemplateService {
 
     private record Resolved(String name, String message) {
 
+    }
+
+    // aliasTargets: what an alias points at that the answer doesn't otherwise say is a data stream or an index.
+    private record ResolvedNames(List<String> dataStreams,
+                                 List<String> indices,
+                                 List<String> aliases,
+                                 List<String> aliasTargets) {
+
+        boolean isEmpty() {
+            return dataStreams.isEmpty() && indices.isEmpty() && aliases.isEmpty();
+        }
     }
 
     private record Template(String name, List<String> indexPatterns, long priority, JsonNode body) {

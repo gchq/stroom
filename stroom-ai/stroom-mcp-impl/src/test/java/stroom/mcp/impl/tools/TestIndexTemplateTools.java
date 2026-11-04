@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
+import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.ai.impl.tools.AgentInstructions;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.InstructionRules.ComponentRule;
@@ -140,6 +142,30 @@ class TestIndexTemplateTools {
         assertThat(rendered.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2*"));
         // The plan leaves some written fields unmapped (dynamic false): noted, not blocking.
         assertThat(TemplateCheck.compare(rendered, DOCS, "ecs-acme-v2", ecs()).get("compatible")).isEqualTo(true);
+    }
+
+    @Test
+    void testAnIndexNameAlreadyHoldingDocumentsIsSaidBeforeAnythingIsIndexed() {
+        // So the user can choose another name while the template is agreed, not after the first run.
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "whatever", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated")));
+        world.presences.put("ecs-acme-v2", new Presence(State.PRESENT, List.of("ecs-acme-v2"), List.of(),
+                List.of(), 52L, null));
+
+        final Map<String, Object> result = propose(args("plan", plan.toJson()));
+
+        assertThat(result).containsEntry("needs", "example_template");
+        assertThat(String.valueOf(result.get(ProposeIndexTemplateTool.EXISTING_INDEX)))
+                .contains("'ecs-acme-v2' already exists on cluster ES_DEV (a data stream), holding 52 document(s)")
+                .contains("rename_index");
+        assertThat(world.lookedUp).containsExactly("c:ecs-acme-v2");
+
+        // Empty, absent or unknown: nothing said.
+        world.presences.put("ecs-acme-v2", new Presence(State.PRESENT, List.of("ecs-acme-v2"), List.of(),
+                List.of(), 0L, null));
+        assertThat(propose(args("plan", plan.toJson()))).doesNotContainKey(ProposeIndexTemplateTool.EXISTING_INDEX);
+        world.presences.put("ecs-acme-v2", Presence.unknown("refused"));
+        assertThat(propose(args("plan", plan.toJson()))).doesNotContainKey(ProposeIndexTemplateTool.EXISTING_INDEX);
     }
 
     @Test
@@ -432,6 +458,7 @@ class TestIndexTemplateTools {
         final Map<String, Object> destination = new LinkedHashMap<>();
         destination.put("index name", index);
         destination.put("cluster", "ES_DEV");
+        destination.put(IndexTemplateAgreements.CLUSTER_UUID, "c");
         Mockito.when(pipelines.destination(anyString())).thenReturn(destination);
     }
 
@@ -481,7 +508,8 @@ class TestIndexTemplateTools {
     }
 
     private ProposeIndexTemplateTool proposeTool() {
-        return new ProposeIndexTemplateTool(plans, examples, inputs, buildIndexes, pipelines, reviews);
+        return new ProposeIndexTemplateTool(plans, examples, inputs, buildIndexes, pipelines, reviews,
+                world.existingIndexes);
     }
 
     private CheckIndexTemplateTool checkTool() {

@@ -16,6 +16,8 @@
 
 package stroom.search.elastic.template;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
+import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.ComponentTemplate;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.IndexTemplate;
 import stroom.search.elastic.template.ElasticIndexTemplatesResponse.OverlappingTemplate;
@@ -425,6 +427,126 @@ class TestElasticIndexTemplateService {
     void testMatchesIndexPattern_nulls() {
         assertThat(ElasticIndexTemplateService.matchesIndexPattern(null, "a")).isFalse();
         assertThat(ElasticIndexTemplateService.matchesIndexPattern("a", null)).isFalse();
+    }
+
+    @Test
+    void testPresence_dataStreamWithDocuments() throws IOException {
+        // Seen in testing: a build's first run went into a data stream of the same name that held documents
+        final FakeElastic elastic = new FakeElastic()
+                .ok("/_resolve/index/logs-app", """
+                        {"indices": [], "aliases": [],
+                         "data_streams": [{"name": "logs-app",
+                                           "backing_indices": [".ds-logs-app-2026.10.01-000001"]}]}""")
+                .ok("/logs-app/_count", """
+                        {"count": 1234, "_shards": {"total": 1, "successful": 1}}""");
+
+        final Presence presence = service.presence("logs-app", elastic);
+
+        assertThat(presence.state()).isEqualTo(State.PRESENT);
+        assertThat(presence.dataStreams()).containsExactly("logs-app");
+        assertThat(presence.indices()).isEmpty();
+        assertThat(presence.aliases()).isEmpty();
+        assertThat(presence.documents()).isEqualTo(1234L);
+        assertThat(presence.holdsDocuments()).isTrue();
+        assertThat(presence.kind()).isEqualTo("a data stream");
+        assertThat(presence.message()).isNull();
+    }
+
+    @Test
+    void testPresence_backingIndexStandsForItsDataStream() throws IOException {
+        final FakeElastic elastic = new FakeElastic()
+                .ok("/_resolve/index/logs-app*", """
+                        {"indices": [{"name": ".ds-logs-app-2026.10.01-000001", "data_stream": "logs-app"},
+                                     {"name": "logs-app-old"}],
+                         "aliases": [{"name": "logs-app-all", "indices": ["logs-app-old"]}]}""")
+                .ok("/logs-app*/_count", "{\"count\": \"0\"}");
+
+        final Presence presence = service.presence("logs-app*", elastic);
+
+        assertThat(presence.dataStreams()).containsExactly("logs-app");
+        assertThat(presence.indices()).containsExactly("logs-app-old");
+        assertThat(presence.aliases()).containsExactly("logs-app-all");
+        assertThat(presence.kind()).isEqualTo("a data stream and an index and an alias");
+        assertThat(presence.documents()).isZero();
+        assertThat(presence.holdsDocuments()).isFalse();
+    }
+
+    @Test
+    void testPresence_aliasNamesWhatItPointsAt() throws IOException {
+        // An alias is emptied by deleting what it points at: its indices and data streams are listed with it
+        final FakeElastic elastic = new FakeElastic()
+                .ok("/_resolve/index/ecs-acme", """
+                        {"indices": [], "data_streams": [],
+                         "aliases": [{"name": "ecs-acme", "indices": ["ecs-acme-2025", "logs-app"]}]}""")
+                // Elasticsearch doesn't say which target is a data stream: each is resolved on its own
+                .ok("/_resolve/index/ecs-acme-2025", """
+                        {"indices": [{"name": "ecs-acme-2025"}], "aliases": [], "data_streams": []}""")
+                .ok("/_resolve/index/logs-app", """
+                        {"indices": [], "aliases": [], "data_streams": [{"name": "logs-app"}]}""")
+                .ok("/ecs-acme/_count", "{\"count\": 7}");
+
+        final Presence presence = service.presence("ecs-acme", elastic);
+
+        assertThat(presence.aliases()).containsExactly("ecs-acme");
+        assertThat(presence.dataStreams()).containsExactly("logs-app");
+        assertThat(presence.indices()).containsExactly("ecs-acme-2025");
+        assertThat(presence.holdsDocuments()).isTrue();
+    }
+
+    @Test
+    void testPresence_absent() throws IOException {
+        final FakeElastic notFound = new FakeElastic()
+                .respond("/_resolve/index/ecs-acme-v1", 404, """
+                        {"error": {"type": "index_not_found_exception", "reason": "no such index"}, "status": 404}""");
+        final FakeElastic empty = new FakeElastic()
+                .ok("/_resolve/index/ecs-acme-*", """
+                        {"indices": [], "aliases": [], "data_streams": []}""");
+
+        assertThat(service.presence("ecs-acme-v1", notFound).state()).isEqualTo(State.ABSENT);
+        assertThat(service.presence("ecs-acme-*", empty).state()).isEqualTo(State.ABSENT);
+        // Nothing counted for a name that stands for nothing
+        assertThat(empty.calls()).containsExactly("/_resolve/index/ecs-acme-*");
+    }
+
+    @Test
+    void testPresence_unknownWhenRefusedOrUnreadable() throws IOException {
+        final FakeElastic refused = new FakeElastic()
+                .forbidden("/_resolve/index/ecs-acme-v1", FORBIDDEN_REASON);
+        final FakeElastic unreadable = new FakeElastic()
+                .ok("/_resolve/index/ecs-acme-v1", "not json");
+
+        final Presence forbidden = service.presence("ecs-acme-v1", refused);
+        assertThat(forbidden.state()).isEqualTo(State.UNKNOWN);
+        assertThat(forbidden.message()).isEqualTo(FORBIDDEN_REASON);
+        final Presence garbled = service.presence("ecs-acme-v1", unreadable);
+        assertThat(garbled.state()).isEqualTo(State.UNKNOWN);
+        assertThat(garbled.message()).startsWith("Unable to read the _resolve/index response");
+    }
+
+    @Test
+    void testPresence_countRefused() throws IOException {
+        final FakeElastic elastic = new FakeElastic()
+                .ok("/_resolve/index/ecs-acme-v1", """
+                        {"indices": [{"name": "ecs-acme-v1"}]}""")
+                .forbidden("/ecs-acme-v1/_count", FORBIDDEN_REASON);
+
+        final Presence presence = service.presence("ecs-acme-v1", elastic);
+
+        assertThat(presence.state()).isEqualTo(State.PRESENT);
+        assertThat(presence.indices()).containsExactly("ecs-acme-v1");
+        assertThat(presence.documents()).isNull();
+        assertThat(presence.holdsDocuments()).isFalse();
+        assertThat(presence.message()).isEqualTo("Its documents couldn't be counted: " + FORBIDDEN_REASON);
+    }
+
+    @Test
+    void testPresence_unreachable() {
+        final ElasticGet unreachable = endpoint -> {
+            throw new ConnectException("Connection refused");
+        };
+
+        assertThatThrownBy(() -> service.presence("ecs-acme-v1", unreachable))
+                .isInstanceOf(ConnectException.class);
     }
 
     private static JsonNode json(final String json) {
