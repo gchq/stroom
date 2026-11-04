@@ -445,22 +445,24 @@ public final class DashboardPaneStories {
                     openNameValuesFilter(play);
                     play.waitFor(() -> play.expect(screen.findByText("gamma")).toBeInTheDocument());
 
-                    // In the table: not faded, no line, no description
-                    play.expect(valueRow(screen, "beta")).not().toHaveClass(FIRST_UNAVAILABLE);
-                    play.expect(valueRow(screen, "beta")).not().toHaveAccessibleDescription();
-                    play.expect(valueText(screen, "beta")).toHaveStyle("opacity", "1");
+                    // In the table: not faded, no line, no description. The popup's 'beta' is after
+                    // the table's on the page
+                    final Query betaText = screen.getAllByText("beta").nth(1);
+                    play.expect(betaText.closest(".data-grid__row")).not().toHaveClass(FIRST_UNAVAILABLE);
+                    play.expect(betaText.closest(".data-grid__row")).not().toHaveAttribute("aria-description");
+                    play.expect(betaText).toHaveStyle("opacity", "1");
 
                     // The first not in the table has the line above it
                     play.expect(valueRow(screen, "gamma")).toHaveClass(FIRST_UNAVAILABLE);
                     play.expect(valueRow(screen, "gamma")).toHaveStyle("border-top-width", "1px");
-                    play.expect(valueRow(screen, "gamma")).toHaveAccessibleDescription(NOT_IN_TABLE);
-                    play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.5");
+                    play.expect(valueRow(screen, "gamma")).toHaveAttribute("aria-description", NOT_IN_TABLE);
+                    play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.6");
 
                     // The next is faded, without a line
                     play.expect(valueRow(screen, "delta")).not().toHaveClass(FIRST_UNAVAILABLE);
                     play.expect(valueRow(screen, "delta")).toHaveStyle("border-top-width", "0px");
-                    play.expect(valueRow(screen, "delta")).toHaveAccessibleDescription(NOT_IN_TABLE);
-                    play.expect(valueText(screen, "delta")).toHaveStyle("opacity", "0.5");
+                    play.expect(valueRow(screen, "delta")).toHaveAttribute("aria-description", NOT_IN_TABLE);
+                    play.expect(valueText(screen, "delta")).toHaveStyle("opacity", "0.6");
 
                     // A value not in the table can still be ticked, and is sent with the next search
                     play.click(screen.findByText("Select None"));

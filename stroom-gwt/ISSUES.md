@@ -1081,17 +1081,21 @@ leaves unowned (`Left unowned per close: ...`), which is where to start.
 
 ## Accessibility
 
-### A column value filter's unavailable values may be too faint
+### A column value filter's unavailable values are too faint
 
-**Reported** (4 November 2026, merging 7.14's #4841 into master). The column value filter lists
+**Fixed** (4 November 2026). The fade is now 60% opacity, 4.7:1 in the light theme and 5.0:1 in the
+dark one; the two stories below check it.
+
+**Confirmed** (4 November 2026, merging 7.14's #4841 into master). The column value filter lists
 the values the table has, then a line, then the values no row has given its other filters, which can
 still be ticked. 7.14 fades those to 50% opacity (`column-value-cell--unavailable` in
-`column-value-cell.css`), which is likely under 4.5:1 and may fail axe's `color-contrast` in the
-`TableColumnValuesFilterUnavailable` (`App/Editors/DashboardEditor`) and
-`ColumnValuesFilterUnavailable` (`App/Editors/QueryEditor`) stories. Screen readers are told by the
-row's `aria-description` ("Not in the table"), so the fade only has to show it. Opacity was kept
-because it fades a conditional formatting colour evenly; a fix could be italics or the muted text
-colour, as for a pipeline property's default value above.
+`column-value-cell.css`): about 3.4:1 in the light theme and 3.9:1 in the dark one (worked out from
+the theme colours), under WCAG AA's 4.5:1. axe doesn't fail the `TableColumnValuesFilterUnavailable`
+(`App/Editors/DashboardEditor`) and `ColumnValuesFilterUnavailable` (`App/Editors/QueryEditor`)
+stories for it, as it leaves contrast through opacity for review. Screen readers are told by the
+row's `aria-description` ("Not in the table"). Fix: 60% opacity (4.7:1 light, 5.0:1 dark) keeps the
+even fade of a conditional formatting colour; or italics, as for a pipeline property's default value
+below.
 
 ### A pipeline property's default value is too faint on its selected row
 

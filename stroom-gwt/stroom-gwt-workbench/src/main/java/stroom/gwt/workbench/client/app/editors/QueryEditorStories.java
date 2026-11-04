@@ -676,14 +676,14 @@ public final class QueryEditorStories {
 
                     final Query gammaRow = screen.getByText("gamma").closest(".data-grid__row");
                     play.expect(gammaRow).not().toHaveClass("column-values-filter__row--first-unavailable");
-                    play.expect(gammaRow).not().toHaveAccessibleDescription();
+                    play.expect(gammaRow).not().toHaveAttribute("aria-description");
                     play.expect(screen.getByText("gamma")).toHaveStyle("opacity", "1");
 
                     final Query deltaRow = screen.getByText("delta").closest(".data-grid__row");
                     play.expect(deltaRow).toHaveClass("column-values-filter__row--first-unavailable");
                     play.expect(deltaRow).toHaveStyle("border-top-width", "1px");
-                    play.expect(deltaRow).toHaveAccessibleDescription("Not in the table");
-                    play.expect(screen.getByText("delta")).toHaveStyle("opacity", "0.5");
+                    play.expect(deltaRow).toHaveAttribute("aria-description", "Not in the table");
+                    play.expect(screen.getByText("delta")).toHaveStyle("opacity", "0.6");
 
                     play.click(screen.findByText("Select None"));
                     play.click(screen.getByText("delta"));
