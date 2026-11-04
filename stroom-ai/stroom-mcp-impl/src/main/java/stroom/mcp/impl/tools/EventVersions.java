@@ -35,6 +35,7 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -623,7 +624,7 @@ public class EventVersions {
                     ? picked
                     : withDoc(call, context, build, picked.version(), FORM);
         }
-        final List<XmlSchemaDoc> held = heldSchemas.forksIn(variant.namespace());
+        final List<XmlSchemaDoc> held = newestFirst(heldSchemas.forksIn(variant.namespace()));
         final List<XmlSchemaDoc> ofVersion = version == null
                 ? held
                 : held.stream().filter(fork -> version.equals(forkVersion(fork))).toList();
@@ -831,7 +832,20 @@ public class EventVersions {
         final Map<String, List<XmlSchemaDoc>> byNamespace = new LinkedHashMap<>();
         heldSchemas.forks().forEach(fork -> byNamespace.computeIfAbsent(namespaceOf(fork), k -> new ArrayList<>())
                 .add(fork));
+        byNamespace.replaceAll((namespace, forks) -> newestFirst(forks));
         return byNamespace;
+    }
+
+    // Forks' documents newest version first, as event-logging's versions are offered, so a form's first (default)
+    // option is the newest. Seen: a fork's versions offered oldest first (by system id, as text), its oldest
+    // selected.
+    private List<XmlSchemaDoc> newestFirst(final List<XmlSchemaDoc> forks) {
+        final List<String> versions = HeldSchemas.newestFirst(forks.stream()
+                .map(this::forkVersion)
+                .toList());
+        return forks.stream()
+                .sorted(Comparator.comparingInt(fork -> versions.indexOf(forkVersion(fork))))
+                .toList();
     }
 
     // Remembers the variant chosen for the build in the session, so that a version given next is read within it.

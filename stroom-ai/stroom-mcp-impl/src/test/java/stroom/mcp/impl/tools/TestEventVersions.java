@@ -508,6 +508,42 @@ class TestEventVersions {
     }
 
     @Test
+    void aForksVersionsAreOfferedNewestFirst() {
+        // Seen in testing: the store lists a fork's documents by system id, as text, so its versions were offered
+        // oldest first and the form selected the oldest.
+        final XmlSchemaDoc older = forkDoc("fork-0", "Test fork v1", FORK_XSD.replace("version=\"4.1.0\"",
+                "version=\"1.0.0\""));
+        final XmlSchemaDoc newer = forkDoc("fork-1", "Test fork", FORK_XSD);
+        final XmlSchemaDoc middle = forkDoc("fork-2", "Test fork v2", FORK_XSD.replace("version=\"4.1.0\"",
+                "version=\"2.10.0\""));
+        holding("4.1.0", "3.5.2");
+        holdingForks(List.of(older, newer, middle));
+
+        // No forms: the variants, then the fork's documents, newest first (by number, not as text).
+        final EventVersions.Target variant = world.eventVersions.target(CALL, context, null, "b1");
+        assertThat(variant.question().get("options")).asList().last()
+                .isEqualTo(Map.of("namespace", FORK_NS, "schema", "the environment's fork", "versions",
+                        List.of("4.1.0", "2.10.0", "1.0.0")));
+        final EventVersions.Target asked = world.eventVersions.target(CALL, context, FORK_NS, "b1");
+        final List<Object> uuids = ((List<?>) asked.question().get("forks")).stream()
+                .map(fork -> ((Map<?, ?>) fork).get("uuid"))
+                .map(Object.class::cast)
+                .toList();
+        assertThat(uuids).containsExactly("fork-1", "fork-2", "fork-0");
+        assertThatThrownBy(() -> world.eventVersions.target(CALL, context, "3.5.2", "b1"))
+                .hasMessageContaining("it holds 4.1.0, 2.10.0, 1.0.0");
+
+        // In a form: the newest is the first option, the one selected.
+        world.forms = true;
+        world.answers.put(EventVersions.forkVersionQuestion(FORK_NS), "4.1.0: /XML Schemas/Test fork");
+        assertThat(world.eventVersions.target(CALL, context, FORK_NS, "b2").version()).isEqualTo("4.1.0");
+        assertThat(world.formsShown.getLast()).extracting(form -> ((Map<?, ?>) ((Map<?, ?>) form.get("properties"))
+                        .get("choice")).get("enum"))
+                .isEqualTo(List.of("4.1.0: /XML Schemas/Test fork", "2.10.0: /XML Schemas/Test fork v2",
+                        "1.0.0: /XML Schemas/Test fork v1"));
+    }
+
+    @Test
     void aForksCodeGivesTheForksVersionAndDocument() {
         // Before, the version of a saved translation was read from an event-logging system id only: a fork's code
         // was taken for the newest event-logging version, so its document wasn't kept and it regenerated in
