@@ -41,6 +41,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String NAME = "build_status";
     static final String BUILD_ARG = "build";
     static final String FULL_ARG = "full";
+    /// The argument naming a stage the user said the build is not to do.
+    static final String SKIP_STAGE_ARG = "skip_stage";
     // First, so a result too large to show in full still shows them.
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
 
@@ -85,6 +87,10 @@ class BuildStatusTool extends AbstractBuiltInTool {
                         .addBooleanProperty(FULL_ARG, "True for each step's description and tools, and each "
                                                       + "document's path; by default each step is given only by "
                                                       + "its state, and each document on one line.")
+                        .addStringProperty(SKIP_STAGE_ARG, "A stage the user said this build is not to do now "
+                                                           + "(indexing or cef_output, e.g. after 'no indexing at "
+                                                           + "this stage'): its steps are skipped and next goes on "
+                                                           + "past them. Only as the user said.")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -98,7 +104,15 @@ class BuildStatusTool extends AbstractBuiltInTool {
                                        + "(e.g. 'onboard-acme-door').");
         }
         try {
+            final String skip = stringArg(call, SKIP_STAGE_ARG);
+            if (skip != null) {
+                plan.skipStage(build, skip);
+            }
             final Map<String, Object> status = new LinkedHashMap<>(plan.status(build, null));
+            final List<String> skipped = plan.skippedByUser(build);
+            if (!skipped.isEmpty()) {
+                status.put("skipped_by_user", skipped);
+            }
             // A doc write_documentation asked descriptions for and didn't write: not done, whatever else says so.
             pendingDocs.warning(context.session()).ifPresent(warning -> status.put("documentation_pending",
                     warning));
