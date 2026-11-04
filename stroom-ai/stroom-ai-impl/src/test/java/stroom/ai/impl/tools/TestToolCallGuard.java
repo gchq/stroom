@@ -194,6 +194,18 @@ class TestToolCallGuard {
     }
 
     @Test
+    void theUsersAnswerToAFormIsNoFailure() {
+        // Seen in testing (chat 145): told "no indexing for now" as the backend form showed, get_field_conventions was
+        // answered "The same arguments as a call that already failed (2 times): change them. Step back..."
+        final StroomTool conventions = tool("get_field_conventions", null,
+                call -> ToolResult.error("The user made no choice: Which backend should the new index use?"));
+        for (int n = 0; n < 4; n++) {
+            assertThat(call(conventions, "{}").text()).doesNotContain("already failed", "in a row");
+        }
+        assertThat(calls).hasSize(4);
+    }
+
+    @Test
     void failuresAreCountedPerSessionAndForgottenAfterAWhile() {
         final StroomTool tool = translation();
         for (int n = 0; n < 3; n++) {
