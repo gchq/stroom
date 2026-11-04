@@ -48,32 +48,47 @@
     background: var(--curve-tab__background-color--hover);
 }
 
-/* In a link bar, in line with its tabs: inside the bar's padding (the bar places it in its tab
-   list's terms), as high as a tab */
+/* In a link bar, as the document bar's: in line with its tabs, as high, the same shape and hover,
+   after a "|" as between its tabs (its separators, tab-bar.css), drawn in its margin, which the bar
+   leaves room for (AbstractTabBar.getSelectorRoom). Its padding is a link tab's, so the "|" is as
+   far from it as from the tab before */
 .tab-bar--link .tab-selector {
     top: 4px;
-    margin-left: 4px;
+    margin-left: 17px;
     box-sizing: border-box;
     height: 24px;
     align-items: center;
-    border: 1px solid transparent;
-    border-radius: .25rem;
-    background-color: transparent;
-    padding: 1px;
+    border-radius: 4px;
+    padding: 0 4px;
+    color: var(--link-tab__text-color);
+}
+
+/* Its count 1px lower, as a link tab's label is (its line's room for descenders would leave its
+   digits high) */
+.tab-bar--link .tab-selector__count {
+    padding-top: 2px;
+}
+
+.tab-bar--link .tab-selector:hover {
+    background: var(--curve-tab__background-color--hover);
+}
+
+.tab-bar--link .tab-selector::before {
+    content: "|";
+    position: absolute;
+    right: 100%;
+    width: 15px;
+    text-align: center;
+    pointer-events: none;
 }
 
 .tab-selector__arrows {
     display: flex;
 }
 
-.tab-bar--curved .tab-selector__arrows svg {
+.tab-selector__arrows svg {
     width: 14px;
     height: 11px;
-}
-
-.tab-bar--link .tab-selector__arrows svg {
-    width: 11px;
-    height: 9px;
 }
 
 /* The number of tabs that don't fit, in line with the arrows, as a tab's label is */
