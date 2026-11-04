@@ -123,6 +123,8 @@ public final class XsltGenerator {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern FOR_EACH_XPATH = Pattern.compile("[/\\[(*@$]");
     private static final Pattern EQUALS_AFTER = Pattern.compile("\\s*!?=", Pattern.UNICODE_CHARACTER_CLASS);
+    // The XSLT's own function writing a record's time zone as Stroom reads one.
+    private static final String ZONE_FUNCTION = "zone";
     private static final Map<String, String> EPOCH_FUNCTIONS = Map.of("epoch_ms", "from-epoch-ms",
             "epoch_s", "from-epoch-s", "epoch_us", "from-epoch-us", "epoch_ns", "from-epoch-ns");
 
@@ -161,6 +163,8 @@ public final class XsltGenerator {
     private final Map<Extraction, Keyed> keyed = new IdentityHashMap<>();
     private final Map<Shape, String> keyedFunctions = new LinkedHashMap<>();
     private final boolean dataFunctionWanted;
+    // Whether a time reads its zone from a field or the stream's meta (mcp:zone).
+    private final boolean zoneFunctionWanted;
     private final String dataFunction;
     private boolean dataFunctionUsed;
     private final Map<List<String>, List<Run>> dataPlans = new HashMap<>();
@@ -227,6 +231,7 @@ public final class XsltGenerator {
         chooseKeyed();
         // mcp:data writes a Data entry only when its value is present: one line a Data entry instead of an xsl:if
         // and two reads of the value (seen: 135 of them, 31 KB of a 50 KB translation).
+        this.zoneFunctionWanted = mapping.allEntries().stream().anyMatch(entry -> entry.zoneSource() != null);
         this.dataFunctionWanted = "function".equals(style.dataEntries()) && mapping.allEntries().stream()
                 .anyMatch(entry -> isSet(entry.dataName()) && entry.value() == null
                                    && !(entry.hasMap() || entry.defaultValue() != null || entry.transform() != null
@@ -279,7 +284,7 @@ public final class XsltGenerator {
         if (entry.transform() != null && XPathText.FUNCTION_TRANSFORMS.contains(entry.transform())) {
             found.add(Conversion.transform(entry.transform()));
         }
-        if (isSet(entry.timeFormat()) && !entry.hasMap() && !entry.repeat()) {
+        if (isSet(entry.timeFormat()) && !entry.hasMap() && !entry.repeat() && entry.zoneSource() == null) {
             found.add(Conversion.time(entry.timeFormat(), entry.timezone()));
         }
         return found;
@@ -833,7 +838,12 @@ public final class XsltGenerator {
                 ? scalar(entry, src)
                 : src + "[1]";
         final String expression;
-        if (isSet(format) && ownFunctions.containsKey(Conversion.time(format, zone))) {
+        if (isSet(format) && entry.zoneSource() != null) {
+            // The zone read record by record (asked for by the user): from a field or the stream's meta, mapped,
+            // normalised and defaulted by mcp:zone.
+            expression = "stroom:format-date(" + one + ", " + XPathText.literal(format) + ", " + zoneText(
+                    entry.zoneSource()) + ")";
+        } else if (isSet(format) && ownFunctions.containsKey(Conversion.time(format, zone))) {
             expression = "mcp:" + ownFunctions.get(Conversion.time(format, zone)) + "(" + one + ")";
         } else if (isSet(format)) {
             expression = XPathText.timeExpression(format, zone, one);
@@ -1616,7 +1626,7 @@ public final class XsltGenerator {
         final boolean usesDictMap = m.allEntries().stream().anyMatch(entry -> isSet(entry.dictionary()));
         final boolean callsJson = JSON_CALL.matcher(ToolJson.dumps(m.toJson(DumpMode.WITHOUT_NONE))).find();
         final boolean usesJson = !m.jsonFields().isEmpty() || !m.xmlFields().isEmpty() || callsJson
-                                 || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty()
+                                 || !ownFunctions.isEmpty() || !keyedFunctions.isEmpty() || zoneFunctionWanted
                                  || dataFunctionWanted;     // the mcp prefix: its own functions
         final Map<String, String> bound = new LinkedHashMap<>();
         m.functions().forEach(functions -> bound.put(functions.prefix(), functions.namespace()));
@@ -1910,9 +1920,51 @@ public final class XsltGenerator {
         }
     }
 
+    // A record's zone from its source: the value (blank-trimmed), each mapped value its zone, then mcp:zone.
+    private String zoneText(final ZoneSource source) {
+        final String value = "normalize-space(string((" + (source.field() != null
+                ? XPathText.fieldText(m.input(), source.field())
+                : "stroom:meta(" + XPathText.literal(source.meta()) + ")") + ")[1]))";
+        String mapped = value;
+        if (source.map() != null) {
+            final List<Map.Entry<String, String>> entries = new ArrayList<>(source.map().entrySet());
+            for (int i = entries.size() - 1; i >= 0; i--) {
+                mapped = XPathText.mapStepText(value, entries.get(i).getKey(), entries.get(i).getValue(), mapped);
+            }
+        }
+        return "mcp:" + ZONE_FUNCTION + "(" + mapped + ", " + XPathText.literal(source.defaultZone()) + ")";
+    }
+
     // The XSLT's own functions, one per repeated conversion: a value in, the converted value out.
     private List<XmlElement> ownFunctions() {
         final List<XmlElement> out = new ArrayList<>();
+        if (zoneFunctionWanted) {
+            // As ZoneSource.asGiven writes a zone: an offset Stroom can't read but whose meaning is plain (+5, +5:30,
+            // +10.5, after any UTC/GMT/UT) as it reads it; blank, the default; anything else as it is.
+            final XmlElement function = XmlElement.create(XSL, "function", "name", "mcp:" + ZONE_FUNCTION, "as",
+                    "xs:string");
+            function.append(new XmlComment(XsltComments.comment("A record's time zone as Stroom reads one: the "
+                                                                + "default where the record gives none")));
+            function.addElement(XSL, "param", "name", "value", "as", "xs:string");
+            function.addElement(XSL, "param", "name", "default", "as", "xs:string");
+            // A UTC, GMT or UT prefix only before an offset (XPath's replace refuses a regex matching nothing).
+            function.addElement(XSL, "variable", "name", "prefix", "select",
+                    "if (matches($value, '^(UTC|GMT|UT)[+-]')) then replace($value, '^(UTC|GMT|UT)[+-].*$', '$1') "
+                    + "else ''");
+            function.addElement(XSL, "variable", "name", "offset", "select",
+                    "substring($value, string-length($prefix) + 1)");
+            function.addElement(XSL, "sequence", "select", "if ($value = '') then $default "
+                    + "else if (matches($offset, '^[+-]\\d(:\\d\\d)?$')) then concat($prefix, "
+                    + "substring($offset, 1, 1), '0', substring($offset, 2, 1), ':', "
+                    + "if (string-length($offset) gt 2) then substring($offset, 4, 2) else '00') "
+                    + "else if (matches($offset, '^[+-]\\d{1,2}\\.(5|25|75)$')) then concat($prefix, "
+                    + "substring($offset, 1, 1), format-number(xs:integer(substring-before(substring($offset, 2), "
+                    + "'.')), '00'), ':', "
+                    + "if (ends-with($offset, '.25')) then '15' else if (ends-with($offset, '.75')) then '45' else "
+                    + "'30') "
+                    + "else $value");
+            out.add(function);
+        }
         if (dataFunctionUsed) {
             final XmlElement function = XmlElement.create(XSL, "function", "name", "mcp:" + dataFunction, "as",
                     "element()?");

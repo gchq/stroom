@@ -3759,7 +3759,10 @@ reads, its messages split into key=value and text parts, queue ids not tied (int
 records over several lines, sessions not tied (the key isn't key=value); ModSecurity reads as keyed sections. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
 offset gets no `timezone` from the draft; the user is asked (UTC, a zone a field names, or the offset the gap between
 the latest time and the stream's `ReceivedTime` suggests, rounded to a quarter hour, within 15 hours), or `timezone=`
-gives it; `build_translation_xslt` warns of any still unset. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked
+gives it; `build_translation_xslt` warns of any still unset. A zone read record by record
+(`ZoneSource`: `timezone` as `{field|meta, map, default}`, offered where the draft finds a field of zone names, or
+`timezone=field:NAME|ZONE`) is written as `stroom:format-date(value, pattern, mcp:zone(...))`: mapped, plain offsets
+normalised (`+5:30`), the default where blank; `LocalCheck` names the sample's zones Stroom's `getZoneId` won't read. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked
 about ("When Stroom received the stream", "When the stream was created in Stroom", both approximations, or "Leave
 it"), or `time_source=received|created|none`; times with no date and no header giving it (the draft's
 `dateless_times`) are asked about the same way, `date_source=received|created|file_name|none`, the file-name date

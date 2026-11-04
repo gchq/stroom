@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.generation.ZoneSource;
 import stroom.ai.impl.tools.sample.Placeholders;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SplitterDryRun;
@@ -1367,6 +1368,7 @@ public final class LocalCheck {
             final Map<Wanted, List<String>> wanted = wanted();
             final Set<String> suggested = lookedUp(wanted, seen);
             checkTimeFormats();
+            checkZoneSources();
             unread(wanted, seen, suggested);
             // Once a record, not once a check: seen, 60 extract entries over 8,600 records took 9 s, three times
             // over.
@@ -1531,6 +1533,40 @@ public final class LocalCheck {
                     } else {
                         warnings.add(entry.path() + ": " + message + otherLayouts(entry, values));
                     }
+                }
+            }
+        }
+
+        // A time whose zone a field gives (asked for by the user): the sample's zones Stroom wouldn't read, mapped
+        // and normalised, are named, as Stroom would read each such record's time as UTC with only a warning.
+        private void checkZoneSources() {
+            for (final FieldMapping entry : mapping.allEntries()) {
+                final ZoneSource source = entry.zoneSource();
+                if (source == null) {
+                    continue;
+                }
+                if (source.field() == null) {
+                    notChecked.add(entry.path() + "'s zones (stream meta '" + source.meta() + "') were not checked "
+                                   + "against the sample");
+                    continue;
+                }
+                if (derived.contains(source.field())) {
+                    continue;
+                }
+                final List<String> values = new ArrayList<>();
+                for (final Object record : where(entry.scope())) {
+                    values.add(valueOf(record, source.field()));
+                }
+                final List<String> unreadable = source.unreadable(values);
+                if (!unreadable.isEmpty()) {
+                    problems.add(entry.path() + ": the zones in '" + source.field() + "' include "
+                                 + ToolText.repr(unreadable.subList(0, Math.min(10, unreadable.size())))
+                                 + ", which Stroom doesn't read as zones (it would read each such record's time as "
+                                 + "UTC, with only a warning). Ask the user which zone each is and give them in the "
+                                 + "timezone's map, e.g. {\"field\": \"" + source.field() + "\", \"map\": {\""
+                                 + unreadable.getFirst() + "\": \"<IANA name or offset>\"}, \"default\": \""
+                                 + source.defaultZone() + "\"}; an abbreviation can name more than one zone (IST, "
+                                 + "CST), so don't guess.");
                 }
             }
         }
