@@ -192,6 +192,24 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
+    void theUsersDecisionsAreRestatedWithEveryNextStep() {
+        // Seen in testing (chats 144, 145): the user's answers, given early, lost deep in a long run's context.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"));
+        facts.sources = List.of("ACME");
+        plan.recordDecision("b", "EventSource/System/Name", "one per product, from the vendor reference");
+        plan.recordDecision("b", "Time zone", "Australia/Sydney");
+        plan.recordDecision("b", "Time zone", "UTC");
+        plan.skipStage("b", "indexing");
+
+        final Map<String, Object> result = plan.withNext(null, "b", new LinkedHashMap<>(Map.of("ok", true)));
+
+        assertThat(next(result).get("decisions")).isEqualTo(Map.of(
+                "EventSource/System/Name", "one per product, from the vendor reference",
+                "Time zone", "UTC",
+                "skip indexing", "not now, as the user said"));
+    }
+
+    @Test
     void aSurveyedFeedWithMoreLocationsThanNextCanGiveIsSteppedOverItsStreams() {
         // Seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a placeholder for
         // them, while the plan's step says step_sample.
