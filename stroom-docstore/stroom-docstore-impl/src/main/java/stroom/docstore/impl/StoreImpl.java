@@ -623,7 +623,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
                         LogUtil.message("Error deserialising {} from store {}, {}",
-                                new DocRef(type, uuid),
+                                toDocRefDisplayString(docRef),
+                                persistence.getClass().getSimpleName(),
+                                e.getMessage()), e);
+            } catch (final Exception e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error deserialising {} from store {}, {}",
+                                toDocRefDisplayString(docRef),
                                 persistence.getClass().getSimpleName(),
                                 e.getMessage()), e);
             }
@@ -710,11 +716,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return updatedDoc;
     }
 
-    @Override
     /**
      * Every document of this type. Filtering to what the user may see is applied by
      * {@code AbstractDocumentStore}, the service layer for this document type.
      */
+    @Override
     public List<DocRef> list() {
         return persistence.list(type);
     }
@@ -769,8 +775,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private String toDocRefDisplayString(final DocRef docRef) {
-        if (docRef == null || !NullSafe.isBlankString(docRef.getName())) {
+        if (docRef == null) {
             return "";
+        } else if (NullSafe.isNonBlankString(docRef.getName())) {
+            return DocRefUtil.createTypedDocRefString(docRef);
         } else {
             try {
                 return DocRefUtil.createTypedDocRefString(docFinderProvider.get().decorate(docRef));
