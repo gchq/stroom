@@ -1598,6 +1598,8 @@ class TestMcpAgentChat {
 
     @Test
     void afterASummaryTheStepsSinceAreShortenedRatherThanSummarisedAgain() {
+        // The budget's own shortening, without the rolling shortening every step.
+        agentChat.setRollingKeptSteps(0);
         // Each summary loses detail and costs a call: the steps since are made smaller first.
         final List<ChatRequest> requests = new ArrayList<>();
         final ChatModel model = summarisingModel(requests, 30, () -> "Summary.");
@@ -1639,7 +1641,29 @@ class TestMcpAgentChat {
     }
 
     @Test
+    void earlierResultsAreShortenedAsARunGoesWithNoBudgetReached() {
+        // Seen in testing (chat 145): a small model lost its place at 70% of its window, which the budget's
+        // shortening never reached.
+        final List<ChatRequest> requests = new ArrayList<>();
+        final ChatModel model = summarisingModel(requests, 14, () -> "Summary.");
+
+        agentChat.chat(model, null, 7, messages, searchToolset(), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        assertThat(requests).noneMatch(TestMcpAgentChat::isSummaryRequest);
+        final List<String> results = requests.getLast().messages().stream()
+                .filter(ToolExecutionResultMessage.class::isInstance)
+                .map(m -> ((ToolExecutionResultMessage) m).text())
+                .toList();
+        assertThat(results).hasSize(14);
+        assertThat(results.getFirst()).isEqualTo(ConversationShortening.SHORTENED_RESULT);
+        assertThat(results.getLast()).isEqualTo("r".repeat(400));
+    }
+
+    @Test
     void contextOverflowShortensToolResultsAndRetriesOnce() {
+        // The budget's own shortening, without the rolling shortening every step.
+        agentChat.setRollingKeptSteps(0);
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
                 .thenReturn(CallToolResult.builder().content(List.of(new TextContent("r".repeat(1_000)))).build());
@@ -1678,6 +1702,8 @@ class TestMcpAgentChat {
 
     @Test
     void contextOverflowAfterManyStepsShrinksFurtherAndCarriesOnInTheSameRun() {
+        // The budget's own shortening, without the rolling shortening every step.
+        agentChat.setRollingKeptSteps(0);
         final McpSyncClient client = Mockito.mock(McpSyncClient.class);
         Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
                 .thenReturn(CallToolResult.builder().content(List.of(new TextContent("r".repeat(1_000)))).build());
@@ -1731,6 +1757,8 @@ class TestMcpAgentChat {
 
     @Test
     void aLongQuestionsEarlierStepsAreSummarisedOnceItsContextFillsUpAndTheRunCarriesOn() {
+        // The budget's own shortening, without the rolling shortening every step.
+        agentChat.setRollingKeptSteps(0);
         // Seen: a 100-step question whose context stayed full, results removed a step or two after they were read,
         // so the agent read them again and again until it hit the step limit.
         final List<ChatRequest> requests = new ArrayList<>();
