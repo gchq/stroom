@@ -107,6 +107,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final DocumentWrites writes;
     private final DocumentAccess documentAccess;
     private final XsltHistory history;
+    private final PendingDocumentation pendingDocs;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -120,7 +121,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                      final OutputFeeds outputFeeds,
                      final DocumentWrites writes,
                      final DocumentAccess documentAccess,
-                     final XsltHistory history) {
+                     final XsltHistory history,
+                     final PendingDocumentation pendingDocs) {
         this.facts = facts;
         this.layout = layout;
         this.places = places;
@@ -133,6 +135,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.writes = writes;
         this.documentAccess = documentAccess;
         this.history = history;
+        this.pendingDocs = pendingDocs;
     }
 
     @Override
@@ -217,6 +220,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final String build = stringArg(call, BUILD_ARG);
         if (build == null) {
             return JsonResults.refused("Give build: the build's name, as start_onboarding or start_build named it.");
+        }
+        // Not promoted with a doc unwritten (seen: the agent said the documentation was done, nothing written).
+        final Optional<String> undocumented = pendingDocs.warning(context.session());
+        if (undocumented.isPresent()) {
+            return JsonResults.refused(undocumented.get());
         }
         try {
             final Map<String, Object> result = promote(call, context, build);

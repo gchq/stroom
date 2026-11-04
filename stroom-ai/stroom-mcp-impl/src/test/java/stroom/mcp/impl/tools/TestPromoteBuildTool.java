@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -50,7 +51,17 @@ class TestPromoteBuildTool {
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
             Mockito.mock(ProcessorFilterWrites.class), Mockito.mock(OutputFeeds.class), docs.writes,
-            world.documentAccess, docs.translation.history);
+            world.documentAccess, docs.translation.history, docs.pendingDocs);
+
+    @Test
+    void aBuildIsNotPromotedWhileADocItWroteIsPending() {
+        // Seen in testing (chat 144): the agent said the documentation was done and went on with nothing written.
+        final ToolCallContext context = BuildToolCalls.context();
+        docs.pendingDocs.remember(context.session(), "p", "Acme-Events", "## Purpose and data\n\nx\n", Map.of());
+
+        assertThat(docs.refusal(tool, context, DocumentationWorld.args(Map.of("build", BUILD))))
+                .contains("pipeline 'Acme-Events'", "not written yet");
+    }
 
     @Test
     void roleSubfoldersAreKeptUnderEachDestinationUnlessTheUserSaysNot() {
