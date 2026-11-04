@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.template;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -50,7 +51,8 @@ import java.util.Objects;
 /// Reads an Elastic Index doc's templates from its cluster, with the doc's cluster connection as a search uses
 /// it, so the caller needs READ on the index doc but nothing on the cluster doc. It is what both the REST
 /// endpoint ([ElasticIndexTemplatesResourceImpl]) and Stroom AI ([AiElasticIndexTemplates]) read the templates
-/// with; each turns its failures into its own form.
+/// with; each turns its failures into its own form. It also looks an index name up on a cluster for Stroom AI
+/// ([AiElasticIndexPresence]), which needs READ on the cluster doc, as no index doc need exist yet.
 public class ElasticIndexTemplateReader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexTemplateReader.class);
@@ -105,6 +107,43 @@ public class ElasticIndexTemplateReader {
                 try {
                     return elasticIndexTemplateServiceProvider.get()
                             .read(indexName, endpoint -> get(restClient, endpoint));
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (final UncheckedIOException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to reach Elasticsearch cluster '{}': {}",
+                    cluster.getName(), e.getCause().getMessage()), e);
+            throw new ReadFailure(Failure.CLUSTER_UNREACHABLE, e.getCause().getMessage());
+        }
+    }
+
+    /// Says whether an index name already stands for something on a cluster, and how many documents it holds, with
+    /// the cluster doc's connection, as the caller: an indexing pipeline names the cluster doc and the index name, and
+    /// may have no Elastic Index doc yet.
+    ///
+    /// @param clusterRef The Elastic Cluster doc, of type [ElasticClusterDoc#TYPE].
+    /// @param indexName  The index name.
+    /// @return What the name stands for, or why that isn't known.
+    /// @throws stroom.util.shared.PermissionException if the caller may not read the cluster doc.
+    /// @throws ReadFailure                            if the cluster doc doesn't exist or can't be reached.
+    public Presence presence(final DocRef clusterRef, final String indexName) {
+        final ElasticClusterDoc cluster;
+        try {
+            cluster = documentResourceHelperProvider.get().read(elasticClusterStoreProvider.get(), clusterRef);
+        } catch (final DocumentNotFoundException e) {
+            throw new ReadFailure(Failure.CLUSTER_NOT_FOUND, e.getMessage());
+        }
+        if (cluster == null || cluster.getConnection() == null) {
+            throw new ReadFailure(Failure.CLUSTER_NOT_FOUND, LogUtil.message(
+                    "Elasticsearch cluster {} not found", clusterRef.getUuid()));
+        }
+        try {
+            return elasticClientCacheProvider.get().contextResult(cluster.getConnection(), client -> {
+                final Rest5Client restClient = getRestClient(client);
+                try {
+                    return elasticIndexTemplateServiceProvider.get()
+                            .presence(indexName, endpoint -> get(restClient, endpoint));
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }

@@ -56,6 +56,8 @@ class TestBundledKnowledge {
             "replace_parser", "output_type", "source_pipeline_uuid", "draft_code", "pipeline_uuid", "index_uuid",
             "index_itself", "records_per_stream", "skip_stream_ids", "known_signatures", "expect_events", "filter_id",
             "events_stream_ids",
+            // A reply's status.
+            "index_exists",
             // An Elasticsearch privilege.
             "create_index",
             "source_confirmation_id", "confirmation_id", "approval_id", "field_mapping", "pipeline_link",

@@ -1697,6 +1697,17 @@ its time field, and each field's name, type and source in the Event.
   the approval form. An index whose writes Elasticsearch refused every time isn't dropped; the cause is fixed first
   (seen in testing). A build's own Lucene index has its shards deleted once the user approves; any other, the user
   deletes.
+* An index name that already stands for something on the cluster is found before indexing, not by `verify_index`'s
+  counts after it (seen in testing, 2026-11-04: the sample's first run went into another's data stream of the same
+  name, and the agent, taking the counts for a translation fault, hand-wrote the XSLT). `ExistingIndexes` looks the
+  pipeline's index name up on its Elastic Cluster doc (`ElasticIndexPresence`, implemented by the Elasticsearch
+  module: `_resolve/index` then `_count`, as the user, with Read on the cluster doc; an index name's `{variables}`
+  looked up as wildcards). The sample's first run into a name holding documents gets an `index_exists` reply before
+  anything is asked or processed: what exists, every data stream and index to delete first (`delete_first`, each request shown for the cluster admin to run by hand; an alias's targets, not the alias; a name's variables taken as any value),
+  `rename_index` as the other way, and a hint not to change the translation over it. `index_dropped=true` is checked
+  again, in `reprocess_streams` too, not taken on trust. Existing but empty, or not known (a refused or unreachable
+  lookup is never taken for absent): processing goes on, with a line in the approval. `propose_index_template`
+  warns (`existing_index`) so another name can be chosen early.
 
 ### Arrays of objects (built, 2026-10-31)
 
@@ -2076,6 +2087,7 @@ flowchart TD
 | An agreed index template for the pipeline's current code; committed by the admin | `ProcessingApprovals`, `IndexTemplateAgreements` | Yes |
 | A template against the documents the pipeline writes | `TemplateCheck` | Problems block |
 | An index written to before: dropped first | `drop_first` | Until the user says so |
+| An Elasticsearch index name already holding documents, before the first run (and once said dropped) | `ExistingIndexes`, `index_exists` | Until it is dropped or renamed |
 | Searches that answer wrongly through Stroom (for Lucene, with each text field's analyzer from `LuceneTextFields`) | `MisleadingSearches` | Refused or rewritten |
 | Documentation not older than the mapping or XSLT | `BuildChecks` | Blocks promotion only for the build's own change |
 | The promotion layout as shown | `review_id` digest | Yes |

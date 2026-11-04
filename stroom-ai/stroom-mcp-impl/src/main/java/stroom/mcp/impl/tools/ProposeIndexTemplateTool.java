@@ -84,6 +84,9 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                                                          + "built without their fields, which it may repeat or "
                                                          + "contradict.";
 
+    /// The result's key for an index name that already holds documents on the cluster.
+    static final String EXISTING_INDEX = "existing_index";
+
     // The records stepped for the documents the template is checked against.
     private static final int RECORDS = 50;
 
@@ -93,6 +96,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
     private final BuildIndexes buildIndexes;
     private final TemplatePipelines pipelines;
     private final TemplateReviews reviews;
+    private final ExistingIndexes existingIndexes;
 
     @Inject
     ProposeIndexTemplateTool(final IndexPlans plans,
@@ -100,13 +104,15 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                              final IndexingInputs inputs,
                              final BuildIndexes buildIndexes,
                              final TemplatePipelines pipelines,
-                             final TemplateReviews reviews) {
+                             final TemplateReviews reviews,
+                             final ExistingIndexes existingIndexes) {
         this.plans = plans;
         this.examples = examples;
         this.inputs = inputs;
         this.buildIndexes = buildIndexes;
         this.pipelines = pipelines;
         this.reviews = reviews;
+        this.existingIndexes = existingIndexes;
     }
 
     @Override
@@ -165,7 +171,9 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                              + "alone. Checked against the documents the pipeline writes; when it fits, the user "
                              + "confirms it as shown (or corrects it: check_index_template), and the agreed template "
                              + "is kept with the pipeline. The user then has the cluster admin commit it, and "
-                             + "create_processor_filter starts indexing once they confirm that.")
+                             + "create_processor_filter starts indexing once they confirm that. existing_index in "
+                             + "the reply: the index name already holds documents on the cluster; tell the user, "
+                             + "so it is dropped or renamed before indexing.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(PIPELINE_UUID_ARG, PIPELINE_UUID_DESCRIPTION)
                         .addProperty(PLAN_ARG, ObjectSchema.builder()
@@ -253,6 +261,9 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         final Map<String, Object> destination = pipelines.destination(pipelineUuid);
         final String index = String.valueOf(destination.get("index name"));
         buildIndexes.requireSameIndex(pipelineUuid, index);
+        // An index name already holding documents on the cluster, said now so the user can choose another before
+        // anything is indexed (the first processing run stops until it is dropped or renamed).
+        final Optional<String> existing = ExistingIndexes.warning(existingIndexes.check(destination), destination);
         final TemplateTarget target = IndexingHelpers.templateTarget(index);
         final String name = NullSafe.nonBlankStringElse(templateName, target.name());
         final FieldPlan forIndex = plan.withIndexName(target.indexName());
@@ -322,6 +333,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
             result.put("needs", EXAMPLE_TEMPLATE_ARG);
             result.put("index", index);
             result.put("cluster", destination.get("cluster"));
+            existing.ifPresent(warning -> result.put(EXISTING_INDEX, warning));
             result.put("pipeline_link", link);
             result.put("hint", "No example was given, so no template is built: call again with example_template= the "
                                + "index template (or an index's mapping) a sibling "
@@ -374,6 +386,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         result.put("template_name", name);
         result.put("index", index);
         result.put("cluster", destination.get("cluster"));
+        existing.ifPresent(warning -> result.put(EXISTING_INDEX, warning));
         result.put("template", body);
         result.put("dev_tools", devTools);
         result.put("self_check", check);
