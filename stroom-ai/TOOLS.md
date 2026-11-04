@@ -4188,8 +4188,7 @@ tool generates two sections in it and keeps the version control:
   benign error (Unknown is agreed per rule in build_translation_xslt); `accept_errors` with `index_uuid`; an
   accepted error without `example` or `reason` (`accept_errors[0].example is required`); a kept mapping with no
   streams to step (`streamsNeeded` says which: sample raw streams, the Events streams indexed or sent); an events
-  pipeline whose XSLT keeps no mapping and whose markdown has no `## Field mapping` (or the lost-mapping text when
-  it was lost); an index or CEF XSLT written by hand without `stream_ids` (for a discovery pipeline, asking for the
+  pipeline whose XSLT keeps no mapping without `stream_ids` (none kept from its last clean stepping); an index or CEF XSLT written by hand without `stream_ids` (for a discovery pipeline, asking for the
   raw streams it indexes); a reference data pipeline without `stream_ids` (its Raw Reference streams); a section that steps to no events
   (`FieldMappingSections.noEvents` says why, per stream: missing, of another type, or stopped by an error); no
   Stepping permission; an existing doc in the build that isn't the tools' own (`WriteGuard.checkInBuild`).
@@ -4200,8 +4199,15 @@ tool generates two sections in it and keeps the version control:
     unmarked, for the rule its elements fit). A note says it was edited by hand, or that it holds what no mapping can
     hold (`HandEditGate.unexpressible`), so it differs from its mapping for good; values and counts are of the XSLT
     as it runs, where they are read from is the mapping's. Seen: a hand edit making users distinct documented from
-    what the mapping generates, duplicates and all; before that, TWITTER's links left out. A Field mapping section of
-    the agent's own (a table) for such an XSLT is kept as written.
+    what the mapping generates, duplicates and all; before that, TWITTER's links left out. Where most of its events
+    carry no rule's marker, it is documented by event type instead (`WrittenEventDocs`), as one written by hand is.
+    A section the agent wrote is replaced.
+  * **A translation XSLT written by hand** (no mapping kept) is documented from the Events it writes over the
+    sample (`FieldMappingSections.writtenEventsSection`, `WrittenEventDocs`): a Common fields table (the EventTime
+    and EventSource fields every event type has), then a section per event type (its TypeId, else its action
+    element; types grouped on their EventDetail as rules are), each field with its sample values and a description
+    asked for as usual; no From column. A lost mapping is said in the notes. Seen in testing: the agent's own section
+    for one had the common fields and no event type's own.
   * **Which streams**: `stream_ids` left out are the streams the pipeline's current code last stepped clean on, kept
     in the build's record (prompts and agents left them out, and every call was refused once first). An events
     pipeline's Events streams given in place of its raw sample stand for the raw streams they were made from

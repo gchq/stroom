@@ -69,9 +69,33 @@ class TestWriteDocumentationTool {
         Mockito.verify(world.sections).fieldMappingSection(any(), eq(BUILD), any(), eq(kept), eq(List.of(41L, 42L)),
                 anyString(), any());
 
+    }
+
+    @Test
+    void aTranslationXsltWrittenByHandIsDocumentedFromTheEventsItWrites() {
+        // Seen in testing: the agent's own section for an XSLT written by hand had the common fields and no event
+        // type's own; the section is generated (asked for by the user), replacing any the markdown has.
+        world.pipeline(BUILD, "Acme", "p");
         Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.empty());
-        assertThat(world.refusal(tool, context, arguments("p", "Created")))
-                .contains("needs a '## Field mapping' section");
+        Mockito.when(world.drift.lostMappings("p")).thenReturn(List.of("Its mapping was lost to save_xslt."));
+
+        assertThat(world.refusal(tool, context, arguments("p", "Created"))).startsWith("Give stream_ids")
+                .contains("generated from the Events its XSLT writes");
+
+        world.world.records().update(BUILD, new DocRef(PipelineDoc.TYPE, "p", "Acme"),
+                entry -> entry.put("stepped_streams", List.of(41)));
+        Mockito.when(world.sections.writtenEventsSection(any(), anyString(), anyString(), any(), anyString(), any()))
+                .thenReturn("#### login\n\n| `EventDetail/Authenticate/Action` | Logon |");
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "pipeline_uuid", "p",
+                "markdown", "## Purpose and data\n\nLogins.\n\n## Field mapping\n\n| XPath | From |\n"
+                            + "| --- | --- |\n| `EventTime/TimeCreated` | time |\n", "change", "Created"));
+        final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(args));
+
+        Mockito.verify(world.sections).writtenEventsSection(any(), eq(BUILD), eq("p"), eq(List.of(41L)),
+                anyString(), any());
+        assertThat(world.world.body(String.valueOf(made.get("uuid")))).contains("#### login")
+                .doesNotContain("| `EventTime/TimeCreated` | time |");
+        assertThat(String.valueOf(made)).contains("Its mapping was lost to save_xslt.");
     }
 
     @Test
@@ -251,7 +275,7 @@ class TestWriteDocumentationTool {
     }
 
     @Test
-    void anXsltEditedSinceItsMappingIsDocumentedAsItRunsOrFromTheAgentsOwnSection() {
+    void anXsltEditedSinceItsMappingIsDocumentedAsItRunsEvenWithTheAgentsOwnSection() {
         // Seen: TWITTER's XSLT saved by hand (save_xslt) with mentions and links in Data arrays, and the Field
         // mapping section generated from the mapping kept before them: links left out, mentions shown joined. The
         // section is generated from the XSLT as it runs (FieldMappingSections), not refused.
@@ -272,7 +296,8 @@ class TestWriteDocumentationTool {
         Mockito.verify(world.sections).fieldMappingSection(any(), any(), any(), any(), any(), any(), any());
         Mockito.clearInvocations(world.sections);
 
-        // One written from the XSLT is kept as it is (another pipeline, edited alike).
+        // One the agent wrote is replaced too (asked for by the user: always generated; another pipeline, edited
+        // alike).
         world.pipeline(BUILD, "Acme2", "q");
         Mockito.when(world.keptMappings.keptXslt("q")).thenReturn(Optional.of(kept));
         args.put("pipeline_uuid", "q");
@@ -280,10 +305,9 @@ class TestWriteDocumentationTool {
                              + "| --- | --- |\n| `EventDetail/Create/Document/Data[@Name='links']` | text |\n");
         final Map<String, Object> made = world.call(tool, context, DocumentationWorld.args(args));
 
-        assertThat(world.world.body(String.valueOf(made.get("uuid"))))
-                .contains("| `EventDetail/Create/Document/Data[@Name='links']` | text |");
-        assertThat(made).doesNotContainKey("field_mapping");
-        Mockito.verifyNoInteractions(world.sections);
+        assertThat(world.world.body(String.valueOf(made.get("uuid")))).contains("as it runs")
+                .doesNotContain("| `EventDetail/Create/Document/Data[@Name='links']` | text |");
+        Mockito.verify(world.sections).fieldMappingSection(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

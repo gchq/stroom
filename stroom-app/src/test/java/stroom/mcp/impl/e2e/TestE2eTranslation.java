@@ -146,7 +146,8 @@ class TestE2eTranslation extends AbstractE2eTest {
                 "markdown", "# " + csv.pipelineName() + "\n\n## Purpose and data\n\nReworded after promotion.\n\n"
                             + "## Field mapping\n\n| XPath | From |\n| --- | --- |\n"
                             + "| `EventSource/User/Id` | the user field |\n",
-                "change", "Purpose reworded after promotion"));
+                // Promoted, the pipeline is in no build that kept the streams it stepped clean on.
+                "stream_ids", List.of(csv.raw()), "change", "Purpose reworded after promotion"));
         dump("write_documentation after promotion", redo);
         assertThat(map(redo, "working_copy_of")).containsEntry("uuid", csv.docUuid());
         assertThat(JsonUtil.writeValueAsString(redo.get("next"), false)).contains("promote_build");

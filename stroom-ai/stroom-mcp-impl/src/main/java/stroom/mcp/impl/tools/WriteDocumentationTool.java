@@ -169,16 +169,14 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                              + "user chooses another folder. The Field mapping section is not taken from the "
                              + "markdown: it is generated from the mapping (or index plan) kept with the pipeline's "
                              + "XSLT, stepped over stream_ids, and put in place of whatever the markdown has there, "
-                             + "so it always agrees with the XSLT; an XSLT edited by hand since is documented as it "
-                             + "runs (its own events, by the mapping's rules), with a note of the edit. It lists "
-                             + "the fields every event type has in one "
+                             + "so it always agrees with the XSLT; an XSLT written or edited by hand is documented "
+                             + "from the Events it writes. It lists the fields every event type has in one "
                              + "table, then a table per event type (types with roughly the same fields together); "
                              + "field_mapping_layout='compact', or an AGENTS doc's Documentation section, lays it "
                              + "out otherwise. Each field is described by what it means for this source: a "
                              + "needs_descriptions reply lists the fields not yet described, with where each comes "
                              + "from and its sample values, for the agent to describe (field_descriptions); kept "
-                             + "with the doc, so an update asks only for new fields. An events pipeline whose XSLT "
-                             + "keeps no mapping must bring its own Field mapping section. The Errors section is "
+                             + "with the doc, so an update asks only for new fields. The Errors section is "
                              + "generated too: every kind of error processing the streams produced (from their "
                              + "Error streams), with counts and an example, and the errors the user accepted as "
                              + "benign, with their reasons; those are kept with the doc, so triage does not raise "
@@ -192,9 +190,8 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                                          + "stroom://guide/documentation (Purpose and data, "
                                                          + "Processing, Field mapping, Output, Conformance, Open "
                                                          + "items). The Field mapping section is generated here from "
-                                                         + "the mapping kept with the XSLT (or the index plan); only "
-                                                         + "an XSLT written by hand needs it written. The version "
-                                                         + "control block is added by the tool.")
+                                                         + "the mapping kept with the XSLT (or the index plan). "
+                                                         + "The version control block is added by the tool.")
                         .addStringProperty(CHANGE_ARG, "What changed and why, in a line, e.g. 'Created' or 'Mapped "
                                                        + "CODE_TO_TOKEN': kept pending, and with the build's other "
                                                        + "changes one row of the doc's version control when the "
@@ -351,22 +348,26 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         final Map<String, String> givenFrom = new LinkedHashMap<>(docs.keptDescriptionSources(previous));
         givenFrom.keySet().removeAll(request.descriptions().keySet());
         final Descriptions described = new Descriptions(given, givenFrom, true, docs.vendorNotes(request.build()));
+        // A translation XSLT keeping no mapping (written by hand): its section is generated from the Events it writes
+        // (asked for by the user: seen in testing, the agent's own section for one had no event type's fields).
+        final boolean handWritten = kept == null && "translation".equals(pipelineShapes.shape(pipelineUuid).stage());
+        final boolean translation = handWritten || kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind());
         List<Long> streamIds = request.streamIds();
-        if (kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind()) && !streamIds.isEmpty()) {
+        if (translation && !streamIds.isEmpty()) {
             // An events pipeline's own Events output, given in place of its raw sample (seen in VS Code): the raw
             // streams they were made from.
             final BuildDocumentation.Parents parents = docs.rawParents(streamIds, pipelineUuid);
             streamIds = parents.streamIds();
             noted.addAll(parents.notes());
         }
-        if (kept != null && streamIds.isEmpty()) {
+        if ((kept != null || handWritten) && streamIds.isEmpty()) {
             // The streams the pipeline's current code last stepped clean on, kept in the build's record (seen:
             // prompts and agents left stream_ids out, and every documentation call was refused once first).
             streamIds = docs.steppedStreams(pipelineUuid);
             if (!streamIds.isEmpty()) {
                 noted.add("Generated from the streams the pipeline last stepped clean on: " + streamIds);
             }
-            if (!streamIds.isEmpty() && KeptMapping.TRANSLATION.equals(kept.kept().kind())) {
+            if (!streamIds.isEmpty() && translation) {
                 final BuildDocumentation.Parents parents = docs.rawParents(streamIds, pipelineUuid);
                 streamIds = parents.streamIds();
                 noted.addAll(parents.notes());
@@ -377,20 +378,24 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
         // The key the generated section is given as.
         String generatedAs = "field_mapping";
         // An XSLT edited since its mapping was kept is documented as it runs (its own events, by the mapping's rules,
-        // with a note of the edit): documented from the mapping, the section said what the XSLT no longer writes (seen
-        // in testing: TWITTER's links, saved with save_xslt, left out, and its mentions shown joined as the mapping
-        // wrote them). A section the agent wrote for it is kept as written.
-        final Optional<String> edited = kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind())
-                ? mappingDrift.editDrift(kept)
-                : Optional.empty();
-        if (kept != null && !(edited.isPresent() && ownFieldMapping(body))) {
+        // with a note of the edit; by event type where most of its events are no longer the mapping's): documented
+        // from the mapping, the section said what the XSLT no longer writes (seen in testing: TWITTER's links, saved
+        // with save_xslt, left out, and its mentions shown joined as the mapping wrote them).
+        if (kept != null || handWritten) {
             if (streamIds.isEmpty()) {
-                throw new ToolRefusal(streamsNeeded(kept));
+                throw new ToolRefusal(kept != null
+                        ? streamsNeeded(kept)
+                        : "Give stream_ids (the pipeline's sample raw streams): the Field mapping section is "
+                          + "generated from the Events its XSLT writes for them, by event type, each field with the "
+                          + "values the sample gave");
             }
             final BuildDocumentation.Layout laid = docs.layout(context.session(), pipelineRef, request.layout());
             noted.addAll(laid.notes());
-            generated = sections.fieldMappingSection(context, request.build(), pipeline, kept, streamIds,
-                    laid.layout(), described);
+            generated = kept != null
+                    ? sections.fieldMappingSection(context, request.build(), pipeline, kept, streamIds,
+                    laid.layout(), described)
+                    : sections.writtenEventsSection(context, request.build(), pipelineUuid, streamIds,
+                            laid.layout(), described);
             if (!described.wanted().isEmpty()) {
                 return BuildDocumentation.needsDescriptions(described);
             }
@@ -400,7 +405,12 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                     generated += "\n\n" + FieldDocs.descriptionSourcesBlock(described.sources());
                 }
             }
-            if (KeptMapping.TRANSLATION.equals(kept.kept().kind())) {
+            if (handWritten) {
+                // Its mapping lost to a save without one: said, as regenerating from it documents where each value
+                // is read from.
+                noted.addAll(mappingDrift.lostMappings(pipelineUuid));
+            }
+            if (translation) {
                 // What the user's documentation says each source field holds, where the build keeps notes from it.
                 final String sourceFields = sourceFieldsMarkdown(docs.notesInBuild(request.build()));
                 if (!sourceFields.isEmpty()) {
@@ -439,16 +449,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                 generated = sections.referenceMapsSection(context, pipelineUuid, streamIds);
                 generatedAs = "reference_maps";
                 body = KeptMapping.replaceSection(body, REFERENCE_MAPS, generated, false);
-            } else if (!body.contains("## Field mapping") && "translation".equals(stage)) {
-                final List<String> lost = mappingDrift.lostMappings(pipelineUuid);
-                if (!lost.isEmpty()) {
-                    throw new ToolRefusal(String.join(" ", lost));
-                }
-                throw new ToolRefusal("An events pipeline's documentation needs a '## Field mapping' section. Its "
-                                      + "XSLT keeps no mapping (it was not saved by build_translation_xslt), so "
-                                      + "write the section from read_document and a stepped sample, or save the "
-                                      + "XSLT again from its mapping (build_translation_xslt uuid=...) and the "
-                                      + "section is generated here");
             }
         }
         final String stamp = docs.today();
@@ -720,19 +720,6 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                   + ". Copy each UUID from a tool's result (never type one), or leave the link "
                                   + "out, and call again.");
         }
-    }
-
-    // Whether the markdown has a Field mapping section of its own: a table, not a placeholder for the generated one.
-    private static boolean ownFieldMapping(final String body) {
-        final int at = body.indexOf("## " + FIELD_MAPPING);
-        if (at < 0) {
-            return false;
-        }
-        final int next = body.indexOf("\n## ", at + 3);
-        final String section = next < 0
-                ? body.substring(at)
-                : body.substring(at, next);
-        return section.lines().anyMatch(line -> line.strip().startsWith("|"));
     }
 
     private static String first(final String text, final int count) {

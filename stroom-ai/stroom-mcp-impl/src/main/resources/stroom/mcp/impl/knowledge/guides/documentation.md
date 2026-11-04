@@ -33,8 +33,9 @@ pipeline), and puts the result in place of whatever the markdown has under `## F
 are stepped, spread evenly over the streams given, so pass all the sample streams: each adds the kinds it holds. So:
 
 - Save every generated XSLT with its mapping (`build_translation_xslt build=... name=...`, or `save_xslt
-  index_plan=...` for an indexing XSLT). Without it, an events pipeline's doc
-  must bring its own `## Field mapping` section, and the tool refuses one that does not.
+  index_plan=...` for an indexing XSLT). Without it, an events pipeline's section
+  is generated from the Events its XSLT writes for `stream_ids`, by event type (its TypeId, else its action
+  element), with the values the sample gave but not where each comes from; any section in the markdown is replaced.
 - Pass `stream_ids` to `write_documentation`, for every indexing pipeline and every events pipeline whose XSLT
   keeps a mapping, as the section goes down to the field with the values the sample gave. Without them the tool
   uses the streams the pipeline last stepped clean on, and refuses when there are none. An indexing XSLT written by hand keeps no plan: its section lists the fields of the documents it writes,
@@ -44,7 +45,8 @@ are stepped, spread evenly over the streams given, so pass all the sample stream
 - Change the mapping and regenerate rather than editing the XSLT: `build_status` reports an XSLT that is no
   longer what its mapping generates, and a documentation whose Field mapping predates the current mapping or
   XSLT (a digest marks the section). A translation XSLT edited by hand since its mapping was kept is documented as
-  it runs: its own output, each event by the mapping's rule, with a note of the edit.
+  it runs: its own output, each event by the mapping's rule (by event type where most of its events are no longer
+  the mapping's), with a note of the edit.
 
 ### What the section holds (events pipelines)
 
