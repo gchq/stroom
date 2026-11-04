@@ -149,29 +149,94 @@ public final class SplitterDryRun {
     public static List<String> kvPatterns(final SplitterSpec spec) {
         final String d = delimiterIn(spec);
         final String s = ToolText.escape(spec.pairSeparator());
-        final String key = "[^" + s + d + "]+";
+        final String key = keyClass(spec);
         if (spec.quote() != null) {
             // Stroom neither tries a group's regexes in turn at each place nor lets a value name a group that didn't
             // match.
             // A quoted value may hold the quote escaped (msg="said \"hi\""): kept as written.
             final String q = ToolText.escape(spec.quote());
-            return List.of(delimiter(spec) + "*(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q
+            return List.of(lead(spec) + "(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q
                            + "\\\\])*(?=" + q + ")|(?<!" + q + ")[^" + d + q + "]*)" + q + "?");
         }
-        return List.of(delimiter(spec) + "*(" + key + ")" + s + "([^" + d + "]*)");
+        return List.of(lead(spec) + "(" + key + ")" + s + "([^" + d + "]*)");
     }
 
-    // A key_value spec's delimiter as a regex, and as a character class's content.
+    // A key_value spec's delimiter as a regex, and as a character class's content. A delimiter with white space
+    // round it (", ") is its other characters with any white space round them.
     private static String delimiter(final SplitterSpec spec) {
+        if (spacedDelimiter(spec)) {
+            return "(?:\\s*" + ToolText.escape(ToolText.strip(spec.delimiter())) + "\\s*)";
+        }
         return ToolText.isBlank(spec.delimiter())
                 ? WHITE_SPACE
                 : ToolText.escape(spec.delimiter());
     }
 
     private static String delimiterIn(final SplitterSpec spec) {
+        if (spacedDelimiter(spec)) {
+            return ToolText.escape(ToolText.strip(spec.delimiter()));
+        }
         return ToolText.isBlank(spec.delimiter())
                 ? WHITE_SPACE
                 : ToolText.escape(spec.delimiter());
+    }
+
+    /// @param spec A key_value spec.
+    /// @return Whether its delimiter has white space round other characters (", ", "; "): then keys may hold
+    /// spaces (Cisco ISE's `Device IP Address=`) and values run to the next delimiter.
+    public static boolean spacedDelimiter(final SplitterSpec spec) {
+        final String core = ToolText.strip(spec.delimiter());
+        return !core.isEmpty() && !core.equals(spec.delimiter());
+    }
+
+    // What may come before a pair or a run of words: delimiters, and with a spaced delimiter white space too (after
+    // a run of words, which ends at white space).
+    private static String lead(final SplitterSpec spec) {
+        return spacedDelimiter(spec)
+                ? "(?:" + delimiter(spec) + "|\\s)*"
+                : delimiter(spec) + "*";
+    }
+
+    /// @param spec A key_value spec.
+    /// @return A trailing delimiter, as a record of spaced-delimited pairs may end (`..., UserName=alice,`).
+    public static String trailingDelimiter(final SplitterSpec spec) {
+        return delimiter(spec) + "+\\s*$";
+    }
+
+    // A key: with a spaced delimiter, words, dots and dashes, holding spaces only straight after the delimiter
+    // (`, Device IP Address=`; at the start or after other words one word, so neither a queue id, `4F2A1C3D9E:
+    // from=`, nor Cisco ISE's `CISE_Passed_Authentications 0001234501 3 2 AuthenticationMethod=` is a key); else
+    // anything but the separator and the delimiter.
+    private static String keyClass(final SplitterSpec spec) {
+        if (!spacedDelimiter(spec)) {
+            return "[^" + ToolText.escape(spec.pairSeparator()) + delimiterIn(spec) + "]+";
+        }
+        final String after = ToolText.escape(ToolText.strip(spec.delimiter())) + "\\s{0,9}";
+        return "(?:(?<=" + after + ")\\w[\\w .-]*|(?<!" + after + ")\\w[\\w.-]*)";
+    }
+
+    /// The delimiter between key=value pairs: ", ", "; " or "|" where most pairs after a record's first follow one,
+    /// else a space.
+    ///
+    /// @param records Records of pairs.
+    /// @return The delimiter.
+    public static String pairDelimiter(final List<String> records) {
+        long later = 0;
+        for (final String record : records) {
+            later += Math.max(0, ToolText.findallGroups(SampleProfiler.KEY_VALUE, record).size() - 1);
+        }
+        for (final String delimiter : List.of(", ", "; ", "|")) {
+            final Pattern after = Pattern.compile("\\s*" + Pattern.quote(ToolText.strip(delimiter))
+                                                  + "\\s*\\w[\\w .-]*=");
+            long count = 0;
+            for (final String record : records) {
+                count += after.matcher(record).results().count();
+            }
+            if (later > 0 && count >= 0.8 * later) {
+                return delimiter;
+            }
+        }
+        return " ";
     }
 
     /// The regexes for a single-quoted key=value value (single_quotes), tried before the pair's own at each place:
@@ -183,7 +248,9 @@ public final class SplitterDryRun {
     /// @return The two regexes.
     public static List<String> singleQuotedPatterns(final SplitterSpec spec) {
         final String s = ToolText.escape(spec.pairSeparator());
-        final String key = delimiter(spec) + "*([^" + s + delimiterIn(spec) + "'\"]+)" + s + "'";
+        final String key = lead(spec) + "(" + (spacedDelimiter(spec)
+                ? keyClass(spec)
+                : "[^" + s + delimiterIn(spec) + "'\"]+") + ")" + s + "'";
         return List.of(key + "([^']*" + s + "[^']*)'", key + "([^']*)'");
     }
 
@@ -198,6 +265,13 @@ public final class SplitterDryRun {
         final String q = spec.quote() == null
                 ? ""
                 : ToolText.escape(spec.quote());
+        if (spacedDelimiter(spec)) {
+            // Words hold no white space; the run ends before a delimiter or a space and a key.
+            final String token = "[^" + s + d + q + "\\s]+";
+            final String between = "(?:" + delimiter(spec) + "|\\s+)+";
+            return lead(spec) + "(" + token + "(?:" + between + token + ")*?)(?=" + between + keyClass(spec)
+                   + s + "|" + delimiter(spec) + "*\\s*$)";
+        }
         final String token = "[^" + s + d + q + "]+";
         final String between = delimiter(spec) + "+";
         return delimiter(spec) + "*(" + token + "(?:" + between + token + ")*?)(?=" + between + "[^" + s + d + "]+"
@@ -547,7 +621,9 @@ public final class SplitterDryRun {
             fields.putIfAbsent(found.group(1), found.group(2));
             at = found.end();
         }
-        if (!ToolText.isBlank(text.substring(at))) {
+        final String rest = text.substring(at);
+        if (!ToolText.isBlank(rest) && !(spacedDelimiter(spec)
+                                        && Pattern.compile(trailingDelimiter(spec)).matcher(rest).lookingAt())) {
             // Stroom reports the rest as content its expressions failed to match (seen: a value holding a space
             // unquoted, `zones=Zone 1`, the record kept with zones=Zone and the error raised).
             return Map.of();
@@ -619,9 +695,11 @@ public final class SplitterDryRun {
         }
         if (!bodies.isEmpty() && pairs >= 0.8 * bodies.size()) {
             final boolean quoted = messages.stream().anyMatch(message -> message.contains("=\""));
-            return withWords(SplitterSpec.builder("key_value").delimiter(" ").quote(quoted
+            final String delimiter = pairDelimiter(bodies);
+            return withWords(SplitterSpec.builder("key_value").delimiter(delimiter).quote(quoted
                     ? "\""
-                    : null).spacedValues(!quoted && spacedValues(bodies, " ", "=")).build(), bodies);
+                    : null).spacedValues(!quoted && " ".equals(delimiter) && spacedValues(bodies, " ", "="))
+                    .build(), bodies);
         }
         for (final String delimiter : List.of(",", "|", "\t", ";")) {
             final String quote = bodies.stream().anyMatch(body -> body.contains("\""))
@@ -649,6 +727,17 @@ public final class SplitterDryRun {
     /// @param spec    A key_value spec.
     /// @param records The records.
     /// @return The spec, with words where they read records it can't.
+    static SplitterSpec wordsWhereNeeded(final SplitterSpec spec, final List<String> records) {
+        if (spec.spacedValues() || spec.words()) {
+            return spec;
+        }
+        final SplitterSpec worded = spec.toBuilder().words(true).build();
+        return records.stream().limit(200)
+                .anyMatch(record -> applyKeyValue(spec, record).isEmpty() && !applyKeyValue(worded, record).isEmpty())
+                ? worded
+                : spec;
+    }
+
     static SplitterSpec withWords(final SplitterSpec spec, final List<String> records) {
         if (spec.spacedValues() || spec.words()) {
             return spec;
@@ -657,12 +746,7 @@ public final class SplitterDryRun {
         if (prefixed != null) {
             return prefixed;
         }
-        final SplitterSpec worded = spec.toBuilder().words(true).build();
-        final boolean needed = records.stream().limit(200)
-                .anyMatch(record -> applyKeyValue(spec, record).isEmpty() && !applyKeyValue(worded, record).isEmpty());
-        return needed
-                ? worded
-                : spec;
+        return wordsWhereNeeded(spec, records);
     }
 
     // Records of the same few words before their pairs and nothing else (08's `2026-09-28T15:00:00Z fw01
@@ -801,11 +885,13 @@ public final class SplitterDryRun {
         if (SampleProfiler.KEY_VALUE_FORMAT.equals(format)) {
             final boolean quoted = lines.subList(0, Math.min(50, lines.size())).stream()
                     .anyMatch(line -> line.contains("=\""));
-            final SplitterSpec.Builder builder = SplitterSpec.builder("key_value").delimiter(" ").pairSeparator("=")
+            final String delimiter = pairDelimiter(lines.subList(0, Math.min(200, lines.size())));
+            final SplitterSpec.Builder builder = SplitterSpec.builder("key_value").delimiter(delimiter)
+                    .pairSeparator("=")
                     .quote(quoted
                             ? "\""
                             : null)
-                    .spacedValues(!quoted && spacedValues(lines, " ", "="));
+                    .spacedValues(!quoted && " ".equals(delimiter) && spacedValues(lines, " ", "="));
             if (info.get("record_key") instanceof final String key) {
                 // Lines tied into records by a key (auditd): each line's fields under its name, the lines between
                 // records (ausearch's separators) passed over.
@@ -875,10 +961,15 @@ public final class SplitterDryRun {
             return null;
         }
         final boolean quoted = bodies.stream().anyMatch(body -> body.contains("=\""));
-        return SplitterSpec.builder(SplitterSpec.ALTERNATIVES).variantField("message_format").parts(List.of(
-                SplitterSpec.builder("key_value").variant("key_value").delimiter(" ").quote(quoted
+        final List<String> paired = bodies.stream()
+                .filter(body -> ToolText.findallGroups(SampleProfiler.KEY_VALUE, body).size() >= 2)
+                .toList();
+        final SplitterSpec pairPart = SplitterSpec.builder("key_value").variant("key_value")
+                .delimiter(pairDelimiter(paired)).quote(quoted
                         ? "\""
-                        : null).build(),
+                        : null).build();
+        return SplitterSpec.builder(SplitterSpec.ALTERNATIVES).variantField("message_format").parts(List.of(
+                wordsWhereNeeded(pairPart, paired),
                 SplitterSpec.builder("regex").variant("text").pattern("(?s)^(.*)$").names(List.of("text"))
                         .build())).build();
     }

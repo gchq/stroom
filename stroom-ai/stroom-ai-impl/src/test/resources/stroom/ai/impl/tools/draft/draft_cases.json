@@ -812,8 +812,13 @@
        },
        {
         "path": "EventDetail/Process/Data",
-        "data_name": "words",
-        "field": "words"
+        "data_name": "prefix1",
+        "field": "prefix1"
+       },
+       {
+        "path": "EventDetail/Process/Data",
+        "data_name": "prefix2",
+        "field": "prefix2"
        },
        {
         "path": "EventDetail/Process/Data",
@@ -853,9 +858,17 @@
    "splitter": {
     "kind": "syslog",
     "body": {
-     "kind": "key_value",
-     "delimiter": " ",
-     "words": true
+     "kind": "regex",
+     "pattern": "^(\\S+)\\s+(\\S+)\\s+(.*)$",
+     "names": [
+      "prefix1",
+      "prefix2",
+      "message"
+     ],
+     "body": {
+      "kind": "key_value",
+      "delimiter": "; "
+     }
     }
    },
    "format": "syslog rfc3164",
@@ -869,7 +882,8 @@
    ],
    "unmapped_fields": [
     "pri",
-    "words",
+    "prefix1",
+    "prefix2",
     "TTY",
     "PWD",
     "COMMAND",
@@ -895,7 +909,8 @@
     "app",
     "pid",
     "message",
-    "words",
+    "prefix1",
+    "prefix2",
     "TTY",
     "PWD",
     "USER",
