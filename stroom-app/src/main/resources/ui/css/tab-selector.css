@@ -17,8 +17,9 @@
 /*
    A tab bar's overflow selector (stroom.widget.tab.client.TabSelector), named BEM style: shown
    when some tabs don't fit, a button showing every tab in a menu, its arrows (tab-selector__arrows)
-   then the number of tabs hidden (tab-selector__count). Its bar places it (--tab-selector__left) and
-   hides it while every tab fits (tab-selector--hidden); it looks like the bar's tabs, curved or link.
+   then the number of tabs hidden (tab-selector__count), in line with them. Its bar places it
+   (--tab-selector__left) and hides it while every tab fits (tab-selector--hidden); it looks like the
+   bar's tabs, curved or link: as high, the same hover, and the same focus ring (tab-bar.css).
 */
 
 .tab-selector {
@@ -31,21 +32,20 @@
     color: var(--control__text-color);
 }
 
-/* In a document tab bar, in line with its tabs: as high as a tab, 4px into the bar */
+/* In a document tab bar, in line with its tabs and shaped as one: as high, 4px into the bar, with a
+   tab's background and hover, and room either side as a tab's icon has */
 .tab-bar--curved .tab-selector {
     top: 4px;
     box-sizing: border-box;
     height: 24px;
-    border: var(--curve-tab__border);
-    border-radius: var(--curve-tab__border-radius);
+    border-radius: 4px;
     background-color: var(--curve-tab__background-color);
-    padding: 0 10px;
+    padding: 0 8px;
     align-items: center;
 }
 
 .tab-bar--curved .tab-selector:hover {
     background: var(--curve-tab__background-color--hover);
-    border: var(--curve-tab__border--hover);
 }
 
 /* In a link bar, in line with its tabs: inside the bar's padding (the bar places it in its tab
@@ -76,22 +76,11 @@
     height: 9px;
 }
 
-/* The number of tabs that don't fit */
+/* The number of tabs that don't fit, in line with the arrows, as a tab's label is */
 .tab-selector__count {
     white-space: nowrap;
     user-select: none;
-}
-
-.tab-bar--curved .tab-selector__count {
-    font-size: var(--font-size-11);
-    margin-left: 0.25em;
-    margin-top: 1em;
-}
-
-.tab-bar--link .tab-selector__count {
-    font-size: var(--font-size-7);
-    margin-left: 2px;
-    margin-top: 6px;
+    margin-left: 4px;
 }
 
 /* While every tab fits, out of sight */
@@ -100,16 +89,26 @@
     left: -1000px;
 }
 
-/* Keyboard focus (not a mouse click's), as a tab's */
+/* Keyboard focus (not a mouse click's), as a tab's (tab-bar.css): a line on its edge and a band
+   outside it, in the bar's room around its tabs */
 .tab-selector:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 1px var(--tab__focus-color), inset 0 0 0 5px var(--tab__focus-band-color);
+    z-index: 1;
 }
 
-/* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */
+.tab-selector:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--tab__focus-color);
+    box-shadow: 0 0 0 4px var(--tab__focus-band-color);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* In forced colours (e.g. Windows high contrast) the band isn't drawn; the line is in Highlight */
 @media (forced-colors: active) {
-    .tab-selector:focus-visible {
-        outline: 2px solid Highlight;
-        outline-offset: -2px;
+    .tab-selector:focus-visible::after {
+        border-color: Highlight;
     }
 }

@@ -26,6 +26,8 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.function.Consumer;
+
 /// A small spinner shown while tasks run, e.g. on a tab or the explorer's bar. It fades in and out
 /// (`busy-spinner--active`), and spins only while it is shown or fading out
 /// (`busy-spinner--spinning`): once it has faded
@@ -43,15 +45,35 @@ public class SmallBusySpinner extends Composite implements TaskMonitorFactory {
 
     private int taskCount;
     private Timer stopSpinning;
+    private boolean busy;
+    private Consumer<Boolean> onBusyChange;
 
     public SmallBusySpinner() {
         initWidget(BINDER.createAndBindUi(this));
+    }
+
+    /// @param onBusyChange Told when the spinner starts or stops showing that something is loading
+    ///                     (true when it starts), e.g. for what it is on to tell screen readers;
+    ///                     or null for nothing.
+    public void setOnBusyChange(final Consumer<Boolean> onBusyChange) {
+        this.onBusyChange = onBusyChange;
+    }
+
+    /// @return Whether the spinner is showing that something is loading.
+    public boolean isBusy() {
+        return busy;
     }
 
     /// Shows the spinner, fading it in, or fades it out and then stops it spinning.
     ///
     /// @param refreshing Whether something is loading.
     public void setRefreshing(final boolean refreshing) {
+        if (busy != refreshing) {
+            busy = refreshing;
+            if (onBusyChange != null) {
+                onBusyChange.accept(refreshing);
+            }
+        }
         if (stopSpinning != null) {
             stopSpinning.cancel();
             stopSpinning = null;

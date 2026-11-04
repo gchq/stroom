@@ -31,10 +31,14 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
-/// A document tab: its icon, its label (cut to 50 characters, the whole as its tooltip), its busy
-/// spinner and, if it can be closed, its close cross; one that can't is the `tab-bar__tab--fixed`
-/// modifier. Its markup is `CurveTab.ui.xml`.
+/// A document tab: its icon, its label (cut short where it is drawn, the whole as its tooltip), its
+/// busy spinner and, if it can be closed, its close cross; one that can't is the
+/// `tab-bar__tab--fixed` modifier. Its markup is `CurveTab.ui.xml`.
+///
+/// Its bar is told when its spinner starts and stops showing ([#setOnBusyChange]), and says so to
+/// screen readers.
 public class CurveTab extends AbstractTab {
 
     private static final Binder BINDER = GWT.create(Binder.class);
@@ -49,6 +53,8 @@ public class CurveTab extends AbstractTab {
     SmallBusySpinner spinner;
     @UiField
     AriaPanel close;
+
+    private Consumer<Boolean> onBusyChange;
 
     public CurveTab(final SvgImage icon,
                     final IconColour iconColour,
@@ -73,10 +79,21 @@ public class CurveTab extends AbstractTab {
         if (!allowClose) {
             addStyleName("tab-bar__tab--fixed");
         }
+
+        spinner.setOnBusyChange(busy -> {
+            if (onBusyChange != null) {
+                onBusyChange.accept(busy);
+            }
+        });
     }
 
     public String getText() {
         return label.getText();
+    }
+
+    /// @return The label's element, which its bar measures to shrink the tabs to fit.
+    Element getLabelElement() {
+        return label.getElement();
     }
 
     /// Shows the tab's name. A long one is cut short with an ellipsis where it is drawn
@@ -96,6 +113,16 @@ public class CurveTab extends AbstractTab {
     @Override
     public TaskMonitor createTaskMonitor() {
         return spinner.createTaskMonitor();
+    }
+
+    @Override
+    public boolean isBusy() {
+        return spinner.isBusy();
+    }
+
+    @Override
+    public void setOnBusyChange(final Consumer<Boolean> onBusyChange) {
+        this.onBusyChange = onBusyChange;
     }
 
 

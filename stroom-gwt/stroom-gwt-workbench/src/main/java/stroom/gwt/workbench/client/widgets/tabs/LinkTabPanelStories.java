@@ -90,6 +90,17 @@ public final class LinkTabPanelStories {
                     }
                     return panel(context, many, null, null, true);
                 })
+                // The tabs shown, the separators between them and the chevron all fit in the bar
+                .withPlay(play -> {
+                    final Query bar = play.querySelector(".tab-bar--link");
+                    play.waitFor(() -> play.expect(play.querySelector(".tab-selector:not(.tab-selector--hidden)"))
+                            .toBeInTheDocument());
+                    play.expect("the chevron ends in the bar", () -> play.querySelector(".tab-selector").right().get()
+                            <= bar.right().get()).toEqual(true);
+                    final Query shown = play.querySelectorAll(".tab-bar__tab:not(.tab-bar__tab--hidden)");
+                    play.expect("the last tab shown ends in the bar", () -> shown.nth(shown.count().get() - 1)
+                            .right().get() <= bar.right().get()).toEqual(true);
+                })
                 // A tab with per-tab extra toolbar widgets, shown only when that tab is active
                 .story("PerTabToolbar", context -> panel(context,
                         List.of("Data", "Query"),

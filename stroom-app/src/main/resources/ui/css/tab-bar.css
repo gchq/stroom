@@ -148,13 +148,18 @@
 }
 
 /* A long name is cut short with an ellipsis (about 50 characters), here rather than in its text, so
-   that a screen reader reads all of it (CurveTab.setText); its tooltip shows all of it too */
+   that a screen reader reads all of it (CurveTab.setText); its tooltip shows all of it too. While
+   the tabs don't all fit, the bar cuts the widest more (--tab-bar__label-cap, CurveTabBar.fitTabs),
+   but no narrower than about 10 characters, past which tabs overflow into its selector. Its widths
+   are its text's, without its padding (which a tab with no icon has more of), so a name of 10
+   characters or fewer is never cut */
 .tab-bar--curved .tab-bar__label {
     position: relative;
+    box-sizing: content-box;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 42ch;
+    max-width: max(10ch, min(42ch, var(--tab-bar__label-cap, 42ch)));
     padding: 1px;
     user-select: none;
     opacity: 0.8;

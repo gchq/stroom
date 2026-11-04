@@ -466,6 +466,12 @@ run of 22 October 2026 (1,538 stories).
   wave 10): in a run of 37 stories with 24 workers the Fields tab had lost its focus ring (161
   pixels differed); it matched its baseline when its six stories were run again alone. A guess:
   under load the focus moves before the screenshot is taken.
+* `App/Visualisations/Force3D` `ViewKeys` (flaky; found 4 November 2026, in a full run): its first
+  attempt failed a camera check (3.0 where under 0.5 was expected), then it passed on retry. A 3D
+  force layout is animated, so a guess is that it hadn't settled. Nothing in that run touched it.
+* `App/Visualisations/Tree` `Keyboard` screenshot (found 4 November 2026): its tooltip was a few
+  pixels from its baseline in two full runs (about 600 pixels differed) and matched when its group
+  was run again alone; nothing in those runs touched the visualisation.
 * Screenshots that differ from run to run, whatever changed (found 24 October 2026, comparing two
   diffs against one baseline): the force layout visualisations (`App/Visualisations/Force`,
   `Force2d`, `Force3d`; 39 to 70 of them, by different amounts each time, as their layouts are
@@ -1654,8 +1660,8 @@ says the same of the data grid, the date and time boxes, the overlays and the co
 
 ### Tab bars: link tabs too small and unnamed, document tab names cut, loading not announced
 
-**Open** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs;
-the first point fixed 3 November 2026, the next three 4 November 2026): left from the tab bars' retrofit (`AbstractTabBar`,
+**Fixed** (30 October 2026, moved from COMPONENTS.md § Status, Tab bars (documents) and Link tabs;
+the first point fixed 3 November 2026, the rest 4 November 2026): left from the tab bars' retrofit (`AbstractTabBar`,
 shared by both bars):
 
 * **Fixed** (3 November 2026; "Toolbar buttons' and tabs' focus rings are cut off"): a link tab
@@ -1677,8 +1683,66 @@ shared by both bars):
   the tab list passed over the selected tab's content. It is one while it holds no tab stop of its
   own, as the ARIA tabs pattern asks, checked whenever what it holds changes (`TabPanelTabStop`, a
   `MutationObserver`), with an inset focus ring (`tab-bar__panel`; `LinkTabPanel` `Basic`).
-* A document tab's loading isn't announced: its spinner is a `SmallBusySpinner` (`CurveTab.java:50`),
-  which says nothing (see "The small busy spinner says nothing").
+* **Fixed** (4 November 2026, the user's decisions): a document tab's loading wasn't announced, as
+  its spinner, a `SmallBusySpinner`, says nothing (see "The small busy spinner says nothing"). Now
+  only the selected tab's loading is announced, the one the user is waiting on, and only once it has
+  gone on for a second, so quick loads and tabs loading out of sight say nothing: "Loading <name>",
+  then "<name> loaded" when it is (only if its loading was said), in a polite status region in the
+  bar (`CurveTabBar.ui.xml`; `TabLoadAnnouncements` decides, `AbstractTabBar` runs the delay). While
+  it loads, a tab's description is "Loading" (heard after its name; one hidden element in the bar,
+  outside the tabs, as a tab's text is its name and is read by code too), and while the selected one
+  loads its panel is `aria-busy` (`CurveTabBar` `Loading`).
+
+### Document tabs don't shrink to fit
+
+**Fixed** (4 November 2026, the user's design). Raised 4 November 2026: the document tabs kept their
+natural width (a long name up to about 50 characters, 42ch), so a few long names filled the bar and
+the rest overflowed into the » selector, where most apps' tabs shrink first.
+
+Now, when they don't all fit, their labels are cut, the widest first, down to the next widest, then
+all alike, as a browser's tabs shrink (a 400px name shrinks to a 200px one's width, then both
+shrink together; the selected tab too), but no narrower than about 10 characters (`10ch`, so it
+follows the text's size; a shorter name is never cut). Past that the tabs that still don't fit
+overflow into the selector, as before. The bar works out the cap (`TabLabelCap`, from the labels'
+text widths, less each tab's icon, close cross and padding and the gaps) and sets it as
+`--tab-bar__label-cap` (`CurveTabBar.fitTabs`, called by `AbstractTabBar.onResize` before it
+picks the tabs shown); the stylesheet clamps it (`tab-bar.css`). Link tabs, short fixed names, keep
+their width. The bar is also laid out again once the page's fonts have loaded, as the tabs' widths
+change then though the bar's size doesn't (the `Overflow` story's keyboard check failed without it,
+the bar having been laid out with the fallback font; done for every tab bar, `AbstractTabBar.onLoad`).
+(`CurveTabBar` `ShrinkToFit`, `ShrinkThenOverflow`.)
+
+The » selector now looks like a tab (the user's design, 4 November 2026): a document tab's shape,
+height, background and hover, with no border of its own, and a tab's focus ring (a line on its edge
+and a band outside it, where it had an inset ring); the number of tabs hidden is on the arrows'
+line, in the tab's text size, where it sat below it in a smaller one (`tab-selector.css`).
+
+### A document tab dragged to a new place no longer shows its loading
+
+**Fixed** (4 November 2026). Found the same day reading the code for the loading announcements:
+dragging a document tab to reorder it (`DraggableTabBar` → `AbstractTabBar.moveTab`) removed its
+widget and made a new one (`createTab`), but a document's requests report to the tab widget it was
+opened with (`ContentTabPaneController.TabTaskMonitorFactory` keeps it). So after a move, the tab's
+spinner never showed, and its loading was never described or announced. Now a move puts the same
+tab in its new place, keeping its spinner, description and id (which names the panel). `CurveTabBar`
+`Loading` moves the loading tab (Move to Start) and checks it still says "Loading" with its spinner
+showing; it failed before the fix.
+
+### A link tab bar's overflow selector is drawn outside its bar
+
+**Fixed** (4 November 2026). Found the same day while restyling the selector (already in the
+baseline): in `LinkTabPanel` `Overflow` (a 320px box), the tabs shown ran to about 362px and the »
+selector was placed at 364px, past the bar's 338px. The room was right (the tab list's 305px); the
+walk that picks the tabs shown (`AbstractTabBar.getDisplayableTabs`) was wrong. It counted each
+tab and the gap between tabs, but not the "|" separators between link tabs (15px each), so six
+43px tabs and the selector (285px by its count) took 333px and more. Nor did it count the room
+before the selector: the last tab's gap, the selector's 2px offset and a link selector's 4px margin
+(a document bar's selector could hang 8px past the bar). Link tabs were 8px narrower before the
+3 November change, so it showed less. The walk now counts a separator between tabs (measured on one
+made for the purpose) and the selector's whole room. `LinkTabPanel` `Overflow` checks the last tab
+shown and the selector end in the bar, and `CurveTabBar` `OverflowAlgorithm` that the selector
+isn't drawn past the bar (its other cases are in a 260px bar, from 250px, to keep their results);
+both failed before the fix.
 
 ### The small busy spinner says nothing
 
@@ -1688,6 +1752,12 @@ shared by both bars):
 "Loading...") has no role and no status text, so a document tab's, the explorer's and Ask Stroom
 AI's loading aren't announced. Also left there: `.sr-only`, a general utility, lives in
 `spinner.css`.
+
+**Fixed for document tabs** (4 November 2026; "Tab bars: link tabs too small…"): the spinner tells
+its owner when it starts and stops (`SmallBusySpinner.setOnBusyChange`), and a document tab's bar
+announces its selected tab's loading. Still open: the explorer's, and Ask Stroom AI's, which is
+waiting on changes to the AI window from another branch (its answers aren't announced either: it
+has no live region).
 
 ### The pager's page boxes are unnamed and reached only by the mouse
 
