@@ -3750,7 +3750,8 @@ more quoted `key:"value"` pairs; a syslog record whose message is empty and whos
 pairs is read by them (`structuredBody`). The dry run keeps the first of same-named fields, as Stroom does. LEEF (`leef`) is
 inferred as a regex reading any syslog header (as CEF's prefix is) and LEEF's header, the attributes a key=value body
 separated by the declared delimiter (2.0) or a tab (1.0); a tab as a delimiter is a tab alone, not any white space. Formats shortlist
-(formats-shortlist-generator.py, 2026-11-04), as first inferred:
+(formats-shortlist-generator.py, 2026-11-04), as first inferred (fixed since, but for text lines tied by a key,
+which the agent gives by hand; the guide has a tested PostgreSQL example):
 Check Point Log Exporter reads as RFC 5424 with its pairs left whole in `structured` (no `:`/`;` pair reading);
 iptables, LEEF 1.0/2.0, OpenLDAP slapd and Cisco ISE infer syslog with a key=value body that Stroom refuses (text
 before the pairs, bare flags, LEEF's header, verbs between pairs, `, ` between pairs, keys holding spaces); Postfix
