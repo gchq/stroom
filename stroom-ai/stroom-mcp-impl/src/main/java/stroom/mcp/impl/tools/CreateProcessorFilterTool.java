@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ToolArgs;
 import stroom.ai.impl.tools.ToolCall;
@@ -76,9 +77,10 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                                          + "agreeing one here. They confirm it in a form; it is then "
                                                          + "kept with the pipeline in place of an agreed one.";
     /// The index-dropped argument.
-    static final String INDEX_DROPPED_DESCRIPTION = "From an earlier drop_first reply: true once the user says the "
-                                                    + "index this pipeline wrote to before has been dropped (or its "
-                                                    + "shards deleted).";
+    static final String INDEX_DROPPED_DESCRIPTION = "From an earlier drop_first or index_exists reply: true once the "
+                                                    + "user says the index has been dropped (or its shards deleted). "
+                                                    + "An Elasticsearch index is checked again: one still holding "
+                                                    + "documents gets index_exists.";
 
     private static final int MIN_PRIORITY = 1;
     private static final int MAX_PRIORITY = 100;
@@ -137,7 +139,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                              + "translation processed their raw streams again) still has their documents in its "
                              + "index: a drop_first reply comes before the approval, with what the cluster admin "
                              + "drops (a build's own Lucene index holding only those is emptied, its shards "
-                             + "deleted, with no such step). An indexing pipeline reading Events needs "
+                             + "deleted, with no such step). The sample's first run into an Elasticsearch index "
+                             + "that already exists holding documents (made by something else) gets an "
+                             + "index_exists reply before anything is asked or processed: not a translation "
+                             + "problem; the cluster admin drops it or the user chooses another name. An indexing "
+                             + "pipeline reading Events needs "
                              + "source_pipeline_uuid, and its filter only selects Events from exactly that events "
                              + "pipeline. For an Elasticsearch indexing pipeline, the index template for its "
                              + "destination index must have been agreed with the user (propose_index_template, "
@@ -283,6 +289,18 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                  + "destination (ArcSight, say) receives them");
         }
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
+        // The sample's first run into an Elasticsearch index: one already holding documents stops it here, before
+        // anything is asked or processed (seen in testing: a data stream of the same name, found only by
+        // verify_index's counts after indexing).
+        if (destination != null && !streamIds.isEmpty() && filters.isEmpty()) {
+            final Presence existing = indexingRuns.existingIndex(destination);
+            if (existing.holdsDocuments()) {
+                return plan.nextFor(context, ref, ExistingIndexes.stop(pipeline, destination, existing,
+                        ToolArgs.flag(call, INDEX_DROPPED_ARG), NAME));
+            }
+            ExistingIndexes.note(existing, destination).ifPresent(note ->
+                    details.put(ExistingIndexes.EXISTING_INDEX, note));
+        }
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
                     NAME, ToolArgs.flag(call, TEMPLATE_COMMITTED_BY_USER_ARG));
@@ -336,6 +354,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
             return plan.nextFor(context, run.ref(), ProcessingApprovals.dropFirst(context.links(), run.pipeline(),
                     run.destination(), run.lucene(), details, NAME));
         }
+        final Optional<Map<String, Object>> stillThere = stillHoldsDocuments(indexingRuns, call, run.pipeline(),
+                run.destination(), details, NAME);
+        if (stillThere.isPresent()) {
+            return plan.nextFor(context, run.ref(), stillThere.get());
+        }
         String summary = run.streamIds().isEmpty()
                 ? "Create processor filter and process the feed\nProcess " + run.common().get("scope") + " with '"
                   + run.pipeline().getName() + "'."
@@ -359,6 +382,32 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         result.put("enabled", true);
         result.put("hint", "Processing has started: wait_for_processing with filter_id=" + created.getId() + ".");
         return plan.nextFor(context, run.ref(), result);
+    }
+
+    /// Where the user said an Elasticsearch index this pipeline wrote to was dropped (`index_dropped=true`), whether it
+    /// still holds documents: checked rather than taken on trust, so its earlier documents are not mixed in.
+    ///
+    /// @param indexingRuns Looks the index up.
+    /// @param call         The call.
+    /// @param pipeline     The indexing pipeline.
+    /// @param destination  Its Elasticsearch destination, or null.
+    /// @param details      What the approval says, with what is already indexed.
+    /// @param tool         The tool calling.
+    /// @return The `index_exists` reply when it still holds documents; else empty.
+    static Optional<Map<String, Object>> stillHoldsDocuments(final IndexingRuns indexingRuns,
+                                                            final ToolCall call,
+                                                            final PipelineDoc pipeline,
+                                                            final Map<String, Object> destination,
+                                                            final Map<String, Object> details,
+                                                            final String tool) {
+        if (destination == null || !details.containsKey(IndexingRuns.ALREADY_INDEXED)
+            || !ToolArgs.flag(call, INDEX_DROPPED_ARG)) {
+            return Optional.empty();
+        }
+        final Presence existing = indexingRuns.existingIndex(destination);
+        return existing.holdsDocuments()
+                ? Optional.of(ExistingIndexes.stop(pipeline, destination, existing, true, tool))
+                : Optional.empty();
     }
 
     // Exactly the sample's streams, unless the pipeline already processed any.

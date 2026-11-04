@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
+import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.ai.impl.AiBuildsConfig;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
@@ -221,6 +223,102 @@ class TestCreateProcessorFilterTool {
         assertThat(String.valueOf(gated.gates().getLast().get("summary"))).contains("once the index is dropped");
         assertThat(gated.result().get("enabled")).isEqualTo(true);
         assertThat(w.created).hasSize(1);
+    }
+
+    @Test
+    void anExistingIndexHoldingDocumentsStopsTheFirstRunBeforeAnythingIsAsked() {
+        // Seen in testing: the first run went into a data stream of the same name that held documents; only
+        // verify_index's counts showed it, and the agent went on to hand-write the XSLT.
+        elasticInBuild(ProcessingWorld.agreed("PUT _index_template/ecs-acme-v2\n{}"));
+        w.presences.put("ecs-acme-v2", dataStream(1234L));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult called = call(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"),
+                user.context());
+
+        assertThat(called.isError()).as(called.text()).isFalse();
+        final Map<String, Object> result = ProcessingWorld.json(called);
+        assertThat(result).containsEntry("status", ExistingIndexes.STATUS)
+                .containsEntry("index", "ecs-acme-v2")
+                .containsEntry("cluster", "ES_DEV")
+                .containsEntry("exists_as", "a data stream")
+                .containsEntry("documents", 1234);
+        assertThat(String.valueOf(result.get("problem"))).contains("already exists on cluster ES_DEV")
+                .contains("1234 document(s) this pipeline didn't index")
+                .contains("verify_index's document counts would fail");
+        assertThat(String.valueOf(result.get("hint"))).contains("Nothing has been processed")
+                .contains("don't change the translation or its XSLT")
+                .contains("index_dropped=true")
+                .contains("rename_index");
+        assertThat(actions(result)).singleElement()
+                .satisfies(button -> assertThat(button.get("request")).isEqualTo("DELETE _data_stream/ecs-acme-v2"));
+        // Nothing asked, nothing made.
+        assertThat(user.forms()).isEmpty();
+        assertThat(w.created).isEmpty();
+        assertThat(w.lookedUp).containsExactly("c:ecs-acme-v2");
+
+        // Said dropped but still there: checked again, not taken on trust.
+        final ToolResult still = call(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev",
+                "index_dropped", true), user.context());
+        assertThat(String.valueOf(ProcessingWorld.json(still).get("problem")))
+                .startsWith("index_dropped=true was given, but 'ecs-acme-v2' still exists");
+        assertThat(w.created).isEmpty();
+
+        // Dropped: the approval follows.
+        w.presences.remove("ecs-acme-v2");
+        final Gated gated = gatedThrough(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev",
+                "index_dropped", true));
+        assertThat(gated.statuses()).last().isEqualTo("needs_approval");
+        assertThat(details(gated.gates().getLast())).doesNotContainKey(ExistingIndexes.EXISTING_INDEX);
+        assertThat(gated.result().get("enabled")).isEqualTo(true);
+    }
+
+    @Test
+    void anExistingEmptyIndexIsIndexedIntoAndSaidSo() {
+        elasticInBuild(ProcessingWorld.agreed("PUT _index_template/ecs-acme-v2\n{}"));
+        w.presences.put("ecs-acme-v2", dataStream(0L));
+
+        final Gated gated = gatedThrough(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"));
+
+        assertThat(gated.statuses()).containsExactly("needs_approval");
+        assertThat(String.valueOf(details(gated.gates().getFirst()).get(ExistingIndexes.EXISTING_INDEX)))
+                .contains("already exists on cluster ES_DEV (a data stream), holding no documents");
+        assertThat(gated.result().get("enabled")).isEqualTo(true);
+    }
+
+    @Test
+    void anIndexThatCantBeLookedUpIsIndexedIntoAndSaidSo() {
+        // Never a reason to stop: the cluster may refuse the lookup to an account that may write.
+        elasticInBuild(ProcessingWorld.agreed("PUT _index_template/ecs-acme-v2\n{}"));
+        w.presences.put("ecs-acme-v2", Presence.unknown("action [indices:admin/resolve/index] is unauthorized"));
+
+        final Gated gated = gatedThrough(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"));
+
+        assertThat(gated.statuses()).containsExactly("needs_approval");
+        assertThat(String.valueOf(details(gated.gates().getFirst()).get(ExistingIndexes.EXISTING_INDEX)))
+                .contains("couldn't be checked (action [indices:admin/resolve/index] is unauthorized)");
+        assertThat(gated.result().get("enabled")).isEqualTo(true);
+    }
+
+    @Test
+    void anIndexThePipelineWroteToIsNotLookedUpUntilSaidDropped() {
+        // The pipeline indexed before: the drop_first path as it was; the index is looked up only once the user
+        // says it is dropped.
+        elasticInBuild(ProcessingWorld.agreed("PUT _index_template/ecs-acme-v2\n{}"));
+        w.idFilter("p1", 3, 4);
+        w.presences.put("ecs-acme-v2", dataStream(10L));
+
+        final ToolResult first = call(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev"),
+                BuildToolCalls.user(Map.of("value", true)).context());
+        assertThat(ProcessingWorld.json(first)).containsEntry("status", "drop_first");
+        assertThat(w.lookedUp).isEmpty();
+
+        final ToolResult said = call(Map.of("stream_ids", List.of(6), "source_pipeline_uuid", "ev",
+                "index_dropped", true), BuildToolCalls.user(Map.of("value", true)).context());
+        final Map<String, Object> still = ProcessingWorld.json(said);
+        assertThat(still).containsEntry("status", ExistingIndexes.STATUS);
+        assertThat(String.valueOf(still.get("problem"))).contains("still exists");
+        assertThat(w.created).isEmpty();
     }
 
     @Test
@@ -593,6 +691,10 @@ class TestCreateProcessorFilterTool {
         w.pipeline(EV, true, null);
         w.translation("ev");
         w.stream(6, "ACME-EVENTS", "Events", "ev", 4L);
+    }
+
+    private static Presence dataStream(final long documents) {
+        return new Presence(State.PRESENT, List.of("ecs-acme-v2"), List.of(), List.of(), documents, null);
     }
 
     private void inBuild() {

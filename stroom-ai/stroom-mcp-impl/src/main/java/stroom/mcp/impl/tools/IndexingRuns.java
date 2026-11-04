@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.impl.tools.KeptMapping;
 import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.MergedPipeline.ElementProperty;
@@ -85,6 +86,7 @@ class IndexingRuns {
     private final StreamProcessing streamProcessing;
     private final Provider<IndexResource> indexResourceProvider;
     private final ErrorText errorText;
+    private final ExistingIndexes existingIndexes;
 
     /// @param pipelineShapes        Reads a pipeline as Stroom runs it.
     /// @param guard                 Says what is in a build.
@@ -93,14 +95,16 @@ class IndexingRuns {
     /// @param streamReader          Reads Error streams as the user (with the View Data permission: without it,
     ///                              Elasticsearch's refusal of earlier writes is not read, and the index is
     ///                              taken to hold what the pipeline indexed before).
+    /// @param existingIndexes       Looks an Elasticsearch index name up on its cluster.
     @Inject
     IndexingRuns(final PipelineShapes pipelineShapes,
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
-                 final StreamReader streamReader) {
+                 final StreamReader streamReader,
+                 final ExistingIndexes existingIndexes) {
         this(pipelineShapes, guard, streamProcessing, indexResourceProvider,
-                streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text());
+                streamId -> streamReader.errorStreamText(streamId, ERROR_BYTES).text(), existingIndexes);
     }
 
     /// As the injected constructor, with how an Error stream's text is read given, for tests.
@@ -108,12 +112,20 @@ class IndexingRuns {
                  final WriteGuard guard,
                  final StreamProcessing streamProcessing,
                  final Provider<IndexResource> indexResourceProvider,
-                 final ErrorText errorText) {
+                 final ErrorText errorText,
+                 final ExistingIndexes existingIndexes) {
         this.pipelineShapes = pipelineShapes;
         this.guard = guard;
         this.streamProcessing = streamProcessing;
         this.indexResourceProvider = indexResourceProvider;
         this.errorText = errorText;
+        this.existingIndexes = existingIndexes;
+    }
+
+    /// @param destination An Elasticsearch indexing pipeline's destination.
+    /// @return What its index name already stands for on its cluster, or why that isn't known.
+    Presence existingIndex(final Map<String, Object> destination) {
+        return existingIndexes.check(destination);
     }
 
     /// @param pipelineUuid A pipeline.

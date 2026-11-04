@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
 import stroom.ai.impl.AiBuildsConfig;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.FeedAccess;
@@ -82,6 +83,14 @@ final class ProcessingWorld {
     final List<CreateProcessFilterRequest> created = new ArrayList<>();
     final Map<Long, String> errorTexts = new LinkedHashMap<>();
     final List<String> deletedShards = new ArrayList<>();
+    // What each Elasticsearch index name stands for on its cluster: nothing, unless a test says.
+    final Map<String, Presence> presences = new LinkedHashMap<>();
+    // Each index name looked up on a cluster, as `cluster uuid:index name`, in order.
+    final List<String> lookedUp = new ArrayList<>();
+    final ExistingIndexes existingIndexes = new ExistingIndexes(() -> (cluster, indexName) -> {
+        lookedUp.add(cluster.getUuid() + ":" + indexName);
+        return presences.getOrDefault(indexName, Presence.absent());
+    });
     // The processor Stroom gives each filter made from now on.
     Processor processor = Processor.builder().id(70).enabled(true).build();
     // The builds' settings (stroom.ai.builds), changed by a test that needs to.
@@ -120,7 +129,7 @@ final class ProcessingWorld {
         approvals = new ProcessingApprovals(world.pipelineShapes, pipelineOutputs, agreements, pipelineDocs,
                 feeds.consent);
         indexingRuns = new IndexingRuns(world.pipelineShapes, world.guard(), streamProcessing,
-                () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""));
+                () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""), existingIndexes);
         sampleStreamTexts = new SampleStreamTexts(feeds.streamReader, feeds.feedNames, world.documentAccess);
         promotion = new PromotionProcessing(filterWrites, streamProcessing, pipelineOutputs, agreements,
                 indexingRuns, pipelineDocs, () -> FEED_MADE + 100_000_000L);
