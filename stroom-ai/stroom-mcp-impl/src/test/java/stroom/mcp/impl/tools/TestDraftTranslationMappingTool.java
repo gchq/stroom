@@ -87,6 +87,8 @@ class TestDraftTranslationMappingTool {
         // In a form: the user's choice.
         world.forms = true;
         world.answers.put(DraftTranslationMappingTool.TRACE_QUESTION, "Its first 20 lines");
+        // Its key=value lines have no time: left for the agent to map here.
+        world.answers.put(TimeSources.TIME_QUESTION, "Leave it: I'll say which field");
         final Map<String, Object> cut = world.call(tool, Map.of("samples", Map.of("app.log", traced)));
         assertThat(world.asked).contains(DraftTranslationMappingTool.TRACE_QUESTION);
         assertThat(String.valueOf(cut.get("mapping"))).contains("[position() le 20]");
@@ -103,6 +105,63 @@ class TestDraftTranslationMappingTool {
         world.asked.clear();
         world.call(tool, Map.of("samples", Map.of("acme.csv", CSV)));
         assertThat(world.asked).doesNotContain(DraftTranslationMappingTool.TRACE_QUESTION);
+    }
+
+    @Test
+    void theUserSaysWhereATimeComesFromWhenRecordsHaveNone() {
+        // key=value lines with no time: the stream's received or created time is offered, never assumed.
+        final String timeless = "user=bob action=logout session=s1\nuser=carol action=login session=s2\n"
+                                + "user=dave action=logout session=s3\n";
+
+        final Map<String, Object> asked = world.call(tool, Map.of("samples", Map.of("app.log", timeless)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("write no EventTime/TimeCreated", "time_source=");
+        assertThat(String.valueOf(asked.get("mapping"))).doesNotContain("ReceivedTime");
+
+        world.forms = true;
+        world.answers.put(TimeSources.TIME_QUESTION, "When Stroom received the stream (an approximation)");
+        final Map<String, Object> chosen = world.call(tool, Map.of("samples", Map.of("app.log", timeless)));
+        // Every rule's, so once, in common.
+        assertThat(String.valueOf(((Map<?, ?>) chosen.get("mapping")).get("common")))
+                .contains("{path=EventTime/TimeCreated, meta=ReceivedTime}");
+        assertThat(String.valueOf(chosen.get("notes"))).contains("an approximation");
+
+        world.asked.clear();
+        final Map<String, Object> given = world.call(tool, Map.of("samples", Map.of("app.log", timeless),
+                TimeSources.TIME_SOURCE_ARG, "created"));
+        assertThat(world.asked).doesNotContain(TimeSources.TIME_QUESTION);
+        assertThat(String.valueOf(given.get("mapping"))).contains("meta=CreatedTime");
+        assertThat(world.call(tool, Map.of("samples", Map.of("app.log", timeless), TimeSources.TIME_SOURCE_ARG,
+                "now"))).containsEntry("error", "time_source is one of received, created, none");
+    }
+
+    @Test
+    void theUserSaysWhereADateComesFromWhenTimesHaveNoneAndNoHeaderGivesIt() {
+        // Lines holding a time of day only; the stream's file name holds the date.
+        final String dateless = "23:59:30.000 INFO [w1] request 1 done\n00:00:10.000 WARN [w2] request 2 slow\n"
+                                + "00:01:00.000 INFO [w1] request 3 done\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(9L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 9", dateless), List.of()));
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(9L)).thenReturn(Map.of("RemoteFile",
+                "app-2026-10-11.log"));
+
+        final Map<String, Object> asked = world.call(tool, Map.of("stream_ids", List.of(9)));
+        assertThat(String.valueOf(asked.get("notes"))).contains("have no date and no header gives it",
+                "date_source=received|created|file_name");
+
+        world.forms = true;
+        world.answers.put(TimeSources.DATE_QUESTION, "The date in the file's name (e.g. app-2026-10-11.log)");
+        final Map<String, Object> chosen = world.call(tool, Map.of("stream_ids", List.of(9)));
+        assertThat(String.valueOf(chosen.get("mapping")))
+                .contains("replace(stroom:meta('RemoteFile'), '^.*?(\\d{4}-\\d{2}-\\d{2}).*$', '$1')")
+                .contains("time_format=yyyy-MM-dd HH:mm:ss.SSS", "rollover=true");
+        assertThat(world.asked).contains(TimeSources.DATE_QUESTION).doesNotContain(TimeSources.TIME_QUESTION);
+
+        // No file name holding a date: not offered.
+        Mockito.when(world.sampleStreamTexts.receiptHeaders(9L)).thenReturn(Map.of());
+        assertThat(world.call(tool, Map.of("stream_ids", List.of(9), TimeSources.DATE_SOURCE_ARG, "file_name")))
+                .containsEntry("error", "date_source is one of received, created, none");
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(9), TimeSources.DATE_SOURCE_ARG,
+                "received")).get("mapping"))).contains("substring(stroom:meta('ReceivedTime'), 1, 10)");
     }
 
     @Test

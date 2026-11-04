@@ -75,6 +75,9 @@ import java.util.regex.PatternSyntaxException;
 /// @param match           An alternatives part: the regex a record matches at its start to be read by it, or null
 ///                        for the kind's own (see [#guard()]).
 /// @param variantField    alternatives: the field each record's variant is written in.
+/// @param carry           An alternatives part: the field its first named field is written as on every record after
+///                        it (a header's date for the lines after it, kept by the splitter so stepping, which reads a
+///                        record alone, sees it too); or null.
 public record SplitterSpec(String kind,
                            String delimiter,
                            boolean headerLine,
@@ -101,7 +104,8 @@ public record SplitterSpec(String kind,
                            List<SplitterSpec> parts,
                            String variant,
                            String match,
-                           String variantField) {
+                           String variantField,
+                           String carry) {
 
     /// The kinds of spec.
     public static final List<String> KINDS = List.of("delimited", "regex", "key_value", "syslog", "cef", "fields",
@@ -201,9 +205,11 @@ public record SplitterSpec(String kind,
             }
             return;
         }
-        if (parts.size() < 2) {
-            throw new IllegalArgumentException("alternatives needs parts: two or more specs, one per format of "
-                                               + "record, tried in order");
+        // One part is enough: a stream of one format whose records are told apart from lines in none (catch_all),
+        // or whose times need the variant to be read with a date (a log of time-only lines).
+        if (parts.isEmpty()) {
+            throw new IllegalArgumentException("alternatives needs parts: a spec per format of record, tried in "
+                                               + "order");
         }
         if (variantField.isBlank()) {
             throw new IllegalArgumentException("variant_field names the field each record's variant is written in");
@@ -231,6 +237,12 @@ public record SplitterSpec(String kind,
                 throw new IllegalArgumentException(which + ": record_start, record_end, blank_line_records, "
                                                    + "continuation and catch_all are the whole spec's, not a "
                                                    + "part's");
+            }
+            if (part.carry() != null && (!"regex".equals(part.kind())
+                                         || part.names().stream().allMatch(String::isEmpty)
+                                         || !VARIANT_NAME.matcher(part.carry()).matches())) {
+                throw new IllegalArgumentException(which + ": carry goes on a regex part with a named field, and is "
+                                                   + "a field name (letters, digits, '_', '.' and '-')");
             }
             if (part.guard() == null) {
                 throw new IllegalArgumentException(which + ": a fields part needs match, the regex its records "
@@ -317,7 +329,7 @@ public record SplitterSpec(String kind,
     ///             names), `quote`, `pattern`, `names`, `pair_separator`, `rfc`, `body` (a spec), `body_field`,
     ///             `quoted_newlines`, `record_end`, `record_start`, `comment_prefix`, `header_directive`,
     ///             `directives`, `escape`, `spaced_values`, `catch_all`, `blank_line_records`, `fields`,
-    ///             `continuation`, `parts` (specs), `variant`, `match` and `variant_field`.
+    ///             `continuation`, `parts` (specs), `variant`, `match`, `variant_field` and `carry`.
     /// @return The spec.
     /// @throws IllegalArgumentException if it isn't a consistent spec.
     @SuppressWarnings("unchecked")
@@ -373,6 +385,7 @@ public record SplitterSpec(String kind,
         builder.variant = (String) json.get("variant");
         builder.match = (String) json.get("match");
         builder.variantField = (String) json.get("variant_field");
+        builder.carry = (String) json.get("carry");
         return builder.build();
     }
 
@@ -405,6 +418,7 @@ public record SplitterSpec(String kind,
         builder.variant = variant;
         builder.match = match;
         builder.variantField = variantField;
+        builder.carry = carry;
         return builder;
     }
 
@@ -446,6 +460,7 @@ public record SplitterSpec(String kind,
         putIf(map, "variant", variant, variant != null);
         putIf(map, "match", match, match != null);
         putIf(map, "variant_field", variantField, !VARIANT.equals(variantField));
+        putIf(map, "carry", carry, carry != null);
         return map;
     }
 
@@ -490,6 +505,7 @@ public record SplitterSpec(String kind,
         private String variant;
         private String match;
         private String variantField = VARIANT;
+        private String carry;
 
         private Builder(final String kind) {
             this.kind = kind;
@@ -679,13 +695,20 @@ public record SplitterSpec(String kind,
             return this;
         }
 
+        /// @param carry The field a part's first named field is written as on every record after it, or null.
+        /// @return This builder.
+        public Builder carry(final String carry) {
+            this.carry = carry;
+            return this;
+        }
+
         /// @return The spec.
         /// @throws IllegalArgumentException if it isn't consistent.
         public SplitterSpec build() {
             return new SplitterSpec(kind, delimiter, headerLine, columns, quote, pattern, names, pairSeparator, rfc,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
-                    variant, match, variantField);
+                    variant, match, variantField, carry);
         }
     }
 }

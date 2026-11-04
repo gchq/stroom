@@ -62,6 +62,8 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `dictionary` | The value a Dictionary of key=value lines gives |
 | `repeat: true` | One element per value of a field holding several; a delimited text list is one value, so split it with an `xpath` using `tokenize()` |
 | `time_format`, `timezone` | Time parsing: see below |
+| `rollover: true` | A time of day on a date that doesn't move on by itself: see below |
+| `time_fallback` | A stream meta time written when the time won't parse: see below |
 | `data_name`, `data_parent` | A `Data` entry: see below |
 
 ## Times
@@ -70,6 +72,26 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 `yyyy-MM-dd'T'HH:mm:ss.SSSX`. An epoch time is named, never described: `epoch_s` (seconds, a fraction allowed),
 `epoch_ms`, `epoch_us`, `epoch_ns`. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`) only for a time that
 carries no zone or offset of its own. `profile_sample` and the draft give the pattern the sample's values fit.
+
+Where a time is incomplete, the user says where the rest comes from; the draft asks (`time_source`,
+`date_source`) and writes the answer. Never `stroom:current-time()` (processing time), and never Stroom's own
+completion of a dateless time (it moves a time later than the stream's creation back a whole month).
+
+- **A date in a header line** (`=== Log opened 2026-10-11 ===`, then `22:14:03 ...` lines): the splitter writes the
+  header's date on each line after it as `header_date` (its header part's `carry`), the header is a `drop_when` rule,
+  and each time is `"xpath": "concat(data[@name='header_date']/@value, ' ', data[@name='time']/@value)"` with the
+  joined `time_format` and `"rollover": true`. A later header (`Day changed to ...`) replaces the date.
+- **No date anywhere in the records:** the date Stroom received or created the stream
+  (`substring(stroom:meta('ReceivedTime'), 1, 10)`), or one in the file's name
+  (`replace(stroom:meta('RemoteFile'), '^.*?(\d{4}-\d{2}-\d{2}).*$', '$1')`), joined the same way, with `rollover`.
+- **No time at all:** `"meta": "ReceivedTime"` (or `CreatedTime`): an approximation, only as the user agreed.
+- **`rollover`** adds a day each time a record's time goes back past the one before it on the same date (a log
+  crossing midnight); a new date starts again. It holds the previous time with `stroom:put`, which processing keeps
+  for the stream but stepping keeps for one record: a time past midnight steps on the day before, and is right in
+  processing.
+- **Times in several layouts:** read each layout (a splitter part each, or a rule each with its own `time_format`);
+  a record whose time still won't parse gets an empty time the schema refuses, unless the user agrees to
+  `"time_fallback": "ReceivedTime"`, which writes that instead and logs a warning naming the record.
 
 ## Data
 

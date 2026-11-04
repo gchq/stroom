@@ -175,6 +175,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                + "a fork's versions are its own: give the namespace "
                                                                + "chosen (or a fork document's UUID); a version "
                                                                + "alone is read within it.")
+                        .addStringProperty(TimeSources.TIME_SOURCE_ARG, "Records with no time: received or created "
+                                                                        + "(the stream's, an approximation) or none, "
+                                                                        + "as the user chose; asked in a form when "
+                                                                        + "left out.")
+                        .addStringProperty(TimeSources.DATE_SOURCE_ARG, "Times with no date and no header giving "
+                                                                        + "it: received, created, file_name or none, "
+                                                                        + "as the user chose; asked in a form when "
+                                                                        + "left out.")
                         .addIntegerProperty(CONTINUATION_LINES_ARG, "Records with stack traces: the most lines of "
                                                                     + "each its Event keeps, as the user chose (0: "
                                                                     + "all of it); asked in a form when left out.")
@@ -245,6 +253,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             result.put("notes", notes);
         }
         traceLines(call, context, result, mapping);
+        // Records with no time, or times with no date: where they come from is the user's to say.
+        TimeSources.apply(call, context, consent, NAME, result, mapping, streamIds.stream()
+                .map(id -> sampleStreamTexts.receiptHeaders(id).get("RemoteFile"))
+                .filter(name -> name != null && !name.isBlank())
+                .toList());
         result.put("schema_check", schemaCheck(context, build, mapping, version));
         result.put("schema_version", version);
         final Optional<String> settled = eventVersions.settled(context, build, version);
