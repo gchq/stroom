@@ -227,7 +227,8 @@ class TemplateReviews {
             }
         });
         for (final String key : List.of("compatible", "blocking", "pipeline_changes", "template_name", "index",
-                "cluster", "self_check", "from_example", "notes", "component_templates")) {
+                "cluster", ProposeIndexTemplateTool.EXISTING_INDEX,
+                "self_check", "from_example", "notes", "component_templates")) {
             if (result.containsKey(key)) {
                 Object value = result.get(key);
                 if ("self_check".equals(key) && value instanceof final Map<?, ?> check) {

@@ -39,6 +39,7 @@ import jakarta.inject.Inject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /// `reprocess_streams` - processes streams again through a pipeline under development, after changing it, at most
@@ -102,7 +103,9 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                              + "enabled and processing starts (for Elasticsearch indexing the approval also "
                              + "confirms the index template is applied on the cluster; an index the pipeline wrote "
                              + "to before gets a drop_first reply ahead of the approval, the user dropping it, "
-                             + "except a build's own Lucene index, emptied once approved, its shards deleted). Any "
+                             + "except a build's own Lucene index, emptied once approved, its shards deleted; an "
+                             + "Elasticsearch index said dropped is checked again, index_exists if it still holds "
+                             + "documents). Any "
                              + "other pipeline (CEF output, reference data): the filter is created disabled, for "
                              + "the user to enable. Promoted pipelines are refused by the write guard: reprocessing "
                              + "production data is the user's.")
@@ -239,6 +242,11 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
             && !ToolArgs.flag(call, CreateProcessorFilterTool.INDEX_DROPPED_ARG)) {
             return plan.nextFor(context, ref, ProcessingApprovals.dropFirst(context.links(), pipeline, destination,
                     lucene, details, NAME));
+        }
+        final Optional<Map<String, Object>> stillThere = CreateProcessorFilterTool.stillHoldsDocuments(indexingRuns,
+                call, pipeline, destination, details, NAME);
+        if (stillThere.isPresent()) {
+            return plan.nextFor(context, ref, stillThere.get());
         }
         String summary = "Create processor filter and reprocess streams\nReprocess " + streamIds.size()
                          + " stream(s) with '" + pipeline.getName() + "'.";

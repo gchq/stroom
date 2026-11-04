@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.api.ElasticIndexPresence.Presence;
+import stroom.ai.api.ElasticIndexPresence.State;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.docref.DocRef;
@@ -175,6 +177,34 @@ class TestReprocessStreamsTool {
         assertThat(w.created.getLast().isEnabled()).isTrue();
         assertThat(gated.result().get("filter_id")).isEqualTo(9);
         assertThat(w.lastExpression().getChildren().get(1)).isEqualTo(ProcessorFilterWrites.pipelineTerm(EV));
+    }
+
+    @Test
+    void anElasticsearchIndexSaidDroppedThatStillHoldsDocumentsIsNotReprocessedInto() {
+        // index_dropped is checked, not taken on trust: an index still holding documents would mix the earlier
+        // run's documents with the new ones.
+        w.pipeline(P1, true, ProcessingWorld.withAgreed(ProcessingWorld.agreed(
+                "PUT _index_template/ecs-acme-v2\n{}")));
+        w.elastic("p1");
+        w.pipeline(EV, true, null);
+        w.translation("ev");
+        w.stream(5, "ACME-EVENTS", "Events", "ev", 4L);
+        w.idFilter("p1", 3, 5);
+        w.steppedClean(P1);
+        w.presences.put("ecs-acme-v2", new Presence(State.PRESENT, List.of(), List.of("ecs-acme-v2"), List.of(),
+                7L, null));
+
+        final Map<String, Object> result = ProcessingWorld.json(call(Map.of("stream_ids", List.of(5),
+                "source_pipeline_uuid", "ev", "index_dropped", true), BuildToolCalls.user(Map.of("value", true))
+                .context()));
+
+        assertThat(result).containsEntry("status", ExistingIndexes.STATUS).containsEntry("exists_as", "an index");
+        assertThat(String.valueOf(result.get("problem"))).contains("still exists").contains("holding 7 document(s)");
+        assertThat(TestCreateProcessorFilterTool.actions(result)).extracting(action -> action.get("request"))
+                .containsExactly("DELETE ecs-acme-v2");
+        assertThat(String.valueOf(result.get("hint"))).contains(ReprocessStreamsTool.NAME + " again");
+        assertThat(w.created).isEmpty();
+        assertThat(w.lookedUp).containsExactly("c:ecs-acme-v2");
     }
 
     @ParameterizedTest

@@ -229,6 +229,79 @@ class TestE2eUsersAggregate extends AbstractE2eTest {
                 "users.organisation");
     }
 
+    @Test
+    void anIndexThatAlreadyHoldsDocumentsStopsTheFirstRunUntilItIsDropped() {
+        // Seen in testing: a build's first run went into a data stream of the same name that already held
+        // documents, found only by verify_index's counts, and the agent went on to hand-write the XSLT.
+        final Onboarded mail = onboard(new Case("exists-" + STAMP, "Event Data (Text)", SAMPLE, CSV_SPLITTER,
+                XSLT));
+        final String index = "e2e-exists-" + STAMP + "-v1";
+        indices.add(index);
+        final DocRef cluster = liveElasticCluster(node, FIXTURE_CLUSTER + " (existing)");
+        final String template = elasticEventsTemplate(FIXTURE_TEMPLATE + " (existing)",
+                "Fixture for TestE2eUsersAggregate");
+        // Something else's data stream of that name, holding a document.
+        final String foreign = "e2e-foreign-" + STAMP;
+        assertThat(node.request("PUT", "/_index_template/" + foreign, "{\"index_patterns\": [\"" + index + "\"], "
+                                                                     + "\"priority\": 1000, \"data_stream\": {}}")
+                .isSuccess()).isTrue();
+        indexTemplates.add(foreign);
+        assertThat(node.request("POST", "/" + index + "/_doc?refresh=true",
+                "{\"@timestamp\": \"2026-01-01T00:00:00Z\", \"message\": \"not the build's\"}").isSuccess())
+                .isTrue();
+
+        final Map<String, Object> plan = obj("backend", "elasticsearch", "index_name", index,
+                "time_field", "@timestamp", "fields", List.of(
+                        obj("name", "StreamId", "type", "id", "source", "@StreamId"),
+                        obj("name", "EventId", "type", "id", "source", "@EventId"),
+                        obj("name", "@timestamp", "type", "date", "source", "EventTime/TimeCreated")));
+        final String xslt = uuidOf(client.json("save_xslt", args("build", mail.build(), "name", index + "-XSLT",
+                "index_plan", plan)));
+        final String pipeline = uuidOf(agreed("create_indexing_pipeline", args("build", mail.build(),
+                "name", index + " - Indexing", "template_uuid", template, "xslt_uuid", xslt, "index_name", index,
+                "cluster_uuid", cluster.getUuid())));
+        assertThat(stepSample(pipeline, List.of(mail.events()))).containsEntry("verdict", "clean");
+
+        // Said while the template is agreed, so another name can be chosen.
+        final Map<String, Object> agreedTemplate = agreed("propose_index_template", args("pipeline_uuid", pipeline,
+                "plan", plan, "events_stream_ids", List.of(mail.events()), "without_example", true));
+        assertThat(agreedTemplate).containsEntry("agreed", true);
+        assertThat(String.valueOf(agreedTemplate.get("existing_index")))
+                .contains("'" + index + "' already exists on cluster " + FIXTURE_CLUSTER + " (existing) (a data "
+                          + "stream), holding 1 document(s)");
+        apply((String) agreedTemplate.get("dev_tools"));
+
+        // The first run stops before anything is asked or processed, with the drop for the admin.
+        final Map<String, Object> filterArgs = args("pipeline_uuid", pipeline, "stream_ids",
+                List.of(mail.events()), "source_pipeline_uuid", mail.pipelineUuid());
+        final Map<String, Object> stopped = client.json("create_processor_filter", filterArgs);
+        dump("create_processor_filter index_exists", stopped);
+        assertThat(stopped).containsEntry("status", "index_exists").containsEntry("exists_as", "a data stream")
+                .containsEntry("documents", 1L).doesNotContainKey("filter_id");
+        assertThat(String.valueOf(stopped.get("hint"))).contains("don't change the translation or its XSLT");
+        final List<Map<String, Object>> actions = list(stopped, "user_actions");
+        assertThat(actions).extracting(action -> action.get("request"))
+                .containsExactly("DELETE _data_stream/" + index);
+
+        // Said dropped too soon: checked, still stopped.
+        final Map<String, Object> early = new LinkedHashMap<>(filterArgs);
+        early.put("index_dropped", true);
+        assertThat(client.json("create_processor_filter", early)).containsEntry("status", "index_exists");
+
+        // Dropped by the admin (and its template, which would make it again): indexed, counted.
+        assertThat(node.request("DELETE", "/_data_stream/" + index, null).isSuccess()).isTrue();
+        node.deleteIndexTemplate(foreign);
+        final Map<String, Object> started = agreed("create_processor_filter", early);
+        assertThat(started).containsEntry("enabled", true);
+        processAll();
+        final Map<String, Object> done = client.json("wait_for_processing", args("pipeline_uuid", pipeline,
+                "stream_ids", List.of(mail.events()), "expect_events", false, "filter_id", started.get("filter_id"),
+                "timeout_seconds", 10));
+        assertThat(done).as("indexed with no Error stream: %s", done.get("streams")).containsEntry("gate", "pass");
+        node.refresh(index);
+        assertThat(node.count(index, null)).as("only the build's 3 events").isEqualTo(3);
+    }
+
     private long term(final String login) {
         return node.count("e2e-users-" + STAMP + "-v1", "{\"term\": {\"users.login\": \"" + login + "\"}}");
     }

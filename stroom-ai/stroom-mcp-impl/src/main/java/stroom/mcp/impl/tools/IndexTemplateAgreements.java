@@ -45,6 +45,8 @@ class IndexTemplateAgreements {
 
     /// The description block an agreed template is kept in.
     static final String AGREED_TEMPLATE = "agreed index template";
+    /// The destination's key for its Elastic Cluster doc's UUID.
+    static final String CLUSTER_UUID = "cluster uuid";
 
     private final PipelineShapes pipelineShapes;
     private final DocumentAccess documentAccess;
@@ -58,8 +60,8 @@ class IndexTemplateAgreements {
     }
 
     /// @param pipelineUuid A pipeline.
-    /// @return The cluster and index name an Elasticsearch indexing pipeline writes to (`index name`, `cluster`);
-    /// empty for other pipelines.
+    /// @return The cluster and index name an Elasticsearch indexing pipeline writes to (`index name`, `cluster`,
+    /// and the cluster doc's UUID as [#CLUSTER_UUID]); empty for other pipelines.
     /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
     Optional<Map<String, Object>> elasticDestination(final String pipelineUuid) {
         final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
@@ -82,6 +84,9 @@ class IndexTemplateAgreements {
                 : String.valueOf(properties.get("indexName")));
         destination.put("cluster", properties.get("cluster") instanceof final Map<?, ?> cluster
                 ? NullSafe.get(cluster.get("name"), String::valueOf)
+                : null);
+        destination.put(CLUSTER_UUID, properties.get("cluster") instanceof final Map<?, ?> cluster
+                ? NullSafe.get(cluster.get("uuid"), String::valueOf)
                 : null);
         return Optional.of(destination);
     }

@@ -2867,7 +2867,11 @@ comes before the approval, with a button (the `DELETE _data_stream/<index>` or `
 cluster admin), and the agent calls again with `index_dropped=true` once the user says it is done. A build's own Lucene
 index is emptied by the tool once approved (`IndexingRuns.deleteIndexShards`, node by node through `IndexResource`).
 An index Elasticsearch refused every earlier write to holds nothing of the pipeline's (read from its Error streams'
-text), so it isn't dropped.
+text), so it isn't dropped. The sample's first run into an Elasticsearch index name that already holds documents (a
+data stream, index or alias made by something else; `ExistingIndexes` over `ElasticIndexPresence`) gets an
+`index_exists` reply before anything is asked or processed, listing every data stream and index the cluster admin deletes by hand first (`delete_first`; variables in the name taken as any value), and `rename_index` as the other way;
+an existing empty index, or one that can't be looked up, is indexed into with a line in the approval.
+`index_dropped=true` is checked again: an index still holding documents gets `index_exists`.
 
 * **Arguments**: `pipeline_uuid` (required), `stream_ids` or `feed` (exactly one), `stream_type`, `created_after`
   (ISO; without an offset taken as UTC), `priority` (1 to 100, default 10), `source_pipeline_uuid`, `index_dropped`,
@@ -2875,7 +2879,8 @@ text), so it isn't dropped.
 * **Returns**: `filter_id`, `pipeline`, `scope`, `events_from_pipeline`, `output_feed` with `output_note`,
   `enabled`, a hint (`wait_for_processing with filter_id=`), and `next`; a disabled filter adds
   `pipeline_link`, what enabling does, `before_enabling` and `user_actions`; a `drop_first` reply in place of the
-  approval when the index must start fresh.
+  approval when the index must start fresh; an `index_exists` reply (`problem`, `exists_as`, `names`, `documents`,
+  `user_actions`, hint) when an Elasticsearch index already holds documents.
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build; both or neither scope; `priority` out of
   range; no clean step (`step_sample (or step_records) ... until the verdict is clean`); a feed outside the build
   (`start_build feeds=`); streams older than their feed; a feed scope without `created_after`; streams already
@@ -2922,13 +2927,13 @@ It shares `create_processor_filter`'s source, test-feed and template checks and 
 indexing or discovery pipeline runs on the user's approval (created enabled); any other is created disabled for the
 user. An index this pipeline wrote to starts fresh, because Stroom's purge on reprocess doesn't apply to a second filter on the same
 streams nor remove a Lucene index's documents (seen: an index held each event twice after its XSLT was fixed and the
-stream reprocessed): a `drop_first` reply comes before the approval, then `index_dropped=true`; a build's own Lucene
-index is emptied once approved.
+stream reprocessed): a `drop_first` reply comes before the approval, then `index_dropped=true` (an Elasticsearch
+index still holding documents then gets `index_exists`); a build's own Lucene index is emptied once approved.
 
 * **Arguments**: `pipeline_uuid`, `stream_ids` (required; 1 to 10), `source_pipeline_uuid`, `index_dropped`,
   `template_committed_by_user`.
 * **Returns**: `filter_id`, `pipeline`, `streams`, `max_tasks`, `enabled`, a hint, `next`; for a disabled
-  filter what the user does first, with buttons; or a `drop_first` reply.
+  filter what the user does first, with buttons; or a `drop_first` or `index_exists` reply.
 * **Refuses**: no `pipeline_uuid`; a pipeline not the tools' own in a build (promoted pipelines too: reprocessing
   production data is the user's); 0 or more than 10 streams (`Give 1 to 10 streams per call`); streams the pipeline
   hasn't processed (`use create_processor_filter`); no clean step of the current code (`... has no clean step of its
@@ -4703,8 +4708,9 @@ for its current index and code.
   session once given); `without_components`; `include_components` (components to compose besides the example's,
   whatever they map; `ecs@mappings` is known); `template_name` (default from the index name); `priority` (only when
   the user asks; none by default); `without_example`; `reviewed` (the review id shown).
-* **Returns**: `template_name`, `index`, `cluster`, `template`, `dev_tools`, `self_check`, `from_example` (or
-  `notes` from the plan alone), `data_stream` (discovery), `pipeline_link`, `stopped_early` and `stepped` when the
+* **Returns**: `template_name`, `index`, `cluster`, `existing_index` (a warning when the index name already holds
+  documents on the cluster, so another can be chosen before indexing), `template`, `dev_tools`, `self_check`,
+  `from_example` (or `notes` from the plan alone), `data_stream` (discovery), `pipeline_link`, `stopped_early` and `stepped` when the
   time limit cut stepping short; then `needs_review` (`dev_tools`, `review_id`, with the key parts of the result),
   or `agreed: true` with the user action. `needs_components` while the example's components aren't given.
 * **Refuses**: no `pipeline_uuid` or streams; no plan to go by; a Lucene plan (`Index templates are for
