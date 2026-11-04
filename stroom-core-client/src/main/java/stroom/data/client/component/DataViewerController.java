@@ -196,6 +196,7 @@ public class DataViewerController
         own(markerList);
         this.classificationLabelController = own(classificationLabelController);
         this.htmlPane = htmlPane;
+        htmlPane.setAriaLabel(INFO_TAB_NAME);
         this.htmlLayer = new ControllerLayer(htmlPane);
         textPaneLayer = new ControllerLayer(textPane);
         // Use properties mode for meta

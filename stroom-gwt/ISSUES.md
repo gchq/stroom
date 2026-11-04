@@ -1869,7 +1869,8 @@ spinner is centred where the cross is. The overflow selector is 24px high, in li
 
 ### A scroll pane that overflows can't be scrolled from the keyboard
 
-**Fixed** (3 November 2026) for Stroom's `ScrollPane`. **Open** for GWT's own `ScrollPanel`.
+**Fixed** (3 November 2026) for Stroom's `ScrollPane`, and (4 November 2026) for the panes of text
+that used GWT's own `ScrollPanel`.
 
 Found 2 November 2026, shown by the toolbars' padding: when its content is taller than it, a scroll
 pane (`scroll-pane`) scrolls but can't take the focus, so a keyboard user can't scroll it (axe
@@ -1887,13 +1888,16 @@ regions ("Processor information", "Processor filter"); `Processors` passes again
 become a tab stop should be given a name (`role="region"`, `ariaLabel`), or a screen reader
 announces nothing when it is reached.
 
-Left: the 13 templates that use GWT's `ScrollPanel` (`g:ScrollPanel`) rather than `ScrollPane` don't
-get this. Moving them can change their layout (`ScrollPane` fills its parent; the document chooser's
-tree had no height in a `ScrollPanel`), so each is a change to check: `Splash`,
-`ElasticIndexFieldList`, `SolrIndexFieldList`, `QueryHistory`, `QueryFavourites`, `QueryDataTab`,
-`ExpressionEditor`, `FloorMapGroupEdit`, `FloorMapLayers`, `TypeFilter`, `XsdDiagramBox`,
-`CodeEditor` and `HtmlPane`. The six regions made focusable by hand in Batch 4 (A11Y.md) still use
-`scroll-region`.
+Then (4 November 2026) the 13 templates that used GWT's `ScrollPanel` (`g:ScrollPanel`): the seven
+that scroll only text are `ScrollPane`s, each a named region: `HtmlPane` ("Text", the data
+viewer's "Info"), `Splash` ("Terms"), `CodeEditor`'s load error ("Load error"), `QueryDataTab`'s
+error ("Query error"), `ElasticIndexFieldList` ("Field list status"), `SolrIndexFieldList`
+("Synchronisation state") and `XsdDiagramBox`'s content (its box's title). The four sized by their
+own classes or content rather than filling their parent fit it (`fitContent`, `scroll-pane--fit`).
+The other six are left as `ScrollPanel`s, as what they scroll takes the focus (an expression tree,
+a grid, tick boxes, buttons), and tabbing to it scrolls them: `QueryHistory`, `QueryFavourites`,
+`ExpressionEditor`, `FloorMapGroupEdit`, `FloorMapLayers` and `TypeFilter`. The six regions made
+focusable by hand in Batch 4 (A11Y.md) still use `scroll-region`.
 
 ### GitHub issues loosely related to accessibility
 

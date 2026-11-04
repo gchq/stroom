@@ -15,9 +15,10 @@
  */
 
 /* A scroll pane (ScrollPane) fills its parent, and its content is at least as big as it. Imported
-   last (app.css), so its size wins over other classes, as its inline size once did */
-.scroll-pane,
-.scroll-pane__content {
+   last (app.css), so its size wins over other classes, as its inline size once did. One that fits
+   its content (its fit modifier) is sized by its other classes or its content instead */
+.scroll-pane:where(:not(.scroll-pane--fit)),
+:where(.scroll-pane:not(.scroll-pane--fit)) > .scroll-pane__content {
     width: 100%;
     height: 100%;
 }

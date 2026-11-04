@@ -31,7 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 /// </l:ScrollPane>
 /// ```
 ///
-/// Give it more classes with `addStyleNames` (not `styleName`, which would replace its own).
+/// Give it more classes with `addStyleNames` (not `styleName`, which would replace its own). A pane
+/// sized by its own classes or its content instead, e.g. a box of error text, is made with
+/// `fitContent="true"`.
 ///
 /// While its content is bigger than it and holds nothing that takes the focus, the pane is a tab
 /// stop itself, so that it can be scrolled with the keyboard ([ScrollPaneTabStop]); it checks
@@ -88,6 +90,12 @@ public class ScrollPane extends ScrollPanel {
     /// @param ariaLabel What the pane holds, for screen readers.
     public void setAriaLabel(final String ariaLabel) {
         getElement().setAttribute("aria-label", ariaLabel);
+    }
+
+    /// @param fitContent Whether the pane is sized by its own classes or its content, rather than
+    ///                   filling its parent.
+    public void setFitContent(final boolean fitContent) {
+        setStyleName("scroll-pane--fit", fitContent);
     }
 
     /// Makes the pane a tab stop whatever its content, or takes it out of the tab order, rather
