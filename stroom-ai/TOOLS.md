@@ -3739,7 +3739,14 @@ forms, kept whole with a note to ask. Keyed records (`KeyedRecords`): a spec's `
 lines holding one key into a record, `line_name` nests each line's fields under its name, `skip_lines` passes over
 separator lines; the profile suggests them for key=value lines and counts keys that come back (interleaved, warned
 of, not joined); the draft takes the time from an epoch in the key and leaves the key out. `StroomInput` reads a
-sample as Stroom's parser does (characters XML forbids taken out) and names what it took. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
+sample as Stroom's parser does (characters XML forbids taken out) and names what it took. With `join_unkeyed`,
+a line holding no key joins the record before it, and named markers start sections read whole (`keyed sections`:
+ModSecurity's serial audit log). Formats shortlist (formats-shortlist-generator.py, 2026-11-04), as inferred today:
+Check Point Log Exporter reads as RFC 5424 with its pairs left whole in `structured` (no `:`/`;` pair reading);
+iptables, LEEF 1.0/2.0, OpenLDAP slapd and Cisco ISE infer syslog with a key=value body that Stroom refuses (text
+before the pairs, bare flags, LEEF's header, verbs between pairs, `, ` between pairs, keys holding spaces); Postfix
+reads, its messages split into key=value and text parts, queue ids not tied (interleaved); PostgreSQL reads as
+records over several lines, sessions not tied (the key isn't key=value); ModSecurity reads as keyed sections. Time zones (`TimeSources`, `TimeZones`): a time read with no zone or
 offset gets no `timezone` from the draft; the user is asked (UTC, a zone a field names, or the offset the gap between
 the latest time and the stream's `ReceivedTime` suggests, rounded to a quarter hour, within 15 hours), or `timezone=`
 gives it; `build_translation_xslt` warns of any still unset. Times (`TimeSources`): rules that write no `EventTime/TimeCreated` are asked

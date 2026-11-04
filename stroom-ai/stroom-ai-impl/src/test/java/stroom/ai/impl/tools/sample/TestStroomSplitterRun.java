@@ -134,6 +134,13 @@ class TestStroomSplitterRun {
                         SplitterDryRun.inferSpec(TestKeyedRecords.enriched()).spec(), TestKeyedRecords.enriched()),
                 keyed("auditd-ausearch-lines.log", "ausearch's output, ---- and time-> lines passed over"),
                 keyed("txn-lines.log", "a transaction log, tied by txn= and named by step="),
+                keyed("modsec-lines.log", "sections between ModSecurity's --id-X-- markers"),
+                Arguments.of("Lines tied by a key, sections between [[job-ID:STEP]] markers",
+                        SplitterDryRun.inferSpec(TestKeyedRecords.sectioned()).spec(), TestKeyedRecords.sectioned()),
+                // The formats shortlist's others as inferred today (formats-shortlist-generator.py).
+                keyed("checkpoint-lines.log", "no: Check Point, RFC 5424 with its pairs as structured data"),
+                keyed("postfix-lines.log", "no: Postfix, syslog with key=value and text messages"),
+                keyed("postgres-lines.log", "no: PostgreSQL, records over several lines"),
                 // Not key=value: a regex reads each line, a bracketed request id ties them, the step names them.
                 Arguments.of("Lines tied by a key, text lines read by a regex",
                         SplitterSpec.builder("regex").pattern("^(\\S+) (\\w+) \\[(req-\\d+)\\] (\\w+) ?(.*)$")
