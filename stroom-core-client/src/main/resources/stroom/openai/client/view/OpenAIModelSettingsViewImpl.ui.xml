@@ -30,6 +30,12 @@
             <v:ValueSpinner ui:field="maxContextWindowTokens" width="80px"
                             title="Maximum number of tokens allowed in the model's context window.&#10;Set to zero to disable."/>
         </form:FormGroup>
+        <form:FormGroup identity="openAIWorkingContextTokens"
+                        label="Working context tokens (optional)"
+                        helpText="The context the model works well within, if less than its window: long chats are compacted to stay inside it. Smaller models can lose track of a long task well before their window is full. Leave at zero to use the whole window.">
+            <v:ValueSpinner ui:field="workingContextTokens" width="80px"
+                            title="The context the model works well within.&#10;Zero for the whole window."/>
+        </form:FormGroup>
         <form:FormGroup identity="openAIReasoningEffort"
                         label="Reasoning Effort (optional)"
                         helpText="Controls reasoning depth for models that support it (e.g. OpenAI o-series). Values: low, medium, high. Leave blank for default.">
