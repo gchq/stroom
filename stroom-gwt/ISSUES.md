@@ -1815,7 +1815,9 @@ density are (`ThemeCssUtil.getCurrentPreferenceClasses`), and wider buttons when
 ### Text size and high contrast (#3695)
 
 **Deferred** (30 October 2026, moved from A11Y.md § Batch 5): two parts of GitHub #3695, tracked
-apart since 23 October 2026.
+apart since 23 October 2026. The issue's other items (from a 2023 comment: stepping, menus, the
+dashboard's scroll bar, the term editor's drop-down and more) are listed one by one in A11Y.md
+§ Batch 5, "#3695 item by item" (4 November 2026).
 
 * **Large text: fonts don't scale.** Waits for the whole-app text size pass, with the user's text
   size preference (text size and spacing, e.g. the stepping bar's fixed-size chevrons; and the
@@ -2003,6 +2005,9 @@ not yet worked on.
   explorer tree has no disabled look).~~ **Kept wontfix** (30 October 2026, the user's decision).
 * **#5847**: nothing says that jobs are disabled for the whole cluster.
 * **#5743**: the Info pane's keys have no help.
+* **#3265** (found 4 November 2026): restructure the main menu to make it more logical and more
+  accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
+  its accessibility as such.
 
 ## Copy-paste mistakes and typos
 
