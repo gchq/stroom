@@ -16,13 +16,16 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.SteppingWalks;
 import stroom.ai.impl.tools.StreamSummaries;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.workspace.ToolTimeoutException;
+import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -34,6 +37,7 @@ import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 /// The Field mapping section of a pipeline's documentation: what is said when no events were sampled, and the line
 /// for the template the user agreed.
@@ -49,10 +54,13 @@ class TestFieldMappingSections {
     private final TranslationWorld world = new TranslationWorld();
     private final PipelineStepping stepping = Mockito.mock(PipelineStepping.class);
     private final StreamSummaries streamSummaries = Mockito.mock(StreamSummaries.class);
+    private final PipelineShapes pipelineShapes = Mockito.mock(PipelineShapes.class);
+    private final GeneratedDrift drift = Mockito.mock(GeneratedDrift.class);
+    private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final FieldMappingSections sections = new FieldMappingSections(stepping,
-            Mockito.mock(DraftCefMappingTool.class), Mockito.mock(PipelineShapes.class), world.eventVersions,
-            Mockito.mock(GeneratedDrift.class), world.streamReader, streamSummaries, Mockito.mock(IndexValues.class),
-            Mockito.mock(ReferenceEvaluation.class));
+            Mockito.mock(DraftCefMappingTool.class), pipelineShapes, world.eventVersions,
+            drift, world.streamReader, streamSummaries, Mockito.mock(IndexValues.class),
+            Mockito.mock(ReferenceEvaluation.class), () -> documentAccess);
     private final PipelineDoc pipeline = PipelineDoc.builder().uuid("p").name("ACME-Events").build();
 
     @Test
@@ -89,6 +97,63 @@ class TestFieldMappingSections {
                 List.of(873L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("streams ['873 (ACME, Events)'] hold no events");
+    }
+
+    @Test
+    void anXsltWrittenByHandIsDocumentedByTheEventTypesItWrites() {
+        // Seen in testing: the agent's own section for an XSLT written by hand had no event type's fields.
+        final MergedPipeline merged = Mockito.mock(MergedPipeline.class);
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x", "ACME-Events");
+        Mockito.when(merged.translationDocs("p")).thenReturn(List.of(new MergedPipeline.TranslationDoc(
+                "translationFilter", "XSLTFilter", xslt, "p", false)));
+        Mockito.when(pipelineShapes.merged("p")).thenReturn(merged);
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder().uuid("x")
+                .name("ACME-Events").data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                          + "xmlns=\"event-logging:3\" version=\"3.0\"/>").build()));
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of(
+                        "5:0", events("<TypeId>login</TypeId><Authenticate><Action>Logon</Action></Authenticate>"),
+                        "5:1", events("<TypeId>file-read</TypeId><View><Document><File><Path>/etc/hosts</Path>"
+                                      + "</File></Document></View>")), false));
+
+        final String section = sections.writtenEventsSection(BuildToolCalls.context(), "b", "p", List.of(5L),
+                FieldDocs.BY_EVENT_TYPE, new Descriptions());
+
+        assertThat(section).startsWith("Counts are of 2 sample records (2 of stream 5).")
+                .contains("### Common fields", "`EventTime/TimeCreated`", "#### login", "#### file-read",
+                        "`EventDetail/Authenticate/Action`", "\"/etc/hosts\"");
+        // Stepped with the XSLT as saved, not code of the tool's own.
+        Mockito.verify(stepping).outputs(any(), any(), eq(List.of(5L)), eq("translationFilter"), eq(null),
+                anyInt());
+    }
+
+    @Test
+    void anXsltRewrittenByHandIsDocumentedByEventTypeNotByRulesThatNoLongerWriteIt() {
+        // Most of its events no longer the mapping's (each record now gives two events where the mapping gave one):
+        // the mapping's rules would document what it no longer writes.
+        final KeptMappings.KeptXslt kept = kept("translation", Map.of("mapping", TranslationWorld.mapping()));
+        Mockito.when(drift.drift(kept)).thenReturn(Optional.of("its XSLT was saved as written by hand"));
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        final String marked = "<Events xmlns=\"event-logging:3\"><Event><?stroom-mcp-rule login?><EventTime>"
+                              + "<TimeCreated>2026-11-04T01:00:00.000Z</TimeCreated></EventTime></Event></Events>";
+        final String running = events("<TypeId>logon</TypeId><Authenticate><Action>Logon</Action></Authenticate>")
+                .replace("</Events>", "")
+                               + events("<TypeId>logoff</TypeId><Authenticate><Action>Logoff</Action>"
+                                        + "</Authenticate>").replaceFirst("^<Events[^>]*>", "");
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), Mockito.isNotNull(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of("5:0", marked), false));
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), Mockito.isNull(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of("5:0", running), false));
+
+        final String section = sections.fieldMappingSection(BuildToolCalls.context(), "b", pipeline, kept,
+                List.of(5L), FieldDocs.BY_EVENT_TYPE, new Descriptions());
+
+        assertThat(section).contains("The XSLT was written by hand", "#### logon, logoff",
+                        "\"Logon\"", "\"Logoff\"")
+                .contains("Note: Its XSLT was saved as written by hand.");
     }
 
     @Test
@@ -143,6 +208,12 @@ class TestFieldMappingSections {
                                                                        + "own, committed to the cluster (confirmed "
                                                                        + "by them 2026-10-05, not agreed here).\n");
         assertThat(FieldMappingSections.agreedLine(pipeline)).isEmpty();
+    }
+
+    private static String events(final String detail) {
+        return "<Events xmlns=\"event-logging:3\"><Event><EventTime><TimeCreated>2026-11-04T01:00:00.000Z"
+               + "</TimeCreated></EventTime><EventSource><System><Name>ACME</Name></System></EventSource>"
+               + "<EventDetail>" + detail + "</EventDetail></Event></Events>";
     }
 
     private static KeptMappings.KeptXslt kept(final String kind, final Map<String, Object> payload) {
