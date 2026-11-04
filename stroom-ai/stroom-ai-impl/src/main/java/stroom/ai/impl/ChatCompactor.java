@@ -97,13 +97,7 @@ public class ChatCompactor {
     /// @param modelDoc The model, or null.
     /// @return How much of the model's context window a chat may use.
     public ContextBudget budget(final OpenAIModelDoc modelDoc) {
-        final int whole = NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxContextWindowTokens, 0);
-        final int working = NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getWorkingContextTokens, 0);
-        // The context the model works well within, where its document says, if less than its window (seen in
-        // testing: Qwen 3.8 Flash lost its place at 70% of a 128k window).
-        final int window = working > 0 && (whole <= 0 || working < whole)
-                ? working
-                : whole;
+        final int window = NullSafe.getOrElse(modelDoc, OpenAIModelDoc::getMaxContextWindowTokens, 0);
         if (window <= 0) {
             return ContextBudget.UNKNOWN;
         }

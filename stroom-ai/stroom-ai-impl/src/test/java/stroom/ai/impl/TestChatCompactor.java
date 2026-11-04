@@ -67,12 +67,6 @@ class TestChatCompactor {
         assertThat(compactor.budget(model(100_000))).isEqualTo(new ContextBudget(100_000 - 4_096, 80));
         // At least half the window is kept for the request.
         assertThat(compactor.budget(model(6_000))).isEqualTo(new ContextBudget(3_000, 80));
-        // The context the model works well within, where its document says (seen in testing: Qwen 3.8 Flash lost its
-        // place at 70% of a 128k window); none larger than the window.
-        assertThat(compactor.budget(model(131_072).copy().workingContextTokens(65_536).build()))
-                .isEqualTo(new ContextBudget(65_536 - 4_096, 80));
-        assertThat(compactor.budget(model(100_000).copy().workingContextTokens(200_000).build()))
-                .isEqualTo(new ContextBudget(100_000 - 4_096, 80));
         assertThat(new ContextBudget(1000, 80).isOver(799)).isFalse();
         assertThat(new ContextBudget(1000, 80).isOver(800)).isTrue();
         assertThat(ContextBudget.UNKNOWN.isOver(Long.MAX_VALUE / 200)).isFalse();

@@ -52,7 +52,6 @@ import java.util.Objects;
         "apiKeyName",
         "modelId",
         "maxContextWindowTokens",
-        "workingContextTokens",
         "reasoningEffort",
         "embeddingModelDimensions",
         "httpClientConfiguration",
@@ -81,10 +80,6 @@ public class OpenAIModelDoc extends AbstractDoc {
     private final String modelId;
     @JsonProperty
     private final int maxContextWindowTokens;
-    // The context the model works well within, less than its window (0: the whole window): chats are compacted to
-    // stay inside it. Seen in testing: a small model lost its place at 70% of a 128k window.
-    @JsonProperty
-    private final int workingContextTokens;
     @JsonProperty
     private final String reasoningEffort;
     @JsonProperty
@@ -114,7 +109,6 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
             @JsonProperty("maxContextWindowTokens") final Integer maxContextWindowTokens,
-            @JsonProperty("workingContextTokens") final Integer workingContextTokens,
             @JsonProperty("reasoningEffort") final String reasoningEffort,
             @JsonProperty("embeddingModelDimensions") final Integer embeddingModelDimensions,
             @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration,
@@ -129,7 +123,6 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.modelId = modelId;
         this.maxContextWindowTokens =
                 Objects.requireNonNullElse(maxContextWindowTokens, DEFAULT_MAX_CONTEXT_WINDOW_TOKENS);
-        this.workingContextTokens = Math.max(0, Objects.requireNonNullElse(workingContextTokens, 0));
         this.reasoningEffort = reasoningEffort;
         this.embeddingModelDimensions =
                 Objects.requireNonNullElse(embeddingModelDimensions, DEFAULT_EMBEDDING_MODEL_DIMENSIONS);
@@ -165,12 +158,6 @@ public class OpenAIModelDoc extends AbstractDoc {
 
     public int getMaxContextWindowTokens() {
         return maxContextWindowTokens;
-    }
-
-    /// @return The context the model works well within, less than its window, which chats are compacted to stay
-    /// inside; 0 for the whole window.
-    public int getWorkingContextTokens() {
-        return workingContextTokens;
     }
 
     public String getReasoningEffort() {
@@ -227,7 +214,6 @@ public class OpenAIModelDoc extends AbstractDoc {
         }
         final OpenAIModelDoc that = (OpenAIModelDoc) o;
         return maxContextWindowTokens == that.maxContextWindowTokens &&
-               workingContextTokens == that.workingContextTokens &&
                Objects.equals(description, that.description) &&
                Objects.equals(baseUrl, that.baseUrl) &&
                Objects.equals(apiKeyName, that.apiKeyName) &&
@@ -249,7 +235,6 @@ public class OpenAIModelDoc extends AbstractDoc {
                 apiKeyName,
                 modelId,
                 maxContextWindowTokens,
-                workingContextTokens,
                 reasoningEffort,
                 embeddingModelDimensions,
                 httpClientConfiguration,
@@ -266,7 +251,6 @@ public class OpenAIModelDoc extends AbstractDoc {
                ", baseUrl='" + baseUrl + '\'' +
                ", modelId='" + apiKeyName + '\'' +
                ", maxContextWindowTokens=" + maxContextWindowTokens +
-               ", workingContextTokens=" + workingContextTokens +
                ", reasoningEffort='" + reasoningEffort + '\'' +
                ", embeddingModelDimensions=" + embeddingModelDimensions +
                ", httpClientConfiguration=" + httpClientConfiguration +
@@ -292,7 +276,6 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String apiKey;
         private String modelId;
         private int maxContextWindowTokens;
-        private int workingContextTokens;
         private String reasoningEffort;
         private int embeddingModelDimensions = DEFAULT_EMBEDDING_MODEL_DIMENSIONS;
         private HttpClientConfig httpClientConfiguration;
@@ -311,7 +294,6 @@ public class OpenAIModelDoc extends AbstractDoc {
             this.apiKey = openAIModelDoc.apiKeyName;
             this.modelId = openAIModelDoc.modelId;
             this.maxContextWindowTokens = openAIModelDoc.maxContextWindowTokens;
-            this.workingContextTokens = openAIModelDoc.workingContextTokens;
             this.reasoningEffort = openAIModelDoc.reasoningEffort;
             this.embeddingModelDimensions = openAIModelDoc.embeddingModelDimensions;
             this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
@@ -343,11 +325,6 @@ public class OpenAIModelDoc extends AbstractDoc {
 
         public Builder maxContextWindowTokens(final int maxContextWindowTokens) {
             this.maxContextWindowTokens = maxContextWindowTokens;
-            return self();
-        }
-
-        public Builder workingContextTokens(final int workingContextTokens) {
-            this.workingContextTokens = workingContextTokens;
             return self();
         }
 
@@ -405,7 +382,6 @@ public class OpenAIModelDoc extends AbstractDoc {
                     apiKey,
                     modelId,
                     maxContextWindowTokens,
-                    workingContextTokens,
                     reasoningEffort,
                     embeddingModelDimensions,
                     httpClientConfiguration,
