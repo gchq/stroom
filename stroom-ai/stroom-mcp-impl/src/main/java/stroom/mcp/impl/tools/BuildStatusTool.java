@@ -43,6 +43,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String FULL_ARG = "full";
     /// The argument naming a stage the user said the build is not to do.
     static final String SKIP_STAGE_ARG = "skip_stage";
+    /// The argument recording a decision the user made, as `topic: decision`.
+    static final String DECISION_ARG = "decision";
     // First, so a result too large to show in full still shows them.
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
 
@@ -91,6 +93,12 @@ class BuildStatusTool extends AbstractBuiltInTool {
                                                            + "(indexing or cef_output, e.g. after 'no indexing at "
                                                            + "this stage'): its steps are skipped and next goes on "
                                                            + "past them. Only as the user said.")
+                        .addStringProperty(DECISION_ARG, "A decision the user made that later steps must keep "
+                                                         + "to, as 'topic: what they decided' (e.g. "
+                                                         + "'EventSource/System/Name: one per product, from the "
+                                                         + "vendor reference'): kept with the build and restated "
+                                                         + "with every next step. One on the same topic replaces "
+                                                         + "it.")
                         .required(BUILD_ARG)
                         .build())
                 .build();
@@ -108,10 +116,23 @@ class BuildStatusTool extends AbstractBuiltInTool {
             if (skip != null) {
                 plan.skipStage(build, skip);
             }
+            final String decision = stringArg(call, DECISION_ARG);
+            if (decision != null) {
+                final int colon = decision.indexOf(':');
+                if (colon <= 0 || colon == decision.length() - 1) {
+                    throw new ToolRefusal("decision is 'topic: what the user decided', e.g. 'Indexing: not until "
+                                          + "the translation is in production'");
+                }
+                plan.recordDecision(build, decision.substring(0, colon), decision.substring(colon + 1));
+            }
             final Map<String, Object> status = new LinkedHashMap<>(plan.status(build, null));
             final List<String> skipped = plan.skippedByUser(build);
             if (!skipped.isEmpty()) {
                 status.put("skipped_by_user", skipped);
+            }
+            final Map<String, String> decided = plan.decisions(build);
+            if (!decided.isEmpty()) {
+                status.put("decisions", decided);
             }
             // A doc write_documentation asked descriptions for and didn't write: not done, whatever else says so.
             pendingDocs.warning(context.session()).ifPresent(warning -> status.put("documentation_pending",

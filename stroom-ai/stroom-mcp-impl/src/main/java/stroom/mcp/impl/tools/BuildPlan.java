@@ -469,6 +469,8 @@ public class BuildPlan {
             final List<String> said = new ArrayList<>();
             changes.forEach((key, change) -> {
                 changed.put(key, change.theirs());
+                // Kept as a decision, restated with every next step, not only said this once.
+                recordDecision(build, key.replace('_', ' '), change.theirs());
                 said.add("the user changed " + key.replace('_', ' ') + " from '" + change.proposed() + "' to '"
                          + change.theirs() + "': use '" + change.theirs() + "' from here on");
             });
@@ -485,6 +487,12 @@ public class BuildPlan {
                 : null;
         nextStep(build, made).ifPresent(next -> {
             final Map<String, Object> shown = new LinkedHashMap<>(next);
+            final Map<String, String> decided = decisions(build);
+            if (!decided.isEmpty()) {
+                // Restated with every next step: seen in testing, the user's answers lost deep in a long run's
+                // context.
+                shown.put("decisions", decided);
+            }
             final Object tool = JsonValues.map(next.get("call")) == null
                     ? null
                     : JsonValues.map(next.get("call")).get("tool");
@@ -1354,6 +1362,34 @@ public class BuildPlan {
             skipped.addAll(stepsOf(STAGE_OUTPUT));
         }
         return skipped;
+    }
+
+    /// Records a decision the user made for the build (replacing one on the same topic), restated with every next
+    /// step after.
+    ///
+    /// @param build    The build, or null (nothing is recorded).
+    /// @param topic    What it is about, e.g. `EventSource/System/Name`.
+    /// @param decision What the user decided.
+    void recordDecision(final String build, final String topic, final String decision) {
+        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(topic) || NullSafe.isBlankString(decision)) {
+            return;
+        }
+        try {
+            facts.rememberDecision(build, ToolText.strip(topic), ToolText.strip(decision));
+        } catch (final RuntimeException e) {
+            // The decision is still in the conversation; the record is a convenience.
+            LOGGER.debug("Unable to record a decision for build {}", build, e);
+        }
+    }
+
+    /// @param build A build.
+    /// @return The decisions the user made for it, and the stages they said it is not to do now.
+    Map<String, String> decisions(final String build) {
+        final Map<String, String> decided = new LinkedHashMap<>(NullSafe.isBlankString(build)
+                ? Map.of()
+                : facts.decisions(build));
+        skippedByUser(build).forEach(stage -> decided.putIfAbsent("skip " + stage, "not now, as the user said"));
+        return decided;
     }
 
     /// The stages the user may say a build is not to do, by the name build_status takes.

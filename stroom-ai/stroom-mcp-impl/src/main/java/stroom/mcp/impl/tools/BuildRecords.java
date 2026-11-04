@@ -96,6 +96,8 @@ public class BuildRecords {
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery` or
     /// `reference`.
     public static final String KIND = "kind";
+    /// The field holding the decisions the user made for the build, topic to decision.
+    public static final String DECISIONS = "decisions";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference");
 
@@ -257,6 +259,34 @@ public class BuildRecords {
     public Map<String, Object> rememberKind(final String build, final String kind) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(KIND, kind));
+    }
+
+    /// @param build A build's name.
+    /// @return The decisions the user made for it, topic to decision, in the order made.
+    public Map<String, String> decisions(final String build) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        if (load(build).get(DECISIONS) instanceof final Map<?, ?> decisions) {
+            decisions.forEach((topic, decision) -> out.put(String.valueOf(topic), String.valueOf(decision)));
+        }
+        return out;
+    }
+
+    /// Records a decision the user made for the build, replacing any earlier one on the same topic, so the plan
+    /// restates it with every next step (seen in testing: long runs lost the user's answers deep in their context).
+    ///
+    /// @param build    A build's name.
+    /// @param topic    What it is about, e.g. `EventSource/System/Name`.
+    /// @param decision What the user decided.
+    /// @return The record as saved.
+    public Map<String, Object> rememberDecision(final String build, final String topic, final String decision) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> decisions = state.get(DECISIONS) instanceof final Map<?, ?> map
+                    ? new LinkedHashMap<>(JsonValues.map(map))
+                    : new LinkedHashMap<>();
+            decisions.put(topic, decision);
+            state.put(DECISIONS, decisions);
+        });
     }
 
     /// Drops documents' entries (promoted out of the build); the record goes once it holds nothing.
