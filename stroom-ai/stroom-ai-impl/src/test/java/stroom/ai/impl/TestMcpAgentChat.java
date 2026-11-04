@@ -36,8 +36,10 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiApprovalScope;
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiToolAccess;
@@ -1394,6 +1396,50 @@ class TestMcpAgentChat {
                         .asString()
                         .contains("only count firewall errors")
                         .startsWith(McpAgentChat.STEER_PREFIX));
+    }
+
+    @Test
+    void aDocumentAttachedWhileTheModelWorksIsGivenBeforeItsNextCall() {
+        // Seen in testing (chat 146): a vendor doc attached while the run worked reached the model only with the
+        // next question, so it said nothing was attached and then searched Stroom for it.
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("surveyed"))).build());
+        final McpToolset toolset = toolset(client, searchTool());
+        final DocRef reference = new DocRef("Documentation", "doc-uuid", "Server mixed log reference");
+        Mockito.when(aiService.getMessagesSince(7, 100)).thenReturn(List.of(
+                new AiChatMessage(101, 7, 0L, AiMessageType.ATTACHMENT, 2016,
+                        "Documentation 'Server mixed log reference'", 1, null),
+                new AiChatMessage(102, 7, 0L, AiMessageType.ATTACHMENT, 2017, "Dashboard 'Errors'", 1, null)));
+        Mockito.when(aiService.getMessagesSince(7, 102)).thenReturn(List.of());
+        Mockito.when(aiService.getAttachmentsByChatId(7)).thenReturn(List.of(
+                new AiChatAttachment(2016, 7, 0L, 0L, AiAttachmentStatus.READY, AiAttachmentType.DOCUMENT,
+                        "Documentation 'Server mixed log reference'", null, false, null, reference, "/Feeds")));
+        final DocumentReferences documentReferences = Mockito.mock(DocumentReferences.class);
+        Mockito.when(documentReferences.note(Mockito.any()))
+                .thenReturn(DocumentReferences.referenceNote(reference, "/Feeds"));
+        agentChat.setDocumentReferences(documentReferences);
+
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("Read the reference."));
+        agentChat.chat(model, null, 7, messages, toolset, 99, new AtomicBoolean(false), taskContext, 1,
+                new StringBuilder(), 100, ContextBudget.UNKNOWN);
+
+        assertThat(model.requests).hasSize(2);
+        assertThat(model.requests.get(1).messages())
+                .filteredOn(UserMessage.class::isInstance)
+                .extracting(m -> ((UserMessage) m).singleText())
+                .anySatisfy(text -> assertThat(text)
+                        .startsWith(McpAgentChat.ATTACHED_WHILE_WORKING)
+                        .contains("uuid doc-uuid", "read_document"))
+                .anySatisfy(text -> assertThat(text)
+                        .startsWith(McpAgentChat.ATTACHED_WHILE_WORKING)
+                        .contains("Dashboard 'Errors' was attached"));
     }
 
     @Test

@@ -31,6 +31,7 @@ import stroom.ai.impl.workspace.WorkspaceArguments;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiToolCategory;
@@ -126,6 +127,8 @@ class McpAgentChat {
      * Put before a message the user sent while the model was working, so the model knows when it was said.
      */
     static final String STEER_PREFIX = "[Sent by the user while you were working] ";
+    /// Put before what the model is told of something the user attached while it was working.
+    static final String ATTACHED_WHILE_WORKING = "[Attached by the user while you were working] ";
     /// Put after a message the user sent while the model was working, if the tab they attached was sent with it.
     static final String STEER_TAB_NOTE = "[Sent with the attached tab as the user has it now (it may have changed, "
                                          + "e.g. by applying a change you proposed). Tools that read the tab, and "
@@ -213,6 +216,8 @@ class McpAgentChat {
     // Null where it isn't injected (in tests), and responses are stored as written.
     private AnswerLinks answerLinks;
     private TabSnapshots tabSnapshots;
+    // Null where it isn't injected (in tests): a document attached mid-run is then noted as unavailable.
+    private DocumentReferences documentReferences;
 
     @Inject
     McpAgentChat(final AiService aiService,
@@ -254,6 +259,11 @@ class McpAgentChat {
     }
 
     /// @param tabSnapshots The tabs the user attached to questions, to tell whether their notes preview content.
+    @Inject
+    void setDocumentReferences(final DocumentReferences documentReferences) {
+        this.documentReferences = documentReferences;
+    }
+
     @Inject
     void setTabSnapshots(final TabSnapshots tabSnapshots) {
         this.tabSnapshots = tabSnapshots;
@@ -1688,9 +1698,32 @@ class McpAgentChat {
                         AiMessageType.STEER_MESSAGE))) {
                     LOGGER.debug(() -> "Picked up a steering message for chatId=" + chatId);
                     steers.add(UserMessage.from(steerText(message)));
+                } else if (message.getMessageType() == AiMessageType.ATTACHMENT
+                           && message.getAttachmentId() != null) {
+                    // Seen in testing (chat 146): a vendor doc attached while the run worked reached the model
+                    // only with the next question, so it said nothing was attached, then searched Stroom for it.
+                    steers.add(attachedWhileWorking(message));
                 }
             }
             return steers;
+        }
+
+        // What the model is told of something the user attached while it worked: a document as at the start of a
+        // question; anything else named, as it is given in full with the next question.
+        private UserMessage attachedWhileWorking(final AiChatMessage message) {
+            final AiChatAttachment attachment = aiService.getAttachmentsByChatId(chatId).stream()
+                    .filter(found -> found.getId() == message.getAttachmentId())
+                    .findFirst()
+                    .orElse(null);
+            LOGGER.debug(() -> "Picked up an attachment added while the run worked for chatId=" + chatId);
+            if (attachment != null && attachment.getAttachmentType() == AiAttachmentType.DOCUMENT) {
+                final UserMessage note = documentReferences != null
+                        ? documentReferences.note(attachment)
+                        : DocumentReferences.unavailableNote(attachment.getDescription());
+                return UserMessage.from(ATTACHED_WHILE_WORKING + note.singleText());
+            }
+            return UserMessage.from(ATTACHED_WHILE_WORKING + "[" + NullSafe.nonBlankStringElse(message.getMessage(),
+                    "Something") + " was attached. It is given with the user's next question.]");
         }
 
         /**
