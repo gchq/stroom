@@ -2650,7 +2650,12 @@ hours in this node's memory (`FewerStreams`). Streams of a feed a build made (it
 
 **The survey doc.** With `build`, the survey is kept in the build's Documentation doc `<feed> - Survey` (`SurveyDoc`
 format, `SurveyDocuments` through `WriteGuard`), and an existing one is continued: its streams are skipped and its
-shapes known. Kinds the user chose to leave untranslated (`set_shape_handling`) are marked `handling: drop` and their
+shapes known. Streams the doc names that are gone since (deleted, or no longer there) are dropped first
+(`GoneStreams`, `SurveyDoc.withoutStreams`): no longer counted as read, their examples no longer locations, and a shape
+seen only in them is surveyed again so it gets locations where the data is now (`gone_streams`, `gone_note`); the
+survey is then not covered until read again. The plan reads the doc the same way. Seen in testing: a feed's streams
+deleted part-way through a build and uploaded again; the shapes the survey knew kept locations only in the deleted
+streams and couldn't be stepped. Kinds the user chose to leave untranslated (`set_shape_handling`) are marked `handling: drop` and their
 locations carry `expect: none`. The doc's format is stored data, so it changes only in ways a survey doc already
 kept still reads (see `SurveyDoc` under "Sample analysis").
 
