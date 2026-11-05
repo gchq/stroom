@@ -47,8 +47,7 @@ import java.util.Objects;
         "keyStoreType",
         "keyStorePath",
         "expiryTimeMs",
-        "secret"
-})
+        "secret"})
 @JsonInclude(Include.NON_NULL)
 public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
@@ -137,15 +136,13 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
             @JsonProperty("keyStorePath") final String keyStorePath,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
-        this.uuid = uuid;
-        this.name = name;
+        this.uuid = Objects.requireNonNull(uuid, () -> "Credential with name '" + name + "' must have a uuid");
+        this.name = Objects.requireNonNull(name, () -> "Credential with uuid '" + uuid + "' must have a name");
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
-        this.credentialType = credentialType == null
-                ? CredentialType.USERNAME_PASSWORD
-                : credentialType;
+        this.credentialType = Objects.requireNonNullElse(credentialType, CredentialType.USERNAME_PASSWORD);
         this.keyStoreType = keyStoreType;
         this.keyStorePath = keyStorePath;
         this.expiryTimeMs = expiryTimeMs;

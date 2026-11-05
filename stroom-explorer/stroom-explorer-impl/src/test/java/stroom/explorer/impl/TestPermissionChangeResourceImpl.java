@@ -57,8 +57,7 @@ class TestPermissionChangeResourceImpl {
                 new SetPermission(UserRef.forUserUuid("user-uuid"), DocumentPermission.VIEW));
 
         final PermissionChangeResourceImpl resource = new PermissionChangeResourceImpl(
-                () -> mockPermissionChangeService,
-                () -> mockEntityEventBus);
+                () -> mockPermissionChangeService);
 
         final Boolean result = resource.changeDocumentPermissions(request);
 

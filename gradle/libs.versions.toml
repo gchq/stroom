@@ -77,7 +77,8 @@ fastutil-core = { module = "it.unimi.dsi:fastutil-core", version = "8.5.18" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 gin = { module = "com.google.gwt.inject:gin", version = "2.1.2" }
-guava = { module = "com.google.guava:guava" } # version controlled by dropwizard-dependencies
+# DropWiz 5.0.2 pulls in 33.6.0-jre but this has a CVE, so manually bring in 33.7.2-jre
+guava = { module = "com.google.guava:guava", version = "33.7.2-jre" } # version controlled by dropwizard-dependencies
 guice-gwt = { module = "com.google.inject:guice", version = "3.0" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
@@ -127,7 +128,7 @@ jersey-client = { module = "org.glassfish.jersey.core:jersey-client" } # version
 jersey-common = { module = "org.glassfish.jersey.core:jersey-common" } # version controlled by dropwizard-dependencies
 jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version controlled by dropwizard-dependencies
 jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
-# DW 5.0.2 pulls in jetty 12.1.9 which has vulns, so force it up to 12.1.4 for the fix
+# DW 5.0.2 pulls in jetty 12.1.9 which has CVEs, so force it up to 12.1.4 for the fix
 # Once we move to DW 5.0.3, we can probably get rid of this and the 'implementation platform(libs.jetty.bom)' in root gradle
 jetty-bom = { module = "org.eclipse.jetty:jetty-bom", version = "12.1.14" }
 jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
@@ -137,7 +138,7 @@ jetty-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet" } # versi
 jetty-servlets = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlets" } # version controlled by dropwizard-dependencies
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
-jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.4" }
+jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.5" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }

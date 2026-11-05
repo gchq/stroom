@@ -89,6 +89,8 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
                         @JsonProperty("nodeInfoList") final List<NodeInfo> nodeInfoList,
                         @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags) {
+        // TODO Should really null/blank check type+uuid to mirror the checks done in the DocRef ctor
+        //  Also, uniqueKey should be compared to type+uuid to ensure the fields are the same.
         this.type = type;
         this.uuid = uuid;
         this.name = name;

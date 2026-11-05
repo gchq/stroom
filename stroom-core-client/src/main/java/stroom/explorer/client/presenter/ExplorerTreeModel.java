@@ -17,7 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
@@ -45,11 +45,7 @@ public class ExplorerTreeModel {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
-            .docRef(DocRef.builder()
-                    .uuid("")
-                    .name("None")
-                    .type("")
-                    .build())
+            .docRef(DocRefUtil.NULL_SELECTION)
             .build();
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
@@ -341,16 +337,17 @@ public class ExplorerTreeModel {
             addToRows(currentRootNodes, rows, openItems.getAllOpenItems());
         }
 
-        // If we are allowing null selection then insert a node at the root to make it
-        // possible.
+        // If we are allowing null selection then insert a node at the root to make it possible.
         if (includeNullSelection) {
-            if (rows.isEmpty() || rows.get(0) != NULL_SELECTION) {
+            //noinspection SequencedCollectionMethodCanBeUsed
+            if (rows.isEmpty() || !NULL_SELECTION.equals(rows.get(0))) {
                 // If there is any quick filter then NULL_SELECTION is a non-match
                 final boolean isFilterMatch = NullSafe.isBlankString(NullSafe.get(
                         currentCriteria,
                         FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
+                //noinspection SequencedCollectionMethodCanBeUsed // Cos GWT
                 rows.add(0, NULL_SELECTION.copy()
                         .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFilterMatch)
                         .build());
