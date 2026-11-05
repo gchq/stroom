@@ -4073,6 +4073,11 @@ if (!window.visualisations) {
                 itemStyle: {borderColor: selectionColour(style), borderWidth: SELECTED_BORDER,
                     shadowColor: selectionColour(style), shadowBlur: 8}
             });
+            if (series.type === "graph") {
+                // A selected link is solid, so its outline shows only either side of it, not through it (asked for
+                // by the user: seen through, the outline read as one thick line).
+                series.select.lineStyle = merge(series.select.lineStyle || {}, {opacity: 1});
+            }
         });
 
         // The same colours for every kind, whatever ECharts version draws it (and as the D3 adapter draws them),
