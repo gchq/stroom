@@ -26,9 +26,11 @@ import stroom.util.shared.NullSafe;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -79,6 +81,14 @@ public final class SplitterDryRun {
             Map.entry("^(.*?)\\s*$", List.of("prefix")));
     /// The most records a dry run reads; a longer sample is read at lines spread over it.
     public static final int MAX_RECORDS = 2000;
+    // The most saved converters' runs kept (see converterRun), the least recently used forgotten first.
+    private static final int CONVERTER_RUNS_KEPT = 8;
+    private static final Map<List<Object>, DryRun> CONVERTER_RUNS = new LinkedHashMap<>(16, 0.75F, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<List<Object>, DryRun> eldest) {
+            return size() > CONVERTER_RUNS_KEPT;
+        }
+    };
     /// A record that is a block of lines ended by a blank line (one of white space only, or the end): its lines
     /// without the blank ones before it. Seen in the Stroom docs' multi-line example: a query and its results.
     public static final String BLANK_LINE_RECORD = "\\s*((?:[^\\n]*\\S[^\\n]*(?:\\n|$))+)";
@@ -1284,9 +1294,43 @@ public final class SplitterDryRun {
     /// @return The records, the lines that match nothing, the field names seen, and the heading.
     /// @throws PatternTimeoutException if the spec's patterns take too long to match.
     public static DryRun dryRun(final SplitterSpec spec, final String sample, final int maxRecords) {
+        if (SplitterSpec.CONVERTER.equals(spec.kind())) {
+            return converterRun(spec.converter(), sample, maxRecords);
+        }
         // Read as Stroom's parser reads it: the characters XML doesn't allow taken out first.
         final String read = StroomInput.asParsed(sample);
         return SafePattern.limited(patterns(spec), () -> dryRunLimited(spec, read, maxRecords));
+    }
+
+    // A saved Data Splitter read by Stroom's own parser (see SplitterSpec#ofConverter): its records, spread over the
+    // sample as a spec's dry run spreads them, and the fields they hold. Kept for a few runs, as one check reads the
+    // same sample several times.
+    private static DryRun converterRun(final String converter, final String sample, final int maxRecords) {
+        final List<Object> key = List.of(converter.hashCode(), converter.length(), sample.hashCode(), sample.length(),
+                maxRecords);
+        synchronized (CONVERTER_RUNS) {
+            final DryRun kept = CONVERTER_RUNS.get(key);
+            if (kept != null) {
+                return kept;
+            }
+        }
+        final StroomSplitterRun.Result result = StroomSplitterRun.run(converter, sample);
+        final List<Map<String, String>> all = result.records();
+        final List<Map<String, String>> records = new ArrayList<>();
+        if (all.size() <= maxRecords) {
+            records.addAll(all);
+        } else {
+            for (int n = 0; n < maxRecords; n++) {
+                records.add(all.get((int) ((long) n * all.size() / maxRecords)));
+            }
+        }
+        final Set<String> fields = new LinkedHashSet<>();
+        records.forEach(record -> fields.addAll(record.keySet()));
+        final DryRun run = new DryRun(records, List.of(), new ArrayList<>(fields), List.of());
+        synchronized (CONVERTER_RUNS) {
+            CONVERTER_RUNS.put(key, run);
+        }
+        return run;
     }
 
     // The patterns a spec gives, for the message if they take too long.

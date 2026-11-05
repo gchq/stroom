@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /// Stroom's own Data Splitter parser on sample text, and the dry run agreeing with it on what the converter
 /// build_data_splitter writes. The behaviours tested were each seen in Stroom first.
@@ -190,6 +191,25 @@ class TestStroomSplitterRun {
         assertThat(runs.getFirst().clean()).isFalse();
         // Said once, with the first text.
         assertThat(runs.get(1).errors()).noneSatisfy(error -> assertThat(error).contains("entry"));
+    }
+
+    @Test
+    void theBuildsSavedConverterReadsASampleAsTheSpecItWasMadeFromDoes() {
+        // Seen in testing: with no spec given, the sample check guessed one from the sample's first format, so a
+        // stream of two formats read only one. The build's own converter, read by Stroom's parser, reads both.
+        final SplitterSpec spec = SplitterSpec.fromMap(Map.of("kind", "key_value", "delimiter", " "));
+        final String sample = "user=alice action=login\nhost=web01 prog=sshd pid=12\n";
+
+        final SplitterDryRun.DryRun fromSpec = SplitterDryRun.dryRun(spec, sample);
+        final SplitterDryRun.DryRun fromConverter = SplitterDryRun.dryRun(
+                SplitterSpec.ofConverter(SplitterXml.converter(spec)), sample);
+
+        assertThat(fromConverter.records()).isEqualTo(fromSpec.records());
+        assertThat(fromConverter.fields()).containsExactlyInAnyOrderElementsOf(fromSpec.fields());
+        // Never one the model gives.
+        assertThat(SplitterSpec.ofConverter("<dataSplitter/>").toMap()).isEqualTo(Map.of("kind", "converter"));
+        assertThatThrownBy(() -> SplitterSpec.fromMap(Map.of("kind", "converter")))
+                .hasMessageContaining("kind must be one of");
     }
 
     @Test
