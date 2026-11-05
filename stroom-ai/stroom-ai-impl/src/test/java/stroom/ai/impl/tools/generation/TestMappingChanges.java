@@ -124,6 +124,38 @@ class TestMappingChanges {
                             + "does not have");
     }
 
+    @Test
+    void aRuleOrExtractRemovedByAnEarlierCallIsSaidAndAWrongNameRefused() {
+        // Seen in testing: changes build on the mapping last sent, even by a refused call, so a removal sent again
+        // was refused four times as "which the mapping does not have". Only what the mapping from before had is
+        // taken as removed already: a name it never had is a mistake, refused.
+        final Map<String, Object> base = json("{\"events\": [{\"name\": \"allow\", \"fields\": ["
+                                              + "{\"path\": \"EventDetail/Unknown/Data\", \"data_name\": \"raw\", "
+                                              + "\"field\": \"message\"}]}], \"extract\": []}");
+        final Map<String, Object> earlier = json("{\"events\": [{\"name\": \"allow\"}, {\"name\": \"other\"}], "
+                                                 + "\"extract\": [{\"field\": \"m\", \"regex\": \"^(.*)$\", "
+                                                 + "\"names\": [\"x\"]}]}");
+        final String gone = " was already removed, by an earlier call (changes build on the mapping last sent, a "
+                            + "refused call's changes too): nothing removed";
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"other\", \"remove\": true}], \"extract\": [{\"names\": [\"x\"], "
+                + "\"remove\": true}]}"), earlier);
+
+        assertThat(applied.done()).containsExactly("rule 'other'" + gone, "extract x" + gone);
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"othr\", \"remove\": true}]}"), earlier))
+                .hasMessageContaining("removes rule 'othr', which the mapping does not have (its rules: ['allow'])");
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json(
+                "{\"extract\": [{\"names\": [\"y\"], \"remove\": true}]}"), earlier))
+                .hasMessageContaining("which no entry extracts");
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json(
+                "{\"events\": [{\"name\": \"allow\", \"fields\": [{\"path\": \"EventDetail/Unknown/Data\", "
+                + "\"remove\": true}]}]}")))
+                .hasMessageContaining("which the mapping does not have")
+                .hasMessageContaining("remove one of these by its data_name");
+    }
+
     @TestFactory
     Stream<DynamicTest> theChangesMergeAsRecorded() {
         final List<Map<String, Object>> cases = ReadingFixtures.json("changes_cases.json");

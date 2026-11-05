@@ -2522,7 +2522,7 @@
     }
    ]
   },
-  "error": "changes.common removes common 'EventDetail/Unknown/Data', which the mapping does not have"
+  "error": "changes.common removes common 'EventDetail/Unknown/Data', which the mapping does not have (it has common 'EventDetail/Unknown/Data' (Data 'a'): remove one of these by its data_name)"
  },
  {
   "kind": "mapping",
@@ -2617,7 +2617,7 @@
     }
    ]
   },
-  "error": "changes.common removes common 'EventDetail/Unknown/Data' (Data 'b'), which the mapping does not have"
+  "error": "changes.common removes common 'EventDetail/Unknown/Data' (Data 'b'), which the mapping does not have (it has common 'EventDetail/Unknown/Data' (Data 'a'): remove one of these by its data_name)"
  },
  {
   "kind": "mapping",
