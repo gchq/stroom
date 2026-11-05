@@ -5413,7 +5413,9 @@ functions and URI-qualified names (`Q{uri}name`) are errors, so such an expressi
 **Mapping changes** (`MappingChanges.applyChanges`, `applyPlanChanges`): a fix sends only what changes, merged into
 the whole mapping (or index plan): a rule changed by name (each key given replacing its own, and its `fields`
 changed entry by entry by path and Data name, as common entries are; `"replace": true` replaces it whole), a common
-entry by its path (and Data name), any other key whole, `{"remove": true}` to remove a rule or an entry. Seen: with
+entry by its path (and Data name), an extract entry by the fields it extracts (`names`), any other key whole,
+`{"remove": true}` to remove a rule or an entry. Seen in testing: `changes.extract` replaced the whole list, so the
+few new entries an agent sent wiped the rest (26 cut to 2), and every record fell to the rule for the rest. Seen: with
 rules replaced whole, changing one entry of a rule of about 140 meant resending them all, so the agent edited the
 mapping file by hand (a dozen calls) and lost the TypeId of a rule it resent. The result is an `Applied` (the merged mapping and what each
 change did); a change that can't apply is a `ToolRefusal`. Seen with a small local model at about 22 tokens a

@@ -201,6 +201,38 @@ class TestMappingChanges {
                 "common 'EventTime/TimeCreated' removed", "'unmatched' replaced");
     }
 
+    @Test
+    void extractEntriesAreChangedOneByOneByTheFieldsTheyExtract() {
+        // Seen in testing: changes.extract replaced the whole list, so the few new entries an agent sent wiped the
+        // rest (26 cut to 2), and every record fell to the rule for the rest.
+        final Map<String, Object> base = json("""
+                {"input": "data_splitter",
+                 "extract": [{"field": "message", "regex": "^(\\\\S+) (.*)$", "names": ["prog", "body"]},
+                             {"field": "body", "regex": "^user (\\\\S+)$", "names": ["user"]},
+                             {"field": "body", "regex": "^ip (\\\\S+)$", "names": ["ip"]}],
+                 "common": [], "events": []}""");
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"extract": [{"field": "body", "regex": "^ *user (\\\\S+)$", "names": ["user"]},
+                             {"names": ["ip"], "remove": true},
+                             {"field": "body", "regex": "^code (\\\\d+)$", "names": ["code"]}]}"""));
+
+        final List<Map<String, Object>> extracts = list(applied.merged().get("extract"));
+        assertThat(extracts.stream().map(entry -> entry.get("names")))
+                .containsExactly(List.of("prog", "body"), List.of("user"), List.of("code"));
+        assertThat(extracts.get(1).get("regex")).isEqualTo("^ *user (\\S+)$");
+        assertThat(applied.done()).containsExactly("extract user replaced", "extract ip removed",
+                "extract code added");
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json("""
+                {"extract": [{"field": "body", "regex": "^(.*)$"}]}""")))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("needs its names")
+                .hasMessageContaining("prog, body; user; ip");
+        assertThatThrownBy(() -> MappingChanges.applyChanges(base, json("""
+                {"extract": [{"names": ["user", "ip"], "field": "body", "regex": "^(\\\\S+) (\\\\S+)$"}]}""")))
+                .hasMessageContaining("are extracted by 2 entries");
+    }
+
     @ParameterizedTest
     @MethodSource("refused")
     void changesThatCannotApplyAreRefused(final String changes, final String message) {

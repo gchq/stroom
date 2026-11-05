@@ -33,8 +33,9 @@ import java.util.Objects;
 /// Seen (Gemma 4 31B in VS Code, about 22 tokens a second): each fix resent the whole mapping, some 800 tokens and
 /// 40 seconds of writing, five times over. A rule is changed by name: the keys given replace its own, except its
 /// `fields`, which are changed entry by entry, as common entries are, by path (and Data name); `"replace": true`
-/// replaces the rule whole. Any other key is replaced whole; `{"remove": true}` removes a rule, a rule's entry or a
-/// common entry. Seen: with a rule replaced whole, changing one entry of a rule of about 140 meant resending them
+/// replaces the rule whole. Extract entries are changed one by one, by the fields they extract. Any other key is
+/// replaced whole; `{"remove": true}` removes a rule, a rule's entry, a common entry or an extract entry. Seen: with a
+/// rule replaced whole, changing one entry of a rule of about 140 meant resending them
 /// all, so the agent edited the mapping file by hand instead, a dozen calls, and lost an entry it left out.
 public final class MappingChanges {
 
@@ -47,7 +48,8 @@ public final class MappingChanges {
     ///                replaced whole with `replace: true`, or else changed: each key given replaces the rule's own,
     ///                and its `fields` entries are each replaced, added or removed by path and Data name),
     ///                `common` (entries, each replacing the entry with its path and Data name, added, or removed),
-    ///                any other key replacing that key whole.
+    ///                `extract` (entries, each replacing the entry that extracts any of its names, added, or removed
+    ///                with `remove: true`), any other key replacing that key whole.
     /// @return The mapping with the changes merged in, and what each change did.
     /// @throws ToolRefusal if a change can't apply (no name, no path, removing what isn't there).
     public static Applied applyChanges(final Map<String, Object> base, final Object changes) {
@@ -61,6 +63,7 @@ public final class MappingChanges {
             switch (change.getKey()) {
                 case "events" -> changeRules(listIn(merged, "events"), change.getValue(), done);
                 case "common" -> changeCommon(listIn(merged, "common"), change.getValue(), done);
+                case "extract" -> changeExtracts(listIn(merged, "extract"), change.getValue(), done);
                 default -> {
                     merged.put(change.getKey(), change.getValue());
                     done.add("'" + change.getKey() + "' replaced");
@@ -116,6 +119,60 @@ public final class MappingChanges {
             }
         }
         return new Applied(merged, done);
+    }
+
+    // Extract entries by the fields they extract. Seen in testing: changes.extract replaced the whole list, so an
+    // agent sending its few new entries wiped the rest (26 entries cut to 2), and every record fell to the rule for
+    // the rest.
+    private static void changeExtracts(final List<Object> extracts, final Object value, final List<String> done) {
+        for (final Object entry : each(value)) {
+            final List<String> names = entry instanceof final Map<?, ?> map
+                    ? JsonValues.strings(map.get("names"))
+                    : List.of();
+            if (names.isEmpty()) {
+                throw new ToolRefusal("Each entry in changes.extract needs its names: it replaces the entry that "
+                                      + "extracts any of them, or is added; with \"remove\": true it removes that "
+                                      + "entry. The extract list as it is: " + extractNames(extracts));
+            }
+            final List<Integer> found = new ArrayList<>();
+            for (int n = 0; n < extracts.size(); n++) {
+                if (extracts.get(n) instanceof final Map<?, ?> kept
+                    && JsonValues.strings(kept.get("names")).stream().anyMatch(names::contains)) {
+                    found.add(n);
+                }
+            }
+            final String said = "extract " + String.join(", ", names);
+            if (found.size() > 1) {
+                throw new ToolRefusal("changes.extract: " + names + " are extracted by " + found.size() + " entries "
+                                      + "(" + String.join("; ", found.stream()
+                        .map(n -> String.join(", ", JsonValues.strings(((Map<?, ?>) extracts.get(n)).get("names"))))
+                        .toList()) + "): change one entry at a time, naming only its fields");
+            }
+            if (JsonValues.truthy(((Map<?, ?>) entry).get("remove"))) {
+                if (found.isEmpty()) {
+                    throw new ToolRefusal("changes.extract removes " + names + ", which no entry extracts (the "
+                                          + "extract list: " + extractNames(extracts) + ")");
+                }
+                extracts.remove((int) found.getFirst());
+                done.add(said + " removed");
+            } else if (found.isEmpty()) {
+                extracts.add(entry);
+                done.add(said + " added");
+            } else {
+                extracts.set(found.getFirst(), entry);
+                done.add(said + " replaced");
+            }
+        }
+    }
+
+    private static String extractNames(final List<Object> extracts) {
+        return extracts.isEmpty()
+                ? "none"
+                : String.join("; ", extracts.stream()
+                        .map(entry -> entry instanceof final Map<?, ?> map
+                                ? String.join(", ", JsonValues.strings(map.get("names")))
+                                : "?")
+                        .toList());
     }
 
     private static void changeRules(final List<Object> rules, final Object value, final List<String> done) {
