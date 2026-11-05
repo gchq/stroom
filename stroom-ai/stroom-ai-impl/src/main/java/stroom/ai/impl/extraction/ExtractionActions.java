@@ -33,6 +33,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.shared.StandardExplorerTags;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.pipeline.PipelineStore;
@@ -208,6 +209,10 @@ public class ExtractionActions {
                     .pipelineData(ExtractionPipelines.data(content.template(), content.element(), xsltRef))
                     .build());
             final DocRef pipeline = new DocRef(PipelineDoc.TYPE, pipelineNode.getUuid(), name);
+            // Tagged as an extraction pipeline, as the dashboard, view and index pipeline pickers list only those
+            // (seen in testing: a column's new extraction pipeline didn't show in the table's settings).
+            explorerService.addTags(List.of(pipeline), StandardExplorerTags.asTagNameSet(
+                    StandardExplorerTags.EXTRACTION));
             return new Written(pipeline, xsltRef, tableChanges(plan, pipeline));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to write the extraction " + name, e);
