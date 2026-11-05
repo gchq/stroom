@@ -52,6 +52,9 @@ if (!window.visualisations) {
     // thick as the item's border, so together half as thick as it (asked for by the user).
     var SELECTED_BORDER = 3;
     var LINK_OUTLINE = SELECTED_BORDER / 4;
+    // How much of the selection colour tints a selected Sankey band: enough to see, little enough for a label over
+    // the band to read (seen in testing: filled solid under the see-through band, a label on it couldn't be seen).
+    var BAND_TINT = 0.25;
     var PROGRESSIVE_CHUNK = 5000;
 
     // Keys removed from option overrides anywhere they appear: they can carry HTML, code or URLs.
@@ -2488,7 +2491,8 @@ if (!window.visualisations) {
 
         return {
             // Each node's own colour needs no legend: its label names it.
-            legend: legendOption(settings, groups.length > 1 && !colourEachNode, style),
+            // A legend item hovered fades all but its group or cluster (see fadeAllBut), so the legend says so.
+            legend: merge(legendOption(settings, groups.length > 1 && !colourEachNode, style), {triggerEvent: true}),
             // An overview of the whole graph, marking where it is zoomed to, in the bottom-right corner.
             thumbnail: boolSetting(settings, "thumbnail", false) ? {
                 show: true,
@@ -2564,6 +2568,9 @@ if (!window.visualisations) {
                 edgeSymbol: directed ? ["none", "arrow"] : ["none", "none"],
                 edgeSymbolSize: 6,
                 emphasis: {focus: "adjacency", lineStyle: {width: 4}},
+                // ECharts' own legend hover highlighted the node whose index is the category's, and its neighbours,
+                // whichever item was hovered (seen in testing); the chart class fades all but the group instead.
+                legendHoverLink: false,
                 lineStyle: {color: "source", opacity: 0.5, curveness: directed ? 0.1 : 0},
                 label: merge({color: style.text, position: "right"}, shortened(150)),
                 labelLayout: {hideOverlap: true},
@@ -4734,15 +4741,100 @@ if (!window.visualisations) {
         // by a solid line either side, kept in step with the link as the layout moves.
         var linkOutlines = {};
 
-        // The line ECharts drew for a selected network graph link, or null (another chart, or not drawn).
+        // Whether a network's items are faded for a legend item hovered.
+        var legendFaded = false;
+        // How much a faded item keeps of its opacity, and the property of a faded shape holding the opacity it had.
+        var LEGEND_FADE = 0.1;
+        var FADED_FROM = "stroomFadedFrom";
+
+        // Fades every network node and link but those of the legend item named (its group or cluster: a link both
+        // of whose ends are in it), or none for null, as a legend item is hovered and left.
+        function fadeAllBut(name) {
+            if (!chart || (name === null && !legendFaded)) {
+                return;
+            }
+            legendFaded = name !== null;
+            try {
+                chart.getModel().eachSeriesByType("graph", function (series) {
+                    var category = -1;
+                    (series.get("categories") || []).forEach(function (each, index) {
+                        if (each && each.name === name) {
+                            category = index;
+                        }
+                    });
+                    var data = series.getData();
+                    var inGroup = function (dataIndex) {
+                        return data.getItemModel(dataIndex).get("category") === category;
+                    };
+                    data.each(function (index) {
+                        fade(data.getItemGraphicEl(index), legendFaded && !inGroup(index));
+                    });
+                    var graph = series.getGraph();
+                    series.getEdgeData().each(function (index) {
+                        var edge = graph.getEdgeByIndex(index);
+                        if (edge) {
+                            fade(edge.getGraphicEl(), legendFaded
+                                && !(inGroup(edge.node1.dataIndex) && inGroup(edge.node2.dataIndex)));
+                        }
+                    });
+                });
+                // A selected link's outline fades with its link.
+                Object.keys(linkOutlines).forEach(function (key) {
+                    var outline = linkOutlines[key];
+                    outline.clone.setStyle("opacity", outline.line[FADED_FROM] !== undefined ? LEGEND_FADE : 1);
+                });
+            } catch (e) {
+                // Without the fade the chart is as it was.
+            }
+        }
+
+        // Fades an item ECharts drew (a node's or a link's group: its shapes and labels) to a tenth of its opacity, as
+        // ECharts' own focus does, or back. Its opacity is set directly, as ECharts gives these no blur state to put
+        // them in (seen in testing: "State blur not exists").
+        function fade(el, on) {
+            if (!el) {
+                return;
+            }
+            var parts = [];
+            var collect = function (part) {
+                parts.push(part);
+                var label = part.getTextContent ? part.getTextContent() : null;
+                if (label) {
+                    parts.push(label);
+                }
+            };
+            collect(el);
+            if (el.traverse) {
+                el.traverse(collect);
+            }
+            parts.forEach(function (part) {
+                if (!part.style || !part.setStyle) {
+                    return;
+                }
+                if (on && part[FADED_FROM] === undefined) {
+                    part[FADED_FROM] = part.style.opacity === undefined || part.style.opacity === null
+                        ? 1 : part.style.opacity;
+                    part.setStyle("opacity", part[FADED_FROM] * LEGEND_FADE);
+                } else if (!on && part[FADED_FROM] !== undefined) {
+                    part.setStyle("opacity", part[FADED_FROM]);
+                    delete part[FADED_FROM];
+                }
+            });
+        }
+
+        // The shape ECharts drew for a selected link, or null (another chart, or not drawn): a network graph's line,
+        // or a Sankey diagram's band (asked for by the user: outlined as a network's link is).
         function linkLine(item) {
             try {
                 var series = chart.getModel().getSeriesByIndex(item.seriesIndex);
-                if (!series || series.subType !== "graph") {
+                if (!series || (series.subType !== "graph" && series.subType !== "sankey")) {
                     return null;
                 }
                 var edge = series.getGraph().getEdgeByIndex(item.dataIndex);
                 var el = edge && edge.getGraphicEl();
+                if (series.subType === "sankey") {
+                    return el || null;
+                }
                 return el && el.childOfName ? el.childOfName("line") || null : null;
             } catch (e) {
                 return null;
@@ -4792,13 +4884,23 @@ if (!window.visualisations) {
                 var outline = linkOutlines[key];
                 try {
                     if (!outline) {
+                        var colour = selectionColour(lastStyle || {dark: true});
+                        // A Sankey band is filled, not stroked: its copy is tinted with the selection colour (see
+                        // BAND_TINT), with its edge drawn solid LINK_OUTLINE beyond the band's.
+                        var series = chart.getModel().getSeriesByIndex(wanted[key].seriesIndex);
+                        var band = !!series && series.subType === "sankey";
                         var clone = new line.constructor({
                             shape: shape,
                             silent: true,
                             z: line.z,
                             z2: (line.z2 || 0) - 1,
-                            style: {
-                                stroke: selectionColour(lastStyle || {dark: true}),
+                            style: band ? {
+                                stroke: colour,
+                                fill: colour,
+                                fillOpacity: BAND_TINT,
+                                lineWidth: 2 * LINK_OUTLINE
+                            } : {
+                                stroke: colour,
                                 fill: null,
                                 lineWidth: ((line.style && line.style.lineWidth) || 1) + 2 * LINK_OUTLINE,
                                 lineCap: "round"
@@ -5030,11 +5132,22 @@ if (!window.visualisations) {
                 }
                 send();
             });
+            chart.on("mouseover", function (params) {
+                if (params && params.componentType === "legend") {
+                    fadeAllBut(String(params.value));
+                }
+            });
+            chart.on("mouseout", function (params) {
+                if (params && params.componentType === "legend") {
+                    fadeAllBut(null);
+                }
+            });
             chart.on("graphroam", function () {
                 zoomed = true;
                 sendControls();
             });
             linkOutlines = {};
+            legendFaded = false;
             chart.on("rendered", syncLinkOutlines);
             chart.getZr().on("click", function (event) {
                 // A click on no item clears the selection; a time range is cleared with the toolbar's button, as
