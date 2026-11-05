@@ -36,6 +36,8 @@ import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -481,6 +483,31 @@ class TranslationBuilds {
                 : new LinkedHashMap<>((Map<String, Object>) map);
     }
 
+
+    /// The build's saved Data Splitter, when it has exactly one: the sample check reads the sample with it, through
+    /// Stroom's own parser, where no spec is given. Seen in testing: without one, the check guessed a spec from the
+    /// sample's first format, so a stream of two formats read only one, its records had none of the mapping's fields,
+    /// and the Unknown gate had no records to show.
+    ///
+    /// @param build The build, or null.
+    /// @return The converter's name and XML; empty without a build, or with none or several Data Splitters.
+    public Optional<Map.Entry<String, String>> dataSplitter(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        final List<Map.Entry<String, String>> found = new ArrayList<>();
+        for (final WriteGuard.BuildDoc doc : guard.folderContents(build)) {
+            if (TextConverterDoc.TYPE.equals(doc.type())) {
+                documentAccess.read(doc.docRef(), TextConverterDoc.class)
+                        .filter(converter -> converter.getConverterType() == TextConverterType.DATA_SPLITTER)
+                        .filter(converter -> !NullSafe.isBlankString(converter.getData()))
+                        .ifPresent(converter -> found.add(Map.entry(doc.name(), converter.getData())));
+            }
+        }
+        return found.size() == 1
+                ? Optional.of(found.getFirst())
+                : Optional.empty();
+    }
 
     // --------------------------------------------------------------------------------
 

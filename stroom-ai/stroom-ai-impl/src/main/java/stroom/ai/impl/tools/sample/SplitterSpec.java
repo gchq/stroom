@@ -97,6 +97,8 @@ import java.util.regex.PatternSyntaxException;
 /// @param singleQuotes    key_value: values may be in single quotes too (`a='two words'`), read without them; a
 ///                        single-quoted value made of pairs (auditd's `msg='op=login res=success'`) is read as those
 ///                        pairs, the record's own.
+/// @param converter       [#CONVERTER] only: the Data Splitter's XML, run through Stroom's own parser; never given by
+///                        the model (see [#ofConverter(String)]).
 public record SplitterSpec(String kind,
                            String delimiter,
                            boolean headerLine,
@@ -132,7 +134,8 @@ public record SplitterSpec(String kind,
                            boolean joinUnkeyed,
                            String skipLines,
                            boolean words,
-                           boolean singleQuotes) {
+                           boolean singleQuotes,
+                           String converter) {
 
     /// The kinds of spec.
     public static final List<String> KINDS = List.of("delimited", "regex", "key_value", "syslog", "cef", "fields",
@@ -143,6 +146,9 @@ public record SplitterSpec(String kind,
     public static final String CONTINUATION = "continuation";
     /// The field an alternatives spec writes each record's variant in, unless it names another.
     public static final String VARIANT = "variant";
+    /// The kind of a spec that is a saved Data Splitter, read by Stroom's own parser: made by the tools only, never
+    /// given (not one of [#KINDS]).
+    public static final String CONVERTER = "converter";
     /// The kind of a spec reading records in several formats.
     public static final String ALTERNATIVES = "alternatives";
     /// The field words keeps each run of text that isn't pairs in.
@@ -162,7 +168,10 @@ public record SplitterSpec(String kind,
     /// @throws IllegalArgumentException with what is inconsistent if it isn't.
     public SplitterSpec {
         Objects.requireNonNull(kind, "kind");
-        if (!KINDS.contains(kind)) {
+        if (CONVERTER.equals(kind) && (converter == null || converter.isBlank())) {
+            throw new IllegalArgumentException("a converter spec needs the Data Splitter's XML");
+        }
+        if (!KINDS.contains(kind) && !CONVERTER.equals(kind)) {
             throw new IllegalArgumentException("kind must be one of " + KINDS);
         }
         delimiter = Objects.requireNonNullElse(delimiter, ",");
@@ -442,6 +451,19 @@ public record SplitterSpec(String kind,
         });
     }
 
+    /// A spec that is a saved Data Splitter, read by Stroom's own parser, as processing reads it: the sample check's
+    /// records where no spec was given. Seen in testing: without one, the check guessed a spec from the sample's
+    /// first format, so a stream of two read only one, its records had none of the mapping's fields, and the agent
+    /// took the Unknown gate's refusal to mean a spec reads one pattern only.
+    ///
+    /// @param converter The Data Splitter's XML.
+    /// @return The spec.
+    public static SplitterSpec ofConverter(final String converter) {
+        final Builder builder = builder(CONVERTER);
+        builder.converter = converter;
+        return builder.build();
+    }
+
     /// @param kind The kind of spec: one of [#KINDS].
     /// @return A builder of a spec of that kind, with the defaults.
     public static Builder builder(final String kind) {
@@ -459,7 +481,7 @@ public record SplitterSpec(String kind,
     /// @throws IllegalArgumentException if it isn't a consistent spec.
     @SuppressWarnings("unchecked")
     public static SplitterSpec fromMap(final Map<String, ?> json) {
-        if (!(json.get("kind") instanceof final String kind)) {
+        if (!(json.get("kind") instanceof final String kind) || !KINDS.contains(kind)) {
             throw new IllegalArgumentException("kind must be one of " + KINDS);
         }
         final Builder builder = builder(kind);
@@ -580,6 +602,10 @@ public record SplitterSpec(String kind,
     public Map<String, Object> toMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("kind", kind);
+        if (CONVERTER.equals(kind)) {
+            // Its XML is the build's converter's, not the model's to send back.
+            return map;
+        }
         putIf(map, "delimiter", delimiter, !",".equals(delimiter));
         putIf(map, "header", header(), headerLine || !columns.isEmpty());
         putIf(map, "quote", quote, quote != null);
@@ -669,6 +695,7 @@ public record SplitterSpec(String kind,
         private String skipLines;
         private boolean words;
         private boolean singleQuotes;
+        private String converter;
 
         private Builder(final String kind) {
             this.kind = kind;
@@ -912,7 +939,7 @@ public record SplitterSpec(String kind,
                     body, bodyField, quotedNewlines, recordEnd, recordStart, commentPrefix, headerDirective,
                     directives, escape, spacedValues, catchAll, blankLineRecords, fields, continuation, parts,
                     variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
-                    joinUnkeyed, skipLines, words, singleQuotes);
+                    joinUnkeyed, skipLines, words, singleQuotes, converter);
         }
     }
 }
