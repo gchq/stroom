@@ -878,6 +878,11 @@ class TestProposeDashboardChangeTool {
                 "Net", "vis-1", null, null, "Events", Map.of("source", "Sender", "target", "Recipient",
                 "directed", "true"))))
                 .containsExactlyInAnyOrder("source", "Sender", "target", "Recipient", "node");
+        // Its groups, which its legend selects (asked for by the user: the legend filters the dashboard).
+        assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation",
+                "Net", "vis-1", null, null, "Events", Map.of("source", "Sender", "target", "Recipient",
+                "sourceGroup", "Dept"))))
+                .contains("sourceGroup", "Dept");
         // A content pack chart's keys aren't known, so aren't checked.
         assertThat(ProposeDashboardChangeTool.selectionKeys(new Component("Visualisation",
                 "D3", "vis-2", null, null, "Events", Map.of("gridSeries", "X")))).isEmpty();

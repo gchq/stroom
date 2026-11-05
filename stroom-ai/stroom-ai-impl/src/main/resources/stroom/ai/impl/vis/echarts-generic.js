@@ -1587,6 +1587,13 @@ if (!window.visualisations) {
         return {
             legend: legendOption(settings, legendShown, style),
             tooltip: {trigger: "item"},
+            // A slice in the legend stands for its name; the slices combined as Other for none.
+            legendSelect: function (name) {
+                var slice = data.filter(function (item) {
+                    return item.name === name;
+                })[0];
+                return !slice || slice.combined ? [] : [fields.selection([["name", fields.rawOf("name", slice.name)]])];
+            },
             // A slice selects its name; the slices combined as Other select nothing.
             selectAt: function (seriesIndex, dataIndex) {
                 var slice = data[dataIndex];
@@ -1856,6 +1863,8 @@ if (!window.visualisations) {
     // The most clusters coloured and named each its own; the rest are one, Other clusters, in a subtle colour.
     var MAX_NAMED_CLUSTERS = 12;
     var OTHER_CLUSTERS = "Other clusters";
+    // The most of a cluster's nodes a legend item filters the dashboard by.
+    var MAX_LEGEND_NODES = 200;
     // The groups beyond Max Categories, combined.
     var OTHER_GROUPS = "Other groups";
     // The most clusters, and bridges between them, a report gives.
@@ -2489,6 +2498,25 @@ if (!window.visualisations) {
                 itemStyle: {borderColor: style.border}
             } : undefined,
             // A node selects itself (node); a link its two ends (by the columns they are from).
+            // A group in the legend stands for its value in the group columns; a cluster for its members drawn (up
+            // to MAX_LEGEND_NODES); the groups or clusters combined, for none.
+            legendSelect: function (name) {
+                if (name === OTHER_GROUPS || name === OTHER_CLUSTERS) {
+                    return [];
+                }
+                if (byCluster) {
+                    return nodeNames.filter(function (node) {
+                        return groupOfNode(node) === name;
+                    }).slice(0, MAX_LEGEND_NODES).map(function (node) {
+                        return nodeSelection(fields, {nodeRoles: nodeRoles}, node);
+                    });
+                }
+                return ["sourceGroup", "targetGroup"].filter(function (role) {
+                    return fields.has(role);
+                }).map(function (role) {
+                    return fields.selection([[role, fields.rawOf(role, name)]]);
+                });
+            },
             selectAt: function (seriesIndex, dataIndex, dataType) {
                 if (dataType === "edge") {
                     var link = links[linkKeys[dataIndex]];
@@ -4012,6 +4040,12 @@ if (!window.visualisations) {
             return null;
         };
         delete option.selectAt;
+        // What a legend item stands for, as the dashboard's filters on this chart's selection read it: a series by
+        // its series column, unless the kind says its own (a pie's slices, a network's groups).
+        var legendSelect = option.legendSelect || function (name) {
+            return fields.has("series") ? [fields.selection([["series", fields.rawOf("series", name)]])] : [];
+        };
+        delete option.legendSelect;
         // For categories that are dates in order, what a range dragged across them stands for.
         var rangeAt = option.rangeAt || null;
         delete option.rangeAt;
@@ -4099,7 +4133,8 @@ if (!window.visualisations) {
         } else if (report.points === 0) {
             report.status = "nothing-drawn";
         }
-        return {option: option, report: report, selectAt: selectAt, rangeAt: option.brush ? rangeAt : null,
+        return {option: option, report: report, selectAt: selectAt, legendSelect: legendSelect,
+            rangeAt: option.brush ? rangeAt : null,
             interval: grouped.interval, intervals: grouped.intervals, intervalChoice: grouped.choice, data: data};
     }
 
@@ -4262,6 +4297,8 @@ if (!window.visualisations) {
         // Whether some series are hidden, from the legend: Stroom's toolbar then offers to show them all.
         var hiddenSeries = false;
         var hiddenNames = [];
+        // What the legend's items shown stand for, as selections, while some are hidden (see legendselectchanged).
+        var legendSelections = [];
         // The interval chosen in Stroom's toolbar for Auto Interval (null for Auto), and whether a network graph's
         // layout is paused.
         var chosenInterval = null;
@@ -4668,7 +4705,8 @@ if (!window.visualisations) {
         // ways, so a filter on its source and target matches it in either direction.
         function selections() {
             if (!selected) {
-                return [];
+                // Nothing clicked: what the legend's items shown stand for, if it is narrowed.
+                return legendSelections.slice();
             }
             if (selected.range) {
                 return [selected.selection];
@@ -4977,7 +5015,19 @@ if (!window.visualisations) {
                     return shown[name] === false;
                 });
                 hiddenSeries = hiddenNames.length > 0;
-                sendControls();
+                // The items shown filter the dashboard as a click does (asked for by the user): what each stands for,
+                // while some are hidden; none once all are shown again.
+                legendSelections = [];
+                if (hiddenSeries && built && built.legendSelect) {
+                    Object.keys(shown).filter(function (name) {
+                        return shown[name] !== false;
+                    }).forEach(function (name) {
+                        built.legendSelect(name).forEach(function (selection) {
+                            legendSelections.push(selection);
+                        });
+                    });
+                }
+                send();
             });
             chart.on("graphroam", function () {
                 zoomed = true;
@@ -5035,14 +5085,20 @@ if (!window.visualisations) {
                     || instance.getHeight() !== chartElement.clientHeight) {
                     instance.resize();
                 }
+                if (hiddenNames.length > 0 && built.option.legend && built.option.legend.show !== false) {
+                    built.option.legend.selected = {};
+                    hiddenNames.forEach(function (name) {
+                        built.option.legend.selected[name] = false;
+                    });
+                }
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
                 if (friction !== null && friction === startingFriction(built.option)) {
                     friction = warmUpLayout(friction);
                 }
-                // Drawn afresh, every series shown and the layout moving, at the zoom it had, and the range tool on
-                // again if it was.
-                hiddenSeries = false;
-                hiddenNames = [];
+                // Drawn afresh, the layout moving, at the zoom it had, and the range tool on again if it was. A
+                // legend narrowed stays so (as it filters the dashboard, perhaps this chart's own query: shown whole
+                // again on a refresh, the filter would go and come back); Show All, or other settings, widen it.
+                hiddenSeries = hiddenNames.length > 0;
                 layoutPaused = false;
                 startLayoutClock(friction);
                 layoutBox = {width: instance.getWidth(), height: instance.getHeight()};
@@ -5094,6 +5150,14 @@ if (!window.visualisations) {
                 zoomWindows = null;
                 chosenInterval = null;
                 freshLayout = true;
+                // Its legend shown whole, and no longer filtering, under other settings.
+                if (legendSelections.length > 0 || hiddenNames.length > 0) {
+                    hiddenNames = [];
+                    legendSelections = [];
+                    if (!selected) {
+                        sendSelection([]);
+                    }
+                }
             }
             lastArgs = {context: context, settings: settings, data: data};
             render();
@@ -5146,7 +5210,8 @@ if (!window.visualisations) {
                 chart.dispatchAction({type: "legendAllSelect"});
                 hiddenSeries = false;
                 hiddenNames = [];
-                sendControls();
+                legendSelections = [];
+                send();
             } else if (name === "downloadImage" && chart && built) {
                 saveFile((value || "chart") + ".png", chart.getDataURL({type: "png", pixelRatio: 2,
                     backgroundColor: backgroundOf(lastStyle)}));
