@@ -51,6 +51,7 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -164,6 +165,9 @@ class TestExtractionActions {
             assertThat(property.getValue().getEntity().getUuid()).isEqualTo("x1");
         });
         assertThat(written.pipeline().getUuid()).isEqualTo("p1");
+        // Tagged as an extraction pipeline, as the pipeline pickers list only those (seen in testing: a column's new
+        // extraction pipeline didn't show in the table's settings).
+        Mockito.verify(explorerService).addTags(List.of(written.pipeline()), Set.of("extraction"));
         // The table: its extraction pipeline set (which turns extraction on), and a column for the new field.
         @SuppressWarnings("unchecked") final List<Map<String, Object>> changes =
                 (List<Map<String, Object>>) JsonUtil.readValue(written.tableChanges(), List.class);
