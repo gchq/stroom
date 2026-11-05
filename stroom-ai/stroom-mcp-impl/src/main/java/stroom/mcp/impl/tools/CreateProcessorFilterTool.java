@@ -286,6 +286,7 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                  + "destination (ArcSight, say) receives them");
         }
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
+        String existingNote = null;
         // The sample's first run into an Elasticsearch index: one already holding documents stops it here, before
         // anything is asked or processed (seen in testing: a data stream of the same name, found only by
         // verify_index's counts after indexing).
@@ -295,14 +296,17 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                 return plan.nextFor(context, ref, ExistingIndexes.stop(pipeline, destination, existing,
                         ToolArgs.flag(call, INDEX_DROPPED_ARG), NAME));
             }
-            ExistingIndexes.note(existing, destination).ifPresent(note ->
-                    details.put(ExistingIndexes.EXISTING_INDEX, note));
+            existingNote = ExistingIndexes.note(existing, destination).orElse(null);
         }
         if (destination != null) {
             final ProcessingApprovals.Committed committed = approvals.committed(call, context, pipeline, destination,
                     NAME, ToolArgs.flag(call, TEMPLATE_COMMITTED_BY_USER_ARG));
             details.put(ProcessingApprovals.INDEX_TEMPLATE, committed.text());
             pipeline = committed.pipeline();
+        }
+        // After the template's condition, which the user must act on: a long note before it cut it from the form.
+        if (existingNote != null) {
+            details.put(ExistingIndexes.EXISTING_INDEX, existingNote);
         }
         // A sample indexed into an index this pipeline already wrote to: the index starts fresh, dropped first
         // (asked for by the user). Not a feed's filter beside an earlier one (a backfill, then new data): those add
