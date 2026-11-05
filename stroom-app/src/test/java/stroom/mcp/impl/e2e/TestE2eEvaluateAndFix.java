@@ -331,7 +331,9 @@ class TestE2eEvaluateAndFix extends AbstractE2eTest {
                 "stream_ids", prod.raw(), "other_pipeline_uuid", copy.get("uuid")));
         assertThat(paths(diff)).as("the working copy differs from production only in Success")
                 .containsExactly(SUCCESS);
-        agreed("write_documentation", args("build", build, "pipeline_uuid", copy.get("uuid"), "markdown",
+        // The copy's sample, as its XSLT is hand-written: its Field mapping is generated from the Events it writes.
+        agreed("write_documentation", args("build", build, "pipeline_uuid", copy.get("uuid"), "stream_ids",
+                prod.raw(), "markdown",
                 "# " + FEED + "-Events\n\n## Purpose and data\n\nCSV logons.\n\n## Field mapping\n\n| From | To |\n"
                 + "| --- | --- |\n| result | " + SUCCESS + " (ok only) |\n",
                 "change", "Locked accounts' logons are no longer successes"));

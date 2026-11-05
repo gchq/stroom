@@ -281,11 +281,14 @@ class TestE2eSourceDocs extends AbstractE2eTest {
         // ### 3. a catalogue guessed from the sample, and a hand-written XSLT writing Unknown
         createFeed(build, feed);
         final long raw = upload(feed, FIREWALL);
-        final String said = refusal("record_source_notes", args("build", build, "source", "Firewall", "summary",
-                "A firewall.", "fields", List.of(), "events", GUESSED));
-        assertThat(said).as("the guessed catalogue is refused, naming Network/Permit and the twin events")
-                .contains("'Allow' is not an EventDetail action element", "Network/Permit",
-                        "TRAFFIC-ALLOW and TRAFFIC-DENY are both event_type=TRAFFIC");
+        // What's valid is recorded; the events to correct come back (since 2eb9d2cb97: seen in testing, the whole
+        // catalogue resent for a few events).
+        final Map<String, Object> recorded = json("record_source_notes", args("build", build, "source", "Firewall",
+                "summary", "A firewall.", "fields", List.of(), "events", GUESSED));
+        assertThat(String.valueOf(recorded.get("event_problems")))
+                .as("the guessed events are sent back to correct, naming Network/Permit")
+                .contains("TRAFFIC-ALLOW: 'Allow' is not an EventDetail action element", "Network/Permit",
+                        "TRAFFIC-DENY");
         final List<Map<String, Object>> fixed = new ArrayList<>();
         fixed.add(with(GUESSED.get(0), Map.of("field", "action", "value", "ALLOW", "event_detail",
                 "Network/Permit")));
