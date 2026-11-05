@@ -77,6 +77,26 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void rulesNoSampleRecordReachesAreNamed() {
+        // Seen in testing: a sample of mostly one kind of event checked clean, and the rules it never reached
+        // failed only in processing.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "common": [],
+                 "events": [{"name": "login", "when": [{"field": "action", "equals": "login"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "login"}]},
+                            {"name": "logout", "when": [{"field": "action", "equals": "logout"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "logout"}]},
+                            {"name": "other", "fields": [{"path": "EventDetail/TypeId", "value": "other"}]}]}"""));
+        final List<Object> records = records(mapping, """
+                {"action": "login"}
+                {"action": "login"}""", null);
+
+        // The rule for the rest is left out: none reaching it is no gap.
+        assertThat(LocalCheck.rulesUnreached(mapping, records)).containsExactly("logout");
+        assertThat(LocalCheck.rulesUnreached(mapping, List.of())).isEmpty();
+    }
+
+    @Test
     void timesInAnotherLayoutAreNamedWithWhatToDo() {
         // Seen: a stream's times in two layouts, the second's records each written with an empty time.
         final TranslationMapping mapping = mapping(json("""
