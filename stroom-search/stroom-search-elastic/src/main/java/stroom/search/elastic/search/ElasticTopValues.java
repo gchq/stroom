@@ -74,16 +74,13 @@ public final class ElasticTopValues {
     /// @param fieldName         The name of the field.
     /// @param nativeType        The Elasticsearch mapping type of the field.
     /// @param nativeTypeLookup  Returns the mapping type of another field by name, or null if there is no such
-    ///                          field. Used to find a `text` field's `keyword` multi-field and whether the field
-    ///                          is within a `nested` object.
-    /// @return The name of the field to aggregate, or null if the field's values can't be listed. Fields within
-    /// a `nested` object can't be listed, as they need a `nested` aggregation.
+    ///                          field. Used to find a `text` field's `keyword` multi-field.
+    /// @return The name of the field to aggregate, or null if the field's values can't be listed. A field within
+    /// a `nested` object is aggregated within that object, see [#getNestedPath].
     public static String getAggregationField(final String fieldName,
                                              final String nativeType,
                                              final Function<String, String> nativeTypeLookup) {
-        if (isWithinNestedObject(fieldName, nativeTypeLookup)) {
-            return null;
-        } else if (AGGREGATABLE_TYPES.contains(nativeType)) {
+        if (AGGREGATABLE_TYPES.contains(nativeType)) {
             return fieldName;
         } else if (TEXT_TYPES.contains(nativeType)) {
             final String keywordField = fieldName + KEYWORD_SUB_FIELD;
@@ -94,16 +91,26 @@ public final class ElasticTopValues {
         return null;
     }
 
-    private static boolean isWithinNestedObject(final String fieldName,
-                                                final Function<String, String> nativeTypeLookup) {
+    /// Finds the `nested` object a field is within, which its values must be aggregated within using a
+    /// `nested` aggregation. For a field within `nested` objects within each other, this is the innermost one.
+    ///
+    /// @param fieldName         The name of the field.
+    /// @param nativeTypeLookup  Returns the mapping type of another field by name, or null if there is no such
+    ///                          field.
+    /// @return The path of the innermost `nested` object the field is within, e.g. `user` for `user.name`, or
+    /// null if it isn't within one.
+    public static String getNestedPath(final String fieldName,
+                                       final Function<String, String> nativeTypeLookup) {
+        String nestedPath = null;
         int separatorIndex = fieldName.indexOf('.');
         while (separatorIndex > 0) {
-            if (Kind.Nested.jsonValue().equals(nativeTypeLookup.apply(fieldName.substring(0, separatorIndex)))) {
-                return true;
+            final String path = fieldName.substring(0, separatorIndex);
+            if (Kind.Nested.jsonValue().equals(nativeTypeLookup.apply(path))) {
+                nestedPath = path;
             }
             separatorIndex = fieldName.indexOf('.', separatorIndex + 1);
         }
-        return false;
+        return nestedPath;
     }
 
     /// @param nativeType The Elasticsearch mapping type of the field being aggregated.

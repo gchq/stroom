@@ -51,11 +51,15 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.TermsAggregation;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -64,10 +68,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /// Lists the most common values of an Elasticsearch field with a `terms` aggregation, for the value picker of
@@ -79,6 +85,9 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSuggestionsQueryHandlerImpl.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Elastic Suggestions Query Handler");
     private static final String AGGREGATION_NAME = "values";
+    // The sub-aggregation counting the documents (events) holding each value of a field within a `nested`
+    // object, rather than the nested objects holding it
+    private static final String DOCUMENT_COUNT_AGGREGATION_NAME = "documents";
 
     private final Provider<ElasticClientCache> elasticClientCacheProvider;
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
@@ -133,15 +142,18 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         if (indexField == null) {
             return FieldValues.EMPTY;
         }
+        final Function<String, String> nativeTypeLookup = name ->
+                NullSafe.get(getElasticIndexField(dataSource, name), ElasticIndexField::getNativeType);
         final String aggregationField = ElasticTopValues.getAggregationField(
                 fieldName,
                 indexField.getNativeType(),
-                name -> NullSafe.get(getElasticIndexField(dataSource, name), ElasticIndexField::getNativeType));
+                nativeTypeLookup);
         if (aggregationField == null) {
             LOGGER.debug("Field '{}' of type '{}' can't list its values", fieldName, indexField.getNativeType());
             return FieldValues.EMPTY;
         }
 
+        final String nestedPath = ElasticTopValues.getNestedPath(fieldName, nativeTypeLookup);
         final String filterRegex = getFilterRegex(request, aggregationField, dataSource);
         final ScopeQuery scopeQuery = getScopeQuery(index, request);
         final ElasticClusterDoc elasticCluster = elasticClusterStoreProvider.get()
@@ -156,6 +168,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                                         elasticClient,
                                         index,
                                         aggregationField,
+                                        nestedPath,
                                         filterRegex,
                                         scopeQuery,
                                         config.getEffectiveTopValuesCount(),
@@ -311,6 +324,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     private FieldValues queryFieldValues(final ElasticsearchClient elasticClient,
                                          final ElasticIndexDoc index,
                                          final String aggregationField,
+                                         final String nestedPath,
                                          final String filterRegex,
                                          final ScopeQuery scopeQuery,
                                          final int count,
@@ -320,14 +334,8 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                 .size(0)
                 .trackTotalHits(t -> t.enabled(true))
                 .query(scopeQuery.query())
-                .aggregations(AGGREGATION_NAME, a -> a
-                        .terms(t -> {
-                            t.field(aggregationField).size(count);
-                            if (filterRegex != null) {
-                                t.include(i -> i.regexp(filterRegex));
-                            }
-                            return t;
-                        })));
+                .aggregations(AGGREGATION_NAME,
+                        createAggregation(aggregationField, nestedPath, filterRegex, count)));
         LOGGER.debug(() -> "Field values request: " + searchRequest);
 
         final SearchResponse<Void> response;
@@ -338,28 +346,65 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         }
 
         final long totalCount = NullSafe.getOrElse(response.hits().total(), total -> total.value(), 0L);
-        final Aggregate aggregate = response.aggregations().get(AGGREGATION_NAME);
+        Aggregate aggregate = response.aggregations().get(AGGREGATION_NAME);
+        if (nestedPath != null && aggregate != null) {
+            aggregate = aggregate.nested().aggregations().get(AGGREGATION_NAME);
+        }
         return new FieldValues(
-                getValueCounts(aggregate, fieldType),
+                getValueCounts(aggregate, nestedPath != null, fieldType),
                 totalCount,
                 scopeQuery.allTime(),
                 scopeQuery.description());
     }
 
+    /// Creates the `terms` aggregation listing a field's most common values. A field within a `nested` object is
+    /// aggregated within that object, and each value is counted by the documents holding it, as a query on the
+    /// value would match them, rather than by the nested objects holding it. The values are ranked by that
+    /// count.
+    private static Aggregation createAggregation(final String aggregationField,
+                                                 final String nestedPath,
+                                                 final String filterRegex,
+                                                 final int count) {
+        final TermsAggregation.Builder terms = new TermsAggregation.Builder()
+                .field(aggregationField)
+                .size(count);
+        if (filterRegex != null) {
+            terms.include(i -> i.regexp(filterRegex));
+        }
+        if (nestedPath == null) {
+            return Aggregation.of(a -> a.terms(terms.build()));
+        }
+
+        terms.order(List.of(
+                NamedValue.of(DOCUMENT_COUNT_AGGREGATION_NAME, SortOrder.Desc),
+                NamedValue.of("_key", SortOrder.Asc)));
+        final Aggregation termsAggregation = Aggregation.of(a -> a
+                .terms(terms.build())
+                .aggregations(DOCUMENT_COUNT_AGGREGATION_NAME, d -> d.reverseNested(r -> r)));
+        return Aggregation.of(a -> a
+                .nested(n -> n.path(nestedPath))
+                .aggregations(AGGREGATION_NAME, termsAggregation));
+    }
+
     // Each value is returned with its term value, quoted so that a term holding it matches the value exactly
-    private static List<FieldValueCount> getValueCounts(final Aggregate aggregate, final FieldType fieldType) {
+    private static List<FieldValueCount> getValueCounts(final Aggregate aggregate,
+                                                        final boolean nested,
+                                                        final FieldType fieldType) {
         if (aggregate == null) {
             return Collections.emptyList();
         } else if (aggregate.isSterms()) {
             return aggregate.sterms().buckets().array().stream()
-                    .map(bucket -> toFieldValueCount(bucket.key().stringValue(), bucket.docCount(), fieldType))
+                    .map(bucket -> toFieldValueCount(
+                            bucket.key().stringValue(),
+                            getCount(bucket.docCount(), bucket.aggregations(), nested),
+                            fieldType))
                     .toList();
         } else if (aggregate.isLterms()) {
             // Booleans are aggregated as 0 or 1, with `true` or `false` as the key's string form
             return aggregate.lterms().buckets().array().stream()
                     .map(bucket -> toFieldValueCount(
                             Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())),
-                            bucket.docCount(),
+                            getCount(bucket.docCount(), bucket.aggregations(), nested),
                             fieldType))
                     .toList();
         } else {
@@ -368,6 +413,19 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         }
     }
 
+    // For a field within a `nested` object, the bucket's own count is of nested objects, so the documents
+    // holding the value are counted by its sub-aggregation instead
+    private static long getCount(final long bucketCount,
+                                 final Map<String, Aggregate> subAggregations,
+                                 final boolean nested) {
+        if (!nested) {
+            return bucketCount;
+        }
+        final Aggregate documentCount = subAggregations.get(DOCUMENT_COUNT_AGGREGATION_NAME);
+        return documentCount != null && documentCount.isReverseNested()
+                ? documentCount.reverseNested().docCount()
+                : bucketCount;
+    }
 
     private static FieldValueCount toFieldValueCount(final String value,
                                                      final long count,

@@ -120,6 +120,10 @@ class TestElasticSuggestionsQueryHandlerImpl {
         addField("flag", FieldType.BOOLEAN, "boolean");
         addField("source.ip", FieldType.IPV4_ADDRESS, "ip");
         addField(TIME_FIELD, FieldType.DATE, "date");
+        addField("users", FieldType.NESTED, "nested");
+        addField("users.name", FieldType.KEYWORD, "keyword");
+        addField("users.roles", FieldType.NESTED, "nested");
+        addField("users.roles.id", FieldType.LONG, "long");
     }
 
     @AfterEach
@@ -349,6 +353,95 @@ class TestElasticSuggestionsQueryHandlerImpl {
         // Text fields are searched with query string syntax, so the value is a phrase
         assertThat(fieldValues.getValues())
                 .containsExactly(new FieldValueCount("disk:full", "\"disk:full\"", 2L));
+    }
+
+    @Test
+    void testNestedField_aggregatedWithinNestedObject() {
+        stubSearch(10, """
+                "nested#values": {
+                  "doc_count": 25,
+                  "sterms#values": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      { "key": "alice", "doc_count": 9, "reverse_nested#documents": { "doc_count": 6 } },
+                      { "key": "bob", "doc_count": 4, "reverse_nested#documents": { "doc_count": 4 } }
+                    ]
+                  }
+                }""");
+
+        final FieldValues fieldValues = createHandler().getFieldValues(request("users.name", "al", null));
+
+        // Each value is counted by the documents holding it, not by the nested objects holding it
+        assertThat(fieldValues.getValues())
+                .containsExactly(new FieldValueCount("alice", 6L), new FieldValueCount("bob", 4L));
+        assertThat(fieldValues.getTotalCount()).isEqualTo(10);
+        ELASTIC.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.nested.path", WireMock.equalTo("users")))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.aggregations.values.terms.field", WireMock.equalTo("users.name")))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.aggregations.values.terms.size", WireMock.equalTo("5")))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.aggregations.values.terms.include", WireMock.equalTo(".*[aA][lL].*")))
+                // Ranked by the documents holding each value
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.aggregations.values.terms.order",
+                        WireMock.equalToJson("[{\"documents\": \"desc\"}, {\"_key\": \"asc\"}]")))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.aggregations.values.aggregations.documents.reverse_nested",
+                        WireMock.equalToJson("{}"))));
+    }
+
+    @Test
+    void testNestedField_innermostNestedObject() {
+        stubSearch(3, """
+                "nested#values": {
+                  "doc_count": 7,
+                  "lterms#values": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": [
+                      { "key": 42, "doc_count": 5, "reverse_nested#documents": { "doc_count": 2 } }
+                    ]
+                  }
+                }""");
+
+        final FieldValues fieldValues = createHandler().getFieldValues(new FetchFieldValuesRequest(
+                INDEX_REF,
+                QueryField.builder().fldName("users.roles.id").fldType(FieldType.LONG).build(),
+                null,
+                null,
+                null,
+                null));
+
+        assertThat(fieldValues.getValues()).containsExactly(new FieldValueCount("42", 2L));
+        ELASTIC.verify(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))
+                .withRequestBody(WireMock.matchingJsonPath(
+                        "$.aggregations.values.nested.path", WireMock.equalTo("users.roles"))));
+    }
+
+    @Test
+    void testNestedField_noValues() {
+        stubSearch(0, """
+                "nested#values": {
+                  "doc_count": 0,
+                  "sterms#values": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": []
+                  }
+                }""");
+
+        assertThat(createHandler().getFieldValues(request("users.name", null, null)).getValues()).isEmpty();
+    }
+
+    @Test
+    void testNestedObject_noRequest() {
+        // The nested object itself has no values to list
+        assertThat(createHandler().getFieldValues(request("users", null, null))).isEqualTo(FieldValues.EMPTY);
+        ELASTIC.verify(0, WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)));
     }
 
     @Test
