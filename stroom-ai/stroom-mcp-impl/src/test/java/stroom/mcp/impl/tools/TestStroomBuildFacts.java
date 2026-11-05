@@ -16,13 +16,19 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
+import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,6 +38,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,6 +96,49 @@ class TestStroomBuildFacts {
         // The build's own feed isn't a source of it.
         assertThat(feeds).containsExactly("UPSTREAM");
         Mockito.verifyNoInteractions(processorFilterAccess);
+    }
+
+    @Test
+    void theEventsStreamsTheBuildUsesAreThoseItsCurrentTranslationMadeFromRawStreamsStillThere() {
+        // Seen in testing: a build's documentation step named the Events of an earlier run, whose raw stream had
+        // been deleted; and a test feed collects the Events of every run, older code's too.
+        final BuildWorld world = new BuildWorld();
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x1", "ACME-Translation");
+        PipelineLayers.given(world.pipelineService, "events", PipelineLayers.of(PipelineLayers.layer("events")
+                .chain("Source", "Source", "dsParser", "DSParser", "translationFilter", "XSLTFilter",
+                        "streamAppender", "StreamAppender")
+                .property("translationFilter", "xslt", xslt)
+                .property("streamAppender", "streamType", "Events")));
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid("x1").name("ACME-Translation").updateTimeMs(5_000L).build()));
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.meta(1L)).thenReturn(raw(1, Status.DELETED));
+        Mockito.when(streamReader.meta(2L)).thenReturn(raw(2, Status.UNLOCKED));
+        Mockito.when(streamReader.find(Mockito.any(), Mockito.anyInt(), Mockito.anyBoolean()))
+                .thenReturn(new ResultPage<>(List.of(
+                        events(13, 2, "events", 6_000), events(12, 2, "events", 4_000),
+                        events(11, 2, "other", 9_000), events(10, 1, "events", 9_000))));
+        final StroomBuildFacts facts = new StroomBuildFacts(null, null, documentAccess, streamReader,
+                world.pipelineShapes, null, null, null, null, null, null, null, null);
+
+        final BuildFacts.EventsStreams found = facts.eventsStreams(Map.of("name", "ACME-TEST"), List.of("events"));
+
+        // 10 from a deleted raw stream, 11 by another pipeline, 12 before the XSLT was last saved.
+        assertThat(found.current()).containsExactly(13L);
+        assertThat(found.leftOut()).containsExactly(12L, 11L, 10L);
+        // None by the build's pipelines: every one from a raw stream still there.
+        assertThat(facts.eventsStreams(Map.of("name", "ACME-TEST"), List.of()).current())
+                .containsExactly(13L, 12L, 11L);
+    }
+
+    private static Meta raw(final long id, final Status status) {
+        return Meta.builder().id(id).feedName("ACME").typeName("Raw Events").status(status).createMs(1_000L).build();
+    }
+
+    private static MetaRow events(final long id, final long parent, final String pipeline, final long createMs) {
+        return new MetaRow(Meta.builder().id(id).feedName("ACME-TEST").typeName("Events").status(Status.UNLOCKED)
+                .parentDataId(parent).pipelineUuid(pipeline).createMs(createMs).build(), null, Map.of());
     }
 
     @Test

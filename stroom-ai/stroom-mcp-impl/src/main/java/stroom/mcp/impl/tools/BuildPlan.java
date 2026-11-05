@@ -609,7 +609,16 @@ public class BuildPlan {
             }
         }
         final List<Long> events = new ArrayList<>();
-        of(byType, FeedDoc.TYPE).forEach(feed -> events.addAll(facts.eventsStreams(feed)));
+        final List<Long> eventsLeftOut = new ArrayList<>();
+        final List<String> translations = pipelines.stream()
+                .filter(p -> "translation".equals(p.get("stage")))
+                .map(BuildPlan::uuid)
+                .toList();
+        of(byType, FeedDoc.TYPE).forEach(feed -> {
+            final BuildFacts.EventsStreams found = facts.eventsStreams(feed, translations);
+            events.addAll(found.current());
+            eventsLeftOut.addAll(found.leftOut());
+        });
         // Elasticsearch: the index template agreed with the user for each indexing pipeline's current code. Not
         // needed for Lucene; to do for Elasticsearch until every such pipeline has one.
         final List<Optional<String>> problems = new ArrayList<>();
@@ -853,6 +862,13 @@ public class BuildPlan {
         result.put("xslts", xslts);
         result.put("pipelines", pipelines.stream().map(BuildPlan::shown).toList());
         result.put("events_streams", events.subList(0, Math.min(20, events.size())));
+        if (!eventsLeftOut.isEmpty()) {
+            result.put("events_streams_left_out", eventsLeftOut.subList(0, Math.min(20, eventsLeftOut.size())));
+            result.put("events_left_out_note", "Events streams of the build's feeds that don't show what its "
+                                               + "translation writes now, so its steps don't use them: made from a "
+                                               + "raw stream since deleted, by another pipeline, or before the "
+                                               + "translation XSLT was last saved.");
+        }
         result.put("before_promotion", checks);
         result.put("steps", steps);
         if (existing) {
