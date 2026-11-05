@@ -61,8 +61,10 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public class TermEditor extends Composite {
@@ -615,30 +617,55 @@ public class TermEditor extends Composite {
     private void showValuePicker() {
         final QueryField field = fieldListBox.getValue();
         if (field != null && restFactory != null && dataSource != null) {
-            // An `in` term's values are separated by commas, so a value containing a comma can't be one of them
-            final boolean allowCommas = !Condition.IN.equals(conditionListBox.getValue());
+            // An `in` term holds several values, so they are ticked in the picker
             fieldValuePickerPresenterProvider.get().show(
                     valuesButton.getElement(),
                     restFactory,
                     dataSource,
                     field,
-                    allowCommas,
+                    Condition.IN.equals(conditionListBox.getValue()),
                     NullSafe.get(scopeSupplier, Supplier::get),
+                    this::getTermValues,
                     this::insertValue);
         }
     }
 
-    // Puts a picked value in the value box, replacing its text for `=` and `!=`, or adding to the list for `in`.
-    // The data source has already quoted the value as its query syntax needs.
+    // Puts a picked value in the value box, replacing its text for `=` and `!=`. For `in`, the value is added to
+    // the list, or removed if the list holds it, and the picker stays open with the focus, so the value box isn't
+    // focused. The data source has already quoted the value as its query syntax needs.
     private void insertValue(final String pickedValue) {
-        final String currentText = StringUtil.trimWhitespace(value.getText());
-        if (Condition.IN.equals(conditionListBox.getValue()) && NullSafe.isNonBlankString(currentText)) {
-            value.setText(currentText + Condition.IN_CONDITION_DELIMITER + " " + pickedValue);
+        if (Condition.IN.equals(conditionListBox.getValue())) {
+            final List<String> listValues = getListValues();
+            if (!listValues.remove(pickedValue)) {
+                listValues.add(pickedValue);
+            }
+            value.setText(String.join(Condition.IN_CONDITION_DELIMITER + " ", listValues));
         } else {
             value.setText(pickedValue);
+            value.setFocus(true);
         }
-        value.setFocus(true);
         fireDirty();
+    }
+
+    // The values in an `in` term's list, in order, for the picker to tick
+    private Set<String> getTermValues() {
+        return Condition.IN.equals(conditionListBox.getValue())
+                ? new HashSet<>(getListValues())
+                : new HashSet<>();
+    }
+
+    private List<String> getListValues() {
+        final List<String> listValues = new ArrayList<>();
+        final String currentText = StringUtil.trimWhitespace(value.getText());
+        if (NullSafe.isNonBlankString(currentText)) {
+            for (final String item : currentText.split(Condition.IN_CONDITION_DELIMITER)) {
+                final String trimmed = StringUtil.trimWhitespace(item);
+                if (NullSafe.isNonBlankString(trimmed)) {
+                    listValues.add(trimmed);
+                }
+            }
+        }
+        return listValues;
     }
 
     // Shows the options button only for fields whose data source supports field-level query options, and

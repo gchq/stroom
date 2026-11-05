@@ -124,9 +124,16 @@
 .fieldValuePicker {
     display: flex;
     flex-direction: column;
-    width: 270px;
+    width: 300px;
+    /* Lifted by FieldValuePickerViewImpl once the user starts to resize the picker */
     max-height: 420px;
+    min-width: 200px;
+    min-height: 100px;
+    max-width: 90vw;
     padding: 5px;
+    /* Dragging the bottom right corner resizes the picker */
+    resize: both;
+    overflow: hidden;
 }
 
 .fieldValuePicker-filter {
@@ -164,6 +171,9 @@
 }
 
 .fieldValuePicker-values {
+    /* Fills the picker when it is resized taller than the list */
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -182,6 +192,10 @@
 
 .fieldValuePicker-row:hover {
     background-color: rgba(var(--blue-500-rgb), 0.1);
+}
+
+.fieldValuePicker-check {
+    flex-shrink: 0;
 }
 
 .fieldValuePicker-row--disabled {
@@ -203,7 +217,7 @@
 }
 
 .fieldValuePicker-bar {
-    flex: 0 0 80px;
+    flex: 0 0 60px;
     height: 6px;
     border-radius: 3px;
     background-color: rgba(var(--blue-500-rgb), 0.15);
