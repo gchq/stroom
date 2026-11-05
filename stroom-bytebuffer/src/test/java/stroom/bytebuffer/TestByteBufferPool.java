@@ -348,7 +348,7 @@ class TestByteBufferPool {
 
         final int threads = 10;
         // Set to true for profiling in visualvm
-        final boolean inProfilingMode = true;
+        final boolean inProfilingMode = false;
 
         final int rounds = 3;
         final int iterations = inProfilingMode
