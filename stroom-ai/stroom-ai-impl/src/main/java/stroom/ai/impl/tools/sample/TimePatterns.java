@@ -18,24 +18,25 @@ package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.ToolText;
 
+import java.text.ParsePosition;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /// Timestamp patterns: a Java (`stroom:format-date`) pattern inferred from a value, and a pattern checked against
 /// values.
 ///
 /// The profiler used to know ten shapes; anything else was typed as a string and the model guessed a pattern,
 /// which `stroom:format-date` then failed silently, leaving TimeCreated empty. Here a value is read left to right
-/// into pattern letters, and any pattern (inferred or the model's) is turned back into a regex and tried on the
-/// sample's values before the XSLT is stepped.
+/// into pattern letters, and any pattern (inferred or the model's) is tried on the sample's values before the XSLT
+/// is stepped, with a parser built as `stroom:format-date` builds its own, so it reads what Stroom reads.
 public final class TimePatterns {
 
     /// What profiling calls an epoch value, and its time_format.
@@ -56,6 +57,8 @@ public final class TimePatterns {
     private static final Pattern COMPACT_DATE = ToolText.re("\\d{8}");
     private static final Pattern COMPACT_ISO = ToolText.re("\\d{8}T\\d{6}(\\.\\d+)?Z?");
     private static final Pattern FRACTION = ToolText.re("\\.(\\d+)");
+    // A pattern's fraction of a second, with its dot: ".SSSSSS".
+    private static final Pattern PATTERN_FRACTION = ToolText.re("\\.S+");
     private static final Pattern DIGITS = ToolText.re("\\d+");
     private static final Pattern LETTERS = ToolText.re("[A-Za-z]+");
     private static final Pattern YEAR_FIRST_DATE = ToolText.re("([-/.])(\\d{1,2})\\1(\\d{1,2})");
@@ -66,7 +69,6 @@ public final class TimePatterns {
     private static final Pattern MONTH_NAME_DATE = ToolText.re("[A-Za-z]+\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?");
     private static final Pattern BRACKETED_ZONE = ToolText.re("\\[([A-Z][a-z]+/[A-Z][A-Za-z_]+)\\]");
     private static final Pattern OFFSET = ToolText.re("[+-]\\d{2}:?\\d{2}");
-    private static final Map<Character, IntFunction<String>> LETTER = letters();
 
     private TimePatterns() {
         // Static methods only.
@@ -133,103 +135,6 @@ public final class TimePatterns {
                 : letters.substring(0, 1);
     }
 
-    private static Map<Character, IntFunction<String>> letters() {
-        final Map<Character, IntFunction<String>> letters = new LinkedHashMap<>();
-        letters.put('y', n -> n >= 4
-                ? "\\d{4}"
-                : "\\d{2}");
-        letters.put('u', n -> n >= 4
-                ? "\\d{4}"
-                : "\\d{2}");
-        letters.put('M', n -> n <= 2
-                ? "\\d{1,2}"
-                : n == 3
-                        ? "[A-Za-z]{3}"
-                        : "[A-Za-z]{3,}");
-        letters.put('L', n -> n <= 2
-                ? "\\d{1,2}"
-                : "[A-Za-z]{3,}");
-        letters.put('d', n -> n == 1
-                ? "\\d{1,2}"
-                : "[ 0-3]?\\d");
-        letters.put('D', n -> "\\d{1,3}");
-        for (final char c : "HkKhms".toCharArray()) {
-            letters.put(c, n -> "\\d{1,2}");
-        }
-        letters.put('S', n -> "\\d{1,9}");
-        letters.put('n', n -> "\\d+");
-        letters.put('N', n -> "\\d+");
-        letters.put('a', n -> "(?:[AaPp]\\.?[Mm]\\.?)");
-        letters.put('E', n -> "[A-Za-z]{3,}");
-        letters.put('e', n -> "\\d|[A-Za-z]{3,}");
-        letters.put('c', n -> "\\d|[A-Za-z]{3,}");
-        letters.put('z', n -> "[A-Za-z][A-Za-z0-9/_+:-]*");
-        letters.put('O', n -> "GMT(?:[+-]\\d{1,2}(?::\\d{2})?)?");
-        letters.put('V', n -> "[A-Za-z][A-Za-z0-9/_+-]*");
-        letters.put('v', n -> "[A-Za-z][A-Za-z ]*");
-        letters.put('X', n -> "(?:Z|[+-]\\d{2}(?::?\\d{2})?)");
-        letters.put('x', n -> "[+-]\\d{2}(?::?\\d{2})?");
-        letters.put('Z', n -> "[+-]\\d{4}|Z|GMT[+-]\\d{2}:\\d{2}");
-        letters.put('G', n -> "[A-Za-z]+");
-        letters.put('Q', n -> "\\d|Q\\d|[A-Za-z ]+");
-        letters.put('q', n -> "\\d|Q\\d");
-        letters.put('w', n -> "\\d{1,2}");
-        letters.put('W', n -> "\\d");
-        letters.put('F', n -> "\\d");
-        letters.put('Y', n -> n >= 4
-                ? "\\d{4}"
-                : "\\d{2}");
-        letters.put('p', n -> " *");
-        return Map.copyOf(letters);
-    }
-
-    /// A regex matching the strings a Java date pattern parses (roughly: counts of digits and letter words).
-    ///
-    /// @param pattern A Java date pattern.
-    /// @return The regex, or null for a pattern with letters this doesn't know (or an unclosed quote).
-    public static Pattern patternRegex(final String pattern) {
-        final StringBuilder out = new StringBuilder("^");
-        int i = 0;
-        while (i < pattern.length()) {
-            final char ch = pattern.charAt(i);
-            if (ch == '\'') {
-                final int end = pattern.indexOf('\'', i + 1);
-                if (end == i + 1) {
-                    // '' is a literal quote.
-                    out.append('\'');
-                    i += 2;
-                    continue;
-                }
-                if (end < 0) {
-                    return null;
-                }
-                out.append(ToolText.escape(pattern.substring(i + 1, end)));
-                i = end + 1;
-                continue;
-            }
-            if (Character.isLetter(ch)) {
-                final IntFunction<String> letter = LETTER.get(ch);
-                if (letter == null) {
-                    return null;
-                }
-                int n = 1;
-                while (i + n < pattern.length() && pattern.charAt(i + n) == ch) {
-                    n++;
-                }
-                out.append(letter.apply(n));
-                i += n;
-                continue;
-            }
-            out.append(ToolText.escape(String.valueOf(ch)));
-            i++;
-        }
-        try {
-            return ToolText.re(out + "$");
-        } catch (final PatternSyntaxException e) {
-            return null;
-        }
-    }
-
     /// Checks a time format against a sample's values.
     ///
     /// @param pattern A Java date pattern, or an epoch name (`epoch seconds` or `epoch_s` and so on).
@@ -258,25 +163,98 @@ public final class TimePatterns {
                             ? " (a fraction of a second allowed)"
                             : "") + "; the sample has " + ToolText.repr(bad.subList(0, Math.min(3, bad.size())));
         }
-        final Pattern regex = patternRegex(pattern);
-        if (regex == null) {
-            return "time_format " + ToolText.repr(pattern) + " is not a Java date pattern this check understands";
+        final DateTimeFormatter formatter = stroomFormatter(pattern);
+        if (formatter == null) {
+            return "time_format " + ToolText.repr(pattern) + " is not a Java date pattern Stroom can read";
         }
-        final List<String> bad = new ArrayList<>();
-        for (final String value : values) {
-            if (!ToolText.isBlank(value) && !ToolText.match(regex, ToolText.strip(value))) {
-                bad.add(value);
-            }
-        }
+        final List<String> bad = misfits(formatter, values);
         if (bad.isEmpty()) {
             return null;
         }
         final String inferred = inferTimePattern(bad.getFirst());
+        // Only where the pattern reads some values: where it reads none, the values' own pattern is the advice.
+        final long given = values.stream().filter(value -> !ToolText.isBlank(value)).count();
+        final String oneForAll = bad.size() < given
+                ? oneForAll(pattern, inferred, values)
+                : null;
         return "time_format " + ToolText.repr(pattern) + " does not match the sample's values, e.g. "
                + ToolText.repr(bad.subList(0, Math.min(3, bad.size())))
-               + (inferred != null && !inferred.equals(pattern)
-                ? "; the values look like " + ToolText.repr(inferred)
-                : "");
+               + (oneForAll != null
+                ? "; one pattern reads them all: " + ToolText.repr(oneForAll)
+                : inferred != null && !inferred.equals(pattern)
+                        ? "; the values look like " + ToolText.repr(inferred)
+                        : "");
+    }
+
+    /// A parser as Stroom's `stroom:format-date` builds one: lenient (a fraction of a second of any width for `S`),
+    /// case-insensitive, English. Seen in testing: the check read `[.SSSSSS]` (an optional fraction, which Stroom
+    /// reads) as literal brackets and refused it, and the agent stripped the fraction with an xpath instead.
+    ///
+    /// @param pattern A Java date pattern.
+    /// @return The parser, or null if the pattern isn't one.
+    static DateTimeFormatter stroomFormatter(final String pattern) {
+        try {
+            return new DateTimeFormatterBuilder()
+                    .parseLenient()
+                    .parseCaseInsensitive()
+                    .appendPattern(pattern)
+                    .toFormatter(Locale.ENGLISH);
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // The values the parser doesn't read whole (blank ones aside).
+    private static List<String> misfits(final DateTimeFormatter formatter, final List<String> values) {
+        final List<String> bad = new ArrayList<>();
+        for (final String value : values) {
+            if (!ToolText.isBlank(value) && !reads(formatter, ToolText.strip(value))) {
+                bad.add(value);
+            }
+        }
+        return bad;
+    }
+
+    // Whether the parser reads the whole value: its text, not whether the date it names is complete (Stroom fills a
+    // missing year or date from the stream).
+    private static boolean reads(final DateTimeFormatter formatter, final String value) {
+        final ParsePosition position = new ParsePosition(0);
+        try {
+            formatter.parseUnresolved(value, position);
+        } catch (final RuntimeException e) {
+            return false;
+        }
+        return position.getErrorIndex() < 0 && position.getIndex() == value.length();
+    }
+
+    /// One pattern that reads every value where the pattern given reads some: its fraction of a second made
+    /// optional (`[.SSSSSS]`), a fraction added as optional, or the two layouts as alternatives
+    /// (`[pattern][other]`), each tried on the values as Stroom reads them.
+    ///
+    /// @param pattern  The pattern given.
+    /// @param inferred The pattern a value it doesn't read looks like, or null.
+    /// @param values   The sample's values.
+    /// @return The pattern, or null when none of these reads them all.
+    static String oneForAll(final String pattern, final String inferred, final List<String> values) {
+        final List<String> candidates = new ArrayList<>();
+        final Matcher fraction = PATTERN_FRACTION.matcher(pattern);
+        if (fraction.find()) {
+            candidates.add(pattern.substring(0, fraction.start()) + "[" + fraction.group() + "]"
+                           + pattern.substring(fraction.end()));
+        } else if (pattern.contains("ss")) {
+            final int at = pattern.lastIndexOf("ss") + 2;
+            candidates.add(pattern.substring(0, at) + "[.SSSSSSSSS]" + pattern.substring(at));
+        }
+        if (inferred != null && !inferred.equals(pattern) && !inferred.startsWith("epoch")) {
+            candidates.add("[" + pattern + "][" + inferred + "]");
+        }
+        for (final String candidate : candidates) {
+            final DateTimeFormatter formatter = stroomFormatter(candidate);
+            if (formatter != null && misfits(formatter, values).isEmpty()) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
 
