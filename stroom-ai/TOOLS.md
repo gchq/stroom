@@ -2834,10 +2834,9 @@ by reference (`IS_DOC_REF`), so Stroom keeps the dependency and a renamed feed i
   has output for them, or a filter already selects them) are refused: use `reprocess_streams`.
 * **Feed** (`feed`, `stream_type`, `created_after`): the feed's streams of the type created after the bound, at most
   2 tasks at a time (`ProcessorFilterWrites.MAX_FEED_FILTER_TASKS`, which the description states). `stream_type`
-  defaults to Events for an indexing pipeline, else the feed's own type. The bound is raised to the feed's creation
-  (seen: one agent guessed midnight after its sample arrived and the filter selected nothing; another chose a date
-  before the feed existed, which selects an earlier, deleted namesake's streams). A translation pipeline's feed
-  filter that selects none of the feed's streams still to process is refused, as is the same
+  defaults to Events for an indexing pipeline, else the feed's own type. A translation pipeline's feed
+  filter that selects none of the feed's streams still to process is refused (seen: an agent guessed midnight after
+  its sample arrived and the filter selected nothing), as is the same
   feed-wide filter twice (seen: made twice, neither selecting anything).
 
 Gates, in order: the pipeline's current code has a recorded clean step (`BuildRecords.steppedClean`); a translation
@@ -3192,8 +3191,7 @@ promotion and returns the plan's `next`.
   part), `first_record_output` (each default output element's output for the first record, up to 5,000
   characters), and as they apply `hint`, `stopped_early`, `record` and `next`.
 * **Refuses**: no `pipeline_uuid` or empty `stream_ids`; `max_records` or `records_per_stream` below 1 or not a
-  whole number; a stream older than its feed (it belongs to an earlier, deleted feed of the same name:
-  `SampleStreamTexts.refuseOlderThanFeed`); a pipeline that looks up reference data from a feed with no stream of
+  whole number; a pipeline that looks up reference data from a feed with no stream of
   that type yet (`PipelineStepping.refuseUnloadedReferences`): a step then finds no reference data, and Stroom keeps
   that empty answer for 10 minutes, so steps made after the reference data is processed still fail.
 * **Notes**:
@@ -3234,7 +3232,7 @@ in one stream share a session.
   and `record`.
 * **Refuses**: no `pipeline_uuid`; empty `locations`; a location that isn't one, or without whole-number `stream`
   and `record` (`locations[0] needs stream and record (and part, if any) as whole numbers: ...`); an `expect` other
-  than `event` or `none`; a stream older than its feed.
+  than `event` or `none`.
 * **Notes**:
   * A record that writes no Event (and sends nothing on) is a warning. With `expect: none` the empty-output marker
     doesn't apply, and an Event is the warning instead.

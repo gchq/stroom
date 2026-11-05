@@ -268,13 +268,13 @@ class ProcessorFilterWrites {
         }
     }
 
-    /// A feed-wide filter's lower bound, kept to the feed's own streams.
+    /// A feed-wide filter's lower bound, checked against the feed's streams.
     ///
-    /// Seen (VS Code), the same day: Gemma guessed created_after at midnight after its sample arrived, so the filter
-    /// selected nothing and the agent waited out ten minutes; Qwen chose a date before the feed was made, which also
-    /// selects the streams of an earlier, deleted feed of that name. Raised to the feed's creation; a translation
-    /// pipeline's filter is refused when the feed has streams of its own that nothing has processed or will, and it
-    /// selects none of them. A filter for new data only, once the feed's streams are processed, is left alone.
+    /// Seen (VS Code): Gemma guessed created_after at midnight after its sample arrived, so the filter selected
+    /// nothing and the agent waited out ten minutes. A translation pipeline's filter is refused when the feed has
+    /// streams that nothing has processed or will, and it selects none of them. A filter for new data only, once the
+    /// feed's streams are processed, is left alone. Streams from before the feed was made (one deleted and made again)
+    /// are its own: Stroom files streams by feed name and shows them in its Data tab.
     ///
     /// @param pipeline   The pipeline the filter is for.
     /// @param feed       The feed.
@@ -283,14 +283,8 @@ class ProcessorFilterWrites {
     /// @return The bound, and how the scope says it.
     /// @throws ToolRefusal if it selects none of the feed's streams still to process.
     FeedBounds feedBounds(final DocRef pipeline, final String feed, final String streamType, final long minMs) {
-        final Long created = feedCreatedMs(feed).orElse(null);
-        long bound = minMs;
-        String said = StreamProcessing.iso(minMs);
-        if (created != null && created != 0 && minMs < created) {
-            bound = created;
-            said = StreamProcessing.iso(created) + " (when the feed was created: streams before then belong to an "
-                   + "earlier feed of that name)";
-        }
+        final long bound = minMs;
+        final String said = StreamProcessing.iso(minMs);
         final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
                 .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
                 .addTextTerm(MetaFields.TYPE, Condition.EQUALS, streamType)
@@ -300,7 +294,6 @@ class ProcessorFilterWrites {
                 .map(MetaRow::getMeta)
                 .filter(Objects::nonNull)
                 .filter(meta -> meta.getStatus() != Status.DELETED)
-                .filter(meta -> created == null || meta.getCreateMs() >= created)
                 .filter(meta -> meta.getCreateMs() != 0)
                 .toList();
         final long earliest = bound;
@@ -328,29 +321,6 @@ class ProcessorFilterWrites {
                                   + "earliest of them.");
         }
         return new FeedBounds(bound, said);
-    }
-
-    /// When the feed doc of that name was created, or empty when there is none (or it can't be read).
-    ///
-    /// Stream data spells a feed as Stroom first saw it: when no feed has that exact name, the one feed spelt the
-    /// same whatever its case is the feed (its earlier namesake, deleted, gave the spelling).
-    ///
-    /// @param feed A feed's name.
-    /// @return When it was made, in milliseconds.
-    Optional<Long> feedCreatedMs(final String feed) {
-        try {
-            Optional<DocRef> ref = feedNames.exact(feed);
-            if (ref.isEmpty()) {
-                final List<DocRef> twins = feedNames.feedsNamed(feed);
-                ref = twins.size() == 1
-                        ? Optional.of(twins.getFirst())
-                        : Optional.empty();
-            }
-            return ref.flatMap(found -> documentAccess.read(found, FeedDoc.class))
-                    .map(FeedDoc::getCreateTimeMs);
-        } catch (final RuntimeException e) {
-            return Optional.empty();
-        }
     }
 
     /// Seen (Gemma, VS Code): the same feed-wide filter made twice, neither selecting anything. A feed by name (filters

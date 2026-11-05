@@ -233,7 +233,8 @@ class TestCreateFeedTool {
 
     @Test
     void streamsOfAnEarlierFeedOfTheNameAreNoted() {
-        // A feed of this name made before and deleted leaves its streams under the name, out of sight in the UI.
+        // A feed of this name made before and deleted leaves its streams under the name: the new feed's own, shown in
+        // its Data tab.
         feeds.world.createTimeMs = 5_000L;
         Mockito.when(feeds.streamReader.find(any(), anyInt(), anyBoolean())).thenReturn(new ResultPage<>(List.of(
                 row(12, 1_000L, Status.UNLOCKED), row(11, 2_000L, Status.DELETED), row(13, 9_000L, Status.UNLOCKED))));
@@ -241,9 +242,9 @@ class TestCreateFeedTool {
         final Map<String, Object> made = json(call("{\"build\": \"bb\", \"name\": \"ACME-VPN-V1.0\"}",
                 BuildToolCalls.answering(Map.of())));
 
-        assertThat(String.valueOf(made.get("note"))).startsWith("Stroom still holds 1 stream(s) from an earlier "
-                                                                + "feed named ACME-VPN-V1.0, since deleted (e.g. "
-                                                                + "[12]); the UI doesn't show them.");
+        assertThat(String.valueOf(made.get("note"))).startsWith("The feed already holds 1 stream(s) from before it "
+                                                                + "was made (e.g. [12])")
+                .contains("They are this feed's data");
     }
 
     @Test
