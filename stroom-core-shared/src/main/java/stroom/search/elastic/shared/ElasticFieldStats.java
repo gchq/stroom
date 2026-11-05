@@ -39,6 +39,7 @@ import java.util.Objects;
         "sampledDocs",
         "docsWithValue",
         "distinctCount",
+        "distinctCountExact",
         "topValues",
         "min",
         "max",
@@ -66,6 +67,8 @@ public final class ElasticFieldStats {
     @JsonProperty
     private final Long distinctCount;
     @JsonProperty
+    private final Boolean distinctCountExact;
+    @JsonProperty
     private final List<ElasticFieldValueCount> topValues;
     @JsonProperty
     private final String min;
@@ -88,7 +91,9 @@ public final class ElasticFieldStats {
     /// @param totalDocs the number of documents matching the time range
     /// @param sampledDocs the approximate number of documents the statistics were calculated from
     /// @param docsWithValue the number of matching documents holding a value for the field
-    /// @param distinctCount the approximate number of distinct values, or `null` if not applicable
+    /// @param distinctCount the number of distinct values, or `null` if not applicable
+    /// @param distinctCountExact `true` if the distinct count is exact, `false` if it is an estimate, or `null` if
+    ///     there is no distinct count
     /// @param topValues the most common values with their counts, or `null` if not applicable
     /// @param min the smallest value, or `null` if not applicable
     /// @param max the largest value, or `null` if not applicable
@@ -106,6 +111,7 @@ public final class ElasticFieldStats {
                              @JsonProperty("sampledDocs") final Long sampledDocs,
                              @JsonProperty("docsWithValue") final Long docsWithValue,
                              @JsonProperty("distinctCount") final Long distinctCount,
+                             @JsonProperty("distinctCountExact") final Boolean distinctCountExact,
                              @JsonProperty("topValues") final List<ElasticFieldValueCount> topValues,
                              @JsonProperty("min") final String min,
                              @JsonProperty("max") final String max,
@@ -121,6 +127,7 @@ public final class ElasticFieldStats {
         this.sampledDocs = sampledDocs;
         this.docsWithValue = docsWithValue;
         this.distinctCount = distinctCount;
+        this.distinctCountExact = distinctCountExact;
         this.topValues = topValues;
         this.min = min;
         this.max = max;
@@ -166,9 +173,15 @@ public final class ElasticFieldStats {
         return docsWithValue;
     }
 
-    /// @return the approximate number of distinct values, or `null` if not applicable
+    /// @return the number of distinct values, or `null` if not applicable
     public Long getDistinctCount() {
         return distinctCount;
+    }
+
+    /// @return `true` if the distinct count is exact, `false` if it is an estimate, or `null` if there is no
+    /// distinct count
+    public Boolean getDistinctCountExact() {
+        return distinctCountExact;
     }
 
     /// @return the most common values with their counts, or `null` if not applicable

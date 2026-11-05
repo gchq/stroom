@@ -38,6 +38,8 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.PermissionException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -152,6 +154,8 @@ class TestElasticFieldStatsService {
         // Counts within the random sampler are already scaled by Elasticsearch to estimate every document
         assertThat(stats.getDocsWithValue()).isEqualTo(90_000);
         assertThat(stats.getDistinctCount()).isEqualTo(3);
+        // A sampled distinct count is always an estimate
+        assertThat(stats.getDistinctCountExact()).isFalse();
         assertThat(stats.getTopValues())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                 .containsExactly(tuple("web01", 50_000L), tuple("web02", 40_000L));
@@ -164,7 +168,8 @@ class TestElasticFieldStatsService {
                 .contains("\"@timestamp\"")
                 .contains("\"gte\":1000")
                 .contains("\"lt\":2000")
-                .contains("\"terms\":{\"field\":\"host\",\"size\":10}");
+                .contains("\"terms\":{\"field\":\"host\",\"size\":10}")
+                .contains("\"cardinality\":{\"field\":\"host\"}");
         assertThat(onlyCountRequest().getBodyAsString()).contains("\"gte\":1000").contains("\"lt\":2000");
     }
 
@@ -188,10 +193,16 @@ class TestElasticFieldStatsService {
         assertThat(stats.getMax()).isEqualTo("100");
         assertThat(stats.getMean()).isEqualTo(42.5);
         assertThat(stats.getMedian()).isEqualTo(40.0);
+        assertThat(stats.getDistinctCount()).isEqualTo(5);
+        assertThat(stats.getDistinctCountExact()).isTrue();
         assertThat(stats.getTopValues()).isNull();
         assertThat(stats.getHistogram())
                 .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                 .containsExactly(tuple("0 – 5", 4L), tuple("5 – 100", 6L));
+        // An exact distinct count needs the largest precision threshold
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))
+                .getFirst().getBodyAsString())
+                .contains("\"cardinality\":{\"field\":\"bytes\",\"precision_threshold\":40000}");
         // A whole number field is split into whole number ranges: (100 - 0) / 10
         assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))
                 .getLast().getBodyAsString())
@@ -358,6 +369,187 @@ class TestElasticFieldStatsService {
     }
 
     @Test
+    void testNestedFieldCoverageCountsParentDocuments() {
+        // A field inside a `nested` object is held in hidden documents, which a bare `exists` query never matches
+        stubCount(8_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 6000}""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.vector", null, null, null, null));
+
+        assertThat(stats.getDocsWithValue()).isEqualTo(6_000);
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"nested\":{\"path\":\"content\",\"query\":{\"exists\":{\"field\":\"content.vector\"}}}");
+    }
+
+    @Test
+    void testTopLevelFieldCoverageIsNotNested() {
+        stubCount(8_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 7000}""");
+
+        service.getFieldStats(request("title.vector", null, null, null, null));
+
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"filter\":{\"exists\":{\"field\":\"title.vector\"}}")
+                .doesNotContain("nested");
+    }
+
+    @Test
+    void testNestedKeywordFieldStatsAreExactAndCountDocuments() {
+        // A random sampler can't hold the nested aggregations a nested field's values need, so every document is
+        // used, even though the index is large enough to sample
+        stubCount(100_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 60000},
+                "nested#nested": {
+                  "doc_count": 250000,
+                  "cardinality#distinct": {"value": 2},
+                  "sterms#top": {
+                    "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                    "buckets": [
+                      {"key": "a", "doc_count": 200000, "reverse_nested#parent": {"doc_count": 55000}},
+                      {"key": "b", "doc_count": 50000, "reverse_nested#parent": {"doc_count": 20000}}
+                    ]
+                  }
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.host", null, null, null, null));
+
+        assertThat(stats.getMessage()).isNull();
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getSampledDocs()).isEqualTo(100_000);
+        assertThat(stats.getDocsWithValue()).isEqualTo(60_000);
+        assertThat(stats.getDistinctCount()).isEqualTo(2);
+        // Each value counts the documents holding it, not the nested objects
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("a", 55_000L), tuple("b", 20_000L));
+        assertThat(onlySearchRequest().getBodyAsString())
+                .doesNotContain("random_sampler")
+                .contains("\"nested\":{\"path\":\"content\"}")
+                .contains("\"terms\":{\"field\":\"content.host\",\"order\":[{\"parent\":\"desc\"},"
+                          + "{\"_key\":\"asc\"}],\"size\":10}")
+                .contains("\"parent\":{\"reverse_nested\":{}}");
+    }
+
+    @Test
+    void testNestedNumericFieldStats() {
+        stubCount(1_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 10},
+                "nested#nested": {
+                  "doc_count": 30,
+                  "cardinality#distinct": {"value": 5},
+                  "stats#stats": {"count": 30, "min": 0.0, "max": 100.0, "avg": 42.5, "sum": 1275.0},
+                  "tdigest_percentiles#median": {"values": [{"key": 50.0, "value": 40.0}]}
+                }""");
+        stubSearch("\"histogram\"", """
+                "nested#nested": {
+                  "doc_count": 30,
+                  "histogram#histogram": {"buckets": [
+                    {"key": 0.0, "doc_count": 20, "reverse_nested#parent": {"doc_count": 7}},
+                    {"key": 5.0, "doc_count": 10, "reverse_nested#parent": {"doc_count": 4}}
+                  ]}
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.bytes", null, null, null, null));
+
+        assertThat(stats.getDocsWithValue()).isEqualTo(10);
+        assertThat(stats.getDistinctCount()).isEqualTo(5);
+        assertThat(stats.getMin()).isEqualTo("0");
+        assertThat(stats.getMax()).isEqualTo("100");
+        assertThat(stats.getMean()).isEqualTo(42.5);
+        assertThat(stats.getMedian()).isEqualTo(40.0);
+        assertThat(stats.getHistogram())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("0 – 5", 7L), tuple("5 – 100", 4L));
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
+                .hasSize(2)
+                .allSatisfy(request -> assertThat(request.getBodyAsString())
+                        .contains("\"nested\":{\"path\":\"content\"}"));
+    }
+
+    @Test
+    void testNestedTopValuesOnly() {
+        stubCount(100_000);
+        stubSearch(null, """
+                "nested#nested": {
+                  "doc_count": 250000,
+                  "sterms#top": {
+                    "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                    "buckets": [{"key": "a", "doc_count": 200000, "reverse_nested#parent": {"doc_count": 55000}}]
+                  }
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "content.host", null, null, null, null, null, null, null, true));
+
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("a", 55_000L));
+    }
+
+    @Test
+    void testWrapAndUnwrapNestedAggs() {
+        final Map<String, Aggregation> aggs = Map.of(
+                "distinct", Aggregation.of(a -> a.cardinality(c -> c.field("content.chunks.text"))));
+
+        assertThat(ElasticFieldStatsService.wrapInNestedAggs(List.of(), aggs)).isSameAs(aggs);
+        assertThat(ElasticFieldStatsService.wrapInNestedAggs(List.of("content"), Map.of())).isEmpty();
+
+        final Map<String, Aggregation> wrapped = ElasticFieldStatsService.wrapInNestedAggs(
+                List.of("content", "content.chunks"), aggs);
+        final Aggregation outer = wrapped.get("nested");
+        assertThat(outer.nested().path()).isEqualTo("content");
+        final Aggregation inner = outer.aggregations().get("nested");
+        assertThat(inner.nested().path()).isEqualTo("content.chunks");
+        assertThat(inner.aggregations()).containsOnlyKeys("distinct");
+
+        // No value aggregations were asked for, so there is nothing to unwrap
+        assertThat(ElasticFieldStatsService.unwrapNestedAggs(List.of("content"), Map.of())).isEmpty();
+    }
+
+    @Test
+    void testIsDistinctCountExact() {
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, null)).isNull();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(false, null)).isNull();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 0L)).isTrue();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 40_000L)).isTrue();
+        // Past the precision threshold, even an exact mode count is an estimate
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 40_001L)).isFalse();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(false, 3L)).isFalse();
+    }
+
+    @Test
+    void testGetNestedPaths() {
+        final List<ElasticIndexField> fields = createIndex().getFields();
+
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "host")).isEmpty();
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "title.vector")).isEmpty();
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "content.vector")).containsExactly("content");
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "content.chunks.text"))
+                .containsExactly("content", "content.chunks");
+        assertThat(ElasticFieldStatsService.getNestedPaths(null, "content.vector")).isEmpty();
+    }
+
+    @Test
+    void testBuildHasValueQueryWrapsEachNestedLevel() {
+        final List<ElasticIndexField> fields = createIndex().getFields();
+
+        final Query query = ElasticFieldStatsService.buildHasValueQuery(fields, "content.chunks.text");
+
+        assertThat(query.isNested()).isTrue();
+        assertThat(query.nested().path()).isEqualTo("content");
+        final Query inner = query.nested().query();
+        assertThat(inner.isNested()).isTrue();
+        assertThat(inner.nested().path()).isEqualTo("content.chunks");
+        assertThat(inner.nested().query().isExists()).isTrue();
+        assertThat(inner.nested().query().exists().field()).isEqualTo("content.chunks.text");
+    }
+
+    @Test
     void testDecimalPlaces() {
         assertThat(ElasticFieldStatsService.getDecimalPlaces(25)).isZero();
         assertThat(ElasticFieldStatsService.getDecimalPlaces(9.5)).isEqualTo(1);
@@ -512,7 +704,21 @@ class TestElasticFieldStatsService {
                                 .build(),
                         ElasticIndexField.builder().fldName("port").fldType(FieldType.LONG).nativeType("long")
                                 .conflictingTypes(Map.of("a", "long", "b", "keyword"))
-                                .build()))
+                                .build(),
+                        ElasticIndexField.builder().fldName("title.vector").fldType(FieldType.DENSE_VECTOR)
+                                .nativeType("dense_vector").build(),
+                        ElasticIndexField.builder().fldName("content").fldType(FieldType.NESTED)
+                                .nativeType("nested").build(),
+                        ElasticIndexField.builder().fldName("content.vector").fldType(FieldType.DENSE_VECTOR)
+                                .nativeType("dense_vector").build(),
+                        ElasticIndexField.builder().fldName("content.host").fldType(FieldType.KEYWORD)
+                                .nativeType("keyword").build(),
+                        ElasticIndexField.builder().fldName("content.bytes").fldType(FieldType.LONG)
+                                .nativeType("long").build(),
+                        ElasticIndexField.builder().fldName("content.chunks").fldType(FieldType.NESTED)
+                                .nativeType("nested").build(),
+                        ElasticIndexField.builder().fldName("content.chunks.text").fldType(FieldType.TEXT)
+                                .nativeType("text").build()))
                 .build();
     }
 }

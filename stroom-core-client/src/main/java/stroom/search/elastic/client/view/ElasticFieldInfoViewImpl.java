@@ -66,16 +66,15 @@ public class ElasticFieldInfoViewImpl
 
     private static final String TOP_VALUES_HELP = "The values held by the most documents. Each bar shows the " +
                                                   "percentage of all documents that hold the value, and the " +
-                                                  "count beside it is the number of documents. For a random " +
-                                                  "sample, both are estimated from the sample. A document " +
+                                                  "count beside it is the number of documents. A document " +
                                                   "holding several values is counted for each of them.";
     private static final String DISTRIBUTION_HELP = "How the values are spread between the smallest and largest " +
                                                     "value, in up to ten ranges. Each bar shows the percentage of " +
                                                     "all documents with a value in that range, and the count " +
                                                     "beside it is the number of documents. Each range includes " +
                                                     "its start but not its end, except the last, which includes " +
-                                                    "the largest value. For a random sample, both are estimated " +
-                                                    "from the sample.";
+                                                    "the largest value.";
+    private static final String SAMPLED_HELP = " Both are estimated from the random sample.";
     private static final String TOP_VALUES_FILTER_HELP = "Only values containing the characters input, ignoring " +
                                                          "case, will be included.";
     // Labels longer than this need the wider label column
@@ -282,6 +281,10 @@ public class ElasticFieldInfoViewImpl
         // Counts are for every document in the time range: exact, or estimated from the sample
         final long totalDocs = Objects.requireNonNullElse(stats.getTotalDocs(), 0L);
         final long docsWithValue = Objects.requireNonNullElse(stats.getDocsWithValue(), 0L);
+        // Only a random sample's counts are estimates
+        final String sampledHelp = Boolean.TRUE.equals(stats.getExact())
+                ? ""
+                : SAMPLED_HELP;
 
         final FlowPanel coverage = createBlock("Coverage");
         coverage.add(createBarRow("Documents with a value", false,
@@ -293,8 +296,11 @@ public class ElasticFieldInfoViewImpl
         final FlowPanel values = new FlowPanel();
         values.addStyleName(style.entries());
         if (stats.getDistinctCount() != null) {
+            final String approximate = Boolean.TRUE.equals(stats.getDistinctCountExact())
+                    ? ""
+                    : " (approximate)";
             addEntry(values, "Distinct values",
-                    ElasticFieldStatsSupport.formatCount(stats.getDistinctCount()) + " (approximate)");
+                    ElasticFieldStatsSupport.formatCount(stats.getDistinctCount()) + approximate);
         }
         addEntryIfSet(values, "Minimum", stats.getMin());
         addEntryIfSet(values, "Maximum", stats.getMax());
@@ -307,7 +313,7 @@ public class ElasticFieldInfoViewImpl
         if (stats.getTopValues() != null) {
             // The controls are kept between renders, so the filter keeps its text and focus while the user types
             topValuesTotalDocs = totalDocs;
-            final FlowPanel topValues = createBlock("Most common values", TOP_VALUES_HELP);
+            final FlowPanel topValues = createBlock("Most common values", TOP_VALUES_HELP + sampledHelp);
             topValues.add(topValuesControls);
             topValues.add(topValuesList);
             showTopValues(stats.getTopValues());
@@ -315,7 +321,7 @@ public class ElasticFieldInfoViewImpl
         }
 
         if (NullSafe.hasItems(stats.getHistogram())) {
-            final FlowPanel histogram = createBlock("Distribution", DISTRIBUTION_HELP);
+            final FlowPanel histogram = createBlock("Distribution", DISTRIBUTION_HELP + sampledHelp);
             // Ranges of timestamps are long, so need a wider label column to show in full
             int longestLabel = 0;
             for (final ElasticFieldValueCount bucket : stats.getHistogram()) {

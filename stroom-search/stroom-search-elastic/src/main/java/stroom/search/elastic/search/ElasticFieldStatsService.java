@@ -42,6 +42,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.ArrayPercentilesItem;
@@ -54,6 +55,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.JsonpMapper;
+import co.elastic.clients.util.NamedValue;
+import co.elastic.clients.util.ObjectBuilder;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.json.stream.JsonParser;
@@ -102,6 +105,11 @@ public class ElasticFieldStatsService {
     private static final String MEDIAN_AGG = "median";
     private static final String HISTOGRAM_AGG = "histogram";
     private static final String GROUPS_AGG = "groups";
+    // The largest precision threshold Elasticsearch allows for a `cardinality` aggregation
+    static final int MAX_EXACT_DISTINCT_COUNT = 40_000;
+    private static final String NESTED_AGG = "nested";
+    private static final String PARENT_AGG = "parent";
+    private static final char FIELD_PATH_SEPARATOR = '.';
     private static final Set<FieldType> NUMERIC_TYPES = Set.of(
             FieldType.ID, FieldType.INTEGER, FieldType.LONG, FieldType.FLOAT, FieldType.DOUBLE);
     // Types whose values can be counted, i.e. that have doc values
@@ -264,7 +272,7 @@ public class ElasticFieldStatsService {
                                                   final ElasticIndexDoc indexDoc,
                                                   final ElasticFieldStatsRequest request,
                                                   final ElasticIndexField field,
-                                                  final Sampling sampling,
+                                                  final Sampling requestedSampling,
                                                   final int maxSampleSize) {
         final String fieldName = field.getFldName();
         final FieldType type = field.getFldType();
@@ -273,6 +281,14 @@ public class ElasticFieldStatsService {
         final boolean date = FieldType.DATE.equals(type);
         final boolean terms = TERMS_TYPES.contains(type) && !Kind.Wildcard.jsonValue().equals(field.getNativeType());
 
+        // The values of a field inside `nested` objects can only be aggregated within `nested` aggregations, which a
+        // `random_sampler` aggregation can't hold, so every document in the time range is used instead of a sample
+        final List<String> nestedPaths = getNestedPaths(indexDoc.getFields(), fieldName);
+        final boolean nested = !nestedPaths.isEmpty();
+        final Sampling sampling = nested
+                ? requestedSampling.exact()
+                : requestedSampling;
+
         final boolean topValuesOnly = Boolean.TRUE.equals(request.getTopValuesOnly());
         final int topValuesCount = getTopValuesCount(request);
         final String topValuesFilter = NullSafe.trim(request.getTopValuesFilter());
@@ -280,45 +296,66 @@ public class ElasticFieldStatsService {
         final boolean filterInElasticsearch = !topValuesFilter.isEmpty()
                                               && Kind.Keyword.jsonValue().equals(field.getNativeType());
 
-        final Map<String, Aggregation> subAggs = new HashMap<>();
+        final Map<String, Aggregation> valueAggs = new HashMap<>();
         if (terms) {
-            subAggs.put(TOP_AGG, Aggregation.of(a -> a.terms(t -> {
-                t.field(fieldName).size(topValuesCount);
-                if (filterInElasticsearch) {
-                    t.include(i -> i.regexp(ElasticTopValues.toContainsRegex(topValuesFilter, true)));
-                }
-                return t;
-            })));
+            valueAggs.put(TOP_AGG, Aggregation.of(a -> {
+                final Aggregation.Builder.ContainerBuilder builder = a.terms(t -> {
+                    t.field(fieldName).size(topValuesCount);
+                    if (filterInElasticsearch) {
+                        t.include(i -> i.regexp(ElasticTopValues.toContainsRegex(topValuesFilter, true)));
+                    }
+                    if (nested) {
+                        // Rank the values by the number of documents holding them, not of nested objects
+                        t.order(NamedValue.of(PARENT_AGG, SortOrder.Desc), NamedValue.of("_key", SortOrder.Asc));
+                    }
+                    return t;
+                });
+                return addParentCount(builder, nested);
+            }));
         }
         if (topValuesOnly) {
-            final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
-            return topValuesStats(fieldName, sampling, maxSampleSize, sample, sample.aggregations().containsKey(TOP_AGG)
-                    ? filterValues(getTermsBuckets(sample.aggregations().get(TOP_AGG)), topValuesFilter)
+            final Sample sample = search(elasticClient, indexDoc, sampling, wrapInNestedAggs(nestedPaths, valueAggs));
+            final Map<String, Aggregate> aggs = unwrapNestedAggs(nestedPaths, sample.aggregations());
+            return topValuesStats(fieldName, sampling, maxSampleSize, sample, aggs.containsKey(TOP_AGG)
+                    ? filterValues(getTermsBuckets(aggs.get(TOP_AGG)), topValuesFilter)
                     : List.of());
         }
-        subAggs.put(HAS_VALUE_AGG, Aggregation.of(a -> a.filter(f -> f.exists(e -> e.field(fieldName)))));
         if (terms || numeric || date) {
-            subAggs.put(DISTINCT_AGG, Aggregation.of(a -> a.cardinality(c -> c.field(fieldName))));
+            valueAggs.put(DISTINCT_AGG, Aggregation.of(a -> a.cardinality(c -> {
+                c.field(fieldName);
+                if (sampling.isExact()) {
+                    // Counts up to the threshold are exact, apart from vanishingly rare hash collisions
+                    c.precisionThreshold(MAX_EXACT_DISTINCT_COUNT);
+                }
+                return c;
+            })));
         }
         if (numeric || date) {
-            subAggs.put(STATS_AGG, Aggregation.of(a -> a.stats(st -> st.field(fieldName))));
+            valueAggs.put(STATS_AGG, Aggregation.of(a -> a.stats(st -> st.field(fieldName))));
         }
         if (numeric) {
-            subAggs.put(MEDIAN_AGG, Aggregation.of(a -> a.percentiles(p -> p
+            valueAggs.put(MEDIAN_AGG, Aggregation.of(a -> a.percentiles(p -> p
                     .field(fieldName)
                     .percents(50.0)
                     .keyed(false))));
         }
         if (date) {
-            subAggs.put(HISTOGRAM_AGG, Aggregation.of(a -> a.autoDateHistogram(h -> h
+            valueAggs.put(HISTOGRAM_AGG, Aggregation.of(a -> addParentCount(a.autoDateHistogram(h -> h
                     .field(fieldName)
-                    .buckets(HISTOGRAM_BUCKETS))));
+                    .buckets(HISTOGRAM_BUCKETS)), nested)));
         }
 
+        final Map<String, Aggregation> subAggs = new HashMap<>(wrapInNestedAggs(nestedPaths, valueAggs));
+        final Query hasValueQuery = buildHasValueQuery(indexDoc.getFields(), fieldName);
+        subAggs.put(HAS_VALUE_AGG, Aggregation.of(a -> a.filter(hasValueQuery)));
+
         final Sample sample = search(elasticClient, indexDoc, sampling, subAggs);
-        final Map<String, Aggregate> aggs = sample.aggregations();
+        final Map<String, Aggregate> aggs = unwrapNestedAggs(nestedPaths, sample.aggregations());
         final StatsAggregate stats = aggs.containsKey(STATS_AGG)
                 ? aggs.get(STATS_AGG).stats()
+                : null;
+        final Long distinctCount = aggs.containsKey(DISTINCT_AGG)
+                ? aggs.get(DISTINCT_AGG).cardinality().value()
                 : null;
 
         List<ElasticFieldValueCount> histogram = null;
@@ -327,14 +364,15 @@ public class ElasticFieldStatsService {
             final List<Long> counts = new ArrayList<>();
             aggs.get(HISTOGRAM_AGG).autoDateHistogram().buckets().array().forEach(bucket -> {
                 starts.add(Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())));
-                counts.add(bucket.docCount());
+                counts.add(getBucketCount(bucket.docCount(), bucket.aggregations()));
             });
             histogram = toRanges(starts, counts, stats == null
                     ? null
                     : getStatValue(stats.maxAsString(), stats.max()));
         } else if (numeric && stats != null && stats.count() > 0) {
             final boolean wholeNumbers = WHOLE_NUMBER_TYPES.contains(type);
-            histogram = getNumericHistogram(elasticClient, indexDoc, sampling, fieldName, stats, wholeNumbers);
+            histogram = getNumericHistogram(
+                    elasticClient, indexDoc, sampling, fieldName, nestedPaths, stats, wholeNumbers);
         }
 
         return new ElasticFieldStats(
@@ -344,10 +382,9 @@ public class ElasticFieldStatsService {
                 maxSampleSize,
                 sampling.totalDocs(),
                 sample.docCount(),
-                aggs.get(HAS_VALUE_AGG).filter().docCount(),
-                aggs.containsKey(DISTINCT_AGG)
-                        ? aggs.get(DISTINCT_AGG).cardinality().value()
-                        : null,
+                sample.aggregations().get(HAS_VALUE_AGG).filter().docCount(),
+                distinctCount,
+                isDistinctCountExact(sampling.isExact(), distinctCount),
                 aggs.containsKey(TOP_AGG)
                         ? filterValues(getTermsBuckets(aggs.get(TOP_AGG)), topValuesFilter)
                         : null,
@@ -367,6 +404,122 @@ public class ElasticFieldStatsService {
                 null);
     }
 
+    /// A `cardinality` aggregation's count is an estimate, except in exact mode up to its precision threshold, below
+    /// which it counts the values' hashes rather than estimating.
+    ///
+    /// @param exact         `true` if every document in the time range was included
+    /// @param distinctCount the distinct count, or `null` if there is none
+    /// @return `true` if the distinct count is exact, `false` if it is an estimate, or `null` if there is none
+    static Boolean isDistinctCountExact(final boolean exact, final Long distinctCount) {
+        if (distinctCount == null) {
+            return null;
+        }
+        return exact && distinctCount <= MAX_EXACT_DISTINCT_COUNT;
+    }
+
+    /// Adds a `reverse_nested` aggregation to a bucket aggregation of a nested field's values, so that each bucket
+    /// counts the documents holding the values rather than the nested objects. See [#getBucketCount].
+    private static ObjectBuilder<Aggregation> addParentCount(final Aggregation.Builder.ContainerBuilder builder,
+                                                             final boolean nested) {
+        return nested
+                ? builder.aggregations(PARENT_AGG, Aggregation.of(a -> a.reverseNested(r -> r)))
+                : builder;
+    }
+
+    /// @param docCount   the bucket's own document count
+    /// @param bucketAggs the bucket's sub-aggregations
+    /// @return the number of documents in the bucket: those counted by its `reverse_nested` aggregation for a
+    /// nested field, otherwise its own document count
+    private static long getBucketCount(final long docCount, final Map<String, Aggregate> bucketAggs) {
+        final Aggregate parent = NullSafe.map(bucketAggs).get(PARENT_AGG);
+        return parent != null && parent.isReverseNested()
+                ? parent.reverseNested().docCount()
+                : docCount;
+    }
+
+    /// Puts aggregations of a field's values within a `nested` aggregation for each of the field's nested ancestors,
+    /// outermost first, as aggregations of values inside `nested` objects need. See [#unwrapNestedAggs].
+    ///
+    /// @param nestedPaths the field's ancestor paths that are mapped as `nested`, outermost first
+    /// @param aggs        the aggregations of the field's values
+    /// @return the aggregations, unchanged if there are no nested paths or no aggregations
+    static Map<String, Aggregation> wrapInNestedAggs(final List<String> nestedPaths,
+                                                     final Map<String, Aggregation> aggs) {
+        if (aggs.isEmpty()) {
+            return aggs;
+        }
+        Map<String, Aggregation> wrapped = aggs;
+        // Wrap from the innermost path outwards so that the outermost `nested` aggregation is applied last
+        for (int i = nestedPaths.size() - 1; i >= 0; i--) {
+            final String path = nestedPaths.get(i);
+            final Map<String, Aggregation> inner = wrapped;
+            wrapped = Map.of(NESTED_AGG, Aggregation.of(a -> a
+                    .nested(n -> n.path(path))
+                    .aggregations(inner)));
+        }
+        return wrapped;
+    }
+
+    /// @param nestedPaths the field's ancestor paths that are mapped as `nested`, outermost first
+    /// @param aggs        the aggregation results of aggregations wrapped by [#wrapInNestedAggs]
+    /// @return the results of the aggregations of the field's values, empty if there were none
+    static Map<String, Aggregate> unwrapNestedAggs(final List<String> nestedPaths,
+                                                   final Map<String, Aggregate> aggs) {
+        Map<String, Aggregate> unwrapped = aggs;
+        for (int i = 0; i < nestedPaths.size(); i++) {
+            final Aggregate nestedAgg = unwrapped.get(NESTED_AGG);
+            if (nestedAgg == null) {
+                // No aggregations of the field's values were asked for, so none were wrapped
+                return Map.of();
+            }
+            unwrapped = nestedAgg.nested().aggregations();
+        }
+        return unwrapped;
+    }
+
+    /// Builds a query matching the documents that have a value for a field. A field inside one or more `nested`
+    /// objects is stored in separate hidden documents, so an `exists` query on it only matches when wrapped in a
+    /// `nested` query for each nested ancestor, outermost first.
+    ///
+    /// @param fields    the index's fields, as read from the index mapping
+    /// @param fieldName the full (dot-delimited) name of the field
+    /// @return the query
+    static Query buildHasValueQuery(final List<ElasticIndexField> fields, final String fieldName) {
+        final List<String> nestedPaths = getNestedPaths(fields, fieldName);
+        Query query = QueryBuilders.exists(e -> e.field(fieldName));
+        // Wrap from the innermost path outwards so that the outermost `nested` query is applied last
+        for (int i = nestedPaths.size() - 1; i >= 0; i--) {
+            final String path = nestedPaths.get(i);
+            final Query inner = query;
+            query = QueryBuilders.nested(n -> n
+                    .path(path)
+                    .query(inner));
+        }
+        return query;
+    }
+
+    /// @param fields    the index's fields, as read from the index mapping
+    /// @param fieldName the full (dot-delimited) name of the field
+    /// @return the field's ancestor paths that are mapped as `nested`, outermost first, or an empty list
+    static List<String> getNestedPaths(final List<ElasticIndexField> fields, final String fieldName) {
+        final Set<String> nestedFieldNames = new HashSet<>();
+        for (final ElasticIndexField field : NullSafe.list(fields)) {
+            if (Kind.Nested.jsonValue().equals(field.getNativeType())) {
+                nestedFieldNames.add(field.getFldName());
+            }
+        }
+        final List<String> nestedPaths = new ArrayList<>();
+        int idx = fieldName.indexOf(FIELD_PATH_SEPARATOR);
+        while (idx > 0) {
+            final String path = fieldName.substring(0, idx);
+            if (nestedFieldNames.contains(path)) {
+                nestedPaths.add(path);
+            }
+            idx = fieldName.indexOf(FIELD_PATH_SEPARATOR, idx + 1);
+        }
+        return nestedPaths;
+    }
+
     /// Gets the distribution of a numeric field over [#HISTOGRAM_BUCKETS] even ranges between its smallest and
     /// largest values, which a second request needs, as the range width depends on them.
     ///
@@ -376,6 +529,7 @@ public class ElasticFieldStatsService {
                                                              final ElasticIndexDoc indexDoc,
                                                              final Sampling sampling,
                                                              final String fieldName,
+                                                             final List<String> nestedPaths,
                                                              final StatsAggregate stats,
                                                              final boolean wholeNumbers) {
         final double min = stats.min();
@@ -384,18 +538,20 @@ public class ElasticFieldStatsService {
         final int decimalPlaces = wholeNumbers
                 ? 0
                 : getDecimalPlaces(interval);
-        final Sample sample = search(elasticClient, indexDoc, sampling, Map.of(
-                HISTOGRAM_AGG, Aggregation.of(a -> a.histogram(h -> h
+        final boolean nested = !nestedPaths.isEmpty();
+        final Sample sample = search(elasticClient, indexDoc, sampling, wrapInNestedAggs(nestedPaths, Map.of(
+                HISTOGRAM_AGG, Aggregation.of(a -> addParentCount(a.histogram(h -> h
                         .field(fieldName)
                         .interval(interval)
                         .offset(min)
-                        .minDocCount(0)))));
+                        .minDocCount(0)), nested)))));
         final List<String> starts = new ArrayList<>();
         final List<Long> counts = new ArrayList<>();
-        sample.aggregations().get(HISTOGRAM_AGG).histogram().buckets().array().forEach(bucket -> {
-            starts.add(formatNumber(bucket.key(), decimalPlaces));
-            counts.add(bucket.docCount());
-        });
+        unwrapNestedAggs(nestedPaths, sample.aggregations()).get(HISTOGRAM_AGG).histogram().buckets().array()
+                .forEach(bucket -> {
+                    starts.add(formatNumber(bucket.key(), decimalPlaces));
+                    counts.add(getBucketCount(bucket.docCount(), bucket.aggregations()));
+                });
         return toRanges(starts, counts, formatNumber(max, decimalPlaces));
     }
 
@@ -504,6 +660,7 @@ public class ElasticFieldStatsService {
                 sampling.totalDocs(),
                 sample.docCount(),
                 aggs.get(HAS_VALUE_AGG).filter().docCount(),
+                null,
                 null,
                 new ArrayList<>(topGroupCounts),
                 null,
@@ -650,17 +807,19 @@ public class ElasticFieldStatsService {
         final List<ElasticFieldValueCount> values = new ArrayList<>();
         if (aggregate.isSterms()) {
             aggregate.sterms().buckets().array().forEach(bucket ->
-                    values.add(new ElasticFieldValueCount(bucket.key().stringValue(), bucket.docCount())));
+                    values.add(new ElasticFieldValueCount(
+                            bucket.key().stringValue(),
+                            getBucketCount(bucket.docCount(), bucket.aggregations()))));
         } else if (aggregate.isLterms()) {
             aggregate.lterms().buckets().array().forEach(bucket ->
                     values.add(new ElasticFieldValueCount(
                             Objects.requireNonNullElse(bucket.keyAsString(), String.valueOf(bucket.key())),
-                            bucket.docCount())));
+                            getBucketCount(bucket.docCount(), bucket.aggregations()))));
         } else if (aggregate.isDterms()) {
             aggregate.dterms().buckets().array().forEach(bucket ->
                     values.add(new ElasticFieldValueCount(
                             Objects.requireNonNullElse(bucket.keyAsString(), formatNumber(bucket.key())),
-                            bucket.docCount())));
+                            getBucketCount(bucket.docCount(), bucket.aggregations()))));
         }
         return values;
     }
@@ -727,8 +886,8 @@ public class ElasticFieldStatsService {
                                                     final Sample sample,
                                                     final List<ElasticFieldValueCount> topValues) {
         return new ElasticFieldStats(fieldName, sampling.isExact(), sampling.sampleSize(), maxSampleSize,
-                sampling.totalDocs(), sample.docCount(), null, null, new ArrayList<>(topValues), null, null, null,
-                null, null, null);
+                sampling.totalDocs(), sample.docCount(), null, null, null, new ArrayList<>(topValues), null, null,
+                null, null, null, null);
     }
 
     private static ElasticFieldStats emptyStats(final String fieldName,
@@ -736,7 +895,7 @@ public class ElasticFieldStatsService {
                                                 final int maxSampleSize,
                                                 final String message) {
         return new ElasticFieldStats(fieldName, null, sampleSize, maxSampleSize, null, null, null, null, null, null,
-                null, null, null, null, message);
+                null, null, null, null, null, message);
     }
 
     /// How the documents in the requested time range are sampled.
@@ -750,6 +909,11 @@ public class ElasticFieldStatsService {
 
         boolean isExact() {
             return probability == null;
+        }
+
+        /// @return this sampling changed to include every document
+        Sampling exact() {
+            return new Sampling(query, totalDocs, sampleSize, null);
         }
     }
 
