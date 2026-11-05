@@ -314,12 +314,14 @@ class CreateFeedTool extends AbstractBuiltInTool {
         if (earlier.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of("Stroom still holds " + earlier.size() + (rows.size() == EARLIER
+        // Streams are filed by feed name, so a feed deleted and made again keeps them: they show in its Data tab, and
+        // its processing takes them (seen in testing: such streams were refused as an earlier feed's).
+        return Optional.of("The feed already holds " + earlier.size() + (rows.size() == EARLIER
                 ? "+"
-                : "") + " stream(s) from an earlier feed named " + doc.getName() + ", since deleted (e.g. "
-                           + earlier.subList(0, Math.min(5, earlier.size())) + "); the UI doesn't show them. They "
-                           + "are not this build's samples: the plan and the stepping and processing tools use only "
-                           + "the streams uploaded to this feed from now on. Tell the user.");
+                : "") + " stream(s) from before it was made (e.g. " + earlier.subList(0, Math.min(5, earlier.size()))
+                           + "): a feed of the same name was deleted and made again, and Stroom files streams by "
+                           + "feed name. They are this feed's data, and a feed-wide processor filter processes them "
+                           + "too. Tell the user, in case they meant to start afresh.");
     }
 
     private static Object flag(final ToolCall call, final String name) {

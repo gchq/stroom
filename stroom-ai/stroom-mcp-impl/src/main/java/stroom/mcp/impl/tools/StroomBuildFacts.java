@@ -159,9 +159,8 @@ class StroomBuildFacts implements BuildFacts {
             if (!FeedDoc.TYPE.equals(feed.get("type"))) {
                 continue;
             }
-            final Long created = feedCreated(feed);
             for (final String type : RAW_TYPES) {
-                for (final Meta meta : ownStreams(String.valueOf(feed.get("name")), type, 20, created)) {
+                for (final Meta meta : ownStreams(String.valueOf(feed.get("name")), type, 20)) {
                     found.computeIfAbsent(type, ignored -> new ArrayList<>()).add(stream(meta));
                 }
             }
@@ -242,7 +241,7 @@ class StroomBuildFacts implements BuildFacts {
 
     @Override
     public List<Long> eventsStreams(final Map<String, Object> feed) {
-        return ownStreams(String.valueOf(feed.get("name")), StreamTypeNames.EVENTS, 50, feedCreated(feed)).stream()
+        return ownStreams(String.valueOf(feed.get("name")), StreamTypeNames.EVENTS, 50).stream()
                 .map(Meta::getId)
                 .toList();
     }
@@ -260,7 +259,7 @@ class StroomBuildFacts implements BuildFacts {
 
     @Override
     public List<Long> referenceStreams(final String feed) {
-        return ownStreams(feed, StreamTypeNames.REFERENCE, 5, null).stream()
+        return ownStreams(feed, StreamTypeNames.REFERENCE, 5).stream()
                 .map(Meta::getId)
                 .toList();
     }
@@ -511,10 +510,9 @@ class StroomBuildFacts implements BuildFacts {
         }
     }
 
-    // The feed's own streams of a type, not deleted: Stroom keeps a deleted feed's streams under its name (the UI
-    // no longer shows them), so a feed made again with the same name finds them too. Its own are those created
-    // since it was.
-    private List<Meta> ownStreams(final String feed, final String type, final int limit, final Long createdMs) {
+    // The feed's streams of a type, not deleted. Streams are filed by feed name, so those of a feed deleted and made
+    // again are the new feed's too, shown in its Data tab (seen in testing: a re-created feed's streams refused).
+    private List<Meta> ownStreams(final String feed, final String type, final int limit) {
         final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
                 .addTextTerm(MetaFields.FEED, Condition.EQUALS, feed)
                 .addTextTerm(MetaFields.TYPE, Condition.EQUALS, type)
@@ -523,14 +521,7 @@ class StroomBuildFacts implements BuildFacts {
                 .stream()
                 .map(MetaRow::getMeta)
                 .filter(meta -> meta.getStatus() != Status.DELETED)
-                .filter(meta -> createdMs == null || meta.getCreateMs() >= createdMs)
                 .toList();
-    }
-
-    private Long feedCreated(final Map<String, Object> feed) {
-        return documentAccess.read(new DocRef(FeedDoc.TYPE, String.valueOf(feed.get("uuid"))), FeedDoc.class)
-                .map(FeedDoc::getCreateTimeMs)
-                .orElse(null);
     }
 
     private static Map<String, Object> stream(final Meta meta) {
