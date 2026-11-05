@@ -193,6 +193,9 @@ public class AskStroomAiPresenter
     private static final int ACTIVE_POLL_MS = 1_000;
     private static final int HIDDEN_POLL_MS = 5_000;
     private static final int STATUS_POLL_MS = 15_000;
+    // A message's timestamp, and the time it shows (in milliseconds), so it can be brought up to date.
+    private static final String TIMESTAMP_CLASS = "ai-message-timestamp";
+    private static final String TIME_ATTRIBUTE = "data-time-ms";
     private static final int HIDDEN_STATUS_POLL_MS = 60_000;
     // For background checks, which should not show a spinner.
     private static final TaskMonitorFactory SILENT = () -> new TaskMonitor() {
@@ -1047,6 +1050,8 @@ public class AskStroomAiPresenter
      */
     private void checkChatStatuses() {
         askStroomAiClient.getChatStatuses(statusVersion, response -> {
+            // Every poll, so the open chat's relative times move on.
+            refreshTimestamps();
             statusVersion = response.getVersion();
             if (response.getStatuses() != null) {
                 final List<AiChatStatus> previous = chatStatuses;
@@ -5575,6 +5580,10 @@ public class AskStroomAiPresenter
         return root.querySelector(selector);
     }-*/;
 
+    private static native NodeList<Element> allMatches(Element root, String selector) /*-{
+        return root.querySelectorAll(selector);
+    }-*/;
+
     private static native void removeAllMatches(Element root, String selector) /*-{
         var matches = root.querySelectorAll(selector);
         for (var i = 0; i < matches.length; i++) {
@@ -6054,8 +6063,29 @@ public class AskStroomAiPresenter
 
     private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
         html.div(timestamp -> timestamp.append(dateTimeFormatter.formatRelative(timeMs, nowMs)),
-                Attribute.className("ai-message-timestamp"),
-                Attribute.title(dateTimeFormatter.format(timeMs)));
+                Attribute.className(TIMESTAMP_CLASS),
+                Attribute.title(dateTimeFormatter.format(timeMs)),
+                new Attribute(TIME_ATTRIBUTE, String.valueOf(timeMs)));
+    }
+
+    // Brings each message's relative time ("just now", "5 minutes ago") up to date. Seen in testing: they were
+    // worked out once, as each message was drawn, so "just now" stayed while the chat was open.
+    private void refreshTimestamps() {
+        final NodeList<Element> stamps = allMatches(getView().getMarkdownContainer().getElement(),
+                "." + TIMESTAMP_CLASS + "[" + TIME_ATTRIBUTE + "]");
+        final long now = System.currentTimeMillis();
+        for (int i = 0; i < stamps.getLength(); i++) {
+            final Element stamp = stamps.getItem(i);
+            try {
+                final String text = dateTimeFormatter.formatRelative(Long.parseLong(
+                        stamp.getAttribute(TIME_ATTRIBUTE)), now);
+                if (!text.equals(stamp.getInnerText())) {
+                    stamp.setInnerText(text);
+                }
+            } catch (final NumberFormatException e) {
+                // Not a time this presenter wrote: left as it is.
+            }
+        }
     }
 
     /**
