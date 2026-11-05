@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.shared.AiToolCategory;
+import stroom.meta.shared.Meta;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -127,11 +128,27 @@ class TestProfileSampleTool {
     @Test
     void sampleStreamsAreReadOnlyByAUserWhoMayViewData() {
         final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
-        final SampleStreamTexts texts = new SampleStreamTexts(Mockito.mock(StreamReader.class),
-                Mockito.mock(FeedNames.class), documentAccess);
+        final SampleStreamTexts texts = new SampleStreamTexts(Mockito.mock(StreamReader.class), documentAccess);
 
         assertThatThrownBy(() -> texts.read(List.of(7L))).isInstanceOf(ToolRefusal.class)
                 .hasMessage(SampleStreamTexts.NO_VIEW_DATA);
+    }
+
+    @Test
+    void aStreamFromBeforeItsFeedWasMadeIsRead() {
+        // Seen in testing: a feed deleted and made again; its streams from before, shown in its Data tab, were
+        // refused as an earlier feed's. Stroom files streams by feed name, so they are the feed's own.
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.canViewData()).thenReturn(true);
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
+                .createMs(1_000L).build());
+        Mockito.when(streamReader.cachedRawText(7L, StreamReader.MAX_SAMPLE_CHARS))
+                .thenReturn(new StreamReader.RawText("a=1\n", false));
+        Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
+        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess);
+
+        assertThat(texts.read(List.of(7L)).texts()).containsEntry("stream 7", "a=1\n");
     }
 
     @Test

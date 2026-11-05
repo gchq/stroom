@@ -294,14 +294,6 @@ class PipelineStepping {
         return SteppedPipeline.of(merged, (type, name) -> declaredType(registry, type, name));
     }
 
-    /// Building and validating pipelines uses only a feed's own streams.
-    ///
-    /// @param streamIds Sample streams.
-    /// @throws ToolRefusal if any is older than its feed.
-    void refuseOlderThanFeed(final List<Long> streamIds) {
-        sampleStreamTexts.refuseOlderThanFeed(streamIds);
-    }
-
     /// A pipeline reference to a feed with no processed reference stream yet: a step now finds no reference data,
     /// and Stroom keeps that answer for 10 minutes (its effective stream cache), so steps after the reference data
     /// is processed still find none (seen: eval case 15, Haiku, which then gave up on reference data for

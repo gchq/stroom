@@ -130,7 +130,7 @@ final class ProcessingWorld {
                 feeds.consent);
         indexingRuns = new IndexingRuns(world.pipelineShapes, world.guard(), streamProcessing,
                 () -> indexResource, streamId -> errorTexts.getOrDefault(streamId, ""), existingIndexes);
-        sampleStreamTexts = new SampleStreamTexts(feeds.streamReader, feeds.feedNames, world.documentAccess);
+        sampleStreamTexts = new SampleStreamTexts(feeds.streamReader, world.documentAccess);
         promotion = new PromotionProcessing(filterWrites, streamProcessing, pipelineOutputs, agreements,
                 indexingRuns, pipelineDocs, () -> FEED_MADE + 100_000_000L);
         wireStreams();

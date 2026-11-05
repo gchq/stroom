@@ -243,9 +243,6 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
                                   + "last clean step needs stepping again.");
         }
         final Optional<OutputFeeds.OutputFeed> output = sources.buildFeedsOnly(ref, streamIds, feed);
-        if (!streamIds.isEmpty()) {
-            sampleStreamTexts.refuseOlderThanFeed(streamIds);
-        }
         final String createdAfter = stringArg(call, CREATED_AFTER_ARG);
         if (feed != null && createdAfter == null) {
             throw new ToolRefusal("A feed-wide filter needs created_after, so it does not reprocess the feed's "
