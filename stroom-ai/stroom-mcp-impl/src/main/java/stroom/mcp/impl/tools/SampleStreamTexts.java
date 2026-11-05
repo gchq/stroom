@@ -44,6 +44,11 @@ class SampleStreamTexts {
     static final String NO_VIEW_DATA = "You don't have permission to view data, so the sample streams can't be "
                                        + "read.";
 
+    /// The most parts of a stream read, as survey_feed reads at most.
+    static final int MAX_PARTS = 20;
+    /// The fewest characters a part is read to, however many parts share the stream's.
+    static final int MIN_PART_CHARS = 100_000;
+
     private final StreamReader streamReader;
     private final DocumentAccess documentAccess;
 
@@ -53,8 +58,14 @@ class SampleStreamTexts {
         this.documentAccess = documentAccess;
     }
 
+    /// Every part of each stream is read, as its own text: a stream of several files received at once has a part
+    /// each, and a pipeline processes them all. Seen in testing: a feed's five latest streams uploaded again as one
+    /// stream of five parts; only the first part was read, so the checks saw almost none of its kinds of event and
+    /// their extracts "matched nothing", while processing read all five.
+    ///
     /// @param streamIds Sample streams.
-    /// @return Their text by name (`stream <id>`), and notes on what was cut short or read through its bytes.
+    /// @return Their text by name (`stream <id>`, or `stream <id> part <n>` from part 0 for a stream of several),
+    /// and notes on what was cut short or read through its bytes.
     /// @throws ToolRefusal if the user may not view data, or a stream can't be read.
     Texts read(final List<Long> streamIds) {
         if (!documentAccess.canViewData()) {
@@ -63,18 +74,38 @@ class SampleStreamTexts {
         final Map<String, String> texts = new LinkedHashMap<>();
         final List<String> notes = new ArrayList<>();
         for (final long streamId : streamIds) {
-            final RawText text;
+            final int parts;
             try {
                 streamReader.meta(streamId);
-                text = streamReader.cachedRawText(streamId, StreamReader.MAX_SAMPLE_CHARS);
+                // At least the one part a stream always has.
+                parts = Math.max(1, streamReader.partCount(streamId));
             } catch (final StreamReadException e) {
                 throw new ToolRefusal(e.getMessage());
             }
-            texts.put("stream " + streamId, text.text());
-            if (text.truncated()) {
-                notes.add("stream " + streamId + " is read up to its first "
-                          + String.format(Locale.ROOT, "%,d", text.text().length())
-                          + " characters (the most a sample is read to)");
+            final int read = Math.min(parts, MAX_PARTS);
+            if (parts > read) {
+                notes.add("stream " + streamId + " has " + parts + " parts: its first " + read + " are read");
+            }
+            // The stream's share of characters, spread over its parts so none is crowded out by the first.
+            final int perPart = Math.max(MIN_PART_CHARS, StreamReader.MAX_SAMPLE_CHARS / read);
+            for (int part = 0; part < read; part++) {
+                final String name = parts == 1
+                        ? "stream " + streamId
+                        : "stream " + streamId + " part " + part;
+                final RawText text;
+                try {
+                    text = streamReader.cachedRawText(streamId, part, perPart);
+                } catch (final StreamReadException e) {
+                    throw new ToolRefusal(e.getMessage());
+                }
+                texts.put(name, text.text());
+                if (text.truncated()) {
+                    notes.add(name + " is read up to its first "
+                              + String.format(Locale.ROOT, "%,d", text.text().length())
+                              + " characters (the most a sample is read to" + (read > 1
+                            ? ", shared by its parts"
+                            : "") + ")");
+                }
             }
             final Map<String, Object> report = streamReader.charsetReport(streamId);
             if (report != null) {
