@@ -4759,17 +4759,14 @@ if (!window.visualisations) {
                 d = "M" + from + "L" + to;
             }
             var selection = linkSelection(fields, link);
-            var linkSelected = ctx.isSelected(selection);
-            if (linkSelected) {
+            if (ctx.isSelected(selection)) {
                 // A solid line either side of a selected link.
                 content.append("path").attr("d", d).attr("fill", "none")
                     .attr("stroke", selectionColour(ctx.style)).attr("stroke-width", width + 2 * LINK_OUTLINE)
                     .attr("stroke-linecap", "round");
             }
-            // A selected link is solid, so its outline shows only either side of it, not through it (asked for by
-            // the user: seen through, the outline read as one thick line).
             var line = content.append("path").attr("d", d).attr("fill", "none").attr("stroke", colour)
-                .attr("stroke-opacity", linkSelected ? 1 : (across ? 0.3 : 0.5)).attr("stroke-width", width);
+                .attr("stroke-opacity", across ? 0.3 : 0.5).attr("stroke-width", width);
             if (network.directed) {
                 line.attr("marker-end", "url(#stroom-d3-arrow-" + ctx.id + "-" + l + ")");
             }
