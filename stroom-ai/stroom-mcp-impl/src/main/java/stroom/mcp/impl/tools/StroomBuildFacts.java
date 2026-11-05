@@ -53,6 +53,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -241,10 +242,54 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
-    public List<Long> eventsStreams(final Map<String, Object> feed) {
-        return ownStreams(String.valueOf(feed.get("name")), StreamTypeNames.EVENTS, 50).stream()
-                .map(Meta::getId)
+    public EventsStreams eventsStreams(final Map<String, Object> feed, final List<String> translations) {
+        final List<Meta> all = ownStreams(String.valueOf(feed.get("name")), StreamTypeNames.EVENTS, 50);
+        // Not made from a raw stream since deleted.
+        final Set<Long> goneParents = GoneStreams.of(streamReader, all.stream()
+                .map(Meta::getParentMetaId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList());
+        final List<Meta> live = all.stream()
+                .filter(meta -> meta.getParentMetaId() == null || !goneParents.contains(meta.getParentMetaId()))
                 .toList();
+        List<Meta> current = live;
+        final List<Meta> byBuild = live.stream()
+                .filter(meta -> translations.contains(meta.getPipelineUuid()))
+                .toList();
+        if (!byBuild.isEmpty()) {
+            // Made since the pipeline's XSLT was last saved, if any were; else all the build's pipelines made.
+            final Map<String, Long> saved = new LinkedHashMap<>();
+            translations.forEach(uuid -> saved.put(uuid, codeSavedMs(uuid)));
+            final List<Meta> sinceCode = byBuild.stream()
+                    .filter(meta -> meta.getCreateMs() >= saved.getOrDefault(meta.getPipelineUuid(), 0L))
+                    .toList();
+            current = sinceCode.isEmpty()
+                    ? byBuild
+                    : sinceCode;
+        }
+        final Set<Long> kept = new TreeSet<>(current.stream().map(Meta::getId).toList());
+        return new EventsStreams(current.stream().map(Meta::getId).toList(), all.stream()
+                .map(Meta::getId)
+                .filter(id -> !kept.contains(id))
+                .toList());
+    }
+
+    // When a pipeline's translation XSLTs were last saved, as milliseconds; 0 if they can't be read.
+    private long codeSavedMs(final String pipelineUuid) {
+        try {
+            return pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid).stream()
+                    .map(MergedPipeline.TranslationDoc::doc)
+                    .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
+                    .mapToLong(doc -> documentAccess.read(doc, XsltDoc.class)
+                            .map(XsltDoc::getUpdateTimeMs)
+                            .orElse(0L))
+                    .max()
+                    .orElse(0L);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the XSLTs of pipeline {}", pipelineUuid, e);
+            return 0L;
+        }
     }
 
     @Override
