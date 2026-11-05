@@ -300,6 +300,20 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         return (String) get(19);
     }
 
+    /**
+     * Setter for <code>stroom.processor_filter.dependency_version</code>.
+     */
+    public void setDependencyVersion(Integer value) {
+        set(20, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_filter.dependency_version</code>.
+     */
+    public Integer getDependencyVersion() {
+        return (Integer) get(20);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -323,7 +337,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
     /**
      * Create a detached, initialised ProcessorFilterRecord
      */
-    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export, String profileName) {
+    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export, String profileName, Integer dependencyVersion) {
         super(ProcessorFilter.PROCESSOR_FILTER);
 
         setId(id);
@@ -346,6 +360,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         setRunAsUserUuid(runAsUserUuid);
         setExport(export);
         setProfileName(profileName);
+        setDependencyVersion(dependencyVersion);
         resetTouchedOnNotNull();
     }
 }

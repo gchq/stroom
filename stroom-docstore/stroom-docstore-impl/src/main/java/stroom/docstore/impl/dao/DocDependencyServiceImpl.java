@@ -107,6 +107,11 @@ public class DocDependencyServiceImpl implements DocDependencyService {
         return docDependencyDao.getDependantsOf(docRef.getUuid());
     }
 
+    @Override
+    public Set<String> getSourceUuids(final String fromType) {
+        return docDependencyDao.getSourceUuids(fromType);
+    }
+
     private boolean hasViewPermission(final DocRef docRef) {
         if (docRef == null || docRef.getUuid() == null) {
             return true;
