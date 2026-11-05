@@ -44,7 +44,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /// A popup listing the most common values of a field, each with the share of documents that have it, from
 /// which the user can pick a value for an expression term.
@@ -57,10 +59,11 @@ public class FieldValuePickerPresenter extends MyPresenterWidget<FieldValuePicke
     private RestFactory restFactory;
     private DocRef dataSource;
     private QueryField field;
-    private boolean allowCommas;
+    private boolean multiSelect;
     private TimeRange timeRange;
     private ExpressionOperator expression;
     private Consumer<String> valueConsumer;
+    private Supplier<Set<String>> termValuesSupplier;
     private String lastFilter;
     // Identifies the latest request so that responses to earlier ones, e.g. for a previous filter, or after the
     // picker has closed, are ignored
@@ -80,24 +83,33 @@ public class FieldValuePickerPresenter extends MyPresenterWidget<FieldValuePicke
     /// @param restFactory     Used to fetch the values.
     /// @param dataSource      The data source to fetch values from.
     /// @param field           The field to list values of.
-    /// @param allowCommas     Whether values containing a comma can be picked. They can't for an `in` term, whose
-    ///                        values are separated by commas.
+    /// @param multiSelect     Whether the term holds several values, as an `in` term does. If so, each value has a
+    ///                        tick box showing whether the term holds it, clicking a value adds it to the term or
+    ///                        removes it, and the picker stays open. Values containing a comma can't be picked, as
+    ///                        the term's values are separated by commas. Otherwise, picking a value closes the
+    ///                        picker.
     /// @param scope           The time range and query expression to count values across, or null for all time.
+    /// @param termValues      Supplies the values the term holds, as a term holds them, to tick when several values
+    ///                        can be picked.
     /// @param valueConsumer   Receives the picked value, as the data source says a term must hold it to match.
+    ///                        When several values can be picked, it adds the value to the term, or removes it if
+    ///                        the term holds it.
     public void show(final Element target,
                      final RestFactory restFactory,
                      final DocRef dataSource,
                      final QueryField field,
-                     final boolean allowCommas,
+                     final boolean multiSelect,
                      final FieldValuesScope scope,
+                     final Supplier<Set<String>> termValues,
                      final Consumer<String> valueConsumer) {
         this.restFactory = restFactory;
         this.dataSource = dataSource;
         this.field = field;
-        this.allowCommas = allowCommas;
+        this.multiSelect = multiSelect;
         this.timeRange = NullSafe.get(scope, FieldValuesScope::getTimeRange);
         this.expression = NullSafe.get(scope, FieldValuesScope::getExpression);
         this.valueConsumer = valueConsumer;
+        this.termValuesSupplier = termValues;
 
         getView().init(isFilterable(field), this::onFilterChange, this::pick, this::hide);
         lastFilter = null;
@@ -170,13 +182,25 @@ public class FieldValuePickerPresenter extends MyPresenterWidget<FieldValuePicke
             } else {
                 scope = NullSafe.getOrElse(timeRange, TimeRange::getName, "Time range");
             }
-            getView().setValues(fieldValues, scope, allowCommas);
+            getView().setValues(fieldValues, scope, multiSelect, getTermValues());
         }
     }
 
     private void pick(final String value) {
-        hide();
-        valueConsumer.accept(value);
+        if (multiSelect) {
+            valueConsumer.accept(value);
+            // Tick or untick the value as the term now holds it, and keep the focus here so that the user can
+            // carry on picking
+            getView().setSelectedValues(getTermValues());
+            getView().focus();
+        } else {
+            hide();
+            valueConsumer.accept(value);
+        }
+    }
+
+    private Set<String> getTermValues() {
+        return NullSafe.set(NullSafe.get(termValuesSupplier, Supplier::get));
     }
 
     // Requests can't be aborted once sent, so a response that arrives after the picker has closed, or after a
@@ -211,9 +235,16 @@ public class FieldValuePickerPresenter extends MyPresenterWidget<FieldValuePicke
         ///
         /// @param fieldValues The values and the number of documents they were counted across.
         /// @param scope       A description of the documents counted, e.g. the time range name.
-        /// @param allowCommas Whether values containing a comma can be picked. Those that can't are shown
-        ///                    disabled.
-        void setValues(FieldValues fieldValues, String scope, boolean allowCommas);
+        /// @param multiSelect Whether several values can be picked. If so, each value has a tick box, and values
+        ///                    containing a comma are shown disabled.
+        /// @param termValues  The values the term holds, as a term holds them, to tick when several values can be
+        ///                    picked.
+        void setValues(FieldValues fieldValues, String scope, boolean multiSelect, Set<String> termValues);
+
+        /// Ticks the values the term holds and unticks the rest, when several values can be picked.
+        ///
+        /// @param termValues The values the term holds, as a term holds them.
+        void setSelectedValues(Set<String> termValues);
 
         /// Shows a message, e.g. that there are no values, in place of the values.
         ///

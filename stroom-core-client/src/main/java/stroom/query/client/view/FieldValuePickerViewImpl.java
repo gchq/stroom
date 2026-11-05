@@ -23,12 +23,16 @@ import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.HtmlBuilder;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -36,6 +40,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePickerView {
@@ -43,12 +50,18 @@ public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePick
     private static final NumberFormat PERCENT_FORMAT = NumberFormat.getFormat("0.0");
     private static final NumberFormat COUNT_FORMAT = NumberFormat.getFormat("#,##0");
     private static final String COMMA = ",";
+    // The size of the corner the browser drags to resize the picker
+    private static final int RESIZE_GRIP_SIZE = 16;
+    // Matches the padding of .fieldValuePicker in TermEditor.css
+    private static final int PANEL_PADDING = 5;
 
     private final FlowPanel panel;
     private final QuickFilter filterBox;
     private final Label scopeLabel;
     private final SpinnerSmall spinner;
     private final FlowPanel valuesPanel;
+    // The tick box of each value listed, by term value, when several values can be picked
+    private final Map<String, CustomCheckBox> checkBoxes = new HashMap<>();
 
     private Consumer<String> filterHandler;
     private Consumer<String> pickHandler;
@@ -109,6 +122,20 @@ public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePick
         panel.add(filterBox);
         panel.add(header);
         panel.add(valuesPanel);
+        panel.addDomHandler(this::onPanelMouseDown, MouseDownEvent.getType());
+    }
+
+    // The picker can be resized by dragging its bottom right corner. Its height is capped so that a long list
+    // scrolls, but the browser won't resize past the cap, so the cap is lifted once a resize starts.
+    private void onPanelMouseDown(final MouseDownEvent event) {
+        final Element element = panel.getElement();
+        final boolean onResizeGrip = event.getRelativeX(element) >= element.getClientWidth() - RESIZE_GRIP_SIZE
+                                     && event.getRelativeY(element) >= element.getClientHeight() - RESIZE_GRIP_SIZE;
+        if (onResizeGrip) {
+            final Style style = element.getStyle();
+            style.setHeight(element.getClientHeight() - (2 * PANEL_PADDING), Unit.PX);
+            style.setProperty("maxHeight", "none");
+        }
     }
 
     @Override
@@ -123,32 +150,40 @@ public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePick
         filterBox.setVisible(filterable);
         scopeLabel.setText("");
         scopeLabel.setTitle("");
-        valuesPanel.clear();
-        firstValue = null;
+        clearValues();
     }
 
     @Override
-    public void setValues(final FieldValues fieldValues, final String scope, final boolean allowCommas) {
-        valuesPanel.clear();
-        firstValue = null;
+    public void setValues(final FieldValues fieldValues,
+                          final String scope,
+                          final boolean multiSelect,
+                          final Set<String> termValues) {
+        clearValues();
         final String scopeText = scope + " - " + COUNT_FORMAT.format(fieldValues.getTotalCount()) + " records";
         scopeLabel.setText(scopeText);
         // The scope, e.g. the query's time conditions, can be too long for the label
         scopeLabel.setTitle(scopeText);
 
         for (final FieldValueCount valueCount : fieldValues.getValues()) {
-            final boolean pickable = allowCommas || !valueCount.getValue().contains(COMMA);
+            // The values of a term that holds several are separated by commas, so a value containing one can't
+            // be one of them
+            final boolean pickable = !multiSelect || !valueCount.getValue().contains(COMMA);
             if (pickable && firstValue == null) {
                 firstValue = getTermValue(valueCount);
             }
-            valuesPanel.add(createRow(valueCount, fieldValues.getTotalCount(), pickable));
+            valuesPanel.add(createRow(valueCount, fieldValues.getTotalCount(), pickable, multiSelect));
         }
+        setSelectedValues(termValues);
+    }
+
+    @Override
+    public void setSelectedValues(final Set<String> termValues) {
+        checkBoxes.forEach((termValue, checkBox) -> checkBox.setValue(termValues.contains(termValue)));
     }
 
     @Override
     public void setMessage(final String message) {
-        valuesPanel.clear();
-        firstValue = null;
+        clearValues();
         final Label label = new Label(message);
         label.setStyleName("fieldValuePicker-message");
         valuesPanel.add(label);
@@ -171,7 +206,16 @@ public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePick
         return panel;
     }
 
-    private Widget createRow(final FieldValueCount valueCount, final long totalCount, final boolean pickable) {
+    private void clearValues() {
+        valuesPanel.clear();
+        checkBoxes.clear();
+        firstValue = null;
+    }
+
+    private Widget createRow(final FieldValueCount valueCount,
+                             final long totalCount,
+                             final boolean pickable,
+                             final boolean multiSelect) {
         final double percent = totalCount > 0
                 ? Math.min(100, valueCount.getCount() * 100D / totalCount)
                 : 0;
@@ -200,6 +244,18 @@ public class FieldValuePickerViewImpl extends ViewImpl implements FieldValuePick
 
         final FlowPanel row = new FlowPanel();
         row.setStyleName("fieldValuePicker-row");
+        if (multiSelect) {
+            // Shows whether the term holds the value. Clicking it, or anywhere else on the row, adds or removes
+            // the value, and the tick follows the term.
+            final CustomCheckBox checkBox = new CustomCheckBox();
+            checkBox.addStyleName("fieldValuePicker-check");
+            checkBox.setTabIndex(-1);
+            checkBox.setEnabled(pickable);
+            row.add(checkBox);
+            if (pickable) {
+                checkBoxes.put(getTermValue(valueCount), checkBox);
+            }
+        }
         row.add(valueLabel);
         row.add(bar);
         row.add(percentLabel);
