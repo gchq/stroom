@@ -55,9 +55,43 @@ class TestTimePatterns {
         assertThat(message).contains("does not match the sample's values").contains("yyyy-MM-dd'T'HH:mm:ssX")
                 .isEqualTo("time_format 'yyyy-MM-dd HH:mm:ss' does not match the sample's values, e.g. "
                            + "['2026-10-01T10:00:00Z']; the values look like \"yyyy-MM-dd'T'HH:mm:ssX\"");
-        assertThat(TimePatterns.patternRegex("yyyy-MM-dd'T'HH:mm:ss").matcher("2026-10-01T10:00:00").lookingAt())
-                .isTrue();
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd'T'HH:mm:ss", List.of("2026-10-01T10:00:00"))).isNull();
         assertThat(TimePatterns.checkTimeFormat("epoch_ms", List.of("1790600000123"))).isNull();
+    }
+
+    @Test
+    void patternsAreReadAsStroomReadsThem() {
+        // Seen in testing: [.SSSSSS] (an optional fraction, which Stroom reads) was refused as literal brackets, and
+        // the agent stripped the fraction with an xpath instead.
+        final List<String> both = List.of("2026-11-05T00:00:01.110744+00:00", "2026-11-05T00:03:06+00:00");
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]XXX", both)).isNull();
+        // Alternatives, and quoted literals (NetScaler's own header).
+        assertThat(TimePatterns.checkTimeFormat("[yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX][yyyy-MM-dd'T'HH:mm:ssXXX]", both))
+                .isNull();
+        assertThat(TimePatterns.checkTimeFormat("MM/dd/yyyy:HH:mm:ss 'GMT'", List.of("11/05/2026:00:00:01 GMT")))
+                .isNull();
+        // Lenient, as Stroom's parser is: a fraction of any width.
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd HH:mm:ss.SSS", List.of("2026-11-05 00:00:01.110744")))
+                .isNull();
+        // The value must be read whole.
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd", List.of("2026-11-05 00:00:01"))).isNotNull();
+    }
+
+    @Test
+    void whereSomeValuesHaveAFractionOnePatternForAllIsSuggested() {
+        final List<String> both = List.of("2026-11-05T00:00:01.110744+00:00", "2026-11-05T00:03:06+00:00");
+
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX", both))
+                .endsWith("one pattern reads them all: \"yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]XXX\"");
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd'T'HH:mm:ssXXX", both))
+                .endsWith("one pattern reads them all: \"yyyy-MM-dd'T'HH:mm:ss[.SSSSSSSSS]XXX\"");
+        // Two layouts that differ by more than a fraction: the two as alternatives.
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd HH:mm:ss", List.of("2026-11-05 00:00:01",
+                "11/05/2026:00:00:01 GMT")))
+                .contains("one pattern reads them all: '[yyyy-MM-dd HH:mm:ss][MM/dd/yyyy:HH:mm:ss z]'");
+        // Where the pattern reads none of them, the values' own pattern is the advice.
+        assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd HH:mm:ss", List.of("2026-10-01T10:00:00Z")))
+                .endsWith("the values look like \"yyyy-MM-dd'T'HH:mm:ssX\"");
     }
 
     @Test
@@ -93,9 +127,8 @@ class TestTimePatterns {
 
     @Test
     void aPatternThisCheckDoesNotUnderstandIsSaidSo() {
-        assertThat(TimePatterns.patternRegex("yyyy-MM-dd'T")).isNull();
         assertThat(TimePatterns.checkTimeFormat("yyyy-MM-dd'T", List.of("2026-10-01")))
-                .isEqualTo("time_format \"yyyy-MM-dd'T\" is not a Java date pattern this check understands");
+                .isEqualTo("time_format \"yyyy-MM-dd'T\" is not a Java date pattern Stroom can read");
         assertThat(TimePatterns.checkTimeFormat("epoch_s", List.of("yesterday")))
                 .isEqualTo("time_format 'epoch_s' expects digits only (a fraction of a second allowed); the sample "
                            + "has ['yesterday']");
