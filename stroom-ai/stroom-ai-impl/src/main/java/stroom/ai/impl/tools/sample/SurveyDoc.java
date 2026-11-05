@@ -25,6 +25,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -91,6 +92,81 @@ public final class SurveyDoc {
         } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
+    }
+
+    /// @param state A survey state.
+    /// @return Every stream it names: those read, those its shapes were seen in, and those its examples are in.
+    public static Set<Long> streams(final Map<String, Object> state) {
+        final Set<Long> ids = new TreeSet<>();
+        JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> addId(ids, id));
+        JsonValues.mapOrEmpty(state.get("shapes")).values().forEach(shape -> {
+            if (shape instanceof final Map<?, ?> map) {
+                JsonValues.listOrEmpty(map.get("streams")).forEach(id -> addId(ids, id));
+                JsonValues.listOrEmpty(map.get("examples")).forEach(example -> addId(ids, streamOf(example)));
+            }
+        });
+        return ids;
+    }
+
+    /// The state without streams that are gone (deleted, or no longer there). Seen in testing: a feed's streams
+    /// deleted part-way through a build and uploaded again; the shapes the survey knew kept examples only in the
+    /// deleted streams, so a later survey took them as known and gave no locations to step them at. So the gone
+    /// streams are no longer read; a shape's examples in them are dropped; a shape left with no example is dropped,
+    /// to be found again (how the user said to handle it is kept, by signature); and the survey is no longer
+    /// covered.
+    ///
+    /// @param state A survey state.
+    /// @param gone  The streams that are gone.
+    /// @return A copy of the state without them, or the state itself if it names none of them.
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> withoutStreams(final Map<String, Object> state, final Set<Long> gone) {
+        if (gone.isEmpty() || Collections.disjoint(streams(state), gone)) {
+            return state;
+        }
+        final Map<String, Object> kept = new LinkedHashMap<>(state);
+        kept.put("streams_read", new ArrayList<>(JsonValues.listOrEmpty(state.get("streams_read")).stream()
+                .filter(id -> !gone.contains(idOf(id)))
+                .toList()));
+        final Map<String, Object> shapes = new LinkedHashMap<>();
+        JsonValues.mapOrEmpty(state.get("shapes")).forEach((signature, shape) -> {
+            if (!(shape instanceof final Map<?, ?> map)) {
+                return;
+            }
+            final List<Object> examples = JsonValues.listOrEmpty(map.get("examples")).stream()
+                    .filter(example -> !gone.contains(idOf(streamOf(example))))
+                    .toList();
+            if (examples.isEmpty()) {
+                return;
+            }
+            final Map<String, Object> copy = new LinkedHashMap<>((Map<String, Object>) map);
+            copy.put("examples", new ArrayList<>(examples));
+            copy.put("streams", new ArrayList<>(JsonValues.listOrEmpty(map.get("streams")).stream()
+                    .filter(id -> !gone.contains(idOf(id)))
+                    .toList()));
+            shapes.put(String.valueOf(signature), copy);
+        });
+        kept.put("shapes", shapes);
+        kept.put("saturated", false);
+        return kept;
+    }
+
+    private static Object streamOf(final Object example) {
+        return example instanceof final Map<?, ?> map && map.get("location") instanceof final Map<?, ?> location
+                ? location.get("stream")
+                : null;
+    }
+
+    private static void addId(final Set<Long> ids, final Object id) {
+        final Long value = idOf(id);
+        if (value != null) {
+            ids.add(value);
+        }
+    }
+
+    private static Long idOf(final Object id) {
+        return id instanceof final Number number
+                ? number.longValue()
+                : null;
     }
 
     /// Shape signatures for the names given: exact signatures, or text found in exactly one signature.

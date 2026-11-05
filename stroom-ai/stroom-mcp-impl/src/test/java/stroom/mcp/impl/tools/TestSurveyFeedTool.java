@@ -324,6 +324,34 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void shapesSeenOnlyInStreamsDeletedSinceAreSurveyedAgainWithLocationsInTheStreamsThereAreNow() {
+        // Seen in testing: a feed's streams deleted part-way through a build and its latest uploaded again; the
+        // survey took the shapes it knew as known, so they had locations only in the deleted streams and couldn't
+        // be stepped.
+        sampleFeedInABuild();
+        final String records = "{\"user\": \"a\", \"action\": \"login\"}\n"
+                               + "{\"user\": \"b\", \"action\": \"login\"}\n"
+                               + "{\"user\": \"a\", \"action\": \"logout\"}\n";
+        stream(7, "ACME-VPN", 1_700_000_000_000L, records, false);
+        json(call("{\"stream_ids\": [7], \"build\": \"acme-v1\"}"));
+        // Stream 7 deleted; the same records uploaded again as stream 8.
+        Mockito.when(streamReader.meta(7L)).thenReturn(meta(7, "ACME-VPN", 1_700_000_000_000L).copy()
+                .status(Status.DELETED).build());
+        stream(8, "ACME-VPN", 1_700_000_100_000L, records, false);
+
+        final Map<String, Object> again = json(call("{\"stream_ids\": [8], \"build\": \"acme-v1\"}"));
+
+        assertThat(again.get("gone_streams")).isEqualTo(List.of(7));
+        assertThat(String.valueOf(again.get("gone_note"))).contains("2 shape(s) seen only in them are surveyed again");
+        assertThat(again.get("new_shapes")).isEqualTo(2);
+        assertThat((List<?>) again.get("locations")).hasSize(3)
+                .allSatisfy(location -> assertThat(((Map<?, ?>) location).get("stream")).isEqualTo(8));
+        final Map<String, Object> state = SurveyDoc.readState(world.body(String.valueOf(
+                ((Map<?, ?>) again.get("survey_doc")).get("uuid"))));
+        assertThat(state.get("streams_read")).isEqualTo(List.of(8L));
+    }
+
+    @Test
     void everyStreamReadSaysTheSurveyIsComplete() {
         final Map<String, Object> result = json(call("{\"feed\": \"ACME\", \"skip_stream_ids\": [1, 2]}"));
 
