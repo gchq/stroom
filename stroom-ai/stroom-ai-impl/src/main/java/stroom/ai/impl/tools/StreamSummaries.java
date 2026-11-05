@@ -250,6 +250,26 @@ public class StreamSummaries {
     // Events.
     // --------------------------------------------------------------------------------
 
+    // Up to `want` of a stream's records: all of them where it holds no more, else spread over it. Seen in
+    // testing: the first 2,000 of 6,000 events were mostly one kind, and "no Unknown events" was taken from them for
+    // the whole stream.
+    private List<String> spreadRecords(final long streamId, final int want) {
+        final StreamReader.Records head = streamReader.readRecords(streamId, 0, 1, null, EVENTS_BUDGET);
+        final long total = NullSafe.getOrElse(head.first(), StreamReader.Fetched::totalItems, 0L);
+        if (total <= want) {
+            return streamReader.readRecords(streamId, 0, want, null, EVENTS_BUDGET).records();
+        }
+        final List<String> records = new ArrayList<>(head.records());
+        int chars = records.stream().mapToInt(String::length).sum();
+        for (int n = 1; n < want && chars < EVENTS_BUDGET; n++) {
+            final List<String> one = streamReader.readRecords(streamId, n * total / want, 1, null,
+                    EVENTS_BUDGET - chars).records();
+            records.addAll(one);
+            chars += one.stream().mapToInt(String::length).sum();
+        }
+        return records;
+    }
+
     /// Profiles Events streams: how many events of each EventDetail type, TypeId and Action there are, and how
     /// often each event-logging path is populated.
     ///
@@ -273,8 +293,7 @@ public class StreamSummaries {
         int count = 0;
         final DocumentBuilder builder = documentBuilder();
         for (final long streamId : streamIds) {
-            final List<String> records = streamReader.readRecords(streamId, 0, maxEvents - count, null,
-                    EVENTS_BUDGET).records();
+            final List<String> records = spreadRecords(streamId, maxEvents - count);
             for (final String record : records) {
                 final Document document;
                 try {
