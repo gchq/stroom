@@ -504,7 +504,9 @@ class TestElasticSearchProvider {
         assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
                 .filteredOn(QueryField::supportsTopValues)
                 .extracting(QueryField::getFldName)
-                .containsExactlyInAnyOrder("Count", "Flag", "Ip", "Message", "Message.keyword", "Name", "Pattern");
+                // A field within a nested object lists its values, but the nested object itself has none
+                .containsExactlyInAnyOrder(
+                        "Count", "Flag", "Ip", "Message", "Message.keyword", "Name", "Pattern", "Users.Name");
     }
 
     @Test

@@ -73,21 +73,51 @@ class TestElasticTopValues {
 
     @Test
     void testGetAggregationField_withinNestedObject() {
-        final Map<String, String> types = Map.of("user", "nested", "event", "object");
+        final Map<String, String> types = Map.of("user", "nested", "user.message.keyword", "keyword");
 
+        // A field within a nested object is aggregated within it, see getNestedPath
         assertThat(ElasticTopValues.getAggregationField("user.name", "keyword", types::get))
-                .isNull();
-        // Fields of plain objects can be aggregated
-        assertThat(ElasticTopValues.getAggregationField("event.action", "keyword", types::get))
-                .isEqualTo("event.action");
+                .isEqualTo("user.name");
+        assertThat(ElasticTopValues.getAggregationField("user.message", "text", types::get))
+                .isEqualTo("user.message.keyword");
     }
 
     @Test
-    void testGetAggregationField_withinDeeperNestedObject() {
+    void testGetNestedPath_notNested() {
+        final Map<String, String> types = Map.of("event", "object");
+
+        assertThat(ElasticTopValues.getNestedPath("user", types::get)).isNull();
+        // Fields of plain objects aren't within a nested object
+        assertThat(ElasticTopValues.getNestedPath("event.action", types::get)).isNull();
+    }
+
+    @Test
+    void testGetNestedPath_withinNestedObject() {
+        final Map<String, String> types = Map.of("user", "nested");
+
+        assertThat(ElasticTopValues.getNestedPath("user.name", types::get)).isEqualTo("user");
+    }
+
+    @Test
+    void testGetNestedPath_withinObjectWithinNestedObject() {
+        final Map<String, String> types = Map.of("user", "nested", "user.address", "object");
+
+        assertThat(ElasticTopValues.getNestedPath("user.address.city", types::get)).isEqualTo("user");
+    }
+
+    @Test
+    void testGetNestedPath_withinNestedObjectWithinObject() {
         final Map<String, String> types = Map.of("a", "object", "a.b", "nested");
 
-        assertThat(ElasticTopValues.getAggregationField("a.b.c", "keyword", types::get))
-                .isNull();
+        assertThat(ElasticTopValues.getNestedPath("a.b.c", types::get)).isEqualTo("a.b");
+    }
+
+    @Test
+    void testGetNestedPath_innermostOfNestedObjectsWithinEachOther() {
+        final Map<String, String> types = Map.of("user", "nested", "user.roles", "nested");
+
+        assertThat(ElasticTopValues.getNestedPath("user.roles.name", types::get)).isEqualTo("user.roles");
+        assertThat(ElasticTopValues.getNestedPath("user.name", types::get)).isEqualTo("user");
     }
 
     @ParameterizedTest

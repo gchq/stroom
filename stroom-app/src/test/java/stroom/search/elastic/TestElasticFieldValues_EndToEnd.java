@@ -48,6 +48,10 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
 
     private static final Path INDEX_BODY = ElasticEndToEndTestHelper.RESOURCES_DIR.resolve("conditions-index.json");
     private static final Path DOCUMENTS = ElasticEndToEndTestHelper.RESOURCES_DIR.resolve("conditions-docs.json");
+    private static final Path NESTED_INDEX_BODY = ElasticEndToEndTestHelper.RESOURCES_DIR.resolve(
+            "field-values-nested-index.json");
+    private static final Path NESTED_DOCUMENTS = ElasticEndToEndTestHelper.RESOURCES_DIR.resolve(
+            "field-values-nested-docs.json");
     private static final DateTimeSettings DATE_TIME_SETTINGS = DateTimeSettings.builder()
             .referenceTime(System.currentTimeMillis())
             .build();
@@ -60,6 +64,8 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
     private ElasticTestNode node;
     private String indexName;
     private DocRef indexRef;
+    private DocRef clusterRef;
+    private String nestedIndexName;
 
     @BeforeEach
     void setUp() {
@@ -68,7 +74,7 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
         node.createIndex(indexName, StreamUtil.fileToString(INDEX_BODY));
         node.bulkIndex(indexName, JsonUtil.getMapper().readTree(StreamUtil.fileToString(DOCUMENTS)));
 
-        final DocRef clusterRef = helper.createCluster(node);
+        clusterRef = helper.createCluster(node);
         indexRef = helper.createIndexDoc(clusterRef, indexName, "Date", 100);
     }
 
@@ -76,6 +82,9 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
     void tearDown() {
         if (node != null && indexName != null) {
             node.deleteIndices(indexName);
+        }
+        if (node != null && nestedIndexName != null) {
+            node.deleteIndices(nestedIndexName);
         }
     }
 
@@ -183,7 +192,83 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     void testUnsupportedFields() {
         assertThat(fetch("Date", FieldType.DATE, null, null)).isEqualTo(FieldValues.EMPTY);
-        assertThat(fetch("Nested.Number", FieldType.LONG, null, null)).isEqualTo(FieldValues.EMPTY);
+        // The nested object itself has no values to list. Its mapping type decides that, not the requested type.
+        assertThat(fetch("Nested", FieldType.KEYWORD, null, null)).isEqualTo(FieldValues.EMPTY);
+    }
+
+    @Test
+    void testNested() {
+        // Document 1 holds 1 and 2, document 2 holds 3
+        assertThat(fetch("Nested.Number", FieldType.LONG, null, null).getValues())
+                .containsExactlyInAnyOrder(
+                        new FieldValueCount("1", 1L),
+                        new FieldValueCount("2", 1L),
+                        new FieldValueCount("3", 1L));
+    }
+
+    @Test
+    void testNested_countsDocumentsNotNestedObjects() {
+        final DocRef nestedIndexRef = createNestedIndex();
+
+        // Document 1 has two users named alice but counts once. Ranked by count, then by value.
+        final FieldValues fieldValues = fetch(nestedIndexRef, "Users.Name", FieldType.KEYWORD, null, null, null);
+        assertThat(fieldValues.getValues())
+                .containsExactly(
+                        new FieldValueCount("bob", 2L),
+                        new FieldValueCount("alice", 1L),
+                        new FieldValueCount("carol", 1L));
+        assertThat(fieldValues.getTotalCount()).isEqualTo(4);
+    }
+
+    @Test
+    void testNested_withinNestedObject() {
+        final DocRef nestedIndexRef = createNestedIndex();
+
+        // admin is held by three roles in documents 1 and 3; user by three roles in documents 1 and 2
+        assertThat(fetch(nestedIndexRef, "Users.Roles.Role", FieldType.KEYWORD, null, null, null).getValues())
+                .containsExactly(new FieldValueCount("admin", 2L), new FieldValueCount("user", 2L));
+    }
+
+    @Test
+    void testNested_objectWithinNestedObject() {
+        final DocRef nestedIndexRef = createNestedIndex();
+
+        assertThat(fetch(nestedIndexRef, "Users.Address.City", FieldType.KEYWORD, null, null, null).getValues())
+                .containsExactly(new FieldValueCount("Paris", 2L), new FieldValueCount("Rome", 1L));
+    }
+
+    @Test
+    void testNested_textUsesKeywordMultiField() {
+        final DocRef nestedIndexRef = createNestedIndex();
+
+        assertThat(fetch(nestedIndexRef, "Users.Message", FieldType.TEXT, null, null, null).getValues())
+                .extracting(FieldValueCount::getValue)
+                .containsExactly("Logged in", "Logged out");
+    }
+
+    @Test
+    void testNested_filterAndTimeRange() {
+        final DocRef nestedIndexRef = createNestedIndex();
+
+        assertThat(fetch(nestedIndexRef, "Users.Name", FieldType.KEYWORD, "AL", null, null).getValues())
+                .containsExactly(new FieldValueCount("alice", 1L));
+
+        // Documents 2 and 3 are dated 2 and 3 January
+        final FieldValues fieldValues = fetch(nestedIndexRef, "Users.Name", FieldType.KEYWORD, null, new TimeRange(
+                "Two days",
+                null,
+                "2026-01-02T00:00:00.000Z",
+                "2026-01-04T00:00:00.000Z"), null);
+        assertThat(fieldValues.getValues())
+                .containsExactly(new FieldValueCount("bob", 1L), new FieldValueCount("carol", 1L));
+        assertThat(fieldValues.getTotalCount()).isEqualTo(2);
+    }
+
+    private DocRef createNestedIndex() {
+        nestedIndexName = ElasticTestNode.createIndexName("field-values-nested");
+        node.createIndex(nestedIndexName, StreamUtil.fileToString(NESTED_INDEX_BODY));
+        node.bulkIndex(nestedIndexName, JsonUtil.getMapper().readTree(StreamUtil.fileToString(NESTED_DOCUMENTS)));
+        return helper.createIndexDoc(clusterRef, nestedIndexName, "Date", 100);
     }
 
     private FieldValues fetch(final String fieldName,
@@ -198,8 +283,17 @@ class TestElasticFieldValues_EndToEnd extends AbstractCoreIntegrationTest {
                               final String filter,
                               final TimeRange timeRange,
                               final ExpressionOperator expression) {
+        return fetch(indexRef, fieldName, fieldType, filter, timeRange, expression);
+    }
+
+    private FieldValues fetch(final DocRef dataSource,
+                              final String fieldName,
+                              final FieldType fieldType,
+                              final String filter,
+                              final TimeRange timeRange,
+                              final ExpressionOperator expression) {
         return handler.getFieldValues(new FetchFieldValuesRequest(
-                indexRef,
+                dataSource,
                 QueryField.builder().fldName(fieldName).fldType(fieldType).build(),
                 filter,
                 timeRange,
