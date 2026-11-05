@@ -40,6 +40,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -250,6 +251,7 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
             assertThat(sampled.getTotalDocs()).isEqualTo(20_000);
             // About 2,000 documents are sampled, and their counts are scaled up to estimate all 20,000
             assertThat(sampled.getSampledDocs()).isBetween(1_000L, 3_000L);
+            assertThat(sampled.getDistinctCountExact()).isFalse();
             assertThat(sampled.getDocsWithValue()).isBetween(15_000L, 25_000L);
             assertThat(sampled.getTopValues())
                     .extracting(ElasticFieldValueCount::getValue)
@@ -259,12 +261,90 @@ class TestElasticFieldSettings_EndToEnd extends AbstractCoreIntegrationTest {
                     largeIndexRef, "Kind", 2_000, null, null, null, true, null, null, null));
             assertThat(exact.getExact()).isTrue();
             assertThat(exact.getSampledDocs()).isEqualTo(20_000);
+            assertThat(exact.getDistinctCount()).isEqualTo(2);
+            assertThat(exact.getDistinctCountExact()).isTrue();
             assertThat(exact.getDocsWithValue()).isEqualTo(20_000);
             assertThat(exact.getTopValues())
                     .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
                     .containsExactly(tuple("b", 15_000L), tuple("a", 5_000L));
         } finally {
             node.deleteIndices(largeIndexName);
+        }
+    }
+
+    @Test
+    void testNestedFieldStats() {
+        // Large enough to be sampled, which nested fields can't be, so their statistics are exact
+        final String nestedIndexName = ElasticTestNode.createIndexName("field-stats-nested");
+        node.createIndex(nestedIndexName, """
+                {"mappings": {"properties": {
+                  "Date": {"type": "date"},
+                  "Content": {"type": "nested", "properties": {
+                    "Kind": {"type": "keyword"},
+                    "Size": {"type": "long"},
+                    "Created": {"type": "date"},
+                    "Vector": {"type": "dense_vector", "dims": 3}
+                  }}
+                }}}""");
+        try {
+            final ArrayNode documents = JsonUtil.getMapper().createArrayNode();
+            for (int i = 0; i < 20_000; i++) {
+                final ObjectNode document = documents.addObject()
+                        .put("_id", String.valueOf(i))
+                        .put("Date", "2026-01-01T00:00:00.000Z");
+                // Three in four documents have content, each with two `a` objects and one `b` object
+                if (i % 4 != 0) {
+                    final ArrayNode content = document.putArray("Content");
+                    for (final String kind : List.of("a", "a", "b")) {
+                        final ObjectNode object = content.addObject()
+                                .put("Kind", kind)
+                                .put("Size", i % 100)
+                                .put("Created", "2026-02-01T00:00:00.000Z");
+                        object.putArray("Vector").add(1.0).add(0.0).add(0.0);
+                    }
+                }
+            }
+            node.bulkIndex(nestedIndexName, documents);
+            final DocRef nestedIndexRef = helper.createIndexDoc(
+                    helper.createCluster(node), nestedIndexName, "Date", 100);
+
+            final ElasticFieldStats kind = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    nestedIndexRef, "Content.Kind", 2_000, null, null, null, null, null, null, null));
+            assertThat(kind.getMessage()).isNull();
+            assertThat(kind.getExact()).isTrue();
+            assertThat(kind.getSampledDocs()).isEqualTo(20_000);
+            assertThat(kind.getDocsWithValue()).isEqualTo(15_000);
+            assertThat(kind.getDistinctCount()).isEqualTo(2);
+            // Each value counts the documents holding it, not the nested objects
+            assertThat(kind.getTopValues())
+                    .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                    .containsExactly(tuple("a", 15_000L), tuple("b", 15_000L));
+
+            final ElasticFieldStats size = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    nestedIndexRef, "Content.Size", 2_000, null, null, null, null, null, null, null));
+            assertThat(size.getDocsWithValue()).isEqualTo(15_000);
+            assertThat(size.getMin()).isEqualTo("1");
+            assertThat(size.getMax()).isEqualTo("99");
+            // Each document's objects share one size, so the ranges count each document once
+            assertThat(size.getHistogram()
+                    .stream()
+                    .mapToLong(ElasticFieldValueCount::getCount)
+                    .sum())
+                    .isEqualTo(15_000L);
+
+            final ElasticFieldStats created = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    nestedIndexRef, "Content.Created", 2_000, null, null, null, null, null, null, null));
+            assertThat(created.getDocsWithValue()).isEqualTo(15_000);
+            assertThat(created.getHistogram())
+                    .extracting(ElasticFieldValueCount::getCount)
+                    .containsExactly(15_000L);
+
+            final ElasticFieldStats vector = elasticFieldStatsService.getFieldStats(new ElasticFieldStatsRequest(
+                    nestedIndexRef, "Content.Vector", 2_000, null, null, null, null, null, null, null));
+            assertThat(vector.getMessage()).isNull();
+            assertThat(vector.getDocsWithValue()).isEqualTo(15_000);
+        } finally {
+            node.deleteIndices(nestedIndexName);
         }
     }
 
