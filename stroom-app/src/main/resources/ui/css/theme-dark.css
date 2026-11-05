@@ -312,6 +312,10 @@
     --vis-axis__color: rgba(255,255,255,0.54);
     --vis-text__color: var(--text-color);
     --vis-text__color--faint: rgba(255,255,255,0.12);
+    /* Borders round a visualisation's panels and boxes (e.g. each chart of a grid), and round its fields
+       and buttons, as Stroom's own */
+    --vis-border__color: var(--border-color);
+    --vis-control__border-color: var(--control__border-color);
     --vis-icon__color: rgba(255,255,255,0.6);
     --vis-icon__color--hover: rgba(255,255,255,0.87);
     --vis-barchart-element__stroke: #000;
