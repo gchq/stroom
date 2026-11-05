@@ -4053,6 +4053,7 @@ if (!window.visualisations) {
     // ------------------------------------------------------------------------------------------
 
     visualisations.EChartsGeneric = function () {
+        var self = this;
         var element = window.document.createElement("div");
         element.className = "vis";
         element.style.position = "relative";
@@ -4217,6 +4218,67 @@ if (!window.visualisations) {
         var freshLayout = true;
         // Gives a network's layout STILL_FRICTION once it has settled (see calmLayout).
         var calmTimer = null;
+        // What waits for the chart to have a size again ("render" or "resize"), and the timer checking for it.
+        var sizeWanted = null;
+        var sizeTimer = null;
+        var sizeChecks = 0;
+
+        // Whether the chart's element has a size. Seen in testing: a widget moved between full screen and its place
+        // on the dashboard is briefly 0 by 0, and a network graph laid out then failed inside ECharts (its view's
+        // transform can't be inverted: "Cannot read properties of null (reading '0')"). Nothing is drawn or resized
+        // at no size.
+        function hasSize() {
+            return chartElement.clientWidth > 0 && chartElement.clientHeight > 0;
+        }
+
+        // Does what was asked (a whole render outranks a resize) once the chart has a size: on the next resize
+        // Stroom calls, or checked every 100ms for up to 10s, as a resize may not follow.
+        // The chart follows its element's own size, whenever it changes. Seen in testing: Stroom calls resize as a
+        // widget goes to full screen and back, but before the widget's new size is laid out, so the chart stayed a
+        // size behind: drawn at the old size in a corner of full screen, and at full screen's size back in the
+        // widget, most of a network out of view until the query ran again.
+        var sizeFrame = null;
+        var sizeObserver = typeof window.ResizeObserver === "function"
+            ? new window.ResizeObserver(function () {
+                if (sizeFrame === null) {
+                    sizeFrame = window.requestAnimationFrame(function () {
+                        sizeFrame = null;
+                        if (!hasSize()) {
+                            return;
+                        }
+                        if (sizeWanted || (chart && (chart.getWidth() !== chartElement.clientWidth
+                            || chart.getHeight() !== chartElement.clientHeight))) {
+                            self.resize();
+                        }
+                    });
+                }
+            })
+            : null;
+        if (sizeObserver) {
+            sizeObserver.observe(chartElement);
+        }
+
+        function whenSized(wanted) {
+            if (wanted === "render" || (wanted && !sizeWanted)) {
+                sizeWanted = wanted;
+            }
+            if (sizeTimer || !sizeWanted) {
+                return;
+            }
+            sizeChecks = 0;
+            var check = function () {
+                sizeTimer = null;
+                if (!sizeWanted) {
+                    return;
+                }
+                if (hasSize()) {
+                    self.resize();
+                } else if (++sizeChecks < 100) {
+                    sizeTimer = setTimeout(check, 100);
+                }
+            };
+            sizeTimer = setTimeout(check, 100);
+        }
         // The chart's size when the force layout last ran: the middle its gravity draws the nodes to.
         var layoutBox = null;
         // Auto Interval groups the rows again as the zoom changes, once it has settled.
@@ -4361,6 +4423,25 @@ if (!window.visualisations) {
         }
 
         // Where each node of the network is drawn now, by name; null if it has none.
+        // A network's places moved with the middle of the chart, from where it was when they were laid out to where
+        // it is now, as a resize moves them (see centreLayout): drawn again at another size (as a widget leaves full
+        // screen), they stay in view. Null if there are none.
+        function centredPlaces(places) {
+            if (!places || !layoutBox) {
+                return places;
+            }
+            var dx = (chartElement.clientWidth - layoutBox.width) / 2;
+            var dy = (chartElement.clientHeight - layoutBox.height) / 2;
+            if (dx === 0 && dy === 0) {
+                return places;
+            }
+            var moved = {};
+            Object.keys(places).forEach(function (name) {
+                moved[name] = [places[name][0] + dx, places[name][1] + dy];
+            });
+            return moved;
+        }
+
         function nodePlaces() {
             var index = graphIndex();
             var model = index >= 0 ? chart.getModel() : null;
@@ -4834,6 +4915,11 @@ if (!window.visualisations) {
             if (!lastArgs) {
                 return;
             }
+            if (!hasSize()) {
+                // Drawn once the chart has a size again (see whenSized).
+                whenSized("render");
+                return;
+            }
             var context = lastArgs.context;
             var settings = lastArgs.settings || {};
             var prefs = readPreferences(context, element);
@@ -4851,13 +4937,20 @@ if (!window.visualisations) {
                     throw new Error("This chart needs ECharts " + MIN_ECHARTS_MAJOR + " or later, but ECharts " +
                         window.echarts.version + " has loaded. Install a newer ECharts build in its Script doc.");
                 }
-                var places = freshLayout ? null : nodePlaces();
+                var places = freshLayout ? null : centredPlaces(nodePlaces());
                 freshLayout = false;
                 built = buildOption(context, settings, lastArgs.data, prefs, style, {zoom: zoomWindows,
                     interval: chosenInterval});
                 report = built.report;
                 var friction = placeNodes(built.option, places);
                 var instance = ensureChart(prefs.theme);
+                // Drawn at the element's size now: ECharts keeps the size it last had until told (seen in testing: a
+                // network redrawn after leaving full screen was drawn at the full screen's size, its nodes out of
+                // view).
+                if (instance.getWidth() !== chartElement.clientWidth
+                    || instance.getHeight() !== chartElement.clientHeight) {
+                    instance.resize();
+                }
                 instance.setOption(built.option, {notMerge: true, lazyUpdate: false});
                 if (friction !== null && friction === startingFriction(built.option)) {
                     friction = warmUpLayout(friction);
@@ -4923,6 +5016,16 @@ if (!window.visualisations) {
         };
 
         this.resize = function () {
+            if (!hasSize()) {
+                whenSized(chart ? "resize" : null);
+                return;
+            }
+            if (sizeWanted === "render") {
+                sizeWanted = null;
+                render();
+                return;
+            }
+            sizeWanted = null;
             if (chart) {
                 holdLayout();
                 chart.resize();
@@ -4977,6 +5080,18 @@ if (!window.visualisations) {
         };
 
         this.teardown = function () {
+            sizeWanted = null;
+            if (sizeObserver) {
+                sizeObserver.disconnect();
+            }
+            if (sizeFrame !== null) {
+                window.cancelAnimationFrame(sizeFrame);
+                sizeFrame = null;
+            }
+            if (sizeTimer) {
+                clearTimeout(sizeTimer);
+                sizeTimer = null;
+            }
             if (calmTimer) {
                 clearTimeout(calmTimer);
                 calmTimer = null;
