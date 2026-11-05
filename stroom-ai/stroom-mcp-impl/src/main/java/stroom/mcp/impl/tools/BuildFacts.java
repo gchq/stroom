@@ -83,9 +83,15 @@ interface BuildFacts {
     /// @return Its name, if the user can read it.
     Optional<String> docName(String type, String uuid);
 
-    /// @param feed One of the build's feeds.
-    /// @return The ids of its own Events streams (not deleted, created since it was).
-    List<Long> eventsStreams(Map<String, Object> feed);
+    /// The Events streams of one of the build's feeds that show what its translation writes now: not made from a raw
+    /// stream since deleted, and, where the build's translation pipelines made any, theirs, made since the
+    /// pipeline's XSLT was last saved. Seen in testing: a build's documentation step named the Events of an earlier
+    /// run, whose raw stream had been deleted.
+    ///
+    /// @param feed         One of the build's feeds.
+    /// @param translations The UUIDs of the build's translation pipelines.
+    /// @return Those Events streams, and the ones left out.
+    EventsStreams eventsStreams(Map<String, Object> feed, List<String> translations);
 
     /// @param pipelineUuid An indexing pipeline.
     /// @return Where an Elasticsearch indexing pipeline writes (`index name`, `cluster`); empty for others.
@@ -141,4 +147,17 @@ interface BuildFacts {
     /// @param pipelineUuid A pipeline.
     /// @return The feeds its own pipeline references load reference data from, by name.
     List<String> referencedFeeds(String pipelineUuid);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A feed's Events streams for the plan.
+    ///
+    /// @param current The ids of those showing what the translation writes now.
+    /// @param leftOut The ids of the others: made from a raw stream since deleted, by another pipeline, or before the
+    ///                XSLT was last saved.
+    record EventsStreams(List<Long> current, List<Long> leftOut) {
+
+    }
 }

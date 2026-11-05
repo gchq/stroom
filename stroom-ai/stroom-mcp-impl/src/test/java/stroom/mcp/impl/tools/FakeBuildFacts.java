@@ -45,6 +45,7 @@ final class FakeBuildFacts implements BuildFacts {
     // Each pipeline's referenced feeds, by its UUID.
     Map<String, List<String>> referencedFeeds = new LinkedHashMap<>();
     List<Long> events = List.of();
+    List<Long> eventsLeftOut = List.of();
     Map<String, Object> survey;
     List<String> checks = List.of();
     String keptXslt;
@@ -169,8 +170,8 @@ final class FakeBuildFacts implements BuildFacts {
     }
 
     @Override
-    public List<Long> eventsStreams(final Map<String, Object> feed) {
-        return events;
+    public EventsStreams eventsStreams(final Map<String, Object> feed, final List<String> translations) {
+        return new EventsStreams(events, eventsLeftOut);
     }
 
     @Override
