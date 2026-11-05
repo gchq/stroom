@@ -70,9 +70,6 @@ public class CredentialsService implements StoredSecrets {
     private final PathCreator pathCreator;
     private final Provider<CredentialsConfig> credentialsConfigProvider;
 
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     public CredentialsService(final CredentialsDao credentialsDao,
@@ -94,7 +91,7 @@ public class CredentialsService implements StoredSecrets {
      */
     private Function<Credential, CredentialWithPerms> createPermissionDecorator() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 return null;
             }
@@ -110,8 +107,7 @@ public class CredentialsService implements StoredSecrets {
 
     private Predicate<Credential> createPermissionFilter() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
-            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+            return securityContext.hasDocumentPermission(credential.asDocRef(), DocumentPermission.VIEW);
         };
     }
 
@@ -126,7 +122,7 @@ public class CredentialsService implements StoredSecrets {
         CredentialWithPerms retval = null;
         if (credential != null) {
 
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
                 final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
@@ -197,7 +193,8 @@ public class CredentialsService implements StoredSecrets {
         final Credential updatedCredential;
         if (existing == null) {
             // Store the new credential.
-            updatedCredential = new Credential(uuid,
+            updatedCredential = new Credential(
+                    uuid,
                     credential.getName(),
                     now,
                     now,
@@ -210,7 +207,8 @@ public class CredentialsService implements StoredSecrets {
             // Check we are allowed to update this existing credential.
             checkEditPermission(uuid);
 
-            updatedCredential = new Credential(uuid,
+            updatedCredential = new Credential(
+                    uuid,
                     credential.getName(),
                     existing.getCreateTimeMs(),
                     now,

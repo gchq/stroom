@@ -48,6 +48,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 public class PermissionChangeService {
+
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
 
@@ -58,42 +59,37 @@ public class PermissionChangeService {
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
     }
 
+    @SuppressWarnings("RedundantLabeledSwitchRuleCodeBlock") // Checkstyle being a PIT_.
     public void changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
         final AbstractDocumentPermissionsChange change = request.getChange();
 
-        if (change instanceof final SetPermission setPermission) {
-            setPermission(request, setPermission);
-
-        } else if (change instanceof final RemovePermission removePermission) {
-            removePermission(request, removePermission);
-
-        } else if (change instanceof final AddDocumentUserCreatePermission addDocumentUserCreatePermission) {
-            addDocumentUserCreatePermission(request, addDocumentUserCreatePermission);
-
-        } else if (change instanceof final RemoveDocumentUserCreatePermission removeDocumentUserCreatePermission) {
-            removeDocumentUserCreatePermission(request, removeDocumentUserCreatePermission);
-
-        } else if (change instanceof final SetDocumentUserCreatePermissions setDocumentUserCreatePermissions) {
-            setDocumentUserCreatePermissions(request, setDocumentUserCreatePermissions);
-
-        } else if (change instanceof final AddAllDocumentUserCreatePermissions addAllDocumentUserCreatePermissions) {
-            addAllDocumentUserCreatePermissions(request, addAllDocumentUserCreatePermissions);
-
-        } else if (change instanceof final RemoveAllDocumentUserCreatePermissions
-                removeAllDocumentUserCreatePermissions) {
-            removeAllDocumentUserCreatePermissions(request, removeAllDocumentUserCreatePermissions);
-
-        } else if (change instanceof final AddAllPermissionsFrom addAllPermissionsFrom) {
-            addAllPermissionsFrom(request, addAllPermissionsFrom);
-
-        } else if (change instanceof final SetAllPermissionsFrom setAllPermissionsFrom) {
-            setAllPermissionsFrom(request, setAllPermissionsFrom);
-
-        } else if (change instanceof final RemoveAllPermissions removeAllPermissions) {
-            removeAllPermissions(request, removeAllPermissions);
-
-        } else {
-            throw new RuntimeException("Unexpected change " + change.getClass().getName());
+        switch (change) {
+            case final SetPermission setPermission -> setPermission(request, setPermission);
+            case final RemovePermission removePermission -> removePermission(request, removePermission);
+            case final AddDocumentUserCreatePermission addDocumentUserCreatePermission -> {
+                addDocumentUserCreatePermission(request, addDocumentUserCreatePermission);
+            }
+            case final RemoveDocumentUserCreatePermission removeDocumentUserCreatePermission -> {
+                removeDocumentUserCreatePermission(request, removeDocumentUserCreatePermission);
+            }
+            case final SetDocumentUserCreatePermissions setDocumentUserCreatePermissions -> {
+                setDocumentUserCreatePermissions(request, setDocumentUserCreatePermissions);
+            }
+            case final AddAllDocumentUserCreatePermissions addAllDocumentUserCreatePermissions -> {
+                addAllDocumentUserCreatePermissions(request, addAllDocumentUserCreatePermissions);
+            }
+            case final RemoveAllDocumentUserCreatePermissions removeAllDocumentUserCreatePermissions -> {
+                removeAllDocumentUserCreatePermissions(request, removeAllDocumentUserCreatePermissions);
+            }
+            case final AddAllPermissionsFrom addAllPermissionsFrom -> {
+                addAllPermissionsFrom(request, addAllPermissionsFrom);
+            }
+            case final SetAllPermissionsFrom setAllPermissionsFrom -> {
+                setAllPermissionsFrom(request, setAllPermissionsFrom);
+            }
+            case final RemoveAllPermissions removeAllPermissions -> {
+                removeAllPermissions(request, removeAllPermissions);
+            }
         }
     }
 
