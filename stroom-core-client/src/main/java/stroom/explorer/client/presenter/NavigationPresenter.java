@@ -31,6 +31,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.document.client.event.ShowCopyDocumentDialogEvent;
+import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
 import stroom.explorer.client.event.ExplorerEndTaskEvent;
@@ -221,6 +223,15 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                 getView().getTaskListener(),
                 true,
                 showAlertsBtn.getState());
+        // Dropping items onto a folder opens the usual copy/move dialog with that folder chosen, so the
+        // user can confirm and pick the permission inheritance.
+        explorerTree.setDropHandler((nodes, destination, copy) -> {
+            if (copy) {
+                ShowCopyDocumentDialogEvent.fire(this, nodes, destination);
+            } else {
+                ShowMoveDocumentDialogEvent.fire(this, nodes, destination);
+            }
+        });
 
         // Add views.
         uiConfigCache.get(uiConfig -> {

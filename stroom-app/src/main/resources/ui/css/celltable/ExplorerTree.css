@@ -85,3 +85,38 @@
     display: flex;
     align-items: center;
  }
+
+/* The folder a dragged item will be dropped into. */
+.explorerTree .explorerTree-dropTarget .cellTableCell {
+    background-color: var(--row__background-color--hovered);
+    box-shadow: inset 0 0 0 1px var(--focus-border);
+}
+
+/* The image under the pointer while dragging, rendered off screen for the browser to snapshot. */
+.explorerCell-dragImage {
+    position: fixed;
+    top: -1000px;
+    left: -1000px;
+    /* Keeps the pointer clear of the first icon and leaves room for the shadow. */
+    padding: 12px 12px 12px 14px;
+    pointer-events: none;
+}
+
+.explorerCell-dragImageBox {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--text-color);
+    background-color: var(--page__background-color);
+    box-shadow: var(--popup__shadow);
+}
+
+.explorerCell-dragImageBox .explorerCell {
+    cursor: default;
+}
+
+.explorerCell-dragImageMore {
+    padding: var(--row__padding--vertical) 0;
+    opacity: 70%;
+}
