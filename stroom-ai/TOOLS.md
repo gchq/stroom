@@ -3852,7 +3852,10 @@ through the model. A call runs in this order:
 
 * **Arguments**: `mapping` or `changes` (objects, or JSON text); `schema_version` (a version, or the UUID of the
   XML schema document the user chose where several hold it); `feeds` (for standing
-  instructions); `sample` (text or list) or `stream_ids`; `splitter`; `build` and `name`, or `uuid`; `change` (the
+  instructions); `sample` (text or list) or `stream_ids`, every part of a stream read as its own text; `splitter`
+  (left out, a build with one Data Splitter has the sample read with it through Stroom's own parser,
+  `SplitterSpec.ofConverter`, as processing reads it; else a spec inferred from the sample); `build` and `name`, or
+  `uuid`; `change` (the
   version history line); `include_xslt` (also return the code when saving); `reviewed` (a `review_id`);
   `field_mapping`, `pipeline_uuid`, `max_records` (1 to 1000, default 50); `discard_hand_edit`,
   `hand_edit_choices`.
