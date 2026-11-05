@@ -80,9 +80,23 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         this.type = type;
         this.uuid = uuid;
         this.name = name;
+        validate(type, uuid);
+    }
 
-        Objects.requireNonNull(type, () -> "Null DocRef type " + toShortString());
-        Objects.requireNonNull(uuid, () -> "Null DocRef UUID " + toShortString());
+    private void validate(final String type, final String uuid) {
+        // TODO uncomment the blank checks on master/7.14, too risky to change on 7.13
+        if (type == null) {
+            throw new InvalidDocRefException("DocRef type must not be null " + toShortString());
+        }
+//        if (type.isBlank()) {
+//            throw new InvalidDocRefException("DocRef type must not be blank " + toShortString());
+//        }
+        if (uuid == null) {
+            throw new InvalidDocRefException("DocRef UUID must not be null" + toShortString());
+        }
+//        if (uuid.isBlank()) {
+//            throw new InvalidDocRefException("DocRef UUID must not be blank " + toShortString());
+//        }
     }
 
     /**
@@ -139,6 +153,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
     }
 
 
+    /// Comparison by type, name and uuid in that order. Comparison is case-sensitive.
     @Override
     public int compareTo(final DocRef o) {
         int diff = 0;
@@ -180,6 +195,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
         return toString();
     }
 
+    /// Equality on uuid ONLY, type and name are ignored.
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -217,21 +233,19 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
                '}';
     }
 
-    /**
-     * Compare this to other on type, uuid and name, unlike the {@link DocRef#equals(Object)}
-     * which only compares on type and uuid. This method is useful for determining if the name has changed
-     * as well as the key parts.
-     */
-    public boolean equalsIncludingName(final DocRef other) {
-        return Objects.equals(this, other);
+    /// Compare this to other on type, uuid and name, unlike the [DocRef#equals(Object)]
+    /// which only compares on uuid.
+    /// This method is useful for comparing a [DocRef] (that may have been de-serialised from JSON)
+    /// against a static magic value.
+    public boolean equalsAll(final DocRef other) {
+        return equalsAll(this, other);
     }
 
-    /**
-     * Compare two {@link DocRef} objects on type, uuid and name, unlike the {@link DocRef#equals(Object)}
-     * which only compares on type and uuid. This method is useful for determining if the name has changed
-     * as well as the key parts.
-     */
-    public static boolean equalsIncludingName(final DocRef docRef1, final DocRef docRef2) {
+    /// Compare two [DocRef] objects on type, uuid and name, unlike the [DocRef#equals(Object)]
+    /// which only compares on uuid.
+    /// This method is useful for comparing a [DocRef] (that may have been de-serialised from JSON)
+    /// against a static magic value.
+    public static boolean equalsAll(final DocRef docRef1, final DocRef docRef2) {
         if (docRef1 == docRef2) {
             return true;
         } else if (docRef1 == null) {
@@ -435,6 +449,17 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
             Objects.requireNonNull(uuid, "UUID not set");
             // Name is not strictly needed by the backend
             return new DocRef(type, uuid, name);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class InvalidDocRefException extends RuntimeException {
+
+        public InvalidDocRefException(final String message) {
+            super(message);
         }
     }
 }

@@ -84,9 +84,6 @@ public class CredentialsService implements StoredSecrets {
     private final Provider<CredentialsConfig> credentialsConfigProvider;
     private final KeyStoreFilePathChecker keyStoreFilePathChecker;
 
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     public CredentialsService(final CredentialsDao credentialsDao,
@@ -110,7 +107,7 @@ public class CredentialsService implements StoredSecrets {
      */
     private Function<Credential, CredentialWithPerms> createPermissionDecorator() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 return null;
             }
@@ -126,8 +123,7 @@ public class CredentialsService implements StoredSecrets {
 
     private Predicate<Credential> createPermissionFilter() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
-            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+            return securityContext.hasDocumentPermission(credential.asDocRef(), DocumentPermission.VIEW);
         };
     }
 
@@ -142,7 +138,7 @@ public class CredentialsService implements StoredSecrets {
         CredentialWithPerms retval = null;
         if (credential != null) {
 
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
                 final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
@@ -201,7 +197,8 @@ public class CredentialsService implements StoredSecrets {
             checkName(credential.getName(), uuid);
             checkKeyStoreFile(secret, uuid);
 
-            final Credential newCredential = new Credential(uuid,
+            final Credential newCredential = new Credential(
+                    uuid,
                     credential.getName(),
                     now,
                     now,

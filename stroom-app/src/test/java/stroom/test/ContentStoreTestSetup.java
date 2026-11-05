@@ -117,7 +117,7 @@ public class ContentStoreTestSetup {
                                  final HomeDirProvider homeDirProvider) {
         this.contentStoreResourceProvider = contentStoreResourceProvider;
         this.homeDirProvider = homeDirProvider;
-        LOGGER.info("Time of last GIT pull: {}", getTime(timeOfLastGitPull));
+        LOGGER.debug(() -> LogUtil.message("Time of last GIT pull: {}", getTime(timeOfLastGitPull)));
     }
 
     private String getTime(final Instant instant) {
@@ -171,7 +171,7 @@ public class ContentStoreTestSetup {
                         nextPull = timeOfLastGitPull.plus(TIME_BETWEEN_GIT_PULLS);
                     }
 
-                    LOGGER.info(() -> LogUtil.message(
+                    LOGGER.debug(() -> LogUtil.message(
                             "Time now: {}; Time of last GIT pull: {}; Time of next GIT pull: {}",
                             getTime(timeNow),
                             getTime(timeOfLastGitPull),
@@ -189,7 +189,7 @@ public class ContentStoreTestSetup {
                             }
                         }
                     } else {
-                        LOGGER.info("Not pulling from GIT repo to update local content cache repo");
+                        LOGGER.debug("Not pulling from GIT repo to update local content cache repo");
                     }
                 } else {
                     // Clone repo to filesystem. Not a bare repo as we want access to the content-store.yml file.
@@ -239,7 +239,7 @@ public class ContentStoreTestSetup {
                 final String contentStoreFileUrl = "file://" +
                                                    localContentRepo.resolve("source/content-store.yml");
                 final String sampleContentStoreFileUrl = "file://" +
-                                                   localContentRepo.resolve("sample-source/content-store.yml");
+                                                         localContentRepo.resolve("sample-source/content-store.yml");
 
                 // Hack to force the content store config to use our content store config file
                 contentStoreResource = contentStoreResourceProvider.get();
