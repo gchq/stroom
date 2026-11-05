@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -338,6 +339,9 @@ class StroomBuildFacts implements BuildFacts {
             documentAccess.read(new DocRef(DocumentationDoc.TYPE, String.valueOf(survey.get("uuid"))),
                             DocumentationDoc.class)
                     .flatMap(doc -> readState(BuildRecords.bodyText(doc)))
+                    // Without the streams deleted since: their shapes are surveyed again, and the plan says so.
+                    .map(state -> SurveyDoc.withoutStreams(state, GoneStreams.of(streamReader,
+                            SurveyDoc.streams(state))))
                     .ifPresent(states::add);
         }
         return combine(states);

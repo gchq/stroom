@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,6 +43,34 @@ class TestSurveyDoc {
         return SampleProfiler.map("feed", "SRC", "format", "json array", "streams_read", streams,
                 "records_read", records, "saturated", saturated, "new_shapes", 1,
                 "time_range", SampleProfiler.map("oldest", "t0", "newest", "t1"));
+    }
+
+    @Test
+    void streamsGoneSinceTheSurveyAreDroppedWithTheShapesSeenOnlyInThem() {
+        // Seen in testing: a feed's streams deleted part-way through a build; the survey kept pointing at them.
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("streams_read", List.of(1L, 2L));
+        state.put("saturated", true);
+        state.put("shapes", new LinkedHashMap<>(Map.of(
+                "only-in-1", Map.of("count", 3L, "streams", List.of(1L), "examples",
+                        List.of(Map.of("text", "a", "location", Map.of("stream", 1L, "part", 0L, "record", 0L)))),
+                "in-both", Map.of("count", 4L, "streams", List.of(1L, 2L), "examples", List.of(
+                        Map.of("text", "b", "location", Map.of("stream", 1L, "part", 0L, "record", 1L)),
+                        Map.of("text", "c", "location", Map.of("stream", 2L, "part", 0L, "record", 5L)))))));
+
+        assertThat(SurveyDoc.streams(state)).containsExactly(1L, 2L);
+        assertThat(SurveyDoc.withoutStreams(state, Set.of(3L))).isSameAs(state);
+
+        final Map<String, Object> kept = SurveyDoc.withoutStreams(state, Set.of(1L));
+
+        assertThat(kept.get("streams_read")).isEqualTo(List.of(2L));
+        assertThat(kept.get("saturated")).isEqualTo(false);
+        assertThat(List.copyOf(((Map<?, ?>) kept.get("shapes")).keySet())).isEqualTo(List.of("in-both"));
+        final Map<?, ?> both = (Map<?, ?>) ((Map<?, ?>) kept.get("shapes")).get("in-both");
+        assertThat(both.get("streams")).isEqualTo(List.of(2L));
+        assertThat((List<?>) both.get("examples")).hasSize(1);
+        // The state read is left as it was.
+        assertThat(state.get("streams_read")).isEqualTo(List.of(1L, 2L));
     }
 
     @Test

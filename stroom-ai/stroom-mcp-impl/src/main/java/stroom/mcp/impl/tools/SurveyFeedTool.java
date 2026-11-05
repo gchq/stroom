@@ -392,11 +392,22 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final SurveyRecord record = build == null
                 ? null
                 : surveyDocuments.load(build, feed).orElse(null);
-        final Map<String, Object> state = record == null
+        final Map<String, Object> read = record == null
                 ? null
                 : SurveyDoc.readState(record.text());
+        // Streams deleted since they were surveyed: their shapes are found again where the data is now.
+        final Set<Long> gone = read == null
+                ? Set.of()
+                : GoneStreams.of(streamReader, SurveyDoc.streams(read));
+        final Map<String, Object> state = read == null
+                ? null
+                : SurveyDoc.withoutStreams(read, gone);
+        final Set<String> dropped = read == null
+                ? Set.of()
+                : droppedShapes(read, state);
         final Set<Long> skip = new TreeSet<>(request.skipStreamIds());
         final Set<String> known = new LinkedHashSet<>(request.knownSignatures());
+        known.removeAll(dropped);
         if (state != null) {
             JsonValues.listOrEmpty(state.get("streams_read")).forEach(id -> skip.add(((Number) id).longValue()));
             JsonValues.mapOrEmpty(state.get("shapes")).keySet().forEach(signature -> known.add(String.valueOf(
@@ -447,6 +458,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             result.put("locations", List.of());
             result.put("time_range", span);
             result.put("hint", "Every stream in the feed has been read: the survey is complete.");
+            noteGone(result, gone, dropped);
             return keep(context, kept, result, Map.of());
         }
         if (streams.isEmpty()) {
@@ -462,7 +474,30 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
         final Map<String, Object> result = result(new Outcome(feed, span, chosen, exhausted, !known.isEmpty(),
                 state, streams.size(), request.maxStreams(), limits), reading, shapes, context);
+        noteGone(result, gone, dropped);
         return keep(context, kept, result, shapes.shapes());
+    }
+
+    // The shapes the survey knew that pruning gone streams left with no example.
+    private static Set<String> droppedShapes(final Map<String, Object> before, final Map<String, Object> after) {
+        final Set<String> dropped = new LinkedHashSet<>(JsonValues.mapOrEmpty(before.get("shapes")).keySet());
+        dropped.removeAll(JsonValues.mapOrEmpty(after.get("shapes")).keySet());
+        return dropped;
+    }
+
+    // Says which streams surveyed before are gone, and that their shapes are being found again.
+    private static void noteGone(final Map<String, Object> result, final Set<Long> gone, final Set<String> dropped) {
+        if (gone.isEmpty()) {
+            return;
+        }
+        result.put("gone_streams", new ArrayList<>(gone));
+        result.put("gone_note", gone.size() + " stream(s) surveyed before are gone (deleted, or no longer there): "
+                                + gone + ". They are no longer counted as read, nor their examples as locations"
+                                + (dropped.isEmpty()
+                ? ""
+                : "; " + dropped.size() + " shape(s) seen only in them are surveyed again, so they get "
+                  + "locations in the streams there are now") + ". The survey is not covered until it has been "
+                                + "read again.");
     }
 
     // Each stream's head, its records added to the shapes.
