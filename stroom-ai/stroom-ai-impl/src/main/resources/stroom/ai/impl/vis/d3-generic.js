@@ -134,6 +134,25 @@ if (!window.visualisations) {
     }
 
     // Scales value from [min, max] to [lo, hi] by square root, so areas grow with the value.
+    // A size from lo to hi by the scale chosen (Node Size Scale, Link Width Scale), as the ECharts adapter sizes:
+    // sqrt (the default: an area that grows with the value), log (for values spanning orders of magnitude, so a few
+    // large ones don't dwarf the rest), or linear.
+    function scaleBy(scale, value, min, max, lo, hi) {
+        if (!(max > min)) {
+            return (lo + hi) / 2;
+        }
+        var ratio;
+        if (scale === "log") {
+            // From the smallest value, so 0 and fractions are fine: log(1 + v - min) over log(1 + max - min).
+            ratio = Math.log(1 + Math.max(value, min) - min) / Math.log(1 + max - min);
+        } else if (scale === "linear") {
+            ratio = (Math.max(value, min) - min) / (max - min);
+        } else {
+            return scaleSqrt(value, min, max, lo, hi);
+        }
+        return lo + ratio * (hi - lo);
+    }
+
     function scaleSqrt(value, min, max, lo, hi) {
         if (!(max > min)) {
             return (lo + hi) / 2;
@@ -1147,6 +1166,10 @@ if (!window.visualisations) {
     var MAX_NAMED_CLUSTERS = 12;
 
     var OTHER_CLUSTERS = "Other clusters";
+    // The groups beyond Max Categories, combined.
+    var OTHER_GROUPS = "Other groups";
+    // The most of a cluster's nodes a legend item filters the dashboard by.
+    var MAX_LEGEND_NODES = 200;
 
     // The most clusters, and bridges between them, a report gives.
     var MAX_REPORTED_CLUSTERS = 10;
@@ -1452,19 +1475,19 @@ if (!window.visualisations) {
         return {of: of, list: list, modularity: modularity};
     }
 
-    // A node's cluster as drawn: its own if one of the MAX_NAMED_CLUSTERS largest, else Other clusters.
-    function clusterNameOf(clusters, name) {
+    // A node's cluster as drawn: its own if one of the largest (as many as Max Categories), else Other clusters.
+    function clusterNameOf(clusters, name, cap) {
         var index = clusters.of[name];
-        return index !== undefined && index < MAX_NAMED_CLUSTERS ? clusters.list[index].name : OTHER_CLUSTERS;
+        return index !== undefined && index < cap ? clusters.list[index].name : OTHER_CLUSTERS;
     }
 
     // The clusters of the nodes drawn, in the clusters' order (Other clusters last): the legend's, and the colours'.
-    function drawnClusters(clusters, names) {
+    function drawnClusters(clusters, names, cap) {
         var drawn = {};
         names.forEach(function (name) {
-            drawn[clusterNameOf(clusters, name)] = true;
+            drawn[clusterNameOf(clusters, name, cap)] = true;
         });
-        var order = clusters.list.slice(0, MAX_NAMED_CLUSTERS).map(function (cluster) {
+        var order = clusters.list.slice(0, cap).map(function (cluster) {
             return cluster.name;
         }).concat([OTHER_CLUSTERS]);
         return order.filter(function (name) {
@@ -2642,7 +2665,13 @@ if (!window.visualisations) {
 
     // The legend's position and the space it takes, once drawn, with an icon for the kind of series (see
     // legendIcon).
-    function legendOf(ctx, names, colours, icon) {
+    function legendOf(ctx, names, colours, icon, select) {
+        // Its items, and what each stands for as the dashboard's filters on this chart's selection read it: a
+        // series by its series column, unless the kind says its own (a pie's slices, a network's groups).
+        ctx.setLegend(names, select || function (name) {
+            return ctx.fields.has("series") ? [ctx.fields.selection([["series", ctx.fields.rawOf("series", name)]])]
+                : [];
+        });
         var position = textSetting(ctx.settings, "legend") || "top";
         var space = drawLegend(ctx, names, colours, position, icon);
         return {position: space > 0 ? position : "none", space: space};
@@ -3733,7 +3762,13 @@ if (!window.visualisations) {
         var colours = paletteOf(ctx.options, slices.length, ctx.style);
         legendOf(ctx, slices.map(function (slice) {
             return slice.name;
-        }), colours, "rect");
+        }), colours, "rect", function (name) {
+            // A slice stands for its name; the slices combined as Other for none.
+            var slice = slices.filter(function (item) {
+                return item.name === name;
+            })[0];
+            return !slice || slice.combined ? [] : [ctx.fields.selection([["name", ctx.fields.rawOf("name", name)]])];
+        });
         var shown = slices.filter(function (slice) {
             return !ctx.hidden[slice.name];
         });
@@ -4543,12 +4578,38 @@ if (!window.visualisations) {
         var hasGroups = fields.has("sourceGroup") || fields.has("targetGroup");
         var byGroup = !!clusters || (String(textSetting(settings, "nodeColours") || "group").toLowerCase() !== "node"
             && hasGroups);
+        // Max Categories: the most groups (or clusters) each given its own colour and legend entry; the rest are
+        // combined, grey, as the ECharts adapter does.
+        var maxCategories = intSetting(settings, "maxCategories", MAX_NAMED_CLUSTERS, 1, 100);
+        var keptGroups = null;
+        if (!clusters && byGroup) {
+            var nodesInGroup = {};
+            network.nodes.forEach(function (node) {
+                var group = node.group === null ? "(none)" : node.group;
+                nodesInGroup[group] = (nodesInGroup[group] || 0) + 1;
+            });
+            var ranked = Object.keys(nodesInGroup).sort(function (a, b) {
+                return nodesInGroup[b] - nodesInGroup[a];
+            });
+            if (ranked.length > maxCategories) {
+                keptGroups = {};
+                ranked.slice(0, maxCategories).forEach(function (group) {
+                    keptGroups[group] = true;
+                });
+                ctx.report.warnings.push((ranked.length - maxCategories) + " groups beyond Max Categories, the "
+                    + "smallest, are combined as " + OTHER_GROUPS);
+            }
+        }
         var groupOf = function (node) {
-            return clusters ? clusterNameOf(clusters, node.name) : (node.group === null ? "(none)" : node.group);
+            if (clusters) {
+                return clusterNameOf(clusters, node.name, maxCategories);
+            }
+            var group = node.group === null ? "(none)" : node.group;
+            return keptGroups && !keptGroups[group] ? OTHER_GROUPS : group;
         };
         var groups = clusters ? drawnClusters(clusters, network.nodes.map(function (node) {
             return node.name;
-        })) : [];
+        }), maxCategories) : [];
         network.nodes.forEach(function (node) {
             if (groups.indexOf(groupOf(node)) < 0) {
                 groups.push(groupOf(node));
@@ -4556,9 +4617,28 @@ if (!window.visualisations) {
         });
         var colours = paletteOf(ctx.options, byGroup ? Math.max(1, groups.length) : network.nodes.length,
             ctx.style).map(function (colour, i) {
-            return clusters && groups[i] === OTHER_CLUSTERS ? ctx.style.subtleText : colour;
+            return (clusters && groups[i] === OTHER_CLUSTERS) || (keptGroups && groups[i] === OTHER_GROUPS)
+                ? ctx.style.subtleText : colour;
         });
-        var legend = legendOf(ctx, byGroup && (hasGroups || clusters) ? groups : [], colours, "rect");
+        var legend = legendOf(ctx, byGroup && (hasGroups || clusters) ? groups : [], colours, "rect", function (name) {
+            // A group stands for its value in the group columns; a cluster for its members drawn (up to
+            // MAX_LEGEND_NODES); the clusters combined, for none.
+            if (name === OTHER_CLUSTERS || name === OTHER_GROUPS) {
+                return [];
+            }
+            if (clusters) {
+                return network.nodes.filter(function (node) {
+                    return groupOf(node) === name;
+                }).slice(0, MAX_LEGEND_NODES).map(function (node) {
+                    return nodeSelection(ctx.fields, network, node.name);
+                });
+            }
+            return ["sourceGroup", "targetGroup"].filter(function (role) {
+                return ctx.fields.has(role);
+            }).map(function (role) {
+                return ctx.fields.selection([[role, ctx.fields.rawOf(role, name)]]);
+            });
+        });
         var shownNodes = network.nodes.filter(function (node) {
             return !ctx.hidden[groupOf(node)];
         });
@@ -4619,9 +4699,11 @@ if (!window.visualisations) {
         var minTotal = totalValues.length ? Math.min.apply(null, totalValues) : 0;
         var maxTotal = totalValues.length ? Math.max.apply(null, totalValues) : 1;
         var sizeByTotal = String(textSetting(settings, "nodeSize") || "connections").toLowerCase() === "total";
+        var nodeScale = String(textSetting(settings, "nodeSizeScale") || "sqrt").toLowerCase();
+        var linkScale = String(textSetting(settings, "linkWidthScale") || "sqrt").toLowerCase();
         var radiusOf = function (node) {
-            return sizeByTotal ? scaleSqrt(totals[node.name], minTotal, maxTotal, 4, 24)
-                : scaleSqrt(node.degree, minDegree, maxDegree, 4, 24);
+            return sizeByTotal ? scaleBy(nodeScale, totals[node.name], minTotal, maxTotal, 4, 24)
+                : scaleBy(nodeScale, node.degree, minDegree, maxDegree, 4, 24);
         };
         var colourOf = function (node, i) {
             return byGroup ? colours[groups.indexOf(groupOf(node)) % colours.length] : colours[i % colours.length];
@@ -4645,7 +4727,8 @@ if (!window.visualisations) {
             var from = at[link.source];
             var to = at[link.target];
             // As wide as its weight, or (without one) the rows it comes from, as ECharts draws it.
-            var width = fields.has("weight") || maxValue > minValue ? scaleSqrt(link.value, minValue, maxValue, 1, 6)
+            var width = fields.has("weight") || maxValue > minValue
+                ? scaleBy(linkScale, link.value, minValue, maxValue, 1, 6)
                 : 1;
             // Links between clusters grey and thinner (Cluster Links), so the clusters stand out.
             var across = clusters && boolSetting(settings, "clusterLinks", true) &&
@@ -5192,6 +5275,10 @@ if (!window.visualisations) {
             id: state.id || "chart",
             toggleSeries: state.toggleSeries || function () {
             },
+            setLegend: function (names, select) {
+                state.legendNames = names;
+                state.legendSelect = select;
+            },
             // The legend's page shown, when its entries don't all fit, and how to show another.
             legendPage: state.legendPage || 0,
             setLegendPage: state.setLegendPage || function () {
@@ -5373,6 +5460,8 @@ if (!window.visualisations) {
         var drawn = null;
         // What is selected: a time range ({range, label, selection}) or the items clicked ({items}).
         var selected = null;
+        // What the legend's items shown stand for, as selections, while some are hidden (see toggleSeries).
+        var legendSelections = [];
         // What the chart remembers between draws (see drawChart).
         var state = {
             hidden: {},
@@ -5510,7 +5599,8 @@ if (!window.visualisations) {
         // clicked link that is the same either way round is sent both ways.
         function selections() {
             if (!selected) {
-                return [];
+                // Nothing clicked: what the legend's items shown stand for, if it is narrowed.
+                return legendSelections.slice();
             }
             if (selected.range) {
                 return [selected.selection];
@@ -5573,7 +5663,8 @@ if (!window.visualisations) {
                 render();
             } else if (name === "showAllSeries") {
                 state.hidden = {};
-                render();
+                legendSelections = [];
+                send();
             } else if (name === "downloadImage" && drawn) {
                 saveImage((value || "chart") + ".png");
             } else if (name === "downloadData" && drawn && lastArgs) {
@@ -5975,13 +6066,41 @@ if (!window.visualisations) {
             render();
         };
 
+        // A legend item clicked. Legend Click show only (asked for by the user): with every item shown, a click
+        // shows only the one clicked; each item clicked after is added; hiding the last one shown shows them all
+        // again. Hide: a click hides the item, as before. The items shown filter the dashboard as a click does.
         state.toggleSeries = function (name) {
-            if (state.hidden[name]) {
+            var names = state.legendNames || [];
+            var showOnly = String(textSetting(lastArgs ? lastArgs.settings || {} : {}, "legendClick")
+                || "show only").toLowerCase() !== "hide";
+            if (showOnly && Object.keys(state.hidden).length === 0 && names.length > 1) {
+                state.hidden = {};
+                names.forEach(function (other) {
+                    if (other !== name) {
+                        state.hidden[other] = true;
+                    }
+                });
+            } else if (state.hidden[name]) {
                 delete state.hidden[name];
             } else {
                 state.hidden[name] = true;
+                if (showOnly && names.every(function (other) {
+                    return state.hidden[other];
+                })) {
+                    state.hidden = {};
+                }
             }
-            render();
+            legendSelections = [];
+            if (Object.keys(state.hidden).length > 0 && state.legendSelect) {
+                names.filter(function (other) {
+                    return !state.hidden[other];
+                }).forEach(function (other) {
+                    state.legendSelect(other).forEach(function (selection) {
+                        legendSelections.push(selection);
+                    });
+                });
+            }
+            send();
         };
 
         function render() {
@@ -6038,6 +6157,16 @@ if (!window.visualisations) {
         }
 
         this.setData = function (context, settings, data) {
+            // Its legend shown whole, and no longer filtering, under other settings; kept narrowed on a refresh
+            // (it may filter this chart's own query).
+            if (lastArgs && JSON.stringify(lastArgs.settings) !== JSON.stringify(settings)
+                && Object.keys(state.hidden).length > 0) {
+                state.hidden = {};
+                legendSelections = [];
+                if (!selected && window.stroom && typeof window.stroom.select === "function") {
+                    window.stroom.select([]);
+                }
+            }
             lastArgs = {context: context, settings: settings, data: data};
             render();
         };
