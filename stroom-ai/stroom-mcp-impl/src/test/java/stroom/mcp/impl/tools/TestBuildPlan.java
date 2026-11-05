@@ -279,6 +279,21 @@ class TestBuildPlan {
         assertThat(((Map<?, ?>) status.get("next")).get("step")).isEqualTo("samples");
     }
 
+    @Test
+    void eventsStreamsLeftOutAreNamedAndNotUsed() {
+        // Seen in testing: the documentation step named the Events of an earlier run, whose raw stream had been
+        // deleted.
+        facts.eventsLeftOut = List.of(8L);
+
+        final Map<String, Object> status = elasticStatus(false, true, List.of());
+
+        assertThat(status.get("events_streams")).isEqualTo(List.of(9L));
+        assertThat(status.get("events_streams_left_out")).isEqualTo(List.of(8L));
+        assertThat(String.valueOf(status.get("events_left_out_note"))).contains("made from a raw stream since "
+                                                                                + "deleted");
+        assertThat(String.valueOf(status.get("next"))).doesNotContain("8]").doesNotContain("8,");
+    }
+
     // The plan of an Elasticsearch build with an events pipeline, an index doc and an indexing pipeline, both
     // stepped clean, its events processed and documented.
     private Map<String, Object> elasticStatus(final boolean indexingVerified,
