@@ -177,8 +177,12 @@ class ListVisualisationsTool extends AbstractWorkspaceTool {
         sb.append("\nClicks (echarts and d3): clicking a slice, bar, point, cell, link or node selects it "
                   + "(clicking it again, or empty space, clears it). The selection holds each column id it maps "
                   + "(e.g. category and series) and the same value under the table column's name, dates as ISO "
-                  + "8601 text; a network graph's node gives node, and its link source and target. A query or "
-                  + "table is filtered by it with an add_selection_filter change (propose_dashboard_change).\n");
+                  + "8601 text; a network graph's node gives node, and its link source and target. The legend "
+                  + "selects too, while it shows only some items and nothing is clicked (Legend Click show only: "
+                  + "a click shows only that item, later clicks add others): one selection per item shown, a "
+                  + "series by series, a pie's slice by name, a network's group by sourceGroup and targetGroup, a "
+                  + "cluster by its nodes' node. A query or table is filtered by it with an add_selection_filter "
+                  + "change (propose_dashboard_change), with terms on those keys.\n");
         sb.append("\nOptions (echarts): for what the style settings can't do, ECharts option overrides as a JSON "
                   + "object, with top-level keys ").append(String.join(", ", VisualisationPlan.OPTION_KEYS.stream()
                         .sorted()

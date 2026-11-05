@@ -109,8 +109,9 @@ class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     static final String NO_CHANGE = "no change was proposed";
 
     // The column ids a click on a generated chart selects.
+    // A network's sourceGroup and targetGroup are selected by its legend (a group shown there).
     static final Set<String> SELECTED_ROLES = Set.of("category", "series", "x", "y", "name", "source",
-            "target", "date", "level2", "level3", "level4", "level5", "level6");
+            "target", "date", "level2", "level3", "level4", "level5", "level6", "sourceGroup", "targetGroup");
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
     /// The selection key of a time range dragged on a time-series chart: its terms keep what is within the
     /// selection's from and to.
