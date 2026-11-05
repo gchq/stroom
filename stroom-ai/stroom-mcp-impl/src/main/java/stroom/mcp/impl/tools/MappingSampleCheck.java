@@ -94,6 +94,13 @@ final class MappingSampleCheck {
         warnings.addAll(PlaceholderChoices.warnings(placeholders));
         // Data a rule's own records never hold.
         warnings.addAll(LocalCheck.dataNotHeld(mapping, found.records()));
+        // Rules the sample never reached: this check says nothing of them.
+        final List<String> unreached = LocalCheck.rulesUnreached(mapping, found.records());
+        if (!unreached.isEmpty()) {
+            warnings.add("Rules " + unreached + " took none of the " + found.records().size() + " sample records, "
+                         + "so this check says nothing of them: before relying on them, step a record of each "
+                         + "(step_records at the survey's locations), or give a sample that holds them");
+        }
         // The required elements the sample's records leave out, counted.
         warnings.addAll(LocalCheck.requiredLeftEmpty(mapping, found.records(),
                 XsltGenerator.generate(mapping, schema, NullSafe.nonBlankStringElse(schema.version(), "4.1.0"))

@@ -597,6 +597,30 @@ public final class LocalCheck {
         return derived;
     }
 
+    /// The rules with conditions that none of the sample's records reach. Seen in testing: a sample of mostly one
+    /// kind of event checked clean, and the rules it never reached failed only in processing.
+    ///
+    /// @param mapping The mapping.
+    /// @param records The sample's records.
+    /// @return Their names, in the mapping's order; none when there are no records, or the mapping reads for_each.
+    public static List<String> rulesUnreached(final TranslationMapping mapping, final List<Object> records) {
+        if (hasText(mapping.forEach()) || records.isEmpty()) {
+            return List.of();
+        }
+        final Set<String> reached = new HashSet<>();
+        for (int n = 0; n < records.size(); n++) {
+            final String name = ruleOf(mapping, records.get(n), extracted(mapping, records, null, n));
+            if (name != null) {
+                reached.add(name);
+            }
+        }
+        return mapping.events().stream()
+                .filter(rule -> !rule.when().isEmpty() && !rule.drop())
+                .map(EventRule::name)
+                .filter(name -> !reached.contains(name))
+                .toList();
+    }
+
     /// The rule a record falls into.
     ///
     /// @param mapping   The mapping.

@@ -3028,7 +3028,9 @@ Summarises streams in one of two ways:
   read is listed under `unread`, and a verdict that would be `clean` becomes `unread` (seen: an Error stream still
   being written was summarised as clean).
 * **`events`**: up to `max_events` events of Events streams: counts per EventDetail type, TypeId and Action, how often
-  each event-logging path (and named Data entry) is populated, and the Data names.
+  each event-logging path (and named Data entry) is populated, and the Data names. A stream holding more is read at
+  events spread over it, not its start (seen in testing: "no Unknown events" taken from the first 2,000 of 6,000,
+  mostly of one kind).
 
 * **Arguments**: `stream_ids` (required: a list, one number, or numbers between commas), `kind` (required),
   `max_events` (default 200, at most 2,000).
@@ -3469,7 +3471,9 @@ error with its line, element path and message), and against quality rules beyond
 (`EventChecks.checkEventQuality`: `TimeCreated` a full UTC timestamp; `EventSource/System/Name`, `Environment`,
 `Generator`, `Device` and `EventDetail/TypeId` present; exactly one action under `EventDetail`; no empty elements).
 Given `stream_ids`, it reads the Events streams itself (`EventStreams`) rather than have the agent read them back:
-an agent once read 50 events back 23 at a time, 47 s a read, to check them.
+an agent once read 50 events back 23 at a time, 47 s a read, to check them. A stream holding more events than are
+checked (500 in all) is read at events spread over it, not its start (`spread` in `read`): seen in testing, the first
+500 of 6,000 events were almost all of one kind.
 
 * **Arguments**: `events_xml` (an `<Events>` document, e.g. step output) or `stream_ids` (Events streams processing
   wrote, as `wait_for_processing` lists them); exactly one of the two. `schema_version` (default the version the
