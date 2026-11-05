@@ -32,6 +32,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.svg.shared.SvgImage;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.PerformanceTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@PerformanceTest
 @Disabled
         // manual testing only
 class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {

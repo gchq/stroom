@@ -17,6 +17,7 @@
 package stroom.proxy.repo;
 
 import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
@@ -128,6 +129,7 @@ class TestFeedKey {
                 .isNotEqualTo(feedKey21a);
     }
 
+    @PerformanceTest
     @Disabled // Manual perf only
     @Test
     void testInternPerf() {

@@ -167,6 +167,9 @@ ext.contentPackDownloadDir = contentPackDownloadDir
 // Defaults to the number of processors.
 final int maxGradleWorkers = gradle.startParameter.maxWorkerCount
 
+// The JUnit tag of performance tests, see stroom.test.common.PerformanceTest.TAG
+final String performanceTestTag = "performance"
+
 logger.info("Max Gradle Workers: [$maxGradleWorkers]")
 
 //defines a list of gradle projects that we will publish with maven
@@ -302,7 +305,10 @@ subprojects {
     }
 
     test {
-        useJUnitPlatform()
+        useJUnitPlatform {
+            // Performance tests (@PerformanceTest) only run via the performanceTest task
+            excludeTags performanceTestTag
+        }
 
         // Set heap size for the test JVM(s) as we were running out of heap on GH Actions
         //maxHeapSize = (8 / Runtime.runtime.availableProcessors().intdiv(2)) + "G"
@@ -378,6 +384,32 @@ subprojects {
             events "failed"
             exceptionFormat = 'full'
             showStackTraces = true
+        }
+    }
+
+    // Runs only the tests marked @PerformanceTest, which the test task excludes. Not part of
+    // check/build, so run explicitly, e.g. ./gradlew performanceTest or
+    // ./gradlew :stroom-lmdb:performanceTest
+    tasks.register('performanceTest', Test) {
+        description = 'Runs the performance tests, i.e. those marked @PerformanceTest.'
+        group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        useJUnitPlatform {
+            includeTags performanceTestTag
+        }
+        // One test JVM at a time, so other tests don't distort the timings
+        maxParallelForks = 1
+        maxHeapSize = "4G"
+        // Same as the test task, needed by LMDB
+        jvmArgs '--add-opens', 'java.base/java.nio=ALL-UNNAMED',
+                '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED'
+        // Performance tests are run to see their timings, so always run them
+        outputs.upToDateWhen { false }
+        testLogging {
+            events "passed", "skipped", "failed"
+            showStandardStreams = true
+            exceptionFormat = 'full'
         }
     }
 
