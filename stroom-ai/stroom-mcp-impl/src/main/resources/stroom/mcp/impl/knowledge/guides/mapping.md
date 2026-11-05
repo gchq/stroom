@@ -134,6 +134,8 @@ rule's `"data": ["rule_id", "bytes"]` is short for Data entries of its action el
   `data_name`), or is added; `{"path": ..., "remove": true}` removes one. `"replace": true` replaces the rule whole;
   `{"name": ..., "remove": true}` removes it.
 - `common`: entries by `path` (and `data_name`), replaced, added, or removed with `"remove": true`.
+- `extract`: entries by the fields they extract (`names`): an entry replaces the one extracting any of its names, or
+  is added; `{"names": [...], "remove": true}` removes one. Send only the entries that change.
 - Any other key replaces that key whole.
 
 `changes_applied` in the result says what each change did.
