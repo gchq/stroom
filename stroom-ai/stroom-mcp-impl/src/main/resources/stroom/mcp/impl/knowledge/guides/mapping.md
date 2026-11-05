@@ -127,7 +127,9 @@ rule's `"data": ["rule_id", "bytes"]` is short for Data entries of its action el
 
 ## Changing a mapping
 
-`build_translation_xslt changes=` sends only what changes, merged into the mapping last sent or saved:
+`build_translation_xslt changes=` sends only what changes, merged into the mapping last sent or saved (last sent
+includes a call that was refused or had problems: its changes stand, so don't send them again; a rule or extract
+an earlier call removed is said in `changes_applied`, not refused, while a name the mapping never had is refused):
 
 - `events`: a rule by `name`. A new one is added after the others. For one already there, each key given replaces
   its own, and its `fields` change entry by entry: an entry replaces the rule's entry with the same `path` (and

@@ -452,7 +452,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             final TranslationBuilds.Base base = builds.mappingToChange(context, request.target(), request.uuid(),
                     request.build(), request.name());
             b.basedOn = base.basedOn();
-            final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes);
+            final MappingChanges.Applied applied = MappingChanges.applyChanges(base.mapping(), changes,
+                    base.earlier());
             given = applied.merged();
             b.applied = applied.done();
         } else if (given == null) {
@@ -641,7 +642,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         boolean inferred = false;
         if (samples != null && !samples.isEmpty() && "data_splitter".equals(b.mapping.input()) && splitter == null) {
             // The build's own converter, read by Stroom's parser as processing reads it, where it has one.
-            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(request.build());
+            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(request.build(), request.uuid());
             if (saved.isPresent()) {
                 splitter = SplitterSpec.ofConverter(saved.get().getValue());
                 warnings.add("sample: read with the build's Data Splitter '" + saved.get().getKey() + "', through "

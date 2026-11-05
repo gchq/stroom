@@ -18,12 +18,15 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
+import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.json.JsonUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -297,6 +300,33 @@ class TestBuildTranslationXsltTool {
         changed.put("events", events);
         assertThat(world.call(tool, Map.of("mapping", changed, "uuid", uuid, "sample", SAMPLE)).get("status"))
                 .isEqualTo("needs_review");
+    }
+
+    @Test
+    void theSampleIsReadWithTheBuildsDataSplitterWhenTheCallNamesOnlyTheXslt() {
+        // Seen in testing: a call naming only the XSLT's uuid, with no splitter, had its sample read with a spec
+        // guessed from it, and the Unknown gate had no records to show.
+        final DocRef converter = world.inBuild("acme-v1", TextConverterDoc.TYPE, "ACME-Splitter");
+        world.world.docs.put(converter.getUuid(), TextConverterDoc.builder().uuid(converter.getUuid())
+                .name("ACME-Splitter").version("v0").converterType(TextConverterDoc.TextConverterType.DATA_SPLITTER)
+                .data(SplitterXml.converter(SplitterSpec.fromMap(Map.of("kind", "key_value", "delimiter", " "))))
+                .build());
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"data_splitter\","), Map.class);
+        final String sample = """
+                ts=2026-09-28T10:00:00.000Z host=ws01 user=alice
+                ts=2026-09-28T10:01:00.000Z host=ws02 user=bob
+                """;
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "N", "sample", sample));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+
+        final Map<String, Object> again = world.call(tool, Map.of("uuid", uuid, "sample", sample, "changes",
+                Map.of("common", List.of(Map.of("path", "EventSource/Generator", "value", "acme2")))));
+
+        assertThat(list(again.get("warnings")))
+                .anyMatch(w -> String.valueOf(w).startsWith("sample: read with the build's Data Splitter "
+                                                            + "'ACME-Splitter'"));
     }
 
     @Test
