@@ -168,6 +168,25 @@ if (!window.visualisations) {
     }
 
     // Scales value from [min, max] to [lo, hi] by square root, so areas grow with the value.
+    // A size from lo to hi by the scale chosen (Node Size Scale, Link Width Scale): sqrt (the default: an area that
+    // grows with the value), log (for values spanning orders of magnitude, so a few large ones don't dwarf the
+    // rest), or linear.
+    function scaleBy(scale, value, min, max, lo, hi) {
+        if (!(max > min)) {
+            return (lo + hi) / 2;
+        }
+        var ratio;
+        if (scale === "log") {
+            // From the smallest value, so 0 and fractions are fine: log(1 + v - min) over log(1 + max - min).
+            ratio = Math.log(1 + Math.max(value, min) - min) / Math.log(1 + max - min);
+        } else if (scale === "linear") {
+            ratio = (Math.max(value, min) - min) / (max - min);
+        } else {
+            return scaleSqrt(value, min, max, lo, hi);
+        }
+        return lo + ratio * (hi - lo);
+    }
+
     function scaleSqrt(value, min, max, lo, hi) {
         if (!(max > min)) {
             return (lo + hi) / 2;
@@ -1837,6 +1856,8 @@ if (!window.visualisations) {
     // The most clusters coloured and named each its own; the rest are one, Other clusters, in a subtle colour.
     var MAX_NAMED_CLUSTERS = 12;
     var OTHER_CLUSTERS = "Other clusters";
+    // The groups beyond Max Categories, combined.
+    var OTHER_GROUPS = "Other groups";
     // The most clusters, and bridges between them, a report gives.
     var MAX_REPORTED_CLUSTERS = 10;
     var MAX_BRIDGES = 5;
@@ -2140,19 +2161,19 @@ if (!window.visualisations) {
         return {of: of, list: list, modularity: modularity};
     }
 
-    // A node's cluster as drawn: its own if one of the MAX_NAMED_CLUSTERS largest, else Other clusters.
-    function clusterNameOf(clusters, name) {
+    // A node's cluster as drawn: its own if one of the largest (as many as Max Categories), else Other clusters.
+    function clusterNameOf(clusters, name, cap) {
         var index = clusters.of[name];
-        return index !== undefined && index < MAX_NAMED_CLUSTERS ? clusters.list[index].name : OTHER_CLUSTERS;
+        return index !== undefined && index < cap ? clusters.list[index].name : OTHER_CLUSTERS;
     }
 
     // The clusters of the nodes drawn, in the clusters' order (Other clusters last): the legend's, and the colours'.
-    function drawnClusters(clusters, names) {
+    function drawnClusters(clusters, names, cap) {
         var drawn = {};
         names.forEach(function (name) {
-            drawn[clusterNameOf(clusters, name)] = true;
+            drawn[clusterNameOf(clusters, name, cap)] = true;
         });
-        var order = clusters.list.slice(0, MAX_NAMED_CLUSTERS).map(function (cluster) {
+        var order = clusters.list.slice(0, cap).map(function (cluster) {
             return cluster.name;
         }).concat([OTHER_CLUSTERS]);
         return order.filter(function (name) {
@@ -2355,12 +2376,44 @@ if (!window.visualisations) {
         // By cluster (nodeColours cluster), each its own colour and named in the legend.
         var colourEachNode = !byCluster && (String(textSetting(settings, "nodeColours") || "group").toLowerCase()
             === "node" || !(fields.has("sourceGroup") || fields.has("targetGroup")));
+        // Max Categories: the most groups (or clusters) each given its own colour and legend entry; the rest are
+        // combined, grey (asked for by the user: a legend of a group per department ran to dozens).
+        var maxCategories = intSetting(settings, "maxCategories", MAX_NAMED_CLUSTERS, 1, 100);
+        var keptGroups = null;
+        if (!byCluster && !colourEachNode) {
+            var nodesInGroup = {};
+            nodeNames.forEach(function (name) {
+                var group = nodes[name].group;
+                if (group !== null && group !== undefined) {
+                    nodesInGroup[group] = (nodesInGroup[group] || 0) + 1;
+                }
+            });
+            var ranked = Object.keys(nodesInGroup).sort(function (a, b) {
+                return nodesInGroup[b] - nodesInGroup[a];
+            });
+            if (ranked.length > maxCategories) {
+                keptGroups = {};
+                ranked.slice(0, maxCategories).forEach(function (group) {
+                    keptGroups[group] = true;
+                });
+                report.warnings.push((ranked.length - maxCategories) + " groups beyond Max Categories, the smallest, " +
+                    "are combined as " + OTHER_GROUPS);
+            }
+        }
         var groups = [];
         var groupIndex = {};
         var groupOfNode = function (name) {
-            return byCluster ? clusterNameOf(clusters, name) : (colourEachNode ? name : nodes[name].group);
+            if (byCluster) {
+                return clusterNameOf(clusters, name, maxCategories);
+            }
+            if (colourEachNode) {
+                return name;
+            }
+            var group = nodes[name].group;
+            return keptGroups && group !== null && group !== undefined && !keptGroups[group] ? OTHER_GROUPS : group;
         };
-        (byCluster ? drawnClusters(clusters, nodeNames) : nodeNames.map(groupOfNode)).forEach(function (group) {
+        (byCluster ? drawnClusters(clusters, nodeNames, maxCategories) : nodeNames.map(groupOfNode))
+            .forEach(function (group) {
             if (group !== null && groupIndex[group] === undefined) {
                 groupIndex[group] = groups.length;
                 groups.push(group);
@@ -2384,6 +2437,8 @@ if (!window.visualisations) {
         // Node Size: by its connections (how many others it links to), or by its links' total (their weights, or
         // the rows they come from, e.g. the messages a person sent and received).
         var sizeByTotal = String(textSetting(settings, "nodeSize") || "connections").toLowerCase() === "total";
+        var nodeScale = String(textSetting(settings, "nodeSizeScale") || "sqrt").toLowerCase();
+        var linkScale = String(textSetting(settings, "linkWidthScale") || "sqrt").toLowerCase();
         var minTotal = Infinity;
         var maxTotal = -Infinity;
         nodeNames.forEach(function (name) {
@@ -2473,7 +2528,7 @@ if (!window.visualisations) {
                 draggable: nodeCount <= 1000,
                 animation: nodeCount <= 500,
                 categories: groups.map(function (group) {
-                    return group === OTHER_CLUSTERS && byCluster
+                    return (group === OTHER_CLUSTERS && byCluster) || (group === OTHER_GROUPS && keptGroups)
                         ? {name: group, itemStyle: {color: style.subtleText}} : {name: group};
                 }),
                 force: physicsOf(settings, nodeCount),
@@ -2494,8 +2549,8 @@ if (!window.visualisations) {
                             ? clusters.list[clusters.of[name]].name : undefined,
                         value: n.degree,
                         category: groupOfNode(name) !== null ? groupIndex[groupOfNode(name)] : undefined,
-                        symbolSize: sizeByTotal ? scaleSqrt(n.weight, minTotal, maxTotal, 8, 48)
-                            : scaleSqrt(n.degree, minDegree, maxDegree, 8, 48),
+                        symbolSize: sizeByTotal ? scaleBy(nodeScale, n.weight, minTotal, maxTotal, 8, 48)
+                            : scaleBy(nodeScale, n.degree, minDegree, maxDegree, 8, 48),
                         label: {show: labelled[name] === true}
                     };
                 }),
@@ -2503,7 +2558,7 @@ if (!window.visualisations) {
                     var link = links[key];
                     // As wide as its weight, or (without one) the rows it comes from: e.g. a pair's messages.
                     var width = hasWeight || maxWeight > minWeight
-                        ? scaleSqrt(link.value, minWeight, maxWeight, 1, 6) : 1;
+                        ? scaleBy(linkScale, link.value, minWeight, maxWeight, 1, 6) : 1;
                     var across = greyAcross && clusters.of[link.source] !== clusters.of[link.target];
                     return {
                         source: link.source,
@@ -4889,6 +4944,35 @@ if (!window.visualisations) {
             chart.on("datazoom", onDataZoom);
             chart.on("legendselectchanged", function (params) {
                 var shown = params && params.selected ? params.selected : {};
+                var names = Object.keys(shown);
+                var showOnly = String(textSetting(lastArgs ? lastArgs.settings || {} : {}, "legendClick")
+                    || "show only").toLowerCase() !== "hide";
+                // Legend Click show only (asked for by the user): with every item shown, a click shows only the one
+                // clicked (ECharts has just hidden it); each item clicked after is added; hiding the last one shown
+                // shows them all again. Toolbar's Show All shows them all too.
+                if (showOnly && params && params.name !== undefined) {
+                    var noneShown = names.every(function (name) {
+                        return shown[name] === false;
+                    });
+                    if (hiddenNames.length === 0 && shown[params.name] === false) {
+                        var others = names.filter(function (name) {
+                            return name !== params.name;
+                        });
+                        chart.dispatchAction({type: "legendSelect", name: params.name});
+                        if (others.length) {
+                            chart.dispatchAction({type: "legendUnSelect", batch: others.map(function (name) {
+                                return {name: name};
+                            })});
+                        }
+                        shown = {};
+                        names.forEach(function (name) {
+                            shown[name] = name === params.name;
+                        });
+                    } else if (noneShown) {
+                        chart.dispatchAction({type: "legendAllSelect"});
+                        shown = {};
+                    }
+                }
                 hiddenNames = Object.keys(shown).filter(function (name) {
                     return shown[name] === false;
                 });
