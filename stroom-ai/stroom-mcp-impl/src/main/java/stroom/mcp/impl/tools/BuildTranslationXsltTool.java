@@ -289,10 +289,14 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                    + "check the mapping against before stepping: "
                                                                    + "fields no record has, and time formats the "
                                                                    + "values do not fit. For data_splitter input "
-                                                                   + "give splitter too."))
+                                                                   + "the build's Data Splitter reads it, or give "
+                                                                   + "splitter."))
                         .addProperty(SPLITTER_ARG, TranslationArgs.object("The Data Splitter spec "
                                                                           + "(build_data_splitter) that parses the "
-                                                                          + "sample, for the check."))
+                                                                          + "sample, for the check. Leave it out "
+                                                                          + "when the build has its Data Splitter: "
+                                                                          + "the check reads the sample with it, as "
+                                                                          + "processing does."))
                         .addStringProperty(BUILD_ARG, "Save the XSLT in this build, with the mapping kept with it, "
                                                       + "and return the document instead of the code: the XSLT "
                                                       + "never has to pass through you. With name for a new XSLT.")
@@ -635,6 +639,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         warnings.addAll(TranslationBuilds.zoneUnknown(b.mapping));
         SplitterSpec splitter = request.splitter();
         boolean inferred = false;
+        if (samples != null && !samples.isEmpty() && "data_splitter".equals(b.mapping.input()) && splitter == null) {
+            // The build's own converter, read by Stroom's parser as processing reads it, where it has one.
+            final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(request.build());
+            if (saved.isPresent()) {
+                splitter = SplitterSpec.ofConverter(saved.get().getValue());
+                warnings.add("sample: read with the build's Data Splitter '" + saved.get().getKey() + "', through "
+                             + "Stroom's own parser");
+            }
+        }
         if (samples != null && !samples.isEmpty() && "data_splitter".equals(b.mapping.input()) && splitter == null) {
             // Without the spec no record could be read, so nothing was checked: the rule for the rest went to the
             // user as "no sample records checked", logoffs and all. The spec is inferred, as build_data_splitter
