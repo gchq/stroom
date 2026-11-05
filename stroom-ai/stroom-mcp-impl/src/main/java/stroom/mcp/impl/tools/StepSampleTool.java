@@ -213,7 +213,6 @@ class StepSampleTool extends AbstractBuiltInTool {
                     final boolean keepOutputs) {
         stepping.checkCanStep();
         stepping.checkDrafts(call, context, pipelineUuid, draftCode);
-        stepping.refuseOlderThanFeed(streamIds);
         final SteppedPipeline pipeline = stepping.load(pipelineUuid);
         pipeline.refuseMistyped();
         stepping.refuseUnloadedReferences(pipeline);

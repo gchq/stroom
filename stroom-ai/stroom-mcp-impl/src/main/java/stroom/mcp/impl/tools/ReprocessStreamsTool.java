@@ -192,7 +192,6 @@ class ReprocessStreamsTool extends AbstractBuiltInTool {
                                   + "step needs stepping again.");
         }
         sources.buildFeedsOnly(ref, streamIds, null);
-        sampleStreamTexts.refuseOlderThanFeed(streamIds);
         final ProcessingSources.EventsSource source = sources.eventsSource(call, context, pipeline,
                 stringArg(call, CreateProcessorFilterTool.SOURCE_PIPELINE_UUID_ARG), streamIds,
                 ProcessorFilters.EVENTS);

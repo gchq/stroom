@@ -37,6 +37,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -473,18 +474,20 @@ class TestCreateProcessorFilterTool {
     }
 
     @Test
-    void aFeedWideFilterStartsNoEarlierThanItsFeed() {
-        // Seen (Qwen, VS Code): created_after a week before the feed was made also selects an earlier, deleted
-        // namesake's streams, which Stroom keeps under the same name.
+    void aFeedWideFilterMayStartBeforeItsFeedWasMade() {
+        // Seen in testing: a feed deleted and made again; its streams from before, shown in its Data tab, were
+        // refused as an earlier feed's. Stroom files streams by feed name, so they are the feed's own.
         otherInBuild();
         w.buildFeed("ACME");
         w.stream(6, "ACME", "Raw Events", null, null);
 
         final Gated gated = gatedThrough(Map.of("feed", "ACME", "created_after", "2026-10-01T00:00:00Z"));
 
-        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isEqualTo(ProcessingWorld.FEED_MADE);
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs())
+                .isEqualTo(Instant.parse("2026-10-01T00:00:00Z").toEpochMilli());
         assertThat(String.valueOf(gated.result().get("scope")))
-                .contains("created after 2026-10-09T21:06:40.000Z (when the feed was created");
+                .contains("created after 2026-10-01T00:00:00.000Z")
+                .doesNotContain("when the feed was created");
     }
 
     @Test
@@ -493,14 +496,15 @@ class TestCreateProcessorFilterTool {
         otherInBuild();
         w.buildFeed("ACME");
         w.stream(6, "ACME", "Raw Events", null, null);
-        // A namesake's.
+        // From before the feed was made (one deleted and made again): the feed's own, so listed too.
         w.stream(Meta.builder().id(2).feedName("ACME").typeName("Raw Events").status(Status.UNLOCKED)
                 .createMs(ProcessingWorld.FEED_MADE - 60_000).build());
 
         final ToolResult result = call(Map.of("feed", "ACME", "created_after", "2026-10-10T00:00:00Z"));
 
         assertThat(result.text()).contains("selects none of the feed's streams")
-                .contains(": 6 (2026-10-09T21:07:40.000Z). To process the sample, give stream_ids");
+                .contains(": 2 (2026-10-09T21:05:40.000Z), 6 (2026-10-09T21:07:40.000Z). To process the sample, "
+                          + "give stream_ids");
         assertThat(w.created).isEmpty();
     }
 
