@@ -2502,6 +2502,9 @@ behaviour; the settled ones are listed here with the section that records them.
 | Agent-added and dismissed stand-in candidates | Parked (2026-10-28) | Revisit if testing shows too many misses or false positives. |
 | Agent evaluation over `/mcp` with a real model | Parked (2026-10-24) | Kept out of CI. Last run: 35 of 53 cases on a small model, about 2.3 hours. |
 | Other chart libraries (Chart.js, Highcharts); sandboxing the visualisation frame | Parked | |
+| Network drilldown: double-click a node for its further links | Parked (2026-11-05) | The chart asks the dashboard to expand a node (a new message: today it can only send a selection); the dashboard runs the graph's own query again for links touching it, capped (e.g. 200), and sends them as an addition; the chart merges them beside the node, marked by distance, a second double-click collapsing them; a Drilldown setting, on by default. The dashboard side is the risk. See the README's roadmap. |
+| Second- and third-order connections | Proposed (2026-11-05) | In the chart: the 1 to 3 hop neighbourhood of a node, from the links loaded (bounded by Max Rows). By the agent: hop-by-hop queries from a starting node, each hop capped, into one table of links with a `hop` column, coloured by hop. Drilldown above is the interactive form. |
+| Fit a network to its view once its layout settles | Proposed (2026-11-05) | A network's force layout spreads wider than a small widget (half of a 60-node sample outside 600×400). |
 | Other dashboard widgets (inputs, table filter, embedded query) | Planned | See the README's roadmap. |
 | Document settings in configuration answers | Planned | See the README's roadmap. |
 | CEF: an AGENTS `vendor:` line isn't applied to the header | Open | Read and echoed only (`CefInstructions.VENDOR`). |
