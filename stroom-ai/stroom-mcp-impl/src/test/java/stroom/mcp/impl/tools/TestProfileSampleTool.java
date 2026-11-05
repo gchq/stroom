@@ -143,12 +143,37 @@ class TestProfileSampleTool {
         final StreamReader streamReader = Mockito.mock(StreamReader.class);
         Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
                 .createMs(1_000L).build());
-        Mockito.when(streamReader.cachedRawText(7L, StreamReader.MAX_SAMPLE_CHARS))
+        Mockito.when(streamReader.partCount(7L)).thenReturn(1);
+        Mockito.when(streamReader.cachedRawText(7L, 0, StreamReader.MAX_SAMPLE_CHARS))
                 .thenReturn(new StreamReader.RawText("a=1\n", false));
         Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
         final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess);
 
         assertThat(texts.read(List.of(7L)).texts()).containsEntry("stream 7", "a=1\n");
+    }
+
+    @Test
+    void everyPartOfASampleStreamIsReadAsItsOwnText() {
+        // Seen in testing: a feed's five latest streams uploaded again as one stream of five parts; only the first
+        // part was read, so the checks saw almost none of its kinds of event.
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        Mockito.when(documentAccess.canViewData()).thenReturn(true);
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.meta(7L)).thenReturn(Meta.builder().id(7L).feedName("ACME").typeName("Raw Events")
+                .createMs(1_000L).build());
+        Mockito.when(streamReader.partCount(7L)).thenReturn(3);
+        final int perPart = StreamReader.MAX_SAMPLE_CHARS / 3;
+        for (int part = 0; part < 3; part++) {
+            Mockito.when(streamReader.cachedRawText(7L, part, perPart))
+                    .thenReturn(new StreamReader.RawText("part=" + part + "\n", false));
+        }
+        Mockito.when(streamReader.charsetReport(7L)).thenReturn(null);
+        final SampleStreamTexts texts = new SampleStreamTexts(streamReader, documentAccess);
+
+        assertThat(texts.read(List.of(7L)).texts()).containsExactly(
+                Map.entry("stream 7 part 0", "part=0\n"),
+                Map.entry("stream 7 part 1", "part=1\n"),
+                Map.entry("stream 7 part 2", "part=2\n"));
     }
 
     @Test

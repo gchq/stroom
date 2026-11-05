@@ -106,6 +106,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             SampleProfiler.KEY_VALUE_FORMAT, SampleProfiler.CEF_FORMAT, SampleProfiler.CRI,
             RecordSplitter.UNKNOWN_TEXT);
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
+    /// The most parts of a stream read.
+    static final int MAX_PARTS = 20;
+    /// The parts of each of a feed's streams read by default when it is sampled across its life.
+    static final int FEED_PARTS = 3;
     static final String MAX_RECORDS_ARG = "max_records_per_stream";
     static final String EXAMPLES_ARG = "examples_per_shape";
     static final String BUILD_ARG = "build";
@@ -235,7 +239,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                            + "and a feed's last streams (read whole).")
                         .addIntegerProperty(MAX_PARTS_ARG, "Parts of a stream to read (a stream of several files "
                                                            + "received at once has one each), not records: "
-                                                           + "max_records_per_stream counts records.")
+                                                           + "max_records_per_stream counts records. Default 3, "
+                                                           + "or all (up to 20) for stream_ids and a feed's last "
+                                                           + "streams.")
                         .addIntegerProperty(MAX_RECORDS_ARG, "Default 1,000, or 10,000 for stream_ids and a feed's "
                                                              + "last streams.")
                         .addProperty(EXAMPLES_ARG, new IntegerSchema(null))
@@ -281,7 +287,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 StartOnboardingTool.streamIds(call, SKIP_STREAM_IDS_ARG),
                 stringListArg(call, KNOWN_SIGNATURES_ARG),
                 maxChars,
-                orDefault(bounded(call, MAX_PARTS_ARG, 1, 20), 3),
+                bounded(call, MAX_PARTS_ARG, 1, MAX_PARTS),
                 maxRecords,
                 orDefault(bounded(call, EXAMPLES_ARG, 1, 10), 2),
                 stringArg(call, BUILD_ARG));
@@ -422,7 +428,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         final boolean whole = !chosen.isEmpty() || exhausted;
         final Limits limits = new Limits(orDefault(request.maxChars(), whole
                 ? FeedSampling.SAMPLE_CHARS
-                : FeedSampling.FEED_CHARS), request.maxParts(), orDefault(request.maxRecords(), whole
+                : FeedSampling.FEED_CHARS), orDefault(request.maxParts(), whole
+                // Streams read whole are read through every part: seen in testing, a feed's latest streams uploaded
+                // again as one stream of five parts was surveyed through three.
+                ? MAX_PARTS
+                : FEED_PARTS), orDefault(request.maxRecords(), whole
                 ? FeedSampling.SAMPLE_RECORDS
                 : FeedSampling.FEED_RECORDS));
         final SurveyRecords kept = new SurveyRecords(build, record, state, request.examples());
@@ -959,7 +969,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param skipStreamIds   Streams already read.
     /// @param knownSignatures Shape signatures from earlier calls.
     /// @param maxChars        The most characters of a part, or null for the default.
-    /// @param maxParts        The most parts of a stream.
+    /// @param maxParts        The most parts of a stream, or null for the default.
     /// @param maxRecords      The most records of a stream, or null for the default.
     /// @param examples        The most examples a shape.
     /// @param build           The build to keep the survey in, or null.
@@ -970,7 +980,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            List<Long> skipStreamIds,
                            List<String> knownSignatures,
                            Integer maxChars,
-                           int maxParts,
+                           Integer maxParts,
                            Integer maxRecords,
                            int examples,
                            String build) {
