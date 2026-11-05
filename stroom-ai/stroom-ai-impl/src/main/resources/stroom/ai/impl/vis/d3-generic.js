@@ -50,10 +50,10 @@ if (!window.visualisations) {
     // toolbar above the chart, so this is only a margin.
     var STROOM_BUTTON_SPACE = 16;
 
-    // A selected item's border, and the solid line drawn either side of a selected link: each side half as thick
-    // as the item's border, so together as thick as it (asked for by the user).
+    // A selected item's border, and the solid line drawn either side of a selected link: each side a quarter as
+    // thick as the item's border, so together half as thick as it (asked for by the user).
     var SELECTED_BORDER = 3;
-    var LINK_OUTLINE = SELECTED_BORDER / 2;
+    var LINK_OUTLINE = SELECTED_BORDER / 4;
 
     var DEFAULT_TIME_PATTERN = "YYYY-MM-DD[T]HH:mm:ss.SSS[Z]";
 
