@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.10-parallel-pathways] - 2026-11-05
+
 * Bug **#5933** : Fix `Null DocRef UUID` error shown when setting permissions on a credential, annotation or annotation tag, and fix the document permissions list not scrolling, which required resizing the dialog to see all users and groups.
 
 * Bug **#5938** : Fix export of all content failing with a 403 when the user lacks the Manage Processors permission, and with a 500 when an analytic rule has no processing type.
@@ -2857,7 +2859,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.10-parallel-pathways...HEAD
+[v7.14-beta.10-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9-parallel-pathways...v7.14-beta.10-parallel-pathways
 [v7.14-beta.9-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.9-parallel-pathways
 [v7.14-beta.8-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.8-parallel-pathways
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
