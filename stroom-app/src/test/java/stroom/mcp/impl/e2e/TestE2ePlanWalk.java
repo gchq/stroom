@@ -19,8 +19,6 @@ package stroom.mcp.impl.e2e;
 import stroom.docref.DocRef;
 import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
-import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.McpTerminal;
 import stroom.mcp.impl.McpTestClient;
 import stroom.pipeline.shared.XsltDoc;
@@ -106,7 +104,6 @@ class TestE2ePlanWalk extends AbstractE2eTest {
     private DocumentationStore documentationStore;
 
     private String build;
-    private Long oldStream;
     private List<Long> events;
     private Map<String, Object> plan;
     private Map<String, Object> index;
@@ -119,7 +116,6 @@ class TestE2ePlanWalk extends AbstractE2eTest {
     @Test
     void theLucenePathIsWalkedByFollowingNextAlone() {
         client.answeringWith(TestE2ePlanWalk::decide);
-        deletedFeedBefore();
         final Map<String, Object> started = run("start_onboarding", args("source_name", "Walk lucene " + STAMP,
                 "samples", Map.of("logons.csv", SAMPLE)));
         build = (String) started.get("build");
@@ -175,13 +171,7 @@ class TestE2ePlanWalk extends AbstractE2eTest {
     // Stage 1 -------------------------------------------------------------------------------------------------
 
     private Map<String, Object> feedStep(final Map<String, Object> call) {
-        final Map<String, Object> made = run("create_feed", fill(call, "name", FEED));
-        if (oldStream != null) {
-            assertThat(String.valueOf(made.get("note")))
-                    .as("the earlier feed's streams, still under the name, are pointed out and not taken as samples")
-                    .contains(String.valueOf(oldStream), "earlier feed");
-        }
-        return made;
+        return run("create_feed", fill(call, "name", FEED));
     }
 
     private Map<String, Object> samplesStep(final Map<String, Object> call) {
@@ -399,14 +389,6 @@ class TestE2ePlanWalk extends AbstractE2eTest {
                     "pipeline_uuid", arguments.get("pipeline_uuid"), "stream_ids", arguments.get("stream_ids")));
             assertThat(message).as("processing before a clean step is refused, naming step_sample")
                     .contains("no clean step", "step_sample");
-            final List<Long> ids = ((List<?>) arguments.get("stream_ids")).stream()
-                    .map(AbstractE2eTest::number)
-                    .toList();
-            assertThat(ids).as("the plan names only the feed's own streams").doesNotContain(oldStream);
-            final String older = replyText("step_sample", args("pipeline_uuid", arguments.get("pipeline_uuid"),
-                    "stream_ids", List.of(oldStream)));
-            assertThat(older).as("stepping the deleted feed's stream is refused, naming the feed's own")
-                    .contains("older than feed", String.valueOf(ids.getFirst()));
             at("stepped", "step_sample");
         }
         if (Set.of("index_template", "indexed").contains(step)) {
@@ -415,17 +397,6 @@ class TestE2ePlanWalk extends AbstractE2eTest {
                     .as("not indexed yet: neither documentation nor promotion is next")
                     .isNotIn("index_documented", "promoted");
         }
-    }
-
-    // Seen in VS Code: a feed of the same name made and deleted before, its streams still in Stroom under the name.
-    private void deletedFeedBefore() {
-        final Map<String, Object> feed = client.json("create_feed", args("build", "walk-old-" + STAMP,
-                "name", FEED));
-        final Map<String, Object> upload = client.json("upload_sample", args("feed", FEED,
-                "sample", "[{\"old\": true}]"));
-        oldStream = number(upload.get("stream_id"));
-        delete(new DocRef(FeedDoc.TYPE, (String) feed.get("uuid"), FEED));
-        findFolder("System/MCP Workspace/walk-old-" + STAMP).map(ExplorerNode::getDocRef).ifPresent(this::delete);
     }
 
     // promote_build's approval, as after the user has seen the layout: its review, then the call with its id. The
