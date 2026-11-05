@@ -99,8 +99,11 @@ completion of a dateless time (it moves a time later than the stream's creation 
   crossing midnight); a new date starts again. It holds the previous time with `stroom:put`, which processing keeps
   for the stream but stepping keeps for one record: a time past midnight steps on the day before, and is right in
   processing.
-- **Times in several layouts:** read each layout (a splitter part each, or a rule each with its own `time_format`);
-  a record whose time still won't parse gets an empty time the schema refuses, unless the user agrees to
+- **Times in several layouts:** one `time_format` reads them where Java's optional sections can say it: a
+  fraction some values have, `yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]XXX`, or whole layouts as alternatives,
+  `[yyyy-MM-dd HH:mm:ss][dd/MMM/yyyy:HH:mm:ss Z]` (Stroom reads both; the check suggests one where it fits).
+  Otherwise read each layout (a splitter part each, or a rule each with its own `time_format`). A record whose time
+  still won't parse gets an empty time the schema refuses, unless the user agrees to
   `"time_fallback": "ReceivedTime"`, which writes that instead and logs a warning naming the record.
 
 ## Data
