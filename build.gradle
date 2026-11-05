@@ -93,11 +93,14 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 }
 
 ext.getSystemPropertyOrDefault = { propName, defaultValue ->
+    // Not System.hasProperty(), which is Groovy asking whether the System class has a property of
+    // that name, so is always false
+    final String sysPropVal = System.getProperty(propName)
     def val
-    if (System.hasProperty(propName)
-            && System.getProperty(propName) != "unspecified"
-            && System.getProperty(propName) != "") {
-        val = System.getProperty(propName)
+    if (sysPropVal != null
+            && sysPropVal != "unspecified"
+            && sysPropVal != "") {
+        val = sysPropVal
     } else {
         val = defaultValue
     }
@@ -159,9 +162,10 @@ ext.contentPackDefinitionFile = contentPackDefinitionFile
 def contentPackDownloadDir = "${System.properties['user.home']}/.stroom/contentPackDownload"
 ext.contentPackDownloadDir = contentPackDownloadDir
 
-final int maxGradleWorkers = getSystemPropertyOrDefault(
-        "org.gradle.workers.max",
-        Runtime.runtime.availableProcessors().intValue())
+// The worker limit Gradle is actually using, however it was set (--max-workers,
+// -Dorg.gradle.workers.max or org.gradle.workers.max in a gradle.properties file).
+// Defaults to the number of processors.
+final int maxGradleWorkers = gradle.startParameter.maxWorkerCount
 
 logger.info("Max Gradle Workers: [$maxGradleWorkers]")
 

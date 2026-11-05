@@ -63,8 +63,13 @@ LATEST_SUFFIX="-LATEST"
 # It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 
-# The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
+# The version of stroom-resources used for running the DB. Despite the name this is
+# a branch, as git clone --branch accepts either.
+STROOM_RESOURCES_GIT_TAG="7.13-stroom-7.13-proxy-stroom-all-dbs-non-durable"
+# The stroom-resources service for the DB. CI DBs are thrown away after each run,
+# so use the non-durable MySQL config, which makes the DB tests much faster.
+# bounceIt.sh prefixes the container name with bounceit_
+STROOM_DB_SERVICE_NAME="stroom-all-dbs-non-durable"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
@@ -109,6 +114,7 @@ stop_and_clear_down_stroom_all_dbs() {
   # clear down stroom-all-dbs container and volumes so we have a blank slate
   echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
   # bouncit.sh prefixes the volume and container names with bounceit_
+  # These filters are prefix matches so cover the durable and non-durable services
   docker ps -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker stop --time 0
   docker ps -a -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
@@ -154,7 +160,7 @@ generate_ddl_dump() {
   stop_and_clear_down_stroom_all_dbs
 
   # The service name is not prefixed with bounceit_ at this point
-  start_databases stroom-all-dbs
+  start_databases "${STROOM_DB_SERVICE_NAME}"
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -165,7 +171,7 @@ generate_ddl_dump() {
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
   docker exec \
-    bounceit_stroom-all-dbs \
+    "bounceit_${STROOM_DB_SERVICE_NAME}" \
     mysqldump \
       -d \
       -p"my-secret-pw" \
@@ -638,8 +644,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs"
-start_databases stroom-all-dbs
+echo "::group::Start ${STROOM_DB_SERVICE_NAME}"
+start_databases "${STROOM_DB_SERVICE_NAME}"
 echo "::endgroup::"
 
 echo "::group::Setup local.yml"
