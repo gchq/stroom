@@ -351,6 +351,13 @@ Planned, not yet built. Decisions and status are in [DESIGN.md](DESIGN.md).
   or D3 installed as Script docs, drawn by Stroom's own adapter scripts so no code from the model runs in the
   visualisation frame; the content pack's D3 Visualisations are wired as they are. Still to come: other libraries
   (e.g. Chart.js, Highcharts), and sandboxing the visualisation frame.
+* **Exploring a network's wider connections.** Parked (2026-11-05). Second- and third-order connections three ways:
+  a node drilldown, where double-clicking a node runs the graph's own query again for the links touching it and
+  adds them to the chart, placed beside it and collapsed by a second double-click (the dashboard side carries the
+  risk: a second search beside the chart's own, its results merged, not replacing); a neighbourhood view in the
+  chart, showing only what lies within 1 to 3 hops of a node, from the links already loaded; and expansion by the
+  agent, querying hop by hop from a starting node, each hop capped, into one table of links with a `hop` column.
+  Also proposed: fitting a network to its view once its layout settles.
 * **Models per task.** A default model, with an administrator able to set others for kinds of work (tool calling,
   code such as XSLT, writing). The likely shape: a small utility model for side calls (titles, follow-ups,
   summaries, digests); choosing the model for a question when it starts, shown and overridable; and tools that
