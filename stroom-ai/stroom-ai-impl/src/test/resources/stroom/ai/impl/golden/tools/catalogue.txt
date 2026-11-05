@@ -2175,8 +2175,20 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The value for legend, as text.",
           "type" : "string"
         },
+        "legendClick" : {
+          "description" : "The value for legendClick, as text.",
+          "type" : "string"
+        },
+        "linkWidthScale" : {
+          "description" : "The value for linkWidthScale, as text.",
+          "type" : "string"
+        },
         "logScale" : {
           "description" : "The value for logScale, as text.",
+          "type" : "string"
+        },
+        "maxCategories" : {
+          "description" : "The value for maxCategories, as text.",
           "type" : "string"
         },
         "maxGauges" : {
@@ -2205,6 +2217,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
         },
         "nodeSize" : {
           "description" : "The value for nodeSize, as text.",
+          "type" : "string"
+        },
+        "nodeSizeScale" : {
+          "description" : "The value for nodeSizeScale, as text.",
           "type" : "string"
         },
         "orient" : {

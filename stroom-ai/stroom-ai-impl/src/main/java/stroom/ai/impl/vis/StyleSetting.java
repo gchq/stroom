@@ -31,6 +31,9 @@ public enum StyleSetting {
             "the y axis's name; the column's name if blank"),
     LEGEND("legend", "Legend", Control.SELECTION, "top", List.of("top", "bottom", "right", "none"), null, null,
             "where the legend goes, shown only when there are several series or groups"),
+    LEGEND_CLICK("legendClick", "Legend Click", Control.SELECTION, "show only", List.of("show only", "hide"), null,
+            null, "show only: clicking a legend item shows only it, each item clicked after is added, and hiding the "
+                  + "last one shown shows them all again; hide: a click hides the item clicked"),
     SORT("sort", "Sort Bars", Control.SELECTION, "", List.of("", "Ascending", "Descending"), null, null,
             "sorts the categories by their total; blank keeps the table's order"),
     HORIZONTAL("horizontal", "Horizontal", Control.BOOLEAN, "false", List.of(), null, null,
@@ -58,6 +61,12 @@ public enum StyleSetting {
             null, "connections sizes each node by how many others it links to; total by its links' total: their "
                   + "weights, or without a weight column the rows they come from (e.g. the messages a person sent "
                   + "and received)"),
+    NODE_SIZE_SCALE("nodeSizeScale", "Node Size Scale", Control.SELECTION, "sqrt", List.of("sqrt", "log", "linear"),
+            null, null, "how node size follows its value: sqrt (its area grows with the value), log (for values "
+                        + "spanning orders of magnitude, so a few large ones don't dwarf the rest) or linear"),
+    LINK_WIDTH_SCALE("linkWidthScale", "Link Width Scale", Control.SELECTION, "sqrt",
+            List.of("sqrt", "log", "linear"), null, null, "how link width follows its weight: sqrt, log (for "
+                                                          + "weights spanning orders of magnitude) or linear"),
     COLOUR_SCALE("colourScale", "Colour Scale", Control.SELECTION, "blue",
             List.of("blue", "green", "red", "purple", "orange", "heat"), null, null,
             "the colours from the smallest value to the largest; heat runs from yellow to red"),
@@ -123,6 +132,8 @@ public enum StyleSetting {
             "the most slices; the smallest are combined as Other"),
     MAX_NODES("maxNodes", "Max Nodes", Control.NUMBER, "300", List.of(), 2, 5000,
             "the most nodes drawn; the least connected are left out"),
+    MAX_CATEGORIES("maxCategories", "Max Categories", Control.NUMBER, "12", List.of(), 1, 100,
+            "the most groups or clusters given their own colour and legend entry; the smallest are combined, grey"),
     MAX_VALUES("maxValues", "Max Rows", Control.NUMBER, "5000", List.of(), 1, 100_000,
             "the most table rows the chart is given");
 
