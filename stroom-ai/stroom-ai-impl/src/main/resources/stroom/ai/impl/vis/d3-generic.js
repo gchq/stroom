@@ -54,6 +54,9 @@ if (!window.visualisations) {
     // thick as the item's border, so together half as thick as it (asked for by the user).
     var SELECTED_BORDER = 3;
     var LINK_OUTLINE = SELECTED_BORDER / 4;
+    // How much of the selection colour tints a selected Sankey band: enough to see, little enough for a label over
+    // the band to read (seen in testing: drawn solid under the see-through band, a label on it couldn't be seen).
+    var BAND_TINT = 0.25;
 
     var DEFAULT_TIME_PATTERN = "YYYY-MM-DD[T]HH:mm:ss.SSS[Z]";
 
@@ -5007,8 +5010,12 @@ if (!window.visualisations) {
             var d = "M" + start + "C" + c1 + " " + c2 + " " + end;
             var selection = linkSelection(fields, link);
             if (ctx.isSelected(selection)) {
+                // Solid LINK_OUTLINE either side, the band between tinted (see BAND_TINT): the background drawn over
+                // the selection colour, all but BAND_TINT of it, inside the band's edges.
                 g.append("path").attr("d", d).attr("fill", "none").attr("stroke", selectionColour(ctx.style))
                     .attr("stroke-width", width + 2 * LINK_OUTLINE);
+                g.append("path").attr("d", d).attr("fill", "none").attr("stroke", backgroundOf(ctx.style))
+                    .attr("stroke-opacity", 1 - BAND_TINT).attr("stroke-width", width);
             }
             // Shaded from the source's colour to the target's, as ECharts shades a flow.
             var gradientId = "stroom-d3-flow-" + ctx.id + "-" + focusItems.length;
