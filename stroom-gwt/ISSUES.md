@@ -2029,6 +2029,31 @@ not yet worked on.
   accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
   its accessibility as such.
 
+### Dialog content doesn't line up with its title, and tab content has no padding
+
+**Open** (found 5 November 2026; measured in every dialog the stories show, 117). `.dialog__content`
+pads its content by the focus ring's room (7px) and `--dialog__padding--horizontal` (1rem) at the
+sides, so that a ring at any edge isn't cut. Three things undo or miss that:
+
+* ~~**Titles sit 5px right of the content in every dialog without an icon** (92 of 117 measured at 20px
+  against 15px). The title bar's `.dialog__icon` is there, 0px wide, when there's no icon, and the bar's
+  `gap: 5px` still comes after it (`dialog.css`, `.dialog__title-bar`).~~ **Fixed** (5 November 2026):
+  `.dialog__icon:empty` isn't shown, so the title starts at the content's edge. A dialog with an icon
+  is unchanged (the icon at the content's edge, the title 10px after it).
+* **Tab content isn't padded.** In a dialog with tabs (New/Edit Credentials, Settings, Filter, User
+  Preferences, Configure Ask Stroom AI, Stream), `.tab-bar__panel` clips (`overflow: hidden`) with no
+  padding, so it cuts the left 4px of a field's ring that the dialog content made room for (New
+  Credentials: Name, Expires, Type, Private Key and the rest; Edit Credentials; Filter's Include and
+  Exclude). The gap under the tabs is 0px in New Credentials, Settings and Filter, 3px in User
+  Preferences, 10-15px in the others; the tab labels sit 4px right of the content.
+* **Other clipping panes:** Change Step Filters' right pane (`.split-pane__pane`, Minimum Severity and
+  Output) and the annotation Status and Assigned To choosers' quick filter (cut left, right and top).
+
+Some dialogs pad their content again (`form-padding`, 21px: Add Notification, the schedules, HTTP
+client configuration, the password dialogs) and some less (8px: New Dictionary and Save As, Add
+External Users, Edit Tags). Screenshots: `app-main-credentialsscreen--credentials` (New Credential),
+`app-main-annotationeditor--status-chooser-keys`.
+
 ## Copy-paste mistakes and typos
 
 **Reported.**
