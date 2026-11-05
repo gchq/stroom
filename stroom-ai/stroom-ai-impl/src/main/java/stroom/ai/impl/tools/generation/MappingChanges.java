@@ -39,6 +39,13 @@ import java.util.Objects;
 /// all, so the agent edited the mapping file by hand instead, a dozen calls, and lost an entry it left out.
 public final class MappingChanges {
 
+    // A rule or extract entry removed that the mapping from before had but the base doesn't: an earlier call removed
+    // it, so it is said rather than refused. The changes build on the mapping last sent, even by a call that was
+    // refused, so a removal is sent again after one is already made (seen in testing: four calls refused for rules
+    // an earlier, refused call had removed). One the mapping never had is still refused: a wrong name.
+    private static final String ALREADY_GONE = " was already removed, by an earlier call (changes build on the "
+                                               + "mapping last sent, a refused call's changes too): nothing removed";
+
     private MappingChanges() {
         // Static only.
     }
@@ -53,6 +60,21 @@ public final class MappingChanges {
     /// @return The mapping with the changes merged in, and what each change did.
     /// @throws ToolRefusal if a change can't apply (no name, no path, removing what isn't there).
     public static Applied applyChanges(final Map<String, Object> base, final Object changes) {
+        return applyChanges(base, changes, null);
+    }
+
+    /// As [#applyChanges(Map, Object)], knowing the mapping from before the changes the base holds (the saved XSLT's,
+    /// or the draft): a rule or extract entry removed that the base lacks but that one had was removed by an
+    /// earlier call, and is said rather than refused; one neither has is refused (a wrong name, say).
+    ///
+    /// @param base    The mapping, as JSON-like values (left as it is).
+    /// @param changes What changes, as for [#applyChanges(Map, Object)].
+    /// @param earlier The mapping from before the base's changes, or null if there is none.
+    /// @return The mapping with the changes merged in, and what each change did.
+    /// @throws ToolRefusal if a change can't apply.
+    public static Applied applyChanges(final Map<String, Object> base,
+                                       final Object changes,
+                                       final Map<String, Object> earlier) {
         final Map<String, Object> given = changesOf(changes, "changes is an object holding only what changes, e.g. "
                                                              + "{\"events\": [{\"name\": ..., \"fields\": [only the "
                                                              + "entries that change]}]} or {\"common\": [{\"path\": "
@@ -61,9 +83,9 @@ public final class MappingChanges {
         final List<String> done = new ArrayList<>();
         for (final Map.Entry<String, Object> change : given.entrySet()) {
             switch (change.getKey()) {
-                case "events" -> changeRules(listIn(merged, "events"), change.getValue(), done);
+                case "events" -> changeRules(listIn(merged, "events"), change.getValue(), done, earlier);
                 case "common" -> changeCommon(listIn(merged, "common"), change.getValue(), done);
-                case "extract" -> changeExtracts(listIn(merged, "extract"), change.getValue(), done);
+                case "extract" -> changeExtracts(listIn(merged, "extract"), change.getValue(), done, earlier);
                 default -> {
                     merged.put(change.getKey(), change.getValue());
                     done.add("'" + change.getKey() + "' replaced");
@@ -124,7 +146,10 @@ public final class MappingChanges {
     // Extract entries by the fields they extract. Seen in testing: changes.extract replaced the whole list, so an
     // agent sending its few new entries wiped the rest (26 entries cut to 2), and every record fell to the rule for
     // the rest.
-    private static void changeExtracts(final List<Object> extracts, final Object value, final List<String> done) {
+    private static void changeExtracts(final List<Object> extracts,
+                                       final Object value,
+                                       final List<String> done,
+                                       final Map<String, Object> earlier) {
         for (final Object entry : each(value)) {
             final List<String> names = entry instanceof final Map<?, ?> map
                     ? JsonValues.strings(map.get("names"))
@@ -150,11 +175,17 @@ public final class MappingChanges {
             }
             if (JsonValues.truthy(((Map<?, ?>) entry).get("remove"))) {
                 if (found.isEmpty()) {
-                    throw new ToolRefusal("changes.extract removes " + names + ", which no entry extracts (the "
-                                          + "extract list: " + extractNames(extracts) + ")");
+                    final boolean hadIt = earlier != null && JsonValues.maps(earlier.get("extract")).stream()
+                            .anyMatch(had -> JsonValues.strings(had.get("names")).stream().anyMatch(names::contains));
+                    if (!hadIt) {
+                        throw new ToolRefusal("changes.extract removes " + names + ", which no entry extracts (the "
+                                              + "extract list: " + extractNames(extracts) + ")");
+                    }
+                    done.add(said + ALREADY_GONE);
+                } else {
+                    extracts.remove((int) found.getFirst());
+                    done.add(said + " removed");
                 }
-                extracts.remove((int) found.getFirst());
-                done.add(said + " removed");
             } else if (found.isEmpty()) {
                 extracts.add(entry);
                 done.add(said + " added");
@@ -175,7 +206,10 @@ public final class MappingChanges {
                         .toList());
     }
 
-    private static void changeRules(final List<Object> rules, final Object value, final List<String> done) {
+    private static void changeRules(final List<Object> rules,
+                                    final Object value,
+                                    final List<String> done,
+                                    final Map<String, Object> earlier) {
         for (final Object rule : each(value)) {
             if (!(rule instanceof final Map<?, ?> named) || !JsonValues.truthy(named.get("name"))) {
                 throw new ToolRefusal("Each rule in changes.events needs its name: it changes the rule of that "
@@ -185,11 +219,15 @@ public final class MappingChanges {
             final int at = indexOf(rules, "name", name);
             if (JsonValues.truthy(named.get("remove"))) {
                 if (at < 0) {
-                    throw new ToolRefusal("changes.events removes rule '" + str(name) + "', which the "
-                                          + "mapping does not have (its rules: " + names(rules) + ")");
+                    if (earlier == null || indexOf(listIn(copyMap(earlier), "events"), "name", name) < 0) {
+                        throw new ToolRefusal("changes.events removes rule '" + str(name) + "', which the "
+                                              + "mapping does not have (its rules: " + names(rules) + ")");
+                    }
+                    done.add("rule '" + str(name) + "'" + ALREADY_GONE);
+                } else {
+                    rules.remove(at);
+                    done.add("rule '" + str(name) + "' removed");
                 }
-                rules.remove(at);
-                done.add("rule '" + str(name) + "' removed");
             } else if (at < 0) {
                 rules.add(withoutReplace(named));
                 done.add("rule '" + str(name) + "' added after the others");
@@ -269,7 +307,17 @@ public final class MappingChanges {
         }
         if (JsonValues.truthy(given.get("remove"))) {
             if (at < 0) {
-                throw new ToolRefusal(changes + " removes " + said(in, found) + ", which the mapping does not have");
+                // A Data entry needs its data_name too: the entries the path has are named (seen in testing: a
+                // removal without it refused with no hint of why).
+                final List<String> samePath = entries.stream()
+                        .filter(other -> other instanceof final Map<?, ?> map && found.getFirst().equals(
+                                commonKey(map).getFirst()))
+                        .map(other -> said(in, commonKey((Map<?, ?>) other)))
+                        .toList();
+                throw new ToolRefusal(changes + " removes " + said(in, found) + ", which the mapping does not have"
+                                      + (samePath.isEmpty()
+                        ? ""
+                        : " (it has " + String.join(", ", samePath) + ": remove one of these by its data_name)"));
             }
             entries.remove(at);
             done.add(said(in, found) + " removed");

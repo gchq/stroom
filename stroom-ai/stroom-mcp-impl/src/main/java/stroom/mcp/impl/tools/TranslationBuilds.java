@@ -117,7 +117,7 @@ class TranslationBuilds {
                          final String name) {
         final Optional<Map<String, Object>> sent = SentMappings.sent(context, target);
         if (sent.isPresent()) {
-            return new Base(sent.get(), null);
+            return new Base(sent.get(), null, earlierMapping(context, uuid, build, name));
         }
         String found = uuid;
         if (found == null && NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)) {
@@ -126,7 +126,7 @@ class TranslationBuilds {
                 final Optional<Map<String, Object>> draft = SentMappings.sent(context, SentMappings.DRAFT + build)
                         .or(() -> SentMappings.sent(context, SentMappings.DRAFT));
                 if (draft.isPresent()) {
-                    return new Base(draft.get(), ON_THE_DRAFT);
+                    return new Base(draft.get(), ON_THE_DRAFT, null);
                 }
             }
         }
@@ -134,12 +134,36 @@ class TranslationBuilds {
             return new Base(keptOrRefuse(found, "XSLT " + found + " keeps no translation mapping to change: give the "
                                                 + "whole mapping").payload().get("mapping") instanceof final Map<?, ?> m
                     ? copy(m)
-                    : Map.of(), null);
+                    : Map.of(), null, null);
         }
         throw new ToolRefusal("changes needs a mapping to apply to: uuid= the saved XSLT, the same build and name as "
                               + "a mapping sent or saved before, or a draft from draft_translation_mapping this "
                               + "session (build= the same build). None was found for those: draft one, or give the "
                               + "whole mapping.");
+    }
+
+    // The mapping from before the changes the last sent one holds: the one kept with the XSLT (uuid, or the build's
+    // XSLT of that name), else the session's draft; null if there is neither. A rule it had that the last sent one
+    // lacks was removed by an earlier call.
+    private Map<String, Object> earlierMapping(final ToolCallContext context,
+                                               final String uuid,
+                                               final String build,
+                                               final String name) {
+        String found = uuid;
+        if (found == null && NullSafe.isNonBlankString(build) && NullSafe.isNonBlankString(name)) {
+            found = xsltNamed(build, name).orElse(null);
+        }
+        if (found != null) {
+            final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(NullSafe.get(
+                    documentAccess.read(new DocRef(XsltDoc.TYPE, found), XsltDoc.class).orElse(null),
+                    XsltDoc::getDescription));
+            if (kept.isPresent() && kept.get().payload().get("mapping") instanceof final Map<?, ?> m) {
+                return copy(m);
+            }
+        }
+        return SentMappings.sent(context, SentMappings.DRAFT + NullSafe.string(build))
+                .or(() -> SentMappings.sent(context, SentMappings.DRAFT))
+                .orElse(null);
     }
 
     /// The mapping to regenerate from, and the schema version it was saved for: the one kept with the XSLT (uuid),
@@ -489,9 +513,14 @@ class TranslationBuilds {
     /// sample's first format, so a stream of two formats read only one, its records had none of the mapping's fields,
     /// and the Unknown gate had no records to show.
     ///
-    /// @param build The build, or null.
+    /// @param given The build the call names, or null.
+    /// @param uuid  The XSLT the call names, or null: its build where the call names none (seen in testing: a call
+    ///              naming only the XSLT's uuid fell back to guessing the spec).
     /// @return The converter's name and XML; empty without a build, or with none or several Data Splitters.
-    public Optional<Map.Entry<String, String>> dataSplitter(final String build) {
+    public Optional<Map.Entry<String, String>> dataSplitter(final String given, final String uuid) {
+        final String build = NullSafe.isNonBlankString(given) || NullSafe.isBlankString(uuid)
+                ? given
+                : guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).orElse(null);
         if (NullSafe.isBlankString(build)) {
             return Optional.empty();
         }
@@ -516,7 +545,8 @@ class TranslationBuilds {
     ///
     /// @param mapping The mapping, as JSON maps and lists.
     /// @param basedOn What it was, when it was the session's draft ([#ON_THE_DRAFT]), else null.
-    record Base(Map<String, Object> mapping, String basedOn) {
+    /// @param earlier The mapping from before the changes it holds (the saved XSLT's, else the draft), or null.
+    record Base(Map<String, Object> mapping, String basedOn, Map<String, Object> earlier) {
 
     }
 
