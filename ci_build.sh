@@ -150,6 +150,14 @@ start_databases() {
   echo -e "${GREEN}Running Docker containers:${NC}"
   docker ps --format '{{.Names}}'
 
+  # Shows which MySQL config file is mounted, i.e. durable or non-durable.
+  # Asks docker rather than MySQL, so doesn't need to wait for MySQL to start.
+  echo -e "${GREEN}Mounts for ${BLUE}bounceit_${STROOM_DB_SERVICE_NAME}${GREEN}:${NC}"
+  docker inspect \
+    "bounceit_${STROOM_DB_SERVICE_NAME}" \
+    --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}' \
+    || true
+
   popd > /dev/null
 }
 
