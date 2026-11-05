@@ -186,19 +186,22 @@ class SaveTextConverterTool extends AbstractBuiltInTool {
             return Optional.of("Not run on a sample: the build has no raw sample stream of its own. Step the "
                                + "pipeline on a raw stream before processing.");
         }
-        final List<String> texts;
+        final Map<String, String> named;
         try {
-            texts = List.copyOf(sampleStreamTexts.read(streamIds).texts().values());
+            named = sampleStreamTexts.read(streamIds).texts();
         } catch (final ToolRefusal e) {
             return Optional.of("Not run on the sample streams " + streamIds + ": " + e.getMessage());
         }
-        final List<StroomSplitterRun.Result> runs = StroomSplitterRun.run(dataSplitterSchema, code, texts);
+        // A text per stream, or per part of a stream of several: each error names its own.
+        final List<String> names = List.copyOf(named.keySet());
+        final List<StroomSplitterRun.Result> runs = StroomSplitterRun.run(dataSplitterSchema, code,
+                List.copyOf(named.values()));
         final List<String> errors = new ArrayList<>();
         int records = 0;
         for (int i = 0; i < runs.size(); i++) {
-            final long streamId = streamIds.get(i);
+            final String name = names.get(i);
             records += runs.get(i).records().size();
-            runs.get(i).errors().forEach(error -> errors.add("stream " + streamId + ": " + error));
+            runs.get(i).errors().forEach(error -> errors.add(name + ": " + error));
         }
         if (!errors.isEmpty()) {
             throw new ToolRefusal("Not saved: Stroom's parser reports " + errors.size() + " error(s) running the "
