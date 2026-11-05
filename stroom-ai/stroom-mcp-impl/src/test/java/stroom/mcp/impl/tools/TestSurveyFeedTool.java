@@ -227,6 +227,25 @@ class TestSurveyFeedTool {
     }
 
     @Test
+    void aStreamNamedByIdIsSurveyedThroughEveryPart() {
+        // Seen in testing: a feed's five latest streams uploaded again as one stream of five parts was surveyed
+        // through three, so the kinds of event only in the last two were never seen.
+        final Meta meta = meta(9, "ACME", 1_760_000_000_000L);
+        Mockito.when(streamReader.meta(9L)).thenReturn(meta);
+        Mockito.when(streamReader.readHead(eq(9L), anyInt(), anyInt())).thenAnswer(invocation ->
+                new StreamReader.RawHead("{\"action\": \"a" + invocation.getArgument(1) + "\"}\n", false, 5));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [9]}"));
+
+        for (int part = 0; part < 5; part++) {
+            Mockito.verify(streamReader).readHead(eq(9L), eq(part), anyInt());
+        }
+        final Map<?, ?> read = (Map<?, ?>) ((List<?>) result.get("per_stream")).getFirst();
+        assertThat(read.get("parts")).isEqualTo(5);
+        assertThat(read.get("head_only")).isEqualTo(false);
+    }
+
+    @Test
     void aFeedsLastStreamsAreReadWholeAndOneReadOnlyInPartIsNotCovered() {
         // Seen in Ask Stroom AI: a one-stream feed read to its 334th record of 1,000 was "covered: every stream in
         // the feed has been read", saturated, and the agent found the other 666 records only through read_stream.

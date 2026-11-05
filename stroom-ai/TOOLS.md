@@ -2656,7 +2656,9 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
 
 * **Arguments**: `feed` (or `stream_ids`), `stream_type` (default Raw Events), `stream_ids`, `max_streams` (1 to 100,
   default 10), `skip_stream_ids`, `known_signatures`, `max_chars_per_stream` (1,000 to 5,000,000),
-  `max_parts_per_stream` (1 to 20, default 3), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
+  `max_parts_per_stream` (1 to 20; default every part, up to 20, for `stream_ids` and a feed's last streams, which
+  are read whole, else 3: seen in testing, a feed's latest streams uploaded again as one stream of five parts was
+  surveyed through three), `max_records_per_stream` (10 to 10,000), `examples_per_shape` (1 to 10,
   default 2), `build`.
 * **Returns**: `feed`, `format`, `time_range`, `streams_read`, `records_read`, `records_in` (an XML document's root
   with its namespace, which the examples inherit), `saturated`, `coverage`, `per_stream` (each stream's records,
