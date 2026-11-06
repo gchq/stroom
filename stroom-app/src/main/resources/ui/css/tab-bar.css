@@ -40,11 +40,19 @@
     padding: 4px;
 }
 
-/* In a dialog, drawn 4px into the content's room above and before it (which holds focus rings,
-   dialog.css), and as much less room below as the bar is higher than it was (by 10px), so its tabs
-   and the fields after them stay about where they were */
+/* In a dialog, drawn 4px into the room round it (which holds focus rings): the content's above and
+   before it (dialog.css), and the panel's below it */
 .dialog__content .tab-bar--link {
-    margin: -4px 0 max(0px, calc(var(--control__gap--vertical) - 10px)) -4px;
+    margin: -4px 0 -4px -4px;
+}
+
+/* In a dialog, the panel the tabs show is a form group's gap below them, whatever it holds (a form,
+   or a grid or editor that fills it), so the tabs read as its heading. It doesn't clip (a layer
+   container does), so a form tab's room for focus rings (layout-helpers.css), which reaches into
+   the content's and this gap, isn't cut off; it shows one layer at a time, so has nothing to hide */
+.dialog__content .tab-bar__panel {
+    overflow: visible;
+    padding-top: var(--control__gap--vertical);
 }
 
 /* The tab list: the tabs and their separators, over the whole bar, so they are placed in it as in

@@ -24,6 +24,15 @@
     min-height: 0;
 }
 
+/* In a dialog, it reaches out above and to each side by its controls' form padding (which a page's
+   tab has from its edge), so they line up with the dialog's title and other tabs' controls; the
+   padding stays inside its panes, which clip, as room for the controls' focus rings */
+.dialog__content .document-user-permissions-tab {
+    width: calc(100% + 2 * var(--control__gap--horizontal));
+    height: calc(100% + var(--control__gap--vertical));
+    margin: calc(-1 * var(--control__gap--vertical)) calc(-1 * var(--control__gap--horizontal)) 0;
+}
+
 /* In a dialog, the details are framed as a control, and inset to line up with the controls above
    them (which have form-padding), as the list's table is */
 .dialog__content .document-user-permissions-tab__details {

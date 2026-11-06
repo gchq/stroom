@@ -90,6 +90,17 @@
     color: var(--control__text-color--readonly);
 }
 
+/* Keyboard focus on a box that can't be typed in: its text box, which has it, is unseen, and its
+   focus border and ring with it (text-field.css), so the value, which draws the field, shows them */
+.selection-box--select-only:has(.selection-box__input:focus-visible) .selection-box__value {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+.selection-box--select-only:has(.selection-box__input[aria-invalid="true"]:focus-visible) .selection-box__value {
+    box-shadow: var(--focus-shadow--invalid);
+}
+
 /* In a grid's cell (SelectionBoxCell): as wide as its column, however narrow (its field too, as the
    cell is also icon-box--fluid; a box's field is otherwise at least 200px, icon-box.css) */
 .selection-box.selection-box--cell {

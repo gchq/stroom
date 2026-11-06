@@ -2029,6 +2029,21 @@ not yet worked on.
   accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
   its accessibility as such.
 
+### ~~A select-only selection box shows no focus ring~~
+
+**Fixed** (6 November 2026; found that day, in Change Step Filters' Minimum Severity): the value,
+which draws the field, shows the focus border and ring while the text box has the keyboard focus
+(`selection-box.css`); `Widgets/Selectors/SelectionBox` "Keyboard Focus Shows A Ring" checks it (and
+fails without the fix). A `SelectionBox` that
+can't be typed in (`selection-box--select-only`, e.g. Minimum Severity, Output, a credential's Type,
+the preferences' Theme) has the keyboard focus on its text box, which draws the ring
+(`text-field.css`'s focus shadow, measured as set), but the text box is unseen (`opacity: 0`,
+`selection-box.css`, so the value's picture shows) and the ring with it; nothing else draws one (the
+template's comment says the box draws its own, but no rule does). So a keyboard user can't see which
+select-only box has the focus (WCAG 2.4.7). Since wave 2 (`cfb8268022`). Fix: draw the ring on the
+box (`.selection-box--select-only:has(.selection-box__input:focus-visible)`) and add a story that
+checks it shows.
+
 ### Dialog content doesn't line up with its title, and tab content has no padding
 
 **Open** (found 5 November 2026; measured in every dialog the stories show, 117). `.dialog__content`
@@ -2040,14 +2055,40 @@ sides, so that a ring at any edge isn't cut. Three things undo or miss that:
   `gap: 5px` still comes after it (`dialog.css`, `.dialog__title-bar`).~~ **Fixed** (5 November 2026):
   `.dialog__icon:empty` isn't shown, so the title starts at the content's edge. A dialog with an icon
   is unchanged (the icon at the content's edge, the title 10px after it).
-* **Tab content isn't padded.** In a dialog with tabs (New/Edit Credentials, Settings, Filter, User
-  Preferences, Configure Ask Stroom AI, Stream), `.tab-bar__panel` clips (`overflow: hidden`) with no
-  padding, so it cuts the left 4px of a field's ring that the dialog content made room for (New
-  Credentials: Name, Expires, Type, Private Key and the rest; Edit Credentials; Filter's Include and
-  Exclude). The gap under the tabs is 0px in New Credentials, Settings and Filter, 3px in User
-  Preferences, 10-15px in the others; the tab labels sit 4px right of the content.
-* **Other clipping panes:** Change Step Filters' right pane (`.split-pane__pane`, Minimum Severity and
-  Output) and the annotation Status and Assigned To choosers' quick filter (cut left, right and top).
+* ~~**Tab content: forms that aren't `.form`.** Measured tab by tab (5 November 2026: 11 tabbed
+  dialogs, 26 shown tabs). A tab panel shouldn't pad its content (a grid, list or editor fills it, as
+  in a dashboard); a form's tab is a `.form`, whose `focus-ring-room` padding keeps rings whole
+  (`layout-helpers.css`). Most are: every dashboard Settings form tab and User Preferences. Not:
+  Credentials' Settings tab (`credential-settings`, not a `.form`, so `.tab-bar__panel`, which clips,
+  cuts the left of Name, Expires, Type, User Name and Password) and Configure Ask Stroom AI's two
+  tabs (a dock column with no gap between its groups, though nothing is cut).~~ **Fixed** (6 November
+  2026): all three are `.form`s, and in a dialog `.tab-bar__panel` doesn't clip (`tab-bar.css`; a
+  `LinkTabPanel`'s layer container did, so the form's room was cut off with it; it shows one layer
+  at a time, so has nothing to hide). The Ask Stroom AI tabs' groups are spaced as other forms'.
+  Every other tabbed dialog measures as before.
+* ~~**Tab content: gaps that differ.** The gap under the tabs depends on what wraps them, not on what
+  the tab holds: -3px (Credentials), 2-4px (dashboard Settings forms), 9px (their grids), 13-15px
+  (User Preferences and Ask Stroom AI, whose tabs sit in an outer `.form` with a flex gap; Stream).
+  `tab-bar.css` gives a dialog's link tab bar `max(0px, calc(var(--control__gap--vertical) - 10px))`
+  below it, which is 0 in compact density.~~ **Fixed** (6 November 2026): a dialog's tab panel is
+  a form group's gap (`--control__gap--vertical`) below its tabs, whatever it holds; User Preferences'
+  and Ask Stroom AI's outer `.form`s are gone (their buttons `button-group--gap-above`). The data
+  viewer (Stream) keeps its own spacing, its tabs sharing a row with its navigator.
+* ~~**Forms in split panes:** Filter's Include Exclude tab (`.form`s inside split panes, which clip both
+  sides).~~ **Fixed** (6 November 2026): `split-pane--forms` (`split-pane.css`) puts the room for
+  rings inside each pane and reaches the split pane as far outside its place, so the fields stay put.
+  Change Step Filters too (the list beside its form inset by the room).
+* ~~**Credentials' Permissions tab is inset 6px** (one control gap; 1rem at normal density) from the
+  title, where every other tab measured lines up with it: the shared permissions tab gives its groups
+  `form-padding` as its room for rings in a split pane, and in a dialog insets the list and details to
+  match. Same in Change Permissions (annotation tags). Its Users and Groups label had a second gap
+  under it (the quick filter's page padding).~~ **Fixed** (6 November 2026): the gap by
+  `quick-filter-page--under-label`; in a dialog the tab reaches out above and to each side by its form
+  padding (`document-user-permissions-tab.css`), which stays inside its panes as the rings' room. A
+  document's own Permissions tab (a page) is unchanged.
+* ~~**Other clipping panes:** Change Step Filters' right pane (`.split-pane__pane`, Minimum Severity and
+  Output)~~ (**Fixed**, above) and the annotation Status and Assigned To choosers' quick filter (cut
+  left, right and top; open).
 
 Some dialogs pad their content again (`form-padding`, 21px: Add Notification, the schedules, HTTP
 client configuration, the password dialogs) and some less (8px: New Dictionary and Save As, Add
