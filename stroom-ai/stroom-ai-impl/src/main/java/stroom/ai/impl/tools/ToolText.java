@@ -556,6 +556,18 @@ public final class ToolText {
         return (long) Math.rint(value);
     }
 
+    /// A run of text up to an unescaped `stop` (a quote, or CEF's `|`), where a backslash escapes the character after
+    /// it: runs of other characters, each taken whole (possessive), joined by escapes. Written as `(?:\\.|[^"\\])*`,
+    /// Java's regex recursed once a character, and a long value overflowed the stack (seen in testing: a mail
+    /// gateway's quoted list of 168 recipients, in the tools' checks and in Stroom's Data Splitter alike).
+    ///
+    /// @param stop The character the run stops at, unescaped.
+    /// @return The regex, with no group of its own.
+    public static String escapedRun(final String stop) {
+        final String other = "[^" + escape(stop) + "\\\\]*+";
+        return other + "(?:\\\\." + other + ")*+";
+    }
+
     /// @return A regex that matches the text literally, as Python's `re.escape` writes it (which Java's regexes
     /// read the same way).
     public static String escape(final String text) {

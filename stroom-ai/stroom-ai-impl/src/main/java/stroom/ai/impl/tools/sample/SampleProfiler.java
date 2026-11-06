@@ -148,7 +148,8 @@ public final class SampleProfiler {
     private static final Pattern JSON_START = ToolText.re("(\\[\\s*)?\\{\\s*\"");
     private static final Pattern SEPARATOR = ToolText.re(" *[^\\w\\s\"'.:/@()\\[\\]{}<>=+-]{1,3} *| +:: +| +- +");
     private static final Pattern WRAPPER_HEAD = ToolText.re(
-            "^\\{\\s*(?:\"[^\"]*\"\\s*:\\s*(?:\"(?:\\\\.|[^\"\\\\])*\"|-?[\\d.eE+-]+|true|false|null)\\s*,\\s*)*"
+            "^\\{\\s*(?:\"[^\"]*\"\\s*:\\s*(?:\"" + ToolText.escapedRun("\"")
+            + "\"|-?[\\d.eE+-]+|true|false|null)\\s*,\\s*)*"
             + "\"([^\"]+)\"\\s*:\\s*\\[\\s*(?=\\{)");
     private static final Pattern DIRECTIVE = ToolText.re("^(#[A-Za-z][\\w-]*:?)(?:[ \\t]+(.*))?$");
     private static final Pattern COLUMN_NAME = ToolText.re("^[A-Za-z_][\\w.()\\-/:]*$");
