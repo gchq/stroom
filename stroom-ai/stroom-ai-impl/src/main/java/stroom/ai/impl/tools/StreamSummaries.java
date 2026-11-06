@@ -250,20 +250,26 @@ public class StreamSummaries {
     // Events.
     // --------------------------------------------------------------------------------
 
-    // Up to `want` of a stream's records: all of them where it holds no more, else spread over it. Seen in
-    // testing: the first 2,000 of 6,000 events were mostly one kind, and "no Unknown events" was taken from them for
-    // the whole stream.
+    // Up to `want` of a stream's records: all of them where it holds no more, else a block at its head and the rest
+    // spread over what follows (RecordPicks). Seen in testing: the first 2,000 of 6,000 events were mostly one kind,
+    // and "no Unknown events" was taken from them for the whole stream; then, read spread alone, a byte count only
+    // events early in their stream had was in none of those read.
     private List<String> spreadRecords(final long streamId, final int want) {
-        final StreamReader.Records head = streamReader.readRecords(streamId, 0, 1, null, EVENTS_BUDGET);
-        final long total = NullSafe.getOrElse(head.first(), StreamReader.Fetched::totalItems, 0L);
+        final StreamReader.Records first = streamReader.readRecords(streamId, 0, 1, null, EVENTS_BUDGET);
+        final long total = NullSafe.getOrElse(first.first(), StreamReader.Fetched::totalItems, 0L);
         if (total <= want) {
             return streamReader.readRecords(streamId, 0, want, null, EVENTS_BUDGET).records();
         }
-        final List<String> records = new ArrayList<>(head.records());
+        final int head = RecordPicks.headCount(total, want);
+        final List<String> records = new ArrayList<>(streamReader.readRecords(streamId, 0, head, null,
+                EVENTS_BUDGET).records());
         int chars = records.stream().mapToInt(String::length).sum();
-        for (int n = 1; n < want && chars < EVENTS_BUDGET; n++) {
-            final List<String> one = streamReader.readRecords(streamId, n * total / want, 1, null,
-                    EVENTS_BUDGET - chars).records();
+        for (final long index : RecordPicks.headAndSpread(total, want).subList(head, want)) {
+            if (chars >= EVENTS_BUDGET) {
+                break;
+            }
+            final List<String> one = streamReader.readRecords(streamId, index, 1, null, EVENTS_BUDGET - chars)
+                    .records();
             records.addAll(one);
             chars += one.stream().mapToInt(String::length).sum();
         }
