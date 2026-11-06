@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.CallProgress;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.RecordPicks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.RawHead;
 import stroom.ai.impl.tools.StreamReader.StreamReadException;
@@ -98,6 +99,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final String MAX_CHARS_ARG = "max_chars_per_stream";
     /// The most windows read from further into a part than its head, spread to its end.
     static final int WINDOWS = 8;
+    // How many times the records a call reads a head is split into, for those read to be spread over them.
+    static final int SPLIT_MORE = 4;
     /// The most characters in a window.
     static final int WINDOW_CHARS = 250_000;
     // Formats of one record a line, read from a window as from the head; not XML, a JSON document, or records of
@@ -563,7 +566,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             cut = cut || head.truncated();
             final RecordSplitter.Chunk chunk;
             try {
-                chunk = RecordSplitter.split(head.text(), limits.maxRecords() - readHere, head.truncated());
+                // More than are read, so those read can be spread over them (see below).
+                chunk = RecordSplitter.split(head.text(), (limits.maxRecords() - readHere) * SPLIT_MORE,
+                        head.truncated());
             } catch (final RuntimeException e) {
                 // A part this detector cannot split.
                 reading.perStream.add(entry("stream", meta.getId(), "part", part, "error",
@@ -587,13 +592,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             final boolean windowed = head.truncated() && WINDOWED.contains(chunk.format())
                                      && !holdsLineBreaks(chunk);
             // A part bigger than its head: the head takes at most half the records left, the windows spread to its
-            // end the rest. Seen in testing: a 20,000-record stream's head filled all 10,000, no window was read, and
-            // a kind of record only near its end was never seen.
-            final int headRecords = windowed
-                    ? Math.min(chunk.records().size(), Math.max(1, (limits.maxRecords() - readHere) / 2))
-                    : chunk.records().size();
-            for (int index = 0; index < headRecords; index++) {
-                if (shapes.add(chunk, index, meta.getId(), part)) {
+            // end the rest. A head holding more records than are left: a block at its start and the rest spread over
+            // it (RecordPicks). Seen in testing: a 20,000-record stream's head filled all 10,000, no window was read,
+            // and a kind of record only near its end was never seen.
+            final int left = limits.maxRecords() - readHere;
+            final List<Long> picks = windowed
+                    ? RecordPicks.headAndSpread(Math.min(chunk.records().size(), Math.max(1, left / 2)),
+                            Math.max(1, left / 2))
+                    : RecordPicks.headAndSpread(chunk.records().size(), left);
+            for (final long index : picks) {
+                if (shapes.add(chunk, (int) index, meta.getId(), part)) {
                     newHere++;
                 }
                 readHere++;
@@ -642,6 +650,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         int read = 0;
         int records = 0;
         int newShapes = 0;
+        // Each window an equal share of the records left, so the last (the part's end) is read too: seen in testing,
+        // the first windows took them all and a kind of record near the end was never seen.
+        final int share = Math.max(1, maxRecords / Math.max(1, windows.size()));
         for (final StreamReader.Window window : windows) {
             if (records >= maxRecords || timeIsUp()) {
                 break;
@@ -650,7 +661,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             try {
                 more = RecordSplitter.split(chunk.header() == null
                         ? window.text()
-                        : chunk.header() + "\n" + window.text(), maxRecords - records, false);
+                        : chunk.header() + "\n" + window.text(), Math.min(share, maxRecords - records), false);
             } catch (final RuntimeException e) {
                 continue;
             }

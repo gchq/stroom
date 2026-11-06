@@ -33,6 +33,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
 import jakarta.inject.Inject;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -223,16 +225,37 @@ public class StreamSummaries {
     ///
     /// @param errorStreamId An Error stream.
     /// @param max           The most markers to give.
-    /// @return Its first markers, up to `max`.
+    /// @return Up to `max` of its markers, in order: with more than that, its warnings and errors first, then its
+    /// INFO lines (seen in testing: a stream's first 1,000 markers were all INFO, a kept-Unknown line for each record,
+    /// and the one warning further in, a field no rule read, was never reported).
     /// @throws IOException      if it can't be read.
     /// @throws RuntimeException if it can't be opened, e.g. it has been deleted or the user may not view its feed.
     public List<ErrorTriage.Marker> errorMarkers(final long errorStreamId, final int max) throws IOException {
         final RawText text = streamReader.errorStreamText(errorStreamId,
                 MAX_ERROR_STREAM_BYTES);
         final List<StoredError> stored = ErrorStreamMarkers.parse(text.text(), text.truncated()).markers();
-        return stored.subList(0, Math.min(stored.size(), max)).stream()
+        return firstMarkers(stored, max).stream()
                 .map(ErrorTriage::fromStoredError)
                 .toList();
+    }
+
+    /// @param stored The markers, in order.
+    /// @param max    The most to keep.
+    /// @return All of them if no more than `max`, else warnings and errors first, then INFO lines, in order.
+    static List<StoredError> firstMarkers(final List<StoredError> stored, final int max) {
+        if (stored.size() <= max) {
+            return stored;
+        }
+        final Set<Integer> kept = new TreeSet<>();
+        for (int i = 0; i < stored.size() && kept.size() < max; i++) {
+            if (stored.get(i).getSeverity() != Severity.INFO) {
+                kept.add(i);
+            }
+        }
+        for (int i = 0; i < stored.size() && kept.size() < max; i++) {
+            kept.add(i);
+        }
+        return kept.stream().map(stored::get).toList();
     }
 
     /// @param e A failure.
