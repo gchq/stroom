@@ -13,13 +13,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -142,7 +143,7 @@ public class FsMetaVolume extends TableImpl<FsMetaVolumeRecord> {
      */
     @Override
     public FsMetaVolume where(Condition condition) {
-        return new FsMetaVolume(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new FsMetaVolume(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -209,7 +210,7 @@ public class FsMetaVolume extends TableImpl<FsMetaVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsMetaVolume whereExists(Select<?> select) {
+    public FsMetaVolume whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -217,7 +218,7 @@ public class FsMetaVolume extends TableImpl<FsMetaVolumeRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public FsMetaVolume whereNotExists(Select<?> select) {
+    public FsMetaVolume whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }
