@@ -256,7 +256,7 @@ docker run \
   --tmpfs /tmp:exec \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/builder \
-  "${build_cache_args[@]+"${build_cache_args[@]}"}" \
+  "${build_cache_args[@]}" \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \
