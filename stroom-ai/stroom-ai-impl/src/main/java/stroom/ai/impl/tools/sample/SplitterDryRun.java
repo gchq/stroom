@@ -81,6 +81,12 @@ public final class SplitterDryRun {
                     List.of("pri", "time", "host", "app", "pid", "msgid", "structured")),
             Map.entry("^(?:<(\\d+)>)?([A-Z][a-z]{2} [ \\d]\\d \\d{2}:\\d{2}:\\d{2}) (\\S+)\\s*$",
                     List.of("pri", "time", "host")),
+            // rsyslog's RFC 3339 header (its high-precision file format): an ISO time, the host, then any tag. Seen in
+            // testing: a relay's CEF lines read with the whole header as one field, so the draft found no time (and
+            // asked the user what time to give events that had one) and no host.
+            Map.entry("^(?:<(\\d+)>)?(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:?\\d{2})) "
+                      + "(\\S+)(?: ([^:\\[\\s]+)(?:\\[(\\d+)\\])?:)?\\s*$",
+                    List.of("pri", "time", "host", "app", "pid")),
             Map.entry("^(.*?)\\s*$", List.of("prefix")));
     /// The most records a dry run reads; a longer sample is read at lines spread over it.
     public static final int MAX_RECORDS = 2000;

@@ -82,6 +82,17 @@ class TestSplitterDryRun {
         return run.records();
     }
 
+    // The keys a record has values for, of those given.
+    private static Map<String, String> present(final Map<String, String> record, final String... keys) {
+        final Map<String, String> found = new LinkedHashMap<>();
+        for (final String key : keys) {
+            if (record.get(key) != null && !record.get(key).isEmpty()) {
+                found.put(key, record.get(key));
+            }
+        }
+        return found;
+    }
+
     private static Map<String, String> pick(final Map<String, String> record, final String... keys) {
         final Map<String, String> picked = new LinkedHashMap<>();
         for (final String key : keys) {
@@ -104,6 +115,29 @@ class TestSplitterDryRun {
         }
         assertThat(records("syslog_cef").getFirst()).containsEntry("host", "gw01");
         assertThat(records("cef").getFirst()).containsEntry("rt", "Oct 01 2026 08:00:00 UTC");
+    }
+
+    @Test
+    void cefAfterRsyslogsIsoHeaderHasItsTimeAndHost() {
+        // Seen in testing: a relay's lines, rsyslog's RFC 3339 header before CEF, were read with the whole header as
+        // one field, so the draft found no time (and asked the user what time to give events that had one) and no
+        // host.
+        final String sample = """
+                2026-11-16T00:00:02+00:00 ns-gw01 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|src=203.0.113.2 \
+                act=blocked
+                2026-11-16T00:00:09.512004Z ns-gw02 ns[812]: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|\
+                src=203.0.113.3 act=transformed
+                2026-11-16T00:00:12-05:00 ns-gw01 CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_CSRF|6|src=203.0.113.4 \
+                act=blocked
+                """;
+        final SplitterDryRun.DryRun run = SplitterDryRun.dryRun(SplitterDryRun.inferSpec(sample).spec(), sample);
+
+        assertThat(run.unmatchedLines()).isEmpty();
+        assertThat(run.records()).extracting(record -> present(record, "time", "host", "app", "pid"))
+                .containsExactly(Map.of("time", "2026-11-16T00:00:02+00:00", "host", "ns-gw01", "app", "ns"),
+                        Map.of("time", "2026-11-16T00:00:09.512004Z", "host", "ns-gw02", "app", "ns", "pid", "812"),
+                        Map.of("time", "2026-11-16T00:00:12-05:00", "host", "ns-gw01"));
+        assertThat(run.records()).allSatisfy(record -> assertThat(record).doesNotContainKey("prefix"));
     }
 
     @Test
