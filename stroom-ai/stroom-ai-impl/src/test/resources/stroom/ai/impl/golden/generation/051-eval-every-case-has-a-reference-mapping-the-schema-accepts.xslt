@@ -26,6 +26,14 @@
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('cef_signature_id=', string(($cef_signature_id)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:for-each select="data[@name][not(@name = ('act', 'cat', 'cef_name', 'cef_product', 'cef_signature_id', 'dpt', 'dst', 'fileHash', 'fname', 'host', 'msg', 'outcome', 'request', 'src', 'suser', 'time'))][normalize-space(string(@value))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'logon': records where cef_signature_id in 1001, 1002. Writes an Authenticate event (TypeId from
        cef_signature_id) from suser, outcome. -->

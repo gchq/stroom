@@ -12,6 +12,14 @@
       <xsl:with-param name="record" select="." tunnel="yes"/>
       <xsl:with-param name="record-no" select="$record-no" tunnel="yes"/>
     </xsl:apply-templates>
+    <xsl:for-each select="*[@key][not(@key = ('ConsoleLogin', 'Records', 'awsRegion', 'bucketName', 'errorCode', 'eventName', 'eventSource', 'eventTime', 'key', 'requestParameters', 'responseElements', 'sourceIPAddress', 'userIdentity', 'userName'))][normalize-space(string(.))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <xsl:template match="*" mode="item">
     <xsl:param name="record-no" tunnel="yes"/>

@@ -426,6 +426,7 @@
    }
   ],
   "unmatched": "skip",
+  "ignored_fields": [],
   "style": {
    "naming": "camelCase",
    "variable_min_reads": 1,

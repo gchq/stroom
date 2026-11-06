@@ -248,6 +248,7 @@
    }
   ],
   "unmatched": "warn",
+  "ignored_fields": [],
   "style": {
    "naming": "snake_case",
    "variable_min_reads": 3,

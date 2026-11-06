@@ -665,6 +665,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -726,6 +727,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -1753,6 +1755,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -1814,6 +1817,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -1890,6 +1894,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -1951,6 +1956,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2028,6 +2034,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2089,6 +2096,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2166,6 +2174,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2227,6 +2236,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2333,6 +2343,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2394,6 +2405,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2621,6 +2633,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2682,6 +2695,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2763,6 +2777,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 1,
@@ -2824,6 +2839,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 1,
@@ -2902,6 +2918,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -2963,6 +2980,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3041,6 +3059,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3102,6 +3121,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3180,6 +3200,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3241,6 +3262,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3477,6 +3499,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 1099511627776,
@@ -3538,6 +3561,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 1099511627776,
@@ -3701,6 +3725,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3762,6 +3787,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3868,6 +3894,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -3929,6 +3956,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4005,6 +4033,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4066,6 +4095,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4215,6 +4245,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4320,6 +4351,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4413,6 +4445,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4493,6 +4526,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4585,6 +4619,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4664,6 +4699,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4770,6 +4806,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -4867,6 +4904,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5017,6 +5055,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5151,6 +5190,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5301,6 +5341,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5435,6 +5476,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5585,6 +5627,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5719,6 +5762,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -5869,6 +5913,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -6003,6 +6048,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -6196,6 +6242,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -6309,6 +6356,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -6545,6 +6593,7 @@
     }
    ],
    "unmatched": "skip",
+   "ignored_fields": [],
    "style": {
     "naming": "camelCase",
     "variable_min_reads": 1,
@@ -6654,6 +6703,7 @@
     }
    ],
    "unmatched": "skip",
+   "ignored_fields": [],
    "style": {
     "naming": "camelCase",
     "variable_min_reads": 1,
@@ -7061,6 +7111,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -7140,6 +7191,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -7229,6 +7281,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,
@@ -7308,6 +7361,7 @@
     }
    ],
    "unmatched": "warn",
+   "ignored_fields": [],
    "style": {
     "naming": "snake_case",
     "variable_min_reads": 3,

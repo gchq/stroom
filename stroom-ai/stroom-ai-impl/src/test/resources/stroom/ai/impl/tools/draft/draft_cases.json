@@ -17,7 +17,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "01_csv_vpn"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -129,7 +129,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -176,7 +176,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "02_json_alert"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -231,7 +231,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -268,7 +268,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "03_json_nested_process"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -324,7 +324,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -365,7 +365,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "04_json_embedded"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -474,7 +474,7 @@
    ],
    "notes": [
     "'message' holds JSON: its keys are fields of their own, e.g. 'message.time', 'message.user', 'message.event', 'message.ok' (json_fields). The text itself isn't mapped.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'message.event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
@@ -513,7 +513,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "05_xml_ns_files"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -601,7 +601,7 @@
     "delete"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'op' (read, delete): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -636,7 +636,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "06_syslog5424_ssh"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -696,7 +696,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -766,7 +766,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "07_syslog3164_sudo"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -877,7 +877,7 @@
    "notes": [
     "'message' holds key/value pairs: 4 keys are fields of their own through pairs ('tty', 'pwd', 'user', 'command'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Every record runs a command ('COMMAND'): drafted as Process (Action Execute, Type Application). Check it, and split the program from its arguments (Process/Arguments) if you want them apart."
    ],
    "unmapped_fields": [
@@ -977,7 +977,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "08_kv_firewall"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1192,7 +1192,7 @@
    ],
    "notes": [
     "'message' holds key/value pairs: 5 keys are fields of their own through pairs ('action_2', 'src_2', 'dst_2', 'dport_2', 'proto_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): allow: Network/Permit for action allow; deny: Network/Deny for action deny.",
     "One rule per value of 'action' (allow, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -1241,7 +1241,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "09_csv_noheader_copy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1299,7 +1299,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -1339,7 +1339,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "10_xml_attrs_lock"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1405,7 +1405,7 @@
    ],
    "notes": [
     "'@time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of '@action' (lock, unlock), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [],
@@ -1446,7 +1446,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "11_jsonl_message_text"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1488,7 +1488,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -1520,7 +1520,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "12_xml_fragments_events"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1670,7 +1670,7 @@
     "4634"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'System/EventID' (4624, 4625, 4634), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
@@ -1740,7 +1740,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "13_json_embedded_message"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -1869,7 +1869,7 @@
    "notes": [
     "'payload' holds JSON: its keys are fields of their own, e.g. 'payload.ts', 'payload.level', 'payload.msg' (json_fields). The text itself isn't mapped.",
     "'payload.msg' holds key/value pairs: 4 keys are fields of their own through pairs ('user', 'action', 'src', 'result'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'action' (LOGIN, LOGOUT), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
@@ -1913,7 +1913,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "14_csv_two_files_variants"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -2039,7 +2039,7 @@
     "timeout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or timestamp; EventSource/User/Id from user or username), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout, timeout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -2084,7 +2084,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "14_csv_two_files_variants"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -2210,7 +2210,7 @@
     "timeout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or timestamp; EventSource/User/Id from user or username), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout, timeout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -2247,7 +2247,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "15_csv_lookup_reference_data"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -2292,7 +2292,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -2320,7 +2320,7 @@
     "common": [
      {
       "path": "EventSource/System/Name",
-      "value": "16_json_batches_items"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -2364,7 +2364,7 @@
    "kinds": [],
    "notes": [
     "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -2396,7 +2396,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "17_csv_firewall_mixed"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -2847,7 +2847,7 @@
     "ADMIN"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; SYSTEM: Update for action CONFIG_SAVED; Process for action START; Alert for action HIGH_CPU, VPN_TUNNEL_DOWN, VPN_TUNNEL_UP; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Authenticate for action LOGOUT; Update for action CONFIG_CHANGE, CONFIG_BACKUP.",
     "One rule per value of 'event_type' (TRAFFIC, SYSTEM, ADMIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -2901,7 +2901,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "18_json_event_string_freetext"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -3098,7 +3098,7 @@
    ],
    "notes": [
     "'event' holds JSON: its keys are fields of their own, e.g. 'event.timestamp', 'event.username', 'event.event_type', 'event.message' (json_fields). The text itself isn't mapped.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'event.message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "One rule per value of 'event.event_type' (LOGIN_SUCCESS, LOGIN_FAILURE, DOCUMENT_VIEW, PASSWORD_CHANGE, DOCUMENT_DELETE, LOGOUT): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -3181,7 +3181,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "19_jsonl_message_layouts"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -3252,7 +3252,7 @@
    "kinds": [],
    "notes": [
     "'message' holds key/value pairs: 6 keys are fields of their own through pairs ('user', 'src', 'method', 'reason', 'peer', 'name'), each read as an extract entry would. A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -3295,7 +3295,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "20_csv_coded_with_docs"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -3350,7 +3350,7 @@
    "records": 4,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -3386,7 +3386,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "21_csv_connections_odd_fields"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -3627,7 +3627,7 @@
     "DISCONNECT"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): CONNECT: Network/Connect for event CONNECT; DISCONNECT: Network/Close for event DISCONNECT.",
     "One rule per value of 'event' (CONNECT, DISCONNECT), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -3680,7 +3680,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "22_syslog_cef_gateway"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -4116,7 +4116,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow; block: Network/Deny for act block.",
     "One rule per value of 'act' (login, allow, block, quarantine, logout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -4190,7 +4190,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "23_pipe_quoted_helpdesk"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -4372,7 +4372,7 @@
     "close"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (create, view, update, close): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
@@ -4412,7 +4412,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "24_csv_noheader_quoted_print"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -4478,7 +4478,7 @@
    "records": 4,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
     "['col4'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -4530,7 +4530,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "24_csv_noheader_quoted_print"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -4595,7 +4595,7 @@
    "records": 4,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
     "['document'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -4685,7 +4685,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "25_syslog_kv_nil_proxy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -5257,7 +5257,7 @@
    ],
    "notes": [
     "'message' holds key/value pairs: 7 keys are fields of their own through pairs ('user_2', 'src_2', 'dst_2', 'url_2', 'category_2', 'action_2' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): business: Network/Permit for action allow; malware: Network/Deny for action block; news: Network/Permit for action allow; phishing: Network/Deny for action block; -: Network/Permit for action allow.",
     "One rule per value of 'category' (business, malware, news, phishing, -), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
     "['category', 'category_2', 'referer', 'referer_2', 'user', 'user_2'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
@@ -5324,7 +5324,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "26_xml_fragments_windows_ns"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -5640,7 +5640,7 @@
     "4634"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'System/EventID' (4624, 4625, 4672, 4740, 4720, 4634): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -5688,7 +5688,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "27_endash_auth_messages"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -5729,7 +5729,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -5781,7 +5781,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "27_endash_auth_messages"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -5834,7 +5834,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -5884,7 +5884,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "28_xml_records_badges"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -5926,7 +5926,7 @@
    "records": 4,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -5959,7 +5959,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "29_csv_large_files_proxy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -6210,7 +6210,7 @@
     "uncategorised"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'category' (business, webmail, social-media, file-sharing, uncategorised): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -6253,7 +6253,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "29_csv_large_files_proxy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -6615,7 +6615,7 @@
     "search"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'category' (social-media, technology, webmail, file-sharing, news, business, uncategorised, search): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -6658,7 +6658,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "30_jsonl_two_shapes_idp"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -6921,7 +6921,7 @@
    ],
    "notes": [
     "'published' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'ts'.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): user.session.start: Alert for outcome.result FAILURE.",
     "The sample's records come in 3 shapes (their fields differ): each element reads every shape's field in turn (EventSource/Client/IPAddress from client.ipAddress or ip; EventDetail/TypeId from eventType or type), and each shape's kinds have rules. Check them against each file.",
@@ -6967,7 +6967,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "31_kv_awkward_times_fortigate"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -7207,7 +7207,7 @@
     "0101039426"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0101039424: Alert for subtype vpn; 0101039425: Alert for subtype vpn; 0101039426: Alert for subtype vpn.",
     "One rule per value of 'logid' (0101039424, 0101039425, 0101039426), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -7280,7 +7280,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "32_xml_fragments_windows_many"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -7407,7 +7407,7 @@
    "kinds": [],
    "notes": [
     "'EventData/Data[@Name='MemberName']' holds key/value pairs: 3 keys are fields of their own through pairs ('cn', 'ou', 'dc'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -7474,7 +7474,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "33_csv_cp1252_hr"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -7531,7 +7531,7 @@
    "records": 5,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -7570,7 +7570,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "33_csv_cp1252_hr"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -7627,7 +7627,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -7667,7 +7667,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "34_jsonl_schema_traps_nac"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -7722,7 +7722,7 @@
    "records": 5,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -8022,7 +8022,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "35_xml_fragments_secretserver_messages"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -9262,7 +9262,7 @@
    ],
    "notes": [
     "'EventData/Data' holds key/value pairs: 37 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'folder' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login, Login Failed; Authenticate for action Logout; Session: Process for action Start; System: Update for action Configuration Changed.",
     "One rule per value of 'event' (Secret, User, Folder, Session, System, Permission): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -9481,7 +9481,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "36_xml_fragments_secretserver_whole_export"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -9875,7 +9875,7 @@
    ],
    "notes": [
     "'EventData/Data' holds key/value pairs: 14 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login Failed, Login; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -10090,7 +10090,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "36_xml_fragments_secretserver_whole_export"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -10538,7 +10538,7 @@
    ],
    "notes": [
     "'EventData/Data' holds key/value pairs: 20 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login Failed, Login; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -10621,7 +10621,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "37_cef_gateway_whole_day"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -10866,7 +10866,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
     "One rule per value of 'act' (login, allow), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -10936,7 +10936,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "37_cef_gateway_whole_day"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11181,7 +11181,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
     "One rule per value of 'act' (allow, login), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -11252,7 +11252,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "38_json_array_one_line_alerts"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11307,7 +11307,7 @@
    "records": 2500,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -11338,7 +11338,7 @@
     "common": [
      {
       "path": "EventSource/System/Name",
-      "value": "39_w3c_bluecoat_proxy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11369,7 +11369,7 @@
    "notes": [
     "The text's format could not be inferred (unknown text): build_data_splitter with a regex spec first, then name its fields here.",
     "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -11395,7 +11395,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "39_w3c_bluecoat_proxy"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11574,7 +11574,7 @@
    "kinds": [],
    "notes": [
     "'#Start-Date' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -11682,7 +11682,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "40_json_cloudtrail_records"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11878,7 +11878,7 @@
     "IAMUser"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'userIdentity.type' (IAMUser): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -11939,7 +11939,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "41_java_multiline_app"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -11980,7 +11980,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -12034,7 +12034,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "41_java_multiline_app"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -12089,7 +12089,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -12148,7 +12148,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "41_java_multiline_app"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -12203,7 +12203,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -12251,7 +12251,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "42_csv_quoted_newlines_tickets"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -12334,7 +12334,7 @@
     "create"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (create): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
@@ -12373,7 +12373,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "42_csv_quoted_newlines_tickets"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -12484,7 +12484,7 @@
     "create"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'comment' reads as free text written about each event: if it says what happened, map it to EventDetail/Description, the event's own description, rather than to an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (update, create): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action.",
@@ -12523,7 +12523,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "43_syslog_csv_palo_alto_traffic"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -12850,7 +12850,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -13046,7 +13046,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "43_syslog_csv_palo_alto_traffic"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -13583,7 +13583,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
     "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -13771,7 +13771,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "43_syslog_csv_palo_alto_traffic"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -14308,7 +14308,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
     "One rule per value of 'type' (TRAFFIC), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -14440,7 +14440,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "44_custom_tilde_delimited"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -14500,7 +14500,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -14559,7 +14559,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "44_custom_tilde_delimited"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -14663,7 +14663,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (LOGIN, PASSWORD_CHANGE), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -14719,7 +14719,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "44_custom_tilde_delimited"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -14848,7 +14848,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (LOGIN, PASSWORD_CHANGE, LOGOUT), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -14895,7 +14895,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "45_jsonl_gelf"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -14973,7 +14973,7 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -15021,7 +15021,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "45_jsonl_gelf"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -15099,7 +15099,7 @@
    "records": 150,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
@@ -15147,7 +15147,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "46_jsonl_ecs_input"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -15301,7 +15301,7 @@
     "[\"file\"]"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'event.category' ([\"authentication\"], [\"file\"]): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -15346,7 +15346,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "46_jsonl_ecs_input"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -15500,7 +15500,7 @@
     "[\"file\"]"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'event.category' ([\"authentication\"], [\"file\"]): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -15544,7 +15544,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "47_kv_fortios_native"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -15903,7 +15903,7 @@
     "0100032001"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0100032001: Authenticate for action login.",
     "One rule per value of 'logid' (0000000013, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -15968,7 +15968,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "47_kv_fortios_native"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -16429,7 +16429,7 @@
     "0100032001"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0419016384: Network/Deny for action dropped; 0100032001: Authenticate for action login.",
     "One rule per value of 'logid' (0000000013, 0419016384, 0100032001), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -16503,7 +16503,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "48_jsonl_damaged_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -16628,7 +16628,7 @@
    ],
    "notes": [
     "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -16671,7 +16671,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "48_jsonl_damaged_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -16796,7 +16796,7 @@
    ],
    "notes": [
     "1 of the 6 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -16839,7 +16839,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "48_jsonl_damaged_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -16964,7 +16964,7 @@
    ],
    "notes": [
     "2 of the 150 lines read aren't JSON objects (first: line 5, isn't JSON: Unterminated string starting at). Stroom's JSONParser stops the stream at the first such line, a fatal error, and every record after it is lost. Read the lines with a Data Splitter instead, one record a line (build_data_splitter spec {'kind': 'regex', 'pattern': '^(.*)$', 'names': ['json']}), and map their keys through json_fields: ['json'] (a key is then json.<key>): a line that isn't JSON gives no fields, matches no rule and is logged, and the rest are read.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'json.action' (login, logout, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -17002,7 +17002,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "49_jsonl_soap_payload"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -17231,7 +17231,7 @@
    ],
    "notes": [
     "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below). The text itself isn't mapped.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'operation' (Login, GetAccount, UpdateAccount): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -17297,7 +17297,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "49_jsonl_soap_payload"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -17526,7 +17526,7 @@
    ],
    "notes": [
     "'payload' holds XML: its elements are fields of their own, e.g. 'payload/Envelope/Header', 'payload/Envelope/Body/Login/User', 'payload/Envelope/Body/Login/Result', 'payload/Envelope/Body/GetAccount/User' (xml_fields; '<field>//<name>' for one anywhere below). The text itself isn't mapped.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'operation' (Login, GetAccount, UpdateAccount): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -17588,7 +17588,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "50_kv_mail_repeated_keys"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -17842,7 +17842,7 @@
     "<5@mail.example.com>"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'msgid' (<0@mail.example.com>, <1@mail.example.com>, <2@mail.example.com>, <3@mail.example.com>, <4@mail.example.com>, <5@mail.example.com>): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -17881,7 +17881,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "50_kv_mail_repeated_keys"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18039,7 +18039,7 @@
     "quarantine"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'action' (deliver, reject, quarantine): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
@@ -18081,7 +18081,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "51_kv_unicode_ansi"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18193,7 +18193,7 @@
     "login"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
@@ -18235,7 +18235,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "51_kv_unicode_ansi"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18347,7 +18347,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
@@ -18386,7 +18386,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "52_postgres_multiline_sql"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18433,7 +18433,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -18486,7 +18486,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "52_postgres_multiline_sql"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18557,7 +18557,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -18620,7 +18620,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "52_postgres_multiline_sql"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18691,7 +18691,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -18794,7 +18794,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "53_cri_container_partial_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -18910,7 +18910,7 @@
    ],
    "notes": [
     "'message' holds key/value pairs: 7 keys are fields of their own through pairs ('user', 'action', 'esult', 'pod', 'ail', 'rows' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (export): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -19026,7 +19026,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "53_cri_container_partial_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -19327,7 +19327,7 @@
    ],
    "notes": [
     "'message' holds key/value pairs: 10 keys are fields of their own through pairs ('user', 'action', 'esult', 'pod', 'ail', 'rows' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): export: Alert for result failure; exp: Alert for result failure.",
     "One rule per value of 'action' (export, logout, login, exp): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -19383,7 +19383,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "FortiOS firewall"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -19581,7 +19581,7 @@
     "LOGIN"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW.",
     "One rule per value of 'event_type' (TRAFFIC, LOGIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -19636,7 +19636,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "FortiOS firewall"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -19834,7 +19834,7 @@
     "LOGIN"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW.",
     "One rule per value of 'event_type' (TRAFFIC, LOGIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -19888,7 +19888,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "FortiOS"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -20002,7 +20002,7 @@
    ],
    "notes": [
     "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): accept: Network/Permit for action accept; deny: Network/Deny for action deny.",
     "One rule per value of 'action' (accept, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -21915,7 +21915,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "Firewall Logs"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -22366,7 +22366,7 @@
     "ADMIN"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action ALLOW; Network/Deny for action DENY; SYSTEM: Update for action CONFIG_SAVED; Process for action START; Alert for action HIGH_CPU, VPN_TUNNEL_DOWN, VPN_TUNNEL_UP; ADMIN: Authenticate for action LOGIN_SUCCESS, LOGIN_FAILED; Authenticate for action LOGOUT; Update for action CONFIG_CHANGE, CONFIG_BACKUP.",
     "One rule per value of 'event_type' (TRAFFIC, SYSTEM, ADMIN), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -22763,7 +22763,7 @@
     "common": [
      {
       "path": "EventSource/System/Name",
-      "value": "Twitter"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -22813,7 +22813,7 @@
    "kinds": [],
    "notes": [
     "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -22905,7 +22905,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "Fortigate"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -23024,7 +23024,7 @@
    ],
    "notes": [
     "'body' holds key/value pairs: 7 keys are fields of their own through pairs ('logid', 'type', 'action', 'srcip', 'dstip', 'msg' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): traffic: Network/Permit for action accept; event: Network/Permit for action accept.",
     "One rule per value of 'type' (traffic, event), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -24299,7 +24299,7 @@
    "kinds": [],
    "notes": [
     "'x-timestamp-unix' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'date' and 'time'.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -24425,7 +24425,7 @@
    ],
    "notes": [
     "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -24500,7 +24500,7 @@
    "kinds": [],
    "notes": [
     "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -24585,7 +24585,7 @@
    "kinds": [],
    "notes": [
     "'ts' names its time zone: kept as EventSource/Device/Location/TimeZoneName.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [],
@@ -24662,7 +24662,7 @@
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "'tz' holds time zone names: kept as EventSource/Device/Location/TimeZoneName; if the times have no zone of their own, read them in it (timezone on EventTime/TimeCreated).",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [],
@@ -24704,7 +24704,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "csv_quoted"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -24796,7 +24796,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
@@ -24830,7 +24830,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "tsv"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -24921,7 +24921,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -24954,7 +24954,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "pipe"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25045,7 +25045,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -25078,7 +25078,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "csv_noheader"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25130,7 +25130,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -25165,7 +25165,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "csv_noheader_quoted"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25225,7 +25225,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
     "['col5'] hold doubled quotes inside quoted values, which Data Splitter keeps doubled: the draft reads them with transform unescape_quotes."
@@ -25263,7 +25263,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "syslog3164_freeform"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25313,7 +25313,7 @@
    "kinds": [],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
@@ -25403,7 +25403,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "syslog5424_kv"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25684,7 +25684,7 @@
    ],
    "notes": [
     "'message' holds key/value pairs: 6 keys are fields of their own through pairs ('action_2', 'src_2', 'dst_2', 'dport_2', 'proto_2', 'user_2'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): allow: Network/Permit for action allow; deny: Network/Deny for action deny.",
     "One rule per value of 'action' (allow, deny), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes.",
     "['user', 'user_2'] hold '-' for none: nil_values ['-'] leaves those elements out rather than writing '-'."
@@ -25744,7 +25744,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "cef"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -25967,7 +25967,7 @@
     "failed"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "Drafted from the sample's values (check them): failed: Alert for act failed.",
@@ -26015,7 +26015,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "syslog_cef"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26272,7 +26272,7 @@
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): failed: Alert for act failed.",
     "One rule per value of 'act' (login, logout, failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
@@ -26332,7 +26332,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "kv_quoted"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26435,7 +26435,7 @@
    ],
    "notes": [
     "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "Drafted from the sample's values (check them): traffic: Network/Permit for action accept; Network/Deny for action deny.",
     "One rule per value of 'type' (traffic), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26473,7 +26473,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_lines"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26556,7 +26556,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26588,7 +26588,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_offsets"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26667,7 +26667,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26710,7 +26710,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "csv_zone_names"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26793,7 +26793,7 @@
    ],
    "notes": [
     "'time' names its time zone: kept as EventSource/Device/Location/TimeZoneName.",
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [],
@@ -26823,7 +26823,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_epoch_fraction"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -26902,7 +26902,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -26933,7 +26933,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_micros"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27012,7 +27012,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27043,7 +27043,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_epoch_micros"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27122,7 +27122,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27153,7 +27153,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_epoch_s_micros"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27232,7 +27232,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27263,7 +27263,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "json_array_nested"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27356,7 +27356,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27393,7 +27393,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "xml_records"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27476,7 +27476,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27510,7 +27510,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "xml_attributes"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27593,7 +27593,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of '@action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27627,7 +27627,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "xml_namespaced"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27710,7 +27710,7 @@
     "logout"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "One rule per value of 'Action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -27743,7 +27743,7 @@
      },
      {
       "path": "EventSource/System/Name",
-      "value": "xml_fragments_ns"
+      "value": "TODO system name"
      },
      {
       "path": "EventSource/System/Environment",
@@ -27844,7 +27844,7 @@
     "4634"
    ],
    "notes": [
-    "Set EventSource/System/Name and Environment to what the user confirms (or the standing instructions say). Both are required: if the user doesn't know one, use a placeholder they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'System/EventID' (4624, 4634), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [

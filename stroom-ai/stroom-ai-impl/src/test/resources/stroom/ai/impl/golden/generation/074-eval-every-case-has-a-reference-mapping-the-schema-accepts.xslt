@@ -36,6 +36,14 @@
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('json.time=', string((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)])[1])), concat('json.action=', string(($json_action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:for-each select="data[@name][not(@name = ('json'))][normalize-space(string(@value))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'logon': records where json.action = login. Writes an Authenticate event (TypeId from json.action) from
        json.user, json.result. -->

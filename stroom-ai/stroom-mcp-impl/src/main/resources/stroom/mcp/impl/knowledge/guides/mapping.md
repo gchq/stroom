@@ -39,6 +39,7 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `common` | Entries written in every Event |
 | `events` | Rules, tried in order: the first whose `when` matches writes the Event |
 | `unmatched` | `warn` (default) or `skip` for records no rule matches |
+| `ignored_fields` | input fields left out of the events on purpose (Data Splitter and JSON input). Any other field no rule reads is logged in processing (WARN, once a stream, by name), so a field the sample lacked is found: map it, or list it here with the user's agreement |
 
 ## An entry
 

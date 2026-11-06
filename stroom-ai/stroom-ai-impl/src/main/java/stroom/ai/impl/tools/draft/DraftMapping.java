@@ -57,6 +57,11 @@ import java.util.regex.Pattern;
 /// reads it), so it can be edited before it is validated.
 public final class DraftMapping {
 
+    /// What a draft's EventSource/System/Name says until the user names the system.
+    public static final String SYSTEM_NAME_PLACEHOLDER = "TODO system name";
+    /// What a draft's EventSource/System/Environment says until the user gives it.
+    public static final String ENVIRONMENT_PLACEHOLDER = "TODO e.g. Prod";
+
     private static final Pattern TIME = ignoringCase("^(@?timestamp|time|ts|date_?time|datetime|event_?time|"
                                                      + "eventtime|created|created_?at|logged_?at|time_?created|"
                                                      + "occurred|when|_time|rt|system_?time)$");
@@ -1023,15 +1028,18 @@ public final class DraftMapping {
             }
         }
 
+        // Only what the user (or a standing instruction) gives: seen in testing, the source's name went in as the
+        // System/Name unasked, and the user was never asked for either. A placeholder left in is refused on saving.
         private void system(final String systemName, final String environment, final String timeField) {
-            common.add(dict(PATH, "EventSource/System/Name", VALUE, firstText(systemName, sourceName,
-                    "TODO system name")));
+            common.add(dict(PATH, "EventSource/System/Name", VALUE, firstText(systemName, null,
+                    SYSTEM_NAME_PLACEHOLDER)));
             common.add(dict(PATH, "EventSource/System/Environment", VALUE, firstText(environment, null,
-                    "TODO e.g. Prod")));
+                    ENVIRONMENT_PLACEHOLDER)));
             if (!LocalCheck.hasText(systemName) || !LocalCheck.hasText(environment)) {
-                notes.add("Set EventSource/System/Name and Environment to what the user confirms (or the standing "
-                          + "instructions say). Both are required: if the user doesn't know one, use a placeholder "
-                          + "they agree to (such as Unknown) and record it as an open item, rather than stopping.");
+                notes.add("Ask the user for EventSource/System/Name and Environment (unless the standing "
+                          + "instructions give them): the draft has placeholders, which saving refuses. Both are "
+                          + "required: if the user doesn't know one, use a value they agree to (such as Unknown) and "
+                          + "record it as an open item, rather than stopping.");
             }
         }
 

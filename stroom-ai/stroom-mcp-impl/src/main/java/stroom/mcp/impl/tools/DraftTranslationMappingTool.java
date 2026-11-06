@@ -149,7 +149,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                                                     + "samples are read from their streams "
                                                                     + "(stream_ids)."))
                         .addStringProperty(SOURCE_NAME_ARG, "The source, e.g. 'Acme door controller': names the "
-                                                            + "system and generator until the user confirms them.")
+                                                            + "generator. The system's name and environment are the "
+                                                            + "user's to give (system_name, environment).")
                         .addStringProperty(SYSTEM_NAME_ARG, "EventSource/System/Name, if the user has said: one "
                                                             + "name, or for a stream of several products a JSON "
                                                             + "object of each variant's, e.g. {\"cef\": "

@@ -7,6 +7,14 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:apply-templates select="." mode="event_type_request"/>
+    <xsl:for-each select="data[@name][not(@name = ('#Remark', '#Software', 'c-ip', 'cs-categories', 'cs-host', 'cs-method', 'cs-uri-path', 'cs-uri-port', 'cs-username', 'date', 's-action', 'sc-bytes', 'sc-filter-result', 'sc-status', 'time', 'x-virus-id'))][normalize-space(string(@value))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'request': every record. Writes a Network/Open event (TypeId from s-action) from c-ip, cs-host,
        cs-uri-port, cs-uri-path, cs-categories, cs-method, sc-status, sc-bytes, x-virus-id, sc-filter-result. -->
