@@ -2493,11 +2493,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRefs"
+                "$ref" : "#/components/schemas/ExportContentRequest"
               }
             }
           },
-          "description" : "docRefs",
+          "description" : "request",
           "required" : true
         },
         "responses" : {
@@ -4115,6 +4115,25 @@
         },
         "summary" : "Find the duplicate check data for the current analytic",
         "tags" : [ "DuplicateCheck" ]
+      }
+    },
+    "/elasticCluster/v1/getDefaultHttpClientConfig" : {
+      "post" : {
+        "operationId" : "getElasticClusterDefaultHttpClientConfig",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HttpClientConfig"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get default HTTP client configuration",
+        "tags" : [ "Elastic Clusters" ]
       }
     },
     "/elasticCluster/v1/testCluster" : {
@@ -18612,18 +18631,6 @@
         },
         "required" : [ "uuid" ]
       },
-      "DocRefs" : {
-        "type" : "object",
-        "properties" : {
-          "docRefs" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DocRef"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
       "DocumentAsset" : {
         "type" : "object",
         "properties" : {
@@ -19128,18 +19135,8 @@
       "ElasticConnectionConfig" : {
         "type" : "object",
         "properties" : {
-          "apiKeyId" : {
+          "apiKeyName" : {
             "type" : "string"
-          },
-          "apiKeySecret" : {
-            "type" : "string"
-          },
-          "caCertificate" : {
-            "type" : "string"
-          },
-          "connectionTimeoutMillis" : {
-            "type" : "integer",
-            "format" : "int32"
           },
           "connectionUrls" : {
             "type" : "array",
@@ -19147,12 +19144,8 @@
               "type" : "string"
             }
           },
-          "responseTimeoutMillis" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "useAuthentication" : {
-            "type" : "boolean"
+          "httpClientConfiguration" : {
+            "$ref" : "#/components/schemas/HttpClientConfig"
           }
         }
       },
@@ -19864,6 +19857,25 @@
           }
         }
       },
+      "ExportContentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
+            "uniqueItems" : true
+          },
+          "includedTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "ExpressionCriteria" : {
         "type" : "object",
         "properties" : {
@@ -20292,6 +20304,9 @@
               "$ref" : "#/components/schemas/ExplorerNodeKey"
             },
             "uniqueItems" : true
+          },
+          "refresh" : {
+            "type" : "boolean"
           },
           "showAlerts" : {
             "type" : "boolean"
@@ -23114,6 +23129,15 @@
             "key" : {
               "type" : "string"
             },
+            "multiSelect" : {
+              "type" : "boolean"
+            },
+            "selectedValues" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
             "useDictionary" : {
               "type" : "boolean"
             },
@@ -25478,7 +25502,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -26125,15 +26149,15 @@
       "ReplaceSecretRequest" : {
         "type" : "object",
         "properties" : {
+          "credential" : {
+            "$ref" : "#/components/schemas/Credential"
+          },
           "expiryTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "secret" : {
             "$ref" : "#/components/schemas/Secret"
-          },
-          "uuid" : {
-            "type" : "string"
           }
         }
       },
@@ -30077,7 +30101,14 @@
         }, {
           "type" : "object",
           "properties" : {
+            "format" : {
+              "type" : "string",
+              "enum" : [ "TEXT", "NUMBER", "DATE_TIME", "PATTERN" ]
+            },
             "key" : {
+              "type" : "string"
+            },
+            "pattern" : {
               "type" : "string"
             },
             "value" : {
