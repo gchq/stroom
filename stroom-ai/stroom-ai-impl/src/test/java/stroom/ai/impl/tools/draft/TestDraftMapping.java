@@ -563,12 +563,13 @@ class TestDraftMapping extends DraftFixtures {
         // user.name is user_name.
         assertThat(JsonValues.maps(mappingOf(draft(List.of(format("json_lines")), "")).get("common")))
                 .contains(map("path", "EventSource/User/Id", "field", "user.name"));
+        // Windows events: a rule for each event id, its EventData read by Name. What an id means isn't known here
+        // (asked for by the user: the tools hold no one source's handling): it comes from the agent, the user's
+        // documentation (theDraftFollowsTheDocumentationAndGenerates) and the user.
         final Map<String, Map<String, Object>> windows = formatRules("xml_fragments_ns");
-        final Map<String, Map<String, Object>> logon = fields(windows.get("4624"));
-        assertThat(logon.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
-        assertThat(logon.get("EventDetail/Authenticate/Outcome/Success").get("value")).isEqualTo("true");
-        assertThat(JsonValues.maps(windows.get("4634").get("fields")).getFirst())
-                .isEqualTo(map("path", "EventDetail/Authenticate/Action", "value", "Logoff"));
+        assertThat(windows).containsKeys("4624", "4634");
+        assertThat(String.valueOf(windows.get("4624"))).contains("data_name=EventData/Data/@Name")
+                .doesNotContain("EventDetail/Authenticate");
         final SplitterSpec named = SplitterSpec.builder("delimited").header(List.of("time", "user", "src_ip",
                 "action")).build();
         assertThat(rules(DraftMapping.draft(List.of(format("csv_noheader")), "", null, null, null, null,

@@ -121,13 +121,6 @@ public final class DraftMapping {
     private static final Pattern EXCEPTION = Pattern.compile(EXCEPTION_REGEX);
     // Values that say a field has nothing (syslog's NILVALUE).
     private static final Set<String> NIL = Set.of("-", "", "null", "none", "n/a");
-    // Windows security log event IDs that are logons and logoffs (seen: 4624 and 4634 drafted as Unknown).
-    private static final Map<String, WindowsEvent> WINDOWS_LOGON = Map.of(
-            "4624", new WindowsEvent("Logon", true), "4625", new WindowsEvent("Logon", false),
-            "4648", new WindowsEvent("Logon", true), "4634", new WindowsEvent("Logoff", null),
-            "4647", new WindowsEvent("Logoff", null), "4778", new WindowsEvent("Logon", true),
-            "4779", new WindowsEvent("Logoff", null));
-    private static final Set<String> EVENT_ID_KEYS = Set.of("eventid", "event_id", "eventcode", "event_code");
     // Key/value pairs in a text field, as survey_feed signs them (kv:): the ways a text writes them are Pairs'.
     // Seen in production: the agent writing 33 extractions by hand after the draft carried such a text whole.
     private static final Pattern COLON_KEY = ToolText.re(Pairs.BOUND + "(" + Pairs.WORDS + "): (\\[)?");
@@ -521,11 +514,6 @@ public final class DraftMapping {
     /// @param extracts The extract entries, one a key (`field`, `regex`, `names`).
     /// @param whole    True if every value of the field had pairs (the text itself needn't be mapped).
     public record PairExtracts(List<Map<String, Object>> extracts, boolean whole) {
-
-    }
-
-    // A Windows logon event: the Authenticate action, and whether it succeeded (null when it says nothing).
-    private record WindowsEvent(String action, Boolean success) {
 
     }
 
@@ -1189,29 +1177,16 @@ public final class DraftMapping {
                 name += "_";
             }
             usedNames.add(name);
-            final WindowsEvent windows = EVENT_ID_KEYS.contains(key(naming))
-                    ? WINDOWS_LOGON.get(kind)
-                    : null;
             final List<Map<String, Object>> ofKind = records.stream().filter(r -> kind.equals(r.get(naming))).toList();
-            if (ToolText.search(AUTH, kind) || windows != null) {
-                final String action;
-                final Boolean success;
-                if (windows != null) {
-                    action = windows.action();
-                    success = windows.success();
-                } else {
-                    action = ToolText.search(LOGOFF, kind)
-                            ? "Logoff"
-                            : "Logon";
-                    success = null;
-                }
+            // A kind named as an authentication. No product's codes are known here (asked for by the user: the tools
+            // hold no one source's handling): what a code means comes from the agent, the user's documentation
+            // (source notes) and the user.
+            if (ToolText.search(AUTH, kind)) {
+                final String action = ToolText.search(LOGOFF, kind)
+                        ? "Logoff"
+                        : "Logon";
                 final List<Map<String, Object>> fields = new ArrayList<>();
                 fields.add(dict(PATH, "EventDetail/Authenticate/Action", VALUE, action));
-                if (success != null) {
-                    fields.add(dict(PATH, "EventDetail/Authenticate/Outcome/Success", VALUE, success
-                            ? "true"
-                            : "false"));
-                }
                 if (JsonValues.truthy(user)) {
                     final Map<String, Object> entry = dict(PATH, "EventDetail/Authenticate/User/Id");
                     entry.putAll(ActionRules.read(user));
