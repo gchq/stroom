@@ -19,6 +19,9 @@ package stroom.ai.impl.tools;
 import stroom.ai.impl.tools.ToolSchema.EnumSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Singleton;
@@ -67,6 +70,8 @@ import java.util.stream.Collectors;
 /// the same arguments can't change. A success resets both.
 @Singleton
 public class ToolCallGuard {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ToolCallGuard.class);
 
     /// Identical failing calls run; after that, answered from the last failure.
     static final int SAME_CALL_LIMIT = 3;
@@ -152,7 +157,7 @@ public class ToolCallGuard {
                         read.notes());
             }
         }
-        final ToolResult result = Objects.requireNonNullElseGet(runner.apply(read.call(), context),
+        final ToolResult result = Objects.requireNonNullElseGet(runOnce(name, read.call(), context, runner),
                 () -> ToolResult.text(""));
         final String failure = failure(result);
         final ToolResult noted;
@@ -170,6 +175,25 @@ public class ToolCallGuard {
                     : withRepeatNote(result, note);
         }
         return withNotes(noted, read.notes());
+    }
+
+    // A call run, a stack overflow inside it (a regular expression recursing over a long value, say) answered as the
+    // call's error rather than ending the chat's run. Seen in testing: a mail gateway's 168 recipients overflowed the
+    // splitter's regex, and the whole run failed.
+    private static ToolResult runOnce(final String name,
+                                      final ToolCall call,
+                                      final ToolCallContext context,
+                                      final BiFunction<ToolCall, ToolCallContext, ToolResult> runner) {
+        try {
+            return runner.apply(call, context);
+        } catch (final StackOverflowError e) {
+            LOGGER.warn(() -> LogUtil.message("Tool '{}' overflowed the stack", name), e);
+            return ToolResult.error("Error: " + name + " ran out of stack, most likely in a regular expression over "
+                                    + "a very long value (one that repeats an alternation, such as (a|b)*, recurses "
+                                    + "once a character). If you wrote the expression, take each run whole instead, "
+                                    + "e.g. [^\"\\\\]*+(?:\\\\.[^\"\\\\]*+)*+ for a quoted value; otherwise "
+                                    + "report it as a fault.");
+        }
     }
 
     /// Reads a call's arguments leniently.
