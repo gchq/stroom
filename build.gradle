@@ -191,6 +191,17 @@ allprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addBooleanOption('html5', true)
     }
+
+    // stroom-util writes the build date into this file on every build, which would
+    // otherwise make every test classpath different and stop tests coming from the
+    // build cache
+    normalization {
+        runtimeClasspath {
+            properties('META-INF/stroom-util-build.properties') {
+                ignoreProperty 'buildDate'
+            }
+        }
+    }
 }
 
 // Variable to capture the version of slf4j defined in the dropwizard-dependencies, so
