@@ -263,7 +263,7 @@ class TestSurveyFeedTool {
         assertThat(result.get("saturated")).isEqualTo(false);
         assertThat(((Map<?, ?>) ((List<?>) result.get("per_stream")).getFirst()).get("head_only")).isEqualTo(true);
         assertThat(String.valueOf(result.get("coverage")))
-                .startsWith("NOT COVERED: every stream in the feed was picked, but only the start of stream(s) "
+                .startsWith("NOT COVERED: every stream in the feed was picked, but only part of stream(s) "
                             + "[15911122]")
                 .contains("stream_ids=[15911122]");
 
