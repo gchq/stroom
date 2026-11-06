@@ -96,4 +96,12 @@ public interface DocDependencyService {
      * Get direct dependants of a specific document (for safe-delete).
      */
     Set<DocRef> getDependantsOf(DocRef docRef);
+
+    /// Get the UUIDs of every source of the given type that has stored dependency edges. Used to find
+    /// edges left behind by entities that no longer exist, e.g. processor filters that have been
+    /// physically deleted.
+    ///
+    /// @param fromType The source type, e.g. `ProcessorFilter`.
+    /// @return The distinct source UUIDs. Empty if there are none.
+    Set<String> getSourceUuids(String fromType);
 }

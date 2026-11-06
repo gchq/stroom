@@ -154,6 +154,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, String> PROFILE_NAME = createField(DSL.name("profile_name"), SQLDataType.VARCHAR(255), this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.dependency_version</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Integer> DEPENDENCY_VERSION = createField(DSL.name("dependency_version"), SQLDataType.INTEGER, this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
