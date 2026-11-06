@@ -200,6 +200,27 @@ class TestDraftIndexMappingTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void aFieldTheTranslationWritesIsRareNotMissingFromTheSample() {
+        // Seen in testing: a byte count the Events held early in their stream, missed by the events read spread over
+        // it, was said to be one the index never gets, to leave out.
+        final String source = "EventDetail/Alert/Data[@Name='Ticket']/@Value";
+        final Map<String, Object> drafted = draft("ecs-firewall-v1", Map.of("convention", "ecs", "without_example",
+                true, "extra_fields", List.of(ordered("name", "acme.ticket", "type", "keyword", "source",
+                        source))), agreeing());
+        assertThat((List<String>) drafted.get("fields_not_in_sample")).contains("acme.ticket <- " + source);
+        final FieldPlan plan = FieldPlan.fromJson((Map<String, Object>) drafted.get("plan"));
+
+        final Map<String, Object> reply = world.plans.reply(plan, Map.of(), TranslationWrites.of(List.of(
+                "<xsl:sequence select=\"mcp:data('Ticket', data[@name='ticket']/@value)\"/>")));
+
+        assertThat((List<String>) reply.get("fields_rare")).containsExactly("acme.ticket <- " + source);
+        assertThat((List<String>) reply.get("fields_not_in_sample")).doesNotContain("acme.ticket <- " + source);
+        assertThat((String) reply.get("hint")).contains("fields_rare: the translation writes their source",
+                "or keep it");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void aPlanIsAmendedWithOnlyWhatChangesAndTheToolsTakeItFromTheSession() {
         // Seen in Ask Stroom AI: past the client's step cap the agent had lost its earlier extra_fields and spent
         // eight calls recovering them, and the 50-field plan went inline five times in all.

@@ -38,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /// The index plans the indexing tools share: the plan a tool was given, else the one kept with the pipeline's indexing
 /// XSLT, else the one drafted in the session; a plan's repeatable fields marked from the event-logging schema; and what
@@ -178,11 +179,26 @@ class IndexPlans {
     /// @throws ToolRefusal if a name is a value and also an object, which no template can map; the plan kept before
     /// stays.
     Map<String, Object> reply(final FieldPlan plan, final Map<String, Double> populated) {
+        return reply(plan, populated, source -> false);
+    }
+
+    /// As [#reply(FieldPlan, Map)], with what the translation writes: a field whose source no event of the sample
+    /// has, but the translation that wrote the Events writes, is `fields_rare` (kept: indexed whenever an event has
+    /// it), not `fields_not_in_sample`. Seen in testing: a byte count the Events held early in their stream, missed
+    /// by the events read spread over it, was said to be one the index would never get, and to leave out.
+    ///
+    /// @param plan      The plan.
+    /// @param populated How often the sample populates each event path (%), or null when no streams were read.
+    /// @param written   Whether the translation writes a source path.
+    /// @return As [#reply(FieldPlan, Map)], with `fields_rare` where there are any.
+    Map<String, Object> reply(final FieldPlan plan,
+                              final Map<String, Double> populated,
+                              final Predicate<String> written) {
         // Refused before it is kept: kept, every later change= failed to render it (seen in Ask Stroom AI).
         final List<String> clashes = plan.valueAndObjectClashes();
         if (!clashes.isEmpty()) {
             throw new ToolRefusal(String.join("; ", clashes) + ". Nothing was kept: send the change again with one "
-                                  + "of each renamed (e.g. netskope.ssl.bypass_reason beside netskope.ssl.bypass), "
+                                  + "of each renamed (e.g. acme.ssl.bypass_reason beside acme.ssl.bypass), "
                                   + "or without it.");
         }
         final EcsSchema ecs = ecs();
@@ -203,8 +219,15 @@ class IndexPlans {
             // Network paths once, whichever action: one field for a source address, not one per Permit and Deny.
             reply.put("populated_paths_not_mapped", IndexingHelpers.populatedNotMapped(plan, populated));
             final List<String> empty = IndexingHelpers.plannedNotPopulated(plan, populated);
-            if (!empty.isEmpty()) {
-                reply.put("fields_not_in_sample", empty);
+            final List<String> rare = empty.stream()
+                    .filter(field -> written.test(field.substring(field.indexOf(" <- ") + " <- ".length())))
+                    .toList();
+            final List<String> missing = empty.stream().filter(field -> !rare.contains(field)).toList();
+            if (!missing.isEmpty()) {
+                reply.put("fields_not_in_sample", missing);
+            }
+            if (!rare.isEmpty()) {
+                reply.put("fields_rare", rare);
             }
             reply.put("field_mapping", IndexFieldDocs.indexFieldMappingMarkdown(plan, populated, null, null,
                     FieldDocs.BY_EVENT_TYPE, null));
@@ -220,9 +243,13 @@ class IndexPlans {
             reply.put("ecs_check", departures);
         }
         reply.put("hint", IndexingHelpers.PLAN_HINT + (reply.containsKey("fields_not_in_sample")
-                ? " fields_not_in_sample: no event of the sample has their source, so the index never gets them as "
-                  + "the Events stand: leave each out (changes= with remove), or, if the events should carry it, "
-                  + "have the translation write it first."
+                ? " fields_not_in_sample: no event read has their source, and the translation doesn't write it (the "
+                  + "tools read part of each stream, so this is no proof the data never has it): ask the user, for "
+                  + "each, whether to leave it out (changes= with remove), have the translation write it first (if "
+                  + "the source's data has it), or keep it (if the data has it on events the sample didn't reach)."
+                : "") + (reply.containsKey("fields_rare")
+                ? " fields_rare: the translation writes their source, though no event read has it (a rare one): "
+                  + "they stay in the plan, indexed whenever an event has it; nothing to change."
                 : "") + (reply.containsKey("fields_not_in_schema")
                 ? " fields_not_in_schema: the Events schema has no element at their source, so no Event can "
                   + "hold it: correct the source to a path the Events have (summarise_streams' path_population), or "

@@ -365,8 +365,8 @@ class TestIndexFieldDocs {
         assertThat(views).contains("`source.ip`", "10% of events", "`user.name`", "40% of events")
                 .doesNotContain("event.outcome");
         // What no event has, saying so.
-        assertThat(text.split("### Not in the sample")[1]).contains("No event of the sample has these",
-                "`message`");
+        assertThat(text.split("### Not seen in the sample")[1])
+                .contains("No event read for this documentation has these", "`message`");
         // Without the shares by action element (the draft's preview), only some events' fields stay common, with
         // their share shown.
         final String preview = section(plan, population, null, null);
@@ -392,7 +392,7 @@ class TestIndexFieldDocs {
                             List.of("Patel, Priya", "Lee, Sam")), null,
                     FieldDocs.BY_EVENT_TYPE, null);
 
-            assertThat(text.split("### Not in the sample")[1]).as(backend)
+            assertThat(text.split("### Not seen in the sample")[1]).as(backend)
                     .contains("| `EventDetail/*/User/Name` | not in the sample | `Patel, Priya`, `Lee, Sam` (from the "
                               + "index) |");
         }
@@ -440,7 +440,7 @@ class TestIndexFieldDocs {
                 // Each in every event: no In sample column.
                 .doesNotContain("In sample", "100% of events");
         // What no event of the sample has: its own section, saying so.
-        assertThat(text.split("### Not in the sample")[1]).contains("`user.target.name`")
+        assertThat(text.split("### Not seen in the sample")[1]).contains("`user.target.name`")
                 .doesNotContain("`user.target.id`", "`secret.id`", "`source.ip`");
         // What only some events have, though not an action element's (seen: source.ip, in 40%), under each.
         assertThat(text.split("#### View")[1]).contains("`source.ip`", "15% of events");

@@ -4577,8 +4577,11 @@ stream (records:2) must be drafted with `input: delimited`, which reads each dat
   `custom_namespaces` (ECS); `changes` (amend instead of drafting); `pipeline_uuid` (with `changes`, the pipeline
   whose kept plan to amend). `plan`, `discovery`, `extra_fields` and `shared` may be given as JSON text.
 * **Returns**: `plan`, `problems` (`FieldPlan.required()`), `rendered` (Lucene field list, or Elasticsearch index
-  template), `convention_paths_not_in_sample`, `populated_paths_not_mapped`, `fields_not_in_sample`,
-  `field_mapping` (the Field mapping section's Markdown), `ecs_check` where it departs from ECS, `from_example`
+  template), `convention_paths_not_in_sample`, `populated_paths_not_mapped`, `fields_not_in_sample` (no event read
+  has the source, and the translation that wrote the Events doesn't write it: the user chooses to leave it out, have
+  the translation write it, or keep it), `fields_rare` (no event read has the source, but the translation writes it:
+  kept, as a sample can't show a path is never populated; seen: a byte count early in its stream said to be one the
+  index never gets), `field_mapping` (the Field mapping section's Markdown), `ecs_check` where it departs from ECS, `from_example`
   (notes on naming, shared fields and the kept example), `shared_from_pipelines`, `ecs_data_elements`, `replaced`
   (with `replaces=`: `{xslt, fields, not_in_draft, hint}`, the fields the old index wrote that the draft doesn't
   cover by source, each with its source and how often the sample populates it), `warnings`, `hint`. A discovery

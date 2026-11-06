@@ -63,6 +63,7 @@ class IndexingMemory {
     private final Map<String, Timed<String>> shown = bounded();
     private final Map<String, Map<String, Object>> plans = bounded();
     private final Map<String, Map<String, Double>> planPopulations = bounded();
+    private final Map<String, List<Long>> planStreams = bounded();
     private final Map<String, Timed<Map<String, Map<String, Object>>>> passed = bounded();
 
     /// @param securityContext Says who the user is.
@@ -207,6 +208,23 @@ class IndexingMemory {
     /// null.
     Map<String, Double> planPopulation(final String indexName) {
         return planPopulations.get(user() + "\n" + indexName);
+    }
+
+    /// Keeps which Events streams a plan was last checked against, so an amendment that gives none knows which
+    /// translation wrote them (what it writes is never called absent from the sample).
+    ///
+    /// @param indexName The plan's index name.
+    /// @param streamIds The Events streams; empty keeps nothing.
+    void keepPlanStreams(final String indexName, final List<Long> streamIds) {
+        if (streamIds != null && !streamIds.isEmpty()) {
+            planStreams.put(user() + "\n" + indexName, List.copyOf(streamIds));
+        }
+    }
+
+    /// @param indexName A plan's index name.
+    /// @return The Events streams this user's plan for it was last checked against, or none.
+    List<Long> planStreams(final String indexName) {
+        return planStreams.getOrDefault(user() + "\n" + indexName, List.of());
     }
 
     /// @return The plans this user drafted or amended, by index name, as kept (JSON).

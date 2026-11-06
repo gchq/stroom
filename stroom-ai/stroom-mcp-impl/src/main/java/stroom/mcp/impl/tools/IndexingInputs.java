@@ -30,19 +30,28 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /// The streams the indexing tools index, and what they hold: an index holds the Events an events pipeline writes, never
 /// a source's own data, unless it is a discovery index, which indexes raw data as it is. create_indexing_pipeline
 /// checks its streams with [#requireEvents].
 class IndexingInputs {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexingInputs.class);
 
     /// How many events are read to see which paths a sample populates.
     static final int EVENTS_READ = 200;
@@ -147,6 +156,38 @@ class IndexingInputs {
             }
         }
         return false;
+    }
+
+    /// @param eventsStreamIds Events streams.
+    /// @return Whether the translations of the pipelines that wrote them write a source path ([TranslationWrites]);
+    /// false for every path when none can be read.
+    Predicate<String> translationWrites(final List<Long> eventsStreamIds) {
+        final Set<String> pipelines = new LinkedHashSet<>();
+        for (final Long id : NullSafe.list(eventsStreamIds)) {
+            try {
+                final String uuid = streamReader.meta(id).getPipelineUuid();
+                if (!NullSafe.isBlankString(uuid)) {
+                    pipelines.add(uuid);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("No pipeline read for stream {}: {}", id, e.getMessage()));
+            }
+        }
+        final List<String> codes = new ArrayList<>();
+        for (final String pipeline : pipelines) {
+            try {
+                pipelineShapes.merged(pipeline).translationDocs(pipeline).stream()
+                        .map(MergedPipeline.TranslationDoc::doc)
+                        .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
+                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class)
+                                .map(XsltDoc::getData)
+                                .ifPresent(codes::add));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("No translation read for pipeline {}: {}", pipeline,
+                        e.getMessage()));
+            }
+        }
+        return TranslationWrites.of(codes);
     }
 
     /// @param streamId An Events stream.
