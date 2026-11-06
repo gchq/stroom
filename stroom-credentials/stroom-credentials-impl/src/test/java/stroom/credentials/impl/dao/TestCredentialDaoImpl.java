@@ -8,6 +8,7 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -138,7 +139,7 @@ public class TestCredentialDaoImpl {
                 null,
                 filter,
                 null,
-                null);
+                DocumentPermission.EDIT);
         return credentialsDao.findCredentialsWithPermissions(request, cred ->
                 new CredentialWithPerms(cred, true, true));
     }
@@ -167,7 +168,7 @@ public class TestCredentialDaoImpl {
                 credentialType == null
                         ? null
                         : Set.of(credentialType),
-                null);
+                DocumentPermission.EDIT);
     }
 
     private ResultPage<CredentialWithPerms> find(final CredentialType credentialType) {

@@ -20,6 +20,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -27,9 +29,10 @@ import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 class DocFinderImpl implements DocFinder {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocFinderImpl.class);
 
     private final DocRefFromNameCache docRefFromNameCache;
     private final DocRefToNameCache docRefToNameCache;
@@ -51,44 +54,54 @@ class DocFinderImpl implements DocFinder {
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
                                    final boolean allowWildCards) {
+        List<DocRef> docRefs;
         // Use the name cache for exact (non-wildcard) lookups.
-        if (!allowWildCards) {
+        if (allowWildCards) {
+            // Wildcard lookups go direct to Persistence, then filter.
+            docRefs = persistence.find(type, nameFilter, true);
+        } else {
             // Cache returns unfiltered results; apply permission filter at this boundary.
-            return docRefFromNameCache.get(type, nameFilter).stream()
-                    .filter(this::canView)
-                    .collect(Collectors.toList());
+            docRefs = docRefFromNameCache.get(type, nameFilter);
         }
+        docRefs = docRefs.stream()
+                .filter(this::canUse)
+                .toList();
 
-        // Wildcard lookups go direct to Persistence, then filter.
-        return persistence.find(type, nameFilter, true).stream()
-                .filter(this::canView)
-                .collect(Collectors.toList());
+        LOGGER.trace("findByNames() - type: {}, nameFilter: {}, allowWildCards: {}, docRefs: {}",
+                type, nameFilter, allowWildCards, docRefs);
+        return docRefs;
     }
 
     @Override
     public List<DocRef> findByNames(final String type,
                                     final List<String> nameFilters,
                                     final boolean allowWildCards) {
+        final List<DocRef> docRefs;
         if (NullSafe.isEmptyCollection(nameFilters)) {
-            return Collections.emptyList();
+            docRefs = Collections.emptyList();
+        } else if (nameFilters.size() == 1) {
+            docRefs = findByName(type, nameFilters.getFirst(), allowWildCards);
+        } else {
+            // Multi name lookups use DB directly
+            docRefs = persistence.find(type, nameFilters, allowWildCards);
         }
-        if (nameFilters.size() == 1) {
-            return findByName(type, nameFilters.getFirst(), allowWildCards);
-        }
-
-        // Multi name lookups use DB directly
-        return persistence.find(type, nameFilters, allowWildCards);
+        LOGGER.trace("findByNames() - type: {}, nameFilters: {}, allowWildCards: {}, docRefs: {}",
+                type, nameFilters, allowWildCards, docRefs);
+        return docRefs;
     }
 
     @Override
     public Optional<String> getName(final DocRef docRef) {
-        if (canView(docRef)) {
-            return docRefToNameCache.getName(docRef);
-        }
-        return Optional.empty();
+        final Optional<String> optName = canUse(docRef)
+                ? docRefToNameCache.getName(docRef)
+                : Optional.empty();
+        LOGGER.trace("getName() - docRef: {}, optName: {}", docRef, optName);
+        return optName;
     }
 
-    private boolean canView(final DocRef docRef) {
-        return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+    private boolean canUse(final DocRef docRef) {
+        // This service only returns docrefs, not the docs themselves. User should only need
+        // USE to see the name of a docref
+        return securityContext.hasDocumentPermission(docRef, DocumentPermission.USE);
     }
 }
