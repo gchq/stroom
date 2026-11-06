@@ -155,7 +155,8 @@ class TestDocumentPermissionDaoImpl {
         final Map<UserRef, UserDocumentPermissions> permissions = documentPermissionDao.getPermissionsForUsers(
                 userRefs);
 
-        assertThat(permissions).hasSize(3);
+        assertThat(permissions)
+                .hasSize(3);
         assertThat(permissions.get(user1).getPermissions())
                 .containsExactlyInAnyOrderEntriesOf(Map.of(docUuid1, DocumentPermission.OWNER));
         assertThat(permissions.get(user2).getPermissions())

@@ -40,8 +40,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.jooq.CommonTableExpression;
@@ -119,7 +117,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
         Objects.requireNonNull(userUuid, "Null user UUID");
 
-        final Object2ByteMap<String> permissionMap = new Object2ByteOpenHashMap<>();
+        final Builder builder = UserDocumentPermissions.builder();
         JooqUtil.contextResult(securityDbConnProvider, context -> context
                         .select(PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
                         .from(PERMISSION_DOC)
@@ -129,9 +127,9 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                 .forEach(r -> {
                     final String docUuid = r.get(PERMISSION_DOC.DOC_UUID);
                     final byte permission = r.get(PERMISSION_DOC.PERMISSION_ID).byteValue();
-                    permissionMap.put(docUuid, permission);
+                    builder.setPermission(docUuid, permission);
                 });
-        return UserDocumentPermissions.create(permissionMap);
+        return builder.build();
     }
 
     /// Gets the document permissions for each of the supplied users.
@@ -160,7 +158,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                                 PERMISSION_DOC.PERMISSION_ID)
                         .from(PERMISSION_DOC)
                         .join(STROOM_USER).on(STROOM_USER.UUID.eq(PERMISSION_DOC.USER_UUID))
-                        .where(PERMISSION_DOC.USER_UUID.in(userRefs))
+                        .where(PERMISSION_DOC.USER_UUID.in(userUuidToUserRefMap.keySet()))
                         .fetch())
                 .forEach(r -> {
                     final String userUuid = r.get(PERMISSION_DOC.USER_UUID);

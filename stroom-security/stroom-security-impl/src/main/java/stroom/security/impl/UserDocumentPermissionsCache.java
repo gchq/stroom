@@ -54,7 +54,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserDocumentPermissionsCache(),
-                userRef -> documentPermissionDaoProvider.get().getPermissionsForUser(userRef.getUuid()));
+                this::load);
     }
 
     boolean hasDocumentPermission(final UserRef userRef,
@@ -62,6 +62,13 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
                                   final DocumentPermission permission) {
         return cache.get(userRef)
                 .hasDocumentPermission(docRef, permission);
+    }
+
+    private UserDocumentPermissions load(final UserRef userRef) {
+        final UserDocumentPermissions perms = documentPermissionDaoProvider.get().getPermissionsForUser(
+                userRef.getUuid());
+        LOGGER.debug("load() - userRef: {}, perms: {}", userRef, perms);
+        return perms;
     }
 
     @Override
@@ -76,12 +83,15 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
             LOGGER.debug("onChange() - Invalidating userRef: {}", userRef);
             cache.invalidate(userRef);
         } else {
+            // No user so have no choice but to clear the whole cache
+
             // Capture the users in the cache prior to clearing, so we can build reload them
             final Set<UserRef> usersInCache = new HashSet<>(cache.keySet());
 
-            // No user so have no choice but to clear the whole cache
             LOGGER.debug("onChange() - Clearing cache");
             cache.clear();
+            // Manually re-load all the users that were in the cache, to save
+            // the cache from having to re-load each one individually.
             if (!usersInCache.isEmpty()) {
                 final Map<UserRef, UserDocumentPermissions> permissionsForUsers = documentPermissionDaoProvider.get()
                         .getPermissionsForUsers(usersInCache);
