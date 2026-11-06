@@ -22,6 +22,7 @@ import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,9 +42,9 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
      * up.
      *
      * @param deleteThreshold Only logically delete filters with a last poll time older than the threshold.
-     * @return The number of logically deleted filters.
+     * @return The UUIDs of the logically deleted filters.
      */
-    int logicallyDeleteOldProcessorFilters(Instant deleteThreshold);
+    Set<String> logicallyDeleteOldProcessorFilters(Instant deleteThreshold);
 
     /**
      * Bring a logically deleted filter back into use, by <b>replacing it with a replica</b>: a new
@@ -75,4 +76,39 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
     Set<String> physicalDeleteOldProcessorFilters(Instant deleteThreshold);
 
     List<ProcessorFilter> fetchByRunAsUser(final String userUuid);
+
+    /// Get the UUIDs of all the filters belonging to a processor, whether deleted or not.
+    ///
+    /// @param processorId The ID of the processor.
+    /// @return The filter UUIDs. Empty if the processor has no filters.
+    Set<String> fetchUuidsByProcessorId(int processorId);
+
+    /// Find which of the supplied filter UUIDs still have a row in the database, whether the filter
+    /// is logically deleted or not.
+    ///
+    /// @param uuids The filter UUIDs to check.
+    /// @return The subset of `uuids` that exist.
+    Set<String> fetchExistingUuids(Collection<String> uuids);
+
+    /// Find a batch of filters, including logically deleted ones, whose dependency edges were not
+    /// written by the current dependency extraction logic, i.e. whose `dependency_version` is null or
+    /// older than `currentDependencyVersion`. Filters are returned in ID order, so the next batch is
+    /// found by passing the ID of the last filter in this one as `afterId`.
+    ///
+    /// @param currentDependencyVersion The version of the current dependency extraction logic.
+    /// @param afterId                  Only return filters with an ID greater than this.
+    /// @param limit                    The maximum number of filters to return.
+    /// @return The filters needing a dependency rebuild, in ID order.
+    List<ProcessorFilter> findWithStaleDependencies(int currentDependencyVersion, int afterId, int limit);
+
+    /// Record that a filter's dependency edges were written by the given version of the dependency
+    /// extraction logic, but only if the filter has not been changed since `filterVersion` was read.
+    /// This does not change the filter's own version.
+    ///
+    /// @param processorFilterId The ID of the filter.
+    /// @param filterVersion     The filter version that the dependencies were extracted from.
+    /// @param dependencyVersion The version of the dependency extraction logic used.
+    /// @return `true` if the version was recorded, `false` if the filter has since been changed or
+    /// no longer exists.
+    boolean setDependencyVersion(int processorFilterId, int filterVersion, int dependencyVersion);
 }

@@ -16,6 +16,7 @@
 
 package stroom.bytebuffer;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -371,6 +372,7 @@ class TestByteBufferUtils {
                 .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
+    @PerformanceTest
     @Disabled // manual perf testing only
     @Test
     void testHashPerformance() throws IOException {
@@ -385,6 +387,7 @@ class TestByteBufferUtils {
         }
     }
 
+    @PerformanceTest
     @Disabled // manual perf testing only
     @Test
     void testCopyPerformance() {
