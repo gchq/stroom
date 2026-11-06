@@ -24,14 +24,21 @@
  * Floor Map Grid — theme-aware colours
  *
  * These variables are used by the SVG grid background
- * (FloorMapGridBackground.java) so that the grid respects
- * the current light/dark theme.
+ * (FloorMapGrid.java) so that the grid respects
+ * the current light/dark theme. It is a design surface's grid,
+ * as a dashboard's in design mode: its background and its minor
+ * lines the dashboard's grid colours (the minor lines faded in by
+ * FloorMapGrid as the map is zoomed in), and its major lines, a
+ * round distance apart, a step stronger, in a control's border
+ * colour. As minor lines become major (once every ten times zoom)
+ * they brighten a step: a quieter grid, the rest of the time, than
+ * minor lines faded in to the major colour.
  * ============================================================ */
 
 :root {
     --floormap-grid__background-color: var(--dashboard-panel__grid-background-color);
-    --floormap-grid__major-stroke:     var(--vis-axis__color);
-    --floormap-grid__minor-stroke:     var(--vis-text__color--faint);
+    --floormap-grid__major-stroke:     var(--control__border-color);
+    --floormap-grid__minor-stroke:     var(--dashboard-panel__grid-color);
     --floormap-grid__highlight-color:  var(--blue-600);
 
     /* Out-of-range chevron. This is a meaningful non-text indicator — it is the
