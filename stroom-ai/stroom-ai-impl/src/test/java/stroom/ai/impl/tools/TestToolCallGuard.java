@@ -222,6 +222,20 @@ class TestToolCallGuard {
     }
 
     @Test
+    void aStackOverflowInsideACallIsTheCallsErrorNotTheRuns() {
+        // Seen in testing: a regex over a mail gateway's 168 recipients overflowed the stack, and the chat's whole
+        // run failed.
+        final StroomTool tool = tool("build_data_splitter", ObjectSchema.builder().build(), call -> {
+            throw new StackOverflowError();
+        });
+
+        final ToolResult result = call(tool, "{}");
+
+        assertThat(result.isError()).isTrue();
+        assertThat(result.text()).contains("build_data_splitter ran out of stack", "regular expression");
+    }
+
+    @Test
     void theRepairPutsBackOnlyWhatIsMojibake() {
         assertThat(MojibakeRepair.repair("café — ok")).isEqualTo(new MojibakeRepair.Repaired("café — ok", 0));
         assertThat(MojibakeRepair.repair(mangled("é"))).isEqualTo(new MojibakeRepair.Repaired("é", 1));

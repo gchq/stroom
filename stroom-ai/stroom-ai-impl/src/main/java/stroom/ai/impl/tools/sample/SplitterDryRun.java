@@ -63,15 +63,18 @@ public final class SplitterDryRun {
     public static final List<String> SYSLOG_3164_NAMES = List.of("pri", "time", "host", "app", "pid", "message");
     /// CEF: whatever comes before it (a syslog header), the seven header fields (a | inside one is escaped \|), then
     /// the extension.
-    public static final String CEF_PATTERN = "^(.*?)CEF:(\\d+)\\|((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|"
-                                             + "((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|"
-                                             + "((?:\\\\.|[^|\\\\])*)\\|((?:\\\\.|[^|\\\\])*)\\|(.*)$";
+    public static final String CEF_PATTERN = "^(.*?)CEF:(\\d+)\\|" + ("(" + ToolText.escapedRun("|") + ")\\|").repeat(6)
+                                             + "(.*)$";
     /// The names of the CEF header's fields.
     public static final List<String> CEF_NAMES = List.of("cef_version", "cef_vendor", "cef_product",
             "cef_device_version", "cef_signature_id", "cef_name", "cef_severity");
     /// One pair of a CEF extension: its value may hold spaces, and runs to the next ` key=` (an = inside one is
     /// escaped \=, so a key holds no backslash: seen, `msg=policy matched a\=b` cut at `a\=` as if it were a key).
-    public static final String CEF_PAIR = "\\s*([^=\\s]+)=((?:\\\\.|[^\\\\])*?)(?=\\s+[^=\\s\\\\]+=|\\s*$)";
+    /// Its value: runs of anything but white space or a backslash, joined by an escaped character or by white space
+    /// that no ` key=` and no end follows, each run taken whole (possessive) so a long value doesn't recurse (see
+    /// [ToolText#escapedRun(String)]).
+    public static final String CEF_PAIR = "\\s*([^=\\s]+)=([^\\\\\\s]*+(?:(?:\\\\.|\\s++(?![^=\\s\\\\]+=|$))"
+                                          + "[^\\\\\\s]*+)*+)(?=\\s+[^=\\s\\\\]+=|\\s*$)";
     /// The syslog headers a CEF line may follow, without their message, and the names of their groups.
     public static final List<Map.Entry<String, List<String>>> CEF_PREFIXES = List.of(
             Map.entry("^(?:<(\\d+)>)?1 (\\S+) (\\S+) (\\S+) (\\S+) (\\S+) (-|\\[.*?\\])\\s*$",
@@ -105,7 +108,7 @@ public final class SplitterDryRun {
     private static final String TAB = "\t";
     // A LEEF record's start: any prefix (group 1), its version (2) and, for 2.0, the declared delimiter (3).
     private static final Pattern LEEF_HEAD = Pattern.compile(
-            "^(.*?)LEEF:(\\d\\.\\d)\\|(?:(?:\\\\.|[^|\\\\])*\\|){4}(?:([^|]{0,4})\\|)?");
+            "^(.*?)LEEF:(\\d\\.\\d)\\|(?:" + ToolText.escapedRun("|") + "\\|){4}(?:([^|]{0,4})\\|)?");
     private static final Pattern LEEF_HEX = Pattern.compile("(?:0?x)([0-9A-Fa-f]{2})");
     private static final String LEEF_ATTRIBUTES = "leef_attributes";
     // A quoted key:"value" pair's start.
@@ -177,8 +180,9 @@ public final class SplitterDryRun {
             // match.
             // A quoted value may hold the quote escaped (msg="said \"hi\""): kept as written.
             final String q = ToolText.escape(spec.quote());
-            return List.of(lead(spec) + "(" + key + ")" + s + q + "?((?<=" + q + ")(?:\\\\.|[^" + q
-                           + "\\\\])*(?=" + q + ")|(?<!" + q + ")[^" + d + q + "]*)" + q + "?");
+            final String quoted = ToolText.escapedRun(spec.quote());
+            return List.of(lead(spec) + "(" + key + ")" + s + q + "?((?<=" + q + ")" + quoted + "(?=" + q + ")|(?<!"
+                           + q + ")[^" + d + q + "]*)" + q + "?");
         }
         return List.of(lead(spec) + "(" + key + ")" + s + "([^" + d + "]*)");
     }
@@ -1224,7 +1228,7 @@ public final class SplitterDryRun {
             prefix = chosen.getKey().substring(1, chosen.getKey().length() - "\\s*$".length()) + "\\s*";
             names.addAll(chosen.getValue());
         }
-        final String field = "((?:\\\\.|[^|\\\\])*)\\|";
+        final String field = "(" + ToolText.escapedRun("|") + ")\\|";
         names.addAll(List.of("leef_version", "leef_vendor", "leef_product", "leef_product_version", "leef_event_id"));
         if (two) {
             names.add("leef_delimiter");

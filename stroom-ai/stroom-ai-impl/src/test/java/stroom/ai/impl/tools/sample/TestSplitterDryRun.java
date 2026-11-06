@@ -29,7 +29,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -121,6 +125,48 @@ class TestSplitterDryRun {
         final SplitterSpec unquoted = SplitterSpec.builder("key_value").build();
         assertThat(SplitterDryRun.dryRun(unquoted, "a=1 b=two c=").records())
                 .containsExactly(Map.of("a", "1", "b", "two", "c", ""));
+    }
+
+    @Test
+    void longValuesAreReadWithoutRecursingOnceACharacter() throws InterruptedException {
+        // Seen in testing: a mail gateway's quoted list of 168 recipients (about 5,000 characters) overflowed the
+        // stack of the key=value regex, (?:\\.|[^"\\])* recursing once a character, in the tools' checks and in
+        // Stroom's Data Splitter. Run on a stack far smaller than a thread's default.
+        final String recipients = IntStream.range(0, 400)
+                .mapToObj(n -> "user." + n + "@domain" + (n % 37) + ".example.co.uk")
+                .collect(Collectors.joining(","));
+        final String line = "id=\"q1\" recipients=\"" + recipients + "\" note=\"said \\\"hi\\\"\" size=5";
+        final SplitterSpec spec = SplitterSpec.builder("key_value").delimiter(" ").quote("\"").build();
+        final String cef = "CEF:0|Acme|Gate|1.0|100|" + recipients.replace(",", " ") + "|5|msg=" + recipients
+                           + " more " + recipients + " src=10.0.0.1";
+        final Map<String, Object> found = new LinkedHashMap<>();
+        final Thread small = new Thread(null, () -> {
+            found.put("pairs", SplitterDryRun.dryRun(spec, line).records());
+            final Matcher header = Pattern.compile(SplitterDryRun.CEF_PATTERN).matcher(cef);
+            found.put("header", header.matches()
+                    ? header.group(7)
+                    : null);
+            final Matcher pair = Pattern.compile(SplitterDryRun.CEF_PAIR).matcher(header.group(9));
+            final Map<String, String> pairs = new LinkedHashMap<>();
+            while (pair.find()) {
+                pairs.put(pair.group(1), pair.group(2));
+            }
+            found.put("extension", pairs);
+        }, "small-stack", 256 * 1024);
+        small.setUncaughtExceptionHandler((thread, e) -> found.put("failed", e));
+        small.start();
+        small.join();
+
+        assertThat(found.get("failed")).as("no stack overflow").isNull();
+        assertThat(found.get("pairs")).isEqualTo(List.of(Map.of("id", "q1", "recipients", recipients,
+                "note", "said \\\"hi\\\"", "size", "5")));
+        assertThat(found.get("header")).isEqualTo(recipients.replace(",", " "));
+        assertThat(found.get("extension")).isEqualTo(Map.of("msg", recipients + " more " + recipients,
+                "src", "10.0.0.1"));
+        // An escaped = and | read as part of a value.
+        final Matcher escaped = Pattern.compile(SplitterDryRun.CEF_PAIR).matcher("msg=a\\=b c\\ d src=1");
+        assertThat(escaped.find()).isTrue();
+        assertThat(escaped.group(2)).isEqualTo("a\\=b c\\ d");
     }
 
     @Test
