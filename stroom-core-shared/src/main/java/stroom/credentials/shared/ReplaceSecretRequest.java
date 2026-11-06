@@ -16,11 +16,17 @@
 
 package stroom.credentials.shared;
 
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 /// Request to replace the secret held by an existing credential.
 ///
@@ -36,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ReplaceSecretRequest {
 
     @JsonProperty
-    private final String uuid;
+    private final Credential credential;
 
     @JsonProperty
     private final Secret secret;
@@ -44,22 +50,35 @@ public class ReplaceSecretRequest {
     @JsonProperty
     private final Long expiryTimeMs;
 
-    /// @param uuid         The UUID of the credential whose secret is to be replaced.
+    /// @param credential   The Credential whose secret is to be replaced.
     /// @param secret       The new secret. Must be of the same type as the credential.
     /// @param expiryTimeMs When the new secret expires, or null if it does not expire.
     @JsonCreator
     public ReplaceSecretRequest(
-            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("credential") final Credential credential,
             @JsonProperty("secret") final Secret secret,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
-        this.uuid = uuid;
-        this.secret = secret;
+        this.credential = Objects.requireNonNull(credential);
+        this.secret = Objects.requireNonNull(secret);
         this.expiryTimeMs = expiryTimeMs;
     }
 
-    /// @return The UUID of the credential whose secret is to be replaced.
-    public String getUuid() {
-        return uuid;
+    /// Test use only
+    @Deprecated
+    @SerialisationTestConstructor
+    public ReplaceSecretRequest() {
+        this.credential = new Credential();
+        this.secret = new UsernamePasswordSecret(null, null);
+        this.expiryTimeMs = null;
+    }
+
+    @JsonIgnore
+    public Credential getUuid() {
+        return credential;
+    }
+
+    public Credential getCredential() {
+        return credential;
     }
 
     /// @return The new secret.
@@ -70,5 +89,14 @@ public class ReplaceSecretRequest {
     /// @return When the new secret expires, or null if it does not expire.
     public Long getExpiryTimeMs() {
         return expiryTimeMs;
+    }
+
+    @Override
+    public String toString() {
+        return "ReplaceSecretRequest{" +
+               "credential=" + credential +
+               "secret class=" + NullSafe.get(secret, Object::getClass, Class::getSimpleName) +
+               ", expiryTimeMs=" + expiryTimeMs +
+               '}';
     }
 }
