@@ -19,6 +19,7 @@ package stroom.proxy.app.handler;
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.FeedKey;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -61,6 +62,7 @@ public class TestAggregator extends StroomUnitTest {
         test(entryCountPerZip, inputZipCount, 2);
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testPerformance() throws IOException {

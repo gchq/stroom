@@ -19,6 +19,7 @@ package stroom.bytebuffer;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.bytebuffer.impl6.ByteBufferPoolImpl7;
+import stroom.test.common.PerformanceTest;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -333,6 +334,7 @@ class TestByteBufferPool {
         doPerfTest(new ArrayList<>(), 1, iterations, byteBufferPool, executorService);
     }
 
+    @PerformanceTest
     @TestFactory
     List<DynamicTest> comparePerformance() {
         final List<ByteBufferPool> byteBufferPools = new ArrayList<>();
@@ -348,7 +350,7 @@ class TestByteBufferPool {
 
         final int threads = 10;
         // Set to true for profiling in visualvm
-        final boolean inProfilingMode = true;
+        final boolean inProfilingMode = false;
 
         final int rounds = 3;
         final int iterations = inProfilingMode
@@ -386,7 +388,7 @@ class TestByteBufferPool {
                 .collect(Collectors.toList());
     }
 
-    //    @Disabled // for manual perf testing only
+    @PerformanceTest
     @Test
     void testPoolPerformanceComparison() {
 

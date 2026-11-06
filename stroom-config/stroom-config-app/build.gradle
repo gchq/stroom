@@ -106,3 +106,10 @@ tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
     mainClass = 'stroom.config.app.GenerateExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
+
+processTestResources {
+    // TestStroomYamlUtil writes this into src/test/resources (it is gitignored). Keep it off
+    // the test classpath, else whether the test has run changes the inputs of the test task
+    // and stops it coming from the build cache.
+    exclude 'stroom/config/app/actual.yaml'
+}
