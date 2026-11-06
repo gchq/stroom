@@ -27,6 +27,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -235,16 +236,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Sets up the data provider for the list of credentials.
      */
-    @SuppressWarnings("checkstyle:LineLength")
-    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(final EventBus eventBus,
-                                                                                                      final PagerView view) {
+    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(
+            final EventBus eventBus,
+            final PagerView view) {
+
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<CredentialWithPerms>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final FindCredentialRequest request = new FindCredentialRequest(pageRequest,
+                final FindCredentialRequest request = new FindCredentialRequest(
+                        pageRequest,
                         null,
                         null,
                         null,
@@ -267,9 +270,9 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             dataProvider.addDataDisplay(dataGrid);
         }
 
-        btnAdd.addClickHandler(event -> handleAddButtonClick());
-        btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-        btnEdit.addClickHandler(event -> handleEditButtonClick());
+        btnAdd.addClickHandler(ignored -> handleAddButtonClick());
+        btnDelete.addClickHandler(ignored -> handleDeleteButtonClick());
+        btnEdit.addClickHandler(ignored -> handleEditButtonClick());
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -279,7 +282,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         }));
 
         // Set the state of the UI
-        gridSelectionModel.addSelectionHandler(event -> updateState());
+        gridSelectionModel.addSelectionHandler(ignored -> updateState());
 
         // Get notified when data has loaded and load up the first item
         dataGrid.addLoadingStateChangeHandler(event -> {
@@ -358,10 +361,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the Add (+) button is clicked.
      */
     private void handleAddButtonClick() {
-        credentialClient.createDocRef(docRef -> {
-            credentialEditPresenterProvider.get()
-                    .show(docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
-        }, this);
+        final DocRef newDocRef = Credential.buildDocRef()
+                .randomUuid()
+                .build();
+        credentialEditPresenterProvider.get()
+                .show(newDocRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
     }
 
     private void afterEdit(final Credential credential) {
@@ -393,7 +397,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void deleteCredentials(final CredentialWithPerms selectedCwp) {
         if (selectedCwp != null) {
-            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), result -> {
+            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), ignored -> {
                 // Reload the list & select the first item
                 dataProvider.refresh();
                 final CredentialWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);

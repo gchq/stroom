@@ -21,25 +21,37 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Singleton
 public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler, Clearable {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDocumentPermissionsCache.class);
+
     private static final String CACHE_NAME = "User Document Permissions Cache";
 
     private final LoadingStroomCache<UserRef, UserDocumentPermissions> cache;
+    private final Provider<DocumentPermissionDao> documentPermissionDaoProvider;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final Provider<DocumentPermissionDao> documentPermissionDaoProvider,
                                         final Provider<AuthorisationConfig> authorisationConfigProvider) {
-        cache = cacheManager.createLoadingCache(
+        this.documentPermissionDaoProvider = documentPermissionDaoProvider;
+        this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserDocumentPermissionsCache(),
                 userRef -> documentPermissionDaoProvider.get().getPermissionsForUser(userRef.getUuid()));
@@ -48,12 +60,8 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     boolean hasDocumentPermission(final UserRef userRef,
                                   final DocRef docRef,
                                   final DocumentPermission permission) {
-        return get(userRef)
+        return cache.get(userRef)
                 .hasDocumentPermission(docRef, permission);
-    }
-
-    private UserDocumentPermissions get(final UserRef userRef) {
-        return cache.get(userRef);
     }
 
     @Override
@@ -62,12 +70,24 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     }
 
     @Override
-    public void onChange(final PermissionChangeEvent event) {
-        if (cache != null) {
-            if (event.getUserRef() != null) {
-                cache.invalidate(event.getUserRef());
-            } else {
-                cache.clear();
+    public void onChange(@NonNull final PermissionChangeEvent event) {
+        final UserRef userRef = event.getUserRef();
+        if (userRef != null) {
+            LOGGER.debug("onChange() - Invalidating userRef: {}", userRef);
+            cache.invalidate(userRef);
+        } else {
+            // Capture the users in the cache prior to clearing, so we can build reload them
+            final Set<UserRef> usersInCache = new HashSet<>(cache.keySet());
+
+            // No user so have no choice but to clear the whole cache
+            LOGGER.debug("onChange() - Clearing cache");
+            cache.clear();
+            if (!usersInCache.isEmpty()) {
+                final Map<UserRef, UserDocumentPermissions> permissionsForUsers = documentPermissionDaoProvider.get()
+                        .getPermissionsForUsers(usersInCache);
+                permissionsForUsers.forEach(cache::put);
+                LOGGER.debug(() -> LogUtil.message(
+                        "onChange() - Loaded {} entries into the cache", permissionsForUsers.size()));
             }
         }
     }

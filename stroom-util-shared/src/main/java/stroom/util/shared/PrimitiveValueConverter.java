@@ -40,8 +40,8 @@ public interface PrimitiveValueConverter<E extends HasPrimitiveValue> {
         final int min = stats.getMin();
         final int max = stats.getMax();
 
-        // We don't want to hold massive arrays and most of our primitives are in this
-        // range
+        // We don't want to hold massive arrays and most of our primitives are in this range.
+        // At the time of writing, the largest primitive value range we have is 100 in IndexShardStatus.
         final PrimitiveValueConverter<T> converter;
         if (min >= 0 && max <= 100) {
             converter = new PrimitiveValueConverterArrayImpl<>(clazz, values);

@@ -58,6 +58,9 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     @JsonProperty
     private final Long expiryTimeMs;
 
+    @JsonIgnore
+    private transient volatile DocRef docRef;
+
     /**
      * Constructor.
      *
@@ -129,7 +132,10 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     }
 
     public DocRef asDocRef() {
-        return new DocRef(TYPE, uuid, name);
+        if (docRef == null) {
+            docRef = new DocRef(TYPE, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -165,5 +171,15 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", keyStoreType=" + keyStoreType +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
+    }
+
+    /// @return A new [DocRef] for this document's type with the supplied uuid.
+    public static DocRef getDocRef(final String uuid) {
+        return new DocRef(TYPE, uuid);
+    }
+
+    /// @return A new builder for creating a [DocRef] for this document's type.
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }

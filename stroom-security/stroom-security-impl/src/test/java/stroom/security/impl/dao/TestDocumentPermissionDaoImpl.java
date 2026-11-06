@@ -22,6 +22,7 @@ import stroom.query.shared.QueryDoc;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
+import stroom.security.impl.UserDocumentPermissions;
 import stroom.security.impl.db.SecurityDbConnProvider;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.shared.DocumentPermission;
@@ -134,6 +135,35 @@ class TestDocumentPermissionDaoImpl {
         assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, uuid2))
                 .isEmpty();
         assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, uuid2))
+                .isEmpty();
+    }
+
+    @Test
+    void getPermissionsForUsers() {
+        final String docUuid1 = "doc1uuid";
+        final String docUuid2 = "doc2uuid";
+        final UserRef user1 = createUser("user1");
+        final UserRef user2 = createUser("user2");
+        final UserRef user3 = createUser("user3");
+
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid1, user1.getUuid(), DocumentPermission.OWNER);
+        documentPermissionDao.setDocumentUserPermission(
+                docUuid2, user2.getUuid(), DocumentPermission.VIEW);
+
+        final Set<UserRef> userRefs = Set.of(user1, user2, user3);
+        final Map<UserRef, UserDocumentPermissions> permissions = documentPermissionDao.getPermissionsForUsers(
+                userRefs);
+
+        assertThat(permissions).hasSize(3);
+        assertThat(permissions.get(user1).getPermissions())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(docUuid1, DocumentPermission.OWNER));
+        assertThat(permissions.get(user2).getPermissions())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(docUuid2, DocumentPermission.VIEW));
+        assertThat(permissions.get(user3).getPermissions())
+                .isEmpty();
+
+        assertThat(documentPermissionDao.getPermissionsForUsers(Set.of()))
                 .isEmpty();
     }
 
