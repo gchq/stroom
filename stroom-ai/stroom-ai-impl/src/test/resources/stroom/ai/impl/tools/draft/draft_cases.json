@@ -1558,24 +1558,12 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "true"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
@@ -1591,24 +1579,12 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "false"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
@@ -1624,20 +1600,12 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logoff"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
@@ -1671,7 +1639,7 @@
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of 'System/EventID' (4624, 4625, 4634), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'System/EventID' (4624, 4625, 4634): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "EventData/Data/@Name",
@@ -5362,34 +5330,22 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "true"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "System/Provider/@Name",
         "field": "System/Provider/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='TargetDomainName']",
         "field": "EventData/Data[@Name='TargetDomainName']"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
@@ -5405,39 +5361,27 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "false"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "System/Provider/@Name",
         "field": "System/Provider/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='TargetDomainName']",
         "field": "EventData/Data[@Name='TargetDomainName']"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='FailureReason']",
         "field": "EventData/Data[@Name='FailureReason']"
        }
@@ -5551,30 +5495,22 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logoff"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "System/Provider/@Name",
         "field": "System/Provider/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='TargetDomainName']",
         "field": "EventData/Data[@Name='TargetDomainName']"
        },
        {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
        }
@@ -27781,19 +27717,7 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "true"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        }
@@ -27809,15 +27733,7 @@
       ],
       "fields": [
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logoff"
-       },
-       {
-        "path": "EventDetail/Authenticate/User/Id",
-        "field": "EventData/Data[@Name='TargetUserName']"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
        }
@@ -27845,7 +27761,7 @@
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "One rule per value of 'System/EventID' (4624, 4634), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "One rule per value of 'System/EventID' (4624, 4634): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "EventData/Data/@Name"
