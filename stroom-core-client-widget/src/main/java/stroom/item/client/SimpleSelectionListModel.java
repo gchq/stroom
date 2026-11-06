@@ -26,6 +26,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,8 +46,10 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<SimpleSelectionItemWrapper<T>>> consumer) {
         if (!NullSafe.isBlankString(filter)) {
+            // Match ignoring case, so both the label and the filter are lower cased
+            final String lowerFilter = filter.toLowerCase(Locale.ROOT);
             final List<SimpleSelectionItemWrapper<T>> filteredItems = items.stream()
-                    .filter(item -> item.getLabel().toLowerCase().contains(filter))
+                    .filter(item -> item.getLabel().toLowerCase(Locale.ROOT).contains(lowerFilter))
                     .collect(Collectors.toList());
 
             consumer.accept(ResultPage.createUnboundedList(filteredItems));
