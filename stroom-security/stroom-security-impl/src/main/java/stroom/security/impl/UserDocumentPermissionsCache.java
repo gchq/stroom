@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.collections.BatchingIterator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -42,6 +43,7 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDocumentPermissionsCache.class);
 
     private static final String CACHE_NAME = "User Document Permissions Cache";
+    static final int BATCH_SIZE = 200;
 
     private final LoadingStroomCache<UserRef, UserDocumentPermissions> cache;
     private final Provider<DocumentPermissionDao> documentPermissionDaoProvider;
@@ -93,11 +95,16 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
             // Manually re-load all the users that were in the cache, to save
             // the cache from having to re-load each one individually.
             if (!usersInCache.isEmpty()) {
-                final Map<UserRef, UserDocumentPermissions> permissionsForUsers = documentPermissionDaoProvider.get()
-                        .getPermissionsForUsers(usersInCache);
-                permissionsForUsers.forEach(cache::put);
+                // Do it batch wise in case there are a mental number of users
+                BatchingIterator.batchedStreamOf(usersInCache, BATCH_SIZE)
+                        .forEach(userRefsBatch -> {
+                            final Map<UserRef, UserDocumentPermissions> permissionsForUsers =
+                                    documentPermissionDaoProvider.get()
+                                            .getPermissionsForUsers(new HashSet<>(userRefsBatch));
+                            permissionsForUsers.forEach(cache::put);
+                        });
                 LOGGER.debug(() -> LogUtil.message(
-                        "onChange() - Loaded {} entries into the cache", permissionsForUsers.size()));
+                        "onChange() - Loaded {} entries into the cache", usersInCache.size()));
             }
         }
     }

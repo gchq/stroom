@@ -134,8 +134,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
     /// Gets the document permissions for each of the supplied users.
     ///
-    /// The returned permissions are in the iteration order of {@code userUuids}.
-    /// An empty permissions object is returned for a user that has no document permissions.
+    /// An empty [DocumentUserPermissions] will be returned for a user that has no document permissions.
     ///
     /// @param userRefs The UUIDs of the users whose document permissions are required.
     /// @return The document permissions for each supplied user.
