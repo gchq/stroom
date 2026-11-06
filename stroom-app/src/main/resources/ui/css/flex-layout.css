@@ -69,11 +69,20 @@
     background: var(--dashboard-panel__grid-background-color);
 }
 
+/* In design mode, a grid as a floor map's looks at its default zoom (floor-map-canvas.css): major
+   lines every 100px, minor lines every 10px. The floor map's SVG lines fall between pixels, so
+   the browser softens them: a major line, in a control's border colour, comes out 1px at half
+   strength, and a minor line, in the grid colour faded to 40%, 2px at about 22%. These are drawn as
+   they come out there */
 .flex-layout--design-mode .flex-layout__design-surface {
+    --flex-layout__grid-major: color-mix(in srgb, var(--control__border-color) 50%, transparent);
+    --flex-layout__grid-minor: color-mix(in srgb, var(--dashboard-panel__grid-color) 22%, transparent);
     background-image:
-        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
-    background-size: 2rem 2rem;
+        linear-gradient(var(--flex-layout__grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--flex-layout__grid-major) 1px, transparent 1px),
+        linear-gradient(var(--flex-layout__grid-minor) 2px, transparent 2px),
+        linear-gradient(90deg, var(--flex-layout__grid-minor) 2px, transparent 2px);
+    background-size: 100px 100px, 100px 100px, 10px 10px, 10px 10px;
 }
 
 /* A pane or splitter, where the layout puts it (the custom properties are set by FlexLayout) */
