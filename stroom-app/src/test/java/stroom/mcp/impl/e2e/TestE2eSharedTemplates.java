@@ -69,7 +69,7 @@ class TestE2eSharedTemplates extends AbstractE2eTest {
         final Map<String, Object> converter = map(agreed("build_data_splitter", args("stream_ids", List.of(raw),
                 "save_as", feed + "-CSV", "build", build)), "saved");
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
-                "build", build, "schema_version", VERSION));
+                "build", build, "schema_version", VERSION, "system_name", "E2E", "environment", "Test"));
         final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
 
         assertThat((List<Map<String, Object>>) mapping.get("shared")).as("the siblings' call, in the draft")

@@ -57,6 +57,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -96,6 +97,8 @@ public class StreamSummaries {
     static final int MAX_ERROR_STREAMS = 20;
     /// The most markers read from one Error stream.
     static final int MAX_MARKERS_PER_STREAM = 1_000;
+    // A message's numbers, aside when telling its kind.
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
     /// The most bytes of one Error stream read.
     static final int MAX_ERROR_STREAM_BYTES = 4 * 1024 * 1024;
     /// The character budget for reading Events records: in effect, none.
@@ -241,7 +244,9 @@ public class StreamSummaries {
 
     /// @param stored The markers, in order.
     /// @param max    The most to keep.
-    /// @return All of them if no more than `max`, else warnings and errors first, then INFO lines, in order.
+    /// @return All of them if no more than `max`, else warnings and errors first, then the first line of each kind of
+    /// message (its numbers aside), then the rest, kept in order: every kind is reported however many lines another
+    /// kind has (seen in testing: 1,000 kept-Unknown lines hid the one saying a field was read by no rule).
     static List<StoredError> firstMarkers(final List<StoredError> stored, final int max) {
         if (stored.size() <= max) {
             return stored;
@@ -249,6 +254,12 @@ public class StreamSummaries {
         final Set<Integer> kept = new TreeSet<>();
         for (int i = 0; i < stored.size() && kept.size() < max; i++) {
             if (stored.get(i).getSeverity() != Severity.INFO) {
+                kept.add(i);
+            }
+        }
+        final Set<String> kinds = new HashSet<>();
+        for (int i = 0; i < stored.size() && kept.size() < max; i++) {
+            if (kinds.add(DIGITS.matcher(NullSafe.string(stored.get(i).getMessage())).replaceAll("#"))) {
                 kept.add(i);
             }
         }

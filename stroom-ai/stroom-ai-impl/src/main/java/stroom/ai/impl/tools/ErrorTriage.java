@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.impl.ErrorTriageRuleConfig;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
@@ -276,8 +277,12 @@ public final class ErrorTriage {
             final Integer affected = group.records.isEmpty()
                     ? null
                     : group.records.size();
+            // A field no rule reads is logged once a stream, but stepping keeps no value from record to record, so
+            // there it is logged for each record: no sign our output is at fault (seen in the e2e suite: every
+            // mapping leaving a field out stepped "review").
             if (BENIGN.equals(classified.classification()) && recordCount != null && recordCount > 0
-                && Objects.requireNonNullElse(affected, group.count) >= recordCount) {
+                && Objects.requireNonNullElse(affected, group.count) >= recordCount
+                && !firstMessage.contains(XsltGenerator.UNREAD_FIELD)) {
                 classified = new Classified(REVIEW, "Occurs for every record; our output may be the cause");
             }
             final AcceptedErrors.Entry known = AcceptedErrors.match(accepted, group.element, firstMessage);

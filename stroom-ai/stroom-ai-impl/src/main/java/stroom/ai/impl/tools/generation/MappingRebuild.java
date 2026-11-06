@@ -376,6 +376,10 @@ final class MappingRebuild {
         payload.put("unmatched", reading.unmatchedWarn()
                 ? "warn"
                 : "skip");
+        // Turned off in the XSLT (log_unmapped_fields false()), kept off.
+        if ("false()".equals(ToolText.strip(String.valueOf(reading.globals().get(XsltGenerator.LOG_UNMAPPED))))) {
+            payload.put("log_unmapped_fields", false);
+        }
         if ("json".equals(kind)) {
             final String layout = XsltGenerator.JSON_RECORDS.entrySet().stream()
                     .filter(entry -> entry.getValue().equals(records))

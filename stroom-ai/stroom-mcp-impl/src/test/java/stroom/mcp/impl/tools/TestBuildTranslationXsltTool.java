@@ -404,6 +404,36 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void loggingUnmappedFieldsTurnedOffInTheXsltStaysOff() {
+        // Asked for by the user: the switch is in the XSLT, so it can be turned off in Stroom's editor, and a save
+        // from the tools after keeps it off.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                """;
+        final String on = "name=\"log_unmapped_fields\" as=\"xs:boolean\" select=\"true()\"";
+        final String off = "name=\"log_unmapped_fields\" as=\"xs:boolean\" select=\"false()\"";
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "L", "sample", sample));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+        assertThat(world.xslt(uuid).getData()).contains(on);
+
+        world.editByHand(uuid, code -> code.replace(on, off));
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", mapping, "uuid", uuid,
+                "sample", sample));
+
+        assertThat(again).as(String.valueOf(again)).containsKey("saved");
+        assertThat(list(again.get("changes_applied")))
+                .contains("log_unmapped_fields kept false, as set in the saved XSLT");
+        assertThat(world.xslt(uuid).getData()).contains(off);
+        // Kept with the XSLT, so it is the mapping's from now on.
+        final Map<String, Object> kept = KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload();
+        assertThat(map(kept.get("mapping")).get("log_unmapped_fields")).isEqualTo(false);
+    }
+
+    @Test
     void answersGivenBeforeStillAnswerWhileTheSampleHasOtherProblems() {
         // Seen in testing: the user was asked again about the same stand-ins on each round of fixing other problems,
         // as the answers were only looked up once the sample check passed.
