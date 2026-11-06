@@ -584,14 +584,21 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             if (holdsLineBreaks(chunk)) {
                 reading.quotedNewlinesIn.add(meta.getId());
             }
-            for (int index = 0; index < chunk.records().size(); index++) {
+            final boolean windowed = head.truncated() && WINDOWED.contains(chunk.format())
+                                     && !holdsLineBreaks(chunk);
+            // A part bigger than its head: the head takes at most half the records left, the windows spread to its
+            // end the rest. Seen in testing: a 20,000-record stream's head filled all 10,000, no window was read, and
+            // a kind of record only near its end was never seen.
+            final int headRecords = windowed
+                    ? Math.min(chunk.records().size(), Math.max(1, (limits.maxRecords() - readHere) / 2))
+                    : chunk.records().size();
+            for (int index = 0; index < headRecords; index++) {
                 if (shapes.add(chunk, index, meta.getId(), part)) {
                     newHere++;
                 }
                 readHere++;
             }
-            if (head.truncated() && WINDOWED.contains(chunk.format()) && !holdsLineBreaks(chunk)
-                && readHere < limits.maxRecords() && !timeIsUp()) {
+            if (windowed && readHere < limits.maxRecords() && !timeIsUp()) {
                 final WindowsRead read = readWindows(reading, meta, part, head, chunk, shapes,
                         limits.maxRecords() - readHere);
                 windowsHere += read.windows();
@@ -753,7 +760,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                   + Math.min(MAX_CHARS, (long) outcome.limits().maxChars() * 4) + " (up to 5,000,000)";
         final boolean chosen = !outcome.chosen().isEmpty();
         if (chosen && !partly.isEmpty()) {
-            return "NOT COVERED: only the start of stream(s) " + partly + " was read (" + recordsRead + " records); "
+            return "NOT COVERED: only part of stream(s) " + partly + " was read (" + recordsRead + " records: a "
+                   + "head, and windows spread to the end where per_stream gives windows); "
                    + "there may be other kinds of event further in. " + again;
         }
         if (chosen) {
@@ -761,7 +769,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                    + "holds";
         }
         if (outcome.exhausted() && !partly.isEmpty()) {
-            return "NOT COVERED: every stream in the feed was picked, but only the start of stream(s) " + partly
+            return "NOT COVERED: every stream in the feed was picked, but only part of stream(s) " + partly
                    + " was read (" + recordsRead + " records); there may be other kinds of event further in. "
                    + again;
         }
@@ -771,7 +779,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         if (saturated) {
             final String heads = partly.isEmpty()
                     ? ""
-                    : " (only the start of stream(s) " + partly + ": big streams are sampled at their head)";
+                    : " (only part of stream(s) " + partly + ": big streams are sampled, their head and windows "
+                      + "further in)";
             return "covered: no new kinds of event in the last " + readIds.size() + " streams read" + heads;
         }
         return "NOT COVERED YET: keep surveying before treating the translation as complete";

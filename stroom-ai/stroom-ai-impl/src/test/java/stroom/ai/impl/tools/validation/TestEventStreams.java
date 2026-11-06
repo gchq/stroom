@@ -63,10 +63,10 @@ class TestEventStreams {
                 .thenReturn(fetched("Events", TestEventChecks.EVENT, 10));
         final EventStreams.Read read = eventStreams.read(List.of(1L, 2L), 4);
         assertThat(read.read()).isEqualTo(Map.of(1L, Map.of("checked", 4, "records", 10L, "spread",
-                "the events checked are spread over the stream, not only its start")));
-        // Spread over the stream, not its first four: seen in testing, the first 500 of 6,000 events were almost all
-        // of one kind.
-        for (final long index : List.of(0L, 2L, 5L, 7L)) {
+                "the events checked are a block at the stream's start and the rest spread over it")));
+        // A block at its head, the rest spread over the stream, not its first four: seen in testing, the first 500 of
+        // 6,000 events were almost all of one kind.
+        for (final long index : List.of(0L, 1L, 4L, 7L)) {
             Mockito.verify(streamReader).fetch(1L, index, null);
         }
     }

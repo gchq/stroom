@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.validation;
 
+import stroom.ai.impl.tools.RecordPicks;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.StreamReader.Fetched;
 import stroom.ai.impl.tools.ToolRefusal;
@@ -71,12 +72,12 @@ public class EventStreams {
             final int take = (int) Math.min(total, cap - checked);
             final List<Fetched> bodies = new ArrayList<>();
             bodies.add(first);
-            for (long n = 1; n < take; n++) {
-                // Spread over the stream, not its start: seen in testing, the first 500 of 6,000 events were almost
-                // all of one kind, and a clean check was taken to cover the rest.
-                bodies.add(streamReader.fetch(streamId, take >= total
-                        ? n
-                        : n * total / take, null));
+            // A block at the head and the rest spread over the stream (RecordPicks): seen in testing, the first 500
+            // of 6,000 events were almost all of one kind, and a clean check was taken to cover the rest.
+            final List<Long> picks = RecordPicks.headAndSpread(total, take);
+            // The first is read already.
+            for (final long index : picks.subList(Math.min(1, picks.size()), picks.size())) {
+                bodies.add(streamReader.fetch(streamId, index, null));
             }
             for (final Fetched body : bodies.subList(0, Math.max(0, Math.min(take, bodies.size())))) {
                 final Element root = XsltChecks.parse(StreamReader.rootClosed(NullSafe.string(body.data())),
@@ -94,7 +95,8 @@ public class EventStreams {
             counts.put("checked", Math.max(take, 0));
             counts.put("records", total);
             if (take < total) {
-                counts.put("spread", "the events checked are spread over the stream, not only its start");
+                counts.put("spread", "the events checked are a block at the stream's start and the rest spread "
+                                     + "over it");
             }
             read.put(streamId, counts);
             checked += Math.max(take, 0);
