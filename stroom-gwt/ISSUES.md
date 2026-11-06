@@ -1453,7 +1453,8 @@ the layout's sizing to `LayoutSizes` (`TestLayoutSizes`).
 Checked by stories `App/Editors/DashboardEditor`: `TabOrder*` (side by side, stacked, nested,
 deeply nested, tabbed, after docking), `SplitterKeyboardResize`, `SplitterKeyboardResizeStacked`,
 `FocusKeptWhenMaximised` (which fails without `FocusMemory`), `SplitterFocused`, `SplitterDragging`,
-and `SplitterAboveVisualisation` (the splitter stays above a visualisation's frame). Known gaps:
+and `SplitterAboveVisualisation` (the splitter stays above a visualisation's frame, by its overlay;
+see "Sample data installs the old visualisations"). Known gaps:
 drags are mouse only; Tab from inside a visualisation's frame goes to the end of the page; a
 splitter's name isn't refreshed when a tab is renamed while it has the focus.
 
@@ -2408,13 +2409,29 @@ Docker and zip builds) in place of the content store's git entry; or point `stro
 at the `8.0` branch, which would change the in-app Content Store for every Stroom too. The first
 was chosen.
 
-Related, **Reported**: a splitter's 1px line is drawn on the first pixel of the panel after it
-(`LayoutSizes` puts it at the end of the panel before, where the next starts), and a visualisation's
-frame covers that panel's content on the page's body. In the workbench the splitter is above the
-frame (`SplitterAboveVisualisation`), but only for a vertical splitter, with nothing around the
-dashboard; a visualisation that paints its own background could still hide a line where that
-doesn't hold, e.g. a horizontal splitter, nested splits, or a stacking context around the dashboard
-in the app. Not yet checked with the old visualisations.
+Related, **Fixed** (5 November 2026): splitters beside a visualisation (or another page's frame)
+were hidden by it, and couldn't be dragged from over it. A splitter's 1px line is drawn on the first
+pixel of the panel after it (`LayoutSizes` puts it at the end of the panel before, where the next
+starts), with a 7px grab area reaching 5px further in; the frames are on the page's root (z-index 2),
+over the dashboard, so they keep their pages as it changes. In the app the dashboard is inside the
+content pane's `split-pane__pane`, which isolates its stacking, so no z-index of a splitter's put it
+above the frames: seen by the user on a dashboard with Bar, Doughnut and Line visualisations, the
+line missing left of Doughnut and Line, and the Bar | Doughnut splitter couldn't be grabbed at all.
+The workbench missed it, as its dashboard had no stacking context round it. Each splitter now has a
+`SplitterOverlay` on the page's root (z-index 3, below the drag marker and glass), laid over its
+line and grab area by `FlexLayout` whenever the panes are laid out or scrolled, clipped to the
+dashboard's scrolled area: it draws the line (hovered, and ringed while the splitter has the
+keyboard focus) and a press on it drags the splitter. It is `aria-hidden` and never focused; the
+splitter keeps the focus, keys and name. `SplitterAboveVisualisation` now isolates the dashboard as
+the app does, and checks what is on top on and beside the line, that the overlay's grab area is the
+splitter's (before and after a drag), its focus ring, and a drag started over the visualisation. Also
+checked by `SplitterOverlaysScrolled` (a dashboard twice the page's width, scrolled: clipped, part
+clipped, out of sight), `SplitterOverlaysFollowTheDashboard` (gone with the Documentation view and a
+maximised panel, back in place after), `SplitterOverlaysDesignMode` (the dashboard's width splitter,
+dragged by its overlay), and, with the real mouse, `VisToolbar` `SplitterBesideVisualisation`
+(`real-input/dashboard-splitters.mjs`: the resize cursor and lit line over the visualisation, and a
+real drag). Not checked: the app shell's explorer resized beside a dashboard (no app shell story
+shows one), and the app itself.
 
 ### Text fields asking for `max` kept their default size
 

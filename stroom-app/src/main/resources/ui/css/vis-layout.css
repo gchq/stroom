@@ -25,13 +25,11 @@
     height: 100%;
 }
 
-/* 1px in from the left: a dashboard's vertical splitter line is drawn over its right-hand pane's
-   first column, and the frame, on the page's root above the dashboard, would hide it */
 .vis-layout__inner {
     position: absolute;
     top: 0;
-    left: 1px;
-    width: calc(100% - 1px);
+    left: 0;
+    width: 100%;
     height: 100%;
 }
 

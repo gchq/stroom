@@ -28,9 +28,11 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /// A splitter of a [FlexLayout]: a line between two panels (or groups of panels) that resizes
@@ -39,6 +41,9 @@ import java.util.function.Function;
 ///
 /// Its accessible name names what it resizes (e.g. "Resize Query and Table"), which depends on the
 /// panels' selected tabs, so it is named again whenever it takes the focus.
+///
+/// While it is on the page, its line and grab area are drawn again above the page's frames (a
+/// [SplitterOverlay] on the page's root), which would otherwise hide them.
 public class Splitter extends Widget {
 
     // How far an arrow key moves a splitter, and with Shift (as SplitPane's KEY_STEP_PX and
@@ -49,10 +54,15 @@ public class Splitter extends Widget {
 
     private final SplitInfo splitInfo;
     private final Function<MutableLayoutConfig, TabLayout> panels;
+    private final SplitterOverlay overlay;
 
-    /// @param splitInfo The split and the gap between its children that the splitter resizes.
-    /// @param panels    Gives the panel showing a tab layout, if there is one.
-    public Splitter(final SplitInfo splitInfo, final Function<MutableLayoutConfig, TabLayout> panels) {
+    /// @param splitInfo          The split and the gap between its children that the splitter resizes.
+    /// @param panels             Gives the panel showing a tab layout, if there is one.
+    /// @param onOverlayMouseDown Given the splitter and a mouse press on its overlay, to drag it as
+    ///                           a press on the splitter itself does.
+    public Splitter(final SplitInfo splitInfo,
+                    final Function<MutableLayoutConfig, TabLayout> panels,
+                    final BiConsumer<Splitter, Event> onOverlayMouseDown) {
         this.splitInfo = splitInfo;
         this.panels = panels;
 
@@ -60,20 +70,49 @@ public class Splitter extends Widget {
 
         // A split across lays its children out side by side, so its splitter is a vertical line
         // (flex-layout.css draws it by its aria-orientation)
-        element.setAttribute("aria-orientation", splitInfo.layoutConfig.getDimension() == Dimension.X
+        final String orientation = splitInfo.layoutConfig.getDimension() == Dimension.X
                 ? "vertical"
-                : "horizontal");
+                : "horizontal";
+        element.setAttribute("aria-orientation", orientation);
+
+        overlay = new SplitterOverlay(orientation);
+        overlay.setOnMouseDown(event -> onOverlayMouseDown.accept(this, event));
 
         setElement(element);
-        sinkEvents(Event.ONFOCUS);
+        sinkEvents(Event.ONFOCUS | Event.ONBLUR | Event.ONKEYDOWN);
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        RootPanel.get().add(overlay);
+    }
+
+    @Override
+    protected void onUnload() {
+        overlay.removeFromParent();
+        super.onUnload();
     }
 
     @Override
     public void onBrowserEvent(final Event event) {
         if (Event.ONFOCUS == event.getTypeInt()) {
             refreshName();
+            overlay.setFocused(isFocusVisible(getElement()));
+        } else if (Event.ONKEYDOWN == event.getTypeInt()) {
+            // A key shows focus given by the mouse or script as keyboard focus
+            overlay.setFocused(isFocusVisible(getElement()));
+        } else if (Event.ONBLUR == event.getTypeInt()) {
+            overlay.setFocused(false);
         }
         super.onBrowserEvent(event);
+    }
+
+    /// Lays the splitter's overlay over its line and grab area, as they are now.
+    ///
+    /// @param clip The dashboard's scrolled area, which clips the splitter.
+    public void layOverlay(final Element clip) {
+        overlay.layOver(getElement(), getElement().getFirstChildElement(), clip);
     }
 
     /// Names the splitter again, from what it resizes now: the selected tabs of the panels either
@@ -184,6 +223,11 @@ public class Splitter extends Widget {
                 ? selected.getLabel()
                 : "panel";
     }
+
+    // Whether an element with the focus shows it as keyboard focus
+    private static native boolean isFocusVisible(Element element) /*-{
+        return element.matches(':focus-visible');
+    }-*/;
 
     private static int percent(final double part, final double whole) {
         return (int) Math.round(Math.max(0, Math.min(100, 100 * part / whole)));

@@ -178,21 +178,46 @@ public final class DashboardPaneStories {
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The splitter beside a visualisation is above its frame (which is on the page's body,
-                // over the panel), so its grab area, line and focus ring are not hidden by it
-                .story("SplitterAboveVisualisation", DashboardSupport.story(DashboardDocs.QUERY_TABLE_VIS_SPLIT,
-                        DashboardPaneStories::visRoutes))
+                // over the panel), so its grab area, line and focus ring are not hidden by it. As in the
+                // app, the dashboard is in its own stacking context (Stroom's content pane isolates it),
+                // so no z-index of the splitter's puts it above the frame: its overlay
+                // (SplitterOverlay, on the page's root) is drawn and grabbed instead
+                .story("SplitterAboveVisualisation", context -> DashboardSupport.isolated(DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_VIS_SPLIT, DashboardPaneStories::visRoutes).render(context)))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     final Query visFrame = play.screen().querySelector("iframe.vis-frame__frame");
                     play.waitFor(() -> play.expect(visFrame).toBeVisible());
                     final Query splitter = play.getByRole("separator", "Resize T and Chart");
-                    play.run("focus the splitter", () -> splitter.element().get().focus());
-                    // Just right of its line, over the visualisation: its grab area (and its focus
-                    // ring) is on top there
+                    final Query chart = DashboardPlays.tab(play, "Chart").closest(DashboardPlays.PANEL);
+                    // On its line and just right of it, over the visualisation, the splitter is on top
+                    play.waitFor(() -> play.expect("what is on top on the splitter's line",
+                            () -> topmostBeside(splitter.element().get(), 0)).toBe("splitter"));
                     play.expect("what is on top just right of the splitter's line",
                             () -> topmostBeside(splitter.element().get(), 3)).toBe("splitter");
                     play.expect("what is on top a little further right",
                             () -> topmostBeside(splitter.element().get(), 20)).toBe("visualisation");
+                    // Its overlay can be grabbed where the splitter can
+                    play.expect("the overlay's grab area, less the splitter's",
+                            () -> grabMismatch(splitter.element().get())).toBe("none");
+
+                    // With the keyboard focus, the overlay rings its line as the splitter is ringed
+                    play.run("focus the splitter", () -> splitter.element().get().focus());
+                    play.keyboard("{ArrowUp}");
+                    play.expect("whether the overlay shows the focus",
+                            () -> overlayAt(splitter.element().get(), 3)
+                                    .hasClassName("flex-layout__overlay--focused")).toBe(true);
+                    DashboardPlays.expectNoProblems(play);
+
+                    // Dragged from over the visualisation, the splitter moves (Chart narrows)
+                    final Value<Double> start = play.capture("Chart's width", chart.width());
+                    play.run("drag the splitter 40px right from just right of its line",
+                            () -> dragFrom(splitter.element().get(), 3, 40));
+                    play.waitFor(() -> play.expect("how much Chart's width changed",
+                            () -> (int) Math.round(chart.width().get() - start.get())).toBe(-40));
+                    // The overlay follows the splitter
+                    play.waitFor(() -> play.expect("the overlay's grab area, less the splitter's, after the drag",
+                            () -> grabMismatch(splitter.element().get())).toBe("none"));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A component's settings rename it
@@ -897,19 +922,67 @@ public final class DashboardPaneStories {
 
     // What is on top at the point the offset given right of the middle of an element: a dashboard
     // splitter, a visualisation's frame, something else, or nothing
-    private static native String topmostBeside(Element element, double dx) /*-{
+    // What is on top beside a splitter's centre: the splitter (or its overlay), a visualisation, or
+    // something else
+    static native String topmostBeside(Element element, double dx) /*-{
         var rect = element.getBoundingClientRect();
         var hit = $doc.elementFromPoint(rect.left + rect.width / 2 + dx, rect.top + rect.height / 2);
         if (!hit) {
             return 'nothing';
         }
-        if (hit.closest('.flex-layout__splitter')) {
+        if (hit.closest('.flex-layout__splitter') || hit.closest('.flex-layout__overlay')) {
             return 'splitter';
         }
         if (hit.closest('.vis-frame') || hit.tagName === 'IFRAME') {
             return 'visualisation';
         }
         return 'something else (' + hit.className + ')';
+    }-*/;
+
+    // The overlay whose grab area is on top beside a splitter's centre, or null
+    private static native Element overlayAt(Element splitter, double dx) /*-{
+        var rect = splitter.getBoundingClientRect();
+        var hit = $doc.elementFromPoint(rect.left + rect.width / 2 + dx, rect.top + rect.height / 2);
+        return hit ? hit.closest('.flex-layout__overlay') : null;
+    }-*/;
+
+    // How the grab area of the overlay on top beside a splitter differs from the splitter's own
+    // (flex-layout__dragger), or 'none'
+    private static native String grabMismatch(Element splitter) /*-{
+        var rect = splitter.getBoundingClientRect();
+        var hit = $doc.elementFromPoint(rect.left + rect.width / 2 + 3, rect.top + rect.height / 2);
+        if (!hit || !hit.classList.contains('flex-layout__overlay-grab')) {
+            return 'no overlay on top';
+        }
+        var want = splitter.firstElementChild.getBoundingClientRect();
+        var got = hit.getBoundingClientRect();
+        var diffs = [];
+        ['left', 'top', 'width', 'height'].forEach(function (k) {
+            if (Math.abs(want[k] - got[k]) > 0.5) {
+                diffs.push(k + ' ' + got[k] + ' not ' + want[k]);
+            }
+        });
+        return diffs.length ? diffs.join(', ') : 'none';
+    }-*/;
+
+    // Drags with the mouse from beside a splitter's centre (pressing what is on top there), right
+    // by the distance given, as DashboardPlays.drag does
+    static native void dragFrom(Element splitter, double dx, double by) /*-{
+        var rect = splitter.getBoundingClientRect();
+        var x = rect.left + rect.width / 2 + dx;
+        var y = rect.top + rect.height / 2;
+        var hit = $doc.elementFromPoint(x, y);
+        var view = $doc.defaultView;
+        var fire = function (target, type, px, buttons) {
+            target.dispatchEvent(new view.MouseEvent(type, {
+                bubbles: true, cancelable: true, view: view, clientX: px, clientY: y, button: 0, buttons: buttons
+            }));
+        };
+        fire(hit, 'mousedown', x, 1);
+        for (var i = 1; i <= 5; i++) {
+            fire($doc.body, 'mousemove', x + by * i / 5, 1);
+        }
+        fire($doc.body, 'mouseup', x + by, 0);
     }-*/;
 
     // Filters the table's Name column to 'alpha' with its values filter: run the query, open the
