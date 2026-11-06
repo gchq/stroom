@@ -44,7 +44,6 @@ import jakarta.inject.Inject;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -57,7 +56,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// Reproduction for the report that changing an XSLT imported by the pipeline's XSLT isn't picked up when
 /// stepping. The pipeline's XSLT imports another (by name or by uuid); the imported XSLT is changed and saved
 /// part way through a stepping session; refreshing the record shown, or stepping on, must show the change.
-@Isolated
 class TestSteppingServiceImportedXslt extends TranslationTest {
 
     private static final AtomicBoolean DONE_SETUP = new AtomicBoolean();
