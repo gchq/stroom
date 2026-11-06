@@ -1900,19 +1900,6 @@ paths:
       summary: Upgrades the content pack and its content
       tags:
       - ContentStoreContentPacks
-  /credentials/createDocRef:
-    get:
-      operationId: createDocRef
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DocRef"
-          description: default response
-      summary: Returns a newly generated DocRef that can be used to for permissions
-      tags:
-      - Credentials
   /credentials/delete:
     post:
       operationId: deleteCredential
