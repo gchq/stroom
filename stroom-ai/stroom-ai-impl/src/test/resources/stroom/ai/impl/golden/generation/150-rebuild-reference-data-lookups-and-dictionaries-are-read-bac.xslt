@@ -2,6 +2,9 @@
 <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:map="http://www.w3.org/2005/xpath-functions/map" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs map mcp">
   <xsl:variable name="user_names_map" select="map:merge(for $line in tokenize(stroom:dictionary('User names'), '\r?\n')[contains(., '=')] return map{normalize-space(substring-before($line, '=')): normalize-space(substring-after($line, '='))})"/>
   <xsl:variable name="vip_users_list" select="tokenize(stroom:dictionary('VIP users'), '\r?\n') ! normalize-space(.)"/>
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
   <xsl:template match="records">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="record" mode="event"/>
@@ -12,21 +15,28 @@
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="data[@name='user']/@value = $vip_users_list">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_vip"/>
         <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''vip'': record ', $record-no, ' (', string-join((concat('user=', string((data[@name='user']/@value[normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:when>
       <xsl:otherwise>
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:for-each select="data[@name][not(@name = ('host', 'hostname', 'time', 'user'))][normalize-space(string(@value))]">
-      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
-      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
-      <xsl:if test="not(string(stroom:get($mcp_unread)))">
-        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
-        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
-      </xsl:if>
-    </xsl:for-each>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="data[@name][not(@name = ('host', 'hostname', 'time', 'user'))][normalize-space(string(@value))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'vip': records where user in the dictionary VIP users. Writes an Unknown event (TypeId vip) from user.
        Unknown on purpose: a VIP list match has no action of its own. -->

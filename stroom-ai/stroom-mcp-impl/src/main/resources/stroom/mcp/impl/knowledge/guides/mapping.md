@@ -39,7 +39,8 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 | `common` | Entries written in every Event |
 | `events` | Rules, tried in order: the first whose `when` matches writes the Event |
 | `unmatched` | `warn` (default) or `skip` for records no rule matches |
-| `ignored_fields` | input fields left out of the events on purpose (Data Splitter and JSON input). Any other field no rule reads is logged in processing (WARN, once a stream, by name), so a field the sample lacked is found: map it, or list it here with the user's agreement |
+| `ignored_fields` | input fields left out of the events on purpose (Data Splitter and JSON input). Any other field no rule reads is logged in processing (WARN, once a stream, by name, classed benign; summarise_streams kind=errors lists them), so a field the sample lacked is found: map it, or list it here with the user's agreement |
+| `log_unmapped_fields` | `true` (default) logs those fields; `false` stops it. Written into the XSLT as its variable `log_unmapped_fields`, so it can be turned off in Stroom's editor too, and a save from the tools keeps it off |
 
 ## An entry
 

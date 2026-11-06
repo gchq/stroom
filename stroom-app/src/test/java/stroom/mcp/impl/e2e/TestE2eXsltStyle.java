@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.mcp.impl.McpTestClient;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitFormRequest;
@@ -166,17 +167,21 @@ class TestE2eXsltStyle extends AbstractE2eTest {
                     children(sheet, "template").stream()
                             .filter(template -> "node()".equals(template.getAttribute("match")))
                             .forEach(template -> parts.add(template.getAttribute("mode")));
+                    // The rules and shared parts: the generator's check of fields no rule reads is a named template
+                    // in any layout.
                     final boolean named = children(sheet, "template").stream()
+                            .filter(template -> !XsltGenerator.UNREAD_TEMPLATE.equals(template.getAttribute("name")))
                             .anyMatch(template -> template.hasAttribute("name"));
                     assertThat(kinds).as("modes: each kind a mode template, applied to the record")
                             .containsExactly("event_type_traffic", "event_type_logon", "event_type_logoff",
                                     "event_type_system");
                     assertThat(parts).as("modes: each shared part a mode template").contains("event_time",
                             "event_source");
-                    assertThat(named).as("modes: no named templates").isFalse();
+                    assertThat(named).as("modes: no rule or shared part a named template").isFalse();
                 }
                 case "named" -> assertThat(xslDescendants(record, "call-template").stream()
                         .map(call -> call.getAttribute("name"))
+                        .filter(name -> !XsltGenerator.UNREAD_TEMPLATE.equals(name))
                         .toList())
                         .as("named: each kind a named template, called")
                         .containsExactly("event_type_traffic", "event_type_logon", "event_type_logoff",

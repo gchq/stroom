@@ -80,6 +80,11 @@ rules:
      reason: "No rule matched these records, and every value the rules test is empty in them. Before adding a rule for them, check they are whole records: in delimited data whose quoted values hold line breaks, a Data Splitter without quoted_newlines splits each such record at the line break, so the later pieces' columns hold the wrong values (often none) and the first piece is translated with fields missing, with no error. If the raw stream has quoted values over several lines, build_data_splitter again with spec quoted_newlines=true, save it over the converter, step and process again. Otherwise they are a kind of record with those fields unset"}
   - {message: 'Several values \(\d+\) for .*, only the first written', class: review,
      reason: "An entry without repeat read several values from its xpath (a delimited list split with tokenize(), say), and the translation wrote only the first. If each value belongs in the event, give the entry repeat: true (build_translation_xslt changes=), which writes one element per value where the schema lets the element repeat; if one value is meant, change the xpath to give one"}
+  # A field of the source no rule of the translation reads (logged, WARN, once a stream): what the sample the mapping was
+  # drafted from lacked, or a field the source added since. Not a fault of the pipeline (stepping stays clean), but
+  # data not in the events.
+  - {message: 'No rule reads field ', class: benign,
+     reason: "A field of the source that no rule of the translation reads, so its value is in no event (logged once a stream; the sample the mapping was drafted from may have lacked it, or the source added it since). Ask the user: map it (build_translation_xslt changes=) and reprocess the streams that hold it, or list it in the mapping's ignored_fields to leave it out on purpose"}
   - {message: 'Kept as Unknown by rule', class: benign,
      reason: "A record a rule keeps as EventDetail/Unknown, as the user agreed (allow_unknown): logged so review_coverage finds every one in the whole feed"}
   - {own: true, severity: [WARNING], class: review, reason: "Warning in this pipeline's own element"}

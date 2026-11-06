@@ -90,6 +90,11 @@ public final class XsltGenerator {
     /// unmatched record of a 160 MB stream logged without a number, so review_coverage found none of them). A
     /// predicate Saxon can't settle without the value, so the variable isn't left unread; it selects nothing.
     public static final String READ_RECORD_NO = "$" + RECORD_NO + "[string(.) = '#']";
+    /// The named template that logs a record's fields no rule reads, called by the rules that translate their records:
+    /// not a rule's own template, nor a shared one, for those reading an XSLT back.
+    public static final String UNREAD_TEMPLATE = "mcp_unread_fields";
+    /// The XSLT's variable that turns the logging of fields no rule reads on (true(), the default) or off.
+    public static final String LOG_UNMAPPED = "log_unmapped_fields";
     // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
     private static final Pattern DATA_NAME_READ = Pattern.compile("@name\\s*=\\s*(['\"])([^'\"]+)\\1");
     private static final Pattern JSON_KEY_READ = Pattern.compile("@key\\s*=\\s*(['\"])([^'\"]+)\\1");
@@ -163,6 +168,8 @@ public final class XsltGenerator {
     private final Set<String> referenceMaps = new HashSet<>();
     // for_each: the templates run with an item as context; $record (a tunnel parameter) is the record.
     private final boolean itemMode;
+    // Whether a rule that translates its records calls the check of fields no rule reads (see warnOfUnreadFields).
+    private boolean unreadCalled;
     private boolean usesRecord;
     // whether log lines give the record's number
     private boolean logsRecordNo;
@@ -1719,7 +1726,7 @@ public final class XsltGenerator {
                 }
             }
         }
-        warnOfUnreadFields(eventTemplate, all);
+        warnOfUnreadFields(sheet, eventTemplate, all);
         if (logsRecordNo) {
             readRecordNo(eventTemplate, apply, body);
         }
@@ -1793,13 +1800,26 @@ public final class XsltGenerator {
     // and handed to the items' template.
     // A record's fields that no rule reads, nor ignored_fields lists, logged (WARN) once a stream each, with the
     // field's name: what the sample the mapping was drafted from lacked, reported by processing (seen in testing: a
-    // field only some records had was never mapped, and nothing said so). Read from the templates written: the names
-    // their xpaths read. Data Splitter and JSON records only, whose fields are named.
-    private void warnOfUnreadFields(final XmlElement eventTemplate, final List<XmlElement> templates) {
-        final boolean data = "data_splitter".equals(m.input());
-        if (!data && !"json".equals(m.input())) {
+    // field only some records had was never mapped, and nothing said so). WARN, not INFO: Stroom writes at most
+    // 1,000 lines of each severity to a stream's Error stream, and a stream's kept-Unknown lines (INFO, one a record)
+    // used them all, so a field first seen later went unreported (seen in the e2e suite). Error triage classes these
+    // lines benign, so stepping stays clean though many a mapping leaves fields out (a syslog header's, say).
+    // Read from the templates written: the names their xpaths read. Data Splitter and JSON records only, whose
+    // fields are named.
+    private void warnOfUnreadFields(final XmlElement sheet,
+                                    final XmlElement eventTemplate,
+                                    final List<XmlElement> templates) {
+        if (!checksUnreadFields()) {
             return;
         }
+        if (itemMode) {
+            // Its rules run on the items, the fields are the record's: checked once for the record.
+            eventTemplate.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
+        } else if (!unreadCalled) {
+            // Every rule leaves its records untranslated.
+            return;
+        }
+        final boolean data = "data_splitter".equals(m.input());
         final Pattern named = data
                 ? DATA_NAME_READ
                 : JSON_KEY_READ;
@@ -1827,11 +1847,22 @@ public final class XsltGenerator {
                 ? ""
                 : "[not(normalize-space(" + value + ") = (" + m.nilValues().stream().map(XPathText::literal)
                         .collect(Collectors.joining(", ")) + "))]";
-        final XmlElement each = eventTemplate.addElement(XSL, "for-each", "select", (data
+        // Turned off and on in the XSLT itself, by its variable near the top (asked for by the user): a team that
+        // doesn't want the Error streams can stop them in Stroom's editor.
+        final int top = leading(sheet, "import", "output", "strip-space", "preserve-space", "key", "param",
+                "variable");
+        sheet.insert(top, XmlElement.create(XSL, "variable", "name", LOG_UNMAPPED, "as", "xs:boolean", "select",
+                m.logUnmappedFields()
+                        ? "true()"
+                        : "false()"));
+        sheet.insert(top, new XmlComment(XsltComments.comment("Fields of the source no rule reads are logged (WARN, "
+                                                              + "once a stream) to the Error stream: false() to "
+                                                              + "stop it (the mapping's log_unmapped_fields)")));
+        final XmlElement template = XmlElement.create(XSL, "template", "name", UNREAD_TEMPLATE);
+        final XmlElement each = template.addElement(XSL, "if", "test", "$" + LOG_UNMAPPED)
+                .addElement(XSL, "for-each", "select", (data
                 ? "data"
                 : "*") + "[" + attribute + "]" + known + "[normalize-space(string(" + value + "))]" + nils);
-        each.append(new XmlComment(" A field no rule reads: logged once a stream (ignored_fields: left out on "
-                                   + "purpose) "));
         each.addElement(XSL, "variable", "name", "mcp_unread", "select", "concat('mcp-unread:', " + attribute + ")");
         final XmlElement first = each.addElement(XSL, "if", "test", "not(string(stroom:get($mcp_unread)))");
         first.addElement(XSL, "value-of", "select", "stroom:put($mcp_unread, 'y')");
@@ -1839,6 +1870,11 @@ public final class XsltGenerator {
         first.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat(" + XPathText.literal(UNREAD_FIELD)
                                                     + ", " + attribute + ", " + XPathText.literal(UNREAD_FIELD_END)
                                                     + "))");
+        sheet.append(new XmlComment(XsltComments.comment(UNREAD_TEMPLATE + ": a field of the record no rule reads, "
+                                                         + "logged once a stream (ignored_fields: left out on "
+                                                         + "purpose); called by the rules that translate their "
+                                                         + "records")));
+        sheet.append(template);
     }
 
     private static void readRecordNo(final XmlElement eventTemplate,
@@ -1886,6 +1922,11 @@ public final class XsltGenerator {
         return "concat(" + String.join(", ", logParts) + ")";
     }
 
+    // Whether the translation checks for fields no rule reads: its records' fields are named.
+    private boolean checksUnreadFields() {
+        return "data_splitter".equals(m.input()) || "json".equals(m.input());
+    }
+
     private void writeRules(final XmlElement recordTemplate, final List<EventRule> rules, final List<Rooted> trees) {
         final boolean isConditional = rules.stream().anyMatch(rule -> !rule.when().isEmpty());
         final List<String> tested = new ArrayList<>(rules.stream()
@@ -1907,6 +1948,12 @@ public final class XsltGenerator {
                     ? body.addElement(XSL, "otherwise")
                     : body.addElement(XSL, "when", "test", test))
                     : body;
+            if (!rule.drop() && checksUnreadFields() && !itemMode) {
+                // Called where a rule translates its records, not for those left untranslated on purpose (seen in
+                // the e2e suite: their fields reported as read by no rule).
+                holder.addElement(XSL, "call-template", "name", UNREAD_TEMPLATE);
+                unreadCalled = true;
+            }
             final Object when = rule.when().isEmpty()
                     ? "every record"
                     : rule.when().stream().map(c -> condition(c, true)).toList();

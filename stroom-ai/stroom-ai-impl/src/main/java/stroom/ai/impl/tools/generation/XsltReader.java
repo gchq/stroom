@@ -342,6 +342,7 @@ public final class XsltReader {
         }
         final XmlElement call = branch.childElements().stream()
                 .filter(child -> child.is(XSL, "apply-templates") || child.is(XSL, "call-template"))
+                .filter(child -> !unreadCheck(child))
                 .findFirst()
                 .orElse(null);
         XmlElement event = firstEvent(branch);
@@ -450,6 +451,9 @@ public final class XsltReader {
             final LeafReading leaf = new LeafReading(join(path, "@" + child.get("name")), null);
             leaf.setExpr(resolve(Objects.requireNonNullElse(child.get("select"), ""), scope, parser));
             rule.leaves().add(leaf);
+        } else if (unreadCheck(child)) {
+            // The generator's check of fields no rule reads: writes nothing.
+            return;
         } else if (child.is(XSL, "apply-templates") || child.is(XSL, "call-template")) {
             readCall(child, path, scope, templates, rule, parser);
         } else if (child.is(XSL, "sequence")) {
@@ -519,6 +523,12 @@ public final class XsltReader {
         } else {
             walk(child, here, scope, templates, rule, parser);
         }
+    }
+
+
+    // The generator's call of its check of fields no rule reads (XsltGenerator.UNREAD_TEMPLATE).
+    private static boolean unreadCheck(final XmlElement child) {
+        return child.is(XSL, "call-template") && XsltGenerator.UNREAD_TEMPLATE.equals(child.get("name"));
     }
 
     private static void readCall(final XmlElement child,

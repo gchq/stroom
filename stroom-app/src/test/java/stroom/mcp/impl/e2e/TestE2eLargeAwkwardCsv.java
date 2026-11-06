@@ -19,6 +19,7 @@ package stroom.mcp.impl.e2e;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
+import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -106,13 +107,17 @@ class TestE2eLargeAwkwardCsv extends AbstractE2eTest {
         final Map<String, Object> done = json("wait_for_processing", args("pipeline_uuid", pipeline,
                 "stream_ids", streams, "filter_id", started.get("filter_id"), "timeout_seconds", 30));
         dump("wait_for_processing", done);
-        // A record lost to the buffer, or a value shifted into the wrong field, would leave an Error stream.
+        // A record lost to the buffer, or a value shifted into the wrong field, would be an error, blocking or for
+        // review.
         assertThat(done).as("no record lost, no error: %s", done.get("problems"))
                 .containsEntry("gate", "pass");
-        assertThat(list(done, "streams")).hasSize(2).allSatisfy(stream -> {
-            assertThat((List<?>) stream.get("events")).hasSize(1);
-            assertThat((List<?>) stream.get("errors")).isEmpty();
-        });
+        assertThat(list(done, "streams")).hasSize(2).allSatisfy(stream ->
+                assertThat((List<?>) stream.get("events")).hasSize(1));
+        // An Error stream, if any, holds only what is reported for information: a field no rule reads (this
+        // mapping leaves 'zone' out), not a lost record or an error.
+        final Map<String, Object> errors = json("summarise_streams", args("stream_ids", streams, "kind", "errors"));
+        dump("summarise_streams errors", errors);
+        assertThat(JsonUtil.writeValueAsString(errors, false)).doesNotContainPattern("\"(blocking|review)\":[1-9]");
     }
 
     // RECORDS lines of CSV after its header: a group in quotes holding a comma, a zone of '-' every third record,
@@ -136,7 +141,7 @@ class TestE2eLargeAwkwardCsv extends AbstractE2eTest {
     // A translation of each record to a logon, the group carried as Data.
     private String translation(final String build, final String feed, final List<Long> streams) {
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", streams,
-                "build", build, "schema_version", VERSION));
+                "build", build, "schema_version", VERSION, "system_name", "E2E", "environment", "Test"));
         final Map<String, Object> mapping = new LinkedHashMap<>((Map<String, Object>) draft.get("mapping"));
         final List<Map<String, Object>> common = new ArrayList<>();
         for (final Map<String, Object> entry : (List<Map<String, Object>>) mapping.get("common")) {

@@ -234,6 +234,8 @@ class TestXsltGeneratorProblems extends XsltRuns {
                     reads.add(matcher.group(1));
                 }
             }
+            // The stylesheet's own switch is global.
+            reads.remove(XsltGenerator.LOG_UNMAPPED);
             assertThat(declared).as(template.get("name") + template.get("match")).containsAll(reads);
         }
     }

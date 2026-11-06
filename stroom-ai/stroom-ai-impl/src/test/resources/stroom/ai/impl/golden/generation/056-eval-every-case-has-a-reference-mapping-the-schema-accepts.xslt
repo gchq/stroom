@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="records:2" exclude-result-prefixes="stroom xs fn mcp">
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
   <xsl:template match="records">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="record" mode="event"/>
@@ -14,26 +17,34 @@
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$direction = 'in'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logged_in"/>
       </xsl:when>
       <xsl:when test="$user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_failed_login"/>
       </xsl:when>
       <xsl:when test="$direction = 'out'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logged_out"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('direction=', string(($direction)[1])), concat('user_failed=', string(($user_failed_parts/fn:match//fn:group[@nr=1][normalize-space(.)])[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:for-each select="data[@name][not(@name = ('component', 'message', 'time'))][normalize-space(string(@value))]">
-      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
-      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
-      <xsl:if test="not(string(stroom:get($mcp_unread)))">
-        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
-        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
-      </xsl:if>
-    </xsl:for-each>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="data[@name][not(@name = ('component', 'message', 'time'))][normalize-space(string(@value))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'logged in': records where direction = in. Writes an Authenticate event (TypeId login) from user_ok,
        session (extracted from message). -->

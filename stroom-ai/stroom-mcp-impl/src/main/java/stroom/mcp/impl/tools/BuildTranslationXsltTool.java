@@ -65,6 +65,9 @@ import stroom.ai.shared.AiToolCategory;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -79,6 +82,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// `build_translation_xslt` - writes the event-logging translation XSLT from a field mapping instead of by hand, and
 /// with build and name (or uuid) saves it with its mapping. The mapping is checked against the schema, compiled as
@@ -87,6 +92,10 @@ import java.util.TreeSet;
 /// saved the XSLT is kept ([HandEditGate]).
 class BuildTranslationXsltTool extends AbstractBuiltInTool {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BuildTranslationXsltTool.class);
+    // The XSLT's switch for logging fields no rule reads (XsltGenerator.LOG_UNMAPPED), as an element's start tag.
+    private static final Pattern LOG_UNMAPPED_VARIABLE = Pattern.compile(
+            "<xsl:variable\\b[^>]*\\bname=[\"']" + XsltGenerator.LOG_UNMAPPED + "[\"'][^>]*>");
     static final String NAME = "build_translation_xslt";
     static final String MAPPING_ARG = "mapping";
     static final String SCHEMA_VERSION_ARG = "schema_version";
@@ -383,6 +392,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (question.isPresent()) {
             return question.get();
         }
+        keepUnmappedLoggingOff(b);
         generate(context, b);
         if (!TranslationBuilds.problems(b.result).isEmpty()) {
             // Fast: what the schema says is wrong comes back before the sample is read and checked (seen: minutes
@@ -556,6 +566,36 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             b.version = target.version();
         }
         return Optional.empty();
+    }
+
+    // The logging of fields no rule reads turned off by hand in the saved XSLT (its log_unmapped_fields variable
+    // false()), where the mapping kept with it had it on: kept off, as set in Stroom's editor (asked for by the user:
+    // the switch is in the XSLT, so it can be turned off there). Turned on again with the mapping's
+    // log_unmapped_fields true once the kept mapping has it off.
+    private void keepUnmappedLoggingOff(final Build b) {
+        if (b.request.uuid() == null || b.mapping == null || !b.mapping.logUnmappedFields()) {
+            return;
+        }
+        try {
+            final XsltDoc saved = translationDocs.readXslt(b.request.uuid());
+            final Matcher variable = LOG_UNMAPPED_VARIABLE.matcher(NullSafe.string(saved.getData()));
+            if (!variable.find() || !variable.group().replace('\'', '"').contains("select=\"false()\"")) {
+                return;
+            }
+            final boolean keptOn = keptPayload(saved)
+                    .map(payload -> payload.get("mapping"))
+                    .filter(Map.class::isInstance)
+                    .map(mapping -> !Boolean.FALSE.equals(((Map<?, ?>) mapping).get("log_unmapped_fields")))
+                    .orElse(true);
+            if (keptOn) {
+                b.mapping = b.mapping.withLogUnmappedFields(false);
+                final List<String> applied = new ArrayList<>(NullSafe.list(b.applied));
+                applied.add("log_unmapped_fields kept false, as set in the saved XSLT");
+                b.applied = applied;
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No saved XSLT read for log_unmapped_fields: {}", e.getMessage()));
+        }
     }
 
     // The translation mapping's payload kept with a saved XSLT ({schema_version, schema_uuid, mapping}), or null.

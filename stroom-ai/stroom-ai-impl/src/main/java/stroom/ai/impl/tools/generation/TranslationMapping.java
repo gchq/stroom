@@ -51,6 +51,9 @@ import java.util.stream.Collectors;
 ///                      has that no rule reads is logged (WARN) once a stream, with its name, so processing reports
 ///                      what the sample the mapping was drafted from lacked (seen in testing: a field only some
 ///                      records had was never mapped, and nothing said so). Data Splitter and JSON input only.
+/// @param logUnmappedFields `log_unmapped_fields`: whether those fields are logged (default true). Written into the
+///                      XSLT as its variable log_unmapped_fields, so it can be turned off in Stroom's editor as well,
+///                      and read back from there.
 /// @param style        How the XSLT is written.
 /// @param imports      Shared XSLTs imported (xsl:import).
 /// @param shared       Named templates from shared XSLTs, called in their element's place.
@@ -71,6 +74,7 @@ public record TranslationMapping(String input,
                                  List<EventRule> events,
                                  String unmatched,
                                  List<String> ignoredFields,
+                                 boolean logUnmappedFields,
                                  XsltStyle style,
                                  List<String> imports,
                                  List<SharedTemplate> shared,
@@ -143,6 +147,7 @@ public record TranslationMapping(String input,
                 fields.requiredModels("events", (value, at) -> EventRule.read(reader, value, at), 1),
                 fields.literal("unmatched", "warn", List.of("warn", "skip")),
                 fields.strings("ignored_fields"),
+                fields.bool("log_unmapped_fields", true),
                 fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT),
                 fields.strings("imports"),
                 fields.models("shared", (value, at) -> SharedTemplate.read(reader, value, at)),
@@ -185,7 +190,8 @@ public record TranslationMapping(String input,
             }
         }
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, List.of(),
-                entries, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, style, imports, shared,
+                entries, forEach, nilValues, dropWhen, common, events, unmatched,
+                ignoredFields, logUnmappedFields, style, imports, shared,
                 functions);
     }
 
@@ -200,7 +206,7 @@ public record TranslationMapping(String input,
                 .toList();
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
                 extract, forEach, nilValues, dropWhen, namedInStyle(common), rules, unmatched,
-                ignoredFields, style, imports,
+                ignoredFields, logUnmappedFields, style, imports,
                 shared, functions);
     }
 
@@ -228,8 +234,17 @@ public record TranslationMapping(String input,
     /// @return This mapping with those rules.
     public TranslationMapping withEvents(final List<EventRule> events) {
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
-                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, style, imports, shared,
+                extract, forEach, nilValues, dropWhen, common, events, unmatched,
+                ignoredFields, logUnmappedFields, style, imports, shared,
                 functions);
+    }
+
+    /// @param log Whether fields no rule reads are logged.
+    /// @return This mapping with that set.
+    public TranslationMapping withLogUnmappedFields(final boolean log) {
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, log, style, imports,
+                shared, functions);
     }
 
     /// @return Every field mapping: the common ones, then each rule's.
@@ -260,6 +275,7 @@ public record TranslationMapping(String input,
                 .models("events", events, rule -> rule.toJson(mode))
                 .put("unmatched", unmatched, "warn")
                 .put("ignored_fields", ignoredFields, List.of())
+                .put("log_unmapped_fields", logUnmappedFields, true)
                 .model("style", style, XsltStyle.DEFAULT, given -> given.toJson(mode))
                 .put("imports", imports, List.of())
                 .models("shared", shared, template -> template.toJson(mode))

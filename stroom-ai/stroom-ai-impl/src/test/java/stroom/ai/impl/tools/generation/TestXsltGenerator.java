@@ -85,7 +85,7 @@ class TestXsltGenerator extends XsltRuns {
     void elementsRepeatedAcrossRulesAreWrittenOnceAsNamedTemplates() {
         final String xslt = generate(mapping(with("style", Map.of("layout", "inline")))).xslt();
         final XmlElement sheet = sheet(xslt);
-        final Set<String> named = sheet.childElements(XSL, "template").stream()
+        final Set<String> named = ownTemplates(sheet).stream()
                 .map(template -> template.get("name"))
                 .filter(name -> name != null)
                 .collect(Collectors.toSet());
@@ -96,7 +96,7 @@ class TestXsltGenerator extends XsltRuns {
         // One rule: nothing repeats, so everything stays inline.
         final String single = generate(mapping(with("events", List.of(rule("logon", List.of(), LOGON)),
                 "style", Map.of("layout", "inline")))).xslt();
-        assertThat(single).doesNotContain("call-template");
+        assertThat(single).doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + ")");
     }
 
     @Test
@@ -113,7 +113,7 @@ class TestXsltGenerator extends XsltRuns {
                 Map.of("layout", "inline"))));
         final XmlElement sheet = sheet(result.xslt());
         final Map<String, XmlElement> named = new LinkedHashMap<>();
-        sheet.childElements(XSL, "template").stream().filter(t -> t.get("name") != null)
+        ownTemplates(sheet).stream().filter(t -> t.get("name") != null)
                 .forEach(t -> named.put(t.get("name"), t));
         // Authenticate/User, called from both rules
         assertThat(descendant(named.get("user"), "User")).isNotNull();
@@ -187,11 +187,11 @@ class TestXsltGenerator extends XsltRuns {
                 {"naming": "camelCase", "variable_min_reads": 1, "inline_map_max_keys": 0, "layout": "inline"}""");
         final String xslt = generate(mapping(with("style", style))).xslt();
         final XmlElement sheet = sheet(xslt);
-        assertThat(sheet.childElements(XSL, "template").stream().map(t -> t.get("name")).filter(n -> n != null))
+        assertThat(ownTemplates(sheet).stream().map(t -> t.get("name")).filter(n -> n != null))
                 .containsExactlyInAnyOrder("eventTime", "eventSource");
         // always xsl:map
         assertThat(sheet.childElements(XSL, "variable")).extracting(v -> v.get("name"))
-                .containsExactly("resultToSuccess");
+                .containsExactly("resultToSuccess", XsltGenerator.LOG_UNMAPPED);
         final String body = XmlSerialiser.toXml(having(sheet, XSL, "template", "mode", "event").getFirst());
         // one read is enough
         assertThat(body).contains("$sid").contains("data[@name='sid']/@value[normalize-space(.)]");
@@ -214,6 +214,9 @@ class TestXsltGenerator extends XsltRuns {
         final String xslt = result.xslt();
         final Map<String, Map<String, String>> maps = new LinkedHashMap<>();
         for (final XmlElement variable : sheet(xslt).childElements(XSL, "variable")) {
+            if (XsltGenerator.LOG_UNMAPPED.equals(variable.get("name"))) {
+                continue;   // the switch for logging fields no rule reads, not a map
+            }
             final Map<String, String> entries = new LinkedHashMap<>();
             variable.childElements(XSL, "map").forEach(map -> map.childElements(XSL, "map-entry")
                     .forEach(entry -> entries.put(entry.get("key"), entry.get("select"))));
@@ -424,6 +427,14 @@ class TestXsltGenerator extends XsltRuns {
         // Nothing written by the check: the events are as before.
         assertThat(children(transform(xslt, records), "Event")).hasSize(1);
 
+        // On by default, by the XSLT's own switch, which turns it off in Stroom's editor too.
+        assertThat(xslt).contains("<xsl:variable name=\"log_unmapped_fields\" as=\"xs:boolean\" "
+                                  + "select=\"true()\"/>", "<xsl:if test=\"$log_unmapped_fields\">");
+        json.put("log_unmapped_fields", false);
+        assertThat(generate(TranslationMapping.fromJson(json)).xslt())
+                .contains("name=\"log_unmapped_fields\" as=\"xs:boolean\" select=\"false()\"");
+        json.remove("log_unmapped_fields");
+
         json.put("ignored_fields", List.of("tls_version"));
         final TranslationMapping ignoring = TranslationMapping.fromJson(json);
         assertThat(ignoring.toJson(DumpMode.COMPACT)).containsEntry("ignored_fields", List.of("tls_version"));
@@ -631,7 +642,7 @@ class TestXsltGenerator extends XsltRuns {
                 [{"href": "Common-Event-V1", "template": "event_source", "at": "Meta"}]"""))));
         assertThat(result.ok()).as(String.valueOf(result.problems())).isTrue();
         final XmlElement sheet = sheet(result.xslt());
-        final List<String> named = sheet.childElements(XSL, "template").stream().map(t -> t.get("name"))
+        final List<String> named = ownTemplates(sheet).stream().map(t -> t.get("name"))
                 .filter(n -> n != null).toList();
         // The generator's own EventSource template is not named event_source: that would override the shared one.
         assertThat(named).doesNotContain("event_source");
@@ -649,8 +660,9 @@ class TestXsltGenerator extends XsltRuns {
         having(sheet, XSL, "template", "match", "node()").forEach(t -> modes.put(t.get("mode"), t));
         assertThat(modes.keySet()).containsExactlyInAnyOrder("eventTypeLogon", "eventTypeOther", "eventTime",
                 "eventSource");
-        assertThat(sheet.childElements(XSL, "template").stream().filter(t -> t.get("name") != null)).isEmpty();
-        assertThat(result.xslt()).doesNotContain("call-template");
+        assertThat(ownTemplates(sheet).stream().filter(t -> t.get("name") != null)).isEmpty();
+        assertThat(result.xslt())
+                .doesNotContainPattern("call-template name=\"(?!" + XsltGenerator.UNREAD_TEMPLATE + ")");
         final XmlElement record = having(sheet, XSL, "template", "mode", "event").getFirst();
         final List<XmlElement> applied = record.iterElements(XSL, "apply-templates");
         assertThat(applied).extracting(a -> a.get("mode")).containsExactly("eventTypeLogon", "eventTypeOther");
@@ -668,10 +680,11 @@ class TestXsltGenerator extends XsltRuns {
     void namedLayoutCallsATemplatePerEventKind() {
         final XsltGenerator.Generated result = generate(mapping(with("style", Map.of("layout", "named"))));
         final XmlElement sheet = sheet(result.xslt());
-        assertThat(sheet.childElements(XSL, "template").stream().map(t -> t.get("name")).filter(n -> n != null))
+        assertThat(ownTemplates(sheet).stream().map(t -> t.get("name")).filter(n -> n != null))
                 .containsExactlyInAnyOrder("event_type_logon", "event_type_other", "event_time", "event_source");
         final XmlElement record = having(sheet, XSL, "template", "mode", "event").getFirst();
         assertThat(record.iterElements(XSL, "call-template")).extracting(c -> c.get("name"))
+                .filteredOn(name -> !XsltGenerator.UNREAD_TEMPLATE.equals(name))
                 .containsExactly("event_type_logon", "event_type_other");
         assertThat(invalid(transform(result.xslt(), RECORDS), XSD)).isEmpty();
         assertThatThrownBy(() -> mapping(with("style", Map.of("layout", "one-big-template"))))
@@ -1029,5 +1042,13 @@ class TestXsltGenerator extends XsltRuns {
         final XPathCompiler compiler = new Processor(false).newXPathCompiler();
         compiler.declareNamespace("xs", "http://www.w3.org/2001/XMLSchema");
         return compiler.evaluateSingle(expression, null).getStringValue();
+    }
+
+    // The sheet's templates, but the generator's check of fields no rule reads, which every translation of named
+    // fields has.
+    private static List<XmlElement> ownTemplates(final XmlElement sheet) {
+        return sheet.childElements(XSL, "template").stream()
+                .filter(template -> !XsltGenerator.UNREAD_TEMPLATE.equals(template.get("name")))
+                .toList();
     }
 }

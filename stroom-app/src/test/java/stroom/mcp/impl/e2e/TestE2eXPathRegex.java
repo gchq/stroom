@@ -50,7 +50,7 @@ class TestE2eXPathRegex extends AbstractE2eTest {
         final Map<String, Object> converter = map(agreed("build_data_splitter", args("stream_ids", List.of(raw),
                 "save_as", feed + "-CSV", "build", build)), "saved");
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
-                "build", build, "schema_version", VERSION));
+                "build", build, "schema_version", VERSION, "system_name", "E2E", "environment", "Test"));
         final Map<String, Object> mapping = withUserExtracted((Map<String, Object>) draft.get("mapping"),
                 "^user=(\\p{L}+) ");
 
@@ -82,7 +82,7 @@ class TestE2eXPathRegex extends AbstractE2eTest {
         final long raw = upload(feed, SAMPLE);
         agreed("build_data_splitter", args("stream_ids", List.of(raw), "save_as", feed + "-CSV", "build", build));
         final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", List.of(raw),
-                "build", build, "schema_version", VERSION));
+                "build", build, "schema_version", VERSION, "system_name", "E2E", "environment", "Test"));
         final Map<String, Object> mapping = withUserExtracted((Map<String, Object>) draft.get("mapping"),
                 "^user=(\\w+)(?= logged)");
 

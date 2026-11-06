@@ -17,6 +17,7 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.mcp.impl.McpTestClient;
 import stroom.util.json.JsonUtil;
 
@@ -416,9 +417,21 @@ class TestE2eRestyle extends AbstractE2eTest {
     }
 
     // Whether any variable is declared after other content of its template, or inside it, rather than at its start.
+    // The generator's check of fields no rule reads: its own code, whatever the mapping's style, its variable in the
+    // loop that reads it.
+    private static boolean inUnreadCheck(final Node node) {
+        for (Node at = node; at != null; at = at.getParentNode()) {
+            if (at instanceof final Element element && "template".equals(element.getLocalName())
+                && XsltGenerator.UNREAD_TEMPLATE.equals(element.getAttribute("name"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean justInTime(final String code) {
         for (final Element variable : descendants(parse(code).getDocumentElement(), "variable")) {
-            if (!XSL.equals(variable.getNamespaceURI())) {
+            if (!XSL.equals(variable.getNamespaceURI()) || inUnreadCheck(variable)) {
                 continue;
             }
             final Node parent = variable.getParentNode();

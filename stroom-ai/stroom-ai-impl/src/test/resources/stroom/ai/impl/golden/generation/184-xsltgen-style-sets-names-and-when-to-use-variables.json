@@ -427,6 +427,7 @@
   ],
   "unmatched": "skip",
   "ignored_fields": [],
+  "log_unmapped_fields": true,
   "style": {
    "naming": "camelCase",
    "variable_min_reads": 1,

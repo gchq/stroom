@@ -6,6 +6,9 @@
       <xsl:map-entry key="'UDP'" select="'UDP'"/>
     </xsl:map>
   </xsl:variable>
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
   <xsl:template match="records">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="record" mode="event"/>
@@ -17,23 +20,30 @@
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event = 'CONNECT'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_connected"/>
       </xsl:when>
       <xsl:when test="$event = 'DISCONNECT'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_closed"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('event=', string(($event)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:for-each select="data[@name][not(@name = ('bytes_in', 'bytes_out', 'client_addr', 'client_port', 'conn_id', 'destination_key', 'destination_zone', 'event', 'policy', 'proto', 'sensor', 'server_addr', 'server_port', 'source_zone', 'timestamp', 'tls_ja3'))][normalize-space(string(@value))]">
-      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
-      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
-      <xsl:if test="not(string(stroom:get($mcp_unread)))">
-        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
-        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
-      </xsl:if>
-    </xsl:for-each>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="data[@name][not(@name = ('bytes_in', 'bytes_out', 'client_addr', 'client_port', 'conn_id', 'destination_key', 'destination_zone', 'event', 'policy', 'proto', 'sensor', 'server_addr', 'server_port', 'source_zone', 'timestamp', 'tls_ja3'))][normalize-space(string(@value))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'connected': records where event = CONNECT. Writes a Network/Connect event (TypeId from event) from
        client_addr, client_port, proto, source_zone, tls_ja3, server_addr, server_port, destination_zone,

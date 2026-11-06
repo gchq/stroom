@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:mcp="stroom-mcp:functions" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs mcp">
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
   <xsl:template match="/">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="/map/map" mode="event"/>
@@ -11,26 +14,34 @@
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$action = 'login'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$action = 'logout'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="$action = 'disk_alert'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_disk"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('_action=', string(($action)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:for-each select="*[@key][not(@key = ('_action', '_disk', '_pct', '_src_ip', '_user', 'full_message', 'host', 'short_message', 'timestamp'))][normalize-space(string(.))]">
-      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
-      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
-      <xsl:if test="not(string(stroom:get($mcp_unread)))">
-        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
-        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
-      </xsl:if>
-    </xsl:for-each>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="*[@key][not(@key = ('_action', '_disk', '_pct', '_src_ip', '_user', 'full_message', 'host', 'short_message', 'timestamp'))][normalize-space(string(.))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'logon': records where _action = login. Writes an Authenticate event (TypeId from _action) from _user. -->
   <xsl:template match="node()" mode="event_type_logon">

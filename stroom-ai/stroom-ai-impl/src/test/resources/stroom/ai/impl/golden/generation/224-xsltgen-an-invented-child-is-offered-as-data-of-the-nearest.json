@@ -292,6 +292,7 @@
   ],
   "unmatched": "skip",
   "ignored_fields": [],
+  "log_unmapped_fields": true,
   "style": {
    "naming": "snake_case",
    "variable_min_reads": 3,
