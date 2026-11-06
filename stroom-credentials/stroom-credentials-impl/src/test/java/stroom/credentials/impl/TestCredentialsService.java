@@ -366,7 +366,12 @@ class TestCredentialsService {
     }
 
     private FindCredentialRequest createFindRequest(final DocumentPermission requiredPermission) {
-        return new FindCredentialRequest(null, null, null, null, requiredPermission);
+        return new FindCredentialRequest(
+                null,
+                null,
+                null,
+                null,
+                requiredPermission);
     }
 
     private PutCredentialRequest createPutRequest() {
