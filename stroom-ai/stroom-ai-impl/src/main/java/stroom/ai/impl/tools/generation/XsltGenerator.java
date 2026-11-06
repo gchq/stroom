@@ -70,6 +70,11 @@ public final class XsltGenerator {
     /// Logged for each record no rule matches (WARN), then the values the rules test: "No event mapping matched
     /// record 5 (action=view | type=)".
     public static final String UNMATCHED = "No event mapping matched record ";
+    /// Logged (WARN) once a stream for each field a record has that no rule reads, nor ignored_fields lists: the
+    /// line is this, the field's name and [#UNREAD_FIELD_END].
+    public static final String UNREAD_FIELD = "No rule reads field ";
+    /// The end of an [#UNREAD_FIELD] line.
+    public static final String UNREAD_FIELD_END = " (map it, or list it in ignored_fields to leave it out)";
     /// Logged (INFO) for each record a kept-Unknown rule takes; `{rule}` is the rule's name.
     public static final String KEPT_UNKNOWN = "Kept as Unknown by rule '{rule}': record ";
     /// Logged (WARN) where an entry without `repeat` reads several values from its own xpath (a split list, say): the
@@ -85,6 +90,9 @@ public final class XsltGenerator {
     /// unmatched record of a 160 MB stream logged without a number, so review_coverage found none of them). A
     /// predicate Saxon can't settle without the value, so the variable isn't left unread; it selects nothing.
     public static final String READ_RECORD_NO = "$" + RECORD_NO + "[string(.) = '#']";
+    // The field names a template's xpaths read, Data Splitter's and JSON's: data[@name='x'], *[@key='x'].
+    private static final Pattern DATA_NAME_READ = Pattern.compile("@name\\s*=\\s*(['\"])([^'\"]+)\\1");
+    private static final Pattern JSON_KEY_READ = Pattern.compile("@key\\s*=\\s*(['\"])([^'\"]+)\\1");
     /// A json-to-xml call in a mapping's xpath (bare, fn: or stroom:), read through the guarded mcp:json-to-xml.
     public static final Pattern JSON_CALL = Pattern.compile("(?<![\\w:-])(?:fn:|stroom:)?json-to-xml\\(",
             Pattern.UNICODE_CHARACTER_CLASS);
@@ -1711,6 +1719,7 @@ public final class XsltGenerator {
                 }
             }
         }
+        warnOfUnreadFields(eventTemplate, all);
         if (logsRecordNo) {
             readRecordNo(eventTemplate, apply, body);
         }
@@ -1782,6 +1791,56 @@ public final class XsltGenerator {
     // it isn't moved into the branch that logs. Declared first, and read after the template's other leading
     // variables, so a template that declares its variables at its start still does. With items, read for the record
     // and handed to the items' template.
+    // A record's fields that no rule reads, nor ignored_fields lists, logged (WARN) once a stream each, with the
+    // field's name: what the sample the mapping was drafted from lacked, reported by processing (seen in testing: a
+    // field only some records had was never mapped, and nothing said so). Read from the templates written: the names
+    // their xpaths read. Data Splitter and JSON records only, whose fields are named.
+    private void warnOfUnreadFields(final XmlElement eventTemplate, final List<XmlElement> templates) {
+        final boolean data = "data_splitter".equals(m.input());
+        if (!data && !"json".equals(m.input())) {
+            return;
+        }
+        final Pattern named = data
+                ? DATA_NAME_READ
+                : JSON_KEY_READ;
+        final Set<String> read = new TreeSet<>(m.ignoredFields());
+        final List<XmlElement> scanned = new ArrayList<>(templates);
+        // With for_each, the record's own template reads the items' field.
+        scanned.add(eventTemplate);
+        for (final XmlElement template : scanned) {
+            final Matcher matcher = named.matcher(XmlSerialiser.toXml(template));
+            while (matcher.find()) {
+                read.add(matcher.group(2));
+            }
+        }
+        final String attribute = data
+                ? "@name"
+                : "@key";
+        final String value = data
+                ? "@value"
+                : ".";
+        final String known = read.isEmpty()
+                ? ""
+                : "[not(" + attribute + " = (" + read.stream().map(XPathText::literal)
+                        .collect(Collectors.joining(", ")) + "))]";
+        final String nils = m.nilValues().isEmpty()
+                ? ""
+                : "[not(normalize-space(" + value + ") = (" + m.nilValues().stream().map(XPathText::literal)
+                        .collect(Collectors.joining(", ")) + "))]";
+        final XmlElement each = eventTemplate.addElement(XSL, "for-each", "select", (data
+                ? "data"
+                : "*") + "[" + attribute + "]" + known + "[normalize-space(string(" + value + "))]" + nils);
+        each.append(new XmlComment(" A field no rule reads: logged once a stream (ignored_fields: left out on "
+                                   + "purpose) "));
+        each.addElement(XSL, "variable", "name", "mcp_unread", "select", "concat('mcp-unread:', " + attribute + ")");
+        final XmlElement first = each.addElement(XSL, "if", "test", "not(string(stroom:get($mcp_unread)))");
+        first.addElement(XSL, "value-of", "select", "stroom:put($mcp_unread, 'y')");
+        // Once a stream, by name: no record's number, which every record would then read (see READ_RECORD_NO).
+        first.addElement(XSL, "sequence", "select", "stroom:log('WARN', concat(" + XPathText.literal(UNREAD_FIELD)
+                                                    + ", " + attribute + ", " + XPathText.literal(UNREAD_FIELD_END)
+                                                    + "))");
+    }
+
     private static void readRecordNo(final XmlElement eventTemplate,
                                      final XmlElement apply,
                                      final XmlElement rulesTemplate) {

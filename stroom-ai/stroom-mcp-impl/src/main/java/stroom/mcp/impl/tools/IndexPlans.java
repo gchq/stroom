@@ -250,6 +250,10 @@ class IndexPlans {
                 : "") + (reply.containsKey("fields_rare")
                 ? " fields_rare: the translation writes their source, though no event read has it (a rare one): "
                   + "they stay in the plan, indexed whenever an event has it; nothing to change."
+                : "") + (reply.containsKey("ecs_check")
+                ? " ecs_check: the plan mixes names ECS has no place for with ECS's own: ask the user, for each, "
+                  + "whether to rename it (its ECS name, or under the source's own namespace) or keep it as it is "
+                  + "(custom_namespaces), before saving. Seen in testing: flat and ECS names mixed in one template."
                 : "") + (reply.containsKey("fields_not_in_schema")
                 ? " fields_not_in_schema: the Events schema has no element at their source, so no Event can "
                   + "hold it: correct the source to a path the Events have (summarise_streams' path_population), or "

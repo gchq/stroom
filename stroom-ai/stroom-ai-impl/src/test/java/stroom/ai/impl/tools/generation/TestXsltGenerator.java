@@ -407,6 +407,35 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aFieldNoRuleReadsIsLoggedOnceAStreamUnlessIgnored() {
+        // Seen in testing: a field only some records had was never mapped, and nothing said so. Processing now says,
+        // by name, once a stream.
+        final Map<String, Object> json = baseJson();
+        final String records = "<records xmlns=\"records:2\"><record><data name=\"time\" value=\"t\"/>"
+                               + "<data name=\"action\" value=\"login\"/><data name=\"user\" value=\"pat\"/>"
+                               + "<data name=\"tls_version\" value=\"1.3\"/></record></records>";
+
+        final String xslt = generate(TranslationMapping.fromJson(json)).xslt();
+
+        // Every field a rule reads (the condition's action too) is known; any other, not blank, is logged.
+        assertThat(xslt).contains("<xsl:for-each select=\"data[@name][not(@name = (", "'action'", "'user'",
+                "stroom:put($mcp_unread, 'y')", XsltGenerator.UNREAD_FIELD);
+        assertThat(xslt).doesNotContain("'tls_version'");
+        // Nothing written by the check: the events are as before.
+        assertThat(children(transform(xslt, records), "Event")).hasSize(1);
+
+        json.put("ignored_fields", List.of("tls_version"));
+        final TranslationMapping ignoring = TranslationMapping.fromJson(json);
+        assertThat(ignoring.toJson(DumpMode.COMPACT)).containsEntry("ignored_fields", List.of("tls_version"));
+        assertThat(generate(ignoring).xslt()).contains("'tls_version'");
+
+        // JSON's fields are named by their keys.
+        json.put("input", "json");
+        assertThat(generate(TranslationMapping.fromJson(json)).xslt())
+                .contains("<xsl:for-each select=\"*[@key][not(@key = (", "'tls_version'");
+    }
+
+    @Test
     void aNilValueIsSkippedByAnyOfAndJoinNotTakenAsTheValue() {
         // Seen in Ask Stroom AI (Netskope): any_of [x-cs-src-ip, x-cs-src-ip-egress] with nil_values ['-'] took the
         // first column's '-' and then left it out, so Source had no address though the second column held one.

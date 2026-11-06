@@ -37,6 +37,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -282,6 +283,16 @@ class TestXsltGeneratorProblems extends XsltRuns {
         processor.registerExtensionFunction(new StroomFunction("log", SequenceType.makeSequenceType(
                 ItemType.STRING, OccurrenceIndicator.ZERO), List.of(ItemType.STRING, ItemType.STRING), args -> {
                     logged.add(args[0].itemAt(0).getStringValue() + ": " + args[1].itemAt(0).getStringValue());
+                    return XdmEmptySequence.getInstance();
+                }));
+        // Stroom's kept values, for the check of fields no rule reads.
+        final Map<String, String> kept = new HashMap<>();
+        processor.registerExtensionFunction(new StroomFunction("get", SequenceType.makeSequenceType(
+                ItemType.STRING, OccurrenceIndicator.ONE), List.of(ItemType.STRING), args ->
+                new XdmAtomicValue(kept.getOrDefault(args[0].itemAt(0).getStringValue(), ""))));
+        processor.registerExtensionFunction(new StroomFunction("put", SequenceType.makeSequenceType(
+                ItemType.STRING, OccurrenceIndicator.ZERO), List.of(ItemType.STRING, ItemType.STRING), args -> {
+                    kept.put(args[0].itemAt(0).getStringValue(), args[1].itemAt(0).getStringValue());
                     return XdmEmptySequence.getInstance();
                 }));
         final Xslt30Transformer transformer = processor.newXsltCompiler()

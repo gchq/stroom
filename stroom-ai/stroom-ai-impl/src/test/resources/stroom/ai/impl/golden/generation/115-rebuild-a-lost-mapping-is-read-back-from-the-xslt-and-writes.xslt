@@ -7,6 +7,14 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:apply-templates select="." mode="event_type_logon"/>
+    <xsl:for-each select="data[@name][not(@name = ('host', 'result', 'sid', 'time', 'user'))][normalize-space(string(@value))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'logon': every record. Writes an Authenticate event (TypeId Logon) from time, host, user, result, sid. -->
   <xsl:template match="node()" mode="event_type_logon">

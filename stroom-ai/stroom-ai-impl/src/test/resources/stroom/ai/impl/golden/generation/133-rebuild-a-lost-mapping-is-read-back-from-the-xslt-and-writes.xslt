@@ -50,6 +50,14 @@
         </Event>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:for-each select="data[@name][not(@name = ('action', 'host', 'result', 'sid', 'time', 'user'))][normalize-space(string(@value))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @name)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @name, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template name="event_time">

@@ -7,6 +7,14 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:apply-templates select="." mode="event_type_process_start"/>
+    <xsl:for-each select="*[@key][not(@key = ('@timestamp', 'args', 'executable', 'host', 'ip', 'name', 'pid', 'process', 'user'))][normalize-space(string(.))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'process start': every record. Writes a Process event (TypeId Process-Start) from process.executable,
        process.args, process.pid. -->

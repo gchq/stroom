@@ -74,7 +74,12 @@ public final class FieldDocFixtures {
     private static final String STROOM_STUBS = "<xsl:function name=\"stroom:log\"><xsl:param name=\"level\"/>"
                                                + "<xsl:param name=\"message\"/><xsl:sequence select=\"()\"/>"
                                                + "</xsl:function><xsl:function name=\"stroom:record-no\">"
-                                               + "<xsl:sequence select=\"0\"/></xsl:function>";
+                                               + "<xsl:sequence select=\"0\"/></xsl:function>"
+                                               + "<xsl:function name=\"stroom:get\"><xsl:param name=\"key\"/>"
+                                               + "<xsl:sequence select=\"''\"/></xsl:function>"
+                                               + "<xsl:function name=\"stroom:put\"><xsl:param name=\"key\"/>"
+                                               + "<xsl:param name=\"value\"/><xsl:sequence select=\"()\"/>"
+                                               + "</xsl:function>";
 
     private FieldDocFixtures() {
         // Static only.
