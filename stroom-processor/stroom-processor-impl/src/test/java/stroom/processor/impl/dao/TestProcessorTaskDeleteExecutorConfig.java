@@ -20,6 +20,7 @@ import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterDependencies;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.security.api.DocumentPermissionService;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -55,6 +56,8 @@ class TestProcessorTaskDeleteExecutorConfig {
     private ProcessorTaskDao mockProcessorTaskDao;
     @Mock
     private DocumentPermissionService mockDocumentPermissionService;
+    @Mock
+    private ProcessorFilterDependencies mockProcessorFilterDependencies;
 
     @Captor
     private ArgumentCaptor<Instant> thresholdCaptor;
@@ -72,7 +75,8 @@ class TestProcessorTaskDeleteExecutorConfig {
                 mockProcessorFilterDao,
                 mockProcessorTaskDao,
                 new SimpleTaskContextFactory(),
-                mockDocumentPermissionService);
+                mockDocumentPermissionService,
+                mockProcessorFilterDependencies);
 
         final Instant beforeFirstRun = Instant.now();
         executor.lockAndDelete();
@@ -104,7 +108,8 @@ class TestProcessorTaskDeleteExecutorConfig {
                 mockProcessorFilterDao,
                 mockProcessorTaskDao,
                 new SimpleTaskContextFactory(),
-                mockDocumentPermissionService);
+                mockDocumentPermissionService,
+                mockProcessorFilterDependencies);
 
         executor.lockAndDelete();
 

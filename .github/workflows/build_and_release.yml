@@ -64,8 +64,24 @@ jobs:
               echo "BUILD_IS_RELEASE=true"
             else
               echo "BUILD_IS_RELEASE=false"
+              # Releases don't use the cached gradle build outputs, so
+              # always run everything
+              echo "GRADLE_BUILD_CACHE_DIR=${RUNNER_TEMP}/gradle-build-cache"
             fi
           } >> $GITHUB_ENV
+
+        # Saves the gradle build cache at the end of the job and restores the
+        # most recent one (from this branch, else the default branch) at the
+        # start, so tasks whose inputs haven't changed don't need to run again.
+      - name: Gradle build cache
+        id: gradle_build_cache
+        if: ${{ env.GRADLE_BUILD_CACHE_DIR != '' }}
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.GRADLE_BUILD_CACHE_DIR }}
+          key: gradle-build-cache-${{ github.sha }}
+          restore-keys: |
+            gradle-build-cache-
 
         # Separate step to show what is visible across steps
       - name: Build Environment Info

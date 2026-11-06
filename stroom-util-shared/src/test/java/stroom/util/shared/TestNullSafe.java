@@ -16,6 +16,7 @@
 
 package stroom.util.shared;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TestSetup;
 import stroom.test.common.TestUtil.TimedCase;
@@ -2600,6 +2601,7 @@ class TestNullSafe {
     }
 
     @Test
+    @PerformanceTest
     @Disabled
     void testPerformanceVsOptional() {
         final int iterations = 100_000_000;
@@ -2658,6 +2660,7 @@ class TestNullSafe {
         }
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testIsNullPerf() {
@@ -2710,6 +2713,7 @@ class TestNullSafe {
                 optCase);
     }
 
+    @PerformanceTest
     @Disabled // Long-running manual perf test
     @Test
     void testGetPerf() {

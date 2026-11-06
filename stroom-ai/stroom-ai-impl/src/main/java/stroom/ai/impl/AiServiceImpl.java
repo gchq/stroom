@@ -294,7 +294,10 @@ public class AiServiceImpl implements AiService {
     private Optional<String> getApiKey(final OpenAIModelDoc doc) {
         final String apiKeyName = doc.getApiKeyName();
         if (NullSafe.isNonBlankString(apiKeyName)) {
-            final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
+            // Users only need USE on the cred to use it.
+            final StoredSecret storedSecret = securityContext.useAsReadResult(() ->
+                    storedSecretsProvider.get().get(apiKeyName));
+
             if (storedSecret != null) {
                 if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
                     if (accessTokenSecret.getAccessToken() != null) {

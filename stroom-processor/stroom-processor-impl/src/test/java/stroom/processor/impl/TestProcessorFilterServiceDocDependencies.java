@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.meta.api.MetaService;
 import stroom.processor.api.ProcessorService;
@@ -33,8 +32,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -43,19 +41,18 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifies that {@link ProcessorFilterServiceImpl} keeps the doc_dependency store current on
- * create/update/delete by extracting the filter's dependencies directly from the in-hand object and
- * calling {@link DocDependencyService#setDependencies} (once, on this node) — rather than re-reading
- * the filter back via the handler registry or relying on a cluster-wide entity event.
+ * create/update/delete/restore by handing the in-hand filter to {@link ProcessorFilterDependencies}
+ * (once, on this node) — rather than re-reading the filter back via the handler registry or relying on
+ * a cluster-wide entity event.
  */
 class TestProcessorFilterServiceDocDependencies {
 
     private static final String FILTER_UUID = "filter-uuid";
     private static final String PIPELINE_UUID = "pipe-uuid";
-    private static final DocRef EXPECTED_REF = new DocRef(ProcessorFilter.ENTITY_TYPE, FILTER_UUID);
 
     private final ProcessorFilterDao processorFilterDao = mock(ProcessorFilterDao.class);
     private final ProcessorTaskDao processorTaskDao = mock(ProcessorTaskDao.class);
-    private final DocDependencyService docDependencyService = mock(DocDependencyService.class);
+    private final ProcessorFilterDependencies processorFilterDependencies = mock(ProcessorFilterDependencies.class);
 
     private final ProcessorFilterServiceImpl service = new ProcessorFilterServiceImpl(
             mock(ProcessorService.class),
@@ -65,7 +62,7 @@ class TestProcessorFilterServiceDocDependencies {
             new MockSecurityContext(),
             mock(DocFinder.class),
             mock(UserRefLookup.class),
-            () -> docDependencyService);
+            processorFilterDependencies);
 
     private ProcessorFilter filterWithProcessor() {
         return ProcessorFilter.builder()
@@ -77,27 +74,25 @@ class TestProcessorFilterServiceDocDependencies {
 
     @Test
     void create_setsDependencies() {
-        when(processorFilterDao.create(any())).thenReturn(filterWithProcessor());
+        final ProcessorFilter created = filterWithProcessor();
+        when(processorFilterDao.create(any())).thenReturn(created);
 
         service.create(filterWithProcessor());
 
-        // Edges are stored from the extracted filter (its pipeline is one of them), not a re-read.
-        verify(docDependencyService, times(1)).setDependencies(
-                eq(EXPECTED_REF),
-                argThat(deps -> deps.stream().anyMatch(d -> PIPELINE_UUID.equals(d.getUuid()))));
-        verify(docDependencyService, never()).removeDependencies(any());
+        // Edges are stored from the filter as persisted, not a re-read.
+        verify(processorFilterDependencies, times(1)).update(created);
+        verify(processorFilterDependencies, never()).remove(anyString());
     }
 
     @Test
     void update_setsDependencies() {
-        when(processorFilterDao.update(any())).thenReturn(filterWithProcessor());
+        final ProcessorFilter updated = filterWithProcessor();
+        when(processorFilterDao.update(any())).thenReturn(updated);
 
         service.update(filterWithProcessor());
 
-        verify(docDependencyService, times(1)).setDependencies(
-                eq(EXPECTED_REF),
-                argThat(deps -> deps.stream().anyMatch(d -> PIPELINE_UUID.equals(d.getUuid()))));
-        verify(docDependencyService, never()).removeDependencies(any());
+        verify(processorFilterDependencies, times(1)).update(updated);
+        verify(processorFilterDependencies, never()).remove(anyString());
     }
 
     @Test
@@ -107,7 +102,31 @@ class TestProcessorFilterServiceDocDependencies {
 
         service.delete(123);
 
-        verify(docDependencyService, times(1)).removeDependencies(EXPECTED_REF);
-        verify(docDependencyService, never()).setDependencies(any(), any());
+        verify(processorFilterDependencies, times(1)).remove(FILTER_UUID);
+        verify(processorFilterDependencies, never()).update(any());
+    }
+
+    @Test
+    void delete_nothingDeleted_keepsDependencies() {
+        when(processorFilterDao.fetch(anyInt())).thenReturn(Optional.of(filterWithProcessor()));
+        when(processorFilterDao.logicalDeleteByProcessorFilterId(anyInt())).thenReturn(0);
+
+        service.delete(123);
+
+        verify(processorFilterDependencies, never()).remove(anyString());
+    }
+
+    @Test
+    void restore_putsDependenciesBack() {
+        // Regression: deleting a filter removes its edges, so restoring it must write them again,
+        // otherwise a restored filter shows no dependencies.
+        final ProcessorFilter deleted = filterWithProcessor().copy().deleted(true).build();
+        final ProcessorFilter restored = filterWithProcessor();
+        when(processorFilterDao.fetchByUuid(FILTER_UUID)).thenReturn(Optional.of(deleted));
+        when(processorFilterDao.restoreProcessorFilter(any())).thenReturn(restored);
+
+        service.restore(new DocRef(ProcessorFilter.ENTITY_TYPE, FILTER_UUID));
+
+        verify(processorFilterDependencies, times(1)).update(restored);
     }
 }
