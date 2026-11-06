@@ -455,7 +455,7 @@ class TestPromoteBuildTool {
         // well.
         assertThat(tool.isReadOnly()).isFalse();
         assertThat(tool.confirmsItself()).isTrue();
-        assertThat(tool.definition().description()).startsWith("Onboarding step 15 of 15 (promoted): ");
+        assertThat(tool.definition().description()).startsWith("Onboarding step 16 of 16 (promoted): ");
     }
 
     private Map<String, Object> review(final Map<String, Object> destinations, final Boolean roleSubfolders) {

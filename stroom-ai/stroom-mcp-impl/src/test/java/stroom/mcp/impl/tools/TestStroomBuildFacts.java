@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.DocumentAccess;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
+import stroom.ai.impl.tools.StreamReader.RawText;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
@@ -33,6 +34,7 @@ import stroom.util.shared.ResultPage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -130,6 +132,42 @@ class TestStroomBuildFacts {
         // None by the build's pipelines: every one from a raw stream still there.
         assertThat(facts.eventsStreams(Map.of("name", "ACME-TEST"), List.of()).current())
                 .containsExactly(13L, 12L, 11L);
+    }
+
+    @Test
+    void theFieldsProcessingReportedAsReadByNoRuleAreThoseTheXsltDoesNotNameNow() throws IOException {
+        // Asked for by the user: a build doesn't go on with fields silently unmapped. Found from the Events streams'
+        // parents, so a build working from an existing feed is covered too.
+        final BuildWorld world = new BuildWorld();
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x1", "ACME-Translation");
+        PipelineLayers.given(world.pipelineService, "events", PipelineLayers.of(PipelineLayers.layer("events")
+                .chain("Source", "Source", "dsParser", "DSParser", "translationFilter", "XSLTFilter")
+                .property("translationFilter", "xslt", xslt)));
+        final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+        // The XSLT reads size now (mapped since), not dlp_policy.
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid("x1").name("ACME-Translation").data("<xsl:value-of select=\"data[@name='size']/@value\"/>")
+                .build()));
+        final StreamReader streamReader = Mockito.mock(StreamReader.class);
+        Mockito.when(streamReader.meta(9L)).thenReturn(Meta.builder().id(9L).typeName("Events").parentDataId(7L)
+                .build());
+        Mockito.when(streamReader.find(Mockito.any(), Mockito.anyInt(), Mockito.anyBoolean()))
+                .thenReturn(new ResultPage<>(List.of(
+                        new MetaRow(Meta.builder().id(12L).typeName("Error").parentDataId(7L).pipelineUuid("events")
+                                .build(), null, Map.of()),
+                        new MetaRow(Meta.builder().id(13L).typeName("Error").parentDataId(7L).pipelineUuid("other")
+                                .build(), null, Map.of()))));
+        Mockito.when(streamReader.errorStreamText(Mockito.eq(12L), Mockito.anyInt())).thenReturn(new RawText(
+                "WARN:translationFilter: Log - No rule reads field dlp_policy (map it, or list it in ignored_fields "
+                + "to leave it out)\nWARN:translationFilter: Log - No rule reads field size (map it, ...)\n", false));
+        Mockito.when(streamReader.errorStreamText(Mockito.eq(13L), Mockito.anyInt())).thenReturn(new RawText(
+                "WARN: Log - No rule reads field other_pipelines (map it, ...)\n", false));
+        final StroomBuildFacts facts = new StroomBuildFacts(null, null, documentAccess, streamReader,
+                world.pipelineShapes, null, null, null, null, null, null, null, null);
+
+        assertThat(facts.unmappedFields(List.of(9L), List.of("events")))
+                .isEqualTo(Map.of("dlp_policy", List.of(7L)));
+        assertThat(facts.unmappedFields(List.of(), List.of("events"))).isEmpty();
     }
 
     private static Meta raw(final long id, final Status status) {

@@ -114,6 +114,13 @@ class TestE2ePlantedFeatures extends AbstractE2eTest {
                 .toList();
         assertThat(events).hasSize(2);
 
+        // ### The build's plan puts the fields processing found no rule reading to the user, before going on.
+        final Map<String, Object> status = json("build_status", args("build", BUILD));
+        dump("build_status unmapped", status.get("unmapped_fields"));
+        softly.assertThat(JsonUtil.writeValueAsString(status.get("unmapped_fields"), false))
+                .as("the mid-stream field listed for the user to decide").contains(PlantedFeed.MID_FIELD);
+        softly.assertThat(String.valueOf(status.get("next"))).as("the plan's next step").contains("unmapped");
+
         // ### The tail-only kind is in what the Events are said to hold.
         final Map<String, Object> summary = json("summarise_streams", args("stream_ids", events, "kind", "events"));
         dump("summarise_streams", summary);

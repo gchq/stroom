@@ -46,6 +46,7 @@ final class FakeBuildFacts implements BuildFacts {
     Map<String, List<String>> referencedFeeds = new LinkedHashMap<>();
     List<Long> events = List.of();
     List<Long> eventsLeftOut = List.of();
+    Map<String, List<Long>> unmapped = new LinkedHashMap<>();
     Map<String, Object> survey;
     List<String> checks = List.of();
     String keptXslt;
@@ -172,6 +173,11 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public EventsStreams eventsStreams(final Map<String, Object> feed, final List<String> translations) {
         return new EventsStreams(events, eventsLeftOut);
+    }
+
+    @Override
+    public Map<String, List<Long>> unmappedFields(final List<Long> events, final List<String> translations) {
+        return unmapped;
     }
 
     @Override

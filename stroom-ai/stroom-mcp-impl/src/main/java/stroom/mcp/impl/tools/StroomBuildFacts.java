@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
@@ -46,6 +47,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -64,6 +66,12 @@ import java.util.regex.Pattern;
 class StroomBuildFacts implements BuildFacts {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomBuildFacts.class);
+    // A field processing reported as read by no rule (XsltGenerator.UNREAD_FIELD): its name.
+    private static final Pattern UNMAPPED_FIELD = Pattern.compile(Pattern.quote(XsltGenerator.UNREAD_FIELD)
+                                                                  + "(\\S+) \\(");
+    // The most Error streams of a raw stream, and characters of each, read for those lines.
+    private static final int ERROR_STREAMS = 20;
+    private static final int ERROR_TEXT = 4 * 1024 * 1024;
 
     /// What a survey doc's name ends with: `<feed> - Survey`.
     static final String SURVEY = " - Survey";
@@ -273,6 +281,73 @@ class StroomBuildFacts implements BuildFacts {
                 .map(Meta::getId)
                 .filter(id -> !kept.contains(id))
                 .toList());
+    }
+
+    @Override
+    public Map<String, List<Long>> unmappedFields(final List<Long> events, final List<String> translations) {
+        final Map<String, List<Long>> found = new LinkedHashMap<>();
+        if (NullSafe.isEmptyCollection(events) || NullSafe.isEmptyCollection(translations)) {
+            return found;
+        }
+        // The raw streams processed: the Events streams' parents, a build's samples or an existing feed's streams.
+        final Set<Long> raw = new LinkedHashSet<>();
+        for (final long id : events) {
+            try {
+                final Long parent = streamReader.meta(id).getParentMetaId();
+                if (parent != null) {
+                    raw.add(parent);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug("Unable to read stream {}", id, e);
+            }
+        }
+        for (final long stream : raw) {
+            final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, stream)
+                    .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.ERROR)
+                    .build();
+            try {
+                for (final MetaRow row : NullSafe.list(NullSafe.get(streamReader.find(expression, ERROR_STREAMS,
+                        true), ResultPage::getValues))) {
+                    if (!translations.contains(row.getMeta().getPipelineUuid())) {
+                        continue;
+                    }
+                    final Matcher line = UNMAPPED_FIELD.matcher(streamReader.errorStreamText(row.getMeta().getId(),
+                            ERROR_TEXT).text());
+                    while (line.find()) {
+                        final List<Long> streams = found.computeIfAbsent(line.group(1), k -> new ArrayList<>());
+                        if (!streams.contains(stream)) {
+                            streams.add(stream);
+                        }
+                    }
+                }
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.debug("Unable to read the Error streams of stream {}", stream, e);
+            }
+        }
+        // Mapped since, or left out (ignored_fields): the XSLT names it now.
+        final List<String> codes = translationCodes(translations);
+        found.keySet().removeIf(field -> codes.stream().anyMatch(code -> code.contains("'" + field + "'")
+                                                                        || code.contains("\"" + field + "\"")));
+        return found;
+    }
+
+    // The code of the pipelines' translation XSLTs.
+    private List<String> translationCodes(final List<String> pipelines) {
+        final List<String> codes = new ArrayList<>();
+        for (final String pipeline : pipelines) {
+            try {
+                pipelineShapes.merged(pipeline).translationDocs(pipeline).stream()
+                        .map(MergedPipeline.TranslationDoc::doc)
+                        .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
+                        .forEach(doc -> documentAccess.read(doc, XsltDoc.class)
+                                .map(XsltDoc::getData)
+                                .ifPresent(codes::add));
+            } catch (final RuntimeException e) {
+                LOGGER.debug("Unable to read the XSLTs of pipeline {}", pipeline, e);
+            }
+        }
+        return codes;
     }
 
     // When a pipeline's translation XSLTs were last saved, as milliseconds; 0 if they can't be read.
