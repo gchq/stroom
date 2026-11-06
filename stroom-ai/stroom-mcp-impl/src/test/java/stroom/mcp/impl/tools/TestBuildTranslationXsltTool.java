@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiChatRunManager;
 import stroom.ai.impl.tools.KeptMapping;
+import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.SplitterXml;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
@@ -384,6 +385,52 @@ class TestBuildTranslationXsltTool {
         assertThat(world.call(tool, Map.of("mapping", mapping, "uuid", wholeUuid, "sample", sample)))
                 .doesNotContainKey("changes_applied");
         assertThat(world.asked).hasSize(2);
+    }
+
+    @Test
+    void aSystemNameOrEnvironmentLeftAsAPlaceholderIsNotSaved() {
+        // Seen in testing: the source's name went in as the System/Name, and the user was never asked for either.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("\"value\": \"Acme\"",
+                "\"value\": \"" + DraftMapping.SYSTEM_NAME_PLACEHOLDER + "\"").replace("\"value\": \"Test\"",
+                "\"value\": \"" + DraftMapping.ENVIRONMENT_PLACEHOLDER + "\""), Map.class);
+
+        final Map<String, Object> result = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "S", "sample", SAMPLE));
+
+        assertThat(result).containsEntry("ok", false).doesNotContainKey("saved");
+        assertThat(list(result.get("problems"))).anySatisfy(problem -> assertThat(String.valueOf(problem))
+                .contains("EventSource/System/Name ('TODO system name') and EventSource/System/Environment",
+                        "still a placeholder: ask the user"));
+    }
+
+    @Test
+    void answersGivenBeforeStillAnswerWhileTheSampleHasOtherProblems() {
+        // Seen in testing: the user was asked again about the same stand-ins on each round of fixing other problems,
+        // as the answers were only looked up once the sample check passed.
+        final Map<String, Object> mapping = JsonUtil.readValue(GOOD.replace("{\"input\": \"json\",",
+                "{\"input\": \"json\", \"json_layout\": \"lines\","), Map.class);
+        final String sample = """
+                {"ts": "2026-09-28T10:00:00.000Z", "host": "ws01", "user": "alice"}
+                {"ts": "2026-09-28T10:01:00.000Z", "host": "-", "user": "bob"}
+                {"ts": "2026-09-28T10:02:00.000Z", "host": "-", "user": "carol"}
+                """;
+        world.forms = true;
+        world.answers.put("'-' in", PlaceholderChoices.KEEP);
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", mapping, "build", "acme-v1",
+                "name", "R", "sample", sample));
+        assertThat(saved).as(String.valueOf(saved)).containsKey("saved");
+        assertThat(world.asked).hasSize(1);
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+
+        // A time format no sample value fits: a problem, so not saved; the stand-in isn't asked about, nor warned of.
+        final Map<String, Object> broken = JsonUtil.readValue(JsonUtil.writeValueAsString(mapping, false)
+                .replace("\"field\":\"ts\"", "\"field\":\"ts\",\"time_format\":\"dd/MM/yyyy\""), Map.class);
+        final Map<String, Object> failing = world.call(tool, Map.of("mapping", broken, "uuid", uuid,
+                "sample", sample));
+
+        assertThat(failing).as(String.valueOf(failing)).containsEntry("ok", false);
+        assertThat(world.asked).hasSize(1);
+        assertThat(list(failing.get("warnings"))).noneMatch(w -> String.valueOf(w).startsWith("sample: placeholder"));
     }
 
     @Test
@@ -851,8 +898,15 @@ class TestBuildTranslationXsltTool {
         assertThat((String) result.get("hint")).contains("Edit draft_mapping");
         // The draft, sent back as the mapping, generates: every kind of this sample drafted with its action
         // element.
-        final Map<String, Object> again = world.call(tool, Map.of("mapping", result.get("draft_mapping"),
+        // As it is, its system's name and environment are placeholders for the user's answer: refused for those
+        // alone.
+        final Map<String, Object> unnamed = world.call(tool, Map.of("mapping", result.get("draft_mapping"),
                 "sample", FW_JSON));
+        assertThat(list(unnamed.get("problems"))).singleElement().asString().contains("still a placeholder");
+        final Map<String, Object> named = JsonUtil.readValue(JsonUtil.writeValueAsString(result.get("draft_mapping"),
+                false).replace(DraftMapping.SYSTEM_NAME_PLACEHOLDER, "FortiOS")
+                .replace(DraftMapping.ENVIRONMENT_PLACEHOLDER, "Test"), Map.class);
+        final Map<String, Object> again = world.call(tool, Map.of("mapping", named, "sample", FW_JSON));
         assertThat(again.get("ok")).as(String.valueOf(again.get("problems"))).isEqualTo(true);
     }
 

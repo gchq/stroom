@@ -61,7 +61,7 @@
    },
    {
     "path": "EventSource/System/Name",
-    "value": "Fortigate"
+    "value": "TODO system name"
    },
    {
     "path": "EventSource/System/Environment",
@@ -504,7 +504,7 @@
    },
    {
     "path": "EventSource/System/Name",
-    "value": "Firewall Logs"
+    "value": "TODO system name"
    },
    {
     "path": "EventSource/System/Environment",
@@ -1293,7 +1293,7 @@
    },
    {
     "path": "EventSource/System/Name",
-    "value": "Fortigate"
+    "value": "TODO system name"
    },
    {
     "path": "EventSource/System/Environment",

@@ -409,6 +409,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
         dropAnswered(b);
         checkAgainstNotes(b);
+        checkSystem(b);
         checkLookups(b);
         jsonProperties(b);
         fieldMapping(context, b);
@@ -678,6 +679,29 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         }
     }
 
+    // EventSource/System/Name and Environment are the user's to give (or a standing instruction's): a draft's
+    // placeholder left in isn't saved. Seen in testing: the source's name went in as the System/Name, and the user
+    // was never asked for either.
+    private static void checkSystem(final Build b) {
+        final List<String> left = new ArrayList<>();
+        for (final FieldMapping entry : b.mapping.allEntries()) {
+            final String path = entry.strippedPath();
+            if (("EventSource/System/Name".equals(path) || "EventSource/System/Environment".equals(path))
+                && entry.value() != null && entry.value().strip().startsWith("TODO")) {
+                left.add(path + " ('" + entry.value() + "')");
+            }
+        }
+        if (!left.isEmpty()) {
+            TranslationBuilds.problems(b.result).add(String.join(" and ", new LinkedHashSet<>(left))
+                                                     + " still a placeholder: ask the user for the system's name "
+                                                     + "and environment (unless the standing instructions give "
+                                                     + "them), then set the value; if they don't know, a value "
+                                                     + "they agree to, such as Unknown");
+            b.result.put("ok", false);
+            b.result.put("xslt", null);
+        }
+    }
+
     // The user's documentation, where the build keeps notes from it: a rule that contradicts the catalogue.
     private void checkAgainstNotes(final Build b) {
         if (b.request.build() == null) {
@@ -925,11 +949,19 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // for the agent.
     private boolean splitDomains(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
-        if (b.qualified == null || b.qualified.isEmpty() || !ok(b)
-            || (request.build() == null && request.uuid() == null)) {
+        if (b.qualified == null || b.qualified.isEmpty()) {
             return false;
         }
         final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.DOMAIN_CHOSEN);
+        if (!ok(b) || (request.build() == null && request.uuid() == null)) {
+            // Not asked now, but what the user answered before still answers the warning (seen in testing: asked
+            // again on each round of fixing other problems).
+            b.qualified.stream()
+                    .filter(found -> before.containsKey(DomainSplits.key(found)))
+                    .forEach(found -> b.domainChoices.put(DomainSplits.key(found),
+                            before.get(DomainSplits.key(found))));
+            return false;
+        }
         // One question for the fields not answered before, the answer for them all (seen: an Id written from two
         // fields, By User in some rules and Target User in others, asked about twice in a row).
         final List<LocalCheck.QualifiedIds> unasked = b.qualified.stream()
@@ -982,11 +1014,18 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     // the XSLT, so a value is asked about once; without forms the warning is left for the agent.
     private boolean leavePlaceholdersOut(final ToolCall call, final ToolCallContext context, final Build b) {
         final Request request = b.request;
-        if (b.placeholders == null || b.placeholders.isEmpty() || !ok(b)
-            || (request.build() == null && request.uuid() == null)) {
+        if (b.placeholders == null || b.placeholders.isEmpty()) {
             return false;
         }
         final Map<String, String> before = agreedSoFar(context, request, TranslationBuilds.PLACEHOLDERS_CHOSEN);
+        if (!ok(b) || (request.build() == null && request.uuid() == null)) {
+            // Not asked now, but what the user answered before still answers the warning (seen in testing: asked
+            // again on each round of fixing other problems).
+            b.placeholders.stream()
+                    .filter(found -> before.containsKey(found.value()))
+                    .forEach(found -> b.placeholderChoices.put(found.value(), before.get(found.value())));
+            return false;
+        }
         final List<Placeholders.Found> unasked = b.placeholders.stream()
                 .filter(found -> !before.containsKey(found.value()))
                 .toList();

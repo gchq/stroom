@@ -17,6 +17,14 @@
         <xsl:apply-templates select="." mode="event_type_other"/>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:for-each select="*[@key][not(@key = ('action', 'bytes_received', 'bytes_sent', 'device', 'dst_ip', 'dst_port', 'event_type', 'message', 'protocol', 'rule_id', 'severity', 'src_ip', 'src_port', 'timestamp', 'username'))][normalize-space(string(.))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'traffic_permitted': records where event_type = TRAFFIC and action = ALLOW. Writes a Network/Permit event
        (TypeId from event_type) from src_ip, src_port, protocol, dst_ip, dst_port, severity, rule_id,

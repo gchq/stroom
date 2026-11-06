@@ -7,6 +7,14 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:apply-templates select="." mode="event_type_any"/>
+    <xsl:for-each select="*[@key][not(@key = ('host', 'time'))][normalize-space(string(.))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'any': every record. Writes an Unknown event (TypeId x) from host. -->
   <xsl:template match="node()" mode="event_type_any">

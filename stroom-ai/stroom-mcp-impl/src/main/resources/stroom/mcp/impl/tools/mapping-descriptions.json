@@ -60,6 +60,10 @@
    "description": "Records no rule matches: log a warning, or skip.",
    "model": null
   },
+  "ignored_fields": {
+   "description": "Input fields left out of the events on purpose (Data Splitter and JSON input). Any other field no rule reads is logged in processing (WARN, once a stream, by name): map it, or list it here with the user's agreement.",
+   "model": null
+  },
   "style": {
    "description": "How the XSLT is written: naming, and when to use variables and xsl:maps.",
    "model": "XsltStyle"

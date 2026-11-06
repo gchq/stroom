@@ -178,7 +178,11 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(byPath.get("EventSource/User/Id").get("field")).isEqualTo("username");
         assertThat(byPath.get("EventDetail/TypeId").get("field")).isEqualTo("event_type");
         assertThat(byPath.get("EventDetail/Description").get("field")).isEqualTo("message");
-        assertThat(byPath.get("EventSource/System/Name").get("value")).isEqualTo("FortiOS firewall");
+        // The source's name is the generator's; the system's name is the user's to give (seen in testing: taken
+        // from the source unasked).
+        assertThat(byPath.get("EventSource/System/Name").get("value"))
+                .isEqualTo(DraftMapping.SYSTEM_NAME_PLACEHOLDER);
+        assertThat(byPath.get("EventSource/Generator").get("value")).isEqualTo("FortiOS firewall");
         // TRAFFIC's records are connections allowed between addresses: Network/Permit, not an Unknown placeholder.
         assertThat(draft.get("kinds")).isEqualTo(List.of("TRAFFIC", "LOGIN"));
         assertThat(rules(draft).keySet()).containsExactly("traffic_permitted", "login", "other");

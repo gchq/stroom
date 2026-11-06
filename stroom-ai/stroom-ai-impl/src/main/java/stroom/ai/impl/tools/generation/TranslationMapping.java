@@ -47,6 +47,10 @@ import java.util.stream.Collectors;
 /// @param common       Fields every event gets.
 /// @param events       Event kinds, tried in order (at least one).
 /// @param unmatched    Records no rule matches: `warn` or `skip`.
+/// @param ignoredFields `ignored_fields`: input fields left out of the events on purpose. Any other field a record
+///                      has that no rule reads is logged (WARN) once a stream, with its name, so processing reports
+///                      what the sample the mapping was drafted from lacked (seen in testing: a field only some
+///                      records had was never mapped, and nothing said so). Data Splitter and JSON input only.
 /// @param style        How the XSLT is written.
 /// @param imports      Shared XSLTs imported (xsl:import).
 /// @param shared       Named templates from shared XSLTs, called in their element's place.
@@ -66,6 +70,7 @@ public record TranslationMapping(String input,
                                  List<FieldMapping> common,
                                  List<EventRule> events,
                                  String unmatched,
+                                 List<String> ignoredFields,
                                  XsltStyle style,
                                  List<String> imports,
                                  List<SharedTemplate> shared,
@@ -87,6 +92,7 @@ public record TranslationMapping(String input,
         common = copy(common);
         events = copy(events);
         unmatched = Objects.requireNonNullElse(unmatched, "warn");
+        ignoredFields = copy(ignoredFields);
         style = Objects.requireNonNullElse(style, XsltStyle.DEFAULT);
         imports = copy(imports);
         shared = copy(shared);
@@ -136,6 +142,7 @@ public record TranslationMapping(String input,
                 fields.models("common", (value, at) -> FieldMapping.read(reader, value, at)),
                 fields.requiredModels("events", (value, at) -> EventRule.read(reader, value, at), 1),
                 fields.literal("unmatched", "warn", List.of("warn", "skip")),
+                fields.strings("ignored_fields"),
                 fields.model("style", (value, at) -> XsltStyle.read(reader, value, at), XsltStyle.DEFAULT),
                 fields.strings("imports"),
                 fields.models("shared", (value, at) -> SharedTemplate.read(reader, value, at)),
@@ -178,7 +185,8 @@ public record TranslationMapping(String input,
             }
         }
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, List.of(),
-                entries, forEach, nilValues, dropWhen, common, events, unmatched, style, imports, shared, functions);
+                entries, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, style, imports, shared,
+                functions);
     }
 
     // Applied to the mapping itself, so the XSLT, the documentation's tables and the sample checks all use the names
@@ -191,8 +199,9 @@ public record TranslationMapping(String input,
                 .map(rule -> rule.withFields(namedInStyle(rule.fields())))
                 .toList();
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
-                extract, forEach, nilValues, dropWhen, namedInStyle(common), rules, unmatched, style, imports, shared,
-                functions);
+                extract, forEach, nilValues, dropWhen, namedInStyle(common), rules, unmatched,
+                ignoredFields, style, imports,
+                shared, functions);
     }
 
     private List<FieldMapping> namedInStyle(final List<FieldMapping> entries) {
@@ -219,7 +228,8 @@ public record TranslationMapping(String input,
     /// @return This mapping with those rules.
     public TranslationMapping withEvents(final List<EventRule> events) {
         return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
-                extract, forEach, nilValues, dropWhen, common, events, unmatched, style, imports, shared, functions);
+                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignoredFields, style, imports, shared,
+                functions);
     }
 
     /// @return Every field mapping: the common ones, then each rule's.
@@ -249,6 +259,7 @@ public record TranslationMapping(String input,
                 .models("common", common, entry -> entry.toJson(mode))
                 .models("events", events, rule -> rule.toJson(mode))
                 .put("unmatched", unmatched, "warn")
+                .put("ignored_fields", ignoredFields, List.of())
                 .model("style", style, XsltStyle.DEFAULT, given -> given.toJson(mode))
                 .put("imports", imports, List.of())
                 .models("shared", shared, template -> template.toJson(mode))

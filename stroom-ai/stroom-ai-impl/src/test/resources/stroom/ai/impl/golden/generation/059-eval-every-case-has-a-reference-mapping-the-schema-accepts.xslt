@@ -33,6 +33,14 @@
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('eventType=', string(($event_type)[1])), concat('type=', string(($type)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
+    <xsl:for-each select="*[@key][not(@key = ('actor', 'alternateId', 'client', 'eventType', 'ip', 'ipAddress', 'ok', 'outcome', 'published', 'reason', 'result', 'ts', 'type', 'user'))][normalize-space(string(.))]">
+      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
+      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+      <xsl:if test="not(string(stroom:get($mcp_unread)))">
+        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+      </xsl:if>
+    </xsl:for-each>
   </xsl:template>
   <!-- Rule 'new session start': records where eventType = user.session.start. Writes an Authenticate event (TypeId
        from eventType) from published, actor.alternateId, client.ipAddress, eventType, outcome.result,
