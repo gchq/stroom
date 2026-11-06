@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterDependencies;
 import stroom.processor.impl.ProcessorModule;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
@@ -61,6 +62,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorTaskDao processorTaskDao;
     private final TaskContextFactory taskContextFactory;
     private final DocumentPermissionService documentPermissionService;
+    private final ProcessorFilterDependencies processorFilterDependencies;
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ClusterLockService clusterLockService,
@@ -69,7 +71,8 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskDao processorTaskDao,
                                     final TaskContextFactory taskContextFactory,
-                                    final DocumentPermissionService documentPermissionService) {
+                                    final DocumentPermissionService documentPermissionService,
+                                    final ProcessorFilterDependencies processorFilterDependencies) {
         this.clusterLockService = clusterLockService;
         this.processorConfigProvider = processorConfigProvider;
         this.processorDao = processorDao;
@@ -77,6 +80,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         this.processorTaskDao = processorTaskDao;
         this.taskContextFactory = taskContextFactory;
         this.documentPermissionService = documentPermissionService;
+        this.processorFilterDependencies = processorFilterDependencies;
     }
 
     /**
@@ -137,7 +141,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         // can't delete the filter until all associated tasks have been processed otherwise they will never be picked
         // up.
         taskContext.info(() -> "Logically deleting old processor filters with a state of COMPLETED and no tasks");
-        runWithCountAndTimeLogging(() -> processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold),
+        runWithCountAndTimeLogging(() -> logicallyDeleteOldProcessorFilters(deleteThreshold),
                 totalCount,
                 "Logically deleted {} old processor filters with a state of " + "COMPLETED and no tasks");
 
@@ -165,6 +169,13 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         }
     }
 
+    private int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        final Set<String> procFilterUuids = processorFilterDao.logicallyDeleteOldProcessorFilters(deleteThreshold);
+        // A deleted filter has no dependency edges
+        processorFilterDependencies.remove(procFilterUuids);
+        return procFilterUuids.size();
+    }
+
     private int deletingOldProcessorFilters(final Instant deleteThreshold) {
         final Set<String> procFilterUuids = processorFilterDao.physicalDeleteOldProcessorFilters(deleteThreshold);
 
@@ -177,6 +188,10 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                     .map(uuid -> new DocRef(ProcessorFilter.ENTITY_TYPE, uuid))
                     .collect(Collectors.toSet());
             documentPermissionService.removeAllDocumentPermissions(docRefs);
+
+            // Their dependency edges should have gone when they were logically deleted, but remove them
+            // again in case that failed, as nothing else will
+            processorFilterDependencies.remove(procFilterUuids);
         }
 
         return procFilterUuids.size();

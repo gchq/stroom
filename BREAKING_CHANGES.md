@@ -221,6 +221,41 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   off, they were not — set `allowPasswordResets` under the password policy section to `false` to actually
   disable them.
 
+* **Only affects databases that have run a v7.14 beta.** v7.13 adds the processor database migration
+  `V07_13_00_001__processor_filter_dependency_version`, which adds a `dependency_version` column to the
+  `processor_filter` table (gh-5979). A processor database that has already run a v7.14 beta has newer
+  migrations applied (`V07_14_00_*`), so when it is upgraded to a v7.14 release that includes this migration,
+  Flyway will refuse to apply the older one and **Stroom will not start**, reporting:
+
+  ```
+  Detected resolved migration not applied to database: 07.13.00.001
+  ```
+
+  Databases upgrading from v7.13 or earlier are not affected.
+
+  To fix this, before starting the new version (or after the failed start), run the migration by hand
+  against the processor database, then record it in that database's Flyway history so Flyway accepts it as
+  applied. The script is safe to run more than once.
+
+  ```bash
+  mysql <connection options> <processor database> \
+      < V07_13_00_001__processor_filter_dependency_version.sql
+  ```
+
+  ```sql
+  INSERT INTO processor_schema_history
+      (installed_rank, version, description, type, script, checksum,
+       installed_by, installed_on, execution_time, success)
+  SELECT MAX(installed_rank) + 1, '07.13.00.001', 'processor filter dependency version',
+         'SQL', 'V07_13_00_001__processor_filter_dependency_version.sql', -2143125670,
+         CURRENT_USER(), NOW(), 0, 1
+  FROM processor_schema_history;
+  ```
+
+  The script is in the Stroom source at
+  `stroom-processor/stroom-processor-impl-db/src/main/resources/stroom/processor/impl/db/migration/`.
+  The `checksum` must be exactly as shown or Flyway will report a checksum mismatch.
+
 ## [v7.3]
 * StroomQL `vis as` keyword combination replaced with `show`.
 

@@ -29,6 +29,7 @@ import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.ProcessorFilterDependencies;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskQueueManager;
@@ -96,6 +97,8 @@ class AbstractProcessorTest {
     protected ProcessorFeedCache processorFeedCache;
     @Inject
     protected DocumentPermissionService mockDocumentPermissionService;
+    @Inject
+    protected ProcessorFilterDependencies mockProcessorFilterDependencies;
 
     @Inject
     protected Set<Clearable> clearables;
@@ -124,6 +127,7 @@ class AbstractProcessorTest {
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);
                         bindMock(DocumentPermissionService.class);
+                        bindMock(ProcessorFilterDependencies.class);
                         bind(UserRefLookup.class).toInstance((userUuid, context) ->
                                 Optional.of(UserRef.forUserUuid(userUuid)));
                     }
