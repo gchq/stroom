@@ -84,3 +84,4 @@ Stroom and its associated libraries, services and content span several GitHub re
 * [`event-logging-schema`](https://github.com/gchq/event-logging-schema) - An XML Schema for describing auditable
   events.
 * [`event-logging`](https://github.com/gchq/event-logging) - A JAXB API for the `event-logging` XML Schema.
+
