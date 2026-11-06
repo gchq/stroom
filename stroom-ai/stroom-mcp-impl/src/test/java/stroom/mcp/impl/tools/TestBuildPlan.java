@@ -63,8 +63,11 @@ class TestBuildPlan {
         assertThat(steps.getLast()).isEqualTo("promoted");
         assertThat(steps.indexOf("stepped")).isLessThan(steps.indexOf("processed"));
         assertThat(steps.indexOf("processed")).isLessThan(steps.indexOf("documented"));
+        // Fields processing reported as read by no rule are decided before the Events are checked.
+        assertThat(steps.indexOf("processed")).isLessThan(steps.indexOf("unmapped"));
+        assertThat(steps.indexOf("unmapped")).isLessThan(steps.indexOf("validated"));
         assertThat(steps.indexOf("documented")).isLessThan(steps.indexOf("index"));
-        assertThat(BuildPlan.onboardingChecklist()).hasSize(15);
+        assertThat(BuildPlan.onboardingChecklist()).hasSize(16);
     }
 
     @Test
@@ -233,7 +236,7 @@ class TestBuildPlan {
 
     @Test
     void theCoreToolsCarryTheirPlanStep() {
-        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 5 of 15 (pipeline): ");
+        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 5 of 16 (pipeline): ");
         assertThat(BuildPlan.onboardingLabel("start_onboarding")).isEqualTo("Onboarding start: ");
         assertThat(BuildPlan.onboardingLabel("build_status")).isEqualTo("Onboarding, any step: ");
         assertThat(BuildPlan.onboardingLabel("locate_event")).isEmpty();
@@ -292,6 +295,27 @@ class TestBuildPlan {
         assertThat(String.valueOf(status.get("events_left_out_note"))).contains("made from a raw stream since "
                                                                                 + "deleted");
         assertThat(String.valueOf(status.get("next"))).doesNotContain("8]").doesNotContain("8,");
+    }
+
+    @Test
+    void fieldsProcessingReportsAsReadByNoRuleAreDecidedBeforeTheBuildGoesOn() {
+        // Asked for by the user: fields processing reports as read by no rule are put to the user (mapped, then
+        // reprocessed, or left out) before the build goes on, not left silently unmapped.
+        facts.unmapped = new LinkedHashMap<>(Map.of("dlp_policy", List.of(7L)));
+
+        final Map<String, Object> status = elasticStatus(false, true, List.of());
+
+        assertThat(((Map<?, ?>) status.get("next")).get("step")).isEqualTo("unmapped");
+        assertThat(String.valueOf(status.get("next")))
+                .contains("ask the user about each field in unmapped_fields", "reprocess_streams", "ignored_fields");
+        assertThat(status.get("unmapped_fields")).isEqualTo(List.of(Map.of("field", "dlp_policy",
+                "streams", List.of(7L))));
+
+        // Mapped or left out: the XSLT names it, so none is reported, and the build goes on.
+        facts.unmapped = new LinkedHashMap<>();
+        final Map<String, Object> decided = elasticStatus(false, true, List.of());
+        assertThat(decided).doesNotContainKey("unmapped_fields");
+        assertThat(((Map<?, ?>) decided.get("next")).get("step")).isNotEqualTo("unmapped");
     }
 
     // The plan of an Elasticsearch build with an events pipeline, an index doc and an indexing pipeline, both

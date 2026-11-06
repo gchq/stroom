@@ -2485,7 +2485,9 @@ its mapping generates (`GeneratedDrift`). A check ending `(promotion waits for t
 * **Returns**: by default compact (`BuildStatusTool.compact`): `next`, `before_promotion` and `steps` first, each step
   by its state only, each document on one line (`type 'name' (role) uuid, a working copy of ...`), then the rest:
   `build`, `sample` (format), `feeds`, `sample_streams` by type, `xslts`, `pipelines`, `events_streams` (up to 20),
-  `works_from`. With `full: true`, each step's description and tools and each document's path.
+  `unmapped_fields` (each field processing reported as read by no rule and not yet mapped or in `ignored_fields`,
+  with its raw streams; the `unmapped` step stays to do until there are none: asked for by the user, so a build
+  doesn't go on with fields silently unmapped), `works_from`. With `full: true`, each step's description and tools and each document's path.
 * **Refuses**: no `build`.
 * **Notes**: compact is the default because the full result (about 10 KB) was saved to the workspace and fetched again
   and again, as the agent couldn't keep it in view.

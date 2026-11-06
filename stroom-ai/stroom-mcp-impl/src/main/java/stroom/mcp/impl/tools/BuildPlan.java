@@ -119,6 +119,9 @@ public class BuildPlan {
                     "survey_feed build=..., step_records over every location"),
             List.of("processed", "Sample streams processed into Events",
                     "create_processor_filter, wait_for_processing"),
+            List.of("unmapped", "Every field processing reported as read by no rule decided with the user: mapped "
+                                + "(then the streams holding it reprocessed) or left out (ignored_fields)",
+                    "build_translation_xslt changes= (or ignored_fields), reprocess_streams"),
             List.of("validated", "Events validated against the schema and the quality rules", "check_events"),
             List.of("documented", "Events pipeline documented, with its Field mapping generated",
                     "write_documentation stream_ids=..."));
@@ -619,6 +622,11 @@ public class BuildPlan {
             events.addAll(found.current());
             eventsLeftOut.addAll(found.leftOut());
         });
+        // Fields processing reported as read by no rule, not yet mapped or left out (asked for by the user: the build
+        // doesn't go on with them silently unmapped).
+        final Map<String, List<Long>> unmapped = events.isEmpty()
+                ? Map.of()
+                : facts.unmappedFields(events, translations);
         // Elasticsearch: the index template agreed with the user for each indexing pipeline's current code. Not
         // needed for Lucene; to do for Elasticsearch until every such pipeline has one.
         final List<Optional<String>> problems = new ArrayList<>();
@@ -657,6 +665,7 @@ public class BuildPlan {
                 ? null
                 : (Boolean) JsonValues.truthy(survey.get("saturated")));
         done.put("processed", !events.isEmpty());
+        done.put("unmapped", !events.isEmpty() && unmapped.isEmpty());
         done.put("validated", !translation.isEmpty() && translation.stream().allMatch(facts::validated));
         done.put("documented", !translation.isEmpty() && allNamed(translation, documented) && !stale);
         // A discovery index's doc is made at verification, once documents are in it: its pipeline comes first. A new
@@ -869,6 +878,11 @@ public class BuildPlan {
                                                + "raw stream since deleted, by another pipeline, or before the "
                                                + "translation XSLT was last saved.");
         }
+        if (!unmapped.isEmpty()) {
+            final List<Map<String, Object>> fields = new ArrayList<>();
+            unmapped.forEach((field, in) -> fields.add(Map.of("field", field, "streams", in)));
+            result.put("unmapped_fields", fields.subList(0, Math.min(50, fields.size())));
+        }
         result.put("before_promotion", checks);
         result.put("steps", steps);
         if (existing) {
@@ -961,6 +975,10 @@ public class BuildPlan {
                     "only once the user says they enabled its filter (" + ASK + "); then check_events");
             case "processed:running" -> call("wait_for_processing", args("pipeline_uuid", tr, "stream_ids", raw),
                     "then check_events");
+            case "unmapped" -> call("build_translation_xslt", args("uuid", "<the translation XSLT's uuid>",
+                            "changes", "<each field in unmapped_fields mapped, or added to ignored_fields>"),
+                    "ask the user about each field in unmapped_fields: map it, then reprocess_streams the streams it "
+                    + "lists, or leave it out (ignored_fields, no reprocessing); then build_status");
             case "validated" -> call("check_events", args("stream_ids", orElse(events,
                             "<the Events streams wait_for_processing gave>")),
                     "the server reads the Events itself: never read them back to send them");
@@ -1337,7 +1355,7 @@ public class BuildPlan {
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
         final Set<String> skipped = new HashSet<>(kinds.discovery()
-                ? Set.of("translation", "pipeline", "stepped", "processed", "validated", "documented")
+                ? Set.of("translation", "pipeline", "stepped", "processed", "unmapped", "validated", "documented")
                 : Set.of());
         if (!kinds.reference()) {
             skipped.addAll(stepsOf(STAGE_REFERENCE));
@@ -1357,7 +1375,7 @@ public class BuildPlan {
             // processes into a test feed of its own.
             skipped.addAll(Set.of("feed", "samples"));
             if (copiesWithoutOwnFeed) {
-                skipped.addAll(Set.of("processed", "validated"));
+                skipped.addAll(Set.of("processed", "unmapped", "validated"));
             }
         }
         if (!stage1) {

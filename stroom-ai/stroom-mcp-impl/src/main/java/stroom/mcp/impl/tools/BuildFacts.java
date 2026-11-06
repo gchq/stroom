@@ -93,6 +93,17 @@ interface BuildFacts {
     /// @return Those Events streams, and the ones left out.
     EventsStreams eventsStreams(Map<String, Object> feed, List<String> translations);
 
+    /// The fields processing reported as read by no rule of the build's translation (its Error streams' "No rule reads
+    /// field" lines), less those its XSLT names now (mapped, or listed in ignored_fields): each for the user to have
+    /// mapped (then the streams holding it reprocessed) or left out. Asked for by the user: the build doesn't go on
+    /// with fields silently unmapped.
+    ///
+    /// @param events       The build's current Events streams: their raw streams (its samples, or an existing feed's)
+    ///                     are where processing reported them.
+    /// @param translations The UUIDs of the build's translation pipelines.
+    /// @return Each such field, with the raw streams it was reported in, in the order found.
+    Map<String, List<Long>> unmappedFields(List<Long> events, List<String> translations);
+
     /// @param pipelineUuid An indexing pipeline.
     /// @return Where an Elasticsearch indexing pipeline writes (`index name`, `cluster`); empty for others.
     Optional<Map<String, Object>> elasticDestination(String pipelineUuid);
