@@ -65,7 +65,7 @@ LATEST_SUFFIX="-LATEST"
 
 # The version of stroom-resources used for running the DB. Despite the name this is
 # a branch, as git clone --branch accepts either.
-STROOM_RESOURCES_GIT_TAG="7.13-stroom-7.13-proxy-stroom-all-dbs-non-durable"
+STROOM_RESOURCES_GIT_TAG="7.13-stroom-7.13-proxy"
 # The stroom-resources service for the DB. CI DBs are thrown away after each run,
 # so use the non-durable MySQL config, which makes the DB tests much faster.
 # bounceIt.sh prefixes the container name with bounceit_
