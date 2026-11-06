@@ -16,6 +16,7 @@
 
 package stroom.util.logging;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.concurrent.DurationAdder;
@@ -231,6 +232,7 @@ class TestLogUtil {
                 .build();
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testTemplatePerformance() {

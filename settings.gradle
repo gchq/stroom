@@ -27,6 +27,17 @@ develocity {
     }
 }
 
+// CI sets this to a dir that it saves and restores between runs, so unchanged
+// tasks (including tests) can be taken from the cache rather than run again.
+def gradleBuildCacheDir = System.getenv('GRADLE_BUILD_CACHE_DIR')
+if (gradleBuildCacheDir) {
+    buildCache {
+        local {
+            directory = new File(gradleBuildCacheDir)
+        }
+    }
+}
+
 rootProject.name = 'stroom'
 
 // Activity

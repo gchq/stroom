@@ -231,9 +231,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                         final String gitUrl = contentPack.getGitUrl();
                         final String overrideGitUrl = overrideGitUrls.get(gitUrl);
                         if (overrideGitUrl != null) {
-                            LOGGER.info("Overriding GitURL '{}' with '{}'",
-                                    gitUrl,
-                                    overrideGitUrl);
+                            LOGGER.debug("Overriding GitURL '{}' with '{}'", gitUrl, overrideGitUrl);
                             contentPack.overrideGitUrl(overrideGitUrl);
                         }
                     }

@@ -36,6 +36,7 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -83,7 +84,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 .as("Check indexStore is not empty")
                 .isNotEmpty();
 
-        final DocRef indexRef = indexStore.list().get(0);
+        final DocRef indexRef = indexStore.list().getFirst();
         final LuceneIndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
@@ -115,7 +116,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
 
         try {
             final String json = JsonUtil.writeValueAsString(searchRequest);
-            LOGGER.info(json);
+            LOGGER.debug("json:\n{}", json);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -124,7 +125,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
-        if (searchResponse.getErrorMessages() != null && searchResponse.getErrorMessages().size() > 0) {
+        if (NullSafe.hasItems(searchResponse.getErrorMessages())) {
             final List<String> messages = searchResponse.getErrorMessages().stream()
                     .map(ErrorMessage::getMessage).toList();
             final String errors = String.join(", ", messages);
@@ -142,7 +143,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 final stroom.query.api.OffsetRange range = tableResult.getResultRange();
 
                 for (long i = range.getOffset(); i < range.getLength(); i++) {
-                    final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
+                    final List<Row> values = rows.computeIfAbsent(componentId, ignored -> new ArrayList<>());
                     values.add(tableResult.getRows().get((int) i));
                 }
             }

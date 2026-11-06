@@ -138,6 +138,7 @@ public class ProcessorModule extends AbstractModule {
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
+                .bindStartupTaskTo(ProcessorFilterDependencyRebuildStartup.class)
                 .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
     }
 

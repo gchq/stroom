@@ -277,7 +277,18 @@ tasks.register('gwtCompile', JavaExec) {
 
     def module = 'stroom.app.App'
 
+    // JavaExec already treats the classpath (the transformed client source and classes,
+    // plus the GWT libs), args and jvm args as inputs. Declaring the output lets gradle
+    // skip the compile when they are unchanged, or take the output from the build cache.
+    // The source prep tasks this depends on still run, as they are not cacheable.
+    outputs.dir(outputDir)
+    outputs.cacheIf { true }
+
     doFirst {
+        // So the output (which is what gets cached) only contains this compile's files
+        logger.info('Deleting GWT output dir ' + outputDir)
+        delete outputDir
+
         logger.info('Deleting GWT build dirs in ' + gwtBuildDir.toString())
         delete gwtTmpDir
         delete workDir

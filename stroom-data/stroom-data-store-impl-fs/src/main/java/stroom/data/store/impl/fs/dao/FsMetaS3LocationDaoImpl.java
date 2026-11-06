@@ -25,14 +25,17 @@ import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.db.util.JooqUtil;
+import stroom.meta.shared.SimpleMeta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import org.jooq.DSLContext;
 import org.jooq.Query;
 import org.jooq.Record5;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -60,57 +63,73 @@ public class FsMetaS3LocationDaoImpl implements FsMetaS3LocationDao {
     }
 
     @Override
+    public void create(final SimpleMeta meta, final DataVolume dataVolume, final S3Location s3Location) {
+        JooqUtil.context(fsDataStoreDbConnProvider, context ->
+                createLocations(meta.getId(), Set.of(s3Location), context, dataVolume));
+    }
+
+    @Override
+    public void tryCreate(final SimpleMeta meta, final DataVolume dataVolume, final S3Location s3Location) {
+        try {
+            JooqUtil.context(fsDataStoreDbConnProvider, context ->
+                    createLocations(meta.getId(), Set.of(s3Location), context, dataVolume));
+        } catch (final Exception e) {
+            if (JooqUtil.isDuplicateKeyException(e)) {
+                // Just swallow
+                LOGGER.debug("tryCreate() - Location already exists, doing nothing, meta: {}, " +
+                             "dataVolume: {}, s3Location: {}",
+                        meta, dataVolume, s3Location);
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    @Override
     public S3LocationDataVolume create(final long metaId,
                                        final FsVolume fsVolume,
                                        final Set<S3Location> s3Locations) {
 
         Objects.requireNonNull(fsVolume);
         return JooqUtil.transactionResult(fsDataStoreDbConnProvider, txnContext -> {
-            // Create the link to the volume
-            final DataVolume dataVolume = dataVolumeDaoImpl.createDataVolume(txnContext, metaId, fsVolume);
+            // Ensure the link to the volume
+            DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(metaId);
+            if (dataVolume == null) {
+                dataVolume = dataVolumeDaoImpl.createDataVolume(txnContext, metaId, fsVolume);
+            }
 
             if (NullSafe.hasItems(s3Locations)) {
-                final List<S3Location> s3LocationList = List.copyOf(s3Locations);
-//                JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-                @SuppressWarnings("VariableTypeCanBeExplicit")
-                var insert = txnContext.insertInto(
-                        FS_META_S3_LOCATION,
-                        FS_META_S3_LOCATION.META_ID,
-                        FS_META_S3_LOCATION.S3_REGION,
-                        FS_META_S3_LOCATION.S3_BUCKET,
-                        FS_META_S3_LOCATION.S3_KEY);
-
-                for (final S3Location s3Location : s3LocationList) {
-                    insert = insert.values(
-                            metaId,
-                            s3Location.getRegionName(),
-                            s3Location.getBucketName(),
-                            s3Location.getKey());
-                }
-
-                insert.execute();
-//                });
-                return new S3LocationDataVolume(dataVolume, s3Locations);
+                return createLocations(metaId, s3Locations, txnContext, dataVolume);
             } else {
                 return new S3LocationDataVolume(dataVolume, Collections.emptySet());
             }
         });
     }
 
-    @Override
-    @Nullable
-    public S3LocationDataVolume getS3LocationDataVolume(final long metaId) {
-        final DataVolume dataVolume = dataVolumeDaoImpl.findDataVolume(metaId);
-        final S3LocationDataVolume s3LocationDataVolume;
-        if (dataVolume != null) {
-            final Set<S3Location> s3Locations = getS3LocationDataVolume(dataVolume);
-            s3LocationDataVolume = new S3LocationDataVolume(dataVolume, s3Locations);
-        } else {
-            s3LocationDataVolume = null;
+    private static @NonNull S3LocationDataVolume createLocations(final long metaId,
+                                                                 final Set<S3Location> s3Locations,
+                                                                 final DSLContext txnContext,
+                                                                 final DataVolume dataVolume) {
+        final List<S3Location> s3LocationList = List.copyOf(s3Locations);
+        @SuppressWarnings("VariableTypeCanBeExplicit")
+        var insert = txnContext.insertInto(
+                FS_META_S3_LOCATION,
+                FS_META_S3_LOCATION.META_ID,
+                FS_META_S3_LOCATION.S3_REGION,
+                FS_META_S3_LOCATION.S3_BUCKET,
+                FS_META_S3_LOCATION.S3_KEY);
+
+        for (final S3Location s3Location : s3LocationList) {
+            insert = insert.values(
+                    metaId,
+                    s3Location.getRegionName(),
+                    s3Location.getBucketName(),
+                    s3Location.getKey());
         }
-        LOGGER.debug("getS3LocationDataVolume() - metaId: {}, s3LocationDataVolume: {}",
-                metaId, s3LocationDataVolume);
-        return s3LocationDataVolume;
+        insert.execute();
+        LOGGER.debug("createLocations() - Created locations for metaId: {}, dataVolume: {}, s3LocationList: {}",
+                metaId, dataVolume, s3LocationList);
+        return new S3LocationDataVolume(dataVolume, s3Locations);
     }
 
     @Override

@@ -13,6 +13,36 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.10] - 2026-11-05
+
+* Bug **#5933** : Fix `Null DocRef UUID` error shown when setting permissions on a credential, annotation or annotation tag, and fix the document permissions list not scrolling, which required resizing the dialog to see all users and groups.
+
+* Bug **#5938** : Fix export of all content failing with a 403 when the user lacks the Manage Processors permission, and with a 500 when an analytic rule has no processing type.
+
+* Feature **#5950** : Add multi-select to dashboard List Input components, emitting the selected values as a comma separated list. Add a format constraint (Number, Date/Time with a date picker, or Regex Pattern) to dashboard Text Input components; a value that does not conform is highlighted and is not passed to queries.
+
+* Bug **#5968** : Fix stepping and processing using out of date versions of imported XSLTs, and clarify the error for an XSLT import that can't be found.
+
+* Bug **#5967** : Fix stepping showing empty panes with no error when the pipeline fails to start, e.g. an invalid data splitter; the errors now show on the element that raised them.
+
+* Bug **#5969** : Fix errors when POSTing data to feed configured to use an S3 based volume. Also prevent an S3 object from being overwritten when the key template results in more than one stream having the same key.
+
+* Bug **#4841** : Fix column value filter tick lists ignoring other column filters and selection filters. Values the table currently has are listed first, then a line, then every other value faded.
+
+* Bug **#5944** : Fix physical delete of data on S3_V1 volumes that was created prior to v7.14.
+
+* Bug **#5961** : Change error handling when a dashboard's config cannot be deserialised to include the dashboard's identity.
+
+* Bug : Fix bug in display of the `None` item in the DocRef pickers. Was incorrectly using instance equality.
+
+* Dependency : Uplift `com.google.guava:guava` from 33.6.0-jre to 33.7.2-jre.
+
+* Dependency : Uplift `com.hubspot.jinjava:jinjava` from 2.8.4 to 2.8.5.
+
+* Dependency : Uplift base docker image to eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b.
+
+* Bug **#5985** : Fix NPE when trying to set perms on a Credential.
+
 * Bug **#5936** : Fix missing document dependencies for index default extraction pipelines, data generator feeds, pathways traces and info feeds, analytic rule and report error and notification feeds, and content template pipelines.
 
 * Bug **#5936** : Fix copies and imports of receive data rules and data retention rules not remapping document references in their rule expressions.
@@ -2801,7 +2831,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.10...HEAD
+[v7.14-beta.10]: https://github.com/gchq/stroom/compare/v7.14-beta.9...v7.14-beta.10
 [v7.14-beta.9]: https://github.com/gchq/stroom/compare/v7.14-beta.8...v7.14-beta.9
 [v7.14-beta.8]: https://github.com/gchq/stroom/compare/v7.14-beta.7...v7.14-beta.8
 [v7.14-beta.7]: https://github.com/gchq/stroom/compare/v7.14-beta.6...v7.14-beta.7

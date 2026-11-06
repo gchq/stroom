@@ -22,6 +22,7 @@ import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
+import stroom.meta.shared.SimpleMeta;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -34,13 +35,19 @@ public interface DataVolumeService {
 
     DataVolume findDataVolume(long metaId);
 
-    S3LocationDataVolume findS3Locations(long metaId);
-
-    Set<S3Location> findS3Locations(DataVolume dataVolume);
+    Set<S3Location> findS3Locations(SimpleMeta meta, DataVolume dataVolume);
 
     List<DataVolume> findDataVolumes(Collection<Long> metaIds);
 
     DataVolume createDataVolume(long metaId, FsVolume volume);
+
+    void tryCreateS3Location(SimpleMeta meta,
+                             DataVolume dataVolume,
+                             S3Location s3Location);
+
+    void createS3Location(SimpleMeta meta,
+                          DataVolume dataVolume,
+                          S3Location s3Location);
 
     S3LocationDataVolume createS3LocationDataVolume(long metaId,
                                                     FsVolume volume,

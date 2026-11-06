@@ -195,12 +195,11 @@ class TestStoreImpl {
             storeImpl.addExistingS3Source(metaProperties, s3Location);
 
             // Then
-            verify(mockDataVolumeService)
-                    .createS3LocationDataVolume(
-                            1L,
-                            fsVolume,
-                            Set.of(s3Location),
-                            true);
+            verify(mockDataVolumeService).createS3LocationDataVolume(
+                    1L,
+                    fsVolume,
+                    Set.of(s3Location),
+                    true);
         }
 
         @Test

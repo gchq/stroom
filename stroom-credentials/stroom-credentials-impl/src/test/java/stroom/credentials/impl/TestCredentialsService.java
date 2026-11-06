@@ -317,7 +317,6 @@ class TestCredentialsService {
     @NullAndEmptySource
     @ValueSource(strings = {"  "})
     void testBlankNameIsRejected(final String name) {
-        when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(null);
 
         assertThatThrownBy(() -> credentialsService.storeCredentials(new PutCredentialRequest(
                 createCredential(name, CredentialType.USERNAME_PASSWORD, null),
@@ -325,21 +324,23 @@ class TestCredentialsService {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("name");
 
-        verify(credentialsDao, never()).putStoredSecret(any(), anyBoolean());
+        verify(credentialsDao, never())
+                .putStoredSecret(any(), anyBoolean());
     }
 
     @Test
     void testReplaceSecret() {
         allowEdit();
+        final StoredSecret storedSecret = createStoredSecret();
         when(securityContext.getUserIdentityForAudit()).thenReturn("editor");
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(createStoredSecret());
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid())).thenReturn(storedSecret);
         when(credentialsDao.updateSecret(any())).thenReturn(true);
         final Credential afterUpdate = createStoredCredential();
         when(credentialsDao.getCredentialByUuid(UUID)).thenReturn(afterUpdate);
         final UsernamePasswordSecret newSecret = new UsernamePasswordSecret("user", "new password");
 
         final Credential result = credentialsService.replaceSecret(
-                new ReplaceSecretRequest(UUID, newSecret, 3_000L));
+                new ReplaceSecretRequest(storedSecret.credential(), newSecret, 3_000L));
 
         final ArgumentCaptor<StoredSecret> stored = ArgumentCaptor.forClass(StoredSecret.class);
         verify(credentialsDao).updateSecret(stored.capture());
@@ -361,11 +362,13 @@ class TestCredentialsService {
 
     @Test
     void testReplaceSecretWithoutASecretIsRejected() {
-        allowEdit();
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(createStoredSecret());
-
-        assertThatThrownBy(() -> credentialsService.replaceSecret(new ReplaceSecretRequest(UUID, null, null)))
-                .isInstanceOf(IllegalArgumentException.class);
+        final StoredSecret storedSecret = createStoredSecret();
+        assertThatThrownBy(() -> credentialsService.replaceSecret(
+                new ReplaceSecretRequest(
+                        storedSecret.credential(),
+                        null,
+                        null)))
+                .isInstanceOf(NullPointerException.class);
 
         verify(credentialsDao, never()).updateSecret(any());
     }
@@ -373,24 +376,29 @@ class TestCredentialsService {
     @Test
     void testReplaceSecretWithTheWrongSecretTypeIsRejected() {
         allowEdit();
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(createStoredSecret());
+        final StoredSecret storedSecret = createStoredSecret();
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(storedSecret);
 
         assertThatThrownBy(() -> credentialsService.replaceSecret(new ReplaceSecretRequest(
-                UUID,
+                storedSecret.credential(),
                 new AccessTokenSecret("token"),
                 null)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        verify(credentialsDao, never()).updateSecret(any());
+        verify(credentialsDao, never())
+                .updateSecret(any());
     }
 
     @Test
     void testReplaceSecretOfMissingCredentialIsRejected() {
         allowEdit();
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(null);
+        final StoredSecret storedSecret = createStoredSecret();
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(null);
 
         assertThatThrownBy(() -> credentialsService.replaceSecret(new ReplaceSecretRequest(
-                UUID,
+                storedSecret.credential(),
                 new UsernamePasswordSecret("user", "password"),
                 null)))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -401,11 +409,13 @@ class TestCredentialsService {
     @Test
     void testReplaceSecretOfACredentialDeletedMeanwhileIsRejected() {
         allowEdit();
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(createStoredSecret());
+        final StoredSecret storedSecret = createStoredSecret();
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(storedSecret);
         when(credentialsDao.updateSecret(any())).thenReturn(false);
 
         assertThatThrownBy(() -> credentialsService.replaceSecret(new ReplaceSecretRequest(
-                UUID,
+                storedSecret.credential(),
                 new UsernamePasswordSecret("user", "password"),
                 null)))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -416,8 +426,9 @@ class TestCredentialsService {
     /// so it can't be used to find out which credentials exist.
     @Test
     void testReplaceSecretWithoutEditPermissionIsRejectedBeforeLookup() {
+        final StoredSecret storedSecret = createStoredSecret();
         assertThatThrownBy(() -> credentialsService.replaceSecret(new ReplaceSecretRequest(
-                UUID,
+                storedSecret.credential(),
                 new UsernamePasswordSecret("user", "password"),
                 null)))
                 .isInstanceOf(PermissionException.class);
@@ -443,11 +454,14 @@ class TestCredentialsService {
         final Path otherCachedFile = cacheDir.resolve("other-uuid.p12");
         writeKeyStore(otherCachedFile, password);
 
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
+        final StoredSecret storedSecret = new StoredSecret(
                 createStoredCredential(CredentialType.KEY_STORE, KeyStoreType.PKCS12),
                 oldSecret,
-                Files.readAllBytes(oldCachedFile)));
-        when(credentialsDao.updateSecret(any())).thenReturn(true);
+                Files.readAllBytes(oldCachedFile));
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(storedSecret);
+        when(credentialsDao.updateSecret(any()))
+                .thenReturn(true);
 
         // The new key store, as uploaded
         final ResourceKey resourceKey = new ResourceKey("upload-key", "new.p12");
@@ -455,7 +469,8 @@ class TestCredentialsService {
         writeKeyStore(upload, password);
         when(resourceStore.getTempFile(resourceKey)).thenReturn(upload);
 
-        credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
+        credentialsService.replaceSecret(new ReplaceSecretRequest(
+                storedSecret.credential(),
                 new KeyStoreSecret("new-uuid", KeyStoreType.PKCS12, password, resourceKey),
                 null));
 
@@ -541,13 +556,16 @@ class TestCredentialsService {
         final Path newKeyStoreFile = keyStoreFile.resolveSibling("new.p12");
         writeKeyStore(newKeyStoreFile, "changeit2");
         allowEdit();
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
+        final StoredSecret storedSecret = new StoredSecret(
                 createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12),
                 new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
-                null));
+                null);
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(storedSecret);
         when(credentialsDao.updateSecret(any())).thenReturn(true);
 
-        credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
+        credentialsService.replaceSecret(new ReplaceSecretRequest(
+                storedSecret.credential(),
                 new KeyStoreFileSecret(KeyStoreType.PKCS12, newKeyStoreFile.toString(), "changeit2"),
                 null));
 
@@ -623,25 +641,31 @@ class TestCredentialsService {
         final Path keyStoreFile = createAllowedKeyStoreFile(tempDir, "changeit");
         allowEdit();
         final Credential existing = createStoredCredential(CredentialType.KEY_STORE_FILE, KeyStoreType.PKCS12);
-        when(credentialsDao.getStoredSecretByUuid(UUID)).thenReturn(new StoredSecret(
+        final StoredSecret storedSecret = new StoredSecret(
                 existing,
                 new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "old"),
-                null));
-        // The file is already used, but by these credentials
-        when(credentialsDao.findCredentials(any(), any())).thenReturn(ResultPage.createUnboundedList(List.of(
-                new Credential(UUID,
-                        existing.getName(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        CredentialType.KEY_STORE_FILE,
-                        KeyStoreType.PKCS12,
-                        keyStoreFile.toString(),
-                        null))));
-        when(credentialsDao.updateSecret(any())).thenReturn(true);
+                null);
+        when(credentialsDao.getStoredSecretByUuid(storedSecret.uuid()))
+                .thenReturn(storedSecret);
 
-        credentialsService.replaceSecret(new ReplaceSecretRequest(UUID,
+        // The file is already used, but by these credentials
+        when(credentialsDao.findCredentials(any(), any()))
+                .thenReturn(ResultPage.createUnboundedList(List.of(
+                        new Credential(storedSecret.uuid(),
+                                existing.getName(),
+                                null,
+                                null,
+                                null,
+                                null,
+                                CredentialType.KEY_STORE_FILE,
+                                KeyStoreType.PKCS12,
+                                keyStoreFile.toString(),
+                                null))));
+        when(credentialsDao.updateSecret(any()))
+                .thenReturn(true);
+
+        credentialsService.replaceSecret(new ReplaceSecretRequest(
+                storedSecret.credential(),
                 new KeyStoreFileSecret(KeyStoreType.PKCS12, keyStoreFile.toString(), "changeit"),
                 null));
 
@@ -754,7 +778,8 @@ class TestCredentialsService {
 
     private Credential createStoredCredential(final CredentialType credentialType,
                                               final KeyStoreType keyStoreType) {
-        return new Credential(UUID,
+        return new Credential(
+                UUID,
                 "a credential",
                 1_000L,
                 1_000L,
@@ -772,7 +797,8 @@ class TestCredentialsService {
     }
 
     private Credential createOtherCredential(final String name) {
-        return new Credential("another-uuid",
+        return new Credential(
+                "another-uuid",
                 name,
                 1_000L,
                 1_000L,

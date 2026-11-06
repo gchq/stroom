@@ -29,6 +29,7 @@ import stroom.meta.shared.SimpleMetaImpl;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
 import stroom.util.entityevent.EntityEventBus;
@@ -137,6 +138,7 @@ public class TestFsPathHelperIntegration {
         LOGGER.info("rootPath: {}", rootPath);
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testGetRootPath_performance() throws IOException {

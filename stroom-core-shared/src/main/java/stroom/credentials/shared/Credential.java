@@ -20,6 +20,8 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Credentials as stored by the Credentials storage system.
@@ -47,8 +50,7 @@ import java.util.Objects;
         "keyStoreType",
         "keyStorePath",
         "expiryTimeMs",
-        "secret"
-})
+        "secret"})
 @JsonInclude(Include.NON_NULL)
 public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
@@ -137,18 +139,34 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
             @JsonProperty("keyStorePath") final String keyStorePath,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
-        this.uuid = uuid;
-        this.name = name;
+        this.uuid = Objects.requireNonNull(uuid, () -> "Credential with name '" + name + "' must have a uuid");
+        this.name = NullSafe.requireNonBlankString(name,
+                () -> "Credential with uuid '" + uuid + "' must have a non-blank name");
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
-        this.credentialType = credentialType == null
-                ? CredentialType.USERNAME_PASSWORD
-                : credentialType;
+        this.credentialType = Objects.requireNonNullElse(credentialType, CredentialType.USERNAME_PASSWORD);
         this.keyStoreType = keyStoreType;
         this.keyStorePath = keyStorePath;
         this.expiryTimeMs = expiryTimeMs;
+    }
+
+    /// Test use only
+    @Deprecated
+    @SerialisationTestConstructor
+    public Credential() {
+        this(
+                UUID.randomUUID().toString(),
+                "Foo",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     public String getUuid() {

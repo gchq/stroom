@@ -181,8 +181,9 @@ public class TestCredentialDaoImpl {
         assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
                 .isEqualTo("/etc/certs/client.p12");
 
-        credentialsDao.updateSecret(new StoredSecret(new Credential("file",
-                null,
+        credentialsDao.updateSecret(new StoredSecret(new Credential(
+                "file",
+                "my cred",
                 null,
                 3_000L,
                 null,

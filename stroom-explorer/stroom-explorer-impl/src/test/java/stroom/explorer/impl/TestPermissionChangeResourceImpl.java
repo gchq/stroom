@@ -21,14 +21,11 @@ import stroom.docref.DocRef;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -57,20 +54,11 @@ class TestPermissionChangeResourceImpl {
                 new SetPermission(UserRef.forUserUuid("user-uuid"), DocumentPermission.VIEW));
 
         final PermissionChangeResourceImpl resource = new PermissionChangeResourceImpl(
-                () -> mockPermissionChangeService,
-                () -> mockEntityEventBus);
+                () -> mockPermissionChangeService);
 
         final Boolean result = resource.changeDocumentPermissions(request);
 
         assertThat(result).isTrue();
         Mockito.verify(mockPermissionChangeService).changeDocumentPermissions(request);
-
-        final ArgumentCaptor<EntityEvent> eventCaptor = ArgumentCaptor.forClass(EntityEvent.class);
-        Mockito.verify(mockEntityEventBus).fire(eventCaptor.capture());
-        final EntityEvent event = eventCaptor.getValue();
-        assertThat(event.getDocRef())
-                .isEqualTo(docRef);
-        assertThat(event.getAction())
-                .isEqualTo(EntityAction.UPDATE);
     }
 }

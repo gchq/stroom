@@ -84,9 +84,6 @@ public class CredentialsService implements StoredSecrets {
     private final Provider<CredentialsConfig> credentialsConfigProvider;
     private final KeyStoreFilePathChecker keyStoreFilePathChecker;
 
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     public CredentialsService(final CredentialsDao credentialsDao,
@@ -110,7 +107,7 @@ public class CredentialsService implements StoredSecrets {
      */
     private Function<Credential, CredentialWithPerms> createPermissionDecorator() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 return null;
             }
@@ -126,8 +123,7 @@ public class CredentialsService implements StoredSecrets {
 
     private Predicate<Credential> createPermissionFilter() {
         return credential -> {
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
-            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+            return securityContext.hasDocumentPermission(credential.asDocRef(), DocumentPermission.VIEW);
         };
     }
 
@@ -142,7 +138,7 @@ public class CredentialsService implements StoredSecrets {
         CredentialWithPerms retval = null;
         if (credential != null) {
 
-            final DocRef docRef = new DocRef(Credential.TYPE, credential.getUuid());
+            final DocRef docRef = credential.asDocRef();
             if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
                 final boolean canEdit = securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
                 final boolean canDelete = securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE);
@@ -201,7 +197,8 @@ public class CredentialsService implements StoredSecrets {
             checkName(credential.getName(), uuid);
             checkKeyStoreFile(secret, uuid);
 
-            final Credential newCredential = new Credential(uuid,
+            final Credential newCredential = new Credential(
+                    uuid,
                     credential.getName(),
                     now,
                     now,
@@ -211,6 +208,7 @@ public class CredentialsService implements StoredSecrets {
                     getKeyStoreType(secret),
                     getKeyStorePath(secret),
                     credential.getExpiryTimeMs());
+
             credentialsDao.putStoredSecret(
                     new StoredSecret(newCredential, secret, readKeyStore(secret)),
                     false);
@@ -254,46 +252,60 @@ public class CredentialsService implements StoredSecrets {
     /// @return The updated credential.
     public Credential replaceSecret(final ReplaceSecretRequest request) {
         checkAppPermission();
-        final String uuid = request.getUuid();
+        final Credential credential = request.getCredential();
+        final String uuid = credential.getUuid();
         // Check permission before looking the credential up so that a user without permission
         // can't tell whether a credential exists or not
         checkEditPermission(uuid);
-        final StoredSecret existing = credentialsDao.getStoredSecretByUuid(uuid);
-        if (existing == null) {
+        final StoredSecret existingSecret = credentialsDao.getStoredSecretByUuid(uuid);
+        if (existingSecret == null) {
             throw new IllegalArgumentException("Credentials not found");
         }
 
-        final Secret secret = request.getSecret();
-        if (secret == null) {
+        final Secret newSecret = request.getSecret();
+        if (newSecret == null) {
             throw new IllegalArgumentException("A new secret must be supplied");
         }
-        checkSecretMatchesType(secret, existing.credential().getCredentialType());
-        checkKeyStoreFile(secret, uuid);
+        checkSecretMatchesType(newSecret, existingSecret.credential().getCredentialType());
+        checkKeyStoreFile(newSecret, uuid);
 
         // Only the secret, its expiry and the update audit fields are written, so a rename made
         // at the same time is not undone
-        final Credential secretFields = new Credential(uuid,
-                null,
-                null,
+        final Credential newCredential = new Credential(
+                uuid,
+                credential.getName(),
+                credential.getCreateTimeMs(),
                 System.currentTimeMillis(),
-                null,
+                credential.getCreateUser(),
                 securityContext.getUserIdentityForAudit(),
-                null,
-                getKeyStoreType(secret),
-                getKeyStorePath(secret),
+                credential.getCredentialType(),
+                getKeyStoreType(newSecret),
+                getKeyStorePath(newSecret),
                 request.getExpiryTimeMs());
-        final boolean updated = credentialsDao.updateSecret(
-                new StoredSecret(secretFields, secret, readKeyStore(secret)));
+
+//        final UpdateSecretState updateSecretState = new UpdateSecretState(
+//                request.getUuid(),
+//                getKeyStoreType(secret),
+//                getKeyStorePath(secret),
+//                System.currentTimeMillis(),
+//                securityContext.getUserIdentityForAudit(),
+//                request.getExpiryTimeMs(),
+//                secret,
+//                readKeyStore(secret));
+
+//        final boolean updated = credentialsDao.updateSecret(updateSecretState);
+        final boolean updated = credentialsDao.updateSecret(new StoredSecret(
+                newCredential, newSecret, readKeyStore(newSecret)));
         if (!updated) {
             throw new IllegalArgumentException("Credentials not found");
         }
-        deleteCachedKeyStore(existing.secret());
+        deleteCachedKeyStore(existingSecret.secret());
 
-        final Credential updatedCredential = credentialsDao.getCredentialByUuid(uuid);
+        final Credential persistedCredential = credentialsDao.getCredentialByUuid(uuid);
         LOGGER.info(() -> LogUtil.message("Secret replaced for credential '{}' ({})",
-                NullSafe.get(updatedCredential, Credential::getName),
+                NullSafe.get(persistedCredential, Credential::getName),
                 uuid));
-        return updatedCredential;
+        return persistedCredential;
     }
 
     /// Checks that a credential name is not blank and is not used by any other credential.

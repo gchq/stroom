@@ -23,6 +23,7 @@ import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
+import stroom.meta.shared.SimpleMeta;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,16 +81,8 @@ public class DataVolumeServiceImpl implements DataVolumeService {
      * Return the S3 location information for metaId
      */
     @Override
-    public S3LocationDataVolume findS3Locations(final long metaId) {
-        return securityContext.secureResult(() ->
-                fsMetaS3LocationDao.getS3LocationDataVolume(metaId));
-    }
-
-    /**
-     * Return the S3 location information for metaId
-     */
-    @Override
-    public Set<S3Location> findS3Locations(final DataVolume dataVolume) {
+    public Set<S3Location> findS3Locations(final SimpleMeta meta, final DataVolume dataVolume) {
+        Objects.requireNonNull(dataVolume, "dataVolume must not be null");
         return securityContext.secureResult(() ->
                 fsMetaS3LocationDao.getS3LocationDataVolume(dataVolume));
     }
@@ -111,6 +104,20 @@ public class DataVolumeServiceImpl implements DataVolumeService {
 //                                                 final S3Location s3Locations) {
 //        return createS3Locations(metaId, Set.of(s3Locations));
 //    }
+
+    @Override
+    public void tryCreateS3Location(final SimpleMeta meta,
+                                    final DataVolume dataVolume,
+                                    final S3Location s3Location) {
+        securityContext.secure(() ->
+                fsMetaS3LocationDao.tryCreate(meta, dataVolume, s3Location));
+    }
+
+    @Override
+    public void createS3Location(final SimpleMeta meta, final DataVolume dataVolume, final S3Location s3Location) {
+        securityContext.secure(() ->
+                fsMetaS3LocationDao.create(meta, dataVolume, s3Location));
+    }
 
     /**
      * Creates a record in the MetaS3Location table for each s3Location, to link a meta record to its
