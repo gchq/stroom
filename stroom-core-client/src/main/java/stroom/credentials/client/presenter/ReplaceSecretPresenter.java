@@ -104,7 +104,7 @@ public class ReplaceSecretPresenter extends MyPresenterWidget<ReplaceSecretView>
                         onOk(secretPresenter, valid -> {
                             if (valid) {
                                 final ReplaceSecretRequest request = new ReplaceSecretRequest(
-                                        credential.getUuid(),
+                                        credential,
                                         secretPresenter.getSecret(),
                                         getView().isCredExpire()
                                                 ? getView().getExpiryTime().getValue()
