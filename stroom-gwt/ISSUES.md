@@ -1822,12 +1822,32 @@ split panel is left. The floor map's views (its editor and map, added since, mov
 
 ### Toolbars can't show their buttons' names as text
 
-**Open** (30 October 2026, moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
-(later)): toolbars are icon only; a button's name is its tooltip and what a screen reader
-announces. The agreed preference (icons only, text only, or icons and text) isn't implemented:
-nothing has a `toolbar-button__label` or a `toolbar-display--*` page class. The design says what it
-needs: a label element in `ToolbarButton`, the preference applied as a page class as the theme and
-density are (`ThemeCssUtil.getCurrentPreferenceClasses`), and wider buttons when they show text.
+**Fixed** (4 November 2026; COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference;
+`Widgets/Buttons/ToolbarDisplay`). The user's Toolbar Buttons preference (User Preferences, Theme)
+shows an action toolbar's buttons as icons (the default), icons and text, or text, the text-only
+buttons bordered; 114 buttons have short labels, the rest show their names; buttons that don't fit
+go into a More menu. `TestToolbarButtonLabels` checks each label is the start of its name.
+
+Found 30 October 2026 (moved from COMPONENT_MODEL_DESIGN.md § Toolbars, Display preference
+(later)): toolbars were icons only; a button's name is its tooltip and what a screen reader
+announces. The agreed preference (icons only, text only, or icons and text) wasn't implemented.
+
+**Decided** (4 November 2026, the user's choices): a preference of three, icons only (the default,
+as now), icons and text, or text only, on User Preferences' Theme tab beside Density
+(`UserPreferences`).
+
+* **Labels:** a button shows a short label (e.g. "Edit", "Batch Edit"), written for it, that its
+  name starts with, so that its screen reader name still contains what it shows (WCAG 2.5.3, label
+  in name); its name stays its tooltip. A button whose name is already short shows its name.
+  Measured: about 195 buttons in 50 toolbars; names average 19 characters, 57 are over 25 (up to
+  61, "Show Cluster Values (all nodes have the same effective value)").
+* **No room:** buttons that don't fit go into a "More" (⋯) menu at the end of the toolbar, as tabs
+  overflow into the » selector, so every button stays reachable.
+* **Scope:** action toolbars (a document's, a list's, a dialog's, a pane's) follow it; buttons in or
+  beside fields (quick filter help, show password, a spinner's arrows), the pager's arrows, window
+  options and the main toolbar's icons stay icons only.
+* **Text only:** no icons anywhere; a button whose icon shows a state says it in its label instead,
+  as its name already does ("Pause" / "Resume", "Disable" / "Enable").
 
 ### Text size and high contrast (#3695)
 
@@ -2025,6 +2045,72 @@ not yet worked on.
 * **#3265** (found 4 November 2026): restructure the main menu to make it more logical and more
   accessible (a Security menu; the user's menu as a profile icon). Its organisation rather than
   its accessibility as such.
+
+### ~~A select-only selection box shows no focus ring~~
+
+**Fixed** (6 November 2026; found that day, in Change Step Filters' Minimum Severity): the value,
+which draws the field, shows the focus border and ring while the text box has the keyboard focus
+(`selection-box.css`); `Widgets/Selectors/SelectionBox` "Keyboard Focus Shows A Ring" checks it (and
+fails without the fix). A `SelectionBox` that
+can't be typed in (`selection-box--select-only`, e.g. Minimum Severity, Output, a credential's Type,
+the preferences' Theme) has the keyboard focus on its text box, which draws the ring
+(`text-field.css`'s focus shadow, measured as set), but the text box is unseen (`opacity: 0`,
+`selection-box.css`, so the value's picture shows) and the ring with it; nothing else draws one (the
+template's comment says the box draws its own, but no rule does). So a keyboard user can't see which
+select-only box has the focus (WCAG 2.4.7). Since wave 2 (`cfb8268022`). Fix: draw the ring on the
+box (`.selection-box--select-only:has(.selection-box__input:focus-visible)`) and add a story that
+checks it shows.
+
+### Dialog content doesn't line up with its title, and tab content has no padding
+
+**Open** (found 5 November 2026; measured in every dialog the stories show, 117). `.dialog__content`
+pads its content by the focus ring's room (7px) and `--dialog__padding--horizontal` (1rem) at the
+sides, so that a ring at any edge isn't cut. Three things undo or miss that:
+
+* ~~**Titles sit 5px right of the content in every dialog without an icon** (92 of 117 measured at 20px
+  against 15px). The title bar's `.dialog__icon` is there, 0px wide, when there's no icon, and the bar's
+  `gap: 5px` still comes after it (`dialog.css`, `.dialog__title-bar`).~~ **Fixed** (5 November 2026):
+  `.dialog__icon:empty` isn't shown, so the title starts at the content's edge. A dialog with an icon
+  is unchanged (the icon at the content's edge, the title 10px after it).
+* ~~**Tab content: forms that aren't `.form`.** Measured tab by tab (5 November 2026: 11 tabbed
+  dialogs, 26 shown tabs). A tab panel shouldn't pad its content (a grid, list or editor fills it, as
+  in a dashboard); a form's tab is a `.form`, whose `focus-ring-room` padding keeps rings whole
+  (`layout-helpers.css`). Most are: every dashboard Settings form tab and User Preferences. Not:
+  Credentials' Settings tab (`credential-settings`, not a `.form`, so `.tab-bar__panel`, which clips,
+  cuts the left of Name, Expires, Type, User Name and Password) and Configure Ask Stroom AI's two
+  tabs (a dock column with no gap between its groups, though nothing is cut).~~ **Fixed** (6 November
+  2026): all three are `.form`s, and in a dialog `.tab-bar__panel` doesn't clip (`tab-bar.css`; a
+  `LinkTabPanel`'s layer container did, so the form's room was cut off with it; it shows one layer
+  at a time, so has nothing to hide). The Ask Stroom AI tabs' groups are spaced as other forms'.
+  Every other tabbed dialog measures as before.
+* ~~**Tab content: gaps that differ.** The gap under the tabs depends on what wraps them, not on what
+  the tab holds: -3px (Credentials), 2-4px (dashboard Settings forms), 9px (their grids), 13-15px
+  (User Preferences and Ask Stroom AI, whose tabs sit in an outer `.form` with a flex gap; Stream).
+  `tab-bar.css` gives a dialog's link tab bar `max(0px, calc(var(--control__gap--vertical) - 10px))`
+  below it, which is 0 in compact density.~~ **Fixed** (6 November 2026): a dialog's tab panel is
+  a form group's gap (`--control__gap--vertical`) below its tabs, whatever it holds; User Preferences'
+  and Ask Stroom AI's outer `.form`s are gone (their buttons `button-group--gap-above`). The data
+  viewer (Stream) keeps its own spacing, its tabs sharing a row with its navigator.
+* ~~**Forms in split panes:** Filter's Include Exclude tab (`.form`s inside split panes, which clip both
+  sides).~~ **Fixed** (6 November 2026): `split-pane--forms` (`split-pane.css`) puts the room for
+  rings inside each pane and reaches the split pane as far outside its place, so the fields stay put.
+  Change Step Filters too (the list beside its form inset by the room).
+* ~~**Credentials' Permissions tab is inset 6px** (one control gap; 1rem at normal density) from the
+  title, where every other tab measured lines up with it: the shared permissions tab gives its groups
+  `form-padding` as its room for rings in a split pane, and in a dialog insets the list and details to
+  match. Same in Change Permissions (annotation tags). Its Users and Groups label had a second gap
+  under it (the quick filter's page padding).~~ **Fixed** (6 November 2026): the gap by
+  `quick-filter-page--under-label`; in a dialog the tab reaches out above and to each side by its form
+  padding (`document-user-permissions-tab.css`), which stays inside its panes as the rings' room. A
+  document's own Permissions tab (a page) is unchanged.
+* ~~**Other clipping panes:** Change Step Filters' right pane (`.split-pane__pane`, Minimum Severity and
+  Output)~~ (**Fixed**, above) and the annotation Status and Assigned To choosers' quick filter (cut
+  left, right and top; open).
+
+Some dialogs pad their content again (`form-padding`, 21px: Add Notification, the schedules, HTTP
+client configuration, the password dialogs) and some less (8px: New Dictionary and Save As, Add
+External Users, Edit Tags). Screenshots: `app-main-credentialsscreen--credentials` (New Credential),
+`app-main-annotationeditor--status-chooser-keys`.
 
 ## Copy-paste mistakes and typos
 

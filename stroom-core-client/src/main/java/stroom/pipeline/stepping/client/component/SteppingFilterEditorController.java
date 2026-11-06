@@ -76,10 +76,10 @@ public class SteppingFilterEditorController extends Controller {
 
         xPathList.getToolbar().setName("XPath actions");
         xPathList.getToolbar().button(SvgImage.ADD, "New XPath Filter", this::addXPathFilter);
-        editXPath = xPathList.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter",
+        editXPath = xPathList.getToolbar().button(SvgImage.EDIT, "Edit Selected XPath Filter", "Edit",
                 this::editXPathFilter);
         editXPath.setEnabled(false);
-        removeXPath = xPathList.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters",
+        removeXPath = xPathList.getToolbar().button(SvgImage.REMOVE, "Delete Selected XPath Filters", "Delete",
                 this::removeXPathFilter);
         removeXPath.setEnabled(false);
 

@@ -5,8 +5,8 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Node group actions" addStyleNames="default-min-sizes">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Node Group"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Node Group" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Node Group" enabled="false"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Node Group" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Node Group" label="Delete" enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Node Groups"/>
     </dg:PagerPanel>
 </ui:UiBinder>

@@ -7,7 +7,7 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <content:CurveTabLayoutPanel ui:field="layout" styleName="curve-tab-layout__layout">
         <g:FlowPanel styleName="curve-tab-layout__bar">
-            <b:Toolbar name="Sidebar" addStyleNames="curve-tab-layout__toolbar toolbar--quiet">
+            <b:Toolbar name="Sidebar" addStyleNames="curve-tab-layout__toolbar toolbar--quiet toolbar--icons">
                 <b:ToolbarButton ui:field="menu" svg="HIDE_MENU" title="Hide Sidebar"/>
             </b:Toolbar>
             <g:SimplePanel styleName="curve-tab-layout__tab-bar-outer">

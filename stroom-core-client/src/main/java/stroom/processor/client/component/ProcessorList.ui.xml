@@ -6,12 +6,12 @@
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Processor actions">
         <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Processor"/>
-        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor" enabled="false"/>
-        <b:ToolbarButton ui:field="duplicateButton" svg="COPY" title="Duplicate Selected Processor" enabled="false"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processors" enabled="false"/>
+        <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Processor" label="Edit" enabled="false"/>
+        <b:ToolbarButton ui:field="duplicateButton" svg="COPY" title="Duplicate Selected Processor" label="Duplicate" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Processors" label="Delete" enabled="false"/>
         <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Processors"/>
-        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Filtered Processors"/>
-        <b:ToolbarButton ui:field="showTasksButton" svg="JOBS" title="Show Tasks for Selected Processor"
+        <b:ToolbarButton ui:field="batchEditButton" svg="GENERATE" title="Batch Edit Filtered Processors" label="Batch Edit"/>
+        <b:ToolbarButton ui:field="showTasksButton" svg="JOBS" title="Show Tasks for Selected Processor" label="Show Tasks"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Processors"/>
     </dg:PagerPanel>

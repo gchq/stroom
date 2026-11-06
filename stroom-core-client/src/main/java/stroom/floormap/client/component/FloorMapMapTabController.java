@@ -446,6 +446,7 @@ public class FloorMapMapTabController
         clusterToggleButton = mapToolbar.toggle(
                 SvgImage.FIELDS_GROUP,
                 "Toggle Clustering of Nearby Entities",
+                "Toggle Clustering",
                 canvas::setClusterNearbyEntities);
         clusterToggleButton.setPressed(true);
 

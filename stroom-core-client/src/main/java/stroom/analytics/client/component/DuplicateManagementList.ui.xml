@@ -4,7 +4,7 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:dg="urn:import:stroom.widget.datagrid.client">
     <dg:PagerPanel ui:field="pager" toolbarName="Duplicate check actions">
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Duplicate Check Rows"
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Duplicate Check Rows" label="Delete"
                          enabled="false"/>
         <dg:DataGrid ui:field="dataGrid" tableName="Duplicate Management"/>
     </dg:PagerPanel>

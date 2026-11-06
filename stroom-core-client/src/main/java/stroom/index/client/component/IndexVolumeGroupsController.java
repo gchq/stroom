@@ -74,10 +74,12 @@ public class IndexVolumeGroupsController extends ContentTabController {
         newButton = indexVolumeGroupList.getToolbar().button(SvgImage.ADD,
                 "New Index Volume Group", this::add);
         openButton = indexVolumeGroupList.getToolbar().button(SvgImage.EDIT,
-                "Edit Selected Index Volume Group", this::edit);
+                "Edit Selected Index Volume Group",
+                "Edit", this::edit);
         openButton.setEnabled(false);
         deleteButton = indexVolumeGroupList.getToolbar().button(SvgImage.DELETE,
-                "Delete Selected Index Volume Group", this::delete);
+                "Delete Selected Index Volume Group",
+                "Delete", this::delete);
         deleteButton.setEnabled(false);
 
         initWidget(indexVolumeGroupList.asWidget());

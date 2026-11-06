@@ -110,7 +110,8 @@ public class ManageActivityController extends Controller {
         activityList.getToolbar().button(SvgImage.ADD, "New Activity", this::onNew);
         openButton = activityList.getToolbar().button(SvgImage.EDIT, "Edit Selected Activity", this::onOpen);
         openButton.setEnabled(false);
-        deleteButton = activityList.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity", this::onDelete);
+        deleteButton = activityList.getToolbar().button(SvgImage.DELETE, "Delete Selected Activity",
+                "Delete", this::onDelete);
         deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();

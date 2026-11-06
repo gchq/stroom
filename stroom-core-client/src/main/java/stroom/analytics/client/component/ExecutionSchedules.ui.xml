@@ -11,7 +11,7 @@
         <b:ToolbarButton ui:field="filterButton" svg="FILTER" title="Filter Schedules"/>
         <b:ToolbarButton ui:field="clearFilterButton" svg="CLEAR" title="Clear Schedule Filter" enabled="false"/>
         <b:ToolbarButton ui:field="runNowButton" svg="STEP_FORWARD" title="Run Schedules Now"/>
-        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Schedules" enabled="false"/>
+        <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Selected Schedules" label="Delete" enabled="false"/>
         <dg:toolbarWidget>
             <tx:Html ui:field="selectionCount" addStyleNames="paging-bar paging-bar__label"/>
         </dg:toolbarWidget>

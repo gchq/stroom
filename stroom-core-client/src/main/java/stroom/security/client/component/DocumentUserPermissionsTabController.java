@@ -81,6 +81,7 @@ public class DocumentUserPermissionsTabController extends Controller {
         docEdit = documentUserPermissionsList.getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected User",
+                "Edit Permissions",
                 this::onEdit);
         docEdit.setEnabled(false);
 

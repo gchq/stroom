@@ -6,7 +6,7 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client">
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+    <g:FlowPanel styleName="max default-min-sizes form">
         <form:FormGroup identity="model"
                         label="Model"
                         helpText="AI model used by Ask Stroom AI to answer questions. Only models you have Use permission on are listed.">

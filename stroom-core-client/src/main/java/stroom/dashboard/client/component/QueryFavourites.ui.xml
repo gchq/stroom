@@ -10,7 +10,7 @@
                      names="Favourites, Selected query" addStyleNames="max default-min-sizes">
         <g:FlowPanel styleName="dock-container-vertical max control-box">
             <b:Toolbar name="Favourite query actions" addStyleNames="dock-min">
-                <b:ToolbarButton ui:field="createButton" svg="ADD" title="Create Favourite From Current Query"/>
+                <b:ToolbarButton ui:field="createButton" svg="ADD" title="Create Favourite From Current Query" label="Create Favourite"/>
                 <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Change Favourite Name" enabled="false"/>
                 <b:ToolbarButton ui:field="deleteButton" svg="DELETE" title="Delete Favourite" enabled="false"/>
             </b:Toolbar>

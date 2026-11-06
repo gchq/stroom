@@ -33,7 +33,7 @@
         </g:SimplePanel>
 
         <!-- Left controls: step-back, play/pause, step-forward -->
-        <b:Toolbar name="Playback controls" addStyleNames="floor-map-timeline__left-controls">
+        <b:Toolbar name="Playback controls" addStyleNames="floor-map-timeline__left-controls toolbar--icons">
             <b:ToolbarButton ui:field="stepBack" svg="STEP_BACKWARD" title="Step Back"
                              addStyleNames="floor-map-timeline__step-button"/>
             <b:ToolbarButton ui:field="playPause" svg="PLAY" title="Play"

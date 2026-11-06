@@ -84,12 +84,14 @@ public class UserAccessController extends ContentTabController
         revokeButton = userAccessList.getToolbar().button(
                 SvgImage.DELETE,
                 "End Sessions and Revoke Tokens for Selected User",
+                "End Sessions",
                 this::revokeSelected);
         revokeButton.setEnabled(false);
         // Revoking does not stop someone coming back, and under an external identity provider it barely
         // slows them down. Disabling is what does, so it belongs next to it rather than on a screen an
         // administrator has to know to go and find.
         openUserButton = userAccessList.getToolbar().button(SvgImage.EDIT, "Open Selected User (to disable them)",
+                "Open",
                 this::openSelectedUser);
         openUserButton.setEnabled(false);
 

@@ -124,6 +124,20 @@ public final class SelectionBoxStories {
                     }
                     play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 })
+                // Keyboard focus shows a ring round a box that can't be typed in: its text box, which
+                // has the focus, is unseen, so the value, which draws the field, shows it (there was
+                // none to see)
+                .story("KeyboardFocusShowsARing", context -> named(selectionBox(context, NAMES)))
+                .withPlay(play -> {
+                    final Query field = play.querySelector(".selection-box__value");
+                    play.expect("the ring before the box has the focus", field.computedStyle("box-shadow"))
+                            .toBe("none");
+                    play.tab();
+                    play.expect(play.getByRole("combobox")).toHaveFocus();
+                    play.expect("the ring with the box focused from the keyboard",
+                                    field.computedStyle("box-shadow"))
+                            .not().toBe("none");
+                })
                 // A right-click on an option shows no menu: the list's options are to choose, not a
                 // table. The grid under them had a private bus, which hid its menu (Copy, Export
                 // Table, Ask Stroom AI About); since the grid asks the page for it, the list turns it

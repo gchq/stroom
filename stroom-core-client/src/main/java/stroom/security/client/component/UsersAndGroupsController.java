@@ -152,7 +152,7 @@ public class UsersAndGroupsController extends Controller {
         final Toolbar memberOfActions = parentsList.getToolbar();
         memberOfActions.setName("Member of actions");
         addMemberOfButton = memberOfActions.button(SvgImage.ADD, "Add to Group", this::onAddMemberOf);
-        removeMemberOfButton = memberOfActions.button(SvgImage.REMOVE, "Remove from Selected Group",
+        removeMemberOfButton = memberOfActions.button(SvgImage.REMOVE, "Remove from Selected Group", "Remove from",
                 this::onRemoveMemberOf);
         removeMemberOfButton.setEnabled(false);
 
@@ -160,6 +160,7 @@ public class UsersAndGroupsController extends Controller {
         membersActions.setName("Members actions");
         addMembersInButton = membersActions.button(SvgImage.ADD, "Add Member to Group", this::onAddMembersIn);
         removeMembersInButton = membersActions.button(SvgImage.REMOVE, "Remove Selected Member From Group",
+                "Remove Selected Member",
                 this::onRemoveMembersIn);
         removeMembersInButton.setEnabled(false);
 

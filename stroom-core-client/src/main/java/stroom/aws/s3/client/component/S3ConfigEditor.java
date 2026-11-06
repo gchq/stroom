@@ -71,7 +71,8 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
-        downloadButton = getToolbar().button(SvgImage.DOWNLOAD, "Download S3 Configuration", this::download);
+        downloadButton = getToolbar().button(SvgImage.DOWNLOAD, "Download S3 Configuration",
+                "Download", this::download);
         downloadButton.setEnabled(false);
 
         addTab(CONFIG,

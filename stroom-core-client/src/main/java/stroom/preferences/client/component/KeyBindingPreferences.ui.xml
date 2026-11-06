@@ -22,9 +22,9 @@
                 <b:ToolbarButton ui:field="addButton" svg="ADD" title="Add Shortcut" enabled="false"/>
                 <b:ToolbarButton ui:field="changeButton" svg="EDIT" title="Change Shortcut" enabled="false"/>
                 <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Remove Shortcut" enabled="false"/>
-                <b:ToolbarButton ui:field="resetButton" svg="UNDO" title="Reset Action to Default Shortcuts"
+                <b:ToolbarButton ui:field="resetButton" svg="UNDO" title="Reset Action to Default Shortcuts" label="Reset Action"
                                  enabled="false"/>
-                <b:ToolbarButton ui:field="resetAllButton" svg="HISTORY" title="Reset All Shortcuts to Defaults"
+                <b:ToolbarButton ui:field="resetAllButton" svg="HISTORY" title="Reset All Shortcuts to Defaults" label="Reset All"
                                  enabled="false"/>
                 <dg:DataGrid ui:field="dataGrid" tableName="Keyboard Shortcuts"/>
             </dg:PagerPanel>

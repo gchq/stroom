@@ -12,11 +12,11 @@
         <b:Toolbar name="Expression actions" addStyleNames="dock-min">
             <b:ToolbarButton ui:field="addTermButton" svg="ADD" title="Add Term"/>
             <b:ToolbarButton ui:field="addOperatorButton" svg="OPERATOR" title="Add Operator"/>
-            <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Duplicate Selected Expression Item"
+            <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Duplicate Selected Expression Item" label="Duplicate"
                              enabled="false"/>
-            <b:ToolbarButton ui:field="disableItemButton" svg="DISABLE" title="Disable Selected Expression Item"
+            <b:ToolbarButton ui:field="disableItemButton" svg="DISABLE" title="Disable Selected Expression Item" label="Disable"
                              enabled="false"/>
-            <b:ToolbarButton ui:field="deleteItemButton" svg="DELETE" title="Delete Selected Expression Item"
+            <b:ToolbarButton ui:field="deleteItemButton" svg="DELETE" title="Delete Selected Expression Item" label="Delete"
                              enabled="false"/>
         </b:Toolbar>
         <g:ScrollPanel styleName="dock-max">

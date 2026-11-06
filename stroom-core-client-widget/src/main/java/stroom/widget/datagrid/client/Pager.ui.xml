@@ -15,7 +15,7 @@
         <tx:Label text="&nbsp;of&nbsp;" styleName="paging-bar__label"/>
         <tx:Label ui:field="lblOf" styleName="paging-bar__label"/>
         <g:HTMLPanel styleName="paging-bar__space">&nbsp;</g:HTMLPanel>
-        <paging:Toolbar name="Paging">
+        <paging:Toolbar name="Paging" addStyleNames="toolbar--icons">
             <paging:ToolbarButton ui:field="first" svg="FAST_BACKWARD" title="First"/>
             <paging:ToolbarButton ui:field="prev" svg="STEP_BACKWARD" title="Backward"/>
             <paging:ToolbarButton ui:field="next" svg="STEP_FORWARD" title="Forward"/>

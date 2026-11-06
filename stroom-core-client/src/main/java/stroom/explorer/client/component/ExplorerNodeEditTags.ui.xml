@@ -25,13 +25,13 @@
                     <form:TextBox ui:field="textBox"
                                   addStyleNames="lower-case-input dock-max"
                                   title="Enter tags manually or filter 'All Known Tags'"/>
-                    <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min explorer-node-edit-tags__clear-toolbar">
+                    <b:Toolbar name="Clear tags" addStyleNames="align-center dock-min explorer-node-edit-tags__clear-toolbar toolbar--icons">
                         <!-- Hidden while nothing is entered, never disabled -->
                         <b:ToolbarButton ui:field="clearInputButton" svg="CLEAR" title="Clear Entered Tags"
                                          addStyleNames="explorer-node-edit-tags__clear" visible="false"/>
                     </b:Toolbar>
                 </g:FlowPanel>
-                <b:Toolbar name="Add tags" addStyleNames="align-center dock-min">
+                <b:Toolbar name="Add tags" addStyleNames="align-center dock-min toolbar--icons">
                     <b:ToolbarButton ui:field="addFromInputButton" svg="ADD" title="Add Entered Tags"
                                      enabled="false"/>
                 </b:Toolbar>
@@ -56,7 +56,7 @@
             <b:Toolbar name="Move tags"
                        addStyleNames="form dock-min explorer-node-edit-tags__move">
                 <b:ToolbarButton ui:field="addFromAllTagsButton" svg="ARROW_RIGHT"
-                                 title="Add Selected Tags from All Known Tags" enabled="false"/>
+                                 title="Add Selected Tags from All Known Tags" label="Add" enabled="false"/>
                 <b:ToolbarButton ui:field="removeButton" svg="ARROW_LEFT" title="Remove Selected Tags"
                                  enabled="false"/>
             </b:Toolbar>

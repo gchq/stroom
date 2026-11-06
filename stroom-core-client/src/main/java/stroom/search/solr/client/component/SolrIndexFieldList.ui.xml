@@ -9,8 +9,8 @@
         <g:SimplePanel styleName="dock-max">
             <dg:PagerPanel ui:field="pager" toolbarName="Field actions">
                 <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Index Field"/>
-                <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Index Field" enabled="false"/>
-                <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Index Fields"
+                <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Index Field" label="Edit" enabled="false"/>
+                <b:ToolbarButton ui:field="removeButton" svg="REMOVE" title="Remove Selected Index Fields" label="Remove"
                                  enabled="false"/>
                 <dg:DataGrid ui:field="dataGrid" tableName="Solr Index Fields"/>
             </dg:PagerPanel>

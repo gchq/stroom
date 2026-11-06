@@ -88,6 +88,11 @@
     align-items: center;
 }
 
+/* No icon (Icon empties itself): no slot, so the bar's gap doesn't push the title past the content */
+.dialog__icon:empty {
+    display: none;
+}
+
 .dialog__icon svg {
     width: 24px;
     height: 24px;

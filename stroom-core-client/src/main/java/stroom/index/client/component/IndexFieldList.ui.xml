@@ -7,8 +7,8 @@
     <v:QuickFilterPage ui:field="page" accessibleName="Filter fields">
         <dg:PagerPanel ui:field="pager" toolbarName="Field actions">
             <b:ToolbarButton ui:field="newButton" svg="ADD" title="New Index Field"/>
-            <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Index Field" enabled="false"/>
-            <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Index Fields"
+            <b:ToolbarButton ui:field="editButton" svg="EDIT" title="Edit Selected Index Field" label="Edit" enabled="false"/>
+            <b:ToolbarButton ui:field="removeButton" svg="DELETE" title="Delete Selected Index Fields" label="Delete"
                              enabled="false"/>
             <dg:DataGrid ui:field="dataGrid" tableName="Index Fields"/>
         </dg:PagerPanel>

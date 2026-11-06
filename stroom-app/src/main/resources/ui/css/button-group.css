@@ -21,3 +21,9 @@
 	flex-direction: row;
 	gap: var(--control__gap--horizontal);
 }
+
+/* Below a panel in a column that has no gap of its own (e.g. under a dialog's tabbed settings), a form
+   group's gap below it */
+.button-group--gap-above {
+	margin-top: var(--control__gap--vertical);
+}
