@@ -591,7 +591,9 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
                 : replaced(replaces, plan, populated);
         final Map<String, Double> withNames = IndexingInputs.populationWithDataNames(events);
         memory.keepPlanPopulation(indexName, withNames);
-        final Map<String, Object> reply = new LinkedHashMap<>(plans.reply(plan, withNames));
+        memory.keepPlanStreams(indexName, streamIds);
+        final Map<String, Object> reply = new LinkedHashMap<>(plans.reply(plan, withNames,
+                inputs.translationWrites(streamIds)));
         // No XSLT here: save_xslt index_plan= generates it, and half the reply was code the agent never reads.
         final Map<String, Object> result = new LinkedHashMap<>();
         if (replaced != null) {
@@ -1187,10 +1189,14 @@ class DraftIndexMappingTool extends AbstractBuiltInTool {
             inputs.requireEvents(streamIds);
             populated = IndexingInputs.populationWithDataNames(inputs.summariseEvents(streamIds));
             memory.keepPlanPopulation(indexName, populated);
+            memory.keepPlanStreams(indexName, streamIds);
         }
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("changed", applied.done());
-        result.putAll(plans.reply(plans.withCardinality(plan), populated));
+        result.putAll(plans.reply(plans.withCardinality(plan), populated,
+                inputs.translationWrites(streamIds.isEmpty()
+                        ? memory.planStreams(indexName)
+                        : streamIds)));
         return result;
     }
 
