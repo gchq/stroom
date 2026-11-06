@@ -78,9 +78,12 @@ class TestStreamSummaries {
         }
         stored.add(new StoredError(Severity.WARNING, null, null, "warn"));
 
+        stored.add(new StoredError(Severity.INFO, null, null, "No rule reads field size"));
+
+        // The warning, then the first of each kind of INFO line ("info #", then the field's), in order.
         assertThat(StreamSummaries.firstMarkers(stored, 3)).extracting(StoredError::getMessage)
-                .containsExactly("info 0", "info 1", "warn");
-        assertThat(StreamSummaries.firstMarkers(stored, 10)).hasSize(6);
+                .containsExactly("info 0", "warn", "No rule reads field size");
+        assertThat(StreamSummaries.firstMarkers(stored, 10)).hasSize(7);
     }
 
     @Test

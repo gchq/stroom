@@ -450,7 +450,8 @@ class TranslationBuilds {
         return new TranslationMapping(mapping.input(), mapping.root(), mapping.record(), mapping.xmlNamespace(),
                 mapping.jsonLayout(), mapping.jsonFields(), mapping.xmlFields(), mapping.pairs(), mapping.extract(),
                 mapping.forEach(), mapping.nilValues(), mapping.dropWhen(), mapping.common(), mapping.events(),
-                mapping.unmatched(), mapping.ignoredFields(), mapping.style(), imports, mapping.shared(),
+                mapping.unmatched(), mapping.ignoredFields(), mapping.logUnmappedFields(), mapping.style(), imports,
+                mapping.shared(),
                 mapping.functions());
     }
 

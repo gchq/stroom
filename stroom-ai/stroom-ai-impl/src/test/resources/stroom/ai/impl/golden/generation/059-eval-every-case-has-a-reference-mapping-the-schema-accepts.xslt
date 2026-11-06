@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="3.0" xpath-default-namespace="http://www.w3.org/2013/XSL/json" exclude-result-prefixes="stroom xs">
+  <!-- Fields of the source no rule reads are logged (WARN, once a stream) to the Error stream: false() to stop it
+       (the mapping's log_unmapped_fields) -->
+  <xsl:variable name="log_unmapped_fields" as="xs:boolean" select="true()"/>
   <xsl:template match="/">
     <Events Version="4.1.0" xsi:schemaLocation="event-logging:3 file://event-logging-v4.1.0.xsd">
       <xsl:apply-templates select="/map/map" mode="event"/>
@@ -12,35 +15,46 @@
     <xsl:sequence select="$record-no[string(.) = '#']"/>
     <xsl:choose>
       <xsl:when test="$event_type = 'user.session.start'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_session_start"/>
       </xsl:when>
       <xsl:when test="$event_type = 'user.session.end'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_session_end"/>
       </xsl:when>
       <xsl:when test="$event_type = 'user.account.lock'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_new_account_lock"/>
       </xsl:when>
       <xsl:when test="$type = 'login'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_login"/>
       </xsl:when>
       <xsl:when test="$type = 'logout'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_logout"/>
       </xsl:when>
       <xsl:when test="$type = 'password_change'">
+        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_legacy_password_change"/>
       </xsl:when>
       <xsl:otherwise>
         <xsl:sequence select="stroom:log('WARN', concat('No event mapping matched record ', $record-no, ' (', string-join((concat('eventType=', string(($event_type)[1])), concat('type=', string(($type)[1]))), ' | '), ')'))"/>
       </xsl:otherwise>
     </xsl:choose>
-    <xsl:for-each select="*[@key][not(@key = ('actor', 'alternateId', 'client', 'eventType', 'ip', 'ipAddress', 'ok', 'outcome', 'published', 'reason', 'result', 'ts', 'type', 'user'))][normalize-space(string(.))]">
-      <!-- A field no rule reads: logged once a stream (ignored_fields: left out on purpose) -->
-      <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
-      <xsl:if test="not(string(stroom:get($mcp_unread)))">
-        <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
-        <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
-      </xsl:if>
-    </xsl:for-each>
+  </xsl:template>
+  <!-- mcp_unread_fields: a field of the record no rule reads, logged once a stream (ignored_fields: left out on
+       purpose); called by the rules that translate their records -->
+  <xsl:template name="mcp_unread_fields">
+    <xsl:if test="$log_unmapped_fields">
+      <xsl:for-each select="*[@key][not(@key = ('actor', 'alternateId', 'client', 'eventType', 'ip', 'ipAddress', 'ok', 'outcome', 'published', 'reason', 'result', 'ts', 'type', 'user'))][normalize-space(string(.))]">
+        <xsl:variable name="mcp_unread" select="concat('mcp-unread:', @key)"/>
+        <xsl:if test="not(string(stroom:get($mcp_unread)))">
+          <xsl:value-of select="stroom:put($mcp_unread, 'y')"/>
+          <xsl:sequence select="stroom:log('WARN', concat('No rule reads field ', @key, ' (map it, or list it in ignored_fields to leave it out)'))"/>
+        </xsl:if>
+      </xsl:for-each>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'new session start': records where eventType = user.session.start. Writes an Authenticate event (TypeId
        from eventType) from published, actor.alternateId, client.ipAddress, eventType, outcome.result,
