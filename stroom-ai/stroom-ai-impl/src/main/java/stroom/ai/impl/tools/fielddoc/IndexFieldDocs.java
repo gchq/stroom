@@ -322,8 +322,13 @@ public final class IndexFieldDocs {
             lines.removeLast();
         }
         if (!notInSample.isEmpty()) {
-            lines.addAll(List.of("", "### Not in the sample", "", "No event of the sample has these, so it doesn't "
-                                                                  + "show which kinds of event carry them.", ""));
+            // Seen in testing: a field the Events held early in their stream, missed by the events read spread
+            // over it, read as one the index never gets.
+            lines.addAll(List.of("", "### Not seen in the sample", "", "No event read for this documentation has "
+                                                                       + "these (only part of each stream is read, "
+                                                                       + "so a rare one can be missed), so it "
+                                                                       + "doesn't show which kinds of event carry "
+                                                                       + "them.", ""));
             lines.addAll(table(head, notInSample));
         }
         return lines;
