@@ -25,6 +25,8 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ import org.mockito.Mockito;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +66,21 @@ class TestStreamSummaries {
         fixture.feedAccess();
         summaries = new StreamSummaries(world.streamReader(), fixture.documentAccess(),
                 new AcceptedErrors(() -> fixture.docFinder, fixture.documentAccess()), () -> aiConfig);
+    }
+
+    @Test
+    void pastTheCapAStreamsWarningsAreKeptBeforeItsInfoLines() {
+        // Seen in testing: a stream's first 1,000 markers were all INFO (a kept-Unknown line a record), and the one
+        // warning further in, a field no rule read, was never reported.
+        final List<StoredError> stored = new ArrayList<>();
+        for (int n = 0; n < 5; n++) {
+            stored.add(new StoredError(Severity.INFO, null, null, "info " + n));
+        }
+        stored.add(new StoredError(Severity.WARNING, null, null, "warn"));
+
+        assertThat(StreamSummaries.firstMarkers(stored, 3)).extracting(StoredError::getMessage)
+                .containsExactly("info 0", "info 1", "warn");
+        assertThat(StreamSummaries.firstMarkers(stored, 10)).hasSize(6);
     }
 
     @Test
