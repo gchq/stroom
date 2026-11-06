@@ -13,6 +13,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.6] - 2026-11-06
+
+* Bug **#5961** : Change error handling when a dashboard's config cannot be deserialised to include the dashboard's identity.
+
+* Bug : Fix bug in display of the `None` item in the DocRef pickers. Was incorrectly using instance equality.
+
+* Dependency : Uplift `com.google.guava:guava` from 33.6.0-jre to 33.7.2-jre.
+
+* Dependency : Uplift `com.hubspot.jinjava:jinjava` from 2.8.4 to 2.8.5.
+
+* Dependency : Uplift base docker image to eclipse-temurin:25.0.5_8-jdk-alpine-3.23@sha256:b903bc22d49da99a0af3d50cf08f6056eaf39646b71bf3a51f74720f8243b34b.
+
+* Bug **#5985** : Fix NPE when trying to set perms on a Credential.
+
+* Bug **#5979** : Fix processor filter dependencies showing as missing. Filters no longer record a dependency on the stream store (including legacy references to it), and deleting a pipeline or processor now removes the dependencies of its filters. Existing processor filter dependencies are rebuilt once on the next start.
+
+* Bug **#5989** : Fix Ask Stroom AI so that a user only requires USE permission on the Credential associalted with the AI model doc.
+
+* Bug **#5992** : Fix AskStroomAI permission logic so a user with only USE permission on an AIModelDoc can pick it as a model to use. Fix AIModelDoc permissions, so if a user has VIEW on the AI model doc but only USE on the credential in it, they can open the model doc and see the credential name.
+
+
 ## [v7.13.5] - 2026-10-30
 
 * Bug **#5936** : Fix missing document dependencies for index default extraction pipelines, data generator feeds, pathways traces and info feeds, analytic rule and report error and notification feeds, and content template pipelines.
@@ -2638,7 +2659,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.6...HEAD
+[v7.13.6]: https://github.com/gchq/stroom/compare/v7.13.5...v7.13.6
 [v7.13.5]: https://github.com/gchq/stroom/compare/v7.13.4...v7.13.5
 [v7.13.4]: https://github.com/gchq/stroom/compare/v7.13.3...v7.13.4
 [v7.13.3]: https://github.com/gchq/stroom/compare/v7.13.2...v7.13.3
