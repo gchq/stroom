@@ -43,7 +43,7 @@ public final class VisToolbarStories {
 
     private static final String TITLE = "App/Dashboard/VisToolbar";
 
-    private static final String VIS_UUID = "vis-toolbar";
+    static final String VIS_UUID = "vis-toolbar";
 
     private static final String VISUALISATION = "{\"type\": \"Visualisation\", \"uuid\": \"" + VIS_UUID + "\", "
                                                 + "\"name\": \"Toolbar Test\", "
@@ -56,6 +56,18 @@ public final class VisToolbarStories {
             DashboardDocs.split(0,
                     DashboardDocs.sized(DashboardDocs.tabs(0, "v1"), 500, 100),
                     DashboardDocs.sized(DashboardDocs.tabs(1, "q1", "t1"), 300, 100)),
+            DashboardDocs.query("q1", "Q", ", \"automate\": {\"open\": true}"),
+            DashboardDocs.table("t1", "T", "q1", DashboardDocs.NAME_FIELD, ""),
+            DashboardDocs.component("vis", "v1", "Chart", "\"tableId\": \"t1\", \"visualisation\": "
+                                                          + "{\"type\": \"Visualisation\", \"uuid\": \"" + VIS_UUID
+                                                          + "\", \"name\": \"Toolbar Test\"}, \"json\": \"{}\""));
+
+    // A Query and Table, and beside them, right of the splitter, the visualisation
+    private static final String DASHBOARD_RIGHT = DashboardDocs.doc("dash-vis-right", "Vis Right", null,
+            "\"designMode\": false",
+            DashboardDocs.split(0,
+                    DashboardDocs.sized(DashboardDocs.tabs(1, "q1", "t1"), 300, 100),
+                    DashboardDocs.sized(DashboardDocs.tabs(0, "v1"), 500, 100)),
             DashboardDocs.query("q1", "Q", ", \"automate\": {\"open\": true}"),
             DashboardDocs.table("t1", "T", "q1", DashboardDocs.NAME_FIELD, ""),
             DashboardDocs.component("vis", "v1", "Chart", "\"tableId\": \"t1\", \"visualisation\": "
@@ -116,18 +128,41 @@ public final class VisToolbarStories {
                     play.waitFor(() -> play.expect(pressed).toHaveTextContent(TextMatch.exact("Pressed labels true")));
                     play.expect(inFrame.querySelector(".label")).toBeVisible();
                     DashboardPlays.expectNoProblems(play);
+                })
+                // The splitter left of a visualisation that paints its page is drawn above it, its
+                // line and focus ring whole, with the dashboard isolated as the app's content pane
+                // isolates it (SplitterOverlay)
+                .story("SplitterBesideVisualisation", context -> DashboardSupport.isolated(
+                        DashboardSupport.story(DASHBOARD_RIGHT, VisToolbarStories::routes).render(context)))
+                .withPlay(play -> {
+                    visFrame(play);
+                    final Query splitter = play.getByRole("separator", "Resize T and Chart");
+                    play.run("focus the splitter", () -> splitter.element().get().focus());
+                    play.keyboard("{ArrowUp}");
+                    play.expect("what is on top on the splitter's line",
+                            () -> DashboardPaneStories.topmostBeside(splitter.element().get(), 0)).toBe("splitter");
+                    play.expect("what is on top just right of the line",
+                            () -> DashboardPaneStories.topmostBeside(splitter.element().get(), 3)).toBe("splitter");
+                    DashboardPlays.expectNoProblems(play);
                 });
     }
 
     // The search, the visualisation and whether it has an index.html asset (it has)
-    private static void routes(final RestFixtures.Builder routes) {
+    static void routes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, RestReply.json(SEARCH_RESPONSE))
                 .get("/visualisation/v1/" + VIS_UUID, RestReply.json(VISUALISATION))
                 .get("/visualisationAssets/saveAs/" + VIS_UUID, RestReply.json("true"));
     }
 
+    // The test visualisation as a dashboard's component, of the table t1
+    static String visComponent(final String id, final String name) {
+        return DashboardDocs.component("vis", id, name, "\"tableId\": \"t1\", \"visualisation\": "
+                                                        + "{\"type\": \"Visualisation\", \"uuid\": \"" + VIS_UUID
+                                                        + "\", \"name\": \"Toolbar Test\"}, \"json\": \"{}\"");
+    }
+
     // The visualisation's frame (VisFrame), once the dashboard has opened and its query has run
-    private static Query visFrame(final Play play) {
+    static Query visFrame(final Play play) {
         DashboardPlays.opened(play);
         final Query frame = play.screen().querySelector("iframe.vis-frame__frame");
         play.waitFor(5000, () -> play.expect(frame).toBeVisible());

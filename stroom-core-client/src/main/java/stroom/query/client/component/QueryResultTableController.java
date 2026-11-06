@@ -901,6 +901,7 @@ public class QueryResultTableController
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
+                getQueryTablePreferences(),
                 conditionalFormattingRules);
     }
 

@@ -100,7 +100,7 @@ class TestFloorMapGrid {
             final double minorOpacity = params[1];
             assertThat(minorOpacity)
                     .as("Minor opacity at effectiveScale=%s", effectiveScale)
-                    .isLessThanOrEqualTo(0.25 + 1e-9);  // MINOR_MAX_OPACITY = 0.25
+                    .isLessThanOrEqualTo(FloorMapGrid.MINOR_MAX_OPACITY + 1e-9);
         }
     }
 

@@ -69,11 +69,20 @@
     background: var(--dashboard-panel__grid-background-color);
 }
 
+/* In design mode, a grid as a floor map's looks at its default zoom (floor-map-canvas.css): major
+   lines every 100px, minor lines every 10px. The floor map's SVG lines fall between pixels, so
+   the browser softens them: a major line, in a control's border colour, comes out 1px at half
+   strength, and a minor line, in the grid colour faded to 40%, 2px at about 22%. These are drawn as
+   they come out there */
 .flex-layout--design-mode .flex-layout__design-surface {
+    --flex-layout__grid-major: color-mix(in srgb, var(--control__border-color) 50%, transparent);
+    --flex-layout__grid-minor: color-mix(in srgb, var(--dashboard-panel__grid-color) 22%, transparent);
     background-image:
-        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
-    background-size: 2rem 2rem;
+        linear-gradient(var(--flex-layout__grid-major) 1px, transparent 1px),
+        linear-gradient(90deg, var(--flex-layout__grid-major) 1px, transparent 1px),
+        linear-gradient(var(--flex-layout__grid-minor) 2px, transparent 2px),
+        linear-gradient(90deg, var(--flex-layout__grid-minor) 2px, transparent 2px);
+    background-size: 100px 100px, 100px 100px, 10px 10px, 10px 10px;
 }
 
 /* A pane or splitter, where the layout puts it (the custom properties are set by FlexLayout) */
@@ -86,10 +95,11 @@
 }
 
 /* A splitter: a focusable separator, its line a vertical one (aria-orientation="vertical")
-   between panels side by side, or a horizontal one between stacked panels */
+   between panels side by side, or a horizontal one between stacked panels. It draws nothing: its
+   overlay (flex-layout__overlay, below) draws its line, hovered and focused, above the page's frames,
+   and would draw the focus ring a second time over its own, doubling the ring's translucent colour */
 .flex-layout__splitter {
     position: absolute;
-    background-color: var(--splitter__background-color);
     z-index: 6;
     outline: none;
 }
@@ -113,9 +123,7 @@
     cursor: row-resize;
 }
 
-/* A splitter's line hovered (and the dragged marker's): 3px across, over the 1px line, in a
-   scrollbar thumb's colours, fading in as SplitPane's does */
-.flex-layout__splitter::after,
+/* The dragged marker's line: 3px across, over the 1px line, in a scrollbar thumb's colours */
 .flex-layout__marker--splitter::after {
     content: "";
     position: absolute;
@@ -125,27 +133,84 @@
     pointer-events: none;
 }
 
-.flex-layout__splitter[aria-orientation="vertical"]::after,
 .flex-layout__marker--across::after {
     inset: 0 -1px;
 }
 
-.flex-layout__splitter[aria-orientation="horizontal"]::after,
 .flex-layout__marker--down::after {
     inset: -1px 0;
 }
 
-.flex-layout__splitter:hover::after {
+/* A splitter's line and grab area, drawn on the page's root above the frames of visualisations and
+   other pages (z-index 2), which are on the root over the dashboard and would hide them; below the
+   drag marker and glass. Placed by SplitterOverlay, clipped to the dashboard's scrolled area, it
+   only takes the mouse on its grab area */
+.flex-layout__overlay {
+    position: absolute;
+    left: var(--flex-layout__overlay-left);
+    top: var(--flex-layout__overlay-top);
+    width: var(--flex-layout__overlay-width);
+    height: var(--flex-layout__overlay-height);
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.flex-layout__overlay-grab {
+    position: absolute;
+    left: var(--flex-layout__overlay-grab-left);
+    top: var(--flex-layout__overlay-grab-top);
+    width: var(--flex-layout__overlay-grab-width);
+    height: var(--flex-layout__overlay-grab-height);
+    pointer-events: auto;
+}
+
+.flex-layout__overlay[aria-orientation="vertical"] > .flex-layout__overlay-grab {
+    cursor: col-resize;
+}
+
+.flex-layout__overlay[aria-orientation="horizontal"] > .flex-layout__overlay-grab {
+    cursor: row-resize;
+}
+
+/* The splitter's line: hovered, 3px across in a scrollbar thumb's colours, fading in as SplitPane's
+   does; with the splitter's keyboard focus, in the focus colour, ringed */
+.flex-layout__overlay-line {
+    position: absolute;
+    left: var(--flex-layout__overlay-line-left);
+    top: var(--flex-layout__overlay-line-top);
+    width: var(--flex-layout__overlay-line-width);
+    height: var(--flex-layout__overlay-line-height);
+    background-color: var(--splitter__background-color);
+    pointer-events: none;
+}
+
+.flex-layout__overlay-line::after {
+    content: "";
+    position: absolute;
+    background-color: var(--splitter__line-color--hover);
+    opacity: 0;
+    transition: opacity .5s;
+}
+
+.flex-layout__overlay[aria-orientation="vertical"] > .flex-layout__overlay-line::after {
+    inset: 0 -1px;
+}
+
+.flex-layout__overlay[aria-orientation="horizontal"] > .flex-layout__overlay-line::after {
+    inset: -1px 0;
+}
+
+.flex-layout__overlay-grab:hover + .flex-layout__overlay-line::after {
     opacity: 1;
 }
 
-/* With the keyboard focus, the line is drawn in the focus colour, ringed */
-.flex-layout__splitter:focus-visible {
+.flex-layout__overlay--focused > .flex-layout__overlay-line {
     background-color: var(--splitter__focus-color);
     box-shadow: var(--focus-shadow);
 }
 
-.flex-layout__splitter:focus-visible::after {
+.flex-layout__overlay--focused > .flex-layout__overlay-line::after {
     opacity: 0;
 }
 
@@ -223,15 +288,15 @@
 /* In forced colours (e.g. Windows high contrast) backgrounds are replaced, which would leave the
    lines invisible, so they are drawn in system colours instead */
 @media (forced-colors: active) {
-    .flex-layout__splitter,
-    .flex-layout__splitter::after,
+    .flex-layout__overlay-line,
+    .flex-layout__overlay-line::after,
     .flex-layout__marker--splitter {
         forced-color-adjust: none;
         background-color: CanvasText;
     }
 
-    .flex-layout__splitter:focus-visible,
-    .flex-layout__splitter:focus-visible::after,
+    .flex-layout__overlay--focused > .flex-layout__overlay-line,
+    .flex-layout__overlay--focused > .flex-layout__overlay-line::after,
     .flex-layout__marker--splitter::after {
         forced-color-adjust: none;
         background-color: Highlight;

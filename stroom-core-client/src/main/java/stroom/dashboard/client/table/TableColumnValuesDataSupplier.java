@@ -23,11 +23,9 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.OffsetRange;
@@ -36,15 +34,12 @@ import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.TableSettings;
 import stroom.query.client.result.table.ColumnValuesDataSupplier;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.Range;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
@@ -59,6 +54,7 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
             final RestFactory restFactory,
             final SearchModel searchModel,
             final stroom.query.api.Column column,
+            final String componentId,
             final TableSettings tableSettings,
             final DateTimeSettings dateTimeSettings,
             final String tableName,
@@ -72,18 +68,16 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
             final QueryKey queryKey = searchModel.getCurrentQueryKey();
             final Search currentSearch = searchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                final List<ComponentResultRequest> requests = new ArrayList<>();
-                currentSearch.getComponentSettingsMap().entrySet()
-                        .stream()
-                        .filter(settings -> settings.getValue() instanceof TableComponentSettings)
-                        .forEach(componentSettings -> requests.add(TableResultRequest
-                                .builder()
-                                .componentId(componentSettings.getKey())
-                                .requestedRange(OffsetRange.UNBOUNDED)
-                                .tableName(tableName)
-                                .tableSettings(tableSettings)
-                                .fetch(Fetch.ALL)
-                                .build()));
+                // Only this table's values are wanted. Its settings carry the filters that decide which values
+                // are available.
+                final List<ComponentResultRequest> requests = Collections.singletonList(TableResultRequest
+                        .builder()
+                        .componentId(componentId)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .tableName(tableName)
+                        .tableSettings(tableSettings)
+                        .fetch(Fetch.ALL)
+                        .build());
 
                 final Search search = Search
                         .builder()
@@ -113,8 +107,7 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
     @Override
     public void exec(final Range range,
                      final Consumer<ColumnValues> dataConsumer,
-                     final RestErrorHandler errorHandler,
-                     final Map<String, ColumnValueSelection> selections) {
+                     final RestErrorHandler errorHandler) {
         if (searchRequest == null) {
             clear(dataConsumer);
 
@@ -125,8 +118,7 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
                     getColumn(),
                     getNameFilter(),
                     pageRequest,
-                    getConditionalFormattingRules(),
-                    selections);
+                    getConditionalFormattingRules());
 
             restFactory
                     .create(DASHBOARD_RESOURCE)
@@ -140,6 +132,6 @@ public class TableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
     }
 
     private void clear(final Consumer<ColumnValues> dataConsumer) {
-        dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
+        dataConsumer.accept(ColumnValues.empty());
     }
 }

@@ -17,7 +17,6 @@
 package stroom.dashboard.shared;
 
 import stroom.query.api.Column;
-import stroom.query.api.ColumnValueSelection;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.util.shared.PageRequest;
 
@@ -28,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
-import java.util.Map;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -44,8 +42,6 @@ public class ColumnValuesRequest {
     private final PageRequest pageRequest;
     @JsonProperty
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
-    @JsonProperty
-    private final Map<String, ColumnValueSelection> selections;
 
     @JsonCreator
     public ColumnValuesRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
@@ -53,14 +49,12 @@ public class ColumnValuesRequest {
                                @JsonProperty("filter") final String filter,
                                @JsonProperty("pageRequest") final PageRequest pageRequest,
                                @JsonProperty("conditionalFormattingRules")
-                                   final List<ConditionalFormattingRule> conditionalFormattingRules,
-                               @JsonProperty("selections") final Map<String, ColumnValueSelection> selections) {
+                                   final List<ConditionalFormattingRule> conditionalFormattingRules) {
         this.searchRequest = searchRequest;
         this.column = column;
         this.filter = filter;
         this.pageRequest = pageRequest;
         this.conditionalFormattingRules = conditionalFormattingRules;
-        this.selections = selections;
     }
 
     public DashboardSearchRequest getSearchRequest() {
@@ -83,10 +77,6 @@ public class ColumnValuesRequest {
         return conditionalFormattingRules;
     }
 
-    public Map<String, ColumnValueSelection> getSelections() {
-        return selections;
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -102,7 +92,6 @@ public class ColumnValuesRequest {
         private String filter;
         private PageRequest pageRequest;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
-        private Map<String, ColumnValueSelection> selections;
 
         private Builder() {
         }
@@ -113,7 +102,6 @@ public class ColumnValuesRequest {
             this.filter = request.filter;
             this.pageRequest = request.pageRequest;
             this.conditionalFormattingRules = request.conditionalFormattingRules;
-            this.selections = request.selections;
         }
 
         public Builder searchRequest(final DashboardSearchRequest searchRequest) {
@@ -141,19 +129,13 @@ public class ColumnValuesRequest {
             return this;
         }
 
-        public Builder selections(final Map<String, ColumnValueSelection> selections) {
-            this.selections = selections;
-            return this;
-        }
-
         public ColumnValuesRequest build() {
             return new ColumnValuesRequest(
                     searchRequest,
                     column,
                     filter,
                     pageRequest,
-                    conditionalFormattingRules,
-                    selections);
+                    conditionalFormattingRules);
         }
     }
 }

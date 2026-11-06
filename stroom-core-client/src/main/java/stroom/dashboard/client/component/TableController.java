@@ -1415,6 +1415,7 @@ public class TableController extends DashboardPaneController
         return new TableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
+                getId(),
                 resolveTableSettings(),
                 getDateTimeSettings(),
                 getTableName(getId()),

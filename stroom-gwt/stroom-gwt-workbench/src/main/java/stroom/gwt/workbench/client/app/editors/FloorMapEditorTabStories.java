@@ -38,6 +38,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The `App/Editors/FloorMapEditor` stories, showing Stroom's real [FloorMapEditorTabController] (a
@@ -407,8 +408,53 @@ public final class FloorMapEditorTabStories {
                     expectMenuWithFocus(play, play.screen());
                     play.keyboard("{Escape}");
                     DocEditors.expectNoProblems(play);
+                })
+                // The grid zoomed in to just before its minor lines become major (major lines nearly
+                // 400px apart): the minor lines at about full strength, in a dashboard's grid colour,
+                // and the major lines in a control's border colour
+                .story("GridBeforePromotion", FloorMapEditorTabStories::render)
+                .withPlay(play -> {
+                    zoomIn(play, 14);
+                    play.expect("whether the minor lines are at about full strength",
+                            () -> minorOpacity() > 0.9).toBe(true);
+                })
+                // One step further: the minor lines are the major lines now (about 42px apart), a step
+                // brighter, and a new set of minor lines starts to fade in
+                .story("GridAfterPromotion", FloorMapEditorTabStories::render)
+                .withPlay(play -> {
+                    zoomIn(play, 15);
+                    play.expect("whether the new minor lines are faint",
+                            () -> minorOpacity() < 0.1).toBe(true);
                 });
     }
+
+    // Zooms the map in from its default view (a major square, 1 m, 100px across), a step of 1.1
+    // times for each press of '=' on the focused canvas
+    private static void zoomIn(final Play play, final int steps) {
+        final Query canvas = play.querySelector(CANVAS);
+        play.waitFor(() -> play.expect(canvas).toHaveAttribute("role", "group"));
+        play.run("focus the canvas", () -> canvas.element().get().focus());
+        play.run("press '=' " + steps + " times", () -> {
+            for (int i = 0; i < steps; i++) {
+                pressEquals(canvas.element().get());
+            }
+        });
+    }
+
+    // A key down of '=' with its key code (187), which the canvas reads, as a play's keys don't
+    // give one
+    private static native void pressEquals(Element element) /*-{
+        var event = new KeyboardEvent('keydown', {key: '=', code: 'Equal', bubbles: true, cancelable: true});
+        Object.defineProperty(event, 'keyCode', {get: function () { return 187; }});
+        Object.defineProperty(event, 'which', {get: function () { return 187; }});
+        element.dispatchEvent(event);
+    }-*/;
+
+    // The minor grid lines' stroke opacity, or 0 if none are drawn
+    private static native double minorOpacity() /*-{
+        var line = $doc.querySelector('.floor-map-grid__line--minor');
+        return line ? parseFloat(line.getAttribute('stroke-opacity')) : 0;
+    }-*/;
 
     // The Editor tab the story shows, as its document holds it
     private static TabStory<FloorMapEditorTabController, FloorMapDoc> tab() {

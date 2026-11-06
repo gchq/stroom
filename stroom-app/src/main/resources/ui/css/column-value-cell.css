@@ -30,3 +30,9 @@
 	white-space: nowrap;
 	min-width: 200px;
 }
+
+/* A value that no row in the table has, given its other filters. It can still be ticked. 60% keeps
+   the text at 4.5:1 or more in both themes (WCAG AA), and fades a conditional formatting colour evenly */
+.column-value-cell--unavailable .column-value-cell__text {
+	opacity: 0.6;
+}

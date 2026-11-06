@@ -49,3 +49,22 @@
     width: 400px;
     height: 400px;
 }
+
+/* Separates the values the table has from the rest, which come after it faded
+   (column-value-cell--unavailable): a line in the middle of a 9px gap above the first of the rest, 4px
+   from each row, so a focused row's ring never touches it. The line is outside the row, which the
+   grid doesn't clip at this list's page size (data-grid--contain is for pages over 200 rows), and in
+   the tick boxes' border colour, as a menu separator's is too faint in the dark theme */
+.column-values-filter .column-values-filter__row--first-unavailable {
+    position: relative;
+    margin-top: 9px;
+}
+
+.column-values-filter .column-values-filter__row--first-unavailable::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--control__border-color);
+}

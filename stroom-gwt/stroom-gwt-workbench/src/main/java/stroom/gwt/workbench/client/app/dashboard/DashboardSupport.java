@@ -210,6 +210,17 @@ public final class DashboardSupport {
         return harness.asWidget();
     }
 
+    /// Puts a story's widget in a stacking context of its own, as Stroom's content pane
+    /// (`split-pane__pane`) puts its tabs' content, so that what is on the page's root (a
+    /// visualisation's frame) stacks against the dashboard as a whole, as in the app.
+    ///
+    /// @param widget The story's widget.
+    /// @return The widget.
+    public static Widget isolated(final Widget widget) {
+        widget.getElement().getStyle().setProperty("isolation", "isolate");
+        return widget;
+    }
+
     /// Creates the injector's `DashboardPaneTypes`, which registers every pane type in the
     /// dashboard's `PaneRegistry`, as Stroom's eager singleton does.
     ///

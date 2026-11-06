@@ -159,12 +159,23 @@ public final class QueryEditorStories {
                                            + "\"messageList\": []}")),
             RestReply.json(COMPLETE));
 
-    // ColumnValuesFilterMenu: the column's distinct values
+    // ColumnValuesFilterMenu: the column's distinct values, both in the table
     private static final RestFixtures COLUMN_VALUES_FIXTURES = fixtures(RestFixtures.builder()
                     .route(RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD),
-                            RestReply.json("{\"values\": [{\"value\": \"alpha\"}, {\"value\": \"beta\"}], "
+                            RestReply.json("{\"values\": [{\"value\": \"alpha\", \"available\": true}, "
+                                           + "{\"value\": \"beta\", \"available\": true}], "
                                            + "\"pageResponse\": {\"offset\": 0, \"length\": 2, \"total\": 2, "
-                                           + "\"exact\": true}}")),
+                                           + "\"exact\": true}, \"availableCount\": 2}")),
+            RestReply.json(COMPLETE));
+
+    // ColumnValuesFilterUnavailable: gamma in the table, delta only without its other filters, so
+    // after it
+    private static final RestFixtures COLUMN_VALUES_UNAVAILABLE_FIXTURES = fixtures(RestFixtures.builder()
+                    .route(RequestMatcher.post("/query/v1/columnValues/" + RequestMatcher.PATH_WILDCARD),
+                            RestReply.json("{\"values\": [{\"value\": \"gamma\", \"available\": true}, "
+                                           + "{\"value\": \"delta\", \"available\": false}], "
+                                           + "\"pageResponse\": {\"offset\": 0, \"length\": 2, \"total\": 2, "
+                                           + "\"exact\": true}, \"availableCount\": 1}")),
             RestReply.json(COMPLETE));
 
     private static final RestFixtures HYPERLINK_FIXTURES = fixtures(RestFixtures.builder(),
@@ -650,6 +661,35 @@ public final class QueryEditorStories {
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": [{}, {\"name\": \"Count\", "
                                            + "\"columnValueSelection\": {\"invert\": false, "
                                            + "\"values\": [\"alpha\"]}}, {}, {}]}}");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The column's values filter lists the values the table has first, then a line, then
+                // the rest faded and described as not in the table. One of those can still be ticked
+                .story("ColumnValuesFilterUnavailable", context -> render(context, COLUMN_VALUES_UNAVAILABLE_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    execute(play);
+                    play.findByText("alpha");
+                    StroomDom.clickHeader(play, play.within(header(play, "Count").closest(StroomDom.GRID_HEADER_CELL))
+                            .querySelector(".column-header__value-filter-icon"));
+                    play.waitFor(() -> play.expect(screen.findByText("delta")).toBeInTheDocument());
+
+                    final Query gammaRow = screen.getByText("gamma").closest(".data-grid__row");
+                    play.expect(gammaRow).not().toHaveClass("column-values-filter__row--first-unavailable");
+                    play.expect(gammaRow).not().toHaveAttribute("aria-description");
+                    play.expect(screen.getByText("gamma")).toHaveStyle("opacity", "1");
+
+                    final Query deltaRow = screen.getByText("delta").closest(".data-grid__row");
+                    play.expect(deltaRow).toHaveClass("column-values-filter__row--first-unavailable");
+                    play.expect(deltaRow).toHaveStyle("margin-top", "9px");
+                    play.expect(deltaRow).toHaveAttribute("aria-description", "Not in the table");
+                    play.expect(screen.getByText("delta")).toHaveStyle("opacity", "0.6");
+
+                    play.click(screen.findByText("Select None"));
+                    play.click(screen.getByText("delta"));
+                    expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": [{}, {\"name\": \"Count\", "
+                                           + "\"columnValueSelection\": {\"invert\": false, "
+                                           + "\"values\": [\"delta\"]}}, {}, {}]}}");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The column menu's Format sets the column's format

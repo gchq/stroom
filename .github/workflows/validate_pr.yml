@@ -48,7 +48,18 @@ jobs:
         # You must be a MEMBER or OWNER to make changes to CI related files.
       - name: Look for changes to CI related files
         id: check_ci_files
-        if: ${{ !contains(fromJSON('["MEMBER","OWNER"]'), github.event.pull_request.author_association) }}
+        # Also allow PRs from dependabot
+        if: >-
+          ${{
+            !(
+              github.event.pull_request.user.login == 'dependabot[bot]' &&
+              github.event.pull_request.user.type == 'Bot'
+            ) &&
+            !contains(
+              fromJSON('["MEMBER","OWNER"]'),
+              github.event.pull_request.author_association
+            )
+          }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}

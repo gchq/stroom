@@ -6,11 +6,11 @@ eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 aws = "2.57.3"
 commons-io = "2.21.0"
 dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
-elasticsearch = "9.4.2"
+elasticsearch = "9.5.5"
 flyway = "12.0.0"
 guice = "7.0.0"
 gwt = "2.13.0"
-jgit = "7.5.0.202512021534-r"
+jgit = "7.8.0.202609011348-r"
 jmh = "1.37"
 jooq = "3.21.9"
 junit-jupiter = "5.13.1"
@@ -110,7 +110,7 @@ jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } #
 
 jakarta-activation = { module = "jakarta.activation:jakarta.activation-api" } # version controlled by dropwizard-dependencies
 jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api" } # version controlled by dropwizard-dependencies
-jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "5.0.1" }
+jakarta-el = { module = "jakarta.el:jakarta.el-api", version = "6.0.1" }
 jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version = "2.0.1" }
 jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" } # version controlled by dropwizard-dependencies
 jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api" } # version controlled by dropwizard-dependencies
@@ -188,7 +188,7 @@ spring-security-crypto = { module = "org.springframework.security:spring-securit
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
-vavr = { module = "io.vavr:vavr", version = "0.10.4" }
+vavr = { module = "io.vavr:vavr", version = "1.1.0" }
 # Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12, so we have to use
 # wiremock-jetty12
 wiremock = { module = "org.wiremock:wiremock-jetty12", version = "3.13.2" }
@@ -213,7 +213,7 @@ java-library = { id = "java-library" }
 download = { id = "de.undercouch.download", version = "4.1.2" }
 
 # Plugin for producing a tree of task dependencies, run task 'taskTree'
-task-tree = { id = "com.dorongold.task-tree", version = "4.0.1" }
+task-tree = { id = "com.dorongold.task-tree", version = "4.0.2" }
 
 # Plugin for producing fat jars and/or shaded jars
 shadow = { id = "com.gradleup.shadow", version = "9.6.1" }

@@ -647,8 +647,11 @@ public final class DashboardSearchStories {
                             : 0));
         });
         routes.route(RequestMatcher.post("/dashboard/v1/columnValues/" + RequestMatcher.PATH_WILDCARD),
-                RestReply.json("{\"values\": [{\"value\": \"red\"}, {\"value\": \"green\"}, {\"value\": \"blue\"}], "
-                               + "\"pageResponse\": {\"offset\": 0, \"length\": 3, \"total\": 3, \"exact\": true}}"));
+                RestReply.json("{\"values\": [{\"value\": \"red\", \"available\": true}, "
+                               + "{\"value\": \"green\", \"available\": true}, "
+                               + "{\"value\": \"blue\", \"available\": true}], "
+                               + "\"pageResponse\": {\"offset\": 0, \"length\": 3, \"total\": 3, \"exact\": true}, "
+                               + "\"availableCount\": 3}"));
     }
 
     // WordListResource: the dictionary's words

@@ -76,10 +76,12 @@ public final class FloorMapGrid {
     private static final String MINOR_CLASS = "floor-map-grid__line floor-map-grid__line--minor";
     /// Desired screen-pixel width for major grid lines.
     private static final double MAJOR_SCREEN_PX = 1.0;
-    /// Maximum opacity for minor grid lines (reached mid-decade).
-    private static final double MINOR_MAX_OPACITY = 0.25;
-    /// Desired screen-pixel width for minor grid lines.
-    private static final double MINOR_SCREEN_PX = 0.5;
+    /// Maximum opacity for minor grid lines (reached as they are about to become major): their
+    /// colour (a dashboard's grid colour) is already fainter than a major line's.
+    static final double MINOR_MAX_OPACITY = 1.0;
+    /// Desired screen-pixel width for minor grid lines: a whole pixel, as a half pixel line is
+    /// smeared over two and too faint to see.
+    private static final double MINOR_SCREEN_PX = 1.0;
 
 
     // -- Zoom range constants ------------------------------------------------

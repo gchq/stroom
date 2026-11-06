@@ -44,9 +44,13 @@ import java.util.function.Consumer;
 /// A table column's values, each ticked or not, below Select All and Select None and a filter. In
 /// the list the arrows move, and Space, Enter or a press ticks or unticks the value with the focus,
 /// Ctrl+A all of them; Escape goes on to the popup it is in, which closes.
+/// Values that no row in the table has, given its other filters, come last, faded and below a line,
+/// and are described as not in the table.
 public class ColumnValuesFilter extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    // Read after an unavailable value's name and state, as its fading only shows it
+    private static final String NOT_IN_TABLE = "Not in the table";
 
     @UiField
     LinkButton selectAllLink;
@@ -81,6 +85,9 @@ public class ColumnValuesFilter extends Component {
         selectionEventManager.addSelectAllHandler(e -> onSelectAll.run());
         // The ticks are the rows' own state, not a selection
         list.setSelectionModel(null, selectionEventManager);
+        list.setRowDescription(value -> value.isAvailable()
+                ? null
+                : NOT_IN_TABLE);
     }
 
     /// Ticks the values the selection holds, which the owner changes as values are ticked.

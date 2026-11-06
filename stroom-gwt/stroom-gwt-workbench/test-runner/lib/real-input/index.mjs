@@ -31,6 +31,7 @@ import { CHECKS as ACE_EDITOR } from './ace-editor.mjs';
 import { CHECKS as AREAS } from './areas.mjs';
 import { CHECKS as BUTTONS } from './buttons.mjs';
 import { CHECKS as COPY_ICONS } from './copy-icons.mjs';
+import { CHECKS as DASHBOARD_SPLITTERS } from './dashboard-splitters.mjs';
 import { CHECKS as DASHBOARD_TABLE } from './dashboard-table.mjs';
 import { CHECKS as DATA_GRID } from './data-grid.mjs';
 import { CHECKS as DATE_TIME } from './date-time.mjs';
@@ -48,7 +49,8 @@ import { CHECKS as TOP_BAR } from './top-bar.mjs';
 import { CHECKS as VALUE_SPINNER } from './value-spinner.mjs';
 
 const FILES = { 'ace-editor.mjs': ACE_EDITOR, 'areas.mjs': AREAS, 'buttons.mjs': BUTTONS,
-  'copy-icons.mjs': COPY_ICONS, 'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
+  'copy-icons.mjs': COPY_ICONS, 'dashboard-splitters.mjs': DASHBOARD_SPLITTERS,
+  'dashboard-table.mjs': DASHBOARD_TABLE, 'data-grid.mjs': DATA_GRID,
   'date-time.mjs': DATE_TIME, 'help.mjs': HELP,
   'icon-picker.mjs': ICON_PICKER, 'link-button.mjs': LINK_BUTTON, 'menu.mjs': MENU,
   'selection-box.mjs': SELECTION_BOX,

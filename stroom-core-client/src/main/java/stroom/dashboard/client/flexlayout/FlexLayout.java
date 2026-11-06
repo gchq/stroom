@@ -241,12 +241,24 @@ public class FlexLayout extends Composite {
     }
 
     private void onMouseDown(final Event event) {
+        onMouseDown(event, getTargetSplitter(event.getEventTarget().cast()));
+    }
+
+    // A mouse press on the layout, or on a splitter's overlay (above the page's frames) as one on
+    // the splitter
+    private void onMouseDown(final Event event, final Splitter splitter) {
         if (newComponents == null) {
             if (!busy) {
-                startSelection(event);
+                startSelection(event, splitter);
             }
         } else {
             finishSelection(event);
+        }
+    }
+
+    private void onOverlayMouseDown(final Splitter splitter, final Event event) {
+        if (MouseUtil.isPrimary(event)) {
+            onMouseDown(event, splitter);
         }
     }
 
@@ -256,7 +268,8 @@ public class FlexLayout extends Composite {
         }
     }
 
-    private void startSelection(final Event event) {
+    // Starts a drag: of a splitter if one was pressed, else of a tab if one was
+    private void startSelection(final Event event, final Splitter splitter) {
         // Reset vars.
         startPos = null;
         draggingTab = false;
@@ -273,8 +286,7 @@ public class FlexLayout extends Composite {
         // We need to know what the mouse is over.
         final Element element = event.getEventTarget().cast();
 
-        // See if a splitter is the target.
-        selectedSplitter = getTargetSplitter(element);
+        selectedSplitter = splitter;
 
         if (selectedSplitter != null) {
             // If we found a splitter as the event target then start split
@@ -1688,7 +1700,18 @@ public class FlexLayout extends Composite {
             for (final TabLayout w : layoutToWidgetMap.values()) {
                 w.onResize();
             }
+            layOverlays();
         });
+    }
+
+    // Lays the splitters' overlays over them, as they are now: they follow the splitters as the
+    // panes' frames follow the panes
+    private void layOverlays() {
+        for (final Splitter splitter : splitToWidgetMap.values()) {
+            if (splitter.isAttached()) {
+                splitter.layOverlay(scrollPanel.getElement());
+            }
+        }
     }
 
     private void addCanvasSplit(final SplitInfo splitInfo,
@@ -1755,7 +1778,7 @@ public class FlexLayout extends Composite {
 
             } else if (key instanceof final SplitInfo splitInfo) {
                 final Splitter splitter = splitToWidgetMap.computeIfAbsent(splitInfo,
-                        info -> new Splitter(info, layoutToWidgetMap::get));
+                        info -> new Splitter(info, layoutToWidgetMap::get, this::onOverlayMouseDown));
                 setPositionAndSize(splitter.getElement(), entry.getValue());
             }
         }
@@ -1766,6 +1789,8 @@ public class FlexLayout extends Composite {
                 updateSplitter(entry.getValue());
             }
         }
+        // A splitter moved by a drag or a key is laid out here only, not by resizeChildWidgets
+        layOverlays();
     }
 
     /**
