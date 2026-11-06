@@ -483,7 +483,9 @@ public final class DashboardPaneStories {
                     // dark theme's #696d77), which can be seen
                     play.expect(valueRow(screen, "gamma")).toHaveStyle("margin-top", "9px");
                     play.expect("the line is drawn in the tick boxes' border colour", () -> lineColour(
-                            valueRow(screen, "gamma").element().get())).toBe("rgb(105, 109, 119)");
+                            valueRow(screen, "gamma").element().get())).toBe(StroomThemeDecorator.isDark()
+                                    ? "rgb(105, 109, 119)"
+                                    : "rgb(140, 144, 152)");
                     play.expect(valueRow(screen, "gamma")).toHaveAttribute("aria-description", NOT_IN_TABLE);
                     play.expect(valueText(screen, "gamma")).toHaveStyle("opacity", "0.6");
 
