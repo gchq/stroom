@@ -2805,8 +2805,10 @@ the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examp
 them in the notes block as `pending`. One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
-is checked as a catalogue event and kept in the notes block (`proposed`); the reply's `table` (Markdown) is for the
-agent to show in the chat, which renders Markdown, where a form's fields are plain text (asked for by the user: no
+is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
+kind's sample record kept from the listing); the reply's `table` (Markdown: for each kind a numbered heading
+`[product] title`, its sample preformatted, and a two-column table of only the rows it has: Kind, Confidence, Action
+element, Action, Outcome, Type id, Who acted, Acted on) is for the agent to show in the chat, which renders Markdown, where a form's fields are plain text (asked for by the user: no
 Markdown in a form). Called then with `confirm: true`, a short plain form (`Consent.review`): one checkbox accepts
 every high and medium proposal ("in the table above"), each low one (up to 10) has its own, and a text field takes
 corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones

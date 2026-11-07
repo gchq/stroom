@@ -7,8 +7,8 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 ## Rules
 
 - Before drafting, `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
-  documentation doesn't cover; propose each from its records and what you know of the source, saying how sure you
-  are; show the table it gives back in your reply, then call it with `confirm: true` and the user confirms them in
+  documentation doesn't cover; propose each from its records and what you know of the source, with a short `title`
+  and the `product` it comes from, saying how sure you are; show the table it gives back in your reply, then call it with `confirm: true` and the user confirms them in
   one short form: for each, who acted (`actor`) and what it was done to (`affected`, and
   `affected_as`: User, File, Document, Group...). The draft then follows them, a rule a kind. Send the user's
   corrections back as proposals with `from_user: true`; ask about any they reject.
