@@ -879,6 +879,7 @@
     "'message' holds key/value pairs: 4 keys are fields of their own through pairs ('tty', 'pwd', 'user', 'command'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Records hold several user fields: 'USER' (unsaid), 'user' (unsaid). EventSource/User is who acted (drafted as 'USER'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "Every record runs a command ('COMMAND'): drafted as Process (Action Execute, Type Application). Check it, and split the program from its arguments (Process/Arguments) if you want them apart."
    ],
    "unmapped_fields": [
@@ -5373,7 +5374,7 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "EventData/Data[@Name='TargetUserName']"
+      "field": "EventData/Data[@Name='SubjectUserName']"
      },
      {
       "path": "EventSource/Generator",
@@ -5406,6 +5407,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='TargetDomainName']",
         "field": "EventData/Data[@Name='TargetDomainName']"
        },
@@ -5434,6 +5440,11 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -5473,11 +5484,6 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='SubjectDomainName']",
         "field": "EventData/Data[@Name='SubjectDomainName']"
        },
@@ -5509,13 +5515,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='TargetDomainName']",
-        "field": "EventData/Data[@Name='TargetDomainName']"
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
+        "data_name": "EventData/Data[@Name='TargetDomainName']",
+        "field": "EventData/Data[@Name='TargetDomainName']"
        }
       ]
      },
@@ -5540,13 +5546,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='TargetDomainName']",
-        "field": "EventData/Data[@Name='TargetDomainName']"
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
+        "data_name": "EventData/Data[@Name='TargetDomainName']",
+        "field": "EventData/Data[@Name='TargetDomainName']"
        }
       ]
      },
@@ -5568,6 +5574,11 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data/@Name",
         "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -5596,6 +5607,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='TargetDomainName']",
         "field": "EventData/Data[@Name='TargetDomainName']"
        },
@@ -5603,11 +5619,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "EventData/Data[@Name='LogonType']",
         "field": "EventData/Data[@Name='LogonType']"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -5642,14 +5653,15 @@
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Records hold several user fields: 'EventData/Data[@Name='TargetUserName']' (affected), 'EventData/Data[@Name='SubjectUserName']' (actor). EventSource/User is who acted (drafted as 'EventData/Data[@Name='SubjectUserName']'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "One rule per value of 'System/EventID' (4624, 4625, 4672, 4740, 4720, 4634): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "System/Provider/@Name",
     "EventData/Data/@Name",
+    "EventData/Data[@Name='TargetUserName']",
     "EventData/Data[@Name='TargetDomainName']",
     "EventData/Data[@Name='LogonType']",
-    "EventData/Data[@Name='SubjectUserName']",
     "EventData/Data[@Name='SubjectDomainName']",
     "EventData/Data[@Name='PrivilegeList']",
     "EventData/Data[@Name='FailureReason']"
@@ -7329,30 +7341,31 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "EventData/Data[@Name='TargetUserName']"
+      "field": "EventData/Data[@Name='SubjectUserName']"
      },
      {
       "path": "EventSource/Generator",
       "field": "EventData/Data[@Name='ProcessName']"
+     },
+     {
+      "path": "EventDetail/TypeId",
+      "field": "System/EventID"
      }
     ],
     "events": [
      {
-      "name": "other",
-      "fields": [
+      "name": "4624",
+      "when": [
        {
-        "path": "EventDetail/TypeId",
-        "value": "Other"
-       },
+        "field": "System/EventID",
+        "equals": "4624"
+       }
+      ],
+      "fields": [
        {
         "path": "EventDetail/Unknown/Data",
         "data_name": "System/Provider/@Name",
         "field": "System/Provider/@Name"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "System/EventID",
-        "field": "System/EventID"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -7361,13 +7374,634 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='LogonType']",
-        "field": "EventData/Data[@Name='LogonType']"
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "EventData/Data[@Name='SubjectUserName']",
-        "field": "EventData/Data[@Name='SubjectUserName']"
+        "data_name": "EventData/Data[@Name='LogonType']",
+        "field": "EventData/Data[@Name='LogonType']"
+       }
+      ]
+     },
+     {
+      "name": "4625",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4625"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='LogonType']",
+        "field": "EventData/Data[@Name='LogonType']"
+       }
+      ]
+     },
+     {
+      "name": "4634",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4634"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='LogonType']",
+        "field": "EventData/Data[@Name='LogonType']"
+       }
+      ]
+     },
+     {
+      "name": "4647",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4647"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4648",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4648"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetServerName']",
+        "field": "EventData/Data[@Name='TargetServerName']"
+       }
+      ]
+     },
+     {
+      "name": "4672",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4672"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='PrivilegeList']",
+        "field": "EventData/Data[@Name='PrivilegeList']"
+       }
+      ]
+     },
+     {
+      "name": "4688",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4688"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='NewProcessName']",
+        "field": "EventData/Data[@Name='NewProcessName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='CommandLine']",
+        "field": "EventData/Data[@Name='CommandLine']"
+       }
+      ]
+     },
+     {
+      "name": "4689",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4689"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       }
+      ]
+     },
+     {
+      "name": "4697",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4697"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='ServiceName']",
+        "field": "EventData/Data[@Name='ServiceName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='ServiceFileName']",
+        "field": "EventData/Data[@Name='ServiceFileName']"
+       }
+      ]
+     },
+     {
+      "name": "4719",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4719"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='CategoryId']",
+        "field": "EventData/Data[@Name='CategoryId']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='AuditPolicyChanges']",
+        "field": "EventData/Data[@Name='AuditPolicyChanges']"
+       }
+      ]
+     },
+     {
+      "name": "4720",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4720"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4722",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4722"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4723",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4723"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4724",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4724"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4725",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4725"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4726",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4726"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4728",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4728"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "cn",
+        "field": "cn"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "ou",
+        "field": "ou"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "dc",
+        "field": "dc"
+       }
+      ]
+     },
+     {
+      "name": "4729",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4729"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "cn",
+        "field": "cn"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "ou",
+        "field": "ou"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "dc",
+        "field": "dc"
+       }
+      ]
+     },
+     {
+      "name": "4740",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4740"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "4767",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "4767"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       }
+      ]
+     },
+     {
+      "name": "1102",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "1102"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       }
+      ]
+     },
+     {
+      "name": "5140",
+      "when": [
+       {
+        "field": "System/EventID",
+        "equals": "5140"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='ShareName']",
+        "field": "EventData/Data[@Name='ShareName']"
+       }
+      ]
+     },
+     {
+      "name": "other",
+      "fields": [
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "System/Provider/@Name",
+        "field": "System/Provider/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data/@Name",
+        "field": "EventData/Data/@Name"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='TargetUserName']",
+        "field": "EventData/Data[@Name='TargetUserName']"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "EventData/Data[@Name='LogonType']",
+        "field": "EventData/Data[@Name='LogonType']"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -7437,18 +8071,41 @@
    "splitter": null,
    "format": "xml fragments",
    "records": 22,
-   "kinds": [],
+   "kinds": [
+    "4624",
+    "4625",
+    "4634",
+    "4647",
+    "4648",
+    "4672",
+    "4688",
+    "4689",
+    "4697",
+    "4719",
+    "4720",
+    "4722",
+    "4723",
+    "4724",
+    "4725",
+    "4726",
+    "4728",
+    "4729",
+    "4740",
+    "4767",
+    "1102",
+    "5140"
+   ],
    "notes": [
     "'EventData/Data[@Name='MemberName']' holds key/value pairs: 3 keys are fields of their own through pairs ('cn', 'ou', 'dc'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
-    "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
+    "Records hold several user fields: 'EventData/Data[@Name='TargetUserName']' (affected), 'EventData/Data[@Name='SubjectUserName']' (actor). EventSource/User is who acted (drafted as 'EventData/Data[@Name='SubjectUserName']'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
+    "One rule per value of 'System/EventID' (4624, 4625, 4634, 4647, 4648, 4672, 4688, 4689, 4697, 4719, 4720, 4722, 4723, 4724, 4725, 4726, 4728, 4729, 4740, 4767, 1102, 5140): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "System/Provider/@Name",
-    "System/EventID",
     "EventData/Data/@Name",
+    "EventData/Data[@Name='TargetUserName']",
     "EventData/Data[@Name='LogonType']",
-    "EventData/Data[@Name='SubjectUserName']",
     "EventData/Data[@Name='TargetServerName']",
     "EventData/Data[@Name='PrivilegeList']",
     "EventData/Data[@Name='NewProcessName']",
@@ -8071,7 +8728,7 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "user"
+      "field": "by_user"
      },
      {
       "path": "EventSource/SessionId",
@@ -8142,13 +8799,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8264,7 +8921,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -8308,8 +8965,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -8362,7 +9019,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -8406,8 +9063,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -8472,13 +9129,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8568,13 +9225,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8693,8 +9350,8 @@
        },
        {
         "path": "EventDetail/Process/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Process/Data",
@@ -8769,13 +9426,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -8867,8 +9524,8 @@
        },
        {
         "path": "EventDetail/Update/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Update/Data",
@@ -8943,13 +9600,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9029,13 +9686,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9119,13 +9776,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9297,6 +9954,7 @@
     "'EventData/Data' holds key/value pairs: 37 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'folder' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
+    "Records hold several user fields: 'user' (unsaid), 'by_user' (actor), 'rpc_account' (unsaid). EventSource/User is who acted (drafted as 'by_user'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login, Login Failed; Authenticate for action Logout; Session: Process for action Start; System: Update for action Configuration Changed.",
     "One rule per value of 'event' (Secret, User, Folder, Session, System, Permission): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -9309,8 +9967,8 @@
     "System/Keywords",
     "System/EventRecordID",
     "System/Channel",
+    "user",
     "action",
-    "by_user",
     "item_id",
     "folder",
     "folder_id",
@@ -9530,7 +10188,7 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "user"
+      "field": "by_user"
      },
      {
       "path": "EventSource/SessionId",
@@ -9568,7 +10226,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -9612,8 +10270,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -9656,7 +10314,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -9700,8 +10358,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -9766,13 +10424,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9846,13 +10504,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -9909,6 +10567,7 @@
    "notes": [
     "'EventData/Data' holds key/value pairs: 14 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
+    "Records hold several user fields: 'user' (unsaid), 'by_user' (actor). EventSource/User is who acted (drafted as 'by_user'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login Failed, Login; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -9921,8 +10580,8 @@
     "System/Keywords",
     "System/EventRecordID",
     "System/Channel",
+    "user",
     "action",
-    "by_user",
     "item_id",
     "authentication",
     "client",
@@ -10139,7 +10798,7 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "user"
+      "field": "by_user"
      },
      {
       "path": "EventSource/SessionId",
@@ -10181,7 +10840,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -10225,8 +10884,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -10289,7 +10948,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -10333,8 +10992,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -10404,13 +11063,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -10484,13 +11143,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -10573,6 +11232,8 @@
     "'EventData/Data' holds key/value pairs: 20 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'details' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
+    "Records hold several user fields: 'user' (unsaid), 'by_user' (actor). EventSource/User is who acted (drafted as 'by_user'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
+    "'correlation_id' ties records together (2 of its values are in more than one record): such records may be one change written as several (a value removed and a value added, a request and its response). Each is mapped alone as drafted; keep the id as Data, and if the user wants them as one event, say how they pair before changing the rules.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login Failed, Login; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
@@ -10585,8 +11246,8 @@
     "System/Keywords",
     "System/EventRecordID",
     "System/Channel",
+    "user",
     "action",
-    "by_user",
     "item_id",
     "authentication",
     "client",
@@ -21288,7 +21949,7 @@
      },
      {
       "path": "EventSource/User/Id",
-      "field": "user"
+      "field": "by_user"
      },
      {
       "path": "EventSource/SessionId",
@@ -21326,7 +21987,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -21340,8 +22001,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -21374,7 +22035,7 @@
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
-        "field": "user"
+        "field": "by_user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -21388,8 +22049,8 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -21419,13 +22080,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -21464,13 +22125,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "action",
-        "field": "action"
+        "data_name": "user",
+        "field": "user"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "by_user",
-        "field": "by_user"
+        "data_name": "action",
+        "field": "action"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -21506,14 +22167,15 @@
    ],
    "notes": [
     "'EventData/Data' holds key/value pairs: 10 keys are fields of their own through pairs ('user', 'event', 'action', 'by_user', 'item_id', 'source_ip' ...), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "Records hold several user fields: 'user' (unsaid), 'by_user' (actor). EventSource/User is who acted (drafted as 'by_user'); for each kind, decide which field is the actor and which the user or account acted on, and map that one in the action element (e.g. Authenticate/User, or the object a Create, Update or Delete names), not as Data.",
     "Drafted from the sample's values (check them): User: Authenticate for action Login, Login Failed; Authenticate for action Logout.",
     "One rule per value of 'event' (User, Secret): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "System/Provider/@Name",
     "System/EventID",
+    "user",
     "action",
-    "by_user",
     "item_id",
     "client",
     "secret",

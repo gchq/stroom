@@ -452,7 +452,9 @@ class TestDraftMapping extends DraftFixtures {
                 .filter(f -> ((String) f.get("path")).endsWith("/Data"))
                 .map(f -> f.get("field"))
                 .toList();
-        assertThat(data).contains("by_user", "client").doesNotContain("EventData/Data");
+        // By User acted (EventSource/User); the user acted on is left as Data for the agent to place.
+        assertThat(common(draft).get("EventSource/User/Id").get("field")).isEqualTo("by_user");
+        assertThat(data).contains("user", "client").doesNotContain("EventData/Data");
         final XsltGenerator.Generated result = generate(decided(m), SCHEMA, "4.1.0");
         assertThat(result.ok()).as("%s", result.problems()).isTrue();
         // The keys alike are one function, called with the key as the text writes it.

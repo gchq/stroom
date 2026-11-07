@@ -104,8 +104,10 @@ class TestDraftedEvents extends XsltRuns {
         all.get(3).iterElements(EVT, "Data").forEach(d -> values.put(d.get("Name"), d.get("Value")));
         // A dash inside a value stays (only one before another key parts them), and a value stops before (Item
         // Id: ...).
+        // By User acted: the event's user; the user named (acted on) is Data.
+        assertThat(text(all.get(3), "EventSource/User/Id")).isEqualTo("domain.com\\riley.chen");
         assertThat(values).containsEntry("secret", "Firewall - Edge Admin")
-                .containsEntry("by_user", "domain.com\\riley.chen")
+                .containsEntry("user", "domain.com\\Chen, Riley")
                 .containsEntry("item_id", "224")
                 .containsEntry("action", "View");
     }
