@@ -308,6 +308,8 @@ class TestSurveyFeedTool {
         assertThat(login.get("count")).isEqualTo(2);
         assertThat(login.get("share_percent")).isEqualTo(66.7);
         assertThat(login.get("new")).isEqualTo(true);
+        // The kind's other record too, its values differing (work package E9).
+        assertThat((List<Object>) login.get("more_examples")).hasSize(1).doesNotContain(login.get("example"));
         assertThat((List<?>) first.get("locations")).hasSize(3);
         final Map<?, ?> doc = (Map<?, ?>) first.get("survey_doc");
         assertThat(doc.get("name")).isEqualTo("ACME-VPN - Survey");

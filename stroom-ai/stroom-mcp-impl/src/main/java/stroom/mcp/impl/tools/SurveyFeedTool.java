@@ -103,6 +103,10 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     static final int SPLIT_MORE = 4;
     /// The most characters in a window.
     static final int WINDOW_CHARS = 250_000;
+    // Further examples a shape shows where they differ, for how many shapes, and how long each.
+    private static final int MORE_EXAMPLES = 2;
+    private static final int SHAPES_WITH_MORE = 20;
+    private static final int MORE_EXAMPLE_CHARS = 300;
     // Formats of one record a line, read from a window as from the head; not XML, a JSON document, or records of
     // several lines, whose records a window can't be started in.
     private static final Set<String> WINDOWED = Set.of(RecordSplitter.DELIMITED, RecordSplitter.JSON_LINES,
@@ -810,6 +814,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                          final Map<String, Long> counts,
                                                          final Map<String, String> drop) {
         final List<Map<String, Object>> shown = new ArrayList<>();
+        int withMore = 0;
         for (final Map<String, Object> shape : found.subList(0, Math.min(60, found.size()))) {
             final String signature = signature(shape);
             final List<Long> streams = (List<Long>) shape.get("streams");
@@ -822,6 +827,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                             ? null
                             : head(String.valueOf(examples.getFirst().get("text")), 500),
                     "locations", examples.stream().map(example -> example.get("location")).toList());
+            // More of the shape's records where their text differs (work package E9: the agent classifies a kind
+            // better from several of its records), for the commonest shapes, kept short.
+            final List<String> more = examples.stream().skip(1)
+                    .map(example -> String.valueOf(example.get("text")))
+                    .filter(text -> !text.equals(String.valueOf(examples.getFirst().get("text"))))
+                    .distinct()
+                    .limit(MORE_EXAMPLES)
+                    .map(text -> head(text, MORE_EXAMPLE_CHARS))
+                    .toList();
+            if (!more.isEmpty() && withMore < SHAPES_WITH_MORE) {
+                entry.put("more_examples", more);
+                withMore++;
+            }
             if (drop.containsKey(signature)) {
                 entry.put("handling", "drop");
                 entry.put("reason", drop.get(signature));
