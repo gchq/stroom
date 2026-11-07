@@ -526,6 +526,51 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return out;
     }
 
+    /// `classify_kinds` (the plan's classify step) answered as a user would who confirms, for each kind, what the
+    /// draft itself makes of it: its action element and Action. For tests of what follows, whose drafts stay as they
+    /// were.
+    ///
+    /// @param build   The build.
+    /// @param streams The sample streams.
+    /// @return The last classify_kinds answer (its `next` the plan's following step).
+    Map<String, Object> classifiedAsDrafted(final String build, final List<?> streams) {
+        final Map<String, Object> listed = json("classify_kinds", args("build", build, "stream_ids", streams));
+        final List<Map<String, Object>> kinds = list(listed, "to_classify");
+        if (kinds.isEmpty()) {
+            return listed;
+        }
+        final Map<String, Object> draft = json("draft_translation_mapping", args("stream_ids", streams));
+        final List<Map<String, Object>> rules = list(map(draft, "mapping"), "events");
+        final List<Map<String, Object>> proposals = new ArrayList<>();
+        for (final Map<String, Object> kind : kinds) {
+            final Map<String, Object> proposal = new LinkedHashMap<>();
+            proposal.put("field", kind.get("field"));
+            proposal.put("value", kind.get("value"));
+            proposal.put("description", String.valueOf(kind.get("value")));
+            proposal.put("event_detail", "Unknown");
+            proposal.put("from_user", true);
+            for (final Map<String, Object> rule : rules) {
+                final boolean forKind = list(rule, "when").stream()
+                        .anyMatch(c -> kind.get("field").equals(c.get("field"))
+                                       && kind.get("value").equals(String.valueOf(c.get("equals"))));
+                if (!forKind) {
+                    continue;
+                }
+                for (final Map<String, Object> field : list(rule, "fields")) {
+                    final String[] path = String.valueOf(field.get("path")).split("/");
+                    if (path.length > 2 && "EventDetail".equals(path[0])) {
+                        proposal.put("event_detail", path[1]);
+                        if ("Action".equals(path[path.length - 1]) && field.get("value") != null) {
+                            proposal.put("action", field.get("value"));
+                        }
+                    }
+                }
+            }
+            proposals.add(proposal);
+        }
+        return json("classify_kinds", args("build", build, "proposals", proposals));
+    }
+
     /// `create_processor_filter` for sample streams, Stroom's processing run as its job would ([#processAll]), and
     /// `wait_for_processing`.
     ///

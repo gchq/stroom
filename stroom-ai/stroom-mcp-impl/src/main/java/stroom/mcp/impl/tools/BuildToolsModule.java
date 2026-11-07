@@ -61,6 +61,7 @@ public class BuildToolsModule extends AbstractModule {
                 .addBinding(CreateFeedTool.class)
                 .addBinding(UploadSampleTool.class)
                 .addBinding(RecordSourceNotesTool.class)
+                .addBinding(ClassifyKindsTool.class)
                 .addBinding(CreateProcessorFilterTool.class)
                 .addBinding(SetProcessorFilterEnabledTool.class)
                 .addBinding(ReprocessStreamsTool.class)

@@ -66,6 +66,8 @@ public class Consent {
 
     /// The most characters a form's message holds.
     public static final int FORM_MESSAGE_LIMIT = 600;
+    /// The key [#review] gives the free text under.
+    public static final String REVIEW_TEXT = "_text";
     // The most a form's message runs to with its documents' links, well inside what a form may hold (2,000).
     private static final int LINKED_MESSAGE_LIMIT = 1_500;
     // Characters of one detail's value in a form.
@@ -215,6 +217,70 @@ public class Consent {
             throw new ToolRefusal("The user made no choice: " + intro);
         }
         return Optional.of(chosen);
+    }
+
+    /// Proposals put to the user in one form: a yes/no for each item (its title, and a description that may hold a
+    /// table), and one free-text field.
+    ///
+    /// @param call    The call asking.
+    /// @param context The call's context.
+    /// @param action  The tool asking, e.g. `classify_kinds`.
+    /// @param intro   What the form is about, its message.
+    /// @param items   The yes/no items by key, in the order shown.
+    /// @param text    The free-text field's title.
+    /// @return Each item's answer by key, and the free text (blank when none) under [#REVIEW_TEXT]; empty when the
+    /// session can't show a form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form.
+    public Optional<Map<String, Object>> review(final ToolCall call,
+                                                final ToolCallContext context,
+                                                final String action,
+                                                final String intro,
+                                                final Map<String, Editable> items,
+                                                final String text) {
+        if (NullSafe.isEmptyMap(items) || !context.userQuestions().canAsk()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        final Map<String, String> fieldKeys = new LinkedHashMap<>();
+        items.forEach((key, item) -> {
+            final String fieldKey = "i" + (fieldKeys.size() + 1);
+            fieldKeys.put(fieldKey, key);
+            final Map<String, Object> field = new LinkedHashMap<>();
+            field.put("type", "boolean");
+            field.put("title", heading(item.title()));
+            if (NullSafe.isNonBlankString(item.proposed())) {
+                field.put("description", item.proposed());
+            }
+            field.put("default", true);
+            properties.put(fieldKey, field);
+        });
+        final Map<String, Object> textField = new LinkedHashMap<>();
+        textField.put("type", "string");
+        textField.put("title", heading(text));
+        properties.put("text", textField);
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("required", List.copyOf(fieldKeys.keySet()));
+        schema.put("properties", properties);
+        if (unshowable(context, action, intro, schema)) {
+            return Optional.empty();
+        }
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + items.keySet()).substring(0, 16);
+        final ElicitResult answer = context.userQuestions().ask(call.name(),
+                UserQuestions.formCallId(call.id(), "review-" + digest), intro, schema);
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
+                    "declined", false);
+            throw new ToolRefusal("The user declined: " + heading(intro));
+        }
+        final Map<String, Object> content = NullSafe.map(answer.content());
+        final Map<String, Object> answers = new LinkedHashMap<>();
+        fieldKeys.forEach((fieldKey, key) -> answers.put(key, Boolean.TRUE.equals(content.get(fieldKey))
+                                                              || "true".equals(String.valueOf(content.get(fieldKey)))));
+        answers.put(REVIEW_TEXT, NullSafe.trim(NullSafe.get(content.get("text"), String::valueOf)));
+        auditLogProvider.get().processed(context.session(), null, "review", action + ": " + heading(intro),
+                "answered: " + answers, true);
+        return Optional.of(answers);
     }
 
     // A form too large to show is asked in the chat instead, as when the session can't show forms: shown, it would
