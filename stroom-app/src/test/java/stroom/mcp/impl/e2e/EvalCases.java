@@ -54,7 +54,8 @@ final class EvalCases {
             "41_java_multiline_app", "42_csv_quoted_newlines_tickets", "43_syslog_csv_palo_alto_traffic",
             "44_custom_tilde_delimited", "45_jsonl_gelf", "46_jsonl_ecs_input", "47_kv_fortios_native",
             "48_jsonl_damaged_lines", "49_jsonl_soap_payload", "50_kv_mail_repeated_keys", "51_kv_unicode_ansi",
-            "52_postgres_multiline_sql", "53_cri_container_partial_lines");
+            "52_postgres_multiline_sql", "53_cri_container_partial_lines", "54_jsonl_session_times",
+            "55_kv_two_event_times");
 
     // The Secret Server export is made of case 35's records.
     private static final String SECRET_SERVER_KINDS = "35_xml_fragments_secretserver_messages";
