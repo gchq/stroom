@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -75,6 +76,10 @@ public final class DraftMapping {
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
     private static final int MAX_RULES = 12;
+    // The fields a CEF or LEEF header names each kind of event in, best first: the format's own, so taken before a
+    // field whose name only looks like a kind's (seen: NetScaler's CEF split by act, blocked or not, rather than by
+    // its name, APPFW_SQL...).
+    private static final List<String> HEADER_KINDS = List.of("cef_name", "cef_signature_id", "leef_event_id");
     /// The draft's key for the variants whose times have no date and no header giving it: `field`, `variant_field`
     /// and `variants` (each variant's time format, e.g. `HH:mm:ss.SSS`), for the user to say where the date comes
     /// from.
@@ -1113,11 +1118,32 @@ public final class DraftMapping {
                     .orElse(null);
         }
 
-        private Kinds kinds() {
-            String naming = names.stream()
-                    .filter(n -> !taken.contains(n) && namesKinds(n) && !oneNumber(n))
-                    .findFirst()
+        // The CEF or LEEF header field with the most kinds (more than one, no more than rules are drafted for).
+        private String headerKinds() {
+            return HEADER_KINDS.stream()
+                    .filter(n -> names.contains(n) && !taken.contains(n))
+                    .filter(n -> {
+                        final int count = kindCount(n);
+                        return count > 1 && count <= MAX_RULES;
+                    })
+                    .max(Comparator.comparingInt(this::kindCount))
                     .orElse(null);
+        }
+
+        private int kindCount(final String name) {
+            final Set<String> kinds = new HashSet<>(values.get(name));
+            kinds.removeAll(NIL);
+            return kinds.size();
+        }
+
+        private Kinds kinds() {
+            String naming = headerKinds();
+            if (naming == null) {
+                naming = names.stream()
+                        .filter(n -> !taken.contains(n) && namesKinds(n) && !oneNumber(n))
+                        .findFirst()
+                        .orElse(null);
+            }
             if (naming == null) {
                 naming = names.stream().filter(n -> !taken.contains(n) && namesKinds(n)).findFirst().orElse(null);
             }

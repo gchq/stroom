@@ -3684,16 +3684,16 @@
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "act"
+      "field": "cef_name"
      }
     ],
     "events": [
      {
-      "name": "login",
+      "name": "user_authenticated",
       "when": [
        {
-        "field": "act",
-        "equals": "login"
+        "field": "cef_name",
+        "equals": "User authenticated"
        }
       ],
       "fields": [
@@ -3732,13 +3732,13 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -3748,8 +3748,71 @@
       ]
      },
      {
-      "name": "permitted",
+      "name": "authentication_failed",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "Authentication failed"
+       }
+      ],
+      "fields": [
+       {
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
+       },
+       {
+        "path": "EventDetail/Authenticate/User/Id",
+        "field": "suser"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "pri",
+        "field": "pri"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "cef_version",
+        "field": "cef_version"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "cef_vendor",
+        "field": "cef_vendor"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "cef_device_version",
+        "field": "cef_device_version"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "cef_signature_id",
+        "field": "cef_signature_id"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "cef_severity",
+        "field": "cef_severity"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "act",
+        "field": "act"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "outcome",
+        "field": "outcome"
+       }
+      ]
+     },
+     {
+      "name": "web_request_allowed_permitted",
+      "when": [
+       {
+        "field": "cef_name",
+        "equals": "Web request allowed"
+       },
        {
         "field": "act",
         "equals": "allow"
@@ -3795,11 +3858,6 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        },
@@ -3816,8 +3874,12 @@
       ]
      },
      {
-      "name": "denied",
+      "name": "web_request_blocked_denied",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "Web request blocked"
+       },
        {
         "field": "act",
         "equals": "block"
@@ -3863,11 +3925,6 @@
        },
        {
         "path": "EventDetail/Network/Deny/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Network/Deny/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        },
@@ -3884,11 +3941,11 @@
       ]
      },
      {
-      "name": "quarantine",
+      "name": "malware_detected",
       "when": [
        {
-        "field": "act",
-        "equals": "quarantine"
+        "field": "cef_name",
+        "equals": "Malware detected"
        }
       ],
       "fields": [
@@ -3919,13 +3976,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -3940,8 +3997,12 @@
       ]
      },
      {
-      "name": "logout",
+      "name": "user_logged_out_logoff",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "User logged out"
+       },
        {
         "field": "act",
         "equals": "logout"
@@ -3983,11 +4044,6 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        }
@@ -4023,13 +4079,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -4076,18 +4132,19 @@
    "format": "cef",
    "records": 6,
    "kinds": [
-    "login",
-    "allow",
-    "block",
-    "quarantine",
-    "logout"
+    "User authenticated",
+    "Authentication failed",
+    "Web request allowed",
+    "Web request blocked",
+    "Malware detected",
+    "User logged out"
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
-    "Drafted from the sample's values (check them): allow: Network/Permit for act allow; block: Network/Deny for act block.",
-    "One rule per value of 'act' (login, allow, block, quarantine, logout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
+    "Drafted from the sample's values (check them): Web request allowed: Network/Permit for act allow; Web request blocked: Network/Deny for act block; User logged out: Authenticate for act logout.",
+    "One rule per value of 'cef_name' (User authenticated, Authentication failed, Web request allowed, Web request blocked, Malware detected, User logged out): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
    ],
    "unmapped_fields": [
     "pri",
@@ -4095,8 +4152,8 @@
     "cef_vendor",
     "cef_device_version",
     "cef_signature_id",
-    "cef_name",
     "cef_severity",
+    "act",
     "outcome",
     "request",
     "cat",
@@ -10593,16 +10650,16 @@
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "act"
+      "field": "cef_name"
      }
     ],
     "events": [
      {
-      "name": "login",
+      "name": "user_authenticated",
       "when": [
        {
-        "field": "act",
-        "equals": "login"
+        "field": "cef_name",
+        "equals": "User authenticated"
        }
       ],
       "fields": [
@@ -10641,13 +10698,13 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -10657,8 +10714,12 @@
       ]
      },
      {
-      "name": "permitted",
+      "name": "web_request_allowed_permitted",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "Web request allowed"
+       },
        {
         "field": "act",
         "equals": "allow"
@@ -10701,11 +10762,6 @@
         "path": "EventDetail/Network/Permit/Data",
         "data_name": "cef_signature_id",
         "field": "cef_signature_id"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
@@ -10754,13 +10810,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -10797,15 +10853,15 @@
    "format": "cef",
    "records": 6,
    "kinds": [
-    "login",
-    "allow"
+    "User authenticated",
+    "Web request allowed"
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
-    "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
-    "One rule per value of 'act' (login, allow), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "Drafted from the sample's values (check them): Web request allowed: Network/Permit for act allow.",
+    "One rule per value of 'cef_name' (User authenticated, Web request allowed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
     "pri",
@@ -10813,8 +10869,8 @@
     "cef_vendor",
     "cef_device_version",
     "cef_signature_id",
-    "cef_name",
     "cef_severity",
+    "act",
     "outcome",
     "request",
     "cat"
@@ -10908,13 +10964,17 @@
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "act"
+      "field": "cef_name"
      }
     ],
     "events": [
      {
-      "name": "permitted",
+      "name": "web_request_allowed_permitted",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "Web request allowed"
+       },
        {
         "field": "act",
         "equals": "allow"
@@ -10960,11 +11020,6 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Network/Permit/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        },
@@ -10981,11 +11036,11 @@
       ]
      },
      {
-      "name": "login",
+      "name": "user_authenticated",
       "when": [
        {
-        "field": "act",
-        "equals": "login"
+        "field": "cef_name",
+        "equals": "User authenticated"
        }
       ],
       "fields": [
@@ -11024,13 +11079,13 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -11069,13 +11124,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -11112,15 +11167,15 @@
    "format": "cef",
    "records": 150,
    "kinds": [
-    "allow",
-    "login"
+    "Web request allowed",
+    "User authenticated"
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
-    "Drafted from the sample's values (check them): allow: Network/Permit for act allow.",
-    "One rule per value of 'act' (allow, login), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "Drafted from the sample's values (check them): Web request allowed: Network/Permit for act allow.",
+    "One rule per value of 'cef_name' (Web request allowed, User authenticated), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
     "pri",
@@ -11128,8 +11183,8 @@
     "cef_vendor",
     "cef_device_version",
     "cef_signature_id",
-    "cef_name",
     "cef_severity",
+    "act",
     "outcome",
     "request",
     "cat"
@@ -25704,13 +25759,17 @@
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "act"
+      "field": "cef_name"
      }
     ],
     "events": [
      {
-      "name": "login",
+      "name": "user_logged_in_logon",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "User logged in"
+       },
        {
         "field": "act",
         "equals": "login"
@@ -25747,19 +25806,18 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        }
       ]
      },
      {
-      "name": "logout",
+      "name": "user_logged_out_logoff",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "User logged out"
+       },
        {
         "field": "act",
         "equals": "logout"
@@ -25796,61 +25854,57 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        }
       ]
      },
      {
-      "name": "alert",
+      "name": "login_failed",
       "when": [
        {
-        "field": "act",
-        "equals": "failed"
+        "field": "cef_name",
+        "equals": "Login failed"
        }
       ],
       "fields": [
        {
-        "path": "EventDetail/Alert/Type",
-        "field": "act",
-        "map": {
-         "failed": "Error"
-        }
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/User/Id",
+        "field": "suser"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_version",
         "field": "cef_version"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_vendor",
         "field": "cef_vendor"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_device_version",
         "field": "cef_device_version"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_signature_id",
         "field": "cef_signature_id"
        },
        {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "act",
+        "field": "act"
        }
       ]
      },
@@ -25879,13 +25933,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        }
       ]
      }
@@ -25898,24 +25952,24 @@
    "format": "cef",
    "records": 3,
    "kinds": [
-    "login",
-    "logout",
-    "failed"
+    "User logged in",
+    "User logged out",
+    "Login failed"
    ],
    "notes": [
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "Drafted from the sample's values (check them): failed: Alert for act failed.",
-    "One rule per value of 'act' (login, logout, failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "Drafted from the sample's values (check them): User logged in: Authenticate for act login; User logged out: Authenticate for act logout.",
+    "One rule per value of 'cef_name' (User logged in, User logged out, Login failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
     "cef_version",
     "cef_vendor",
     "cef_device_version",
     "cef_signature_id",
-    "cef_name",
-    "cef_severity"
+    "cef_severity",
+    "act"
    ],
    "fields_seen": [
     "cef_version",
@@ -25979,13 +26033,17 @@
      },
      {
       "path": "EventDetail/TypeId",
-      "field": "act"
+      "field": "cef_name"
      }
     ],
     "events": [
      {
-      "name": "login",
+      "name": "user_logged_in_logon",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "User logged in"
+       },
        {
         "field": "act",
         "equals": "login"
@@ -26027,19 +26085,18 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        }
       ]
      },
      {
-      "name": "logout",
+      "name": "user_logged_out_logoff",
       "when": [
+       {
+        "field": "cef_name",
+        "equals": "User logged out"
+       },
        {
         "field": "act",
         "equals": "logout"
@@ -26081,66 +26138,62 @@
        },
        {
         "path": "EventDetail/Authenticate/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
        }
       ]
      },
      {
-      "name": "alert",
+      "name": "login_failed",
       "when": [
        {
-        "field": "act",
-        "equals": "failed"
+        "field": "cef_name",
+        "equals": "Login failed"
        }
       ],
       "fields": [
        {
-        "path": "EventDetail/Alert/Type",
-        "field": "act",
-        "map": {
-         "failed": "Error"
-        }
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/User/Id",
+        "field": "suser"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "pri",
         "field": "pri"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_version",
         "field": "cef_version"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_vendor",
         "field": "cef_vendor"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_device_version",
         "field": "cef_device_version"
        },
        {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_signature_id",
         "field": "cef_signature_id"
        },
        {
-        "path": "EventDetail/Alert/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
-       },
-       {
-        "path": "EventDetail/Alert/Data",
+        "path": "EventDetail/Authenticate/Data",
         "data_name": "cef_severity",
         "field": "cef_severity"
+       },
+       {
+        "path": "EventDetail/Authenticate/Data",
+        "data_name": "act",
+        "field": "act"
        }
       ]
      },
@@ -26174,13 +26227,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_name",
-        "field": "cef_name"
+        "data_name": "cef_severity",
+        "field": "cef_severity"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "cef_severity",
-        "field": "cef_severity"
+        "data_name": "act",
+        "field": "act"
        }
       ]
      }
@@ -26202,16 +26255,16 @@
    "format": "cef",
    "records": 3,
    "kinds": [
-    "login",
-    "logout",
-    "failed"
+    "User logged in",
+    "User logged out",
+    "Login failed"
    ],
    "notes": [
     "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
-    "Drafted from the sample's values (check them): failed: Alert for act failed.",
-    "One rule per value of 'act' (login, logout, failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
+    "Drafted from the sample's values (check them): User logged in: Authenticate for act login; User logged out: Authenticate for act logout.",
+    "One rule per value of 'cef_name' (User logged in, User logged out, Login failed), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
     "pri",
@@ -26219,8 +26272,8 @@
     "cef_vendor",
     "cef_device_version",
     "cef_signature_id",
-    "cef_name",
-    "cef_severity"
+    "cef_severity",
+    "act"
    ],
    "time_zones": {
     "examples": {

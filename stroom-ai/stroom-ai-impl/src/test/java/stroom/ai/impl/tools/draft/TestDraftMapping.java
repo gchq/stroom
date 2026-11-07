@@ -529,8 +529,31 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
-    void cefNamesTheKindWithItsAct() {
-        assertThat(formatRules("cef").keySet()).contains("login", "logout");
+    void cefNamesTheKindWithItsHeadersName() {
+        assertThat(formatRules("cef").keySet()).contains("user_logged_in_logon", "user_logged_out_logoff",
+                "login_failed");
+    }
+
+    @Test
+    void cefsNameIsTakenForTheKindOverAnActThatSaysWhatWasDone() {
+        // Seen in testing (chat 152): NetScaler's CEF split by act (blocked or not), not by its name.
+        final String text = String.join("\n",
+                "CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|src=10.0.0.1 act=blocked",
+                "CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|src=10.0.0.2 act=not blocked",
+                "CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|src=10.0.0.3 act=transformed",
+                "CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|src=10.0.0.4 act=not blocked") + "\n";
+        final Map<String, Map<String, Object>> rules = rules(draft(List.of(text), ""));
+        assertThat(rules.keySet()).contains("appfw_sql", "appfw_xss", "appfw_starturl")
+                .doesNotContain("blocked", "not_blocked");
+    }
+
+    @Test
+    void cefsNameTheSameInEveryRecordLeavesTheKindToAnotherField() {
+        final String text = String.join("\n",
+                "CEF:0|Acme|Gateway|2.1|100|Access|3|suser=alice act=login",
+                "CEF:0|Acme|Gateway|2.1|100|Access|3|suser=bob act=logout",
+                "CEF:0|Acme|Gateway|2.1|100|Access|3|suser=carol act=login") + "\n";
+        assertThat(rules(draft(List.of(text), "")).keySet()).contains("login", "logout");
     }
 
     @Test
