@@ -125,8 +125,9 @@ class TestClassifyKindsTool {
         final String table = String.valueOf(shown.get("table"));
         assertThat(table).startsWith("### 1. [Acme app] User logon\n\n```\ntime = 2026-11-06T09:00:00Z\n"
                                      + "action = login\n")
-                .contains("```\n\n| Kind | action=login |\n| --- | --- |\n| Confidence | high |\n"
+                .contains("```\n\n| Confidence | high |\n| --- | --- |\n"
                           + "| Action element | Authenticate |\n| Action | Logon |\n| Who acted | user |")
+                .doesNotContain("| Kind |")
                 // No title: the description, cut short; no row for what a proposal doesn't say.
                 .contains("### 3. Records purged")
                 .doesNotContain("| Outcome |");
@@ -167,7 +168,7 @@ class TestClassifyKindsTool {
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 BuildToolCalls.context());
-        assertThat(String.valueOf(shown.get("table"))).contains("| Kind | action=purge |");
+        assertThat(String.valueOf(shown.get("table"))).contains("### 3. Records purged");
         final Map<String, Object> asked = call("{\"build\": \"acme\", \"confirm\": true}", BuildToolCalls.context());
         assertThat(asked).containsEntry("asked", false);
         assertThat(String.valueOf(asked.get("hint"))).contains("from_user: true");

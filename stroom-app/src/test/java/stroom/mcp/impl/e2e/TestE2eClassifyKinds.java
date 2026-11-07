@@ -67,7 +67,8 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final Map<String, Object> shown = json("classify_kinds", args("build", BUILD, "proposals",
                 JsonUtil.readValue(PROPOSALS, List.class)));
         dump("classify_kinds shown", shown);
-        assertThat(String.valueOf(shown.get("table"))).contains("| Kind | action=login |", "```\ntime = ");
+        assertThat(String.valueOf(shown.get("table"))).contains("### 1. A user logged on", "```\ntime = ")
+                .doesNotContain("| Kind |");
 
         // ### Confirmed in a short form: the sure ones accepted together, the low one rejected, and corrected.
         client.answeringWith(this::answer);
@@ -79,7 +80,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         assertThat(answered.get("corrections")).isEqualTo("purge deletes the audit records: Delete, not Alert");
         final ElicitFormRequest form = client.forms().getLast();
         // Plain text only: the form's fields are shown as they are, so no table in it.
-        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false)).contains("action=purge as Delete")
+        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false)).contains("4. Records purged (Delete)")
                 .doesNotContain("|");
         assertThat(form.message()).doesNotContain("|");
 
