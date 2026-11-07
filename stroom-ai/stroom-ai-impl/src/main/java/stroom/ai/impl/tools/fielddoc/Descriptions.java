@@ -412,7 +412,11 @@ public final class Descriptions {
 
     // One note's words: its meaning, and up to eight of its codes.
     private static String said(final Map<String, Object> note) {
-        final String meaning = ToolText.rstrip(text(note.get("meaning")), ".") + ".";
+        // A note from the agent's own knowledge says so, not passed off as the vendor's (work package E7).
+        final String meaning = ToolText.rstrip(text(note.get("meaning")), ".") + ("agent_knowledge".equals(
+                note.get("basis"))
+                ? " (the agent's knowledge, " + text(note.get("confidence")) + " confidence)."
+                : ".");
         if (!JsonValues.truthy(note.get("values")) || !(note.get("values") instanceof final Map<?, ?> codes)) {
             return meaning;
         }

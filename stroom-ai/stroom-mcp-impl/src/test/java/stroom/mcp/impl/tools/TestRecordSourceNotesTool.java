@@ -114,8 +114,8 @@ class TestRecordSourceNotesTool {
         assertThat(noted.get("hint")).isEqualTo("draft_translation_mapping with build= drafts from these notes.");
         final String text = world.body(String.valueOf(noted.get("uuid")));
         assertThat(text).startsWith("# Acme directory source notes\n\nThe directory audit log.\n\n## Field dictionary")
-                .contains("| usr | Account name |  |  | EventSource/User/Id |")
-                .contains("| 4625 | An account failed to log on | Authenticate | Logon failed |")
+                .contains("| usr | Account name |  |  | EventSource/User/Id | documentation |")
+                .contains("| 4625 | An account failed to log on | Authenticate | Logon failed | documentation |")
                 .contains("## Sources\n\n- https://acme.example/audit\n- `Acme directory reference - audit log "
                           + "reference` (kept in Stroom)");
         final Map<String, Object> notes = SourceNotes.readNotes(text);
@@ -241,6 +241,41 @@ class TestRecordSourceNotesTool {
         assertThat(noted.get("hint")).isEqualTo("draft_translation_mapping with build= drafts from these notes; "
                                                 + "events without a field and value (1) cannot become rules: give "
                                                 + "them where the documentation says how a record shows the event.");
+    }
+
+    @Test
+    void theAgentsOwnKnowledgeIsKeptAsSuchAndItsLeastSureNotesPutToTheUserFirst() {
+        // Asked for by the user (work package E7): what the agent knows of a source, said as such, beside the user's
+        // documentation; the notes it is least sure of reviewed first.
+        final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
+                                                    + "\"summary\": \"The directory audit log.\", \"events\": ["
+                                                    + "{\"event\": \"4624\", \"description\": "
+                                                    + "\"An account logged on\", \"event_detail\": "
+                                                    + "\"Authenticate\", \"basis\": \"agent_knowledge\", "
+                                                    + "\"confidence\": \"high\"}, "
+                                                    + "{\"event\": \"4662\", \"description\": "
+                                                    + "\"An operation on an object\", "
+                                                    + "\"basis\": \"agent_knowledge\", \"confidence\": \"low\"}, "
+                                                    + "{\"event\": \"4625\", \"description\": \"A logon failed\"}]}"));
+        assertThat(noted.get("to_review")).isEqualTo(List.of("4662"));
+        final String text = world.body(String.valueOf(noted.get("uuid")));
+        assertThat(text).contains("| 4624 | An account logged on | Authenticate |  | agent knowledge (high) |")
+                .contains("| 4662 | An operation on an object |  |  | agent knowledge (low) |")
+                .contains("| 4625 | A logon failed |  |  | documentation |");
+        // The documentation's notes carry no basis: it is the default.
+        assertThat(((List<?>) SourceNotes.readNotes(text).get("events")).get(2))
+                .isEqualTo(Map.of("event", "4625", "description", "A logon failed"));
+    }
+
+    @Test
+    void aNoteFromTheAgentsKnowledgeSaysHowSureItIs() {
+        final String start = "{\"build\": \"acme\", \"source\": \"A\", \"summary\": \"s\", \"fields\": [{\"field\": "
+                             + "\"x\", \"meaning\": \"m\", ";
+        assertThat(call(start + "\"basis\": \"agent_knowledge\"}]}").text())
+                .isEqualTo("fields[0]: a note from your own knowledge needs confidence 'high', 'medium' or 'low'");
+        assertThat(call(start + "\"basis\": \"guess\"}]}").text())
+                .isEqualTo("fields[0].basis is 'documentation' or 'agent_knowledge', not 'guess'");
+        assertThat(world.created).isEmpty();
     }
 
     @Test
