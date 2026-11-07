@@ -46,7 +46,8 @@ class TestClassifyKindsTool {
             "time=2026-11-06T09:00:19Z action=purge user=alice src=10.0.0.1",
             "time=2026-11-06T09:00:22Z action=login user=bob src=10.0.0.2",
             "time=2026-11-06T09:00:25Z action=logout user=carol src=10.0.0.3")) + "\n";
-    private static final String PROPOSALS = "[{\"field\": \"action\", \"value\": \"login\", \"description\": \"A user "
+    private static final String PROPOSALS = "[{\"field\": \"action\", \"value\": \"login\", \"title\": \"User logon\", "
+                                            + "\"product\": \"Acme app\", \"description\": \"A user "
                                             + "logged on\", \"event_detail\": \"Authenticate\", \"action\": "
                                             + "\"Logon\", \"actor\": \"user\", \"confidence\": \"high\"}, "
                                             + "{\"field\": \"action\", \"value\": \"logout\", \"description\": \"A "
@@ -119,7 +120,16 @@ class TestClassifyKindsTool {
                 "purge is Delete of the audit records"));
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 user.context());
-        assertThat(String.valueOf(shown.get("table"))).contains("| action=login: A user logged on | Authenticate |");
+        // One after another, each a heading, its sample preformatted, and a table of the rows it has (asked for by
+        // the user: one wide table of long descriptions was hard to read).
+        final String table = String.valueOf(shown.get("table"));
+        assertThat(table).startsWith("### 1. [Acme app] User logon\n\n```\ntime = 2026-11-06T09:00:00Z\n"
+                                     + "action = login\n")
+                .contains("```\n\n| Kind | action=login |\n| --- | --- |\n| Confidence | high |\n"
+                          + "| Action element | Authenticate |\n| Action | Logon |\n| Who acted | user |")
+                // No title: the description, cut short; no row for what a proposal doesn't say.
+                .contains("### 3. Records purged")
+                .doesNotContain("| Outcome |");
         assertThat(String.valueOf(shown.get("hint"))).contains("confirm=true");
         assertThat(user.shown()).isEmpty();
         // Then a short form of plain text: the sure ones accepted together (i1), the low one rejected (i2), and a
@@ -157,7 +167,7 @@ class TestClassifyKindsTool {
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 BuildToolCalls.context());
-        assertThat(String.valueOf(shown.get("table"))).contains("| action=purge: Records purged | Delete |");
+        assertThat(String.valueOf(shown.get("table"))).contains("| Kind | action=purge |");
         final Map<String, Object> asked = call("{\"build\": \"acme\", \"confirm\": true}", BuildToolCalls.context());
         assertThat(asked).containsEntry("asked", false);
         assertThat(String.valueOf(asked.get("hint"))).contains("from_user: true");

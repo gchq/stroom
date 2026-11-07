@@ -89,7 +89,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     // The notes block's proposals classify_kinds keeps between showing them in the chat and asking the user.
     static final String PROPOSED = "proposed";
     // The block keys classify_kinds keeps, carried from one write of the notes to the next.
-    private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED);
+    private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED, ClassifyKindsTool.SAMPLES);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;

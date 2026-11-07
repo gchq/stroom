@@ -67,7 +67,7 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final Map<String, Object> shown = json("classify_kinds", args("build", BUILD, "proposals",
                 JsonUtil.readValue(PROPOSALS, List.class)));
         dump("classify_kinds shown", shown);
-        assertThat(String.valueOf(shown.get("table"))).contains("action=login: A user logged on");
+        assertThat(String.valueOf(shown.get("table"))).contains("| Kind | action=login |", "```\ntime = ");
 
         // ### Confirmed in a short form: the sure ones accepted together, the low one rejected, and corrected.
         client.answeringWith(this::answer);
