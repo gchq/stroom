@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [v7.14]
+
+* Wildcard values for Elasticsearch `keyword` fields are now matched **case-sensitively**, so `Admin*` no
+  longer matches `admin01`. Previously wildcards always ignored case, which is slow on large indices. Exact
+  values and regular expressions were already case-sensitive, so all three now behave the same.
+
+  **Review dashboard and query terms that use wildcards on `keyword` fields.** In a dashboard, open the
+  term's query options (the cog to the right of the value) and tick *Case-insensitive* where case should be
+  ignored. StroomQL queries have no way to match case-insensitively yet.
+
+* Elasticsearch fields with the `wildcard` mapping type are now searched with term-level queries, the same as
+  `keyword` fields, rather than as analysed text. A value is matched against the whole field value, so terms
+  that relied on matching a single word need a wildcard pattern instead, e.g. `*powershell*` rather than
+  `powershell`.
+
+* The Elasticsearch term suggestions shown while typing a term's value have been replaced by a value picker
+  (the button to the right of the value) that lists the field's most common values. The
+  `stroom.elastic.search.suggestions.enabled` property now turns the value picker on and off.
+
 ## [v7.13]
 
 * Account email addresses must now be unique, so that the internal identity provider's 'Forgot password'

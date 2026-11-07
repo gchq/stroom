@@ -28,6 +28,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.security.api.SecurityContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -99,7 +100,8 @@ class TestElasticSearchProvider {
                 securityContext,
                 null,
                 null,
-                null);
+                null,
+                ElasticSuggestConfig::new);
     }
 
     @Test
@@ -446,6 +448,92 @@ class TestElasticSearchProvider {
                         tuple("Message.keyword", FieldType.KEYWORD, true));
         assertThat(elasticSearchProvider.getDataSourceFields(createIndex()).getFirst().getConditionSet())
                 .isEqualTo(ConditionSet.ELASTIC_TEXT);
+    }
+
+    @Test
+    void testGetDataSourceFields_queryOptionSets() throws IOException {
+        givenMapping("""
+                {
+                  "Constant": { "type": "constant_keyword", "value": "foo" },
+                  "Count": { "type": "long" },
+                  "Message": { "type": "match_only_text" },
+                  "Name": { "type": "keyword" },
+                  "Pattern": { "type": "wildcard" },
+                  "Title": { "type": "text" },
+                  "Version": { "type": "version" }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::getFldName, QueryField::getQueryOptionSet)
+                .containsExactlyInAnyOrder(
+                        tuple("Constant", null),
+                        tuple("Count", null),
+                        tuple("Message", ElasticQueryOptionSets.TEXT),
+                        tuple("Name", ElasticQueryOptionSets.KEYWORD),
+                        tuple("Pattern", ElasticQueryOptionSets.KEYWORD),
+                        tuple("Title", ElasticQueryOptionSets.TEXT),
+                        tuple("Version", null));
+    }
+
+    @Test
+    void testGetDataSourceFields_supportsTopValues() throws IOException {
+        givenMapping("""
+                {
+                  "Count": { "type": "long" },
+                  "Flag": { "type": "boolean" },
+                  "Ip": { "type": "ip" },
+                  "Message": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": { "type": "keyword" }
+                    }
+                  },
+                  "Name": { "type": "keyword" },
+                  "Pattern": { "type": "wildcard" },
+                  "Ratio": { "type": "double" },
+                  "Time": { "type": "date" },
+                  "Title": { "type": "text" },
+                  "Users": {
+                    "type": "nested",
+                    "properties": {
+                      "Name": { "type": "keyword" }
+                    }
+                  }
+                }""");
+
+        assertThat(elasticSearchProvider.getDataSourceFields(createIndex()))
+                .filteredOn(QueryField::supportsTopValues)
+                .extracting(QueryField::getFldName)
+                // A field within a nested object lists its values, but the nested object itself has none
+                .containsExactlyInAnyOrder(
+                        "Count", "Flag", "Ip", "Message", "Message.keyword", "Name", "Pattern", "Users.Name");
+    }
+
+    @Test
+    void testGetDataSourceFields_noTopValuesWhenValuePickerDisabled() throws IOException {
+        givenMapping("""
+                {
+                  "Name": { "type": "keyword" }
+                }""");
+        final ElasticSearchProvider provider = new ElasticSearchProvider(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                elasticClientCache,
+                elasticClusterStore,
+                elasticIndexStore,
+                securityContext,
+                null,
+                null,
+                null,
+                () -> new ElasticSuggestConfig(false, null));
+
+        assertThat(provider.getDataSourceFields(createIndex()))
+                .extracting(QueryField::supportsTopValues)
+                .containsExactly(false);
     }
 
     @Test

@@ -45,6 +45,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.search.elastic.shared.UnsupportedTypeException;
+import stroom.search.elastic.suggest.ElasticSuggestConfig;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -100,6 +101,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private final ElasticSearchExecutor elasticSearchExecutor;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final DocFinder docFinder;
+    private final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider;
 
     @Inject
     public ElasticSearchProvider(
@@ -115,7 +117,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final SecurityContext securityContext,
             final ElasticSearchExecutor elasticSearchExecutor,
             final FieldInfoResultPageFactory fieldInfoResultPageFactory,
-            final DocFinder docFinder) {
+            final DocFinder docFinder,
+            final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider) {
         this.elasticIndexCache = elasticIndexCache;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -126,6 +129,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         this.elasticSearchExecutor = elasticSearchExecutor;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.docFinder = docFinder;
+        this.elasticSuggestConfigProvider = elasticSuggestConfigProvider;
     }
 
     @Override
@@ -232,6 +236,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     @Override
     public List<QueryField> getDataSourceFields(final ElasticIndexDoc index) {
         final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
+        // The value picker is only offered when it is enabled
+        final boolean valuePickerEnabled = Boolean.TRUE.equals(elasticSuggestConfigProvider.get().getEnabled());
 
         return fieldMappings
                 .entrySet()
@@ -257,8 +263,16 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final FieldType elasticFieldType =
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
+                        final boolean supportsTopValues = valuePickerEnabled && ElasticTopValues.getAggregationField(
+                                fieldName,
+                                nativeType,
+                                name -> getNativeType(name, fieldMappings)) != null;
                         return toDataSourceField(
-                                elasticFieldType, nativeType, fieldName, fieldIsIndexed(effectiveFieldMeta));
+                                elasticFieldType,
+                                nativeType,
+                                fieldName,
+                                fieldIsIndexed(effectiveFieldMeta),
+                                supportsTopValues);
                     } catch (final UnsupportedTypeException e) {
                         LOGGER.debug(e::getMessage, e);
                         return null;
@@ -277,7 +291,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private QueryField toDataSourceField(final FieldType elasticIndexFieldType,
                                          final String nativeType,
                                          final String fieldName,
-                                         final Boolean isIndexed)
+                                         final Boolean isIndexed,
+                                         final boolean supportsTopValues)
             throws IllegalArgumentException {
         final ConditionSet conditionSet = getConditionSet(elasticIndexFieldType, nativeType);
         return QueryField
@@ -286,7 +301,23 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .fldType(elasticIndexFieldType)
                 .conditionSet(conditionSet)
                 .queryable(isIndexed && !FieldType.NESTED.equals(elasticIndexFieldType))
+                .queryOptionSet(ElasticQueryOptionSets.get(nativeType))
+                .supportsTopValues(supportsTopValues
+                        ? Boolean.TRUE
+                        : null)
                 .build();
+    }
+
+    /// Returns the mapping type of a field, resolving aliases, or null if there is no such field.
+    private String getNativeType(final String fieldName, final Map<String, FieldMapping> fieldMappings) {
+        final FieldMapping fieldMeta = fieldMappings.get(fieldName);
+        if (fieldMeta == null) {
+            return null;
+        }
+        final FieldMapping effectiveFieldMeta = resolveEffectiveFieldMapping(fieldName, fieldMeta, fieldMappings);
+        return effectiveFieldMeta == null
+                ? null
+                : getFieldTypeFromMapping(fieldName, effectiveFieldMeta);
     }
 
     /**
