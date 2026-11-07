@@ -86,6 +86,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String PENDING = "pending";
     // The notes block's fields of the sample's records (classify_kinds), for checking the fields its proposals name.
     static final String RECORD_FIELDS = "record_fields";
+    // The notes block's proposals classify_kinds keeps between showing them in the chat and asking the user.
+    static final String PROPOSED = "proposed";
+    // The block keys classify_kinds keeps, carried from one write of the notes to the next.
+    private static final List<String> CLASSIFY_KEYS = List.of(RECORD_FIELDS, PROPOSED);
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -240,7 +244,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final DocumentationDoc notesDoc = written(context.session(), contents, build, notesName,
                 notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames),
                         JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING),
-                        JsonValues.strings(earlier.get(RECORD_FIELDS))));
+                        carried(earlier, Map.of())));
         final long usable = events.stream()
                 .filter(event -> JsonValues.truthy(event.get("field")) && JsonValues.truthy(event.get("value")))
                 .count();
@@ -350,14 +354,15 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// @param source  The source's name (its notes doc is `<source> source notes`).
     /// @param events  The events, each checked by [#checkedEvents].
     /// @param pending The kinds still to classify, as field=value (none when every kind is settled).
-    /// @param recordFields The fields of the sample's records, or null to keep those recorded before.
+    /// @param kept    Block keys classify_kinds keeps (record_fields, proposed), each replacing the earlier one; a
+    ///                key given as an empty list removes it; the others are carried over.
     /// @return The notes doc's `uuid` and `name`.
     Map<String, Object> recordClassified(final ToolCallContext context,
                                          final String build,
                                          final String source,
                                          final List<Map<String, Object>> events,
                                          final List<String> pending,
-                                         final List<String> recordFields) {
+                                         final Map<String, Object> kept) {
         final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
         guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
         final String notesName = source + SourceNotes.NOTES_SUFFIX;
@@ -369,12 +374,24 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                 "The kinds of event the agent classified and the user confirmed.");
         final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
                 summary, fields, merged, JsonValues.strings(earlier.get("references")),
-                JsonValues.strings(earlier.get("documents")), pending, true, recordFields == null
-                        ? JsonValues.strings(earlier.get(RECORD_FIELDS))
-                        : recordFields));
+                JsonValues.strings(earlier.get("documents")), pending, true, carried(earlier, kept)));
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", doc.getUuid());
         out.put("name", doc.getName());
+        return out;
+    }
+
+    // The classify_kinds keys of the earlier notes, with those given in their place; an empty list removes one.
+    private static Map<String, Object> carried(final Map<String, Object> earlier, final Map<String, Object> given) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        for (final String key : CLASSIFY_KEYS) {
+            final Object value = given.containsKey(key)
+                    ? given.get(key)
+                    : earlier.get(key);
+            if (value instanceof final List<?> list && !list.isEmpty()) {
+                out.put(key, value);
+            }
+        }
         return out;
     }
 
@@ -512,7 +529,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<Map<String, Object>> events,
                             final List<String> references,
                             final List<String> keptNames) {
-        return notesText(source, summary, fields, events, references, keptNames, List.of(), false, List.of());
+        return notesText(source, summary, fields, events, references, keptNames, List.of(), false, Map.of());
     }
 
     /// As [#notesText(String, String, List, List, List, List)], with the kinds still to classify.
@@ -525,7 +542,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// @param keptNames  The names of the source documents kept in the build.
     /// @param pending    The kinds still to classify (classify_kinds), as field=value.
     /// @param classified Whether classify_kinds has looked at the kinds (pending then says what is left).
-    /// @param recordFields The fields of the sample's records classify_kinds read, or none.
+    /// @param kept       Block keys classify_kinds keeps (record_fields, proposed).
     /// @return The document's text.
     static String notesText(final String source,
                             final String summary,
@@ -535,7 +552,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<String> keptNames,
                             final List<String> pending,
                             final boolean classified,
-                            final List<String> recordFields) {
+                            final Map<String, Object> kept) {
         final List<String> lines = new ArrayList<>(List.of("# " + source + " source notes", "", summary.strip(), ""));
         if (!fields.isEmpty()) {
             lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path "
@@ -564,7 +581,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (!references.isEmpty() || !keptNames.isEmpty()) {
             lines.addAll(List.of("## Sources", ""));
             references.forEach(reference -> lines.add("- " + reference));
-            keptNames.forEach(kept -> lines.add("- `" + kept + "` (kept in Stroom)"));
+            keptNames.forEach(name -> lines.add("- `" + name + "` (kept in Stroom)"));
         }
         final Map<String, Object> block = new LinkedHashMap<>();
         block.put("source", source);
@@ -574,9 +591,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         if (classified) {
             block.put(PENDING, List.copyOf(pending));
         }
-        if (!recordFields.isEmpty()) {
-            block.put(RECORD_FIELDS, List.copyOf(recordFields));
-        }
+        kept.forEach(block::put);
         block.put("fields", fields);
         block.put("events", events);
         block.put("documents", keptNames);
