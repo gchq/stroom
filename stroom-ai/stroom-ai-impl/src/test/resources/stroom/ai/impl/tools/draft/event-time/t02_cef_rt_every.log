@@ -1,0 +1,40 @@
+<134>2026-11-06T09:00:17.048+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:00:15 src=10.0.3.166 act=not blocked
+<134>2026-11-06T09:00:32.266+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:00:30 src=10.0.0.188 act=blocked
+<134>2026-11-06T09:00:39.409+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:00:38 src=10.0.1.127 act=blocked
+<134>2026-11-06T09:00:42.017+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:00:40 src=10.0.3.168 act=not blocked
+<134>2026-11-06T09:00:54.561+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:00:53 src=10.0.0.191 act=blocked
+<134>2026-11-06T09:01:04.184+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:01:02 src=10.0.2.220 act=not blocked
+<134>2026-11-06T09:01:06.813+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:01:05 src=10.0.2.2 act=not blocked
+<134>2026-11-06T09:01:15.071+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:01:13 src=10.0.0.239 act=not blocked
+<134>2026-11-06T09:01:22.225+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:01:21 src=10.0.1.51 act=blocked
+<134>2026-11-06T09:01:44.126+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:01:43 src=10.0.0.159 act=not blocked
+<134>2026-11-06T09:01:52.831+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:01:50 src=10.0.1.132 act=blocked
+<134>2026-11-06T09:02:03.662+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:02:02 src=10.0.3.116 act=not blocked
+<134>2026-11-06T09:02:32.138+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:02:29 src=10.0.1.91 act=not blocked
+<134>2026-11-06T09:02:42.729+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:02:39 src=10.0.1.126 act=blocked
+<134>2026-11-06T09:02:54.043+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:02:52 src=10.0.3.152 act=blocked
+<134>2026-11-06T09:03:20.355+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:03:19 src=10.0.3.232 act=blocked
+<134>2026-11-06T09:03:20.894+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:03:20 src=10.0.0.74 act=blocked
+<134>2026-11-06T09:03:44.881+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:03:42 src=10.0.1.7 act=blocked
+<134>2026-11-06T09:03:54.841+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:03:52 src=10.0.0.108 act=blocked
+<134>2026-11-06T09:04:21.928+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:04:21 src=10.0.3.101 act=blocked
+<134>2026-11-06T09:04:38.254+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:04:35 src=10.0.3.155 act=not blocked
+<134>2026-11-06T09:04:42.932+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:04:42 src=10.0.2.16 act=blocked
+<134>2026-11-06T09:04:46.540+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:04:44 src=10.0.3.172 act=blocked
+<134>2026-11-06T09:04:52.121+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:04:51 src=10.0.2.155 act=blocked
+<134>2026-11-06T09:04:59.258+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:04:56 src=10.0.2.229 act=not blocked
+<134>2026-11-06T09:05:04.826+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:05:02 src=10.0.0.236 act=not blocked
+<134>2026-11-06T09:05:13.177+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:05:11 src=10.0.1.166 act=not blocked
+<134>2026-11-06T09:05:25.985+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:05:24 src=10.0.2.72 act=not blocked
+<134>2026-11-06T09:05:28.206+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:05:26 src=10.0.1.116 act=not blocked
+<134>2026-11-06T09:05:45.650+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:05:44 src=10.0.3.241 act=not blocked
+<134>2026-11-06T09:06:13.048+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:06:11 src=10.0.3.243 act=blocked
+<134>2026-11-06T09:06:19.631+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:06:18 src=10.0.3.145 act=blocked
+<134>2026-11-06T09:06:39.556+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:06:38 src=10.0.1.78 act=not blocked
+<134>2026-11-06T09:06:49.534+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:06:48 src=10.0.3.234 act=blocked
+<134>2026-11-06T09:06:59.442+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:06:58 src=10.0.2.219 act=blocked
+<134>2026-11-06T09:07:07.518+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:07:04 src=10.0.0.141 act=blocked
+<134>2026-11-06T09:07:07.172+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|rt=Nov 06 2026 09:07:05 src=10.0.1.244 act=not blocked
+<134>2026-11-06T09:07:28.433+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:07:27 src=10.0.2.236 act=not blocked
+<134>2026-11-06T09:07:41.674+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_XSS|6|rt=Nov 06 2026 09:07:40 src=10.0.2.104 act=blocked
+<134>2026-11-06T09:07:46.445+00:00 relay1 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_STARTURL|6|rt=Nov 06 2026 09:07:43 src=10.0.1.98 act=not blocked

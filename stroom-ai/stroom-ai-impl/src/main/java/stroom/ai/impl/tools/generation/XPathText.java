@@ -28,11 +28,12 @@ import java.util.stream.Collectors;
 public final class XPathText {
 
     /// Epoch values other than milliseconds, to milliseconds: seconds (a fraction kept), microseconds and
-    /// nanoseconds, cut to the millisecond.
+    /// nanoseconds, cut to the millisecond; and Windows FILETIME (100 ns ticks since 1601-01-01).
     public static final Map<String, String> EPOCH_SCALE = Map.of("epoch_s", "* 1000", "epoch_us", "div 1000",
-            "epoch_ns", "div 1000000");
-    /// The epoch time formats.
-    public static final List<String> EPOCH_FORMATS = List.of("epoch_ms", "epoch_s", "epoch_us", "epoch_ns");
+            "epoch_ns", "div 1000000", "windows_filetime", "div 10000 - 11644473600000");
+    /// The epoch time formats (FILETIME among them: a number, converted as they are).
+    public static final List<String> EPOCH_FORMATS = List.of("epoch_ms", "epoch_s", "epoch_us", "epoch_ns",
+            "windows_filetime");
     /// Transforms worth a function of their own when repeated; lower, upper and trim are one XPath call already.
     public static final List<String> FUNCTION_TRANSFORMS = List.of("strip_domain", "domain", "digits");
 

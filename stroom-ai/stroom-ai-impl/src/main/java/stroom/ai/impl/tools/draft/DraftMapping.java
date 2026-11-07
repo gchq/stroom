@@ -63,9 +63,6 @@ public final class DraftMapping {
     /// What a draft's EventSource/System/Environment says until the user gives it.
     public static final String ENVIRONMENT_PLACEHOLDER = "TODO e.g. Prod";
 
-    private static final Pattern TIME = ignoringCase("^(@?timestamp|time|ts|date_?time|datetime|event_?time|"
-                                                     + "eventtime|created|created_?at|logged_?at|time_?created|"
-                                                     + "occurred|when|_time|rt|system_?time)$");
     private static final Pattern NAMING = ignoringCase("^(event_?type|eventtype|type|event|event_?name|event_?id|"
                                                        + "eventid|action|activity|category|subtype|sub_?type|"
                                                        + "operation|op|logid|log_?type|msg_?id|kind|result_?type|"
@@ -76,6 +73,12 @@ public final class DraftMapping {
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
     private static final int MAX_RULES = 12;
+    /// The draft's key for the kinds (or the whole sample) where two times could each be the event's: each with
+    /// what tells them apart, for the agent to choose from.
+    public static final String TIME_CANDIDATES = "time_candidates";
+    // Records holding a time for it to be put to the agent beside another as the event's.
+    private static final int CANDIDATE_SHARE = 90;
+    private static final String BYTE_ORDER_MARK = String.valueOf((char) 0xFEFF);
     // The fields a CEF or LEEF header names each kind of event in, best first: the format's own, so taken before a
     // field whose name only looks like a kind's (seen: NetScaler's CEF split by act, blocked or not, rather than by
     // its name, APPFW_SQL...).
@@ -543,6 +546,12 @@ public final class DraftMapping {
         private final Set<String> zoneNames = new LinkedHashSet<>();
         // The field holding zone names, for each record's zone to be read from it.
         private String zoneFieldName;
+        // The fields EventTime/TimeCreated is read from, and the time fields that could be the event's (an object's
+        // times aside), best first.
+        private final List<String> chosenTimes = new ArrayList<>();
+        private final List<String> usableTimes = new ArrayList<>();
+        private Set<String> containerFields = Set.of();
+        private final List<Map<String, Object>> timeCandidates = new ArrayList<>();
 
         /// @param read       The sample as the draft reads it.
         /// @param sourceName The source's name.
@@ -619,6 +628,9 @@ public final class DraftMapping {
             result.put("unmapped_fields", rest);
             if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
                 result.put(TIME_ZONES, timeZones(timeExamples, List.copyOf(zoneNames), zoneFieldName));
+            }
+            if (!timeCandidates.isEmpty()) {
+                result.put(TIME_CANDIDATES, timeCandidates);
             }
             result.put("fields_seen", names);
             return result;
@@ -714,8 +726,27 @@ public final class DraftMapping {
                 held.forEach(v -> counted.merge(SampleProfiler.valueType(v), 1, Integer::sum));
                 types.put(name, held.isEmpty()
                         ? "empty"
-                        : JsonValues.mostCommon(counted).getFirst());
+                        : namedTime(name, held).orElse(JsonValues.mostCommon(counted).getFirst()));
             }
+        }
+
+        // A field named as a time whose values are all one kind of number time (an epoch time, a FILETIME): typed
+        // as that time. Only by name: such widths are otherwise counts and ids.
+        private Optional<String> namedTime(final String name, final List<String> held) {
+            if (held.isEmpty() || !EventTimes.namedAsTime(timeKey(name))) {
+                return Optional.empty();
+            }
+            final Set<String> patterns = new HashSet<>();
+            for (final String value : held) {
+                final String pattern = TimePatterns.inferNamedTimePattern(value);
+                if (pattern == null || !TimePatterns.isEpoch(pattern)) {
+                    return Optional.empty();
+                }
+                patterns.add(pattern);
+            }
+            return patterns.size() == 1
+                    ? Optional.of(TIMESTAMP_PREFIX + patterns.iterator().next() + ")")
+                    : Optional.empty();
         }
 
         // Fields holding JSON text: their keys are fields of their own (<field>.<key>, read through json_fields),
@@ -895,16 +926,22 @@ public final class DraftMapping {
             return keyField;
         }
 
-        // Time: the first timestamp-typed field whose name says time, else the first timestamp-typed field; a
-        // date-only field beside a time-of-day field (FortiOS's date= and time=) is joined.
+        // Time: the timestamp-typed fields ranked by what their names say (an event's time, then one that may be,
+        // then one whose name says nothing; an object's never), the record's own before its container's (a syslog
+        // header's), in the order seen; a date-only field beside a time-of-day field (FortiOS's date= and time=)
+        // is joined. The container's time is the fallback for records without their own.
         private String time() {
-            String timeField = names.stream()
-                    .filter(n -> ToolText.match(TIME, key(n)) && type(n).startsWith(TIMESTAMP))
-                    .findFirst()
-                    .orElseGet(() -> names.stream().filter(n -> type(n).startsWith(TIMESTAMP)).findFirst()
-                            .orElse(null));
+            containerFields = EventTimes.containerFields(spec);
+            final List<String> stamps = names.stream().filter(n -> type(n).startsWith(TIMESTAMP)).toList();
+            stamps.stream().filter(n -> EventTimes.rank(timeKey(n)) != EventTimes.Rank.OBJECT)
+                    .sorted(Comparator.comparingInt(this::timeOrder))
+                    .forEach(usableTimes::add);
+            String timeField = usableTimes.isEmpty()
+                    ? null
+                    : usableTimes.getFirst();
             final String first = timeField;
-            boolean dateOnly = timeField != null && !type(timeField).contains("H") && !type(timeField).contains("h");
+            boolean dateOnly = timeField != null && !type(timeField).contains("H") && !type(timeField).contains("h")
+                               && !type(timeField).contains("filetime");
             String clock = names.stream()
                     .filter(n -> !n.equals(first) && !values.get(n).isEmpty()
                                  && values.get(n).stream().allMatch(v -> ToolText.fullmatch(CLOCK, ToolText.strip(v))))
@@ -914,9 +951,11 @@ public final class DraftMapping {
                     ? subSecond(clock)
                     : subSecond(timeField);
             if (timeField != null && !chosenPrecise) {
-                final String precise = names.stream()
+                // Not a container's time over the record's own.
+                final String precise = usableTimes.stream()
                         .filter(n -> !n.equals(first) && subSecond(n)
-                                     && (type(n).contains("H") || type(n).contains("epoch")))
+                                     && (type(n).contains("H") || type(n).contains("epoch"))
+                                     && (containerFields.contains(first) || !containerFields.contains(n)))
                         .findFirst()
                         .orElse(null);
                 if (precise != null) {
@@ -931,9 +970,12 @@ public final class DraftMapping {
             }
             if (timeField != null && dateOnly && clock != null) {
                 joinedTime(timeField, clock);
+                chosenTimes.addAll(List.of(timeField, clock));
             } else if (timeField != null) {
-                fieldTime(timeField);
+                timeField = ownOrContainersTime(timeField);
+                candidatesOf(timeField, records, null);
             }
+            timesNote(stamps);
             timeZoneField();
             if (timeField == null) {
                 // Seen: an else on the zone test above, so a draft that mapped EventTime said no timestamp was
@@ -942,6 +984,187 @@ public final class DraftMapping {
                           + "the profile).");
             }
             return timeField;
+        }
+
+        // A field's own name for what it says of a time: an XML Data element's Name (Data[@Name='lastLogon']), else
+        // its key.
+        private static String timeKey(final String name) {
+            // Without a byte order mark the file's first name carries (seen: a BOM before 'time').
+            return FieldHomes.keys(name).getFirst().replace(BYTE_ORDER_MARK, "");
+        }
+
+        // A time to the second or finer: not a date alone.
+        private boolean fullTime(final String name) {
+            final String type = type(name);
+            return type.contains("H") || type.contains("h") || type.contains("epoch") || type.contains("filetime");
+        }
+
+        // Where the records' time is first in the order: an event's time, one that may be, one whose name says
+        // nothing; the record's own before its container's; a container's without a year (RFC 3164's) after any
+        // of the record's own; a date beside a time of day as an event's time.
+        private int timeOrder(final String name) {
+            EventTimes.Rank rank = EventTimes.rank(timeKey(name));
+            final String type = type(name);
+            final boolean dateOnly = !type.contains("H") && !type.contains("h") && !type.contains("epoch")
+                                     && !type.contains("filetime");
+            if (dateOnly && names.stream().anyMatch(n -> !n.equals(name) && clockField(n))) {
+                rank = EventTimes.Rank.EVENT;
+            }
+            final boolean container = containerFields.contains(name);
+            if (container && !type.contains("y") && !type.contains("epoch") && !type.contains("filetime")) {
+                rank = EventTimes.Rank.PLAIN;
+            }
+            // A date alone, with no time of day to join, after every full time.
+            final int dateAlone = dateOnly && rank != EventTimes.Rank.EVENT
+                    ? 100
+                    : 0;
+            return dateAlone + rank.ordinal() * 2 + (container
+                    ? 1
+                    : 0);
+        }
+
+        private boolean clockField(final String name) {
+            return !values.get(name).isEmpty()
+                   && values.get(name).stream().allMatch(v -> ToolText.fullmatch(CLOCK, ToolText.strip(v)));
+        }
+
+        // The record's own time, with its container's for records without one, in one format reading both; where
+        // none can (a number beside a pattern), the container's for every record. Returns the field chosen first.
+        private String ownOrContainersTime(final String timeField) {
+            final String outer = containerFields.contains(timeField)
+                    ? null
+                    : usableTimes.stream()
+                            .filter(n -> containerFields.contains(n) && timeOrder(n) % 2 == 1
+                                         && timeOrder(n) / 2 != EventTimes.Rank.PLAIN.ordinal())
+                            .findFirst()
+                            .orElse(null);
+            if (outer == null) {
+                fieldTime(timeField);
+                return timeField;
+            }
+            final List<String> own = covering(timeField, n -> type(timeField).equals(type(n))
+                                                              && !containerFields.contains(n)
+                                                              && timeOrder(n) == timeOrder(timeField));
+            final List<String> both = new ArrayList<>(values.get(outer));
+            own.forEach(n -> both.addAll(values.get(n)));
+            final String format = TimePatterns.combined(List.of(patternOf(type(timeField)), patternOf(type(outer))),
+                    both);
+            if (format == null) {
+                notes.add("'" + timeField + "' (" + formatName(timeField) + ") and '" + outer + "' (" + formatName(
+                        outer) + ") can't be read in one format, so EventTime/TimeCreated is '" + outer + "', the "
+                          + "container's time, for every record; '" + timeField + "' is left as Data.");
+                fieldTime(outer);
+                return outer;
+            }
+            final List<String> fields = new ArrayList<>(own);
+            fields.add(outer);
+            final Map<String, Object> entry = dict(PATH, "EventTime/TimeCreated", ANY_OF, fields, "time_format",
+                    TimePatterns.EPOCH_NAMES.getOrDefault(format, format));
+            for (final String field : fields) {
+                final String pattern = patternOf(type(field));
+                if (!TimePatterns.isEpoch(pattern) && !TimePatterns.hasZone(pattern)) {
+                    timeExamples.put(field, values.get(field).stream().limit(5).toList());
+                    notes.add("'" + field + "' has no time zone or offset. " + NO_ZONE);
+                }
+            }
+            common.add(entry);
+            taken.addAll(fields);
+            chosenTimes.addAll(fields);
+            return timeField;
+        }
+
+        // The time_format of a time field.
+        private String formatName(final String name) {
+            final String pattern = patternOf(type(name));
+            return TimePatterns.EPOCH_NAMES.getOrDefault(pattern, pattern);
+        }
+
+        // Two or more times each as likely the event's as the one chosen, each in nearly every record and not the
+        // same values: put to the agent, with what tells them apart (B10). rule is null for the whole sample.
+        private void candidatesOf(final String chosen, final List<Map<String, Object>> scope, final String rule) {
+            final List<String> alike = usableTimes.stream()
+                    .filter(n -> timeOrder(n) == timeOrder(chosen) && !n.equals(chosen) && fullTime(n)
+                                 && fullTime(chosen) && EventTimes.share(n, scope) >= CANDIDATE_SHARE
+                                 && type(n).contains("H") == type(chosen).contains("H")
+                                 && scope.stream().anyMatch(r -> EventTimes.held(r, n) && EventTimes.held(r, chosen)
+                                                                 && !r.get(n).equals(r.get(chosen))))
+                    .toList();
+            if (alike.isEmpty() || (rule == null && EventTimes.share(chosen, scope) < CANDIDATE_SHARE)) {
+                return;
+            }
+            final List<String> fields = new ArrayList<>(List.of(chosen));
+            fields.addAll(alike);
+            final Map<String, String> formats = new LinkedHashMap<>();
+            final Map<String, String> keys = new LinkedHashMap<>();
+            fields.forEach(n -> {
+                formats.put(n, formatName(n));
+                keys.put(n, timeKey(n));
+            });
+            final Map<String, Object> entry = new LinkedHashMap<>();
+            if (rule != null) {
+                entry.put("rule", rule);
+            }
+            entry.put(FIELDS, EventTimes.evidence(fields, formats, scope, keys));
+            timeCandidates.add(entry);
+            notes.add((rule == null
+                    ? "The records' "
+                    : "Rule '" + rule + "': its records' ") + reprs(fields) + " could each be the event's time; "
+                      + "drafted with '" + chosen + "'. " + TIME_CANDIDATES + " says what tells them apart: choose "
+                      + "one (changes=), say which and why, and ask the user if unsure.");
+        }
+
+        // A kind whose records lack the common time: its own, from the times its records hold, best first, and a
+        // choice put to the agent where two are alike.
+        private void kindTime(final Map<String, Object> rule, final List<Map<String, Object>> ofKind) {
+            if (chosenTimes.isEmpty() || ofKind.isEmpty()
+                || ofKind.stream().allMatch(r -> chosenTimes.stream().anyMatch(f -> EventTimes.held(r, f)))) {
+                return;
+            }
+            final String best = usableTimes.stream()
+                    .filter(n -> !chosenTimes.contains(n) && ofKind.stream().anyMatch(r -> EventTimes.held(r, n)))
+                    .findFirst()
+                    .orElse(null);
+            if (best == null) {
+                return;
+            }
+            final String name = (String) rule.get("name");
+            final Map<String, Object> entry = dict(PATH, "EventTime/TimeCreated", FIELD, best, "time_format",
+                    formatName(best));
+            final List<Map<String, Object>> fields = new ArrayList<>(JsonValues.maps(rule.get(FIELDS)));
+            fields.removeIf(field -> best.equals(field.get(FIELD)));
+            fields.addFirst(entry);
+            rule.put(FIELDS, fields);
+            final String pattern = patternOf(type(best));
+            if (!TimePatterns.isEpoch(pattern) && !TimePatterns.hasZone(pattern)) {
+                timeExamples.put(best, values.get(best).stream().limit(5).toList());
+            }
+            notes.add("Rule '" + name + "': its records have no " + reprs(chosenTimes) + ", so its time is '" + best
+                      + "'.");
+            candidatesOf(best, ofKind, name);
+        }
+
+        // Every timestamp field, what it is taken for, and which EventTime/TimeCreated reads (B11): when there is
+        // more than one, or the one chosen may not be the event's.
+        private void timesNote(final List<String> stamps) {
+            final boolean sure = chosenTimes.stream()
+                    .allMatch(n -> EventTimes.rank(timeKey(n)) == EventTimes.Rank.EVENT || timeOrder(n) / 2 == 0);
+            if (stamps.size() < 2 && sure) {
+                return;
+            }
+            final List<String> said = new ArrayList<>();
+            for (final String name : stamps) {
+                final String where = containerFields.contains(name)
+                        ? "the container's, "
+                        : containerFields.isEmpty()
+                                ? ""
+                                : "the record's own, ";
+                said.add("'" + name + "' (" + where + EventTimes.rank(timeKey(name)).said() + ", in "
+                         + EventTimes.share(name, records) + "% of records, " + formatName(name) + ")");
+            }
+            notes.add("Timestamp fields: " + String.join("; ", said) + ". EventTime/TimeCreated reads " + (chosenTimes
+                    .isEmpty()
+                    ? "none of them"
+                    : reprs(chosenTimes)) + ".");
         }
 
         private void joinedTime(final String timeField, final String clock) {
@@ -971,7 +1194,12 @@ public final class DraftMapping {
             final String pattern = patternOf(type(timeField));
             final Map<String, Object> entry = dict(PATH, "EventTime/TimeCreated", FIELD, timeField);
             final String timeType = type(timeField);
-            readFrom(entry, covering(timeField, n -> timeType.equals(type(n))));
+            // Only times alike: an object's never, nor a container's beside the record's own.
+            final List<String> covered = covering(timeField, n -> timeType.equals(type(n))
+                                                                  && usableTimes.contains(n)
+                                                                  && timeOrder(n) == timeOrder(timeField));
+            readFrom(entry, covered);
+            chosenTimes.addAll(covered);
             if (TimePatterns.EPOCH_NAMES.containsKey(pattern)) {
                 entry.put("time_format", TimePatterns.EPOCH_NAMES.get(pattern));
             } else {
@@ -1178,7 +1406,11 @@ public final class DraftMapping {
             final Object user = commonSource("EventSource/User/Id");
             final Object message = commonSource("EventDetail/Description");
             for (final String[] pair : pairs) {
+                final int before = rules.size();
                 kindRules(pair[0], pair[1], rest, user, message, usedNames, rules, recognised);
+                if (rules.size() > before) {
+                    kindTime(rules.getLast(), records.stream().filter(r -> pair[1].equals(r.get(pair[0]))).toList());
+                }
             }
             if (!recognised.isEmpty()) {
                 notes.add("Drafted from the sample's values (check them): " + String.join("; ", recognised) + ".");

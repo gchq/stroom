@@ -72,7 +72,9 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 
 `time_format` is a Java time pattern with letters that aren't pattern letters quoted:
 `yyyy-MM-dd'T'HH:mm:ss.SSSX`. An epoch time is named, never described: `epoch_s` (seconds, a fraction allowed),
-`epoch_ms`, `epoch_us`, `epoch_ns`. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`, or an offset, `+10:00`) only for a time that
+`epoch_ms`, `epoch_us`, `epoch_ns`; a Windows FILETIME (100 ns ticks since 1601, as Active Directory's `lastLogon`)
+is `windows_filetime`. A time field that is an object's (an expiry, a file's creation, an account's last logon) is not
+the event's: keep it as Data. `timezone` (an IANA name, e.g. `UTC`, `Australia/Sydney`, or an offset, `+10:00`) only for a time that
 carries no zone or offset of its own, and never assumed: the zone is the user's to say. The draft asks, offering UTC,
 a zone the records name, and an offset guessed from the gap between the sample's latest time and when Stroom received
 it (`timezone=` gives the answer); left unset, Stroom reads the time as UTC and the build warns. Where each record
@@ -107,6 +109,13 @@ completion of a dateless time (it moves a time later than the stream's creation 
   Otherwise read each layout (a splitter part each, or a rule each with its own `time_format`). A record whose time
   still won't parse gets an empty time the schema refuses, unless the user agrees to
   `"time_fallback": "ReceivedTime"`, which writes that instead and logs a warning naming the record.
+- **Which time is the event's:** the draft reads the record's own time before its container's (a syslog header's),
+  falling back to the container's record by record, and keeps an object's times (an expiry, a file's creation, an
+  account's last logon) as Data. Where two times could each be the event's, it drafts with the first and lists them
+  in `time_candidates` (per rule, or for every record), each with its share of the records, format, rank and median
+  distance from the others. Choose from that evidence and what you know of the source (the time the event happened,
+  not when a period began or something was created), set the rule's `EventTime/TimeCreated` with `changes=`, say
+  which you chose and why, and ask the user when unsure.
 
 ## Data
 

@@ -84,7 +84,7 @@ public final class ReadShapes {
         out.put("in dictionary", shape(XPathText.inDictionaryText(expr(1), expr(2))));
         out.put("time", shape(XPathText.timeExpression(text(1), null, expr(1) + "[1]")));
         out.put("time, zone", shape(XPathText.timeExpression(text(1), text(2), expr(1) + "[1]")));
-        for (final String epoch : List.of("epoch_ms", "epoch_s", "epoch_us", "epoch_ns")) {
+        for (final String epoch : XPathText.EPOCH_FORMATS) {
             out.put(epoch, shape(XPathText.timeExpression(epoch, null, expr(1) + "[1]")));
         }
         // Before seconds' fraction was rounded: still epoch_s.

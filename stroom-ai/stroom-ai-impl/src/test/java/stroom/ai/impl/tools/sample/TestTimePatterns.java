@@ -133,4 +133,58 @@ class TestTimePatterns {
                 .isEqualTo("time_format 'epoch_s' expects digits only (a fraction of a second allowed); the sample "
                            + "has ['yesterday']");
     }
+
+    @Test
+    void epochTimesAreKnownByTheirRangeNotALeadingOne() {
+        // Until 2026-11-07 only Sep 2001 to May 2033 was known (1 and nine digits, and so on).
+        assertThat(TimePatterns.inferTimePattern("2147483648")).isEqualTo("epoch seconds");
+        assertThat(TimePatterns.inferTimePattern("4102444799")).isEqualTo("epoch seconds");
+        assertThat(TimePatterns.inferTimePattern("2524608000000")).isEqualTo("epoch milliseconds");
+        assertThat(TimePatterns.inferTimePattern("2524608000000000")).isEqualTo("epoch microseconds");
+        assertThat(TimePatterns.inferTimePattern("2524608000000000000")).isEqualTo("epoch nanoseconds");
+        // Past 2100: a number.
+        assertThat(TimePatterns.inferTimePattern("5000000000")).isNull();
+        assertThat(TimePatterns.inferTimePattern("9000000000000")).isNull();
+    }
+
+    @Test
+    void anEpochTimeBefore2001OrAFiletimeIsATimeOnlyInAFieldNamedAsOne() {
+        // Before Sep 2001 an epoch time has a digit fewer, the width of many counts and ids: a time only when the
+        // field's name says so.
+        for (final String value : List.of("631152000", "946684800000", "946684800000000", "946684800000000000")) {
+            assertThat(TimePatterns.inferTimePattern(value)).as(value).isNull();
+        }
+        assertThat(TimePatterns.inferNamedTimePattern("631152000")).isEqualTo("epoch seconds");
+        assertThat(TimePatterns.inferNamedTimePattern("946684800000")).isEqualTo("epoch milliseconds");
+        assertThat(TimePatterns.inferNamedTimePattern("946684800000000")).isEqualTo("epoch microseconds");
+        assertThat(TimePatterns.inferNamedTimePattern("946684800000000000")).isEqualTo("epoch nanoseconds");
+        // A FILETIME (2026): never an epoch time of any unit in range.
+        assertThat(TimePatterns.inferTimePattern("134384292266961040")).isNull();
+        assertThat(TimePatterns.inferNamedTimePattern("134384292266961040")).isEqualTo("windows filetime");
+        assertThat(TimePatterns.inferNamedTimePattern("1793955626")).isEqualTo("epoch seconds");
+        // Before 1990 or past 2100: a number, whatever the name.
+        assertThat(TimePatterns.inferNamedTimePattern("500000000")).isNull();
+        assertThat(TimePatterns.inferNamedTimePattern("5000000000")).isNull();
+        // Anything else as inferTimePattern reads it.
+        assertThat(TimePatterns.inferNamedTimePattern("2026-11-06T09:00:00Z"))
+                .isEqualTo(TimePatterns.inferTimePattern("2026-11-06T09:00:00Z"));
+    }
+
+    @Test
+    void aFiletimeFormatIsCheckedAndNamed() {
+        assertThat(TimePatterns.EPOCH_NAMES).containsEntry("windows filetime", "windows_filetime");
+        assertThat(TimePatterns.checkTimeFormat("windows_filetime", List.of("134384292266961040"))).isNull();
+        assertThat(TimePatterns.checkTimeFormat("windows_filetime", List.of("1793955626"))).isNotNull();
+    }
+
+    @Test
+    void aCombinedFormatIsZonelessWhereAnyOfItsSectionsIs() {
+        // A record's own time without a zone, its container's with one: the user is still asked the zone.
+        assertThat(TimePatterns.zoneless("[MMM dd yyyy HH:mm:ss][yyyy-MM-dd'T'HH:mm:ss.SSSXXX]")).isTrue();
+        assertThat(TimePatterns.zoneless("[yyyy-MM-dd'T'HH:mm:ssX][dd/MMM/yyyy:HH:mm:ss Z]")).isFalse();
+        assertThat(TimePatterns.zoneless("yyyy-MM-dd HH:mm:ss[.SSS]")).isTrue();
+        assertThat(TimePatterns.zoneless("yyyy-MM-dd'T'HH:mm:ss[.SSS]XXX")).isFalse();
+        assertThat(TimePatterns.zoneless("epoch_ms")).isFalse();
+        assertThat(TimePatterns.zoneless("windows_filetime")).isFalse();
+    }
 }

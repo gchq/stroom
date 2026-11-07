@@ -281,6 +281,8 @@ class TestXsltGenerator extends XsltRuns {
         assertThat(epochMs("epoch_ns", "1790899198000555000")).isEqualTo("1790899198000");
         assertThat(epochMs("epoch_us", "1790899198000999")).isEqualTo("1790899198000");
         assertThat(epochMs("epoch_s", "1790899198.9999")).isEqualTo("1790899198999");
+        // Windows FILETIME (100 ns ticks since 1601), cut to the millisecond like the rest.
+        assertThat(epochMs("windows_filetime", "134384292266961049")).isEqualTo("1793955626696");
         // A pattern with digits below the millisecond is read by Stroom's format-date alone, which cuts them.
         final List<Map<String, Object>> common = new ArrayList<>();
         common.add(json("""
@@ -529,9 +531,11 @@ class TestXsltGenerator extends XsltRuns {
         // Seen: 'epoch seconds' told to quote its letters, "ep'o'ch sec'o'nds", which isn't a time at all.
         assertThat(MappingFacts.patternProblem("epoch seconds")).isEqualTo(
                 "time_format 'epoch seconds' describes an epoch time: write it as epoch_s (epoch_s, epoch_ms, "
-                + "epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds)");
+                + "epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds; windows_filetime for Windows "
+                + "FILETIME)");
         assertThat(MappingFacts.patternProblem("Unix time in milliseconds")).contains("write it as epoch_ms");
         assertThat(MappingFacts.patternProblem("epoch ns")).contains("write it as epoch_ns");
+        assertThat(MappingFacts.patternProblem("Windows FILETIME")).contains("write it as windows_filetime");
         assertThat(MappingFacts.patternProblem("epoch microseconds")).contains("write it as epoch_us");
     }
 

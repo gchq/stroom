@@ -44,7 +44,8 @@ import java.util.regex.Pattern;
 /// @param repeat       Write one element per value of the input instead of the first value.
 /// @param scope        With for_each: `record` when the input is the record's, not the item's.
 /// @param timeFormat   `time_format`: input time pattern (Java), or `epoch_ms` / `epoch_s` / `epoch_us` /
-///                     `epoch_ns`.
+///                     `epoch_ns`, or `windows_filetime` (100 ns ticks since 1601, as Active Directory's
+///                     lastLogon).
 /// @param timezone     Input time zone when the time has none, e.g. `+10:00` or `UTC`.
 /// @param map          Input value -> output value, e.g. `{ok: true, fail: false}`.
 /// @param defaultValue `default`: output when the field is empty (or, with map, matches no key).
@@ -234,7 +235,7 @@ public record FieldMapping(String path,
         if (join != null && (repeat || isSet(timeFormat) || isSet(dictionary))) {
             return "'" + path + "': join gives one text from its fields: no repeat, time_format or dictionary with it";
         }
-        if (rollover && (!isSet(timeFormat) || timeFormat.startsWith("epoch") || repeat)) {
+        if (rollover && (!isSet(timeFormat) || XPathText.EPOCH_FORMATS.contains(timeFormat) || repeat)) {
             return "'" + path + "': rollover goes with a time_format pattern (a date joined with a time of day), not "
                    + "an epoch, and one value";
         }
@@ -243,7 +244,7 @@ public record FieldMapping(String path,
             return "'" + path + "': time_fallback names a stream meta time (e.g. 'ReceivedTime') written when the "
                    + "time doesn't parse, so it goes with time_format, one value and no rollover";
         }
-        if (zoneSource != null && (!isSet(timeFormat) || timeFormat.startsWith("epoch") || repeat)) {
+        if (zoneSource != null && (!isSet(timeFormat) || XPathText.EPOCH_FORMATS.contains(timeFormat) || repeat)) {
             return "'" + path + "': timezone from a field or meta attribute goes with a time_format pattern (not an "
                    + "epoch, which has no zone to read) and one value";
         }
