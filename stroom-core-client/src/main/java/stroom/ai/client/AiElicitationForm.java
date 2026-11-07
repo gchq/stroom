@@ -180,6 +180,18 @@ final class AiElicitationForm {
         private final boolean custom;
         private final List<String> optionDescriptions;
 
+        /// A field of text, built without a form's JSON (the browser's parser), e.g. in tests.
+        ///
+        /// @param name   Its name.
+        /// @param title  Its title.
+        /// @param format Its format (`email`, `date`...), or null for free text.
+        /// @param custom True for a question the user may answer in their own words.
+        /// @return The field.
+        static Field text(final String name, final String title, final String format, final boolean custom) {
+            return new Field(name, title, null, "string", format, true, false, List.of(), List.of(), List.of(),
+                    custom, List.of());
+        }
+
         private Field(final String name,
                       final String title,
                       final String description,
