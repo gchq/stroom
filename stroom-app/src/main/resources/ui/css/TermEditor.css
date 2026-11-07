@@ -94,6 +94,11 @@
 	border: none;
 }
 
+.termEditor-button {
+    flex-shrink: 0;
+    margin-left: 2px;
+}
+
 .termEditor-label {
     display: flex;
     margin: 0px;
@@ -113,4 +118,117 @@
 	border: solid 1px var(--control__border-color--disabled);
 	background-color: var(--control__background-color--disabled);
 	color: var(--control__text-color--disabled);
+}
+
+/* Value picker listing a field's most common values */
+.fieldValuePicker {
+    display: flex;
+    flex-direction: column;
+    width: 270px;
+    max-height: 420px;
+    padding: 5px;
+}
+
+.fieldValuePicker-filter {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.fieldValuePicker-filter .quickFilter-textBox {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+}
+
+.fieldValuePicker-header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 22px;
+}
+
+.fieldValuePicker-scope {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 2px 5px;
+    opacity: 0.7;
+    font-size: 0.9em;
+}
+
+.fieldValuePicker-spinner {
+    flex-shrink: 0;
+}
+
+.fieldValuePicker-values {
+    overflow-y: auto;
+}
+
+.fieldValuePicker-message {
+    padding: 5px;
+    opacity: 0.7;
+}
+
+.fieldValuePicker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 5px;
+    cursor: pointer;
+}
+
+.fieldValuePicker-row:hover {
+    background-color: rgba(var(--blue-500-rgb), 0.1);
+}
+
+.fieldValuePicker-row--disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.fieldValuePicker-row--disabled:hover {
+    background-color: transparent;
+}
+
+.fieldValuePicker-value {
+    flex: 1 1 auto;
+    /* Lets a long value shrink so that it is cut short with an ellipsis */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fieldValuePicker-bar {
+    flex: 0 0 80px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(var(--blue-500-rgb), 0.15);
+    overflow: hidden;
+}
+
+.fieldValuePicker-barFill {
+    height: 100%;
+    background-color: rgba(var(--blue-500-rgb), 0.8);
+}
+
+.fieldValuePicker-percent {
+    flex: 0 0 45px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Query options dialog: a tick box option's box, label and help on one line */
+.form-group.queryOptions-checkBoxRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-group.queryOptions-checkBoxRow .help-button {
+    margin-left: 0;
 }

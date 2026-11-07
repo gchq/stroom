@@ -1,10 +1,74 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel styleName="dock-container-vertical">
-        <g:SimplePanel ui:field="dataGrid" styleName="dock-max"/>
-        <g:ScrollPanel styleName="dock-min">
-            <g:HTML ui:field="statusMessage" styleName="elasticFieldListView-statusMessage"/>
-        </g:ScrollPanel>
-    </g:FlowPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view"
+             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
+    <ui:style>
+        .filters {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 4px 4px 4px;
+        }
+
+        .nameFilter {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        .typeFilter {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        /* A details panel takes the space left below the tab bar and scrolls within it */
+        .detailsPanel {
+            flex: 1 1 0;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* So the scroll panel of the Info or Settings view fills the details panel exactly */
+        .detailsPanel > * {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .noSelection {
+            padding: 10px;
+        }
+    </ui:style>
+
+    <g:ThinSplitLayoutPanel styleName="max">
+        <g:north size="700">
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <!-- Both filters narrow the same list, so they sit side by side above it -->
+                <g:FlowPanel styleName="dock-min {style.filters}">
+                    <view:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter}"/>
+                    <l:MultiSelectionBox ui:field="typeFilter" addStyleNames="{style.typeFilter}"
+                                         title="Show only fields of the ticked types. Tick none to show all types."/>
+                </g:FlowPanel>
+                <g:SimplePanel ui:field="dataGrid" styleName="dock-max"/>
+            </g:FlowPanel>
+        </g:north>
+        <g:center>
+            <g:ResizeFlowPanel styleName="max">
+                <g:ResizeFlowPanel ui:field="detailsTabs" styleName="max dock-container-vertical">
+                    <g:FlowPanel styleName="dock-min linkTabPanelViewImpl">
+                        <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
+                    </g:FlowPanel>
+                    <g:SimplePanel ui:field="infoPanel" styleName="{style.detailsPanel}"/>
+                    <g:SimplePanel ui:field="settingsPanel" styleName="{style.detailsPanel}"/>
+                </g:ResizeFlowPanel>
+                <g:Label ui:field="noSelection" addStyleNames="{style.noSelection}"
+                         text="Select a field to see how it is mapped and change its settings."/>
+            </g:ResizeFlowPanel>
+        </g:center>
+    </g:ThinSplitLayoutPanel>
 </ui:UiBinder>

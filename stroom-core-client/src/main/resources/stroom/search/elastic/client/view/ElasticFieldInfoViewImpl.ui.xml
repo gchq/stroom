@@ -1,0 +1,214 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
+    <ui:style type="stroom.search.elastic.client.view.ElasticFieldInfoViewImpl.Style">
+        /* A heading and its buttons, centred on one line */
+        .sectionHeader {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 0.4em;
+        }
+
+        @external docRefLinkContainer, docRefLinkText;
+
+        /* As the section headings of the stream browser's Info tab */
+        .sectionTitle {
+            color: var(--heading-color);
+            font-weight: bold;
+            font-size: 125%;
+            line-height: 1.2;
+        }
+
+        .laterSection {
+            padding-top: 1rem;
+        }
+
+        .valueList {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .barLabel .docRefLinkContainer {
+            min-width: 0;
+        }
+
+        .barLabel .docRefLinkText {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .entries {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            column-gap: 16px;
+            row-gap: 2px;
+        }
+
+        .entryName {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .entryValue {
+            word-break: break-all;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .dateBox {
+            width: 220px;
+        }
+
+        .sampleSize {
+            width: 140px;
+        }
+
+        .mode {
+            width: 180px;
+        }
+
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* A subheading, in the colour of the section headings but smaller */
+        .statsHeading {
+            color: var(--heading-color);
+            font-weight: bold;
+            font-size: 110%;
+            line-height: 1.2;
+        }
+
+        .statsHeader {
+            margin-bottom: 4px;
+        }
+
+        .topValuesControls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .topValuesCount {
+            width: 100px;
+        }
+
+        .topValuesFilter {
+            width: 220px;
+        }
+
+        /* Wide enough for a range of two timestamps */
+        .barRow.barRowWide {
+            grid-template-columns: 420px 240px 160px;
+        }
+
+        .barRow {
+            display: grid;
+            grid-template-columns: 250px 240px 160px;
+            column-gap: 8px;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .barLabel {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .barTrack {
+            height: 14px;
+        }
+
+        .barCount {
+            white-space: nowrap;
+        }
+
+        .errorPanel {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+    </ui:style>
+
+    <g:ScrollPanel styleName="max">
+        <g:FlowPanel styleName="form-padding form">
+            <g:FlowPanel ui:field="mappingHeader" addStyleNames="{style.sectionHeader}">
+                <g:Label text="Field mapping" addStyleNames="{style.sectionTitle}"/>
+            </g:FlowPanel>
+            <g:Label ui:field="mappingMessage"/>
+            <g:FlowPanel ui:field="mappingEntries" addStyleNames="{style.entries}"/>
+
+            <g:FlowPanel addStyleNames="{style.sectionHeader} {style.laterSection}">
+                <g:Label text="Statistics" addStyleNames="{style.sectionTitle}"/>
+                <b:InlineSvgButton ui:field="refreshStats" addStyleNames="allow-focus"/>
+                <spinner:SpinnerSmall ui:field="spinner"/>
+                <g:Label ui:field="loadingLabel" text="Loading statistics..." visible="false"/>
+            </g:FlowPanel>
+            <g:FlowPanel addStyleNames="{style.controls}">
+                <form:FormGroup identity="elasticFieldStatsMode" label="Mode"
+                                helpText="Random sample estimates the statistics from a random sample of all the documents, which is fast. Exact calculates them across every document in a time range, which is slower on large indices."
+                                addStyleNames="{style.mode}">
+                    <l:SelectionBox ui:field="mode" addStyleNames="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="randomControls" addStyleNames="{style.controls}">
+                <form:FormGroup identity="elasticFieldStatsSampleSize" label="Sample size"
+                                helpText="Approximate number of documents sampled at random. Larger samples are more accurate but slower."
+                                addStyleNames="{style.sampleSize}">
+                    <l:SelectionBox ui:field="sampleSize" addStyleNames="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="exactControls" addStyleNames="{style.controls}" visible="false">
+                <form:FormGroup identity="elasticFieldStatsFrom" label="From" addStyleNames="{style.dateBox}">
+                    <datetimebox:DateTimeBox ui:field="fromTime" addStyleNames="w-100"/>
+                </form:FormGroup>
+                <form:FormGroup identity="elasticFieldStatsTo" label="To" addStyleNames="{style.dateBox}">
+                    <datetimebox:DateTimeBox ui:field="toTime" addStyleNames="w-100"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+            <g:Label ui:field="statsMessage" visible="false"/>
+            <g:FlowPanel ui:field="errorPanel" addStyleNames="{style.errorPanel}" visible="false">
+                <g:Label ui:field="errorText" addStyleNames="text-danger"/>
+                <b:Button ui:field="retry" text="Retry" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="statsContent" addStyleNames="{style.stats}"/>
+        </g:FlowPanel>
+    </g:ScrollPanel>
+</ui:UiBinder>

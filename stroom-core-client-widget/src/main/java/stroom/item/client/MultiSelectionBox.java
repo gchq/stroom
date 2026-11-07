@@ -64,7 +64,8 @@ import java.util.stream.Collectors;
 
 /// A drop down box that lets the user tick any number of items from a list.
 ///
-/// The closed box shows the display values of the ticked items, separated by commas.
+/// The closed box shows the display values of the ticked items, separated by commas, or
+/// the text set with [#setNoneSelectedText(String)] when no items are ticked.
 /// The popup stays open while the user ticks items, and closes when they click
 /// elsewhere or press escape.
 ///
@@ -81,6 +82,7 @@ public class MultiSelectionBox<T> extends Composite implements Focus, HasValueCh
     private final Set<T> selected = new HashSet<>();
     private Function<T, String> displayValueFunction;
     private Function<T, SafeHtml> renderFunction;
+    private String noneSelectedText;
 
     private PopupPanel popup;
     private MyCellTable<T> cellTable;
@@ -137,6 +139,15 @@ public class MultiSelectionBox<T> extends Composite implements Focus, HasValueCh
     /// @param renderFunction The function to render an item as HTML.
     public void setRenderFunction(final Function<T, SafeHtml> renderFunction) {
         this.renderFunction = renderFunction;
+    }
+
+    /// Sets the text shown in the closed box when no items are ticked, e.g. 'All types' when
+    /// ticking no items means no filtering.
+    ///
+    /// @param noneSelectedText The text to show, or `null` to show nothing.
+    public void setNoneSelectedText(final String noneSelectedText) {
+        this.noneSelectedText = noneSelectedText;
+        updateText();
     }
 
     /// Replaces the items the user can choose from. Any ticked items not in `items` are
@@ -202,7 +213,10 @@ public class MultiSelectionBox<T> extends Composite implements Focus, HasValueCh
                 .stream()
                 .map(this::getDisplayValue)
                 .collect(Collectors.joining(DISPLAY_DELIMITER));
-        textBox.setValue(text);
+        // The title only lists ticked items, so the box's own title shows when none are ticked
+        textBox.setValue(text.isEmpty()
+                ? NullSafe.string(noneSelectedText)
+                : text);
         textBox.setTitle(text);
     }
 

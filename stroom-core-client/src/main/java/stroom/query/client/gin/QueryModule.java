@@ -22,11 +22,15 @@ import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.ExpressionTreeViewImpl;
 import stroom.query.client.QueryPlugin;
 import stroom.query.client.ResultStorePlugin;
+import stroom.query.client.presenter.FieldValuePickerPresenter;
+import stroom.query.client.presenter.FieldValuePickerPresenter.FieldValuePickerView;
 import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.client.presenter.QueryOptionsPresenter;
+import stroom.query.client.presenter.QueryOptionsPresenter.QueryOptionsView;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter;
@@ -41,8 +45,10 @@ import stroom.query.client.presenter.ResultStoreSettingsPresenter;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.client.presenter.TextPresenter;
 import stroom.query.client.presenter.TextPresenter.TextView;
+import stroom.query.client.view.FieldValuePickerViewImpl;
 import stroom.query.client.view.QueryEditViewImpl;
 import stroom.query.client.view.QueryHelpViewImpl;
+import stroom.query.client.view.QueryOptionsViewImpl;
 import stroom.query.client.view.QueryResultTableSplitViewImpl;
 import stroom.query.client.view.QueryResultTableViewImpl;
 import stroom.query.client.view.QueryResultTabsView;
@@ -98,6 +104,14 @@ public class QueryModule extends PluginModule {
                 ExpressionTreePresenter.class,
                 ExpressionTreeView.class,
                 ExpressionTreeViewImpl.class);
+        bindPresenterWidget(
+                QueryOptionsPresenter.class,
+                QueryOptionsView.class,
+                QueryOptionsViewImpl.class);
+        bindPresenterWidget(
+                FieldValuePickerPresenter.class,
+                FieldValuePickerView.class,
+                FieldValuePickerViewImpl.class);
 
         bindPresenterWidget(
                 ResultStorePresenter.class,
