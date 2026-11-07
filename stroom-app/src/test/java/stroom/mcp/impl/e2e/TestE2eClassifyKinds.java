@@ -63,19 +63,27 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         assertThat(String.valueOf(map(json("build_status", args("build", BUILD)), "next").get("step")))
                 .isNotEqualTo("translation");
 
-        // ### Proposed: a table for the chat, which renders Markdown; no form yet.
+        // ### Proposed: the high-confidence ones as one table for the chat, which renders Markdown; no form yet.
         final Map<String, Object> shown = json("classify_kinds", args("build", BUILD, "proposals",
                 JsonUtil.readValue(PROPOSALS, List.class)));
         dump("classify_kinds shown", shown);
-        assertThat(String.valueOf(shown.get("table"))).contains("### 1. A user logged on", "```\ntime = ")
-                .doesNotContain("| Kind |");
+        assertThat(String.valueOf(shown.get("table"))).startsWith("## High-confidence classifications")
+                .contains("| 1 |  | A user logged on | Authenticate: Logon |");
 
-        // ### Confirmed in a short form: the sure ones accepted together, the low one rejected, and corrected.
+        // ### Accepted together in a short form; then the others in detail, grouped by confidence.
         client.answeringWith(this::answer);
+        final Map<String, Object> high = json("classify_kinds", args("build", BUILD, "confirm", true));
+        dump("classify_kinds high", high);
+        assertThat(high.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
+        assertThat(String.valueOf(high.get("table"))).contains("## Medium-confidence classifications",
+                "### 3. A report exported", "```\ntime = ", "## Low-confidence classifications",
+                "### 4. Records purged");
+
+        // ### Each of the others on its own: the low one rejected, and corrected.
         final Map<String, Object> answered = json("classify_kinds", args("build", BUILD, "confirm", true));
         dump("classify_kinds answered", answered);
         client.answeringWith(McpTestClient::agree);
-        assertThat(answered.get("recorded")).isEqualTo(List.of("action=login", "action=logout", "action=export"));
+        assertThat(answered.get("recorded")).isEqualTo(List.of("action=export"));
         assertThat(answered.get("rejected")).isEqualTo(List.of("action=purge"));
         assertThat(answered.get("corrections")).isEqualTo("purge deletes the audit records: Delete, not Alert");
         final ElicitFormRequest form = client.forms().getLast();
