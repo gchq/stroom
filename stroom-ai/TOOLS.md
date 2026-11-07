@@ -3779,7 +3779,20 @@ it"), or `time_source=received|created|none`; times with no date and no header g
 `dateless_times`) are asked about the same way, `date_source=received|created|file_name|none`, the file-name date
 offered only when a sample stream's `RemoteFile` holds one, the date joined with each time and `rollover` set. A
 header line giving the date (`VariantDrafts`) needs no question: it becomes a `drop_when` rule, the splitter carries
-its date onto the lines after it (`header_date`), and each dateless time is joined with it, with `rollover`. Without forms or the argument, a note says to ask.
+its date onto the lines after it (`header_date`), and each dateless time is joined with it, with `rollover`. Without forms or the argument, a note says to ask. Which time
+is the event's (`EventTimes`, the draft's `time()`): timestamp fields are ranked by name (an event's time; one that
+may be, such as `created_at`, `start`, `end`, `date`; one whose name says nothing; an object's, such as `expires`,
+`valid_*`, `last*`, `*modified*`, CEF's `file*Time`, never, kept as Data), the record's own before its container's
+(a syslog header before CEF, JSON or pairs, by the spec's structure), a container time without a year (RFC 3164)
+after any of the record's own. The container's time is the fallback record by record: `any_of [own..., container]`
+with one `time_format` reading both (`[A][B]`, `TimePatterns.combined`, checked on the values); where none can (an
+epoch number beside a pattern) the container's for every record, with a note. A kind whose records lack the common
+time gets its own in its rule. Where two times are alike (same rank and side, each in 90% of the records, different
+values) the draft keeps the first and adds `time_candidates` (`rule` when a kind's, `fields`: each with `share`,
+`time_format`, `rank`, `from_others`, the median seconds from each other over records holding both) for the agent
+to choose from; a note lists every timestamp field (`Timestamp fields: ...`) with its share, rank and format.
+Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
+(1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601).
 
 The user chooses the event-logging version first (`EventVersions.target`), before anything is read. The draft is
 compacted (`MappingCompaction.compactRules`, `compactPairs`) so it fits a reply: a rule's leftover fields as its
@@ -3796,7 +3809,7 @@ generated without them.
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
   this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
 * **Returns**: `mapping`, `source_notes`, `splitter`, `format`, `records`, `kinds`, `notes`, `unmapped_fields`,
-  `fields_seen`; `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
+  `fields_seen`; `time_candidates` (when two times could each be the event's); `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
   `ok: null` and `note` when the schema can't be read); `schema_version` and `schema_version_settled`;
   `current_translation` when the build's feed is already translated by a pipeline whose XSLT looks values up; for
   XML fragments, `xml_namespace` set to the namespace of the environment's wrapper; `hint`. Or the version question

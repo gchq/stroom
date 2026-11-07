@@ -474,6 +474,7 @@
    ],
    "notes": [
     "'message' holds JSON: its keys are fields of their own, e.g. 'message.time', 'message.user', 'message.event', 'message.ok' (json_fields). The text itself isn't mapped.",
+    "Timestamp fields: 'received' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX); 'message.time' (event time, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'message.time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'message.event' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -1299,6 +1300,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -1488,6 +1490,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
+    "Timestamp fields: 'received' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'received'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -1837,6 +1840,7 @@
    "notes": [
     "'payload' holds JSON: its keys are fields of their own, e.g. 'payload.ts', 'payload.level', 'payload.msg' (json_fields). The text itself isn't mapped.",
     "'payload.msg' holds key/value pairs: 4 keys are fields of their own through pairs ('user', 'action', 'src', 'result'), each read as an extract entry would. The text itself isn't mapped (map it too, to Description say, if it's wanted whole). A key only one record shows is left out: add it the same way if it's wanted.",
+    "Timestamp fields: 'received' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX); 'payload.ts' (event time, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'payload.ts'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "One rule per value of 'action' (LOGIN, LOGOUT), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -2007,6 +2011,7 @@
     "timeout"
    ],
    "notes": [
+    "Timestamp fields: 'time' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); 'timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'time', 'timestamp'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or timestamp; EventSource/User/Id from user or username), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout, timeout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -2178,6 +2183,7 @@
     "timeout"
    ],
    "notes": [
+    "Timestamp fields: 'time' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); 'timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'time', 'timestamp'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or timestamp; EventSource/User/Id from user or username), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout, timeout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -3066,6 +3072,7 @@
    ],
    "notes": [
     "'event' holds JSON: its keys are fields of their own, e.g. 'event.timestamp', 'event.username', 'event.event_type', 'event.message' (json_fields). The text itself isn't mapped.",
+    "Timestamp fields: 'received' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX); 'event.timestamp' (event time, in 100% of records, yyyy-MM-dd'T'HH:mm:ss.SSSXXX). EventTime/TimeCreated reads 'event.timestamp'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'event.message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "One rule per value of 'event.event_type' (LOGIN_SUCCESS, LOGIN_FAILURE, DOCUMENT_VIEW, PASSWORD_CHANGE, DOCUMENT_DELETE, LOGOUT): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -4503,6 +4510,7 @@
    "records": 4,
    "kinds": [],
    "notes": [
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",
@@ -5722,6 +5730,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd HH:mm:ss). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -6791,17 +6800,17 @@
       ],
       "fields": [
        {
+        "path": "EventTime/TimeCreated",
+        "field": "ts",
+        "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+       },
+       {
         "path": "EventDetail/Authenticate/Action",
         "value": "Logon"
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
         "field": "user"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ts",
-        "field": "ts"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -6820,17 +6829,17 @@
       ],
       "fields": [
        {
+        "path": "EventTime/TimeCreated",
+        "field": "ts",
+        "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+       },
+       {
         "path": "EventDetail/Authenticate/Action",
         "value": "Logon"
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
         "field": "user"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ts",
-        "field": "ts"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -6849,17 +6858,17 @@
       ],
       "fields": [
        {
+        "path": "EventTime/TimeCreated",
+        "field": "ts",
+        "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+       },
+       {
         "path": "EventDetail/Authenticate/Action",
         "value": "Logoff"
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
         "field": "user"
-       },
-       {
-        "path": "EventDetail/Authenticate/Data",
-        "data_name": "ts",
-        "field": "ts"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -6914,8 +6923,12 @@
    ],
    "notes": [
     "'published' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'ts'.",
+    "Timestamp fields: 'published' (a time its name says nothing of, in 50% of records, yyyy-MM-dd'T'HH:mm:ss.SSSX); 'ts' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'published'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
+    "Rule 'login': its records have no 'published', so its time is 'ts'.",
+    "Rule 'password_change': its records have no 'published', so its time is 'ts'.",
+    "Rule 'logout': its records have no 'published', so its time is 'ts'.",
     "Drafted from the sample's values (check them): user.session.start: Alert for outcome.result FAILURE.",
     "The sample's records come in 3 shapes (their fields differ): each element reads every shape's field in turn (EventSource/Client/IPAddress from client.ipAddress or ip; EventDetail/TypeId from eventType or type), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'eventType' (user.session.start, user.account.lock, user.session.end, login, password_change, logout): replace each EventDetail/Unknown left by the action element that describes the kind (Authenticate, Network, Process, View, Create, Update, Delete, Alert, Send, Receive...), and move its Data entries into that element (e.g. EventDetail/Alert/Data); 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes. Unknown is for records no action element describes, not a way round a schema error; build_translation_xslt refuses it where the values show an action."
@@ -7200,6 +7213,9 @@
     "0101039426"
    ],
    "notes": [
+    "'eventtime' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'itime'.",
+    "The records' 'eventtime', 'itime' could each be the event's time; drafted with 'eventtime'. time_candidates says what tells them apart: choose one (changes=), say which and why, and ask the user if unsure.",
+    "Timestamp fields: 'itime' (event time, in 100% of records, epoch_s); 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'eventtime' (event time, in 100% of records, epoch_ns). EventTime/TimeCreated reads 'eventtime'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0101039424: Alert for subtype vpn; 0101039425: Alert for subtype vpn; 0101039426: Alert for subtype vpn.",
@@ -7213,6 +7229,30 @@
     "subtype",
     "action",
     "remip"
+   ],
+   "time_candidates": [
+    {
+     "fields": [
+      {
+       "field": "eventtime",
+       "share": 100,
+       "time_format": "epoch_ns",
+       "rank": "event",
+       "from_others": {
+        "itime": 1.0
+       }
+      },
+      {
+       "field": "itime",
+       "share": 100,
+       "time_format": "epoch_s",
+       "rank": "event",
+       "from_others": {
+        "eventtime": 1.0
+       }
+      }
+     ]
+    }
    ],
    "fields_seen": [
     "itime",
@@ -11381,7 +11421,7 @@
     "common": [
      {
       "path": "EventTime/TimeCreated",
-      "field": "#Start-Date",
+      "xpath": "concat(data[@name='date']/@value, ' ', data[@name='time']/@value)",
       "time_format": "yyyy-MM-dd HH:mm:ss"
      },
      {
@@ -11417,6 +11457,11 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
+        "data_name": "#Start-Date",
+        "field": "#Start-Date"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
         "data_name": "#Date",
         "field": "#Date"
        },
@@ -11424,16 +11469,6 @@
         "path": "EventDetail/Unknown/Data",
         "data_name": "#Remark",
         "field": "#Remark"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "date",
-        "field": "date"
-       },
-       {
-        "path": "EventDetail/Unknown/Data",
-        "data_name": "time",
-        "field": "time"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -11564,7 +11599,8 @@
    "records": 144,
    "kinds": [],
    "notes": [
-    "'#Start-Date' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "'date' and 'time' are joined for EventTime/TimeCreated. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: '#Start-Date' (a time its name says nothing of, in 100% of records, yyyy-MM-dd HH:mm:ss); '#Date' (a time its name says nothing of, in 100% of records, yyyy-MM-dd HH:mm:ss); 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd). EventTime/TimeCreated reads 'date', 'time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -11572,10 +11608,9 @@
    "unmapped_fields": [
     "#Software",
     "#Version",
+    "#Start-Date",
     "#Date",
     "#Remark",
-    "date",
-    "time",
     "time-taken",
     "c-ip",
     "cs-username",
@@ -11598,18 +11633,6 @@
     "sc-bytes",
     "cs-bytes"
    ],
-   "time_zones": {
-    "examples": {
-     "#Start-Date": [
-      "2026-10-11 08:00:00",
-      "2026-10-11 08:00:00",
-      "2026-10-11 08:00:00",
-      "2026-10-11 08:00:00",
-      "2026-10-11 08:00:00"
-     ]
-    },
-    "zone_names": []
-   },
    "fields_seen": [
     "#Software",
     "#Version",
@@ -11971,6 +11994,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd HH:mm:ss). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -12509,8 +12533,8 @@
     "common": [
      {
       "path": "EventTime/TimeCreated",
-      "field": "time",
-      "time_format": "MMM dd HH:mm:ss"
+      "field": "col2",
+      "time_format": "yyyy/MM/dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -12548,13 +12572,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "col1",
-        "field": "col1"
+        "data_name": "time",
+        "field": "time"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "col2",
-        "field": "col2"
+        "data_name": "col1",
+        "field": "col1"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -12840,15 +12864,16 @@
    "records": 6,
    "kinds": [],
    "notes": [
-    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "'col2' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'time' (the container's, event time, in 100% of records, MMM dd HH:mm:ss); 'col2' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col7' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col22' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'col36' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss). EventTime/TimeCreated reads 'col2'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
    ],
    "unmapped_fields": [
     "pri",
+    "time",
     "col1",
-    "col2",
     "col3",
     "col4",
     "col5",
@@ -12896,12 +12921,12 @@
    ],
    "time_zones": {
     "examples": {
-     "time": [
-      "Oct 11 08:00:00",
-      "Oct 11 08:00:05",
-      "Oct 11 08:00:10",
-      "Oct 11 08:00:15",
-      "Oct 11 08:00:20"
+     "col2": [
+      "2026/10/11 08:00:00",
+      "2026/10/11 08:00:05",
+      "2026/10/11 08:00:10",
+      "2026/10/11 08:00:15",
+      "2026/10/11 08:00:20"
      ]
     },
     "zone_names": []
@@ -13032,8 +13057,8 @@
     "common": [
      {
       "path": "EventTime/TimeCreated",
-      "field": "time",
-      "time_format": "MMM dd HH:mm:ss"
+      "field": "receive_time",
+      "time_format": "yyyy/MM/dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -13129,13 +13154,13 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "future_use1",
-        "field": "future_use1"
+        "data_name": "time",
+        "field": "time"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "receive_time",
-        "field": "receive_time"
+        "data_name": "future_use1",
+        "field": "future_use1"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
@@ -13319,13 +13344,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "future_use1",
-        "field": "future_use1"
+        "data_name": "time",
+        "field": "time"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "receive_time",
-        "field": "receive_time"
+        "data_name": "future_use1",
+        "field": "future_use1"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -13573,7 +13598,8 @@
     "TRAFFIC"
    ],
    "notes": [
-    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "'receive_time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'time' (the container's, event time, in 100% of records, MMM dd HH:mm:ss); 'receive_time' (the record's own, event time, in 100% of records, yyyy/MM/dd HH:mm:ss); 'generated_time' (the record's own, event time, in 100% of records, yyyy/MM/dd HH:mm:ss); 'future_use3' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'start' (the record's own, may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy/MM/dd HH:mm:ss). EventTime/TimeCreated reads 'receive_time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
@@ -13581,8 +13607,8 @@
    ],
    "unmapped_fields": [
     "pri",
+    "time",
     "future_use1",
-    "receive_time",
     "serial",
     "subtype",
     "future_use2",
@@ -13622,12 +13648,12 @@
    ],
    "time_zones": {
     "examples": {
-     "time": [
-      "Oct 11 08:00:00",
-      "Oct 11 08:00:05",
-      "Oct 11 08:00:10",
-      "Oct 11 08:00:15",
-      "Oct 11 08:00:20"
+     "receive_time": [
+      "2026/10/11 08:00:00",
+      "2026/10/11 08:00:05",
+      "2026/10/11 08:00:10",
+      "2026/10/11 08:00:15",
+      "2026/10/11 08:00:20"
      ]
     },
     "zone_names": []
@@ -13757,8 +13783,8 @@
     "common": [
      {
       "path": "EventTime/TimeCreated",
-      "field": "time",
-      "time_format": "MMM dd HH:mm:ss"
+      "field": "receive_time",
+      "time_format": "yyyy/MM/dd HH:mm:ss"
      },
      {
       "path": "EventSource/System/Name",
@@ -13854,13 +13880,13 @@
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "future_use1",
-        "field": "future_use1"
+        "data_name": "time",
+        "field": "time"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
-        "data_name": "receive_time",
-        "field": "receive_time"
+        "data_name": "future_use1",
+        "field": "future_use1"
        },
        {
         "path": "EventDetail/Network/Permit/Data",
@@ -14044,13 +14070,13 @@
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "future_use1",
-        "field": "future_use1"
+        "data_name": "time",
+        "field": "time"
        },
        {
         "path": "EventDetail/Unknown/Data",
-        "data_name": "receive_time",
-        "field": "receive_time"
+        "data_name": "future_use1",
+        "field": "future_use1"
        },
        {
         "path": "EventDetail/Unknown/Data",
@@ -14298,7 +14324,8 @@
     "TRAFFIC"
    ],
    "notes": [
-    "'time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "'receive_time' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'time' (the container's, event time, in 100% of records, MMM dd HH:mm:ss); 'receive_time' (the record's own, event time, in 100% of records, yyyy/MM/dd HH:mm:ss); 'generated_time' (the record's own, event time, in 100% of records, yyyy/MM/dd HH:mm:ss); 'future_use3' (the record's own, a time its name says nothing of, in 100% of records, yyyy/MM/dd HH:mm:ss); 'start' (the record's own, may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy/MM/dd HH:mm:ss). EventTime/TimeCreated reads 'receive_time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'message' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): TRAFFIC: Network/Permit for action allow.",
@@ -14306,8 +14333,8 @@
    ],
    "unmapped_fields": [
     "pri",
+    "time",
     "future_use1",
-    "receive_time",
     "serial",
     "subtype",
     "future_use2",
@@ -14347,12 +14374,12 @@
    ],
    "time_zones": {
     "examples": {
-     "time": [
-      "Oct 11 08:00:00",
-      "Oct 11 08:00:05",
-      "Oct 11 08:00:10",
-      "Oct 11 08:00:15",
-      "Oct 11 08:00:20"
+     "receive_time": [
+      "2026/10/11 08:00:00",
+      "2026/10/11 08:00:05",
+      "2026/10/11 08:00:10",
+      "2026/10/11 08:00:15",
+      "2026/10/11 08:00:20"
      ]
     },
     "zone_names": []
@@ -14491,6 +14518,7 @@
    "kinds": [],
    "notes": [
     "'col1' has no time zone or offset. The zone the source writes it in is the user's to say: draft_translation_mapping asks (timezone=), and Stroom reads it as UTC until then.",
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd HH:mm:ss). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -15894,6 +15922,8 @@
     "0100032001"
    ],
    "notes": [
+    "'eventtime' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'date' and 'time'.",
+    "Timestamp fields: 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'eventtime' (event time, in 100% of records, epoch_ns). EventTime/TimeCreated reads 'eventtime'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0100032001: Authenticate for action login.",
@@ -16420,6 +16450,8 @@
     "0100032001"
    ],
    "notes": [
+    "'eventtime' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'date' and 'time'.",
+    "Timestamp fields: 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'eventtime' (event time, in 100% of records, epoch_ns). EventTime/TimeCreated reads 'eventtime'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "Drafted from the sample's values (check them): 0000000013: Network/Permit for action accept; Network/Deny for action deny; 0419016384: Network/Deny for action dropped; 0100032001: Authenticate for action login.",
@@ -18065,8 +18097,8 @@
      {
       "path": "EventTime/TimeCreated",
       "any_of": [
-       "time",
-       "﻿time"
+       "﻿time",
+       "time"
       ],
       "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
      },
@@ -18184,10 +18216,11 @@
     "login"
    ],
    "notes": [
+    "Timestamp fields: '﻿time' (event time, in 17% of records, yyyy-MM-dd'T'HH:mm:ssX); 'time' (event time, in 83% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads '\\ufefftime', 'time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
+    "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from ﻿time or time), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (logout, login), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
@@ -18219,8 +18252,8 @@
      {
       "path": "EventTime/TimeCreated",
       "any_of": [
-       "time",
-       "﻿time"
+       "﻿time",
+       "time"
       ],
       "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
      },
@@ -18338,10 +18371,11 @@
     "logout"
    ],
    "notes": [
+    "Timestamp fields: '﻿time' (event time, in 1% of records, yyyy-MM-dd'T'HH:mm:ssX); 'time' (event time, in 99% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads '\\ufefftime', 'time'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
-    "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from time or ﻿time), and each shape's kinds have rules. Check them against each file.",
+    "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from ﻿time or time), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'action' (login, logout), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
    "unmapped_fields": [
@@ -22590,6 +22624,7 @@
    ],
    "notes": [
     "'message' holds JSON: its keys are fields of their own, e.g. 'message.timestamp', 'message.event_type', 'message.user' (json_fields). The text itself isn't mapped.",
+    "Timestamp fields: 'timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); '@timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX); 'message.timestamp' (event time, in 50% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'timestamp', '@timestamp'.",
     "The sample's records come in 2 shapes (their fields differ): each element reads every shape's field in turn (EventTime/TimeCreated from timestamp or @timestamp; EventSource/User/Id from user or message.user; EventDetail/TypeId from event_type or message.event_type), and each shape's kinds have rules. Check them against each file.",
     "One rule per value of 'event_type' or 'message.event_type' (login, logout, user_authentication_check, password_change), each with its action element; 'other' catches the rest. Work through the schema problems build_translation_xslt reports: each names what the element takes."
    ],
@@ -24290,6 +24325,7 @@
    "kinds": [],
    "notes": [
     "'x-timestamp-unix' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'date' and 'time'.",
+    "Timestamp fields: 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'x-timestamp-unix' (event time, in 100% of records, epoch_s). EventTime/TimeCreated reads 'x-timestamp-unix'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -25121,6 +25157,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart."
@@ -25216,6 +25253,7 @@
    "records": 3,
    "kinds": [],
    "notes": [
+    "Timestamp fields: 'col1' (a time its name says nothing of, in 100% of records, yyyy-MM-dd'T'HH:mm:ssX). EventTime/TimeCreated reads 'col1'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "No host field was recognised: EventSource/Device is the device where the event happened. Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field names the kind of event: every record is one 'other' event with Unknown/Data. If the records are all one kind of event (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise add rules with conditions once you know how kinds are told apart.",

@@ -228,8 +228,8 @@ final class TimeSources {
         JsonValues.maps(mapping.get("events")).forEach(rule -> entries.addAll(JsonValues.maps(rule.get("fields"))));
         return entries.stream()
                 .filter(entry -> TIME_CREATED.equals(entry.get("path")))
-                .filter(entry -> entry.get("time_format") instanceof final String format && !format.startsWith(
-                        "epoch") && !TimePatterns.hasZone(format))
+                .filter(entry -> entry.get("time_format") instanceof final String format
+                                 && TimePatterns.zoneless(format))
                 .filter(entry -> entry.get("timezone") == null)
                 .toList();
     }

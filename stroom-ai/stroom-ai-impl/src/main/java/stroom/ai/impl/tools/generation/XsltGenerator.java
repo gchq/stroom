@@ -139,7 +139,8 @@ public final class XsltGenerator {
     // The XSLT's own function writing a record's time zone as Stroom reads one.
     private static final String ZONE_FUNCTION = "zone";
     private static final Map<String, String> EPOCH_FUNCTIONS = Map.of("epoch_ms", "from-epoch-ms",
-            "epoch_s", "from-epoch-s", "epoch_us", "from-epoch-us", "epoch_ns", "from-epoch-ns");
+            "epoch_s", "from-epoch-s", "epoch_us", "from-epoch-us", "epoch_ns", "from-epoch-ns",
+            "windows_filetime", "from-filetime");
 
     private final TranslationMapping m;
     private final EventSchema schema;

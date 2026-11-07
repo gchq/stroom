@@ -376,7 +376,8 @@ public final class MappingFacts {
         if (epoch != null) {
             // Seen: 'epoch seconds' told to quote its letters, "ep'o'ch sec'o'nds", which isn't a time at all.
             return "time_format " + ToolText.repr(pattern) + " describes an epoch time: write it as " + epoch
-                   + " (epoch_s, epoch_ms, epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds)";
+                   + " (epoch_s, epoch_ms, epoch_us or epoch_ns for seconds, milli-, micro- or nanoseconds; "
+                   + "windows_filetime for Windows FILETIME)";
         }
         boolean quoted = false;
         final Set<String> bad = new TreeSet<>();
@@ -401,6 +402,9 @@ public final class MappingFacts {
     // The epoch time format a pattern describes in words (epoch seconds, unix time in ms), or null.
     private static String epochName(final String pattern) {
         final String words = pattern.strip().toLowerCase(Locale.ROOT);
+        if (words.contains("filetime") || words.contains("file time")) {
+            return "windows_filetime";
+        }
         if (!EPOCH_WORDS.matcher(words).find()) {
             return null;
         }
