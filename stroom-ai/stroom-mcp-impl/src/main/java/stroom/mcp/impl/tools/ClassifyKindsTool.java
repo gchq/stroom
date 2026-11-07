@@ -146,7 +146,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                              + "event_detail (the action element, e.g. Authenticate, Update, "
                                              + "Network/Permit), action and success where it has them, type_id, "
                                              + "actor and affected (the fields naming who acted and who or what "
-                                             + "it was done to), and confidence (high, medium or low); or "
+                                             + "it was done to), affected_as (what that is: User, File, "
+                                             + "Document, Group...), and confidence (high, medium or low); or "
                                              + "from_user: true for what the user said.")
                                 .items(proposal())
                                 .build())
@@ -167,6 +168,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .addStringProperty("type_id", "The event's TypeId.")
                 .addStringProperty("actor", "The field naming who acted.")
                 .addStringProperty("affected", "The field naming the user or object acted on.")
+                .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
+                                                  + "User, File, Document, Group... (or its leaf, User/Name).")
                 .addStringProperty("confidence", "high, medium or low: how sure you are.")
                 .addBooleanProperty(FROM_USER, "True for what the user said (recorded without asking again).")
                 .required("field", "value", "description")
@@ -444,11 +447,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> lines = new ArrayList<>(List.of("| Kind | Action element | Action | Outcome | Actor | "
                                                            + "Acted on | Confidence |",
                 "| --- | --- | --- | --- | --- | --- | --- |"));
+        // Acted on: the field, and what it names (a user, a file...).
         for (final Proposal p : proposals) {
             final Map<?, ?> e = p.given();
             lines.add("| " + p.key() + ": " + text(e.get("description")) + " | " + text(e.get("event_detail"))
                       + " | " + text(e.get("action")) + " | " + text(e.get("success")) + " | "
-                      + text(e.get("actor")) + " | " + text(e.get("affected")) + " | " + p.confidence() + " |");
+                      + text(e.get("actor")) + " | " + text(e.get("affected")) + (e.get("affected_as") == null
+                    ? ""
+                    : " (" + text(e.get("affected_as")) + ")") + " | " + p.confidence() + " |");
         }
         return String.join("\n", lines);
     }
