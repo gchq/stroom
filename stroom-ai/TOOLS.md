@@ -3793,7 +3793,9 @@ epoch number beside a pattern) the container's for every record, with a note. A 
 time gets its own in its rule. Where two times are alike (same rank and side, each in 90% of the records, different
 values) the draft keeps the first and adds `time_candidates` (`rule` when a kind's, `fields`: each with `share`,
 `time_format`, `rank`, `from_others`, the median seconds from each other over records holding both) for the agent
-to choose from; a note lists every timestamp field (`Timestamp fields: ...`) with its share, rank and format.
+to choose from, the time entry marked `choose_from` (the fields), which a mapping may not carry
+(`FieldMapping.read` refuses it, so build_translation_xslt does, until the agent chooses; the draft's own
+`schema_check` reads it without); a note lists every timestamp field (`Timestamp fields: ...`) with its share, rank and format.
 Numbers in a field named as a time are read as one where they can be: epoch seconds to nanoseconds by range
 (1990-2100; before Sep 2001 only when named), and `windows_filetime` (FILETIME: 100 ns ticks since 1601). Kinds: a
 naming field (matched by its own name or with its parent's, `event_code`) may have up to 64 values, each with a

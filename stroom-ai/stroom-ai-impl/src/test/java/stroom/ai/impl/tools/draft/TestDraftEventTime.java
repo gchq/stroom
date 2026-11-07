@@ -83,6 +83,7 @@ class TestDraftEventTime extends DraftFixtures {
     void anObjectsCreationAndExpiryAreNotTheEventsTime() {
         final Map<String, Object> draft = draft("t05_json_object_times");
         assertThat(time(draft).get("field")).isEqualTo("event_time");
+        assertThat(time(draft)).doesNotContainKey("choose_from");
         assertThat(timeNote(draft)).contains("'created_at'", "'expires'");
         assertThat(draft).doesNotContainKey("time_candidates");
     }
@@ -110,8 +111,10 @@ class TestDraftEventTime extends DraftFixtures {
         // other.
         assertThat(JsonValues.maps(session.get("fields")).getFirst())
                 .containsKeys("share", "time_format", "rank", "from_others");
-        // Drafted with the first meanwhile, so the draft works as it stands.
-        assertThat(fields(rules(draft).get("session")).get(TIME_CREATED).get("field")).isEqualTo("start");
+        // Drafted with the first, marked: build_translation_xslt refuses it until the agent chooses.
+        final Map<String, Object> sessionTime = fields(rules(draft).get("session")).get(TIME_CREATED);
+        assertThat(sessionTime.get("field")).isEqualTo("start");
+        assertThat(sessionTime.get("choose_from")).isEqualTo(List.of("start", "end"));
         assertThat(fields(rules(draft).get("file_access"))).doesNotContainKey(TIME_CREATED);
     }
 
@@ -127,6 +130,7 @@ class TestDraftEventTime extends DraftFixtures {
     void twoTimesEachNamedAsTheEventsArePutToTheAgent() {
         final Map<String, Object> draft = draft("t09_kv_two_event_times");
         assertThat(time(draft).get("field")).isEqualTo("ts");
+        assertThat(time(draft).get("choose_from")).isEqualTo(List.of("ts", "logged_at"));
         final List<Map<String, Object>> candidates = JsonValues.maps(draft.get("time_candidates"));
         assertThat(candidates).hasSize(1);
         assertThat(candidates.getFirst()).doesNotContainKey("rule");

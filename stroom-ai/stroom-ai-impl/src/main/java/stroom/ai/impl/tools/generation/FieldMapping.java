@@ -126,6 +126,16 @@ public record FieldMapping(String path,
         if (fields == null) {
             return null;
         }
+        if (fields.input().get("choose_from") instanceof final List<?> choices) {
+            // A time the draft put to the agent, not yet chosen (asked for by the user: seen, the draft's first kept
+            // without a word).
+            fields.valueError("'" + fields.input().get("path") + "' still has choose_from " + ToolText.repr(
+                    choices.stream().map(String::valueOf).toList()) + ": the draft couldn't tell which is the event's "
+                              + "time (its time_candidates say what tells them apart). Choose one from that and what "
+                              + "you know of the source, set field to it, remove choose_from, and say which you chose "
+                              + "and why; ask the user if unsure");
+            return null;
+        }
         final FieldMapping read = new FieldMapping(fields.requiredString("path"), fields.optionalString("field"),
                 fields.optionalStrings("any_of"), fields.optionalString("value"), fields.optionalString("xpath"),
                 fields.optionalString("meta"), fields.optionalModel("lookup", (value, at) -> Lookup.read(reader,

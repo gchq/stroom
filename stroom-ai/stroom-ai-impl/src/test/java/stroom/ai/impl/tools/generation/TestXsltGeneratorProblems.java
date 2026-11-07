@@ -504,6 +504,19 @@ class TestXsltGeneratorProblems extends XsltRuns {
                         "is an expression, not an input field: give it as xpath"));
     }
 
+    @Test
+    void aTimeTheDraftPutToTheAgentIsRefusedUntilItChooses() {
+        // Asked for by the user: seen in the agent eval, Haiku kept the draft's first time (a session's start, not
+        // its end) without saying it had chosen at all, twice in six runs.
+        final List<Object> fields = List.of((Object) json("""
+                {"path": "EventTime/TimeCreated", "field": "start", "time_format": "yyyy-MM-dd'T'HH:mm:ssX",
+                 "choose_from": ["start", "end"]}"""));
+        assertThatThrownBy(() -> mapping(with("events", List.of(rule("session", List.of(), fields)))))
+                .isInstanceOf(MappingValidationException.class)
+                .hasMessageContaining("'EventTime/TimeCreated' still has choose_from ['start', 'end']")
+                .hasMessageContaining("remove choose_from");
+    }
+
     @ParameterizedTest
     @MethodSource("functionCalls")
     void aFunctionCallIsNotTakenAsAField(final String entry, final String message) {

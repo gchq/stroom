@@ -113,8 +113,9 @@ completion of a dateless time (it moves a time later than the stream's creation 
   falling back to the container's record by record, and keeps an object's times (an expiry, a file's creation, an
   account's last logon) as Data. Where two times could each be the event's, it drafts with the first and lists them
   in `time_candidates` (per rule, or for every record), each with its share of the records, format, rank and median
-  distance from the others. Choose from that evidence and what you know of the source (the time the event happened,
-  not when a period began or something was created), set the rule's `EventTime/TimeCreated` with `changes=`, say
+  distance from the others; that entry carries `choose_from`, which `build_translation_xslt` refuses until you
+  choose. Choose from that evidence and what you know of the source (the time the event happened, not when a period
+  began or something was created), send the entry with `changes=` with its field and without `choose_from`, say
   which you chose and why, and ask the user when unsure.
 
 ## Data
