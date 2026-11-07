@@ -47,6 +47,8 @@ final class FakeBuildFacts implements BuildFacts {
     List<Long> events = List.of();
     List<Long> eventsLeftOut = List.of();
     Map<String, List<Long>> unmapped = new LinkedHashMap<>();
+    // Whether classify_kinds has settled every kind (settled unless a test says not).
+    boolean classified = true;
     Map<String, Object> survey;
     List<String> checks = List.of();
     String keptXslt;
@@ -85,6 +87,11 @@ final class FakeBuildFacts implements BuildFacts {
 
     static KeptMapping.Kept kept(final String kind, final Map<String, Object> payload) {
         return new KeptMapping.Kept(kind, payload);
+    }
+
+    @Override
+    public boolean classified(final List<Map<String, Object>> docs) {
+        return classified;
     }
 
     @Override

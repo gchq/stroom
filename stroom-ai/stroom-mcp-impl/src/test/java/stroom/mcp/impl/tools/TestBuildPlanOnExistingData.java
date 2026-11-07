@@ -152,7 +152,7 @@ class TestBuildPlanOnExistingData {
         }
         // Until the backend is known to be Elasticsearch.
         assertThat(state(result, "index_template")).isEqualTo("not needed");
-        assertThat(String.valueOf(next(result).get("progress"))).startsWith("step 5 of 13, processed");
+        assertThat(String.valueOf(next(result).get("progress"))).startsWith("step 6 of 14, processed");
         final List<Map<String, Object>> withPlan = new ArrayList<>(docs);
         withPlan.add(FakeBuildFacts.doc("XSLT", "ixx", "ACME - Indexing"));
         facts.docs = withPlan;

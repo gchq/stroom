@@ -67,7 +67,7 @@ class TestBuildPlan {
         assertThat(steps.indexOf("processed")).isLessThan(steps.indexOf("unmapped"));
         assertThat(steps.indexOf("unmapped")).isLessThan(steps.indexOf("validated"));
         assertThat(steps.indexOf("documented")).isLessThan(steps.indexOf("index"));
-        assertThat(BuildPlan.onboardingChecklist()).hasSize(16);
+        assertThat(BuildPlan.onboardingChecklist()).hasSize(17);
     }
 
     @Test
@@ -236,7 +236,7 @@ class TestBuildPlan {
 
     @Test
     void theCoreToolsCarryTheirPlanStep() {
-        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 5 of 16 (pipeline): ");
+        assertThat(BuildPlan.onboardingLabel("create_pipeline")).isEqualTo("Onboarding step 6 of 17 (pipeline): ");
         assertThat(BuildPlan.onboardingLabel("start_onboarding")).isEqualTo("Onboarding start: ");
         assertThat(BuildPlan.onboardingLabel("build_status")).isEqualTo("Onboarding, any step: ");
         assertThat(BuildPlan.onboardingLabel("locate_event")).isEmpty();
@@ -295,6 +295,27 @@ class TestBuildPlan {
         assertThat(String.valueOf(status.get("events_left_out_note"))).contains("made from a raw stream since "
                                                                                 + "deleted");
         assertThat(String.valueOf(status.get("next"))).doesNotContain("8]").doesNotContain("8,");
+    }
+
+    @Test
+    void eachKindIsClassifiedBeforeTheDraftUnlessTheTranslationIsWritten() {
+        // Asked for by the user (work package E8): the agent classifies the kinds and the user confirms them before
+        // the translation is drafted.
+        facts.classified = false;
+        final Map<String, Object> status = plan.status("b", new DocRef("Feed", "f", "ACME"));
+        assertThat(states(status).get("classify")).isEqualTo("to do");
+        final List<Object> steps = BuildPlan.checklist().stream().map(step -> step.get("step")).toList();
+        assertThat(steps.indexOf("classify")).isGreaterThan(steps.indexOf("converter"))
+                .isLessThan(steps.indexOf("translation"));
+
+        facts.classified = true;
+        assertThat(states(plan.status("b", new DocRef("Feed", "f", "ACME"))).get("classify")).isEqualTo("done");
+
+        // A build whose translation is written already has no need of it.
+        facts.classified = false;
+        facts.docs = List.of(FakeBuildFacts.doc("Feed", "f", "ACME"), FakeBuildFacts.doc("XSLT", "x", "ACME-T"));
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        assertThat(states(plan.status("b", null)).get("classify")).isEqualTo("not needed");
     }
 
     @Test

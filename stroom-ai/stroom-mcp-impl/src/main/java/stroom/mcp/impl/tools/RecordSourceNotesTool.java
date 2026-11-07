@@ -73,12 +73,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             "event_logging_path", "values", "basis", "confidence");
     private static final List<String> FIELD_REQUIRED = List.of("field", "meaning");
     private static final List<String> EVENT_KEYS = List.of("event", "description", "event_detail", "type_id", "field",
-            "value", "action", "success", "basis", "confidence");
+            "value", "action", "success", "actor", "affected", "basis", "confidence");
     private static final List<String> EVENT_REQUIRED = List.of("event", "description");
     private static final int MAX_NAME = 200;
     // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
     private static final String DOCUMENTATION = "documentation";
     private static final String AGENT_KNOWLEDGE = "agent_knowledge";
+    /// A note the agent proposed and the user confirmed (classify_kinds).
+    static final String USER_CONFIRMED = "user_confirmed";
+    // The notes block's kinds still to classify (classify_kinds), as field=value.
+    static final String PENDING = "pending";
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -177,7 +181,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     private Map<String, Object> record(final ToolCall call, final ToolCallContext context) {
         final String build = required(call, BUILD_ARG);
         final String source = required(call, SOURCE_ARG);
-        final String summary = NullSafe.string(rawArg(call, SUMMARY_ARG));
+        final String givenSummary = NullSafe.string(rawArg(call, SUMMARY_ARG));
         final List<Map<String, Object>> givenFields = notes(call, FIELDS_ARG, FIELD_KEYS, FIELD_REQUIRED);
         final List<Map<String, Object>> allEvents = notes(call, EVENTS_ARG, EVENT_KEYS, EVENT_REQUIRED);
         // An event whose action element the schema doesn't have is left out, to be sent again corrected; the rest is
@@ -212,6 +216,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
         final String notesName = source + SourceNotes.NOTES_SUFFIX;
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
+        final String summary = NullSafe.isBlankString(givenSummary)
+                ? text(earlier.get("summary"))
+                : givenSummary;
         // What earlier calls recorded stays, unless this one gives the same field or event again.
         final List<Map<String, Object>> fields = merged(earlier.get("fields"), givenFields, FIELD_KEYS,
                 FIELD_REQUIRED);
@@ -223,7 +230,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         keptDocs.forEach(doc -> keptNames.add(text(doc.get("name"))));
 
         final DocumentationDoc notesDoc = written(context.session(), contents, build, notesName,
-                notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames)));
+                notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames),
+                        JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING)));
         final long usable = events.stream()
                 .filter(event -> JsonValues.truthy(event.get("field")) && JsonValues.truthy(event.get("value")))
                 .count();
@@ -325,6 +333,88 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         }
     }
 
+    /// Records catalogue events classify_kinds settled (each basis user_confirmed) into the build's source notes, with
+    /// the kinds still to classify; earlier notes stay, an event given again replaced.
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param source  The source's name (its notes doc is `<source> source notes`).
+    /// @param events  The events, each checked by [#checkedEvents].
+    /// @param pending The kinds still to classify, as field=value (none when every kind is settled).
+    /// @return The notes doc's `uuid` and `name`.
+    Map<String, Object> recordClassified(final ToolCallContext context,
+                                         final String build,
+                                         final String source,
+                                         final List<Map<String, Object>> events,
+                                         final List<String> pending) {
+        final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
+        guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
+        final String notesName = source + SourceNotes.NOTES_SUFFIX;
+        final Map<String, Object> earlier = earlierNotes(contents, notesName);
+        final List<Map<String, Object>> fields = merged(earlier.get("fields"), List.of(), FIELD_KEYS,
+                FIELD_REQUIRED);
+        final List<Map<String, Object>> merged = merged(earlier.get("events"), events, EVENT_KEYS, EVENT_REQUIRED);
+        final String summary = NullSafe.nonBlankStringElse(text(earlier.get("summary")),
+                "The kinds of event the agent classified and the user confirmed.");
+        final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
+                summary, fields, merged, JsonValues.strings(earlier.get("references")),
+                JsonValues.strings(earlier.get("documents")), pending, true));
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("uuid", doc.getUuid());
+        out.put("name", doc.getName());
+        return out;
+    }
+
+    /// Catalogue events as recorded: normalised, basis checked, and each checked against the schema's action
+    /// elements and the others (two a record can't tell apart).
+    ///
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @param given   The events.
+    /// @param name    The argument they were given in, for the problems.
+    /// @return The events.
+    /// @throws ToolRefusal naming every problem.
+    List<Map<String, Object>> checkedEvents(final ToolCallContext context,
+                                            final String build,
+                                            final List<Map<?, ?>> given,
+                                            final String name) {
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (int i = 0; i < given.size(); i++) {
+            for (final String key : EVENT_REQUIRED) {
+                if (given.get(i).get(key) == null) {
+                    throw new ToolRefusal(name + "[" + i + "]." + key + " is required");
+                }
+            }
+            final Map<String, Object> event = normalised(given.get(i), EVENT_KEYS, EVENT_REQUIRED);
+            basisChecked(event, name + "[" + i + "]");
+            events.add(event);
+        }
+        final List<String> problems = new ArrayList<>(SourceNotes.catalogueProblems(events,
+                detailCheck(context, build)));
+        if (problems.isEmpty()) {
+            problems.addAll(SourceNotes.catalogueProblems(events, null));
+        }
+        if (!problems.isEmpty()) {
+            throw new ToolRefusal("Nothing recorded: " + String.join("; ", problems) + ". Correct them and call "
+                                  + "again.");
+        }
+        return events;
+    }
+
+    /// @param context The call's context.
+    /// @param build   The build.
+    /// @return The build's source notes (one doc's, the first), or empty without any.
+    Map<String, Object> notesOf(final ToolCallContext context, final String build) {
+        final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
+        guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
+        return contents.values().stream()
+                .filter(doc -> DocumentationDoc.TYPE.equals(doc.type())
+                               && doc.name().endsWith(SourceNotes.NOTES_SUFFIX))
+                .findFirst()
+                .map(doc -> earlierNotes(contents, doc.name()))
+                .orElse(Map.of());
+    }
+
     private Map<String, Object> alreadyInStroom(final String uuid) {
         final DocumentationDoc existing = documentAccess.read(new DocRef(DocumentationDoc.TYPE, uuid),
                         DocumentationDoc.class)
@@ -378,6 +468,28 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<Map<String, Object>> events,
                             final List<String> references,
                             final List<String> keptNames) {
+        return notesText(source, summary, fields, events, references, keptNames, List.of(), false);
+    }
+
+    /// As [#notesText(String, String, List, List, List, List)], with the kinds still to classify.
+    ///
+    /// @param source     The log source the notes are of.
+    /// @param summary    What the source is.
+    /// @param fields     The field dictionary's rows.
+    /// @param events     The event catalogue's rows.
+    /// @param references Where the notes came from, e.g. vendor documentation.
+    /// @param keptNames  The names of the source documents kept in the build.
+    /// @param pending    The kinds still to classify (classify_kinds), as field=value.
+    /// @param classified Whether classify_kinds has looked at the kinds (pending then says what is left).
+    /// @return The document's text.
+    static String notesText(final String source,
+                            final String summary,
+                            final List<Map<String, Object>> fields,
+                            final List<Map<String, Object>> events,
+                            final List<String> references,
+                            final List<String> keptNames,
+                            final List<String> pending,
+                            final boolean classified) {
         final List<String> lines = new ArrayList<>(List.of("# " + source + " source notes", "", summary.strip(), ""));
         if (!fields.isEmpty()) {
             lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path "
@@ -398,6 +510,11 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                               + text(event.get("type_id")) + " | " + basisText(event) + " |"));
             lines.add("");
         }
+        if (!pending.isEmpty()) {
+            lines.addAll(List.of("## Kinds still to classify", ""));
+            pending.forEach(kind -> lines.add("- " + kind));
+            lines.add("");
+        }
         if (!references.isEmpty() || !keptNames.isEmpty()) {
             lines.addAll(List.of("## Sources", ""));
             references.forEach(reference -> lines.add("- " + reference));
@@ -405,6 +522,12 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         }
         final Map<String, Object> block = new LinkedHashMap<>();
         block.put("source", source);
+        if (!summary.isBlank()) {
+            block.put("summary", summary.strip());
+        }
+        if (classified) {
+            block.put(PENDING, List.copyOf(pending));
+        }
         block.put("fields", fields);
         block.put("events", events);
         block.put("documents", keptNames);
@@ -460,7 +583,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     // knowledge.
     private static void basisChecked(final Map<String, Object> note, final String where) {
         final String basis = text(note.getOrDefault("basis", DOCUMENTATION));
-        if (!List.of(DOCUMENTATION, AGENT_KNOWLEDGE).contains(basis)) {
+        if (!List.of(DOCUMENTATION, AGENT_KNOWLEDGE, USER_CONFIRMED).contains(basis)) {
             throw new ToolRefusal(where + ".basis is 'documentation' or 'agent_knowledge', not '" + basis + "'");
         }
         final String confidence = text(note.get("confidence"));
@@ -470,6 +593,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         }
         if (DOCUMENTATION.equals(basis)) {
             note.remove("basis");
+            note.remove("confidence");
+        }
+        if (USER_CONFIRMED.equals(basis)) {
             note.remove("confidence");
         }
     }
@@ -486,6 +612,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     // How a note's basis reads in the notes document.
     private static String basisText(final Map<String, Object> note) {
+        if (USER_CONFIRMED.equals(note.get("basis"))) {
+            return "agent's proposal, confirmed by the user";
+        }
         return AGENT_KNOWLEDGE.equals(note.get("basis"))
                 ? "agent knowledge (" + text(note.get("confidence")) + ")"
                 : DOCUMENTATION;
@@ -513,7 +642,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     }
 
     // An argument's JSON objects: a list of them, or one alone, or either as JSON text.
-    private static List<Map<?, ?>> objects(final ToolCall call, final String name) {
+    static List<Map<?, ?>> objects(final ToolCall call, final String name) {
         Object value = argsMap(call).get(name);
         if (value instanceof final String text && !text.isBlank()) {
             try {

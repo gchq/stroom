@@ -103,6 +103,10 @@ public class BuildPlan {
                                  + "the sample text (for XML fragments: the wrapper, as the environment writes "
                                  + "them; stroom://guide/data-splitter)",
                     "build_data_splitter stream_ids=<the sample streams>, save_text_converter"),
+            List.of("classify", "Each kind of event the user's documentation doesn't cover classified: you propose "
+                                + "each from its records and what you know of the source, the user confirms them in "
+                                + "one form (into the source notes the draft follows)",
+                    "classify_kinds build=... (without proposals, then with them)"),
             List.of("translation", "Translation XSLT from a mapping: draft it from the sample, decide the action "
                                    + "elements, generate and save it with the mapping (stroom://guide/mapping)",
                     "draft_translation_mapping, build_translation_xslt build=... name=... (uuid=... to replace)"),
@@ -655,6 +659,13 @@ public class BuildPlan {
                 ? (Boolean) !of(byType, TextConverterDoc.TYPE).isEmpty()
                 : null);
         // A copied pipeline's XSLT is there already, with its mapping or written by hand.
+        // Asked for by the user (work package E8): before the draft; not needed once the build has a translation
+        // (saved from a mapping, written by hand, or a copied pipeline's).
+        done.put("classify", facts.classified(docs)
+                ? Boolean.TRUE
+                : hasMapping(xslts, "translation") || !translation.isEmpty()
+                        ? null
+                        : Boolean.FALSE);
         done.put("translation", hasMapping(xslts, "translation")
                                 || (existing && !translation.isEmpty()
                                     && xslts.stream().anyMatch(x -> !"index".equals(x.get("mapping")))));
@@ -943,6 +954,8 @@ public class BuildPlan {
                     + "the chat. From then on give tools stream_ids, not the text");
             case "converter" -> call("build_data_splitter", args("stream_ids", raw, "build", build, "save_as",
                     "<converter name>"), "it saves the converter once every line parses");
+            case "classify" -> call("classify_kinds", args("build", build, "stream_ids", raw),
+                    "lists the kinds to classify; call again with a proposal for each, which the user confirms");
             case "translation" -> call("draft_translation_mapping", args("stream_ids", raw),
                     "decide what its notes ask, then build_translation_xslt with the mapping, stream_ids, the "
                     + "splitter, build and name: it saves the XSLT with the mapping");
@@ -1326,7 +1339,7 @@ public class BuildPlan {
 
     private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
         // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
-        final Set<String> notNeeded = Set.of("converter", "index_template", "covered");
+        final Set<String> notNeeded = Set.of("converter", "classify", "index_template", "covered");
         final List<Map<String, Object>> steps = new ArrayList<>();
         for (final Map<String, Object> item : checklist()) {
             final String step = String.valueOf(item.get("step"));
@@ -1355,7 +1368,8 @@ public class BuildPlan {
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
         final Set<String> skipped = new HashSet<>(kinds.discovery()
-                ? Set.of("translation", "pipeline", "stepped", "processed", "unmapped", "validated", "documented")
+                ? Set.of("classify", "translation", "pipeline", "stepped", "processed", "unmapped", "validated",
+                        "documented")
                 : Set.of());
         if (!kinds.reference()) {
             skipped.addAll(stepsOf(STAGE_REFERENCE));

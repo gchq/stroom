@@ -71,7 +71,7 @@ class TestStartOnboardingTool {
         assertThat(String.valueOf(result.get("text_converter"))).startsWith("needed: build_data_splitter");
         final Map<?, ?> next = (Map<?, ?>) result.get("next");
         assertThat(next.get("step")).isEqualTo("feed");
-        assertThat((List<?>) result.get("plan")).hasSize(16);
+        assertThat((List<?>) result.get("plan")).hasSize(17);
         assertThat(result.get("task_list")).isEqualTo(BuildPlan.TASK_LIST);
         assertThat(String.valueOf(result.get("task_list"))).contains("next.progress");
         assertThat(next.get("call")).isEqualTo(Map.of("tool", "create_feed", "arguments", Map.of(

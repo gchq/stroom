@@ -236,6 +236,7 @@ document in a build folder also needs Create there.
 | `propose_index_template` | Builds the final Elasticsearch index template for the cluster admin to apply | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `rebuild_mapping` | Rebuilds a translation's kept mapping from its XSLT | content | no | build | | Stepping | View, Edit | slot, confirms |
 | `record_source_notes` | Keeps vendor reference documentation, and notes made from it, in the build | content | no | build | | | View, Edit | build |
+| `classify_kinds` | The agent classifies each kind of event the documentation doesn't cover; the user confirms in one form | content | no | build | View Data | | View, Edit | build |
 | `rename_index` | Changes the Elasticsearch index name the build's Elastic Index and pipelines use | indexing | no | indexing | | | View, Edit | confirms |
 | `reprocess_streams` | Processes streams again through a build's pipeline | processing | no | processing | Manage Processors | View Data | View, Edit | confirms |
 | `review_coverage` | Finds the records across a feed that no rule of its translation matched | content | yes | build | View Data | Stepping | View | slot |
@@ -2790,6 +2791,38 @@ file's 985 records).
   such a command three times from its own terminal). Each file post is logged on the node that takes it (who, file,
   feed, stream).
 
+### `classify_kinds`
+
+Content · write (the build's source notes doc) · checks View and Edit; reads the sample streams (View Data) · changes
+only its build · chat group build · Classes: `ClassifyKindsTool`, `RecordSourceNotesTool`, `Consent.review`,
+`DraftMapping`
+
+Work package E8, every decision the user's: before the translation is drafted, the agent classifies each kind of
+event the user's documentation doesn't cover and the user confirms the classifications in one form. Called without
+proposals, it finds the kinds as the draft does (each rule's last field = value condition), leaves out those the
+source notes settle (an event with that field and value, from the documentation or confirmed by the user), and lists
+the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examples` whose values differ), keeping
+them in the notes block as `pending`. One kind (or none told apart), or none left, records nothing pending: the plan's
+`classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
+`description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `confidence`), each is checked as
+a catalogue event, then put to the user in one form (`Consent.review`): one checkbox accepts every high and medium
+proposal (the table in its description, since a form's message holds 2,000 characters), each low one (up to 10) has
+its own, and a text field takes corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
+leave `pending` and come back as `rejected` for the agent to ask about (the draft keeps them Unknown); the
+corrections come back for the agent to send as `from_user: true` proposals, recorded without another form (any kind
+the draft found, pending or not). Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
+plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
+not recorded once the translation is written.
+
+* **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
+  (the build's newest five raw sample streams when left out); `splitter`; `proposals`.
+* **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `source_notes`, `hint`, `next`; proposals:
+  `recorded`, `rejected`, `corrections`, `still_to_classify`, `source_notes`, `hint`, `next`, or `asked: false` and
+  `table`.
+* **Refuses**: no build; no source and no source notes; no sample streams; proposals before a listing; a proposal
+  for a kind not pending (unless from the user), without a confidence or an action element, or one the catalogue
+  checks refuse; the form declined.
+
 ### `record_source_notes`
 
 Content · write (Documentation docs in the build) · checks View and Edit; docs created and changed as the user; a
@@ -2807,7 +2840,9 @@ field and value showing it), `build_translation_xslt build=` (a mapping checked 
 same source (a long manual a part at a time), the docs are updated, not made twice: earlier fields and events stay
 unless given again.
 
-For documentation the user gave, and for the agent's own knowledge of a source, each such note `basis:
+For documentation the user gave, for classifications the user confirmed (`basis: user_confirmed`, written by
+`classify_kinds`, which also keeps the kinds still to classify as `pending`; events may name their `actor` and
+`affected` fields), and for the agent's own knowledge of a source, each such note `basis:
 agent_knowledge` with a `confidence` (high, medium or low, required); the notes doc shows each note's basis, the
 result's `to_review` lists the low-confidence ones for the user first, and field documentation says a meaning is the
 agent's knowledge. Never notes guessed from the sample's values: the draft would follow them over the sample's own.
