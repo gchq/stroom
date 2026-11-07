@@ -1,0 +1,47 @@
+name: File server audit with sessions
+template: Event Data (JSON)
+capabilities: [format_recognition, schema_inference, timestamps, event_time_choice]
+request: >
+  Onboard this file server's audit log (JSON lines). file_access lines say who opened which file. session lines are
+  written when a user's session on the server closes, with when it started and ended. Index the events by user.
+expected:
+  records: 6
+  event_types: []
+  paths: [EventTime/TimeCreated, EventSource/User/Id]
+  # A session line's event is its close: its time is end, not start (work package T7, the draft's time_candidates).
+  values:
+    EventTime/TimeCreated: ["2026-11-06T09:00:17.000Z", "2026-11-06T09:00:47.000Z", "2026-11-06T09:02:10.000Z",
+                            "2026-11-06T09:03:05.000Z", "2026-11-06T09:04:40.000Z", "2026-11-06T09:05:30.000Z"]
+  forbidden_values:
+    EventTime/TimeCreated: ["2026-11-06T08:44:47.000Z", "2026-11-06T08:30:05.000Z", "2026-11-06T09:01:30.000Z"]
+sample: |
+  {"type": "file_access", "event_time": "2026-11-06T09:00:17.000+00:00", "user": "alice", "file": "/srv/share/63.docx"}
+  {"type": "session", "start": "2026-11-06T08:44:47.000+00:00", "end": "2026-11-06T09:00:47.000+00:00", "user": "carol"}
+  {"type": "file_access", "event_time": "2026-11-06T09:02:10.000+00:00", "user": "bob", "file": "/srv/share/12.xlsx"}
+  {"type": "session", "start": "2026-11-06T08:30:05.000+00:00", "end": "2026-11-06T09:03:05.000+00:00", "user": "dave"}
+  {"type": "file_access", "event_time": "2026-11-06T09:04:40.000+00:00", "user": "alice", "file": "/srv/share/7.pdf"}
+  {"type": "session", "start": "2026-11-06T09:01:30.000+00:00", "end": "2026-11-06T09:05:30.000+00:00", "user": "bob"}
+reference:
+  mapping:
+    input: json
+    json_layout: lines
+    common:
+      - {path: EventTime/TimeCreated, field: event_time, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
+      - {path: EventSource/System/Name, value: File Server}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, value: file-audit}
+      - {path: EventSource/Device/HostName, value: fs01}
+      - {path: EventSource/User/Id, field: user}
+      - {path: EventDetail/TypeId, field: type}
+    events:
+      - name: file_access
+        when: [{field: type, equals: file_access}]
+        fields:
+          - {path: EventDetail/View/File/Path, field: file}
+      - name: session
+        when: [{field: type, equals: session}]
+        fields:
+          - {path: EventTime/TimeCreated, field: end, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: user}
+          - {path: EventDetail/Authenticate/Data, data_name: session_start, field: start}
