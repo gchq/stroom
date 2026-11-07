@@ -48,6 +48,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -73,7 +74,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             "event_logging_path", "values", "basis", "confidence");
     private static final List<String> FIELD_REQUIRED = List.of("field", "meaning");
     private static final List<String> EVENT_KEYS = List.of("event", "description", "event_detail", "type_id", "field",
-            "value", "action", "success", "actor", "affected", "basis", "confidence");
+            "value", "action", "success", "actor", "affected", "affected_as", "basis", "confidence");
     private static final List<String> EVENT_REQUIRED = List.of("event", "description");
     private static final int MAX_NAME = 200;
     // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
@@ -189,8 +190,13 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final Function<String, String> detailCheck = detailCheck(context, build);
         final List<Map<String, Object>> givenEvents = new ArrayList<>();
         final List<String> eventProblems = new ArrayList<>();
+        final EventSchema affectedSchema = schemaOrNull(context, build);
         for (final Map<String, Object> event : allEvents) {
-            final List<String> problems = SourceNotes.catalogueProblems(List.of(event), detailCheck);
+            final List<String> problems = new ArrayList<>(SourceNotes.catalogueProblems(List.of(event),
+                    detailCheck));
+            if (problems.isEmpty()) {
+                affectedChecked(affectedSchema, event).ifPresent(problems::add);
+            }
             if (problems.isEmpty()) {
                 givenEvents.add(event);
             } else {
@@ -392,6 +398,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final List<String> problems = new ArrayList<>(SourceNotes.catalogueProblems(events,
                 detailCheck(context, build)));
         if (problems.isEmpty()) {
+            final EventSchema schema = schemaOrNull(context, build);
+            events.forEach(event -> affectedChecked(schema, event).ifPresent(problems::add));
+        }
+        if (problems.isEmpty()) {
             problems.addAll(SourceNotes.catalogueProblems(events, null));
         }
         if (!problems.isEmpty()) {
@@ -413,6 +423,33 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                 .findFirst()
                 .map(doc -> earlierNotes(contents, doc.name()))
                 .orElse(Map.of());
+    }
+
+    // An event's affected_as checked against its action element, and written out to the leaf the affected field's
+    // value goes in (User becomes User/Id); why it can't be, if not. Left as given when the schema is unreadable.
+    private static Optional<String> affectedChecked(final EventSchema schema,
+                                                              final Map<String, Object> event) {
+        if (schema == null || !JsonValues.truthy(event.get("affected_as"))) {
+            return Optional.empty();
+        }
+        try {
+            event.put("affected_as", SourceNotes.affectedPath(schema, text(event.getOrDefault("event_detail",
+                    "Unknown")), text(event.get("affected_as"))));
+            return Optional.empty();
+        } catch (final IllegalArgumentException e) {
+            return Optional.of("event " + text(event.get("event")) + ": " + e.getMessage());
+        }
+    }
+
+    // The event-logging schema of the build's version (else the newest held), or null when unreadable.
+    private EventSchema schemaOrNull(final ToolCallContext context, final String build) {
+        try {
+            return eventVersions.eventSchema(context, build, eventVersions.chosenOrLatest(context, build));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No event-logging schema to check affected_as against: {}",
+                    e.getMessage()), e);
+            return null;
+        }
     }
 
     private Map<String, Object> alreadyInStroom(final String uuid) {
@@ -746,6 +783,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                             + "checks the mapping against it.")
                 .addStringProperty("value", "That field's value for this event, e.g. '4625'.")
                 .addStringProperty("action", "The action element's Action, when it has one, e.g. Logon or Logoff.")
+                .addStringProperty("actor", "The field naming who acted (EventSource/User for this event).")
+                .addStringProperty("affected", "The field naming the user or object acted on.")
+                .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
+                                                  + "User, File, Document, Group... (or its leaf, User/Name).")
                 .addBooleanProperty("success", "The event's outcome, when the documentation says it, e.g. false for "
                                                + "a failed logon.")
                 .required("event", "description")

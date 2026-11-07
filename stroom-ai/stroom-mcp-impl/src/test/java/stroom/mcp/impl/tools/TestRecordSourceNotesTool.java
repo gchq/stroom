@@ -268,6 +268,27 @@ class TestRecordSourceNotesTool {
     }
 
     @Test
+    void whatAKindActsOnIsCheckedAgainstItsActionElement() {
+        final Map<String, Object> noted = json(call("{\"build\": \"acme\", \"source\": \"Acme directory\", "
+                                                    + "\"summary\": \"s\", \"events\": [{\"event\": \"4726\", "
+                                                    + "\"description\": \"An account was deleted\", "
+                                                    + "\"event_detail\": \"Delete\", \"field\": \"evt\", "
+                                                    + "\"value\": \"4726\", \"actor\": \"subject\", "
+                                                    + "\"affected\": \"target\", \"affected_as\": \"User\"}, "
+                                                    + "{\"event\": \"4727\", \"description\": \"A group was "
+                                                    + "made\", \"event_detail\": \"Delete\", \"field\": "
+                                                    + "\"evt\", \"value\": \"4727\", \"affected\": \"target\", "
+                                                    + "\"affected_as\": \"Mailbox\"}]}"));
+        // The object written out to the leaf its value goes in; one the action element doesn't hold left out.
+        final Map<?, ?> deleted = (Map<?, ?>) ((List<?>) SourceNotes.readNotes(world.body(String.valueOf(
+                noted.get("uuid")))).get("events")).getFirst();
+        assertThat(deleted.get("affected_as")).isEqualTo("User/Id");
+        assertThat(deleted.get("actor")).isEqualTo("subject");
+        assertThat(String.valueOf(noted.get("event_problems"))).contains("event 4727: affected_as 'Mailbox' isn't "
+                                                                         + "under Delete");
+    }
+
+    @Test
     void aNoteFromTheAgentsKnowledgeSaysHowSureItIs() {
         final String start = "{\"build\": \"acme\", \"source\": \"A\", \"summary\": \"s\", \"fields\": [{\"field\": "
                              + "\"x\", \"meaning\": \"m\", ";

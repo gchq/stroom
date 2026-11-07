@@ -150,6 +150,43 @@ public final class SourceNotes {
         return problems;
     }
 
+    /// What a catalogue event's `affected_as` names under its action element: the object acted on (`User`,
+    /// `File`, `Document`, `Group`...), with the leaf the affected field's value goes in (its `Id`, else `Name`,
+    /// `Path` or `Title`) when only the object is named.
+    ///
+    /// @param schema     The event-logging schema.
+    /// @param detail     The event's `event_detail`, e.g. `Delete`.
+    /// @param affectedAs The event's `affected_as`, e.g. `User` or `User/Name`.
+    /// @return The path below the action element, e.g. `User/Id`.
+    /// @throws IllegalArgumentException saying what the action element holds, when it has no such object.
+    public static String affectedPath(final EventSchema schema, final String detail, final String affectedAs) {
+        final String element = ToolText.strip(NullSafe.string(detail).strip(), "/");
+        final String given = ToolText.strip(NullSafe.string(affectedAs).strip(), "/");
+        final List<Child> chain;
+        try {
+            chain = schema.resolve(EVENT_DETAIL + element + "/" + given);
+        } catch (final IllegalArgumentException e) {
+            final List<String> holds = schema.children(schema.resolve(EVENT_DETAIL + element).getLast().decl())
+                    .stream()
+                    .map(Child::name)
+                    .filter(name -> !"Data".equals(name))
+                    .toList();
+            throw new IllegalArgumentException("affected_as '" + given + "' isn't under " + element + ", which "
+                                               + "holds " + String.join(", ", holds), e);
+        }
+        if (schema.isLeaf(chain.getLast().decl())) {
+            return given;
+        }
+        for (final String leaf : List.of("Id", "Name", "Path", "Title")) {
+            if (schema.hasPath(EVENT_DETAIL + element + "/" + given + "/" + leaf)) {
+                return given + "/" + leaf;
+            }
+        }
+        throw new IllegalArgumentException("affected_as '" + given + "' under " + element + " has no Id, Name, Path "
+                                           + "or Title for the affected field's value: name its leaf too (e.g. "
+                                           + given + "/...)");
+    }
+
     /// Why an event's `event_detail` can't be its action element: it must be an EventDetail action element that
     /// takes Data (where the draft puts the event's other fields), so Network needs its action (Network/Permit).
     ///
@@ -548,13 +585,31 @@ public final class SourceNotes {
                             ? "true"
                             : "false"));
         }
-        final String user = common.stream()
-                .filter(entry -> "EventSource/User/Id".equals(entry.get("path"))
-                                 && JsonValues.truthy(entry.get("field")))
-                .map(entry -> text(entry.get("field")))
-                .findFirst()
-                .orElse(null);
-        if ("Authenticate".equals(detail) && user != null) {
+        // Who acted, where the catalogue says (asked for by the user: kind by kind, not one field for the source).
+        final String actor = JsonValues.truthy(event.get("actor"))
+                ? text(event.get("actor"))
+                : null;
+        if (actor != null) {
+            fields.add(entry("path", "EventSource/User/Id", "field", actor));
+        }
+        // What it was done to: the object the catalogue names (affected_as, checked against the schema when
+        // recorded), its value from the affected field.
+        final boolean affected = JsonValues.truthy(event.get("affected")) && JsonValues.truthy(event.get(
+                "affected_as"));
+        if (affected) {
+            fields.add(entry("path", EVENT_DETAIL + detail + "/" + text(event.get("affected_as")), "field",
+                    text(event.get("affected"))));
+        }
+        final String user = actor != null
+                ? actor
+                : common.stream()
+                        .filter(entry -> "EventSource/User/Id".equals(entry.get("path"))
+                                         && JsonValues.truthy(entry.get("field")))
+                        .map(entry -> text(entry.get("field")))
+                        .findFirst()
+                        .orElse(null);
+        if ("Authenticate".equals(detail) && user != null && !hasPath(fields, entry("path",
+                "EventDetail/Authenticate/User/Id"))) {
             // The schema wants the user authenticating: the one the event is about.
             fields.add(entry("path", "EventDetail/Authenticate/User/Id", "field", user));
         }
