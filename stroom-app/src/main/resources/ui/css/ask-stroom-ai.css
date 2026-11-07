@@ -1589,9 +1589,20 @@
     white-space: nowrap;
 }
 
+/* A box for free text: one line to start, growing with each line the user adds (Shift+Enter) to five, then
+   scrolling. Its height is set as the user types; the most it may grow to is here. */
+.ai-textarea-grow {
+    display: block;
+    resize: none;
+    overflow-y: auto;
+    line-height: 1.4;
+    min-height: calc(1.4em + 10px);
+    max-height: calc(5 * 1.4em + 10px);
+}
+
 .ai-question-custom-row {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 6px;
     margin-bottom: 6px;
 }
