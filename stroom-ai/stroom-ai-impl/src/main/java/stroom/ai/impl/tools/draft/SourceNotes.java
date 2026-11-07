@@ -16,12 +16,15 @@
 
 package stroom.ai.impl.tools.draft;
 
+import stroom.ai.impl.tools.IpAddresses;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventSchema.Child;
 import stroom.util.shared.NullSafe;
+
+import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,6 +38,7 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /// Source notes: what the user's vendor or event reference documentation says about a source, kept so the tools use
 /// it.
@@ -182,9 +186,31 @@ public final class SourceNotes {
                 return given + "/" + leaf;
             }
         }
+        // Seen in the agent eval: told only to name a leaf, the agent guessed three times before finding one.
+        final List<String> leaves = new ArrayList<>();
+        leaves(schema, chain.getLast().decl(), given, 3, leaves);
         throw new IllegalArgumentException("affected_as '" + given + "' under " + element + " has no Id, Name, Path "
-                                           + "or Title for the affected field's value: name its leaf too (e.g. "
-                                           + given + "/...)");
+                                           + "or Title for the affected field's value: name its leaf, one of "
+                                           + String.join(", ", leaves.subList(0, Math.min(12, leaves.size()))));
+    }
+
+    // The leaf paths below an element, to a depth, Data aside.
+    private static void leaves(final EventSchema schema,
+                               final Element decl,
+                               final String at,
+                               final int depth,
+                               final List<String> out) {
+        for (final Child child : schema.children(decl)) {
+            if ("Data".equals(child.name())) {
+                continue;
+            }
+            final String path = at + "/" + child.name();
+            if (schema.isLeaf(child.decl())) {
+                out.add(path);
+            } else if (depth > 1) {
+                leaves(schema, child.decl(), path, depth - 1, out);
+            }
+        }
     }
 
     /// Why an event's `event_detail` can't be its action element: it must be an EventDetail action element that
@@ -298,6 +324,8 @@ public final class SourceNotes {
         applied.put("not_in_sample", notInSample);
         applied.put("not_in_catalogue", notInCatalogue);
         applied.put("from_sample", fromSample);
+        final List<String> unread = new ArrayList<>();
+        applied.put("unread_fields", unread);
 
         final Map<String, Map<String, Object>> byField = new LinkedHashMap<>();
         for (final Map<String, Object> field : JsonValues.maps(notes.get("fields"))) {
@@ -364,6 +392,7 @@ public final class SourceNotes {
         }
 
         final List<Map<String, Object>> rules = new ArrayList<>();
+        final Catalogued known = new Catalogued(names, values);
         for (final Map<String, Object> event : events) {
             String detail = ToolText.strip(NullSafe.nonBlankStringElse(text(event.get("event_detail")), UNKNOWN)
                     .strip(), "/");
@@ -394,7 +423,17 @@ public final class SourceNotes {
                     detail = UNKNOWN;
                 }
             }
-            rules.add(rule(event, key, detail, common, detailFields, sampled, rest));
+            rules.add(rule(event, key, detail, common, detailFields, sampled, rest, known));
+            final String actor = text(event.get("actor"));
+            if (!actor.isBlank() && known.person(actor) == null) {
+                unread.add(key.get(1) + ": actor '" + actor + "'" + (known.field(actor) == null
+                        ? " isn't a field of the records"
+                        : " holds addresses, not a user"));
+            }
+            final String affected = text(event.get("affected"));
+            if (!affected.isBlank() && known.field(affected) == null) {
+                unread.add(key.get(1) + ": affected '" + affected + "' isn't a field of the records");
+            }
             final boolean shown = NullSafe.list(values.get(key.get(0))).contains(key.get(1));
             appliedEvents.add(firstTruthy(event.get("event"), key.get(1), "") + " (" + key.get(0) + "=" + key.get(1)
                               + ") -> " + detail + (shown
@@ -559,46 +598,76 @@ public final class SourceNotes {
                 : null;
     }
 
-    // One rule for a catalogued event.
+    // One rule for a catalogued event: the sample's own rule for its records first, so what the draft read stays
+    // (asked for by the user; seen in the agent eval, a catalogue rule wrote one fixed description over each
+    // record's message, and lost the severity, names and addresses the sample's rule had), then what the catalogue
+    // says over it: the TypeId, the action element's Action and outcome, who acted and what was acted on.
     private static Map<String, Object> rule(final Map<String, Object> event,
                                             final List<String> key,
                                             final String detail,
                                             final List<Map<String, Object>> common,
                                             final List<Map<String, Object>> detailFields,
                                             final List<Map<String, Object>> sampled,
-                                            final List<String> rest) {
+                                            final List<String> rest,
+                                            final Catalogued fieldsKnown) {
+        final String prefix = EVENT_DETAIL + detail + "/";
         final List<Map<String, Object>> fields = new ArrayList<>();
-        if (JsonValues.truthy(event.get("type_id"))) {
-            fields.add(entry("path", "EventDetail/TypeId", "value", text(event.get("type_id"))));
-        } else {
-            fields.add(entry("path", "EventDetail/TypeId", "field", key.get(0)));
-        }
-        if (JsonValues.truthy(event.get("description"))) {
-            fields.add(entry("path", "EventDetail/Description", "value", event.get("description")));
+        sampled.stream()
+                .filter(rule -> covers(rule, key))
+                .findFirst()
+                .ifPresent(like -> {
+                    for (final Map<String, Object> field : JsonValues.maps(like.get("fields"))) {
+                        final String path = text(field.get("path"));
+                        if ("EventDetail/TypeId".equals(path)) {
+                            continue;
+                        }
+                        if (path.startsWith(EVENT_DETAIL) && path.chars().filter(c -> c == '/').count() >= 2
+                            && !path.startsWith(prefix)) {
+                            // Under another action element (Unknown, or the sample's guess): its Data move to the
+                            // catalogue's; its other children are that element's, not this one's.
+                            if (path.endsWith("/Data") && JsonValues.truthy(field.get("data_name"))) {
+                                final Map<String, Object> moved = new LinkedHashMap<>(field);
+                                moved.put("path", prefix + "Data");
+                                fields.add(moved);
+                            }
+                            continue;
+                        }
+                        fields.add(new LinkedHashMap<>(field));
+                    }
+                });
+        fields.addFirst(JsonValues.truthy(event.get("type_id"))
+                ? entry("path", "EventDetail/TypeId", "value", text(event.get("type_id")))
+                : entry("path", "EventDetail/TypeId", "field", key.get(0)));
+        // The catalogue's description only where the records carry no message of their own.
+        final boolean ownMessage = Stream.concat(common.stream(), fields.stream())
+                .anyMatch(entry -> "EventDetail/Description".equals(entry.get("path"))
+                                   && (JsonValues.truthy(entry.get("field")) || JsonValues.truthy(entry.get("xpath"))
+                                       || JsonValues.truthy(entry.get("any_of"))));
+        if (JsonValues.truthy(event.get("description")) && !ownMessage) {
+            put(fields, entry("path", "EventDetail/Description", "value", event.get("description")));
         }
         if (JsonValues.truthy(event.get("action"))) {
-            fields.add(entry("path", EVENT_DETAIL + detail + "/Action", "value", event.get("action")));
+            put(fields, entry("path", EVENT_DETAIL + detail + "/Action", "value", event.get("action")));
         }
         if (event.get("success") != null) {
-            fields.add(entry("path", EVENT_DETAIL + detail + "/Outcome/Success", "value",
+            put(fields, entry("path", EVENT_DETAIL + detail + "/Outcome/Success", "value",
                     JsonValues.truthy(event.get("success"))
                             ? "true"
                             : "false"));
         }
-        // Who acted, where the catalogue says (asked for by the user: kind by kind, not one field for the source).
-        final String actor = JsonValues.truthy(event.get("actor"))
-                ? text(event.get("actor"))
-                : null;
+        // Who acted, where the catalogue says (asked for by the user: kind by kind, not one field for the source):
+        // only a field of the records, and not one holding addresses (seen in the eval: a firewall's source address
+        // given as the actor of records naming no user).
+        final String actor = fieldsKnown.person(text(event.get("actor")));
         if (actor != null) {
-            fields.add(entry("path", "EventSource/User/Id", "field", actor));
+            put(fields, entry("path", "EventSource/User/Id", "field", actor));
         }
         // What it was done to: the object the catalogue names (affected_as, checked against the schema when
         // recorded), its value from the affected field.
-        final boolean affected = JsonValues.truthy(event.get("affected")) && JsonValues.truthy(event.get(
-                "affected_as"));
-        if (affected) {
-            fields.add(entry("path", EVENT_DETAIL + detail + "/" + text(event.get("affected_as")), "field",
-                    text(event.get("affected"))));
+        final String affected = fieldsKnown.field(text(event.get("affected")));
+        if (affected != null && JsonValues.truthy(event.get("affected_as"))) {
+            put(fields, entry("path", EVENT_DETAIL + detail + "/" + text(event.get("affected_as")), "field",
+                    affected));
         }
         final String user = actor != null
                 ? actor
@@ -608,27 +677,20 @@ public final class SourceNotes {
                         .map(entry -> text(entry.get("field")))
                         .findFirst()
                         .orElse(null);
-        if ("Authenticate".equals(detail) && user != null && !hasPath(fields, entry("path",
-                "EventDetail/Authenticate/User/Id"))) {
+        if ("Authenticate".equals(detail) && user != null
+            && !hasPath(fields, entry("path", "EventDetail/Authenticate/User/Id"))) {
             // The schema wants the user authenticating: the one the event is about.
             fields.add(entry("path", "EventDetail/Authenticate/User/Id", "field", user));
         }
-        final String prefix = EVENT_DETAIL + detail + "/";
         fields.addAll(detailFields.stream()
                 .filter(field -> text(field.get("path")).startsWith(prefix) && !hasPath(fields, field))
                 .toList());
-        // What the schema wants that the catalogue doesn't say (Authenticate's Action, Update's After), from the
-        // sample's rule for the same records when it writes the same element.
-        final String element = detail.split("/")[0];
-        sampled.stream()
-                .filter(rule -> covers(rule, key) && detailOf(rule).contains(element))
-                .findFirst()
-                .ifPresent(like -> fields.addAll(JsonValues.maps(like.get("fields")).stream()
-                        .filter(field -> text(field.get("path")).startsWith(prefix)
-                                         && !(text(field.get("path")).endsWith("/Data") || hasPath(fields, field)))
-                        .toList()));
+        final Set<String> dataNames = new LinkedHashSet<>();
+        fields.forEach(field -> dataNames.add(text(field.get("data_name"))));
         for (final String name : rest) {
-            fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
+            if (!dataNames.contains(name)) {
+                fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
+            }
         }
         final String name = ToolText.strip(NOT_NAME.matcher(firstTruthy(event.get("event"), key.get(1), ""))
                 .replaceAll("_"), "_").toLowerCase(Locale.ROOT);
@@ -640,6 +702,18 @@ public final class SourceNotes {
         rule.put("fields", fields);
         // Unknown is not agreed here: build_translation_xslt puts it to the user with the records it catches.
         return rule;
+    }
+
+    // An entry in place of any with its path (and Data name), where it was; else last.
+    private static void put(final List<Map<String, Object>> fields, final Map<String, Object> entry) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (Objects.equals(fields.get(i).get("path"), entry.get("path"))
+                && Objects.equals(fields.get(i).get("data_name"), entry.get("data_name"))) {
+                fields.set(i, entry);
+                return;
+            }
+        }
+        fields.add(entry);
     }
 
     // The action elements a rule writes.
@@ -717,5 +791,33 @@ public final class SourceNotes {
         return value == null
                 ? ""
                 : ToolText.str(value);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The sample's fields, for checking the fields a catalogue event names.
+    private record Catalogued(List<String> names, Map<String, List<String>> values) {
+
+        // The field, when the records have it; else null.
+        String field(final String name) {
+            return name != null && !name.isBlank() && names.contains(name)
+                    ? name
+                    : null;
+        }
+
+        // The field, when the records have it and it names a person or account: not one whose values are
+        // addresses.
+        String person(final String name) {
+            final String known = field(name);
+            if (known == null) {
+                return null;
+            }
+            final List<String> held = NullSafe.list(values.get(known));
+            return !held.isEmpty() && held.stream().allMatch(IpAddresses::isAddress)
+                    ? null
+                    : known;
+        }
     }
 }

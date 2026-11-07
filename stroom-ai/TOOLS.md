@@ -2817,7 +2817,9 @@ not recorded once the translation is written.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
   (the build's newest five raw sample streams when left out); `splitter`; `proposals`.
-* **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `source_notes`, `hint`, `next`; proposals:
+* **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `record_fields` (kept in the notes:
+  proposals' `actor` and `affected` must be among them), `user_fields` (fields named for a user or account whose
+  values aren't addresses, else a note to leave `actor` out), `source_notes`, `hint`, `next`; proposals:
   `recorded`, `rejected`, `corrections`, `still_to_classify`, `source_notes`, `hint`, `next`, or `asked: false` and
   `table`.
 * **Refuses**: no build; no source and no source notes; no sample streams; proposals before a listing; a proposal
