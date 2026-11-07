@@ -823,6 +823,30 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aClassifiedKindIsDescribedByTheCommentAPersonWrote() {
+        // Seen in the agent eval (case 42): every ticket event described as 'A ticket is closed', its comment kept
+        // as Data.
+        final List<String> lines = new ArrayList<>(List.of("time,action,user,ticket,comment"));
+        for (int i = 0; i < 12; i++) {
+            lines.add("2026-11-06T09:%02d:00Z,%s,user%d,T-%d,said thing %d".formatted(i, i % 2 == 0
+                    ? "create"
+                    : "close", i % 3, i, i));
+        }
+        final Map<String, Object> notes = json("""
+                {"source": "Desk", "fields": [], "events": [
+                  {"event": "create", "description": "A ticket is raised", "event_detail": "Create",
+                   "field": "action", "value": "create", "basis": "user_confirmed"},
+                  {"event": "close", "description": "A ticket is closed", "event_detail": "Update",
+                   "field": "action", "value": "close", "basis": "user_confirmed"}]}""");
+        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "Desk", "Desk",
+                "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
+        final Map<String, Map<String, Object>> closed = fields(rules(draft).get("close"));
+        assertThat(closed.get("EventDetail/Description").get("field")).isEqualTo("comment");
+        assertThat(JsonValues.maps(rules(draft).get("close").get("fields")))
+                .noneMatch(field -> "comment".equals(field.get("data_name")));
+    }
+
+    @Test
     void anAffectedObjectIsCheckedAgainstTheActionElement() {
         assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Network/Permit", "Destination"))
                 .isInstanceOf(IllegalArgumentException.class)

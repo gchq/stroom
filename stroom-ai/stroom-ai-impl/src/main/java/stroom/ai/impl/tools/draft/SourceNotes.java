@@ -643,7 +643,23 @@ public final class SourceNotes {
                 .anyMatch(entry -> "EventDetail/Description".equals(entry.get("path"))
                                    && (JsonValues.truthy(entry.get("field")) || JsonValues.truthy(entry.get("xpath"))
                                        || JsonValues.truthy(entry.get("any_of"))));
-        if (JsonValues.truthy(event.get("description")) && !ownMessage) {
+        // A field of free text a person wrote about each event (a ticket's comment) is the event's message before
+        // the catalogue's words for the kind (seen in the agent eval: every ticket event described as 'A ticket is
+        // closed', its comment kept as Data).
+        final String freeText = ownMessage
+                ? null
+                : fieldsKnown.freeText();
+        if (freeText != null) {
+            final Map<String, Object> message = fields.stream()
+                    .filter(field -> freeText.equals(field.get("field")))
+                    .findFirst()
+                    .map(LinkedHashMap::new)
+                    .orElseGet(() -> new LinkedHashMap<>(entry("field", freeText)));
+            fields.removeIf(field -> freeText.equals(field.get("field")));
+            message.put("path", "EventDetail/Description");
+            message.remove("data_name");
+            put(fields, message);
+        } else if (JsonValues.truthy(event.get("description")) && !ownMessage) {
             put(fields, entry("path", "EventDetail/Description", "value", event.get("description")));
         }
         if (JsonValues.truthy(event.get("action"))) {
@@ -685,10 +701,16 @@ public final class SourceNotes {
         fields.addAll(detailFields.stream()
                 .filter(field -> text(field.get("path")).startsWith(prefix) && !hasPath(fields, field))
                 .toList());
-        final Set<String> dataNames = new LinkedHashSet<>();
-        fields.forEach(field -> dataNames.add(text(field.get("data_name"))));
+        // The fields left over, as Data: not one the rule already reads (as Data or into an element).
+        final Set<String> read = new LinkedHashSet<>();
+        fields.stream()
+                .filter(field -> !"EventDetail/TypeId".equals(field.get("path")))
+                .forEach(field -> {
+                    read.add(text(field.get("data_name")));
+                    read.add(text(field.get("field")));
+                });
         for (final String name : rest) {
-            if (!dataNames.contains(name)) {
+            if (!read.contains(name)) {
                 fields.add(entry("path", prefix + "Data", "data_name", name, "field", name));
             }
         }
@@ -805,6 +827,16 @@ public final class SourceNotes {
             return name != null && !name.isBlank() && names.contains(name)
                     ? name
                     : null;
+        }
+
+        // The first field of free text a person writes about an event (a comment, a remark, a note) the records
+        // hold; else null.
+        String freeText() {
+            return names.stream()
+                    .filter(name -> DraftMapping.FREE_TEXT.matcher(name).matches()
+                                    && !NullSafe.list(values.get(name)).isEmpty())
+                    .findFirst()
+                    .orElse(null);
         }
 
         // The field, when the records have it and it names a person or account: not one whose values are
