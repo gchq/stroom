@@ -6,6 +6,10 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
 
 ## Rules
 
+- Before drafting, `classify_kinds` (the plan's `classify` step): it lists the kinds of event the user's
+  documentation doesn't cover; propose each from its records and what you know of the source, saying how sure you
+  are, and the user confirms them in one form. The draft then follows them, a rule a kind. Send the user's
+  corrections back as proposals with `from_user: true`; ask about any they reject.
 - Never write a translation XSLT by hand, and never send the field inventory as the mapping: draft it, edit what the
   draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
   (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught

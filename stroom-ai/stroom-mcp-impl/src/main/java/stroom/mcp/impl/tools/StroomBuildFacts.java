@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.MergedPipeline;
 import stroom.ai.impl.tools.ProcessorFilterAccess;
 import stroom.ai.impl.tools.StreamReader;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.data.shared.StreamTypeNames;
@@ -449,6 +450,23 @@ class StroomBuildFacts implements BuildFacts {
         return new LinkedHashSet<>(found).stream()
                 .filter(feed -> !own.contains(feed.toLowerCase(Locale.ROOT)))
                 .toList();
+    }
+
+    @Override
+    public boolean classified(final List<Map<String, Object>> docs) {
+        for (final Map<String, Object> doc : docs) {
+            if (DocumentationDoc.TYPE.equals(doc.get("type"))
+                && String.valueOf(doc.get("name")).endsWith(SourceNotes.NOTES_SUFFIX)) {
+                final Optional<Map<String, Object>> notes = documentAccess.read(new DocRef(DocumentationDoc.TYPE,
+                                String.valueOf(doc.get("uuid"))), DocumentationDoc.class)
+                        .map(read -> SourceNotes.readNotes(BuildRecords.bodyText(read)));
+                if (notes.isPresent() && notes.get().get(RecordSourceNotesTool.PENDING) instanceof final List<?> left
+                    && left.isEmpty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

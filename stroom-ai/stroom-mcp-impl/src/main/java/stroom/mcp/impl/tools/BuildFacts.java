@@ -34,6 +34,10 @@ interface BuildFacts {
     /// @return Its documents (not its record), in a stable order: by type, name and UUID.
     List<Map<String, Object>> buildDocs(String build);
 
+    /// @param docs A build's documents.
+    /// @return Whether classify_kinds has settled every kind of event: its source notes say none is still to classify.
+    boolean classified(List<Map<String, Object>> docs);
+
     /// @param build A build's name.
     /// @param docs  Its documents.
     /// @return The raw streams on its feeds, by stream type (`Raw Events`, `Raw Reference`): each stream's `id`,
