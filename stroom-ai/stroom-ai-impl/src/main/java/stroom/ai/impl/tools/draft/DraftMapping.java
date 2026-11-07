@@ -87,6 +87,9 @@ public final class DraftMapping {
     /// The draft's key for the kinds (or the whole sample) where two times could each be the event's: each with
     /// what tells them apart, for the agent to choose from.
     public static final String TIME_CANDIDATES = "time_candidates";
+    /// The key a drafted time entry carries while its time is one of several the agent must choose from: the
+    /// fields, the one drafted first. build_translation_xslt refuses the mapping until it is removed.
+    public static final String CHOOSE_FROM = "choose_from";
     // Records holding a time for it to be put to the agent beside another as the event's.
     private static final int CANDIDATE_SHARE = 90;
     private static final String BYTE_ORDER_MARK = String.valueOf((char) 0xFEFF);
@@ -986,7 +989,10 @@ public final class DraftMapping {
                 chosenTimes.addAll(List.of(timeField, clock));
             } else if (timeField != null) {
                 timeField = ownOrContainersTime(timeField);
-                candidatesOf(timeField, records, null);
+                candidatesOf(timeField, records, null, common.stream()
+                        .filter(e -> "EventTime/TimeCreated".equals(e.get(PATH)))
+                        .findFirst()
+                        .orElse(null));
             }
             timesNote(stamps);
             timeZoneField();
@@ -1094,7 +1100,10 @@ public final class DraftMapping {
 
         // Two or more times each as likely the event's as the one chosen, each in nearly every record and not the
         // same values: put to the agent, with what tells them apart (B10). rule is null for the whole sample.
-        private void candidatesOf(final String chosen, final List<Map<String, Object>> scope, final String rule) {
+        private void candidatesOf(final String chosen,
+                                  final List<Map<String, Object>> scope,
+                                  final String rule,
+                                  final Map<String, Object> entry) {
             final List<String> alike = usableTimes.stream()
                     .filter(n -> timeOrder(n) == timeOrder(chosen) && !n.equals(chosen) && fullTime(n)
                                  && fullTime(chosen) && EventTimes.share(n, scope) >= CANDIDATE_SHARE
@@ -1113,17 +1122,24 @@ public final class DraftMapping {
                 formats.put(n, formatName(n));
                 keys.put(n, timeKey(n));
             });
-            final Map<String, Object> entry = new LinkedHashMap<>();
+            final Map<String, Object> candidate = new LinkedHashMap<>();
             if (rule != null) {
-                entry.put("rule", rule);
+                candidate.put("rule", rule);
             }
-            entry.put(FIELDS, EventTimes.evidence(fields, formats, scope, keys));
-            timeCandidates.add(entry);
+            candidate.put(FIELDS, EventTimes.evidence(fields, formats, scope, keys));
+            timeCandidates.add(candidate);
+            if (entry != null) {
+                // Asked for by the user: the choice can't be left unmade (seen: the agent kept the draft's first
+                // without a word).
+                entry.put(CHOOSE_FROM, new ArrayList<>(fields));
+            }
             notes.add((rule == null
                     ? "The records' "
                     : "Rule '" + rule + "': its records' ") + reprs(fields) + " could each be the event's time; "
-                      + "drafted with '" + chosen + "'. " + TIME_CANDIDATES + " says what tells them apart: choose "
-                      + "one (changes=), say which and why, and ask the user if unsure.");
+                      + "drafted with '" + chosen + "', its entry marked " + CHOOSE_FROM + ", which "
+                      + "build_translation_xslt refuses until you choose. " + TIME_CANDIDATES + " says what tells "
+                      + "them apart: choose one (changes=: the entry with its field, without " + CHOOSE_FROM + "), "
+                      + "say which and why, and ask the user if unsure.");
         }
 
         // A kind whose records lack the common time: its own, from the times its records hold, best first, and a
@@ -1153,7 +1169,7 @@ public final class DraftMapping {
             }
             notes.add("Rule '" + name + "': its records have no " + reprs(chosenTimes) + ", so its time is '" + best
                       + "'.");
-            candidatesOf(best, ofKind, name);
+            candidatesOf(best, ofKind, name, entry);
         }
 
         // Every timestamp field, what it is taken for, and which EventTime/TimeCreated reads (B11): when there is

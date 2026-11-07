@@ -6981,7 +6981,11 @@
      {
       "path": "EventTime/TimeCreated",
       "field": "eventtime",
-      "time_format": "epoch_ns"
+      "time_format": "epoch_ns",
+      "choose_from": [
+       "eventtime",
+       "itime"
+      ]
      },
      {
       "path": "EventSource/System/Name",
@@ -7226,7 +7230,7 @@
    ],
    "notes": [
     "'eventtime' holds the time to a fraction of a second, so it is EventTime/TimeCreated rather than 'itime'.",
-    "The records' 'eventtime', 'itime' could each be the event's time; drafted with 'eventtime'. time_candidates says what tells them apart: choose one (changes=), say which and why, and ask the user if unsure.",
+    "The records' 'eventtime', 'itime' could each be the event's time; drafted with 'eventtime', its entry marked choose_from, which build_translation_xslt refuses until you choose. time_candidates says what tells them apart: choose one (changes=: the entry with its field, without choose_from), say which and why, and ask the user if unsure.",
     "Timestamp fields: 'itime' (event time, in 100% of records, epoch_s); 'date' (may be the event's time or something else's (a creation, a period's start or end): check, in 100% of records, yyyy-MM-dd); 'eventtime' (event time, in 100% of records, epoch_ns). EventTime/TimeCreated reads 'eventtime'.",
     "Ask the user for EventSource/System/Name and Environment (unless the standing instructions give them): the draft has placeholders, which saving refuses. Both are required: if the user doesn't know one, use a value they agree to (such as Unknown) and record it as an open item, rather than stopping.",
     "'msg' reads as each event's message, so it is EventDetail/Description, the event's own description: keep it there in every rule, rather than in an object's Description or a Data entry.",
