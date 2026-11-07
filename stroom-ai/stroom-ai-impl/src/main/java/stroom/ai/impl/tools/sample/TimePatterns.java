@@ -18,17 +18,27 @@ package stroom.ai.impl.tools.sample;
 
 import stroom.ai.impl.tools.ToolText;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.ParsePosition;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// Timestamp patterns: a Java (`stroom:format-date`) pattern inferred from a value, and a pattern checked against
 /// values.
@@ -49,10 +59,14 @@ public final class TimePatterns {
             "july", "august", "september", "october", "november", "december");
     private static final Pattern ZONE_NAME = ToolText.re(
             "(?:UTC|GMT|Z(?![a-z])|[A-Z]{3,4}T|[A-Z][a-z]+/[A-Z][A-Za-z_]+)");
-    private static final Pattern EPOCH_S = ToolText.re("1\\d{9}(\\.\\d{1,9})?");
-    private static final Pattern EPOCH_MS = ToolText.re("1\\d{12}");
-    private static final Pattern EPOCH_US = ToolText.re("1\\d{15}");
-    private static final Pattern EPOCH_NS = ToolText.re("1\\d{18}");
+    // Epoch times are known by range, 1990 to 2100 (until 2026-11-07 by a leading 1 and a width: Sep 2001 to May
+    // 2033 only). Seconds may carry a fraction.
+    private static final Pattern EPOCH_DIGITS = ToolText.re("(\\d{9,19})(\\.\\d{1,9})?");
+    private static final long EPOCH_FROM = 631_152_000L;
+    private static final long EPOCH_TO = 4_102_444_800L;
+    // Windows FILETIME: 100 ns ticks since 1601-01-01, also Active Directory's lastLogon and pwdLastSet.
+    private static final long FILETIME_EPOCH_SECONDS = 11_644_473_600L;
+    private static final long FILETIME_TICKS = 10_000_000L;
     private static final Pattern COMPACT_DATE_TIME = ToolText.re("\\d{14}");
     private static final Pattern COMPACT_DATE = ToolText.re("\\d{8}");
     private static final Pattern COMPACT_ISO = ToolText.re("\\d{8}T\\d{6}(\\.\\d+)?Z?");
@@ -80,6 +94,7 @@ public final class TimePatterns {
         names.put("epoch milliseconds", "epoch_ms");
         names.put("epoch microseconds", "epoch_us");
         names.put("epoch nanoseconds", "epoch_ns");
+        names.put("windows filetime", "windows_filetime");
         return Map.copyOf(names);
     }
 
@@ -93,6 +108,46 @@ public final class TimePatterns {
         return unquoted.chars().anyMatch(c -> "XxZzOV".indexOf(c) >= 0);
     }
 
+    /// @param format A time_format: a pattern, a combined one (`[A][B]`, each field's own), or an epoch name.
+    /// @return Whether some value it reads can carry no zone or offset: a pattern, or a section of a combined one,
+    /// that reads none. Epoch times and FILETIME are UTC by definition.
+    public static boolean zoneless(final String format) {
+        if (format == null || format.isEmpty() || isEpoch(format)) {
+            return false;
+        }
+        final List<String> sections = topSections(format);
+        return sections.isEmpty()
+                ? !hasZone(format)
+                : sections.stream().anyMatch(section -> !hasZone(section));
+    }
+
+    // A combined format's top-level optional sections ([A][B]), or none when it isn't wholly made of them.
+    private static List<String> topSections(final String format) {
+        final List<String> out = new ArrayList<>();
+        int depth = 0;
+        int start = -1;
+        boolean quoted = false;
+        for (int i = 0; i < format.length(); i++) {
+            final char c = format.charAt(i);
+            if (c == '\'') {
+                quoted = !quoted;
+            } else if (!quoted && c == '[') {
+                if (depth == 0) {
+                    start = i + 1;
+                }
+                depth++;
+            } else if (!quoted && c == ']') {
+                depth--;
+                if (depth == 0) {
+                    out.add(format.substring(start, i));
+                }
+            } else if (depth == 0) {
+                return List.of();
+            }
+        }
+        return out;
+    }
+
     /// @param value A value.
     /// @return The pattern, or null when the value doesn't look like a date and time.
     public static String inferTimePattern(final String value) {
@@ -100,17 +155,9 @@ public final class TimePatterns {
         // Epoch seconds may carry a fraction (1791712800.123: a Bluecoat column, GELF's timestamp), which epoch_s
         // keeps. Seen in production: a fraction made the value a plain decimal, the time was mapped by hand, and its
         // milliseconds were dropped.
-        if (ToolText.fullmatch(EPOCH_S, text)) {
-            return "epoch seconds";
-        }
-        if (ToolText.fullmatch(EPOCH_MS, text)) {
-            return "epoch milliseconds";
-        }
-        if (ToolText.fullmatch(EPOCH_US, text)) {
-            return "epoch microseconds";
-        }
-        if (ToolText.fullmatch(EPOCH_NS, text)) {
-            return "epoch nanoseconds";
+        final String epoch = epochName(text, false);
+        if (epoch != null) {
+            return epoch;
         }
         if (ToolText.fullmatch(COMPACT_DATE_TIME, text)) {
             return "yyyyMMddHHmmss";
@@ -127,6 +174,56 @@ public final class TimePatterns {
                     : "");
         }
         return new Reading(text).pattern();
+    }
+
+    /// Infers a value's pattern as [#inferTimePattern(String)] does, for a field whose name says it holds a time:
+    /// an epoch time before Sep 2001 too (a digit narrower, the width of many counts and ids), and a Windows
+    /// FILETIME (`windows filetime`), which no unit of epoch time in range can be.
+    ///
+    /// @param value A value.
+    /// @return The pattern, or null when the value doesn't look like a date and time.
+    public static String inferNamedTimePattern(final String value) {
+        final String text = ToolText.strip(value);
+        final String epoch = epochName(text, true);
+        return epoch != null
+                ? epoch
+                : inferTimePattern(text);
+    }
+
+    // The epoch time (or with named, FILETIME too) the digits are in 1990 to 2100, by their width; null if none.
+    private static String epochName(final String text, final boolean named) {
+        final Matcher m = EPOCH_DIGITS.matcher(text);
+        if (!m.matches()) {
+            return null;
+        }
+        final String digits = m.group(1);
+        final int width = digits.length();
+        if (m.group(2) != null) {
+            return (width == 10 || (named && width == 9)) && inRange(digits, 1)
+                    ? "epoch seconds"
+                    : null;
+        }
+        // Each unit's widths in range: 2001 on (the full width), and before 2001 (a digit narrower) when named.
+        final String[] units = {"epoch seconds", "epoch milliseconds", "epoch microseconds", "epoch nanoseconds"};
+        final long[] scales = {1L, 1_000L, 1_000_000L, 1_000_000_000L};
+        for (int i = 0; i < units.length; i++) {
+            final int full = 10 + 3 * i;
+            if ((width == full || (named && width == full - 1)) && inRange(digits, scales[i])) {
+                return units[i];
+            }
+        }
+        if (named && (width == 17 || width == 18)) {
+            final long seconds = Long.parseLong(digits) / FILETIME_TICKS - FILETIME_EPOCH_SECONDS;
+            if (seconds >= EPOCH_FROM && seconds < EPOCH_TO) {
+                return "windows filetime";
+            }
+        }
+        return null;
+    }
+
+    private static boolean inRange(final String digits, final long scale) {
+        final long seconds = new BigInteger(digits).divide(BigInteger.valueOf(scale)).longValue();
+        return seconds >= EPOCH_FROM && seconds < EPOCH_TO;
     }
 
     private static String repeat(final String letters, final int length, final int whole) {
@@ -148,6 +245,7 @@ public final class TimePatterns {
                 case "epoch_s", "epoch seconds" -> "\\d{9,13}(\\.\\d+)?";
                 case "epoch_us", "epoch microseconds" -> "\\d{12,16}";
                 case "epoch_ns", "epoch nanoseconds" -> "\\d{15,19}";
+                case "windows_filetime", "windows filetime" -> "\\d{17,18}";
                 default -> "\\d{9,13}";
             };
             final Pattern regex = ToolText.re(allowed);
@@ -184,6 +282,92 @@ public final class TimePatterns {
                 : inferred != null && !inferred.equals(pattern)
                         ? "; the values look like " + ToolText.repr(inferred)
                         : "");
+    }
+
+    /// One format reading every value of several fields that each write a time their own way: their patterns as
+    /// optional sections, in order (`[MMM dd yyyy HH:mm:ss][yyyy-MM-dd'T'HH:mm:ssXXX]`), checked on the values as
+    /// Stroom reads them. Epoch times combine with nothing but themselves.
+    ///
+    /// @param patterns Each field's pattern (or epoch name), in the order they are read.
+    /// @param values   Every field's values.
+    /// @return The format, or null when no one format reads them all.
+    public static String combined(final List<String> patterns, final List<String> values) {
+        final List<String> distinct = patterns.stream().distinct().toList();
+        if (distinct.isEmpty()) {
+            return null;
+        }
+        if (distinct.stream().anyMatch(TimePatterns::isEpoch)) {
+            return distinct.size() == 1
+                    ? distinct.getFirst()
+                    : null;
+        }
+        final String format = distinct.size() == 1
+                ? distinct.getFirst()
+                : distinct.stream().map(pattern -> "[" + pattern + "]").collect(Collectors.joining());
+        final DateTimeFormatter formatter = stroomFormatter(format);
+        return formatter != null && misfits(formatter, values).isEmpty()
+                ? format
+                : null;
+    }
+
+    /// @param pattern A pattern or an epoch name (in words or as a time_format).
+    /// @return Whether it is an epoch time (or a FILETIME), which a number holds.
+    public static boolean isEpoch(final String pattern) {
+        return EPOCH_NAMES.containsKey(pattern) || EPOCH_NAMES.containsValue(pattern);
+    }
+
+    /// A value's time as epoch milliseconds, for telling times apart (how far one field's time is from another's),
+    /// not for writing: a time without a zone is read as UTC.
+    ///
+    /// @param pattern The value's pattern, or an epoch name.
+    /// @param value   The value.
+    /// @return Its epoch milliseconds, or null when it doesn't parse or names no date (a time without a year).
+    public static Long epochMillis(final String pattern, final String value) {
+        if (pattern == null || ToolText.isBlank(value)) {
+            return null;
+        }
+        final String text = ToolText.strip(value);
+        try {
+            final String format = EPOCH_NAMES.getOrDefault(pattern, pattern);
+            switch (format) {
+                case "epoch_s" -> {
+                    return new BigDecimal(text).movePointRight(3).longValue();
+                }
+                case "epoch_ms" -> {
+                    return Long.parseLong(text);
+                }
+                case "epoch_us" -> {
+                    return Long.parseLong(text) / 1_000L;
+                }
+                case "epoch_ns" -> {
+                    return new BigInteger(text).divide(BigInteger.valueOf(1_000_000L)).longValue();
+                }
+                case "windows_filetime" -> {
+                    return Long.parseLong(text) / (FILETIME_TICKS / 1_000L) - FILETIME_EPOCH_SECONDS * 1_000L;
+                }
+                default -> {
+                    return parsedMillis(format, text);
+                }
+            }
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    private static Long parsedMillis(final String pattern, final String text) {
+        final DateTimeFormatter formatter = stroomFormatter(pattern);
+        if (formatter == null) {
+            return null;
+        }
+        final TemporalAccessor parsed = formatter.parse(text);
+        final LocalDate date = parsed.query(TemporalQueries.localDate());
+        final LocalTime time = parsed.query(TemporalQueries.localTime());
+        if (date == null) {
+            return null;
+        }
+        final ZoneId zone = Objects.requireNonNullElse(parsed.query(TemporalQueries.zone()), ZoneOffset.UTC);
+        return date.atTime(Objects.requireNonNullElse(time, LocalTime.MIDNIGHT)).atZone(zone).toInstant()
+                .toEpochMilli();
     }
 
     /// A parser as Stroom's `stroom:format-date` builds one: lenient (a fraction of a second of any width for `S`),

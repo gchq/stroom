@@ -132,6 +132,7 @@ final class VariantDrafts {
         final Set<String> unmapped = new LinkedHashSet<>();
         final Set<String> seen = new LinkedHashSet<>(List.of(field));
         final List<Object> kinds = new ArrayList<>();
+        final List<Map<String, Object>> timeCandidates = new ArrayList<>();
         final Map<String, List<String>> timeExamples = new LinkedHashMap<>();
         final Set<String> zoneNames = new LinkedHashSet<>();
         // A variant's field of zone names (the first found).
@@ -187,6 +188,22 @@ final class VariantDrafts {
             }
             seen.addAll((List<String>) drafted.result().getOrDefault("fields_seen", List.of()));
             kinds.addAll((List<Object>) drafted.result().getOrDefault("kinds", List.of()));
+            // A choice of time put to the agent: for the variant's rule, named as merged, or for its records.
+            for (final Map<String, Object> candidate : JsonValues.maps(drafted.result().get(
+                    DraftMapping.TIME_CANDIDATES))) {
+                final Map<String, Object> named = new LinkedHashMap<>();
+                if (candidate.get("rule") != null) {
+                    named.put("rule", prefix + "_" + candidate.get("rule"));
+                } else {
+                    named.put("variant", prefix);
+                }
+                candidate.forEach((key, value) -> {
+                    if (!"rule".equals(key)) {
+                        named.put(key, value);
+                    }
+                });
+                timeCandidates.add(named);
+            }
             if (sourceNotes == null) {
                 sourceNotes = drafted.result().get("source_notes");
             }
@@ -209,6 +226,9 @@ final class VariantDrafts {
         result.put("kinds", kinds);
         result.put(NOTES, notes);
         result.put("unmapped_fields", new ArrayList<>(unmapped));
+        if (!timeCandidates.isEmpty()) {
+            result.put(DraftMapping.TIME_CANDIDATES, timeCandidates);
+        }
         if (!timeExamples.isEmpty() || !zoneNames.isEmpty()) {
             result.put(DraftMapping.TIME_ZONES, DraftMapping.timeZones(timeExamples, List.copyOf(zoneNames),
                     zoneField[0]));

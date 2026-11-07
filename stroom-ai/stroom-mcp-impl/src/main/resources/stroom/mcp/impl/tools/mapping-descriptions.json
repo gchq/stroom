@@ -235,7 +235,7 @@
    "model": null
   },
   "time_format": {
-   "description": "Input time pattern (Java, e.g. \"yyyy-MM-dd'T'HH:mm:ss\", from profile_sample), or 'epoch_ms' / 'epoch_s' / 'epoch_us' / 'epoch_ns'. Finer than milliseconds is rounded to them.",
+   "description": "Input time pattern (Java, e.g. \"yyyy-MM-dd'T'HH:mm:ss\", from profile_sample), or 'epoch_ms' / 'epoch_s' / 'epoch_us' / 'epoch_ns', or 'windows_filetime' (Windows FILETIME: 100 ns ticks since 1601, e.g. Active Directory's lastLogon). Finer than milliseconds is rounded to them.",
    "model": null
   },
   "timezone": {

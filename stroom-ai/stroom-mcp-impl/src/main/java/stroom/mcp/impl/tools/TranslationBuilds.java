@@ -271,7 +271,7 @@ class TranslationBuilds {
     static List<String> zoneUnknown(final TranslationMapping mapping) {
         return mapping.allEntries().stream()
                 .filter(e -> e.path().endsWith("TimeCreated") && NullSafe.isNonEmptyString(e.timeFormat())
-                             && !e.timeFormat().startsWith("epoch") && !TimePatterns.hasZone(e.timeFormat())
+                             && TimePatterns.zoneless(e.timeFormat())
                              && NullSafe.isBlankString(e.timezone()) && e.zoneSource() == null
                              && NullSafe.isBlankString(e.timeFallback()))
                 .map(e -> e.path() + " is read with no time zone or offset and no timezone, so Stroom reads it as "

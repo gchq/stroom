@@ -25,7 +25,6 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /// The zone a source writes its times in, guessed for the user to confirm: a source that sends its logs as it writes
@@ -69,7 +68,9 @@ final class TimeZones {
         }
         LocalDateTime latest = null;
         for (final Map<String, Object> entry : entries) {
-            final List<String> values = examples.getOrDefault(String.valueOf(entry.get("field")), List.of());
+            final List<String> values = fields(entry).stream()
+                    .flatMap(field -> examples.getOrDefault(field, List.of()).stream())
+                    .toList();
             for (final String value : values) {
                 final LocalDateTime read = read(value, String.valueOf(entry.get("time_format")));
                 if (read != null && (latest == null || read.isAfter(latest))) {
@@ -99,9 +100,24 @@ final class TimeZones {
     }
 
     /// @param entry A TimeCreated entry.
-    /// @return What it reads: its field, else its xpath.
+    /// @return What it reads: its field, its fields in turn (any_of: a record's own time, then its container's),
+    /// else its xpath.
     static String readFrom(final Map<String, Object> entry) {
-        return String.valueOf(Objects.requireNonNullElse(entry.get("field"), entry.get("xpath")));
+        final List<String> fields = fields(entry);
+        return fields.isEmpty()
+                ? String.valueOf(entry.get("xpath"))
+                : String.join("' or '", fields);
+    }
+
+    // The fields an entry reads: its field, or each of its any_of.
+    private static List<String> fields(final Map<String, Object> entry) {
+        if (entry.get("field") != null) {
+            return List.of(String.valueOf(entry.get("field")));
+        }
+        if (entry.get("any_of") instanceof final List<?> anyOf) {
+            return anyOf.stream().map(String::valueOf).toList();
+        }
+        return List.of();
     }
 
     // A value read with a pattern as a time with no zone; null when it doesn't read.
