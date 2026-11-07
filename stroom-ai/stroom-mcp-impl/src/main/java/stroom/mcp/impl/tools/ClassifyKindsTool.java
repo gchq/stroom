@@ -392,7 +392,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     ? ""
                     : "high or medium ") + "confidence in the table above", null));
         }
-        singly.forEach(entry -> items.put(String.valueOf(entry.get(KEY)), new Consent.Editable(line(entry), null)));
+        singly.forEach(entry -> items.put(String.valueOf(entry.get(KEY)), new Consent.Editable(line(entry,
+                proposed.indexOf(entry) + 1), null)));
         final Optional<Map<String, Object>> answers = consent.review(call, context, NAME,
                 "Confirm how the " + proposed.size() + " kinds of event shown in the chat are classified, before "
                 + "the translation is drafted.", items, "Corrections, if any (e.g. 4662 is Access, not Alert)");
@@ -594,12 +595,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < entries.size(); i++) {
             final Map<String, Object> e = entries.get(i);
-            final String title = ToolText.isBlank(text(e.get("title")))
-                    ? cut(text(e.get("description")), 70)
-                    : text(e.get("title"));
             lines.add("### " + (i + 1) + ". " + (ToolText.isBlank(text(e.get("product")))
                     ? ""
-                    : "[" + text(e.get("product")) + "] ") + title);
+                    : "[" + text(e.get("product")) + "] ") + title(e));
             lines.add("");
             if (e.get("sample") != null) {
                 // Preformatted (asked for by the user), so above the table: a table's cell can't hold it.
@@ -608,9 +606,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 lines.add("```");
                 lines.add("");
             }
-            lines.add("| Kind | " + cell(e.get(KEY)) + " |");
+            // The heading names the kind (asked for by the user: no Kind row); every proposal has a confidence, the
+            // table's first row (a table needs one).
+            lines.add("| Confidence | " + cell(e.get("confidence")) + " |");
             lines.add("| --- | --- |");
-            row(lines, "Confidence", e.get("confidence"));
             row(lines, "Action element", e.get("event_detail"));
             row(lines, "Action", e.get("action"));
             row(lines, "Outcome", e.get("success") == null
@@ -628,6 +627,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             lines.add("");
         }
         return String.join("\n", lines).strip();
+    }
+
+    // A proposal's short name: its title, else the start of its description.
+    private static String title(final Map<String, Object> e) {
+        return ToolText.isBlank(text(e.get("title")))
+                ? cut(text(e.get("description")), 70)
+                : text(e.get("title"));
     }
 
     // A row of a proposal's table, only where it has a value.
@@ -656,11 +662,12 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return String.join("\n", lines);
     }
 
-    // A low-confidence proposal as its form item, plain and short: the kind and its action element.
-    private static String line(final Map<String, Object> e) {
-        return e.get(KEY) + " as " + text(e.get("event_detail")) + (e.get("action") == null
+    // A low-confidence proposal as its form item, plain and short: its number and title as the chat shows them,
+    // and its action element.
+    private static String line(final Map<String, Object> e, final int number) {
+        return number + ". " + title(e) + " (" + text(e.get("event_detail")) + (e.get("action") == null
                 ? ""
-                : " (" + text(e.get("action")) + ")");
+                : ": " + text(e.get("action"))) + ")";
     }
 
     private static String text(final Object value) {

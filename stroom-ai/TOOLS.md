@@ -2807,8 +2807,9 @@ them in the notes block as `pending`. One kind (or none told apart), or none lef
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
 is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
 kind's sample record kept from the listing); the reply's `table` (Markdown: for each kind a numbered heading
-`[product] title`, its sample preformatted, and a two-column table of only the rows it has: Kind, Confidence, Action
-element, Action, Outcome, Type id, Who acted, Acted on) is for the agent to show in the chat, which renders Markdown, where a form's fields are plain text (asked for by the user: no
+`[product] title`, its sample preformatted, and a two-column table of only the rows it has: Confidence first, then
+Action element, Action, Outcome, Type id, Who acted, Acted on; the short form names low-confidence kinds by number
+and title) is for the agent to show in the chat, which renders Markdown, where a form's fields are plain text (asked for by the user: no
 Markdown in a form). Called then with `confirm: true`, a short plain form (`Consent.review`): one checkbox accepts
 every high and medium proposal ("in the table above"), each low one (up to 10) has its own, and a text field takes
 corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
