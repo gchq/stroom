@@ -63,10 +63,10 @@ public final class DraftMapping {
     /// What a draft's EventSource/System/Environment says until the user gives it.
     public static final String ENVIRONMENT_PLACEHOLDER = "TODO e.g. Prod";
 
-    private static final Pattern NAMING = ignoringCase("^(event_?type|eventtype|type|event|event_?name|event_?id|event_?code|"
-                                                       + "eventid|action|activity|category|subtype|sub_?type|"
-                                                       + "operation|op|logid|log_?type|msg_?id|kind|result_?type|"
-                                                       + "act|device_?action)$");
+    private static final Pattern NAMING = ignoringCase("^(event_?type|eventtype|type|event|event_?name|event_?id|"
+                                                       + "event_?code|eventid|action|activity|category|subtype|"
+                                                       + "sub_?type|operation|op|logid|log_?type|msg_?id|kind|"
+                                                       + "result_?type|act|device_?action)$");
     private static final Pattern AUTH = ignoringCase(
             "(login|logon|signin|sign_in|authenticat|logoff|logout|signout|sign_out|password)");
     private static final Pattern LOGOFF = ignoringCase("(logoff|logout|signout|sign_out)");
