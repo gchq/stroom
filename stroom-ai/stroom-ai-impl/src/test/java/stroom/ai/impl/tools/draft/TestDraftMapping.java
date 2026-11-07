@@ -790,7 +790,44 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void aClassifiedKindKeepsWhatTheSamplesRuleReadAndItsOwnMessage() {
+        // Seen in the agent eval: a catalogue rule wrote one fixed description over each record's message, and its
+        // actor, a label rather than a field, left the event's user empty.
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            lines.add("ts=2026-11-06T09:%02d:00Z action=%s user=user%d src=10.0.0.%d msg=\"said %d\"".formatted(i,
+                    i % 2 == 0
+                            ? "login"
+                            : "logout", i % 3, i, i));
+        }
+        final Map<String, Object> notes = json("""
+                {"source": "App", "fields": [], "events": [
+                  {"event": "login", "description": "A user logged on", "event_detail": "Authenticate",
+                   "action": "Logon", "field": "action", "value": "login", "actor": "By User",
+                   "basis": "user_confirmed"},
+                  {"event": "logout", "description": "A user logged off", "event_detail": "Authenticate",
+                   "action": "Logoff", "field": "action", "value": "logout", "actor": "src",
+                   "basis": "user_confirmed"}]}""");
+        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "App", "App",
+                "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
+        final Map<String, Map<String, Object>> login = fields(rules(draft).get("login"));
+        assertThat(login).doesNotContainKey("EventDetail/Description");
+        assertThat(common(draft).get("EventDetail/Description").get("field")).isEqualTo("msg");
+        assertThat(login.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");
+        // Neither a label nor an address is the event's user: the common mapping stands.
+        assertThat(login).doesNotContainKey("EventSource/User/Id");
+        assertThat(fields(rules(draft).get("logout"))).doesNotContainKey("EventSource/User/Id");
+        assertThat(notes(draft)).anyMatch(note -> note.contains("login: actor 'By User' isn't a field of the "
+                                                                + "records")
+                                                  && note.contains("logout: actor 'src' holds addresses"));
+    }
+
+    @Test
     void anAffectedObjectIsCheckedAgainstTheActionElement() {
+        assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Network/Permit", "Destination"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("name its leaf, one of Destination/")
+                .hasMessageContaining("Destination/Device/IPAddress");
         assertThat(SourceNotes.affectedPath(SCHEMA, "Delete", "User")).isEqualTo("User/Id");
         assertThat(SourceNotes.affectedPath(SCHEMA, "Delete", "User/Name")).isEqualTo("User/Name");
         assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Delete", "Mailbox"))

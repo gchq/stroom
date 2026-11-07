@@ -84,6 +84,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String USER_CONFIRMED = "user_confirmed";
     // The notes block's kinds still to classify (classify_kinds), as field=value.
     static final String PENDING = "pending";
+    // The notes block's fields of the sample's records (classify_kinds), for checking the fields its proposals name.
+    static final String RECORD_FIELDS = "record_fields";
     private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
@@ -237,7 +239,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
         final DocumentationDoc notesDoc = written(context.session(), contents, build, notesName,
                 notesText(source, summary, fields, events, List.copyOf(references), List.copyOf(keptNames),
-                        JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING)));
+                        JsonValues.strings(earlier.get(PENDING)), earlier.containsKey(PENDING),
+                        JsonValues.strings(earlier.get(RECORD_FIELDS))));
         final long usable = events.stream()
                 .filter(event -> JsonValues.truthy(event.get("field")) && JsonValues.truthy(event.get("value")))
                 .count();
@@ -347,12 +350,14 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// @param source  The source's name (its notes doc is `<source> source notes`).
     /// @param events  The events, each checked by [#checkedEvents].
     /// @param pending The kinds still to classify, as field=value (none when every kind is settled).
+    /// @param recordFields The fields of the sample's records, or null to keep those recorded before.
     /// @return The notes doc's `uuid` and `name`.
     Map<String, Object> recordClassified(final ToolCallContext context,
                                          final String build,
                                          final String source,
                                          final List<Map<String, Object>> events,
-                                         final List<String> pending) {
+                                         final List<String> pending,
+                                         final List<String> recordFields) {
         final Map<String, WriteGuard.BuildDoc> contents = new LinkedHashMap<>();
         guard.folderContents(build).forEach(doc -> contents.putIfAbsent(doc.type() + "\n" + doc.name(), doc));
         final String notesName = source + SourceNotes.NOTES_SUFFIX;
@@ -364,7 +369,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                 "The kinds of event the agent classified and the user confirmed.");
         final DocumentationDoc doc = written(context.session(), contents, build, notesName, notesText(source,
                 summary, fields, merged, JsonValues.strings(earlier.get("references")),
-                JsonValues.strings(earlier.get("documents")), pending, true));
+                JsonValues.strings(earlier.get("documents")), pending, true, recordFields == null
+                        ? JsonValues.strings(earlier.get(RECORD_FIELDS))
+                        : recordFields));
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("uuid", doc.getUuid());
         out.put("name", doc.getName());
@@ -505,7 +512,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<Map<String, Object>> events,
                             final List<String> references,
                             final List<String> keptNames) {
-        return notesText(source, summary, fields, events, references, keptNames, List.of(), false);
+        return notesText(source, summary, fields, events, references, keptNames, List.of(), false, List.of());
     }
 
     /// As [#notesText(String, String, List, List, List, List)], with the kinds still to classify.
@@ -518,6 +525,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     /// @param keptNames  The names of the source documents kept in the build.
     /// @param pending    The kinds still to classify (classify_kinds), as field=value.
     /// @param classified Whether classify_kinds has looked at the kinds (pending then says what is left).
+    /// @param recordFields The fields of the sample's records classify_kinds read, or none.
     /// @return The document's text.
     static String notesText(final String source,
                             final String summary,
@@ -526,7 +534,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<String> references,
                             final List<String> keptNames,
                             final List<String> pending,
-                            final boolean classified) {
+                            final boolean classified,
+                            final List<String> recordFields) {
         final List<String> lines = new ArrayList<>(List.of("# " + source + " source notes", "", summary.strip(), ""));
         if (!fields.isEmpty()) {
             lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path "
@@ -564,6 +573,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         }
         if (classified) {
             block.put(PENDING, List.copyOf(pending));
+        }
+        if (!recordFields.isEmpty()) {
+            block.put(RECORD_FIELDS, List.copyOf(recordFields));
         }
         block.put("fields", fields);
         block.put("events", events);
@@ -783,8 +795,10 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                                             + "checks the mapping against it.")
                 .addStringProperty("value", "That field's value for this event, e.g. '4625'.")
                 .addStringProperty("action", "The action element's Action, when it has one, e.g. Logon or Logoff.")
-                .addStringProperty("actor", "The field naming who acted (EventSource/User for this event).")
-                .addStringProperty("affected", "The field naming the user or object acted on.")
+                .addStringProperty("actor", "The field naming the user or account who acted (EventSource/User for "
+                                            + "this event); left out when the records name none.")
+                .addStringProperty("affected", "The field naming the user or object acted on; left out when there "
+                                               + "is none.")
                 .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
                                                   + "User, File, Document, Group... (or its leaf, User/Name).")
                 .addBooleanProperty("success", "The event's outcome, when the documentation says it, e.g. false for "

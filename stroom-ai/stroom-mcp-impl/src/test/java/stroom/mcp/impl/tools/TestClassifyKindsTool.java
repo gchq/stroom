@@ -84,6 +84,8 @@ class TestClassifyKindsTool {
         assertThat(kinds.getFirst()).containsEntry("field", "action").containsEntry("records", 3);
         assertThat(list(kinds.getFirst().get("examples"))).hasSize(3);
         assertThat(pending()).containsExactly("action=login", "action=logout", "action=purge");
+        assertThat(listed.get("record_fields")).isEqualTo(List.of("time", "action", "user", "src"));
+        assertThat(listed.get("user_fields")).isEqualTo(List.of("user"));
     }
 
     @Test
@@ -164,6 +166,12 @@ class TestClassifyKindsTool {
         assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
                         + "\"description\": \"d\", \"event_detail\": \"Authenticate\"}]}"))
                 .isEqualTo("Nothing recorded: proposals[0]: confidence is high, medium or low");
+        // A label from the text is no field of the records.
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
+                        + "\"description\": \"d\", \"event_detail\": \"Authenticate\", \"actor\": \"By User\", "
+                        + "\"confidence\": \"high\"}]}"))
+                .isEqualTo("Nothing recorded: proposals[0]: actor and affected name fields of the records, as listed "
+                           + "(time, action, user, src), or are left out");
         assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"login\", "
                         + "\"description\": \"d\", \"event_detail\": \"Login\", \"confidence\": \"high\"}]}"))
                 .startsWith("Nothing recorded:");
