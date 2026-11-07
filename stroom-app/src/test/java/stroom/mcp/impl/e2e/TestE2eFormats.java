@@ -264,7 +264,9 @@ class TestE2eFormats extends AbstractE2eTest {
         cases.put("xml_namespaced", Case.of("xml", XML, "User", USERS));
         cases.put("xml_fragments_ns", Case.of("xml fragments", XML, "EventData/Data[@Name='TargetUserName']", USERS)
                 .withReplaceParser("XMLFragmentParser")
-                .withUserIsXpath());
+                .withUserIsXpath()
+                // What the ids mean is the agent's to say (the draft holds no one source's codes).
+                .withRules(logonRules("System/EventID", "4624", "4634", "EventData/Data[@Name='TargetUserName']")));
         return cases;
     }
 
