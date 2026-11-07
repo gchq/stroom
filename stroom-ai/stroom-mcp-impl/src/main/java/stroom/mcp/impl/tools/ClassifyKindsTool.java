@@ -70,6 +70,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     static final String SPLITTER_ARG = "splitter";
     static final String PROPOSALS_ARG = "proposals";
     static final String CONFIRM_ARG = "confirm";
+    /// The notes block's key for each kind's sample record (from the listing), shown with its proposal.
+    static final String SAMPLES = "samples";
 
     // Low-confidence proposals each asked on their own in the form; past this many, with the others.
     private static final int MOST_SINGLY = 10;
@@ -81,6 +83,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final String BLOCK = "block";
     // A kept proposal's kind, as field=value.
     private static final String KEY = "kind";
+    private static final int SAMPLE_CHARS = 100;
     // A field's name that says it names a user or account (generic words, no product's).
     private static final Pattern USER_NAME = Pattern.compile("(?i)(user|account|login|principal|subject|actor|"
                                                              + "owner|member|identity|uid)");
@@ -173,6 +176,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .addStringProperty("field", "The field the kind is told by, as listed.")
                 .addStringProperty("value", "Its value for this kind, as listed.")
                 .addStringProperty("event", "The kind's name or id (the value when left out).")
+                .addStringProperty("title", "A short name for the kind, the heading the user reads, e.g. 'SQL "
+                                            + "injection signature'.")
+                .addStringProperty("product", "The product or part of it the kind comes from, in the heading's "
+                                              + "brackets, e.g. 'NetScaler AppFirewall'.")
                 .addStringProperty("description", "What the event is.")
                 .addStringProperty("event_detail", "The EventDetail action element.")
                 .addStringProperty("action", "The action element's Action, when it has one.")
@@ -251,9 +258,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     : "Every kind is settled by the documentation or the user: go on to the draft.");
             return result;
         }
+        // Each kind's first record, shown with its proposal.
+        final List<Map<String, Object>> kindSamples = todo.stream()
+                .filter(kind -> !kind.examples().isEmpty())
+                .map(kind -> Map.<String, Object>of(KEY, kind.key(), "sample", sampleText(kind.examples().getFirst())))
+                .toList();
         result.put("source_notes", notes.recordClassified(context, build, source, List.of(),
                 todo.stream().map(Kind::key).toList(), Map.of(RecordSourceNotesTool.RECORD_FIELDS, recordFields,
-                        RecordSourceNotesTool.PROPOSED, List.of())));
+                        RecordSourceNotesTool.PROPOSED, List.of(), SAMPLES, kindSamples)));
         result.put("to_classify", todo.stream().map(Kind::shown).toList());
         result.put("record_fields", recordFields);
         final List<String> users = userFields(records, recordFields);
@@ -315,6 +327,17 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             } else {
                 entry.put(KEY, proposals.get(i).key());
                 entry.put("confidence", proposals.get(i).confidence());
+                for (final String shown : List.of("title", "product")) {
+                    final Object value = proposals.get(i).given().get(shown);
+                    if (value != null && !ToolText.isBlank(ToolText.str(value))) {
+                        entry.put(shown, ToolText.str(value));
+                    }
+                }
+                final String key = proposals.get(i).key();
+                JsonValues.maps(notesNow.get(SAMPLES)).stream()
+                        .filter(sample -> key.equals(sample.get(KEY)))
+                        .findFirst()
+                        .ifPresent(sample -> entry.put("sample", sample.get("sample")));
                 toConfirm.add(entry);
             }
         }
@@ -437,6 +460,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static Map<String, Object> confirmedEntry(final Map<String, Object> entry) {
         entry.remove(KEY);
         entry.remove("confidence");
+        entry.remove("title");
+        entry.remove("product");
+        entry.remove("sample");
         entry.put("basis", RecordSourceNotesTool.USER_CONFIRMED);
         return entry;
     }
@@ -561,19 +587,72 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // The proposals as a Markdown table, for the agent to show in the chat.
-    private static String table(final List<Map<String, Object>> entries) {
-        final List<String> lines = new ArrayList<>(List.of("| Kind | Action element | Action | Outcome | Actor | "
-                                                           + "Acted on | Confidence |",
-                "| --- | --- | --- | --- | --- | --- | --- |"));
-        for (final Map<String, Object> e : entries) {
-            // Acted on: the field, and what it names (a user, a file...).
-            lines.add("| " + e.get(KEY) + ": " + text(e.get("description")) + " | " + text(e.get("event_detail"))
-                      + " | " + text(e.get("action")) + " | " + text(e.get("success")) + " | "
-                      + text(e.get("actor")) + " | " + text(e.get("affected")) + (e.get("affected_as") == null
+    // The proposals for the agent to show in the chat, one after another (asked for by the user: one wide table
+    // of long descriptions was hard to read): a numbered heading for each, '[product] title', then a table of two
+    // columns, the row's name and its value, with a row only where the proposal has one.
+    static String table(final List<Map<String, Object>> entries) {
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            final Map<String, Object> e = entries.get(i);
+            final String title = ToolText.isBlank(text(e.get("title")))
+                    ? cut(text(e.get("description")), 70)
+                    : text(e.get("title"));
+            lines.add("### " + (i + 1) + ". " + (ToolText.isBlank(text(e.get("product")))
                     ? ""
-                    : " (" + text(e.get("affected_as")) + ")") + " | " + text(e.get("confidence")) + " |");
+                    : "[" + text(e.get("product")) + "] ") + title);
+            lines.add("");
+            if (e.get("sample") != null) {
+                // Preformatted (asked for by the user), so above the table: a table's cell can't hold it.
+                lines.add("```");
+                lines.add(ToolText.str(e.get("sample")).replace("```", "'''"));
+                lines.add("```");
+                lines.add("");
+            }
+            lines.add("| Kind | " + cell(e.get(KEY)) + " |");
+            lines.add("| --- | --- |");
+            row(lines, "Confidence", e.get("confidence"));
+            row(lines, "Action element", e.get("event_detail"));
+            row(lines, "Action", e.get("action"));
+            row(lines, "Outcome", e.get("success") == null
+                    ? null
+                    : JsonValues.truthy(e.get("success"))
+                            ? "Success"
+                            : "Failure");
+            row(lines, "Type id", e.get("type_id"));
+            row(lines, "Who acted", e.get("actor"));
+            row(lines, "Acted on", e.get("affected") == null
+                    ? null
+                    : text(e.get("affected")) + (e.get("affected_as") == null
+                            ? ""
+                            : " (" + text(e.get("affected_as")) + ")"));
+            lines.add("");
         }
+        return String.join("\n", lines).strip();
+    }
+
+    // A row of a proposal's table, only where it has a value.
+    private static void row(final List<String> lines, final String name, final Object value) {
+        if (value != null && !ToolText.isBlank(ToolText.str(value))) {
+            lines.add("| " + name + " | " + cell(value) + " |");
+        }
+    }
+
+    // A table cell's text: its pipes escaped, on one line.
+    private static String cell(final Object value) {
+        return ToolText.str(value).replace("|", "\\|").replace("\n", " ");
+    }
+
+    private static String cut(final String text, final int most) {
+        return text.length() <= most
+                ? text
+                : text.substring(0, most - 3).strip() + "...";
+    }
+
+    // A record as its fields, one a line (field = value), each value cut short: the sample shown with a kind.
+    private static String sampleText(final Map<String, Object> record) {
+        final List<String> lines = new ArrayList<>();
+        record.forEach((field, value) -> lines.add(field + " = " + cut(ToolText.str(value).replace("\n", " "),
+                SAMPLE_CHARS)));
         return String.join("\n", lines);
     }
 
