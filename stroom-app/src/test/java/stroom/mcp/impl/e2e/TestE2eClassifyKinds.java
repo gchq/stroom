@@ -63,18 +63,25 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         assertThat(String.valueOf(map(json("build_status", args("build", BUILD)), "next").get("step")))
                 .isNotEqualTo("translation");
 
-        // ### Proposed: the user accepts the sure ones together, rejects the low one, and corrects it.
-        client.answeringWith(this::answer);
-        final Map<String, Object> answered = json("classify_kinds", args("build", BUILD, "proposals",
+        // ### Proposed: a table for the chat, which renders Markdown; no form yet.
+        final Map<String, Object> shown = json("classify_kinds", args("build", BUILD, "proposals",
                 JsonUtil.readValue(PROPOSALS, List.class)));
+        dump("classify_kinds shown", shown);
+        assertThat(String.valueOf(shown.get("table"))).contains("action=login: A user logged on");
+
+        // ### Confirmed in a short form: the sure ones accepted together, the low one rejected, and corrected.
+        client.answeringWith(this::answer);
+        final Map<String, Object> answered = json("classify_kinds", args("build", BUILD, "confirm", true));
         dump("classify_kinds answered", answered);
         client.answeringWith(McpTestClient::agree);
         assertThat(answered.get("recorded")).isEqualTo(List.of("action=login", "action=logout", "action=export"));
         assertThat(answered.get("rejected")).isEqualTo(List.of("action=purge"));
         assertThat(answered.get("corrections")).isEqualTo("purge deletes the audit records: Delete, not Alert");
         final ElicitFormRequest form = client.forms().getLast();
-        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false))
-                .contains("action=login: A user logged on", "action=purge as Delete");
+        // Plain text only: the form's fields are shown as they are, so no table in it.
+        assertThat(JsonUtil.writeValueAsString(form.requestedSchema(), false)).contains("action=purge as Delete")
+                .doesNotContain("|");
+        assertThat(form.message()).doesNotContain("|");
 
         // ### The correction sent as the user's: recorded without another form.
         final int forms = client.forms().size();
