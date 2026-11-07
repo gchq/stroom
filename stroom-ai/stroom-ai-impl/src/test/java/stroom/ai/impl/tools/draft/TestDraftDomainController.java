@@ -51,7 +51,25 @@ class TestDraftDomainController extends DraftFixtures {
         assertThat(rules.keySet()).contains("4624", "5136", "4720", "4662");
     }
 
-    // E2.
+    // A hundred kinds in a field named for them (asked for by the user: a source of a hundred event types).
+    @Test
+    void aHundredKindsHaveARuleEach() {
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 300; i++) {
+            text.append("{\"time\": \"2026-11-06T09:00:00Z\", \"event_id\": \"").append(1000 + i % 100)
+                    .append("\", \"user\": \"u").append(i % 7).append("\"}\n");
+        }
+        assertThat(rules(draft(text.toString())).keySet()).contains("1000", "1050", "1099").hasSize(101);
+        // But an id, a value a record, is no kinds field however its name reads (seen: a mail log's msgid).
+        final StringBuilder ids = new StringBuilder();
+        for (int i = 0; i < 150; i++) {
+            ids.append("{\"time\": \"2026-11-06T09:00:00Z\", \"msg_id\": \"<").append(i)
+                    .append("@mail.example.com>\", \"user\": \"u").append(i % 7).append("\"}\n");
+        }
+        assertThat(rules(draft(ids.toString())).keySet()).noneMatch(rule -> rule.contains("mail_example_com"));
+    }
+
+    // E2.    // E2.
     @Test
     void theActorAmongSeveralUserFieldsIsTheEventSourcesUser() {
         final Map<String, Object> draft = draft(WEF);
