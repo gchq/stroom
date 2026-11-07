@@ -70,6 +70,7 @@ class TestE2eEventTime extends AbstractE2eTest {
                     for (final Map<String, Object> field : (List<Map<String, Object>>) rule.get("fields")) {
                         if ("EventTime/TimeCreated".equals(field.get("path"))) {
                             field.put("field", "end");
+                            field.remove("choose_from");
                         }
                     }
                 }
@@ -111,6 +112,12 @@ class TestE2eEventTime extends AbstractE2eTest {
                 "source_name", "Event times " + name, "system_name", "Event Times", "environment", "Test",
                 "splitter", splitter, "timezone", "UTC"));
         dump("draft_translation_mapping", draft);
+        if (draft.get("time_candidates") != null) {
+            // Not saved until the agent chooses each time the draft put to it.
+            assertThat(refusal("build_translation_xslt", args("mapping", keptUnknown(map(draft, "mapping")),
+                    "schema_version", draft.get("schema_version"), "stream_ids", raw, "splitter", splitter, "build",
+                    build, "name", feedName + "-Events"))).contains("still has choose_from");
+        }
         final Map<String, Object> mapping = agent.apply(keptUnknown(map(draft, "mapping")));
         final Map<String, Object> saved = agreed("build_translation_xslt", args("mapping", mapping,
                 "schema_version", draft.get("schema_version"), "stream_ids", raw, "splitter", splitter,

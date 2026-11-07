@@ -393,6 +393,30 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                 : Optional.empty();
     }
 
+    // The mapping without choose_from on any entry (a copy).
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> withoutChoices(final Map<String, Object> mapping) {
+        final Map<String, Object> copy = new LinkedHashMap<>(mapping);
+        copy.put("common", JsonValues.maps(mapping.get("common")).stream().map(DraftTranslationMappingTool::unmarked)
+                .toList());
+        copy.put("events", JsonValues.maps(mapping.get("events")).stream().map(rule -> {
+            final Map<String, Object> out = new LinkedHashMap<>(rule);
+            if (rule.get("fields") != null) {
+                out.put("fields", JsonValues.maps(rule.get("fields")).stream()
+                        .map(DraftTranslationMappingTool::unmarked)
+                        .toList());
+            }
+            return out;
+        }).toList());
+        return copy;
+    }
+
+    private static Map<String, Object> unmarked(final Map<String, Object> entry) {
+        final Map<String, Object> out = new LinkedHashMap<>(entry);
+        out.remove(DraftMapping.CHOOSE_FROM);
+        return out;
+    }
+
     // Each problem's first sentence: build_translation_xslt gives them whole, and the draft's notes say the rest.
     private Map<String, Object> schemaCheck(final ToolCallContext context,
                                             final String build,
@@ -400,7 +424,9 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                             final String version) {
         final Map<String, Object> check = new LinkedHashMap<>();
         try {
-            final XsltGenerator.Generated checked = XsltGenerator.generate(TranslationMapping.parse(mapping),
+            // Checked as the agent's choices will be: without the marks on times it must choose between.
+            final XsltGenerator.Generated checked = XsltGenerator.generate(TranslationMapping.parse(
+                            withoutChoices(mapping)),
                     eventVersions.eventSchema(context, build, version), version);
             check.put("ok", checked.ok());
             check.put("problems", MappingCompaction.grouped(checked.problems()).stream()
