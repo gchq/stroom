@@ -63,7 +63,7 @@ public final class DraftMapping {
     /// What a draft's EventSource/System/Environment says until the user gives it.
     public static final String ENVIRONMENT_PLACEHOLDER = "TODO e.g. Prod";
 
-    private static final Pattern NAMING = ignoringCase("^(event_?type|eventtype|type|event|event_?name|event_?id|"
+    private static final Pattern NAMING = ignoringCase("^(event_?type|eventtype|type|event|event_?name|event_?id|event_?code|"
                                                        + "eventid|action|activity|category|subtype|sub_?type|"
                                                        + "operation|op|logid|log_?type|msg_?id|kind|result_?type|"
                                                        + "act|device_?action)$");
@@ -72,7 +72,18 @@ public final class DraftMapping {
     private static final Pattern LOGOFF = ignoringCase("(logoff|logout|signout|sign_out)");
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
-    private static final int MAX_RULES = 12;
+    // A kinds field's values past which it is an identifier, not kinds of event (until 2026-11-07, 12: a domain
+    // controller's 40 event ids were drafted as no kinds at all).
+    private static final int MAX_KINDS = 64;
+    // A field tying records written of one change or action (a correlation id), by generic names.
+    private static final Pattern CORRELATION = ignoringCase("(correlation_?id|corr_?id|correlation|op_?correlation_?id|"
+                                                            + "activity_?id|transaction_?id)$");
+    // A user field's name: who acted, or who (or what account) it was done to, by generic prefixes.
+    private static final Pattern USER_FIELD = ignoringCase("(user|user_?name|user_?id|account|account_?name)$");
+    private static final Pattern ACTOR = ignoringCase("^(subject|source|src|actor|initiator|caller|requester|acting|"
+                                                      + "by(?=_)|s(?=user))");
+    private static final Pattern AFFECTED = ignoringCase("^(target|dest|dst|member|object|affected|victim|"
+                                                         + "d(?=user))");
     /// The draft's key for the kinds (or the whole sample) where two times could each be the event's: each with
     /// what tells them apart, for the agent to choose from.
     public static final String TIME_CANDIDATES = "time_candidates";
@@ -595,6 +606,8 @@ public final class DraftMapping {
                     : time();
             system(systemName, environment, timeField);
             homes();
+            users();
+            correlated();
             final Kinds kinds = kinds();
             final String naming = kinds.namings().isEmpty()
                     ? null
@@ -1296,6 +1309,74 @@ public final class DraftMapping {
             }
         }
 
+        // Several user fields in a record (who acted, who it was done to): the actor's in EventSource/User where
+        // their names say which is which (Subject*, Target*), and the agent asked to decide kind by kind.
+        private void users() {
+            final List<String> named = names.stream()
+                    .filter(n -> !"empty".equals(type(n)) && !n.contains("//") && FieldHomes.keys(n).stream()
+                            .anyMatch(k -> ToolText.search(USER_FIELD, k)))
+                    .toList();
+            // Only fields in a record together: one user in two shapes' fields (user, message.user) isn't several.
+            final List<String> users = named.stream()
+                    .filter(n -> records.stream().anyMatch(r -> JsonValues.truthy(r.get(n)) && named.stream()
+                            .anyMatch(m -> !m.equals(n) && JsonValues.truthy(r.get(m)))))
+                    .toList();
+            if (users.size() < 2) {
+                return;
+            }
+            final Map<String, Object> user = common.stream()
+                    .filter(e -> "EventSource/User/Id".equals(e.get(PATH)) && e.get(FIELD) != null)
+                    .findFirst()
+                    .orElse(null);
+            final String actor = users.stream().filter(n -> role(n).equals("actor")).findFirst().orElse(null);
+            if (user != null && actor != null && !"actor".equals(role((String) user.get(FIELD)))) {
+                // The field it replaces is left for the rules (as Data until the agent places it), not lost.
+                taken.remove((String) user.get(FIELD));
+                taken.add(actor);
+                user.put(FIELD, actor);
+            }
+            final List<String> said = users.stream().map(n -> "'" + n + "' (" + role(n) + ")").toList();
+            notes.add("Records hold several user fields: " + String.join(", ", said) + ". EventSource/User is who "
+                      + "acted" + (user == null
+                    ? ""
+                    : " (drafted as '" + user.get(FIELD) + "')") + "; for each kind, decide which field is the "
+                      + "actor and which the user or account acted on, and map that one in the action element (e.g. "
+                      + "Authenticate/User, or the object a Create, Update or Delete names), not as Data.");
+        }
+
+        // Records tied by a correlation id that two or more of them share (one change written as several records):
+        // each mapped alone first, as drafted; pairing them is the agent's to propose once it knows the source.
+        private void correlated() {
+            for (final String name : names) {
+                if (FieldHomes.keys(name).stream().noneMatch(k -> ToolText.search(CORRELATION, k))) {
+                    continue;
+                }
+                final List<String> held = values.get(name);
+                final long shared = JsonValues.counted(held).values().stream().filter(count -> count > 1).count();
+                if (shared > 0) {
+                    notes.add("'" + name + "' ties records together (" + shared + " of its values are in more than "
+                              + "one record): such records may be one change written as several (a value removed "
+                              + "and a value added, a request and its response). Each is mapped alone as drafted; "
+                              + "keep the id as Data, and if the user wants them as one event, say how they pair "
+                              + "before changing the rules.");
+                    return;
+                }
+            }
+        }
+
+        // A user field's role by its name's prefix: actor, affected, or unsaid.
+        private static String role(final String name) {
+            for (final String key : FieldHomes.keys(name)) {
+                if (ToolText.search(ACTOR, key)) {
+                    return "actor";
+                }
+                if (ToolText.search(AFFECTED, key)) {
+                    return "affected";
+                }
+            }
+            return "unsaid";
+        }
+
         // What the notes say of the event's message: where the draft put it, or, if it found none, a field of free text
         // that may be it (seen in eval cases 22, 23 and 42, with neither said: the message, a CEF msg or a ticket's
         // comment, went into a Document's Description or a Data entry).
@@ -1323,7 +1404,9 @@ public final class DraftMapping {
         private boolean namesKinds(final String name) {
             final Set<String> kinds = new HashSet<>(values.get(name));
             kinds.removeAll(NIL);
-            return ToolText.match(NAMING, key(name)) && !kinds.isEmpty() && kinds.size() <= MAX_RULES;
+            // By its own name or with its parent's (Winlogbeat's event.code is event_code).
+            return FieldHomes.keys(name).stream().anyMatch(k -> ToolText.match(NAMING, k)) && !kinds.isEmpty()
+                   && kinds.size() <= MAX_KINDS;
         }
 
         // Seen: syslog's msgid, always '-', taken over an action field: a field with only nil values names no kind.
@@ -1352,7 +1435,7 @@ public final class DraftMapping {
                     .filter(n -> names.contains(n) && !taken.contains(n))
                     .filter(n -> {
                         final int count = kindCount(n);
-                        return count > 1 && count <= MAX_RULES;
+                        return count > 1 && count <= MAX_KINDS;
                     })
                     .max(Comparator.comparingInt(this::kindCount))
                     .orElse(null);
@@ -1396,7 +1479,7 @@ public final class DraftMapping {
                         own.add((String) record.get(n));
                     }
                 }
-                JsonValues.mostCommon(JsonValues.counted(own)).stream().limit(MAX_RULES)
+                JsonValues.mostCommon(JsonValues.counted(own)).stream().limit(MAX_KINDS)
                         .forEach(v -> pairs.add(new String[]{n, v}));
             }
             final List<String> kinds = pairs.stream().map(pair -> pair[1]).toList();
