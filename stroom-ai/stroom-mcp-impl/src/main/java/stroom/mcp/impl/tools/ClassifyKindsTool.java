@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.IpAddresses;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /// `classify_kinds` - the agent classifies every kind of event in the sample the user's documentation doesn't
 /// cover, and the user confirms the classifications in one form, before the translation is drafted (work package
@@ -76,6 +78,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final int EXAMPLE_VALUE = 100;
     private static final String FROM_USER = "from_user";
     private static final String BLOCK = "block";
+    // A field's name that says it names a user or account (generic words, no product's).
+    private static final Pattern USER_NAME = Pattern.compile("(?i)(user|account|login|principal|subject|actor|"
+                                                             + "owner|member|identity|uid)");
 
     private final RecordSourceNotesTool notes;
     private final SampleStreamTexts sampleStreamTexts;
@@ -145,8 +150,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                                 .description("One per kind listed: its field and value (as listed), description, "
                                              + "event_detail (the action element, e.g. Authenticate, Update, "
                                              + "Network/Permit), action and success where it has them, type_id, "
-                                             + "actor and affected (the fields naming who acted and who or what "
-                                             + "it was done to), affected_as (what that is: User, File, "
+                                             + "actor and affected where the records name them (the fields "
+                                             + "naming the user who acted, and who or what it was done to; left "
+                                             + "out otherwise), affected_as (what that is: User, File, "
                                              + "Document, Group...), and confidence (high, medium or low); or "
                                              + "from_user: true for what the user said.")
                                 .items(proposal())
@@ -166,8 +172,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 .addStringProperty("action", "The action element's Action, when it has one.")
                 .addBooleanProperty("success", "The outcome, when the kind says it.")
                 .addStringProperty("type_id", "The event's TypeId.")
-                .addStringProperty("actor", "The field naming who acted.")
-                .addStringProperty("affected", "The field naming the user or object acted on.")
+                .addStringProperty("actor", "The field naming the user or account who acted (one of user_fields); "
+                                            + "left out when the records name none, as for network traffic.")
+                .addStringProperty("affected", "The field naming the user or object acted on; left out when there "
+                                               + "is none, as for an alert or a connection.")
                 .addStringProperty("affected_as", "What the affected field names, as the action element's object: "
                                                   + "User, File, Document, Group... (or its leaf, User/Name).")
                 .addStringProperty("confidence", "high, medium or low: how sure you are.")
@@ -216,7 +224,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         final Map<String, String> samples = sampleStreamTexts.read(streams).texts();
         final SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(rawArg(call, SPLITTER_ARG));
-        final List<Kind> kinds = kinds(samples, splitter, source);
+        final List<Map<String, Object>> records = DraftMapping.records(samples, splitter).records();
+        final List<Kind> kinds = kinds(samples, splitter, source, records);
+        final List<String> recordFields = recordFields(records);
         final Set<String> settled = settled(notesNow);
         final List<Kind> todo = kinds.stream().filter(kind -> !settled.contains(kind.key())).toList();
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -224,7 +234,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         result.put("already_settled", kinds.stream().map(Kind::key).filter(settled::contains).toList());
         if (kinds.size() <= 1 || todo.isEmpty()) {
             // Nothing for the user to decide: one kind (the draft's own rule), or every kind settled already.
-            result.put("source_notes", notes.recordClassified(context, build, source, List.of(), List.of()));
+            result.put("source_notes", notes.recordClassified(context, build, source, List.of(), List.of(),
+                    recordFields));
             result.put("to_classify", List.of());
             result.put("hint", kinds.size() <= 1
                     ? "One kind of event (or none told apart): nothing to classify. Go on to the draft."
@@ -232,8 +243,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             return result;
         }
         result.put("source_notes", notes.recordClassified(context, build, source, List.of(),
-                todo.stream().map(Kind::key).toList()));
+                todo.stream().map(Kind::key).toList(), recordFields));
         result.put("to_classify", todo.stream().map(Kind::shown).toList());
+        result.put("record_fields", recordFields);
+        final List<String> users = userFields(records, recordFields);
+        result.put("user_fields", users.isEmpty()
+                ? "None: the records name no user or account, so leave actor out."
+                : users);
         result.put("hint", "Propose a classification for each of these " + todo.size() + " kinds (proposals=, one "
                            + "each, with its field and value as listed), from its records and what you know of the "
                            + "source, saying how sure you are; the user confirms them in one form.");
@@ -251,6 +267,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             throw new ToolRefusal("Call classify_kinds without proposals first: it lists the kinds to classify");
         }
         final List<String> pending = JsonValues.strings(notesNow.get(RecordSourceNotesTool.PENDING));
+        final List<String> recordFields = JsonValues.strings(notesNow.get(RecordSourceNotesTool.RECORD_FIELDS));
         final List<Proposal> proposals = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
         for (int i = 0; i < given.size(); i++) {
@@ -267,6 +284,11 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             } else if (!fromUser && ToolText.isBlank(ToolText.str(Objects.requireNonNullElse(item.get(
                     "event_detail"), "")))) {
                 problems.add("proposals[" + i + "]: give event_detail, the action element");
+            } else if (unknownField(item, "actor", recordFields) || unknownField(item, "affected", recordFields)) {
+                // Seen in the agent eval: a label from the text ('By User') given for a field, the event's user
+                // then drafted empty.
+                problems.add("proposals[" + i + "]: actor and affected name fields of the records, as listed ("
+                             + String.join(", ", recordFields) + "), or are left out");
             } else {
                 proposals.add(new Proposal(key, item, confidence, fromUser));
             }
@@ -335,7 +357,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<String> left = pending.stream()
                 .filter(key -> !accepted.contains(key) && !rejected.contains(key))
                 .toList();
-        final Map<String, Object> doc = notes.recordClassified(context, build, source, confirmed, left);
+        final Map<String, Object> doc = notes.recordClassified(context, build, source, confirmed, left, null);
         result.put("recorded", List.copyOf(accepted));
         result.put("source_notes", doc);
         if (!rejected.isEmpty()) {
@@ -349,6 +371,35 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         result.put("hint", hint(rejected, corrections, left));
         return result;
+    }
+
+    // Whether a proposal names, for the key, a field the records don't have (when their fields are known).
+    private static boolean unknownField(final Map<?, ?> item, final String key, final List<String> recordFields) {
+        final Object named = item.get(key);
+        return named != null && !ToolText.isBlank(ToolText.str(named)) && !recordFields.isEmpty()
+               && !recordFields.contains(ToolText.str(named));
+    }
+
+    // The fields the records hold, in the order first seen.
+    private static List<String> recordFields(final List<Map<String, Object>> records) {
+        final Set<String> seen = new LinkedHashSet<>();
+        records.forEach(record -> record.forEach((field, value) -> {
+            if (value != null && !ToolText.isBlank(ToolText.str(value))) {
+                seen.add(field);
+            }
+        }));
+        return List.copyOf(seen);
+    }
+
+    // The fields whose names say user or account and whose values aren't addresses: who may have acted.
+    private static List<String> userFields(final List<Map<String, Object>> records, final List<String> fields) {
+        return fields.stream()
+                .filter(field -> USER_NAME.matcher(field).find())
+                .filter(field -> records.stream()
+                        .map(record -> record.get(field))
+                        .filter(value -> value != null && !ToolText.isBlank(ToolText.str(value)))
+                        .anyMatch(value -> !IpAddresses.isAddress(ToolText.str(value))))
+                .toList();
     }
 
     private static String hint(final List<String> rejected, final String corrections, final List<String> left) {
@@ -371,10 +422,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     // The kinds the draft makes rules for, each with its records.
     private static List<Kind> kinds(final Map<String, String> samples,
                                     final SplitterSpec splitter,
-                                    final String source) {
+                                    final String source,
+                                    final List<Map<String, Object>> records) {
         final Map<String, Object> draft = DraftMapping.draft(List.copyOf(samples.values()), source, null, null, null,
                 null, splitter);
-        final List<Map<String, Object>> records = DraftMapping.records(samples, splitter).records();
         final List<Kind> kinds = new ArrayList<>();
         @SuppressWarnings("unchecked") final Map<String, Object> mapping = (Map<String, Object>) draft.get("mapping");
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {

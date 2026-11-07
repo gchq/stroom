@@ -24028,7 +24028,8 @@
     "not_in_catalogue": [
      "evt=9999"
     ],
-    "from_sample": []
+    "from_sample": [],
+    "unread_fields": []
    },
    "splitter": {
     "kind": "delimited",
@@ -24362,20 +24363,16 @@
         "field": "action"
        },
        {
-        "path": "EventDetail/Description",
-        "value": "Administrator logged in"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "true"
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
         "field": "username"
        },
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
+        "path": "EventDetail/Authenticate/Outcome/Success",
+        "value": "true"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -24403,20 +24400,16 @@
         "field": "action"
        },
        {
-        "path": "EventDetail/Description",
-        "value": "Administrator failed to log in"
-       },
-       {
-        "path": "EventDetail/Authenticate/Outcome/Success",
-        "value": "false"
+        "path": "EventDetail/Authenticate/Action",
+        "value": "Logon"
        },
        {
         "path": "EventDetail/Authenticate/User/Id",
         "field": "username"
        },
        {
-        "path": "EventDetail/Authenticate/Action",
-        "value": "Logon"
+        "path": "EventDetail/Authenticate/Outcome/Success",
+        "value": "false"
        },
        {
         "path": "EventDetail/Authenticate/Data",
@@ -24442,10 +24435,6 @@
        {
         "path": "EventDetail/TypeId",
         "field": "action"
-       },
-       {
-        "path": "EventDetail/Description",
-        "value": "Configuration modified"
        },
        {
         "path": "EventDetail/Update/After/Configuration/Type",
@@ -24538,7 +24527,8 @@
     "from_sample": [
      "event_type=TRAFFIC: the catalogue has more than one event for it, so the sample's rules are kept (traffic_permitted: Network; traffic_denied: Network)",
      "action=VPN_TUNNEL_DOWN: the catalogue gives no action element, so the sample's rules are kept (system_alert: Alert)"
-    ]
+    ],
+    "unread_fields": []
    },
    "splitter": {
     "kind": "delimited",

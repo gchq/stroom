@@ -1727,6 +1727,12 @@ public final class DraftMapping {
             final List<String> appliedFields = (List<String>) applied.get(FIELDS);
             final List<String> appliedEvents = (List<String>) applied.get(EVENTS);
             final List<String> fromSample = (List<String>) applied.get("from_sample");
+            final List<String> unread = (List<String>) applied.getOrDefault("unread_fields", List.of());
+            if (!unread.isEmpty()) {
+                notes.add("The source notes name what the draft couldn't use, so those rules keep the sample's: "
+                          + String.join("; ", unread) + ". The fields are " + reprs(names) + ": correct the notes "
+                          + "(classify_kinds from_user) if a kind's user or object is one of them.");
+            }
             final List<String> notInCatalogue = (List<String>) applied.get("not_in_catalogue");
             if (!appliedEvents.isEmpty()) {
                 notes.removeIf(n -> n.startsWith("One rule per value of") || n.startsWith("No field names the kind"));
