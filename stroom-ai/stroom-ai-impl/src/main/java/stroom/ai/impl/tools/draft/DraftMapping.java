@@ -165,7 +165,7 @@ public final class DraftMapping {
     private static final String FIELD = "field";
     private static final String DESCRIPTION = "EventDetail/Description";
     // Names of free text a person writes about an event, e.g. a ticket's comment.
-    private static final Pattern FREE_TEXT = Pattern.compile("(?i)(comments?|remarks?|notes?)");
+    static final Pattern FREE_TEXT = Pattern.compile("(?i)(comments?|remarks?|notes?)");
     private static final String FIELDS = "fields";
     private static final String VALUE = "value";
     private static final String ANY_OF = "any_of";
