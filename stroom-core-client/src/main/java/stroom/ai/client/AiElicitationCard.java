@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONBoolean;
 import com.google.gwt.json.client.JSONObject;
@@ -62,6 +63,10 @@ final class AiElicitationCard {
     static final String LATER_CLASS = "ai-question--later";
 
     private static final SafeHtml INPUT = SafeHtmlUtils.fromSafeConstant("input");
+    private static final SafeHtml TEXTAREA = SafeHtmlUtils.fromSafeConstant("textarea");
+    /// On a box for free text: it starts one line high and grows with each line the user adds, to five, then
+    /// scrolls (asked for by the user).
+    static final String GROWING_CLASS = "ai-textarea-grow";
     private static final SafeHtml SELECT = SafeHtmlUtils.fromSafeConstant("select");
     private static final SafeHtml OPTION = SafeHtmlUtils.fromSafeConstant("option");
     private static final SafeHtml LABEL = SafeHtmlUtils.fromSafeConstant("label");
@@ -156,6 +161,14 @@ final class AiElicitationCard {
             }, SELECT, Attribute.className("allow-focus ai-elicitation-input"),
                     new Attribute(FIELD_ATTRIBUTE, field.getName()),
                     new Attribute(KIND_ATTRIBUTE, CHOICE));
+        } else if (NullSafe.isBlankString(field.getFormat())) {
+            // Free text: several lines if the user wants (Shift+Enter).
+            row.elem(NullSafe.string(field.getDefault()), TEXTAREA,
+                    Attribute.className("allow-focus ai-elicitation-input " + GROWING_CLASS),
+                    new Attribute("rows", "1"),
+                    new Attribute("placeholder", placeholder(field.getFormat())),
+                    new Attribute(FIELD_ATTRIBUTE, field.getName()),
+                    new Attribute(KIND_ATTRIBUTE, TEXT));
         } else {
             row.elem(INPUT, Attribute.className("allow-focus ai-elicitation-input"),
                     new Attribute("type", "text"),
@@ -246,9 +259,10 @@ final class AiElicitationCard {
                     if (field.isCustom() || field.getValues().isEmpty()) {
                         // The user's own answer, sent with Enter or the Send button beside it.
                         question.div(custom -> {
-                            custom.elem(INPUT, Attribute.className("allow-focus ai-elicitation-input "
-                                                                   + CUSTOM_ANSWER_CLASS),
-                                    new Attribute("type", "text"),
+                            custom.elem("", TEXTAREA, Attribute.className("allow-focus ai-elicitation-input "
+                                                                          + CUSTOM_ANSWER_CLASS + " "
+                                                                          + GROWING_CLASS),
+                                    new Attribute("rows", "1"),
                                     new Attribute("placeholder", field.getValues().isEmpty()
                                             ? "Type your answer"
                                             : "Or type your own answer"));
@@ -545,6 +559,14 @@ final class AiElicitationCard {
             }
         }
         several.forEach((name, chosen) -> values.put(name, chosen.toString()));
+        final NodeList<Element> areas = card.getElementsByTagName("textarea");
+        for (int i = 0; i < areas.getLength(); i++) {
+            final TextAreaElement area = TextAreaElement.as(areas.getItem(i));
+            final String name = area.getAttribute(FIELD_ATTRIBUTE);
+            if (name != null && !name.isEmpty() && TEXT.equals(area.getAttribute(KIND_ATTRIBUTE))) {
+                values.put(name, area.getValue());
+            }
+        }
         final NodeList<Element> selects = card.getElementsByTagName("select");
         for (int i = 0; i < selects.getLength(); i++) {
             final SelectElement select = SelectElement.as(selects.getItem(i));

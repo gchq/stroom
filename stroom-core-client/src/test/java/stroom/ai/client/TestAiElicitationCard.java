@@ -16,6 +16,8 @@
 
 package stroom.ai.client;
 
+import stroom.widget.util.client.HtmlBuilder;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -122,5 +124,23 @@ class TestAiElicitationCard {
         // None recommended, or one that isn't an option: as given.
         assertThat(AiElicitationCard.recommendedFirst(values, List.of())).containsExactly(0, 1, 2, 3);
         assertThat(AiElicitationCard.recommendedFirst(values, List.of("6"))).containsExactly(0, 1, 2, 3);
+    }
+
+    @Test
+    void aBoxForFreeTextGrowsWithItsLinesAndAFormattedOneStaysOneLine() {
+        // Asked for by the user: a free-text answer may run to several lines (Shift+Enter), starting one line high.
+        final HtmlBuilder fields = new HtmlBuilder();
+        AiElicitationCard.appendFields(fields, List.of(
+                AiElicitationForm.Field.text("text", "Corrections, if any", null, false),
+                AiElicitationForm.Field.text("when", "When", "date", false)));
+        final String html = fields.toSafeHtml().asString();
+        assertThat(html).contains("<textarea class=\"allow-focus ai-elicitation-input ai-textarea-grow\" rows=\"1\"")
+                .contains("<input class=\"allow-focus ai-elicitation-input\" type=\"text\"");
+
+        final HtmlBuilder questions = new HtmlBuilder();
+        AiElicitationCard.appendQuestions(questions, List.of(AiElicitationForm.Field.text("q1", "Which zone?", null,
+                true)));
+        assertThat(questions.toSafeHtml().asString())
+                .contains("ai-question-custom ai-textarea-grow\" rows=\"1\" placeholder=\"Type your answer\"");
     }
 }

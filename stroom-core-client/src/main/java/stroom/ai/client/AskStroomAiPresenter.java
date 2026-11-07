@@ -143,10 +143,12 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
@@ -719,11 +721,16 @@ public class AskStroomAiPresenter
         // in the chat's input box. In a form from an MCP tool, Enter submits it.
         registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
             final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER && e.isShiftKeyDown()
+                && target.hasClassName(AiElicitationCard.GROWING_CLASS)) {
+                // A new line in a box for free text, as in the chat's input box.
+                return;
+            }
             if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER
                 && target.hasClassName(AiElicitationCard.CUSTOM_ANSWER_CLASS)) {
                 // The user's own answer to one of the agent's questions.
                 e.preventDefault();
-                final String answer = InputElement.as(target).getValue().trim();
+                final String answer = textOf(target).trim();
                 if (!answer.isEmpty()) {
                     onQuestionAnswered(target, answer);
                 }
@@ -761,6 +768,13 @@ public class AskStroomAiPresenter
                 onSendEdit(Integer.parseInt(idStr));
             }
         }, KeyDownEvent.getType()));
+        // A box for free text grows as the user adds lines (and shrinks as they remove them).
+        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+            final Element target = e.getNativeEvent().getEventTarget().cast();
+            if (target.hasClassName(AiElicitationCard.GROWING_CLASS)) {
+                fitToLines(target);
+            }
+        }, KeyUpEvent.getType()));
 
         // The tab the user is on can be attached to the chat, starting with the one active now.
         onActiveTabChange(contentManager.getSelectedTab());
@@ -2294,11 +2308,11 @@ public class AskStroomAiPresenter
         if (row == null) {
             return;
         }
-        final NodeList<Element> inputs = row.getElementsByTagName("input");
+        final NodeList<Element> inputs = row.getElementsByTagName("textarea");
         for (int i = 0; i < inputs.getLength(); i++) {
             final Element input = inputs.getItem(i);
             if (input.hasClassName(AiElicitationCard.CUSTOM_ANSWER_CLASS)) {
-                final String answer = InputElement.as(input).getValue().trim();
+                final String answer = textOf(input).trim();
                 if (answer.isEmpty()) {
                     input.focus();
                 } else {
@@ -2307,6 +2321,21 @@ public class AskStroomAiPresenter
                 return;
             }
         }
+    }
+
+    // What a box for text holds: a text area's, or an input's.
+    private static String textOf(final Element box) {
+        return "textarea".equalsIgnoreCase(box.getTagName())
+                ? TextAreaElement.as(box).getValue()
+                : InputElement.as(box).getValue();
+    }
+
+    // A box for free text sized to its lines: one to start, growing with each line added, to the most its style
+    // allows (five), past which it scrolls.
+    private static void fitToLines(final Element box) {
+        box.getStyle().setProperty("height", "auto");
+        final int borders = box.getOffsetHeight() - box.getClientHeight();
+        box.getStyle().setHeight(box.getScrollHeight() + borders, Unit.PX);
     }
 
     private void onQuestionBack(final Element within) {
