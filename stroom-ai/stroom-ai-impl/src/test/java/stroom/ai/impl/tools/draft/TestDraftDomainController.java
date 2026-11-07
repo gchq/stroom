@@ -27,8 +27,9 @@ import java.util.Objects;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// What onboarding a domain controller's Security log ([DomainControllerLog]) needs of the draft, in general terms
-/// (the work package's E1, E2, E4 and E6): a rule for each of many kinds, the actor among several user fields, and times
-/// to seven digits of a second. Nothing here is Windows knowledge in the tools: the log is only the test's source.
+/// (the work package's E1, E2, E4 and E6): a rule for each of many kinds, the actor among several user fields, and
+/// times to seven digits of a second. Nothing here is Windows knowledge in the tools: the log is only the test's
+/// source.
 class TestDraftDomainController extends DraftFixtures {
 
     private static final String WEF = DomainControllerLog.wef(600, 1);
