@@ -2805,10 +2805,11 @@ the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examp
 them in the notes block as `pending`. One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
-is checked as
-a catalogue event, then put to the user in one form (`Consent.review`): one checkbox accepts every high and medium
-proposal (the table in its description, since a form's message holds 2,000 characters), each low one (up to 10) has
-its own, and a text field takes corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
+is checked as a catalogue event and kept in the notes block (`proposed`); the reply's `table` (Markdown) is for the
+agent to show in the chat, which renders Markdown, where a form's fields are plain text (asked for by the user: no
+Markdown in a form). Called then with `confirm: true`, a short plain form (`Consent.review`): one checkbox accepts
+every high and medium proposal ("in the table above"), each low one (up to 10) has its own, and a text field takes
+corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
 leave `pending` and come back as `rejected` for the agent to ask about (the draft keeps them Unknown); the
 corrections come back for the agent to send as `from_user: true` proposals, recorded without another form (any kind
 the draft found, pending or not). Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
@@ -2816,12 +2817,12 @@ plan's `classify` step (after the converter, before the translation) is done whe
 not recorded once the translation is written.
 
 * **Arguments**: `build` (required); `source` (the source's name; the notes' when the build has them); `stream_ids`
-  (the build's newest five raw sample streams when left out); `splitter`; `proposals`.
+  (the build's newest five raw sample streams when left out); `splitter`; `proposals`; `confirm`.
 * **Returns**: listing: `kinds_found`, `already_settled`, `to_classify`, `record_fields` (kept in the notes:
   proposals' `actor` and `affected` must be among them), `user_fields` (fields named for a user or account whose
   values aren't addresses, else a note to leave `actor` out), `source_notes`, `hint`, `next`; proposals:
-  `recorded`, `rejected`, `corrections`, `still_to_classify`, `source_notes`, `hint`, `next`, or `asked: false` and
-  `table`.
+  `table` (and `recorded` for any from the user), `source_notes`, `hint`, `next`; confirm: `recorded`, `rejected`,
+  `corrections`, `still_to_classify`, `source_notes`, `hint`, `next`, or `asked: false` without forms.
 * **Refuses**: no build; no source and no source notes; no sample streams; proposals before a listing; a proposal
   for a kind not pending (unless from the user), without a confidence or an action element, or one the catalogue
   checks refuse; the form declined.

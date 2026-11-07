@@ -114,16 +114,23 @@ class TestClassifyKindsTool {
     @Test
     void theUserConfirmsTheSureOnesTogetherAndTheOthersOneByOne() {
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
-        // The sure ones accepted together (i1), the low one rejected (i2), and a correction.
+        // The proposals come back as a table for the chat, which renders Markdown; no form yet.
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "i2", false, "text",
                 "purge is Delete of the audit records"));
-        final Map<String, Object> done = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
+        final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 user.context());
+        assertThat(String.valueOf(shown.get("table"))).contains("| action=login: A user logged on | Authenticate |");
+        assertThat(String.valueOf(shown.get("hint"))).contains("confirm=true");
+        assertThat(user.shown()).isEmpty();
+        // Then a short form of plain text: the sure ones accepted together (i1), the low one rejected (i2), and a
+        // correction.
+        final Map<String, Object> done = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
         assertThat(done.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
         assertThat(done.get("rejected")).isEqualTo(List.of("action=purge"));
         assertThat(done.get("corrections")).isEqualTo("purge is Delete of the audit records");
         assertThat(String.valueOf(done.get("hint"))).contains("from_user: true");
         assertThat(user.shown()).hasSize(1);
+        assertThat(user.shown().getFirst()).doesNotContain("|").hasSizeLessThan(200);
         assertThat(pending()).isEmpty();
         final Map<String, Object> login = list(notes().get("events")).getFirst();
         assertThat(login).containsEntry("event", "login").containsEntry("event_detail", "Authenticate")
@@ -146,12 +153,14 @@ class TestClassifyKindsTool {
     }
 
     @Test
-    void withoutFormsTheTableIsForTheChatAndNothingRecorded() {
+    void withoutFormsTheUserIsAskedInTheChatAndNothingRecorded() {
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
-        final Map<String, Object> asked = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
+        final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 BuildToolCalls.context());
+        assertThat(String.valueOf(shown.get("table"))).contains("| action=purge: Records purged | Delete |");
+        final Map<String, Object> asked = call("{\"build\": \"acme\", \"confirm\": true}", BuildToolCalls.context());
         assertThat(asked).containsEntry("asked", false);
-        assertThat(String.valueOf(asked.get("table"))).contains("| action=purge: Records purged | Delete |");
+        assertThat(String.valueOf(asked.get("hint"))).contains("from_user: true");
         assertThat(pending()).hasSize(3);
     }
 
@@ -160,6 +169,8 @@ class TestClassifyKindsTool {
         assertThat(text("{\"build\": \"acme\", \"source\": \"Acme app\", \"proposals\": " + PROPOSALS + "}"))
                 .isEqualTo("Call classify_kinds without proposals first: it lists the kinds to classify");
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        assertThat(text("{\"build\": \"acme\", \"confirm\": true}"))
+                .startsWith("Nothing to confirm: send the proposals first");
         assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", \"value\": \"reboot\", "
                         + "\"description\": \"d\", \"event_detail\": \"Alert\", \"confidence\": \"high\"}]}"))
                 .startsWith("Nothing recorded: proposals[0]: action=reboot isn't a kind still to classify");
