@@ -80,7 +80,8 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final int forms = client.forms().size();
         final Map<String, Object> corrected = json("classify_kinds", args("build", BUILD, "proposals", List.of(
                 Map.of("field", "action", "value", "purge", "description", "Audit records deleted",
-                        "event_detail", "Delete", "from_user", true))));
+                        "event_detail", "Delete", "actor", "user", "affected", "object", "affected_as", "Document",
+                        "from_user", true))));
         dump("classify_kinds corrected", corrected);
         assertThat(corrected.get("recorded")).isEqualTo(List.of("action=purge"));
         assertThat(client.forms()).hasSize(forms);
@@ -95,6 +96,8 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final String rules = JsonUtil.writeValueAsString(map(draft, "mapping").get("events"), false);
         assertThat(rules).contains("EventDetail/Authenticate/Action", "Logon", "Logoff", "A report exported",
                 "Audit records deleted");
+        // What the purge acts on, where the user said: the Delete's Document, its Id from the object field.
+        assertThat(rules).contains("{\"path\":\"EventDetail/Delete/Document/Id\",\"field\":\"object\"}");
         assertThat(strings(draft, "notes")).anyMatch(note -> note.startsWith("Drafted from the source "
                                                                              + "documentation"));
     }
@@ -117,8 +120,8 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         final List<String> lines = new ArrayList<>();
         final List<String> actions = List.of("login", "logout", "export", "purge");
         for (int i = 0; i < 24; i++) {
-            lines.add("time=2026-11-06T09:%02d:00Z action=%s user=user%d src=10.0.0.%d".formatted(i,
-                    actions.get(i % actions.size()), i % 5, 1 + i % 9));
+            lines.add("time=2026-11-06T09:%02d:00Z action=%s user=user%d src=10.0.0.%d object=rec-%d".formatted(i,
+                    actions.get(i % actions.size()), i % 5, 1 + i % 9, i));
         }
         return String.join("\n", lines) + "\n";
     }

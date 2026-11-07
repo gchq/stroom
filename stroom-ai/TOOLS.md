@@ -2804,7 +2804,8 @@ source notes settle (an event with that field and value, from the documentation 
 the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examples` whose values differ), keeping
 them in the notes block as `pending`. One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
-`description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `confidence`), each is checked as
+`description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
+is checked as
 a catalogue event, then put to the user in one form (`Consent.review`): one checkbox accepts every high and medium
 proposal (the table in its description, since a form's message holds 2,000 characters), each low one (up to 10) has
 its own, and a text field takes corrections. Accepted proposals are recorded `basis: user_confirmed`; rejected ones
@@ -2842,7 +2843,9 @@ unless given again.
 
 For documentation the user gave, for classifications the user confirmed (`basis: user_confirmed`, written by
 `classify_kinds`, which also keeps the kinds still to classify as `pending`; events may name their `actor` and
-`affected` fields), and for the agent's own knowledge of a source, each such note `basis:
+`affected` fields, and `affected_as`, what the affected field names as the action element's object, checked against
+the schema and written out to its leaf, `User` as `User/Id`; the draft writes the actor as the rule's
+EventSource/User/Id and the affected field at `EventDetail/<element>/<affected_as>`), and for the agent's own knowledge of a source, each such note `basis:
 agent_knowledge` with a `confidence` (high, medium or low, required); the notes doc shows each note's basis, the
 result's `to_review` lists the low-confidence ones for the user first, and field documentation says a meaning is the
 agent's knowledge. Never notes guessed from the sample's values: the draft would follow them over the sample's own.
@@ -3852,7 +3855,8 @@ generated without them.
   tool); `source_name`, `system_name`, `environment`; `splitter` (a build_data_splitter spec, else inferred);
   `build` (for source notes, the chosen version, the current translation); `schema_version` (a version, or where
   this Stroom holds the version in more than one XML schema document, the UUID of the one the user chose).
-* **Returns**: `mapping`, `source_notes`, `splitter`, `format`, `records`, `kinds`, `notes`, `unmapped_fields`,
+* **Returns** (`schema_check.unfilled` says when rules' action elements need parts the draft couldn't fill):
+  `mapping`, `source_notes`, `splitter`, `format`, `records`, `kinds`, `notes`, `unmapped_fields`,
   `fields_seen`; `time_candidates` (when two times could each be the event's); `schema_check` (`ok`, each problem's first sentence cut near 220 characters, at most 6 warnings;
   `ok: null` and `note` when the schema can't be read); `schema_version` and `schema_version_settled`;
   `current_translation` when the build's feed is already translated by a pipeline whose XSLT looks values up; for

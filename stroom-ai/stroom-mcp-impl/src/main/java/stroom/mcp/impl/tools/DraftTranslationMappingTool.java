@@ -432,6 +432,15 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             check.put("problems", MappingCompaction.grouped(checked.problems()).stream()
                     .map(DraftTranslationMappingTool::firstSentence)
                     .toList());
+            if (checked.problems().stream().anyMatch(p -> p.contains(" needs one of ")
+                                                          || p.contains("is required by the schema"))) {
+                // Asked for by the user: what a rule's element still needs is said at the draft, not found by a
+                // refused build.
+                check.put("unfilled", "Some rules' action elements need parts the draft couldn't fill (problems "
+                                      + "says which): fill each before build_translation_xslt. The user or object "
+                                      + "a kind acts on goes in its catalogue entry's affected and affected_as "
+                                      + "(classify_kinds), or straight into the rule's fields.");
+            }
             final List<String> warnings = MappingCompaction.grouped(checked.warnings());
             check.put("warnings", warnings.subList(0, Math.min(6, warnings.size())));
         } catch (final ToolRefusal e) {

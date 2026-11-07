@@ -761,6 +761,44 @@ class TestDraftMapping extends DraftFixtures {
     }
 
     @Test
+    void whoActedAndWhatWasActedOnAreDraftedWhereTheCatalogueSays() {
+        // Asked for by the user: a kind's actor is its event's user, and what it was done to its action element's
+        // object, so an action element without an Action (Delete, Create) isn't left empty.
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            lines.add("ts=2026-11-06T09:%02d:00Z evt=%s subject=admin%d target=user%d host=dc01".formatted(i,
+                    i % 2 == 0
+                            ? "4720"
+                            : "4726", i % 3, i));
+        }
+        final Map<String, Object> notes = json("""
+                {"source": "Directory", "fields": [], "events": [
+                  {"event": "4720", "description": "An account was created", "event_detail": "Create",
+                   "field": "evt", "value": "4720", "actor": "subject", "affected": "target",
+                   "affected_as": "User/Id", "basis": "user_confirmed"},
+                  {"event": "4726", "description": "An account was deleted", "event_detail": "Delete",
+                   "field": "evt", "value": "4726", "actor": "subject", "affected": "target",
+                   "affected_as": "User/Id", "basis": "user_confirmed"}]}""");
+        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "Directory",
+                "Directory", "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
+        final Map<String, Map<String, Object>> deleted = fields(rules(draft).get("4726"));
+        assertThat(deleted.get("EventSource/User/Id").get("field")).isEqualTo("subject");
+        assertThat(deleted.get("EventDetail/Delete/User/Id").get("field")).isEqualTo("target");
+        assertThat(fields(rules(draft).get("4720")).get("EventDetail/Create/User/Id").get("field")).isEqualTo("target");
+        final XsltGenerator.Generated checked = generate(mappingOf(draft), SCHEMA, "4.1.0");
+        assertThat(checked.problems()).noneMatch(problem -> problem.contains("needs one of"));
+    }
+
+    @Test
+    void anAffectedObjectIsCheckedAgainstTheActionElement() {
+        assertThat(SourceNotes.affectedPath(SCHEMA, "Delete", "User")).isEqualTo("User/Id");
+        assertThat(SourceNotes.affectedPath(SCHEMA, "Delete", "User/Name")).isEqualTo("User/Name");
+        assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Delete", "Mailbox"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("affected_as 'Mailbox' isn't under Delete, which holds");
+    }
+
+    @Test
     void withoutNotesTheDraftGuessesAsBefore() {
         final Map<String, Object> draft = draft(NOTES_SAMPLE, "Acme directory", "Acme", "Eval");
         assertThat(draft.get("source_notes")).isNull();
