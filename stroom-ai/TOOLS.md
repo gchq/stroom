@@ -2672,7 +2672,8 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   parts, `head_only`, `new_shapes`, `windows`, and any undecodable bytes), `quoted_newlines`, `kinds` (each field
   naming the kind of event, up to 6, with how many records hold each of its values, up to 25, over every shape;
   seen: a 790 KB survey regrouped by x-type and x-action with jq), `shapes` (up to 60:
-  `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `locations`), `new_shapes`,
+  `signature`, `new`, `count`, `share_percent`, `streams`, `example` up to 500 characters, `more_examples` (up to
+  two more records whose text differs, 300 characters each, for the first 20 shapes), `locations`), `new_shapes`,
   `locations` (stream, part, record, shape, for `step_records`; only new shapes once some are known), `hint`. With a
   build, the survey doc's details too.
 * **Refuses**: no View Data; neither `feed` nor `stream_ids`; an argument out of range (`<name> must be a whole number
@@ -2806,12 +2807,14 @@ field and value showing it), `build_translation_xslt build=` (a mapping checked 
 same source (a long manual a part at a time), the docs are updated, not made twice: earlier fields and events stay
 unless given again.
 
-Only for documentation the user gave; notes guessed from the sample aren't documentation, and the draft would follow
-them over the sample's own values.
+For documentation the user gave, and for the agent's own knowledge of a source, each such note `basis:
+agent_knowledge` with a `confidence` (high, medium or low, required); the notes doc shows each note's basis, the
+result's `to_review` lists the low-confidence ones for the user first, and field documentation says a meaning is the
+agent's knowledge. Never notes guessed from the sample's values: the draft would follow them over the sample's own.
 
 * **Arguments**: `build`, `source`, `summary` (required); `fields` (each `field` and `meaning` required, then `type`,
-  `example`, `event_logging_path`, `values`); `events` (each `event` and `description` required, then
-  `event_detail`, `type_id`, `field`, `value`, `action`, `success`); `references`; `documents` (each `title` and its
+  `example`, `event_logging_path`, `values`, `basis`, `confidence`); `events` (each `event` and `description` required,
+  then `event_detail`, `type_id`, `field`, `value`, `action`, `success`, `basis`, `confidence`); `references`; `documents` (each `title` and its
   `text`, or a `uuid`; `source` optional). Lists may be one object, or JSON text.
 * **Returns**: `type`, `uuid`, `name` of the notes doc, `fields` and `events` counts, `documents_kept`, a `hint`
   (events without a field and value can't become rules), and `next`.

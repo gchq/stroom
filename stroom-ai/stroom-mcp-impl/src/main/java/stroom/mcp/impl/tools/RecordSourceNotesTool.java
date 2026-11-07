@@ -70,12 +70,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
 
     // A note's keys, in the order the notes keep them; the first required key names the note.
     private static final List<String> FIELD_KEYS = List.of("field", "meaning", "type", "example",
-            "event_logging_path", "values");
+            "event_logging_path", "values", "basis", "confidence");
     private static final List<String> FIELD_REQUIRED = List.of("field", "meaning");
     private static final List<String> EVENT_KEYS = List.of("event", "description", "event_detail", "type_id", "field",
-            "value", "action", "success");
+            "value", "action", "success", "basis", "confidence");
     private static final List<String> EVENT_REQUIRED = List.of("event", "description");
     private static final int MAX_NAME = 200;
+    // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
+    private static final String DOCUMENTATION = "documentation";
+    private static final String AGENT_KNOWLEDGE = "agent_knowledge";
+    private static final List<String> CONFIDENCES = List.of("high", "medium", "low");
 
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
@@ -136,10 +140,12 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                              + "build_translation_xslt (build=) checks a mapping against the catalogue, and "
                              + "write_documentation lists the source fields with their meanings. Promotion puts them "
                              + "beside the feed.\n\n"
-                             + "Only for documentation the user gave (pasted, attached, or already in Stroom): with "
-                             + "none, don't call this. Notes guessed from the sample aren't documentation, and the "
-                             + "draft would follow them over the sample's own values (draft_translation_mapping "
-                             + "reads those itself).")
+                             + "For documentation the user gave (pasted, attached, or already in Stroom), and for "
+                             + "what you know of a source yourself (a vendor's published event ids and fields), each "
+                             + "such note marked basis=agent_knowledge with a confidence. Never notes guessed from "
+                             + "the sample's values: the draft would follow them over the sample "
+                             + "(draft_translation_mapping reads those itself). The result's to_review lists your "
+                             + "notes of low confidence: put those to the user first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_ARG, "Source name, e.g. 'Acme door controller'.")
@@ -228,6 +234,12 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         result.put("fields", fields.size());
         result.put("events", events.size());
         result.put("documents_kept", keptDocs);
+        final List<String> review = new ArrayList<>(toReview(fields, "field"));
+        review.addAll(toReview(events, "event"));
+        if (!review.isEmpty()) {
+            // The agent's own notes it is least sure of: for the user to confirm or correct first.
+            result.put("to_review", review);
+        }
         if (!pathProblems.isEmpty()) {
             result.put("path_problems", pathProblems);
         }
@@ -368,20 +380,22 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                             final List<String> keptNames) {
         final List<String> lines = new ArrayList<>(List.of("# " + source + " source notes", "", summary.strip(), ""));
         if (!fields.isEmpty()) {
-            lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path |",
-                    "| --- | --- | --- | --- | --- |"));
+            lines.addAll(List.of("## Field dictionary", "", "| Field | Meaning | Type | Example | Event-logging path "
+                                                            + "| Basis |",
+                    "| --- | --- | --- | --- | --- | --- |"));
             fields.forEach(field -> lines.add("| " + text(field.get("field")) + " | " + text(field.get("meaning"))
                                               + " | " + text(field.get("type")) + " | " + text(field.get("example"))
-                                              + " | " + text(field.get("event_logging_path")) + " |"));
+                                              + " | " + text(field.get("event_logging_path")) + " | "
+                                              + basisText(field) + " |"));
             lines.add("");
         }
         if (!events.isEmpty()) {
-            lines.addAll(List.of("## Event catalogue", "", "| Event | Description | EventDetail | TypeId |",
-                    "| --- | --- | --- | --- |"));
+            lines.addAll(List.of("## Event catalogue", "", "| Event | Description | EventDetail | TypeId | Basis |",
+                    "| --- | --- | --- | --- | --- |"));
             events.forEach(event -> lines.add("| " + text(event.get("event")) + " | "
                                               + text(event.get("description")) + " | "
                                               + text(event.get("event_detail")) + " | "
-                                              + text(event.get("type_id")) + " |"));
+                                              + text(event.get("type_id")) + " | " + basisText(event) + " |"));
             lines.add("");
         }
         if (!references.isEmpty() || !keptNames.isEmpty()) {
@@ -435,9 +449,46 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                     throw new ToolRefusal(name + "[" + i + "]." + key + " is required");
                 }
             }
-            notes.add(normalised(given.get(i), keys, needed));
+            final Map<String, Object> note = normalised(given.get(i), keys, needed);
+            basisChecked(note, name + "[" + i + "]");
+            notes.add(note);
         }
         return notes;
+    }
+
+    // A note's basis and confidence: documentation unless said, a confidence only (and always) for the agent's own
+    // knowledge.
+    private static void basisChecked(final Map<String, Object> note, final String where) {
+        final String basis = text(note.getOrDefault("basis", DOCUMENTATION));
+        if (!List.of(DOCUMENTATION, AGENT_KNOWLEDGE).contains(basis)) {
+            throw new ToolRefusal(where + ".basis is 'documentation' or 'agent_knowledge', not '" + basis + "'");
+        }
+        final String confidence = text(note.get("confidence"));
+        if (AGENT_KNOWLEDGE.equals(basis) && !CONFIDENCES.contains(confidence)) {
+            throw new ToolRefusal(where + ": a note from your own knowledge needs confidence 'high', 'medium' or "
+                                  + "'low'");
+        }
+        if (DOCUMENTATION.equals(basis)) {
+            note.remove("basis");
+            note.remove("confidence");
+        }
+    }
+
+    /// @param notes Field or event notes.
+    /// @param key   The key naming each (field or event).
+    /// @return The names of those from the agent's own knowledge at low confidence, for the user to review first.
+    static List<String> toReview(final List<Map<String, Object>> notes, final String key) {
+        return notes.stream()
+                .filter(note -> AGENT_KNOWLEDGE.equals(note.get("basis")) && "low".equals(note.get("confidence")))
+                .map(note -> text(note.get(key)))
+                .toList();
+    }
+
+    // How a note's basis reads in the notes document.
+    private static String basisText(final Map<String, Object> note) {
+        return AGENT_KNOWLEDGE.equals(note.get("basis"))
+                ? "agent knowledge (" + text(note.get("confidence")) + ")"
+                : DOCUMENTATION;
     }
 
     private static List<Map<String, Object>> documents(final ToolCall call) {
@@ -528,8 +579,16 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         return ArraySchema.builder().description(description).items(items).build();
     }
 
+    private static ObjectSchema.Builder withBasis(final ObjectSchema.Builder builder) {
+        return builder
+                .addStringProperty("basis", "Where the note comes from: 'documentation' (the user's; the default) "
+                                            + "or 'agent_knowledge' (what you know of the source, said as such).")
+                .addStringProperty("confidence", "With basis agent_knowledge: 'high', 'medium' or 'low', how sure "
+                                                 + "you are; low ones are put to the user first.");
+    }
+
     private static ObjectSchema fieldNote() {
-        return ObjectSchema.builder()
+        return withBasis(ObjectSchema.builder())
                 .addStringProperty("field", "The field's name as the sample has it (a column, key or element).")
                 .addStringProperty("meaning", "What the field holds.")
                 .addStringProperty("type", "Its type.")
@@ -545,7 +604,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     }
 
     private static ObjectSchema eventNote() {
-        return ObjectSchema.builder()
+        return withBasis(ObjectSchema.builder())
                 .addStringProperty("event", "Source event id or action, e.g. '4624' or 'CODE_TO_TOKEN'.")
                 .addStringProperty("description", "What the event is.")
                 .addStringProperty("event_detail", "The EventDetail action element, e.g. Authenticate, Update, "
