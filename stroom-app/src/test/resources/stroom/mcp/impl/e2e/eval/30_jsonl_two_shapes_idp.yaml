@@ -12,7 +12,10 @@ expected:
   forbidden_types: [Unknown]
   paths: [EventTime/TimeCreated, EventSource/User/Id, EventSource/Client/IPAddress, EventDetail/Authenticate/Action]
   values:
-    EventSource/User/Id: [alice@example.org, bob, carol, dave@example.org]
+    # The new shape's Ids are domain-qualified: split as the user agrees (build_translation_xslt asks), the account
+    # in the Id and the domain beside it.
+    EventSource/User/Id: [alice, bob, carol, dave]
+    EventSource/User/Domain: [example.org]
     EventDetail/Authenticate/Action: [Logon, Logoff, AccountLock, ChangePassword]
 sample: |
   {"eventType": "user.session.start", "published": "2026-10-02T08:00:00.000Z", "actor": {"alternateId": "alice@example.org"}, "client": {"ipAddress": "10.0.0.5"}, "outcome": {"result": "SUCCESS"}}
@@ -38,31 +41,37 @@ reference:
         when: [{field: eventType, equals: user.session.start}]
         fields:
           - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
-          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventSource/User/Domain, field: actor.alternateId, transform: domain}
           - {path: EventSource/Client/IPAddress, field: client.ipAddress}
           - {path: EventDetail/TypeId, field: eventType}
           - {path: EventDetail/Authenticate/Action, value: Logon}
-          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventDetail/Authenticate/User/Domain, field: actor.alternateId, transform: domain}
           - {path: EventDetail/Authenticate/Outcome/Success, field: outcome.result, map: {SUCCESS: 'true', FAILURE: 'false'}}
           - {path: EventDetail/Authenticate/Outcome/Description, field: outcome.reason}
       - name: new session end
         when: [{field: eventType, equals: user.session.end}]
         fields:
           - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
-          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventSource/User/Domain, field: actor.alternateId, transform: domain}
           - {path: EventSource/Client/IPAddress, field: client.ipAddress}
           - {path: EventDetail/TypeId, field: eventType}
           - {path: EventDetail/Authenticate/Action, value: Logoff}
-          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventDetail/Authenticate/User/Domain, field: actor.alternateId, transform: domain}
       - name: new account lock
         when: [{field: eventType, equals: user.account.lock}]
         fields:
           - {path: EventTime/TimeCreated, field: published, time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
-          - {path: EventSource/User/Id, field: actor.alternateId}
+          - {path: EventSource/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventSource/User/Domain, field: actor.alternateId, transform: domain}
           - {path: EventSource/Client/IPAddress, field: client.ipAddress}
           - {path: EventDetail/TypeId, field: eventType}
           - {path: EventDetail/Authenticate/Action, value: AccountLock}
-          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId}
+          - {path: EventDetail/Authenticate/User/Id, field: actor.alternateId, transform: strip_domain}
+          - {path: EventDetail/Authenticate/User/Domain, field: actor.alternateId, transform: domain}
       # The legacy shape: type names what happened, ok whether it worked.
       - name: legacy login
         when: [{field: type, equals: login}]
