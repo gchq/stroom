@@ -72,9 +72,13 @@ public final class DraftMapping {
     private static final Pattern LOGOFF = ignoringCase("(logoff|logout|signout|sign_out)");
     private static final Pattern COMMAND = ignoringCase(
             "^(command|cmd|cmd_?line|command_?line|process_?command)$");
-    // A kinds field's values past which it is an identifier, not kinds of event (until 2026-11-07, 12: a domain
-    // controller's 40 event ids were drafted as no kinds at all).
-    private static final int MAX_KINDS = 64;
+    // A kinds field's values past which it is an identifier, not kinds of event: the field's name already says
+    // kinds (event id, type, action), so up to 200 (asked for by the user: a source of a hundred event types; until
+    // 2026-11-07, 12, when a domain controller's 40 event ids were drafted as no kinds at all; then 64).
+    private static final int MAX_KINDS = 200;
+    // Values a kinds field may have without repeating (the limit before it was raised to 200): a sample's excerpt
+    // may show each of a few dozen kinds once (seen: a Windows excerpt's event ids).
+    private static final int FEW_KINDS = 64;
     // A field tying records written of one change or action (a correlation id), by generic names.
     private static final Pattern CORRELATION = ignoringCase("(correlation_?id|corr_?id|correlation|op_?correlation_?id|"
                                                             + "activity_?id|transaction_?id)$");
@@ -1422,7 +1426,14 @@ public final class DraftMapping {
             kinds.removeAll(NIL);
             // By its own name or with its parent's (Winlogbeat's event.code is event_code).
             return FieldHomes.keys(name).stream().anyMatch(k -> ToolText.match(NAMING, k)) && !kinds.isEmpty()
-                   && kinds.size() <= MAX_KINDS;
+                   && kinds.size() <= MAX_KINDS && repeats(name, kinds.size());
+        }
+
+        // Past 64 values, kinds repeat: each value in two records or more on average. Seen when the limit was
+        // raised to 200: a mail log's msgid (a message's id, a value a record) drafted as 200 kinds.
+        private boolean repeats(final String name, final int kinds) {
+            final long held = values.get(name).stream().filter(value -> !NIL.contains(value)).count();
+            return kinds <= FEW_KINDS || kinds * 2L <= held;
         }
 
         // Seen: syslog's msgid, always '-', taken over an action field: a field with only nil values names no kind.
