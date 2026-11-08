@@ -2633,7 +2633,7 @@ quarters ...) by `FeedSampling.pickSpread`, skipping those already read; with `s
 read. For each stream up to `max_parts_per_stream` parts are read with `StreamReader.readHead`, split into records by
 `RecordSplitter` (same detection as the profile), and added to `Shapes` (see "Sample analysis" for how a shape is
 signed). Where a part is longer than its head and its format is one record a line (delimited, JSON lines, key=value,
-CEF, CRI, unknown text), up to 8 windows of 250,000 characters spread to the part's end are read too
+CEF, CRI, unknown text, and mixed lines whose records are each one line), up to 8 windows of 250,000 characters spread to the part's end are read too
 (`StreamReader.readWindows`), their records placed where they are, so a kind of event deep in a big stream can still be
 found. A part in a different format from the first is skipped and said.
 
@@ -2659,7 +2659,13 @@ the user's choice are kept in the survey doc (`depth`, by `stream:part`): a part
 about again, and one a call's time cut short is read on by the next call, not from its start. The result's `depth`
 says each part's progress; the survey is covered once every such part is read whole (`covered: every part read to its
 end`) or the user chose to stop it (`covered as far as the user chose: ...`). Where the client shows no forms, the
-agent asks in the chat and passes the answer as `read_deeper`.
+agent asks in the chat and passes the answer as `read_deeper`. A window or a deeper read of a mixed-lines part is
+split a record a line whatever formats it holds (`RecordSplitter.splitAs`), as a run of one format's lines would
+otherwise read as that format and be skipped. The streams read only in part are kept in the survey doc
+(`streams_in_part`) until a later call reads them whole: a call with no streams left to pick says the survey is
+complete only once each is settled (read to its end, or the user chose to stop); otherwise it is `NOT COVERED` and
+the hint names the `stream_ids` to read further (seen in testing: a mixed-lines stream read to its 10,000th record was
+never offered deeper, a later call said the survey was complete, and its rarest kinds were found only at processing).
 
 **Fewer streams.** Fewer than 10 streams a call (a smaller `max_streams`, or fewer than 10 of an existing feed's
 streams by id) is confirmed by the user in a form, but only when the feed holds more streams than that (seen: a
@@ -2914,6 +2920,17 @@ agent's knowledge. Never notes guessed from the sample's values: the draft would
   event-logging schema lacks as an action element taking Data (e.g. `Allow`; Network needs its action,
   `Network/Permit`), or two events with the same field and value. The schema is the build's chosen version, else the
   newest held (`EventVersions.chosenOrLatest`); when it can't be read, only the twins are checked.
+* **Notes** (chat 166): kinds said in free text are told apart by patterns. A proposal may give `matches` (an XPath
+  regex its `field` matches) in place of `value`, `within` (the listed kind it splits, `*` for every record where none
+  is told apart) and `names` (its capture groups' fields, each once in the build). Before anything is kept, each is
+  checked against the kind's records (`Patterned`): within a listed kind, compiling in XPath's dialect, matching some
+  of its records, overlapping no other; what they leave is said (`patterns_leave`). Confirmed, they are recorded with
+  `matches`, `names` and `within`; the kind they split is listed again with what they leave, settled once they leave
+  none. The table shows each pattern's records and what it reads. Its hints never send the agent to make a splitter
+  part for each wording.
+* **Notes** (chat 165): read with the build's saved Data Splitter, its formats are found from the converter's XML
+  (`SplitterSpec.converterVariants`: the field each part writes with a value of its own), so each format is drafted
+  and listed as from a spec; records in no kind listed are said (`unlisted_records`, also in the hint).
 * **Notes**: an existing notes or reference doc is changed only when it is the tools' own and in the build
   (`WriteGuard.checkInBuild`). Names are cut to 200 characters.
 
@@ -3939,6 +3956,12 @@ generated without them.
   * With variants, a kind the user confirmed by field=value goes only into the rules of the variants whose records
     hold that value (`VariantDrafts.belongsTo`; one no variant holds, to the first whose records have the field):
     before, every variant got a rule for every confirmed kind (`linux_icastart`).
+  * A catalogue event told by a pattern (`matches`, from classify_kinds) is a rule testing its field with the pattern
+    (`matches`), before the rules of value kinds (the rest of the kind it splits); its capture groups (`names`) are an
+    extract entry, the fields its actor and affected may name; its TypeId is its own name. Its `within` (app=sshd) is
+    the rule's first condition, so it takes only that kind's records, as confirmed; a format's own field (`variant`),
+    which a format's draft leaves out, isn't repeated: the format's condition is added with its rules. With variants,
+    it goes to the variants whose records match it.
   * Bodies of `Key value` parts separated by ` - ` (`DraftMapping.pairsIn`, Pairs style `dashed`, keys such as
     `Group(s)` with their brackets escaped) are read as pairs where a text holds at least two spaced dashes and more
     such keys than `Key: value` keys (Secret Server's colon pairs hold a dash in a value: `Secret: Firewall - Edge
@@ -3966,7 +3989,11 @@ through the model. A call runs in this order:
    `uuid`, to regenerate from the kept mapping as the generator writes it now (an agent asked to restyle an XSLT
    once sent its 1,400-line kept mapping back whole). Text that is JSON is parsed, its error located with the text
    around it. A list of fields given as the mapping with a sample comes back as a draft (`needs_mapping`) rather
-   than an error, as small models send an inventory.
+   than an error, as small models send an inventory. A mapping refused as not a translation mapping (an entry with
+   no source, say) is not remembered as last sent, and the refusal says so: later `changes` still apply to the mapping
+   before it (seen in testing: refused changes became the base, and the agent's next changes, written against the
+   mapping before them, were refused as removing what "the mapping does not have"). One that parses but fails its
+   checks is remembered, for `changes` to fix.
 2. **The version**: a saved XSLT's own (kept with it), else `EventVersions.target`.
 3. **Generation** (`TranslationBuilds.generated`): `XsltGenerator.generate` with the imports standing instructions
    require added, then compiled as Stroom compiles it (`XsltCompileCheck`): one that doesn't compile is a problem
@@ -5419,6 +5446,9 @@ pipeline would, in `stroom-ai-impl`:
     wrong place, two rounds of stepping before the Command entry got a default);
   * Data entries reading fields none of the rule's records hold, as a warning (`dataNotHeld`; seen: a SecretServer
     launch rule's rpc_account, target and duration_ms, in none of its records);
+  * value maps none of whose keys is a value the records give the field, so every record gets the default or nothing,
+    as a warning naming the keys and the values held (`mapKeysNotHeld`; seen in testing: iptables' `PROTO=TCP`
+    mapped by protocol number, 6, 17 and 1, so every dropped packet's TransportProtocol was Other);
   * fields mapped as they are into a user's Id whose sample values are domain-qualified, pointing to `strip_domain`
     (`domainQualifiedIds`; seen in eval cases 35, 36 and 43: the domain kept in every Id).
 

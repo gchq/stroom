@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.sample.FeedSampling;
 import stroom.ai.impl.tools.sample.RecordStream;
+import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -452,6 +453,54 @@ class TestSurveyFeedTool {
 
         assertThat(result.get("saturated")).isEqualTo(true);
         assertThat(result.get("hint")).isEqualTo("Every stream in the feed has been read: the survey is complete.");
+    }
+
+    @Test
+    void aStreamReadOnlyInPartKeepsTheSurveyFromBeingCompleteUntilTheUserSettlesIt() {
+        // Seen in testing: a stream read to its 10,000th record of many more, then a survey with no streams left to
+        // pick said it was complete, and kinds only further in were found at processing.
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(10), true);
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"max_records_per_stream\": 10, "
+                  + "\"build\": \"acme-v1\"}"));
+
+        final Map<String, Object> left = json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"}"));
+
+        assertThat(left.get("saturated")).isEqualTo(false);
+        assertThat(left.get("coverage")).isEqualTo("NOT COVERED: stream(s) [7] read only in part");
+        assertThat((String) left.get("hint")).contains("[7] only in part", "stream_ids [7]");
+
+        // The user chooses to stop there: settled, so the survey is complete.
+        json(call("{\"stream_ids\": [7], \"max_streams\": 1, \"max_records_per_stream\": 10, "
+                  + "\"build\": \"acme-v1\"}", BuildToolCalls.user(Map.of("answer", SurveyDepth.STOP_HERE))
+                .context()));
+        final Map<String, Object> settled = json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"}"));
+        assertThat(settled.get("saturated")).isEqualTo(true);
+        assertThat(settled.get("hint")).isEqualTo("Every stream in the feed has been read: the survey is "
+                                                  + "complete.");
+    }
+
+    @Test
+    void linesOfMixedFormatsReadOnlyInPartAreOfferedDeeper() {
+        // Seen in testing: a NetScaler stream of mixed lines read to its 10,000th record was never offered deeper.
+        sampleFeedInABuild();
+        final String mixed = IntStream.range(0, 4).mapToObj(i -> String.join("\n",
+                        "<13>Oct 11 22:14:1%d host1 app[42]: user=alice action=login".formatted(i),
+                        "user=bob action=logout src=10.0.0.%d".formatted(i),
+                        "2026-10-11 22:14:1%d ERROR Something failed".formatted(i)))
+                .collect(Collectors.joining("\n")) + "\n";
+        stream(7, "ACME-VPN", 0, mixed, true);
+        Mockito.when(streamReader.readWindows(eq(7L), eq(0), anyLong(), anyInt(), anyInt())).thenReturn(List.of(
+                new StreamReader.Window("2026-10-11 23:00:00 WARN Disk nearly full\n", 5_001, 4_000_000)));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10}"));
+
+        assertThat(result.get("format")).isEqualTo(SampleProfiler.MIXED_LINES);
+        // A window of one format's lines still read, as lines of the part.
+        assertThat(String.valueOf(result.get("shapes"))).contains("Disk nearly full");
+        assertThat((String) result.get("coverage")).startsWith("NOT COVERED: 1 part(s) read only in part");
+        assertThat((String) result.get("hint")).contains("read_deeper=");
     }
 
     @Test

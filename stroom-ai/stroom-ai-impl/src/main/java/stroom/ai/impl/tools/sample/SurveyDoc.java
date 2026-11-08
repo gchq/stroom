@@ -53,6 +53,9 @@ public final class SurveyDoc {
     public static final Pattern STATE_FENCE = ToolText.re("```json survey-state\\n(.*?)\\n```", Pattern.DOTALL);
     /// The most characters of an example record kept.
     public static final int MAX_EXAMPLE_CHARS = 4000;
+    /// The streams read only in part, in a survey's result and its state: a survey with no streams left to pick
+    /// isn't complete while one of them is unsettled.
+    public static final String STREAMS_IN_PART = "streams_in_part";
 
     private static final DateTimeFormatter AT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
             .withZone(ZoneOffset.UTC);
@@ -125,6 +128,9 @@ public final class SurveyDoc {
         }
         final Map<String, Object> kept = new LinkedHashMap<>(state);
         kept.put("streams_read", new ArrayList<>(JsonValues.listOrEmpty(state.get("streams_read")).stream()
+                .filter(id -> !gone.contains(idOf(id)))
+                .toList()));
+        kept.put(STREAMS_IN_PART, new ArrayList<>(JsonValues.listOrEmpty(state.get(STREAMS_IN_PART)).stream()
                 .filter(id -> !gone.contains(idOf(id)))
                 .toList()));
         final Map<String, Object> shapes = new LinkedHashMap<>();
@@ -277,6 +283,7 @@ public final class SurveyDoc {
                 ? (List<Object>) result.get("streams_read")
                 : List.of();
         merged.put("streams_read", sortedUnion((Collection<Object>) merged.get("streams_read"), resultStreams));
+        merged.put(STREAMS_IN_PART, inPart(merged, result, resultStreams));
         merged.put("saturated", JsonValues.truthy(result.get("saturated")));
         // How far each part read only in part has been read, and what the user chose for it (survey_feed's
         // SurveyDepth), by stream:part: a later call reads on from there, or doesn't ask again.
@@ -320,6 +327,21 @@ public final class SurveyDoc {
             }
         }
         return merged;
+    }
+
+    // The streams read only in part so far: those read so now, and those before that this call didn't read whole.
+    private static List<Object> inPart(final Map<String, Object> merged,
+                                       final Map<String, Object> result,
+                                       final List<Object> resultStreams) {
+        final Set<Long> now = new TreeSet<>();
+        JsonValues.listOrEmpty(result.get(STREAMS_IN_PART)).forEach(id -> now.add(((Number) id).longValue()));
+        final Set<Long> readWhole = new TreeSet<>();
+        resultStreams.forEach(id -> readWhole.add(((Number) id).longValue()));
+        readWhole.removeAll(now);
+        final Set<Long> out = new TreeSet<>(now);
+        JsonValues.listOrEmpty(merged.get(STREAMS_IN_PART)).forEach(id -> out.add(((Number) id).longValue()));
+        out.removeAll(readWhole);
+        return new ArrayList<>(out);
     }
 
     // sorted(set(a) | set(b)), of stream ids.

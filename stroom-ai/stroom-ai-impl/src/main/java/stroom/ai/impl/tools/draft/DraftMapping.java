@@ -224,10 +224,54 @@ public final class DraftMapping {
                 ? ""
                 : sourceName;
         if (read.spec() != null && SplitterSpec.ALTERNATIVES.equals(read.spec().kind())) {
-            return VariantDrafts.draft(read, variant -> new Drafting(variant, source)
-                    .draft(systemName, environment, sourceNotes, detailCheck));
+            final String field = read.spec().variantField();
+            return withDrops(VariantDrafts.draft(read, (variant, records) -> new Drafting(records, source)
+                    .draft(systemName, environment, SourceNotes.forVariant(sourceNotes, field, variant), detailCheck)),
+                    sourceNotes);
         }
-        return new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck);
+        final Optional<SplitterSpec.ConverterVariants> formats = read.spec() == null
+                ? Optional.empty()
+                : read.spec().converterVariants();
+        if (formats.isPresent()) {
+            return withDrops(VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records,
+                    source).draft(systemName, environment, SourceNotes.forVariant(sourceNotes, formats.get().field(),
+                    variant), detailCheck)), sourceNotes);
+        }
+        return withDrops(new Drafting(read, source).draft(systemName, environment, sourceNotes, detailCheck),
+                sourceNotes);
+    }
+
+    // The draft with a drop rule for each kind the user said to leave untranslated (classify_kinds), so their records
+    // are neither translated nor logged as Unknown (asked for by the user: a drop left to the agent could be
+    // forgotten, and the records then kept as Unknown, logged in every Error stream).
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> withDrops(final Map<String, Object> result,
+                                                 final Map<String, Object> sourceNotes) {
+        final List<String> dropped = sourceNotes == null
+                ? List.of()
+                : JsonValues.strings(sourceNotes.get(SourceNotes.DROPPED));
+        if (dropped.isEmpty() || !(result.get("mapping") instanceof final Map<?, ?> drafted)) {
+            return result;
+        }
+        final Map<String, Object> mapping = (Map<String, Object>) drafted;
+        final List<Object> drops = new ArrayList<>((List<Object>) mapping.getOrDefault("drop_when", List.of()));
+        final List<String> added = new ArrayList<>();
+        for (final String key : dropped) {
+            final List<Map<String, Object>> when = SourceNotes.dropConditions(key);
+            final Map<String, Object> drop = dict("reason", SourceNotes.DROPPED_REASON + ": " + key, "when", when);
+            if (!when.isEmpty() && !drops.contains(drop)) {
+                drops.add(drop);
+                added.add(key);
+            }
+        }
+        if (!added.isEmpty()) {
+            mapping.put("drop_when", drops);
+            final List<Object> notes = new ArrayList<>(JsonValues.listOrEmpty(result.get("notes")));
+            notes.add("Kinds the user said to leave untranslated are dropped (drop_when), neither translated nor "
+                      + "logged: " + String.join("; ", added) + ".");
+            result.put("notes", notes);
+        }
+        return result;
     }
 
     /// The sample's records as the draft reads them.
@@ -1624,8 +1668,8 @@ public final class DraftMapping {
             if (found.rules().isEmpty() || !found.left().isEmpty()) {
                 final List<String> kept = held(ofKind, rest);
                 // Its records holding none of the rest, the kind field: a rule with no action element fails the
-                // mapping. With no rest at all, it has no Data.
-                rules.add(kindRule(name, naming, kind, dataEntries("Unknown", kept.isEmpty() && !rest.isEmpty()
+                // mapping (seen with event phrases, the message mapped to Description and nothing left).
+                rules.add(kindRule(name, naming, kind, dataEntries("Unknown", kept.isEmpty()
                         ? List.of(naming)
                         : kept)));
             }

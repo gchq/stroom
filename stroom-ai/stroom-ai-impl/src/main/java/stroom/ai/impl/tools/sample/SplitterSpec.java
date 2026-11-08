@@ -18,12 +18,16 @@ package stroom.ai.impl.tools.sample;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -158,6 +162,10 @@ public record SplitterSpec(String kind,
     /// The field a record's first line's name is written in, unless lead_field names another.
     public static final String LEAD = "lead";
     private static final Pattern VARIANT_NAME = Pattern.compile("[A-Za-z0-9_.-]+");
+    // A data element of a converter's XML with a value of its own (no $ group): how an alternatives part writes its
+    // variant (SplitterXml).
+    private static final Pattern LITERAL_DATA = Pattern.compile(
+            "<data\\s+name=\"([^\"]+)\"\\s+value=\"([A-Za-z0-9_.-]+)\"\\s*/>");
     // A key=value part's own match, with spaced values (read from the end): a record that starts with a pair. Without
     // them, a record that is pairs from start to end, read by the part's own pair regex: one the part can't read whole
     // (an unclosed quote, text before the pairs) is the next part's or catch_all's, not an error and lost.
@@ -598,6 +606,28 @@ public record SplitterSpec(String kind,
                 : columns;
     }
 
+    /// The formats a saved converter reads, as written by an alternatives spec: the field each record's variant is
+    /// written in, and the variants. Seen in chat 165: classify_kinds read a build's saved converter, its variant
+    /// field the agent's own (`srcfmt`), and the draft took every record as one format, so all but three kinds went
+    /// into one catch-all no one was asked about.
+    ///
+    /// @return For a [#CONVERTER] spec, the field written with a value of its own in the most data elements (two
+    /// values or more) and those values, in order; empty for another spec, or a converter of one format.
+    public Optional<ConverterVariants> converterVariants() {
+        if (!CONVERTER.equals(kind)) {
+            return Optional.empty();
+        }
+        final Map<String, Set<String>> byName = new LinkedHashMap<>();
+        final Matcher found = LITERAL_DATA.matcher(converter);
+        while (found.find()) {
+            byName.computeIfAbsent(found.group(1), name -> new LinkedHashSet<>()).add(found.group(2));
+        }
+        return byName.entrySet().stream()
+                .filter(entry -> entry.getValue().size() >= 2)
+                .max(Comparator.comparingInt(entry -> entry.getValue().size()))
+                .map(entry -> new ConverterVariants(entry.getKey(), List.copyOf(entry.getValue())));
+    }
+
     /// @return The spec as JSON: its kind, and the values that aren't the defaults.
     public Map<String, Object> toMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
@@ -941,5 +971,17 @@ public record SplitterSpec(String kind,
                     variant, match, variantField, carry, recordKey, keyField, lineName, leadField,
                     joinUnkeyed, skipLines, words, singleQuotes, converter);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The formats a saved converter reads.
+    ///
+    /// @param field    The field each record's variant is written in.
+    /// @param variants The variants, in the converter's order.
+    public record ConverterVariants(String field, List<String> variants) {
+
     }
 }

@@ -161,6 +161,14 @@ whole (an unclosed quote) is not the part's: it goes on to the next part, or `ca
 `catch_all`, a record no part's match fits is kept as `unparsed`. Syslog messages some key=value and some not are
 read the same way, by a body of two parts (`message_format`). Fix a part rather than writing the XSLT by hand.
 
+A part is a line format, not a kind of event. Where a word of each record names its event (`SSLVPN LOGIN`, an event
+id), read it into a field of the format's part. Never make a part for each wording of a message (`sshd_invalid_user`,
+`sshd_failed_password`...): one part for the program's lines, its message whole. The events in it are told apart by
+patterns in `classify_kinds`: a proposal per event with `field` (the message), `matches` (a regex in XPath's dialect,
+e.g. `^Failed password for (?:invalid user )?(\S+) from (\S+)`), `names` for its capture groups (the user, the
+address: fields the rule reads) and `within` (the listed kind it splits, `variant=syslog`; `*` when no kinds are told
+apart). The user confirms them; what they leave of the kind stays to classify.
+
 Lines holding only a time of day (`22:14:03.123 INFO ...`) are timestamped text too, read by their own part. A
 header line holding a date for the lines after it (`=== Log opened 2026-10-11 ===`) is a `date header`, read by a
 last part (variant `header`, its date as `date`) whatever its share, with `"carry": "header_date"`: the splitter
@@ -293,6 +301,32 @@ syslog header. The header's fields are `cef_version`, `cef_vendor`, `cef_product
 `act`, `msg`, `rt`...), a value running to the next ` key=`, spaces and all. A syslog header before `CEF:` gives
 `pri`, `time` and `host`. `profile_sample` names the format and `build_data_splitter` infers the spec
 (`{"kind": "cef"}`); the draft reads `act` for the kind of event, `suser` for the user, `src`/`dst` for addresses.
+
+Written by hand, the syslog header is the `cef` part's own `body`: a regex reading the text before `CEF:`, its groups
+named. In an `alternatives` spec, with CEF lines beside others (`2026-11-16T00:00:12+00:00 ns-gw01 ns: CEF:0|Citrix|...`):
+
+```json
+{"kind": "alternatives", "parts": [
+  {"kind": "cef", "variant": "cef",
+   "body": {"kind": "regex",
+            "pattern": "^(?:<(\\d+)>)?(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:?\\d{2})) (\\S+)(?: ([^:\\[\\s]+)(?:\\[(\\d+)\\])?:)?\\s*$",
+            "names": ["pri", "time", "host", "app", "pid"]}},
+  {"kind": "regex", "variant": "linux", "pattern": "^(\\S+) (\\S+) ([\\w.:-]+)(?:\\[(\\d+)\\])?: (.*)$",
+   "names": ["time", "host", "program", "pid", "message"]}]}
+```
+
+Seen going wrong in testing (some twelve tries, then the inferred spec copied):
+- `{"kind": "cef"}` written by hand, with no `body`: the CEF fields are read, but the header's `time` and `host` are
+  lost. Only an inferred spec adds the header's `body` itself.
+- CEF as the `body` of a `regex` or `syslog` part (`{"kind": "regex", ..., "body": {"kind": "cef"}}`): the CEF
+  fields come out empty. The `cef` part is the outer one; the header is its body.
+- A `names` list that doesn't fit the groups: each capturing group needs a name, `pri` too when the pattern has the
+  optional `(?:<(\d+)>)?` priority group; Stroom's parser then reports "Group number N not found" (`stroom_check`).
+- A `match` of your own on a `cef` part: its kind's match (CEF's header) already picks its lines; one of your own can
+  stop the part reading them. Leave `match` out unless two parts would take the same lines.
+
+When unsure, call `build_data_splitter` with `stream_ids` and no spec: the inferred spec shows the shape, and you
+change only the parts it gets wrong.
 
 Step the pipeline after each change: the `dsParser` element's output shows the records produced.
 

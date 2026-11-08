@@ -21,6 +21,8 @@ import net.sf.saxon.regex.ARegularExpression;
 import net.sf.saxon.trans.XPathException;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /// An extraction's regular expression read as the generated XSLT runs it: in XPath's dialect, compiled by Saxon's
 /// own regex engine, as `analyze-string()` compiles it. The generator asks how many capture groups it has, or, if it
@@ -29,20 +31,39 @@ import java.util.ArrayList;
 ///
 /// XPath's capture groups are simple to count: every `(` that isn't escaped, isn't inside a character class, and
 /// doesn't open a non-capturing `(?:` group, is one. XPath has no named groups and no lookaround.
-final class XPathRegex {
+public final class XPathRegex {
 
     // Compiling a regex reads nothing from the configuration but its defaults, so one is shared.
     private static final Configuration CONFIGURATION = new Configuration();
     private static final String HOST_LANGUAGE = "XP30";
+    // Named groups and lookaround, which XPath has not.
+    private static final Pattern LOOKAROUND = Pattern.compile(
+            "\\(\\?(P?<[A-Za-z_]|<?[=!])");
 
     private XPathRegex() {
         // Static only.
     }
 
     /// @param regex A regular expression.
+    /// @return Why the generated XSLT can't run it (named groups or lookaround, which XPath has not, or Saxon's
+    /// reason it doesn't compile); empty when it can.
+    public static Optional<String> problem(final String regex) {
+        if (LOOKAROUND.matcher(regex).find()) {
+            return Optional.of("XPath regular expressions have no named groups and no lookaround; use "
+                                         + "plain groups, (?:...) for ones that are not fields, and anchors");
+        }
+        try {
+            groups(regex);
+            return Optional.empty();
+        } catch (final XPathRegexException e) {
+            return Optional.of("it does not compile as XPath compiles it: " + e.getMessage());
+        }
+    }
+
+    /// @param regex A regular expression.
     /// @return How many capture groups it has.
     /// @throws XPathRegexException if it doesn't compile as XPath compiles it, with Saxon's reason.
-    static int groups(final String regex) throws XPathRegexException {
+    public static int groups(final String regex) throws XPathRegexException {
         try {
             new ARegularExpression(regex, "", HOST_LANGUAGE, new ArrayList<>(), CONFIGURATION);
         } catch (final XPathException e) {
@@ -76,7 +97,7 @@ final class XPathRegex {
 
 
     /// A regular expression that doesn't compile in XPath's dialect.
-    static final class XPathRegexException extends Exception {
+    public static final class XPathRegexException extends Exception {
 
         /// @param message Saxon's reason.
         XPathRegexException(final String message) {

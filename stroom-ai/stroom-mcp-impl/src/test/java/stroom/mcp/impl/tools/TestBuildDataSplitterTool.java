@@ -25,15 +25,20 @@ import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.StroomSplitterRun;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -515,5 +520,34 @@ class TestBuildDataSplitterTool {
     private static StreamReader.PartLengths lengths(final int longest, final boolean complete) {
         return new StreamReader.PartLengths(List.of(new RecordLengths.Measured(10, longest, new RecordLengths.Span(
                 longest, 3), null, 0, complete)), 1);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theGuidesCefAfterASyslogHeaderExampleReadsBothTheHeaderAndTheCefFields() throws IOException {
+        // The data-splitter guide's hand-written CEF part (seen in testing: some twelve tries before the inferred
+        // spec was copied): its header as the cef part's body, beside a part for other lines, as Stroom's parser
+        // reads it.
+        final String guide;
+        try (InputStream in = TestBuildDataSplitterTool.class.getResourceAsStream(
+                "/stroom/mcp/impl/knowledge/guides/data-splitter.md")) {
+            guide = new String(Objects.requireNonNull(in).readAllBytes(), StandardCharsets.UTF_8);
+        }
+        final int start = guide.indexOf("{\"kind\": \"alternatives\", \"parts\": [\n  {\"kind\": \"cef\"");
+        final String json = guide.substring(start, guide.indexOf("\n```", start));
+        final SplitterSpec spec = SplitterSpec.fromMap(JsonUtil.readValue(json, Map.class));
+        final String sample = "2026-11-16T00:00:12+00:00 ns-gw01 ns: CEF:0|Citrix|NetScaler|NS13.1|APPFW|APPFW_SQL|6|"
+                              + "src=203.0.113.16 spt=61406 method=POST msg=SQL Keyword check failed\n"
+                              + "2026-11-16T00:00:13+00:00 web02 sshd[6522]: Accepted publickey for alice from "
+                              + "10.0.0.2 port 51000 ssh2\n";
+
+        final StroomSplitterRun.Result run = StroomSplitterRun.run(SplitterXml.converter(spec), sample);
+
+        assertThat(run.errors()).as("Stroom's parser").isEmpty();
+        assertThat(run.records()).hasSize(2);
+        assertThat(run.records().getFirst()).containsEntry("time", "2026-11-16T00:00:12+00:00")
+                .containsEntry("host", "ns-gw01").containsEntry("cef_name", "APPFW_SQL")
+                .containsEntry("src", "203.0.113.16");
+        assertThat(run.records().getLast()).containsEntry("program", "sshd").containsEntry("pid", "6522");
     }
 }

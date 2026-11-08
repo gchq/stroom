@@ -775,7 +775,7 @@ class McpAgentChat {
                 expandedArgumentChars, error
                         ? "Failed"
                         : "Run", !error, unattended);
-        return forModel;
+        return ToolOutputs.forModel(forModel);
     }
 
     /// @return The call as it is sent: with the workspace files its arguments name put in, if there were any.

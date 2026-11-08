@@ -149,6 +149,118 @@ class TestDraftMixedLines {
                 .doesNotContain("[variant=linux, event=LOGIN]", "[variant=gw, event=SUDO]");
     }
 
+    @Test
+    void aSavedConvertersFormatsAreDraftedEachOnItsOwnAsTheSpecsAre() {
+        // Seen in chat 165: classify_kinds read the build's saved converter, its formats' field the agent's own
+        // ('srcfmt'), and the draft took every record as one format: three kinds listed, the rest one catch-all.
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            text.append("2026-11-06T09:00:0%d gw01 GW %s alice%d\n".formatted(i, i % 2 == 0
+                    ? "LOGIN"
+                    : "LOGOUT", i));
+            text.append("2026-11-06T09:01:0%d web01 LINUX %s bob%d\n".formatted(i, i % 2 == 0
+                    ? "SUDO"
+                    : "CRON", i));
+        }
+        final SplitterSpec spec = SplitterSpec.fromMap(Map.of("kind", "alternatives", "variant_field", "srcfmt",
+                "parts", List.of(
+                        Map.of("kind", "regex", "variant", "gw", "pattern", "^(\\S+) (\\S+) GW (\\S+) (\\S+)$",
+                                "names", List.of("time", "host", "event", "user")),
+                        Map.of("kind", "regex", "variant", "linux", "pattern",
+                                "^(\\S+) (\\S+) LINUX (\\S+) (\\S+)$",
+                                "names", List.of("time", "host", "event", "user")))));
+        final SplitterSpec saved = SplitterSpec.ofConverter(SplitterXml.converter(spec));
+        assertThat(saved.converterVariants()).hasValue(new SplitterSpec.ConverterVariants("srcfmt",
+                List.of("gw", "linux")));
+        assertThat(spec.converterVariants()).as("only a saved converter's").isEmpty();
+
+        final List<String> fromSpec = whens(DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
+                null, null, spec));
+        final List<String> fromSaved = whens(DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
+                null, null, saved));
+
+        assertThat(fromSaved).as("%s", fromSaved).isEqualTo(fromSpec)
+                .contains("[srcfmt=gw, event=LOGIN]", "[srcfmt=linux, event=SUDO]");
+    }
+
+    @Test
+    void aPatternKindIsTheRuleOfTheFormatWhoseMessagesItMatches() {
+        // Asked for by the user after chat 166: an event said in free text told apart by a pattern, in its own
+        // format's rules only, before that format's rule for the rest.
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            text.append("2026-11-06T09:00:0%d gw01 GW %s alice%d\n".formatted(i, i % 2 == 0
+                    ? "LOGIN"
+                    : "LOGOUT", i));
+            text.append("2026-11-06T09:01:0%d web01 LINUX sshd: %s\n".formatted(i, i % 2 == 0
+                    ? "Failed password for bob" + i + " from 10.0.0." + i
+                    : "Server listening on port 22"));
+        }
+        final SplitterSpec splitter = SplitterSpec.fromMap(Map.of("kind", "alternatives", "parts", List.of(
+                Map.of("kind", "regex", "variant", "gw", "pattern", "^(\\S+) (\\S+) GW (\\S+) (\\S+)$",
+                        "names", List.of("time", "host", "event", "user")),
+                Map.of("kind", "regex", "variant", "linux", "pattern", "^(\\S+) (\\S+) LINUX (.*)$",
+                        "names", List.of("time", "host", "message")))));
+        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(
+                Map.of("event", "Failed password", "description", "A password was refused", "event_detail",
+                        "Authenticate", "action", "Logon", "success", false, "field", "message", "matches",
+                        "^sshd: Failed password for (\\S+) from (\\S+)", "names", List.of("ssh_user", "ssh_src"),
+                        "actor", "ssh_user", "within", "variant=linux")));
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
+                notes, null, splitter);
+
+        final List<String> rules = JsonValues.maps(mapping(draft).get("events")).stream()
+                .map(rule -> rule.get("name") + " " + rule.get("when"))
+                .toList();
+        // The format's condition once: within names the format, which the format's rules test already.
+        assertThat(rules).as("%s", rules).anySatisfy(rule -> assertThat(rule).startsWith("linux_failed_password")
+                .containsOnlyOnce("equals=linux").contains("matches=^sshd: Failed password for"));
+        assertThat(rules).noneMatch(rule -> rule.startsWith("gw_") && rule.contains("matches"));
+        assertThat(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_failed_password"))
+                .findFirst().orElseThrow()))
+                .isLessThan(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_other"))
+                        .findFirst().orElseThrow()));
+        assertThat(JsonValues.maps(mapping(draft).get("extract"))).anySatisfy(extract -> assertThat(extract)
+                .containsEntry("names", List.of("ssh_user", "ssh_src")));
+        // Not drafted into the other format, nor noted there as missing from the sample (seen in chat 170).
+        assertThat(String.valueOf(draft.get("notes"))).doesNotContain("[gw] Drafted from the source documentation");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aKindTheUserSaidToDropIsDroppedNotTranslatedNorLogged() {
+        // Asked for by the user: a drop left to the agent could be forgotten, the records kept as Unknown and logged.
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            text.append("2026-11-06T09:00:0%d gw01 GW %s alice%d\n".formatted(i, i % 2 == 0
+                    ? "LOGIN"
+                    : "LOGOUT", i));
+        }
+        final SplitterSpec splitter = SplitterSpec.fromMap(Map.of("kind", "regex", "pattern",
+                "^(\\S+) (\\S+) GW (\\S+) (\\S+)$", "names", List.of("time", "host", "event", "user")));
+        final Map<String, Object> notes = Map.of("source", "Mixed", "fields", List.of(), "events", List.of(),
+                "dropped", List.of("event=LOGOUT"));
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(text.toString()), "Mixed", "Mixed", "Test",
+                notes, null, splitter);
+
+        assertThat((List<Map<String, Object>>) mapping(draft).get("drop_when")).containsExactly(Map.of(
+                "reason", "the user said to leave these untranslated: event=LOGOUT",
+                "when", List.of(Map.of("field", "event", "equals", "LOGOUT"))));
+        assertThat(String.valueOf(draft.get("notes"))).contains("dropped (drop_when), neither translated nor logged");
+    }
+
+    // Each rule's conditions, as field=value.
+    private static List<String> whens(final Map<String, Object> draft) {
+        return JsonValues.maps(mapping(draft).get("events")).stream()
+                .map(rule -> JsonValues.maps(rule.get("when")).stream()
+                        .map(condition -> condition.get("field") + "=" + condition.get("equals"))
+                        .toList()
+                        .toString())
+                .toList();
+    }
+
     private static Map<String, Object> agentsDecisions(final Map<String, Object> mapping) {
         final List<Map<String, Object>> common = JsonValues.maps(mapping.get("common"));
         for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
