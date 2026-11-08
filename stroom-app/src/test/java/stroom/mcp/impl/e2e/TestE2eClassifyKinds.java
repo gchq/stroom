@@ -78,7 +78,8 @@ class TestE2eClassifyKinds extends AbstractE2eTest {
         dump("classify_kinds high", high);
         assertThat(high.get("recorded")).isEqualTo(List.of("action=login", "action=logout"));
         assertThat(String.valueOf(high.get("table"))).startsWith("## Medium-confidence classifications")
-                .contains("### 1. A report exported", "```\ntime = ").doesNotContain("Low-confidence");
+                .contains("### 1. A report exported", "```\ntime=2026-11-06T09:", "#### Action element\n\nExport")
+                .doesNotContain("Low-confidence");
 
         // ### The medium one accepted the same way; then the low one, numbered from 1 again.
         final Map<String, Object> medium = json("classify_kinds", args("build", BUILD, "confirm", true));
