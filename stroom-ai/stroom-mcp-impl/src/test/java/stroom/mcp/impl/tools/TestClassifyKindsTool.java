@@ -185,6 +185,28 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void inStroomAiTheChatShowsTheTableNotTheAgent() {
+        // Seen in testing: the agent retyped a set's table, shortened and restyled, and once never showed it. In
+        // Stroom AI's chat the chat shows a needs_showing result's table itself; elsewhere the agent shows it.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
+        final Map<String, Object> inChat = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
+                user.chatContext());
+        assertThat(inChat).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(inChat.get("table"))).startsWith("## High-confidence classifications");
+        assertThat(String.valueOf(inChat.get("hint"))).startsWith("The chat shows the user this table itself")
+                .contains("don't repeat", "confirm=true");
+        final Map<String, Object> next = call("{\"build\": \"acme\", \"confirm\": true}", user.chatContext());
+        assertThat(next).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(next.get("hint"))).startsWith("The chat shows the user this table itself");
+
+        // From another client, the agent shows it.
+        final Map<String, Object> elsewhere = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        assertThat(elsewhere).containsEntry("status", "needs_showing");
+        assertThat(String.valueOf(elsewhere.get("hint"))).startsWith("Show the table to the user in your reply");
+    }
+
+    @Test
     void aSetOfOneConfidenceIsAmendedNotAccepted() {
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
         call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
@@ -447,6 +469,41 @@ class TestClassifyKindsTool {
                 "| 2 | Gateway | Login failed | Authenticate: Logon (Failure) |",
                 // No outcome given, none shown.
                 "| 3 | AppFirewall | SQL injection | Alert |");
+    }
+
+    @Test
+    void aFormatReadIntoTheFieldsOfOneEventIsAKindNotACatchAll() {
+        // Seen in chat 161: the agent's splitter gave each sshd message form a variant of its own (failed password,
+        // accepted), each one kind of event, and they were rated medium as catch-alls. A format whose records say
+        // what happened in free text still is one.
+        final String sshd = String.join("\n", List.of(
+                "Nov  6 09:00:01 jump01 sshd[101]: Failed password for alice from 10.0.0.1 port 50001 ssh2",
+                "Nov  6 09:00:02 jump01 sshd[102]: Accepted password for bob from 10.0.0.2 port 50002 ssh2",
+                "Nov  6 09:00:03 jump01 sshd[103]: Failed password for carol from 10.0.0.3 port 50003 ssh2",
+                "Nov  6 09:00:04 jump01 sshd[104]: Accepted password for dave from 10.0.0.4 port 50004 ssh2",
+                "Nov  6 09:00:05 jump01 kernel: Out of memory: Killed process 1039 (java)",
+                "Nov  6 09:00:06 jump01 kernel: usb 1-1: new high-speed USB device number 4 using xhci_hcd",
+                "Nov  6 09:00:07 jump01 kernel: eth0: link up at 1000 Mbps full duplex")) + "\n";
+        samples(13L, sshd);
+        final String head = "^(\\S+ +\\d+ \\S+) (\\S+) ";
+        final String sshdTail = " password for (\\S+) from (\\S+) port (\\d+) ssh2$";
+        final List<String> sshdNames = List.of("time", "host", "pid", "user", "src", "port");
+        final String splitter = JsonUtil.writeValueAsString(Map.of("kind", "alternatives", "parts", List.of(
+                Map.of("kind", "regex", "variant", "sshd_failed", "names", sshdNames,
+                        "pattern", head + "sshd\\[(\\d+)\\]: Failed" + sshdTail),
+                Map.of("kind", "regex", "variant", "sshd_accepted", "names", sshdNames,
+                        "pattern", head + "sshd\\[(\\d+)\\]: Accepted" + sshdTail),
+                Map.of("kind", "regex", "variant", "kernel", "names", List.of("time", "host", "message"),
+                        "pattern", head + "kernel: (.*)$"))), false);
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Hosts\", \"stream_ids\": [13], "
+                                                + "\"splitter\": " + splitter + "}", BuildToolCalls.context());
+        final Map<String, Boolean> catchAll = new LinkedHashMap<>();
+        list(listed.get("to_classify")).forEach(kind -> catchAll.put(String.valueOf(kind.get("value")),
+                Boolean.TRUE.equals(kind.get("catch_all"))));
+        assertThat(catchAll).as("%s", listed)
+                .containsEntry("sshd_failed", false)
+                .containsEntry("sshd_accepted", false)
+                .containsEntry("kernel", true);
     }
 
     @Test

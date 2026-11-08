@@ -33,6 +33,9 @@ import java.util.Map;
  */
 final class AiToolMessages {
 
+    // The status of a tool result whose content the user is to see as it is, shown by the chat itself.
+    static final String NEEDS_SHOWING = "needs_showing";
+
     private AiToolMessages() {
         // Static only.
     }
@@ -335,6 +338,29 @@ final class AiToolMessages {
     static boolean hasArguments(final String arguments) {
         return arguments != null && !arguments.replaceAll("\\s", "").isEmpty()
                && !"{}".equals(arguments.replaceAll("\\s", ""));
+    }
+
+    /// @param resultJson A tool result message's JSON.
+    /// @return The Markdown its tool gave for the user to see as it is (a result whose status is `needs_showing`,
+    /// with a `table`, e.g. classify_kinds' proposals), or null.
+    static String shownTable(final String resultJson) {
+        final String text = getString(resultJson, "text");
+        if (text == null || !text.contains(NEEDS_SHOWING)) {
+            return null;
+        }
+        try {
+            final JSONObject result = JSONParser.parseStrict(text).isObject();
+            if (result == null || !NEEDS_SHOWING.equals(text(result, "status"))) {
+                return null;
+            }
+            final String table = text(result, "table");
+            return table == null || table.isBlank()
+                    ? null
+                    : table;
+        } catch (final RuntimeException e) {
+            // Not a JSON result.
+            return null;
+        }
     }
 
     /**
