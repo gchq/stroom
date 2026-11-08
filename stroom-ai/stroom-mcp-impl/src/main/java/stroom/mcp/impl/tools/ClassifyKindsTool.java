@@ -108,6 +108,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     static final String SAMPLES = "samples";
     // A kind told apart by its format alone.
     private static final String CATCH_ALL = "catch_all";
+    // The action element of an event not classified.
+    private static final String UNKNOWN = "Unknown";
 
     // How sure the agent is of a proposal, in the order the proposals are put to the user.
     private static final String HIGH = "high";
@@ -137,7 +139,10 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
     private static final int EXAMPLES = 3;
     private static final int EXAMPLE_FIELDS = 20;
     private static final int EXAMPLE_VALUE = 100;
-    private static final int SAMPLE_CHARS = 100;
+    // The shortest value looked for in the sample's lines, to find a record's own line.
+    private static final int MIN_MATCHED = 3;
+    // A field holding a record's time, left out of a record shown by its fields.
+    private static final Pattern TIME_FIELD = Pattern.compile("(?i)(time|timestamp|ts|date|datetime|@timestamp)");
     // A field's name that says it names a user or account (generic words, no product's).
     private static final Pattern USER_NAME = Pattern.compile("(?i)(user|account|login|principal|subject|actor|"
                                                              + "owner|member|identity|uid)");
@@ -308,6 +313,7 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> records = unpacked(DraftMapping.records(samples, splitter).records(),
                 mapping);
         final List<Kind> kinds = kinds(draft, records);
+        final String variantField = variantField(draft);
         final List<String> recordFields = recordFields(records);
         final Set<String> settled = settled(notesNow);
         // Not those the user rejected: the agent asks what they are, and they stay out of later rounds.
@@ -332,8 +338,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
         }
         // Each kind's first record, shown with its proposal.
         final List<Map<String, Object>> kindSamples = batch.stream()
-                .filter(kind -> !kind.examples().isEmpty())
-                .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, sampleText(kind.examples().getFirst()),
+                .filter(kind -> kind.first() != null)
+                .map(kind -> Map.<String, Object>of(KEY, kind.key(), SAMPLE, recordText(kind, samples, variantField),
                         CATCH_ALL, kind.catchAll()))
                 .toList();
         result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(),
@@ -397,6 +403,14 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 problems.add("proposals[" + i + "]: confidence is high, medium or low");
             } else if (!fromUser && ToolText.isBlank(valueText(item.get(EVENT_DETAIL)))) {
                 problems.add("proposals[" + i + "]: give event_detail, the action element");
+            } else if (!fromUser && catchAll(notesNow, key) && UNKNOWN.equalsIgnoreCase(valueText(item.get(
+                    EVENT_DETAIL)))) {
+                // Seen in chat 160: the agent proposed a catch-all as Unknown, leaving the events in it (a
+                // gateway's logons, a host's sudo commands) for the mapping, never put to the user.
+                problems.add("proposals[" + i + "]: " + key + " is a catch_all kind (a format's records, the "
+                             + "events in it not told apart), so not Unknown: if its records name their event, "
+                             + "refine the splitter (build_data_splitter) so a field holds the name, save it, and "
+                             + "list again; else classify it as the one kind of event it is");
             } else if (unknownField(item, ACTOR, recordFields) || unknownField(item, AFFECTED, recordFields)) {
                 // Seen in the agent eval: a label from the text ('By User') given for a field, the event's user
                 // then drafted empty.
@@ -513,7 +527,15 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
             return recorded(context, build, source, notesNow, proposed, set);
         }
         // Amended: nothing recorded yet; the agent sends them again as the user said, and the next set follows.
+        // The set leaves the proposals now, so one the user rejected (left out by the agent, which asks what it is)
+        // isn't put to them again, and stays still to classify.
+        final Set<String> amended = new LinkedHashSet<>();
+        set.forEach(entry -> amended.add(String.valueOf(entry.get(KEY))));
         final Map<String, Object> result = new LinkedHashMap<>();
+        result.put(SOURCE_NOTES, notes.recordClassified(context, build, source, List.of(), pending(notesNow),
+                Map.of(RecordSourceNotesTool.PROPOSED, proposed.stream()
+                        .filter(entry -> !amended.contains(String.valueOf(entry.get(KEY))))
+                        .toList())));
         result.put(RECORDED, List.of());
         result.put(AMENDMENTS, answer.get());
         result.put(HINT, "The user amended the " + confidence + "-confidence classifications: send "
@@ -722,7 +744,9 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 continue;
             }
             final Kind kind = new Kind(String.valueOf(told.get(FIELD)), String.valueOf(told.get(EQUALS)),
-                    String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind), catchAll);
+                    String.valueOf(rule.get("name")), ofKind.size(), examples(ofKind), catchAll, ofKind.isEmpty()
+                    ? null
+                    : ofKind.getFirst());
             // One kind in several rules (a rule a variant): listed once, its records counted together.
             final Kind earlier = kinds.stream().filter(k -> k.key().equals(kind.key())).findFirst().orElse(null);
             if (earlier == null) {
@@ -731,7 +755,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 final List<Map<String, Object>> both = new ArrayList<>(earlier.examples());
                 kind.examples().stream().filter(e -> !both.contains(e) && both.size() < EXAMPLES).forEach(both::add);
                 kinds.set(kinds.indexOf(earlier), new Kind(earlier.field(), earlier.value(), earlier.rule(),
-                        earlier.records() + kind.records(), both, earlier.catchAll() && kind.catchAll()));
+                        earlier.records() + kind.records(), both, earlier.catchAll() && kind.catchAll(),
+                        earlier.first()));
             }
         }
         return kinds;
@@ -844,26 +869,24 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                     : "[" + text(e.get(PRODUCT)) + "] ") + title(e));
             lines.add("");
             if (e.get(SAMPLE) != null) {
-                // Preformatted (asked for by the user), so above the table: a table's cell can't hold it.
+                // Preformatted (asked for by the user).
                 lines.add("```");
                 lines.add(ToolText.str(e.get(SAMPLE)).replace("```", "'''"));
                 lines.add("```");
                 lines.add("");
             }
-            // The headings name the kind and its confidence (asked for by the user: no Kind or Confidence row); every
-            // proposal has an action element, the table's first row (a table needs one).
-            lines.add("| Action element | " + cell(e.get(EVENT_DETAIL)) + " |");
-            lines.add("| --- | --- |");
-            row(lines, "Action", e.get(ACTION));
-            row(lines, "Outcome", outcome(e));
-            row(lines, "Type id", e.get(TYPE_ID));
-            row(lines, "Who acted", e.get(ACTOR));
-            row(lines, "Acted on", e.get(AFFECTED) == null
+            // What it says, each under a subheading of its own (asked for by the user: no table; the headings name
+            // the kind and its confidence): the action element always, the others where the proposal has them.
+            item(lines, "Action element", e.get(EVENT_DETAIL));
+            item(lines, "Action", e.get(ACTION));
+            item(lines, "Outcome", outcome(e));
+            item(lines, "Type id", e.get(TYPE_ID));
+            item(lines, "Who acted", e.get(ACTOR));
+            item(lines, "Acted on", e.get(AFFECTED) == null
                     ? null
                     : text(e.get(AFFECTED)) + (e.get(AFFECTED_AS) == null
                             ? ""
                             : " (" + text(e.get(AFFECTED_AS)) + ")"));
-            lines.add("");
         }
         return String.join("\n", lines).strip();
     }
@@ -929,10 +952,13 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : text(e.get(TITLE));
     }
 
-    // A row of a proposal's table, only where it has a value.
-    private static void row(final List<String> lines, final String name, final Object value) {
+    // One of what a proposal says, under a subheading, only where it has a value.
+    private static void item(final List<String> lines, final String name, final Object value) {
         if (value != null && !ToolText.isBlank(ToolText.str(value))) {
-            lines.add("| " + name + " | " + cell(value) + " |");
+            lines.add("#### " + name);
+            lines.add("");
+            lines.add(ToolText.str(value).replace("\n", " "));
+            lines.add("");
         }
     }
 
@@ -947,11 +973,42 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                 : text.substring(0, most - 3).strip() + "...";
     }
 
-    // A record as its fields, one a line (field = value), each value cut short: the sample shown with a kind.
-    private static String sampleText(final Map<String, Object> record) {
+    // A kind's record as the sample has it, whole (asked for by the user: the record itself, not its fields cut
+    // short): the sample's line holding most of the record's values (among those holding its kind's value, but for a
+    // catch-all); else its fields, whole, but for its format and time.
+    private static String recordText(final Kind kind,
+                                     final Map<String, String> samples,
+                                     final String variantField) {
+        final List<String> values = kind.first().values().stream()
+                .map(ClassifyKindsTool::valueText)
+                .filter(value -> value.length() >= MIN_MATCHED && !value.contains("\"") && !value.contains("\\")
+                                 && !value.contains("\n"))
+                .distinct()
+                .toList();
+        String best = null;
+        long bestCount = 0;
+        for (final String text : samples.values()) {
+            for (final String line : text.split("\n")) {
+                // A catch-all's value is its format's name, not in its records' text.
+                if (!kind.catchAll() && !line.contains(kind.value())) {
+                    continue;
+                }
+                final long count = values.stream().filter(line::contains).count();
+                if (count > bestCount) {
+                    best = line;
+                    bestCount = count;
+                }
+            }
+        }
+        if (best != null && bestCount * 2 >= values.size()) {
+            return best.strip();
+        }
         final List<String> lines = new ArrayList<>();
-        record.forEach((field, value) -> lines.add(field + " = " + cut(ToolText.str(value).replace("\n", " "),
-                SAMPLE_CHARS)));
+        kind.first().forEach((field, value) -> {
+            if (named(field) && !field.equals(variantField) && !TIME_FIELD.matcher(field).matches()) {
+                lines.add(field + " = " + valueText(value));
+            }
+        });
         return String.join("\n", lines);
     }
 
@@ -977,7 +1034,8 @@ class ClassifyKindsTool extends AbstractBuiltInTool {
                         String rule,
                         int records,
                         List<Map<String, Object>> examples,
-                        boolean catchAll) {
+                        boolean catchAll,
+                        Map<String, Object> first) {
 
         String key() {
             return field + "=" + value;

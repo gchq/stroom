@@ -140,10 +140,24 @@ class TestClassifyKindsTool {
         assertThat(high.get("recorded")).isEqualTo(List.of("action=login"));
         assertThat(user.shown().getLast()).isEqualTo("Review the high-confidence classifications shown in the chat.");
         final String medium = String.valueOf(high.get("table"));
-        assertThat(medium).startsWith("## Medium-confidence classifications (1 of 1)\n\n### 1. A user logged off\n\n"
-                                     + "```\n")
-                .contains("| Action element | Authenticate |\n| --- | --- |\n| Action | Logoff |")
-                .doesNotContain("Low-confidence", "Records purged", "| Outcome |", "| Kind |", "| Confidence |");
+        // The record as logged, whole (not its fields cut short); then what the proposal says, each under a
+        // subheading, no table.
+        assertThat(medium).isEqualTo("""
+                ## Medium-confidence classifications (1 of 1)
+
+                ### 1. A user logged off
+
+                ```
+                time=2026-11-06T09:00:05Z action=logout user=bob src=10.0.0.2
+                ```
+
+                #### Action element
+
+                Authenticate
+
+                #### Action
+
+                Logoff""");
         assertThat(String.valueOf(high.get("hint"))).contains("medium-confidence");
 
         // The medium one accepted the same way; then the low one, numbered from 1 again.
@@ -183,9 +197,18 @@ class TestClassifyKindsTool {
         assertThat(amended.get("amendments")).isEqualTo("1 is a timeout, not a logoff");
         assertThat(String.valueOf(amended.get("hint"))).contains("medium-confidence", "send it again",
                 "from_user: true");
+        // The amended set leaves the proposals, still to classify until the agent sends it as the user said.
         assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED)))
                 .extracting(entry -> entry.get("kind"))
-                .containsExactly("action=logout", "action=purge");
+                .containsExactly("action=purge");
+        assertThat(pending()).containsExactly("action=logout", "action=purge");
+
+        // The agent leaves out the one the user rejected (to ask what it is): it isn't put to the user again, the
+        // next set is.
+        final Map<String, Object> next = call("{\"build\": \"acme\", \"confirm\": true}",
+                BuildToolCalls.user(Map.of("answer", "Accept it")).context());
+        assertThat(next.get("recorded")).isEqualTo(List.of("action=purge"));
+        assertThat(pending()).containsExactly("action=logout");
     }
 
     @Test
@@ -398,7 +421,7 @@ class TestClassifyKindsTool {
         assertThat(amended.get("amendments")).isEqualTo("1 is Authenticate: Logon by the src host");
         assertThat(String.valueOf(amended.get("hint"))).contains("send it again with the amendments applied",
                 "from_user: true");
-        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).hasSize(3);
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).hasSize(2);
 
         // Sent as the user said: recorded, and the others shown in detail for the next form.
         final Map<String, Object> sent = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
@@ -424,6 +447,33 @@ class TestClassifyKindsTool {
                 "| 2 | Gateway | Login failed | Authenticate: Logon (Failure) |",
                 // No outcome given, none shown.
                 "| 3 | AppFirewall | SQL injection | Alert |");
+    }
+
+    @Test
+    void aCatchAllIsNotProposedAsUnknown() {
+        // Seen in chat 160: two catch-all formats proposed as Unknown, the gateway's logons and the hosts' sudo
+        // commands in them left for the mapping, never put to the user.
+        final String mixed = THREE_KINDS + String.join("\n", List.of(
+                "Nov  6 09:02:00 web1 cache warmed after 12 seconds",
+                "Nov  6 09:02:05 web2 config reloaded from disk",
+                "Nov  6 09:02:09 web1 disk 80% full on the data volume",
+                "Nov  6 09:02:13 web3 worker restarted by the supervisor")) + "\n";
+        samples(10L, mixed);
+        final String splitter = JsonUtil.writeValueAsString(SplitterDryRun.inferSpec(mixed).spec().toMap(), false);
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [10], \"splitter\": " + splitter + "}",
+                BuildToolCalls.context());
+        assertThat(text("{\"build\": \"acme\", \"proposals\": [{\"field\": \"variant\", \"value\": \"syslog\", "
+                        + "\"description\": \"Web host lines\", \"event_detail\": \"Unknown\", "
+                        + "\"confidence\": \"medium\"}]}"))
+                .startsWith("Nothing recorded: proposals[0]: variant=syslog is a catch_all kind")
+                .contains("refine the splitter (build_data_splitter)");
+        // Its sample is its own line as logged, though its value (the format's name) isn't in it.
+        final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"variant\", "
+                                               + "\"value\": \"syslog\", \"description\": \"Web host lines\", "
+                                               + "\"event_detail\": \"Alert\", \"confidence\": \"medium\"}]}",
+                BuildToolCalls.context());
+        assertThat(String.valueOf(shown.get("table"))).contains("```\nNov  6 09:02:00 web1 cache warmed after 12 "
+                                                               + "seconds\n```");
     }
 
     @Test

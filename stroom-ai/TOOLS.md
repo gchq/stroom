@@ -2807,8 +2807,9 @@ keys of JSON text, the elements of XML text, the values the draft's extractions 
 inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
 told apart by its format alone is marked `catch_all` (a format's records, its events not told apart; a format's
 `other` rule is listed with only the records its own rules leave, and not at all when they leave none); a high
-proposal for one is rated medium (`rated_medium`), so the user confirms it on its own, and the hint says to refine
-the splitter when its records name their event. The build keeps one notes doc: the one named for the source, else the
+proposal for one is rated medium (`rated_medium`), a proposal of one as Unknown is refused (seen: catch-alls
+proposed as Unknown, their events never put to the user), and the hint says to refine the splitter when its records
+name their event. The build keeps one notes doc: the one named for the source, else the
 one it has. One kind (or none told apart), or none left, records nothing pending: the plan's
 `classify` step is done. Called with `proposals` (one catalogue entry a pending kind: `field`, `value`,
 `description`, `event_detail`, `action`, `success`, `type_id`, `actor`, `affected`, `affected_as`, `confidence`), each
@@ -2817,8 +2818,10 @@ kind's sample record kept from the listing, and its place among those of its con
 (Markdown, which the chat renders, where a form's fields are plain text: asked for by the user, no Markdown in a
 form) is for the agent to show in the chat: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
 title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
-in detail, each a numbered heading `[product] title`, its sample preformatted, and a two-column table of only the
-rows it has (Action element first, then Action, Outcome, Type id, Who acted, Acted on). A listing takes 18 kinds a
+in detail, each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
+holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, each
+under a subheading of its own (Action element, then Action, Outcome, Type id, Who acted, Acted on, where it has
+them). A listing takes 18 kinds a
 round (`round` says how many are left); kinds rejected earlier (`rejected` in the notes) are left out of later
 rounds. The draft treats a kinds field (named for kinds) as one with up to 200 values. The proposals are put to the user a set at a time (asked for by the user): up to ten of one
 confidence, high first, then medium, then low, each set numbered from 1 under a heading saying which of that
@@ -2828,8 +2831,8 @@ question of the set shown, answered one way or the other (asked for by the user:
 them both accept and amend): an `Accept all N` button, or amendments in the user's own words. Accepted, the set is
 recorded `basis: user_confirmed` and the next set's table comes back; amended (`amendments`, nothing recorded), the
 agent sends the set again as `from_user: true` proposals, recorded without another form (any kind the draft found,
-pending or not; the proposals still to confirm are kept, and the next set shown), leaving out any the user rejects and
-asking what it is. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
+pending or not; an amended set leaves the proposals at once, so a kind the agent leaves out isn't put to the user
+again, and stays still to classify), leaving out any the user rejects and asking what it is. `from_user` is only for what the user said. Without forms, `asked: false` and the `table` for the chat; nothing recorded. The
 plan's `classify` step (after the converter, before the translation) is done when the notes say nothing is pending,
 not recorded once the translation is written.
 
