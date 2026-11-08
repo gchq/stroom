@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.sample.SplitterDryRun;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.json.JsonUtil;
@@ -360,6 +361,49 @@ class TestClassifyKindsTool {
         assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED)))
                 .extracting(entry -> entry.get("kind"))
                 .containsExactly("action=login", "action=logout");
+    }
+
+    @Test
+    void aCatchAllKindIsAtMostMediumAndShownOnItsOwn() {
+        // Asked for by the user: a format whose events the draft can't tell apart is one kind, a catch-all; the
+        // agent rated those high in testing, so the user never saw them on their own.
+        final String mixed = THREE_KINDS + String.join("\n", List.of(
+                "Nov  6 09:02:00 web1 cache warmed after 12 seconds",
+                "Nov  6 09:02:05 web2 config reloaded from disk",
+                "Nov  6 09:02:09 web1 disk 80% full on the data volume",
+                "Nov  6 09:02:13 web3 worker restarted by the supervisor")) + "\n";
+        samples(10L, mixed);
+        final SplitterDryRun.Inferred inferred = SplitterDryRun.inferSpec(mixed);
+        assertThat(inferred.spec()).as("%s", inferred).isNotNull();
+        final String splitter = JsonUtil.writeValueAsString(inferred.spec().toMap(), false);
+        final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [10], "
+                                                + "\"splitter\": " + splitter + "}", BuildToolCalls.context());
+        final List<Map<String, Object>> catchAll = list(listed.get("to_classify")).stream()
+                .filter(kind -> Boolean.TRUE.equals(kind.get("catch_all")))
+                .toList();
+        // The plain-text lines, told apart by nothing but their format; not the key-value lines' 'other' rule,
+        // which leaves none of the sample's records.
+        assertThat(catchAll).as("%s", listed).hasSize(1);
+        assertThat(catchAll.getFirst()).containsEntry("value", "syslog").containsEntry("records", 4);
+        assertThat(list(listed.get("to_classify"))).filteredOn(kind -> "login".equals(kind.get("value")))
+                .allMatch(kind -> !kind.containsKey("catch_all"));
+        assertThat(String.valueOf(listed.get("hint"))).contains("catch_all", "at most medium");
+
+        final String field = String.valueOf(catchAll.getFirst().get("field"));
+        final String value = String.valueOf(catchAll.getFirst().get("value"));
+        final String proposals = PROPOSALS.substring(0, PROPOSALS.length() - 1) + ", {\"field\": \"" + field
+                                 + "\", \"value\": \"" + value + "\", \"title\": \"Web host message\", "
+                                 + "\"description\": \"A web host's status message\", \"event_detail\": \"Alert\", "
+                                 + "\"confidence\": \"high\"}]";
+        final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + proposals + "}",
+                BuildToolCalls.context());
+        assertThat(shown.get("rated_medium")).as("%s", shown).isEqualTo(List.of(field + "=" + value));
+        // Not in the high-confidence table: in the medium ones, shown on its own after.
+        assertThat(String.valueOf(shown.get("table"))).contains("User logon").doesNotContain("Web host message");
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED)))
+                .filteredOn(entry -> (field + "=" + value).equals(entry.get("kind")))
+                .extracting(entry -> entry.get("confidence"))
+                .containsExactly("medium");
     }
 
     private void samples(final long stream, final String text) {
