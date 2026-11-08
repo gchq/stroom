@@ -56,10 +56,13 @@ public final class ToolOutputs {
     static final int MAX_SHOWN_IN_FULL_CHARS = 64_000;
     /// The field of an MCP server's result that says what it is, e.g. `needs_review`.
     static final String STATUS_FIELD = "status";
-    /// The statuses of results whose content the user must be shown, exactly as it is, before the agent calls
-    /// the tool again with the result's id: a review (e.g. an index template in `dev_tools`, records in
-    /// `show_user`, a layout in `layout`), or a confirmation or approval (its `summary` and `details`).
-    static final Set<String> SHOWN_TO_USER_STATUSES = Set.of("needs_review", "needs_confirmation", "needs_approval");
+    /// The statuses of results whose content the user must be shown, exactly as it is: a review (e.g. an index
+    /// template in `dev_tools`, records in `show_user`, a layout in `layout`), or a confirmation or approval (its
+    /// `summary` and `details`), before the agent calls the tool again with the result's id; or content to show
+    /// with no id to send back (`needs_showing`, e.g. classify_kinds' `table`; seen: a table of ten proposals saved
+    /// to the workspace, and retyped by the agent, shortened and restyled).
+    static final Set<String> SHOWN_TO_USER_STATUSES = Set.of("needs_review", "needs_confirmation", "needs_approval",
+            "needs_showing");
     /// The fields of such a result that are for the agent, not to be shown to the user, in the order looked for.
     static final List<String> ID_FIELDS = List.of("review_id", "confirmation_id", "approval_id");
     static final String HINT_FIELD = "hint";

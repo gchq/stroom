@@ -2805,8 +2805,9 @@ the rest (`to_classify`: `field`, `value`, `rule`, `records`, up to three `examp
 them in the notes block as `pending`. The records are read as the draft reads them, inner messages unpacked (the
 keys of JSON text, the elements of XML text, the values the draft's extractions take from text), so a kind told apart
 inside a message field has its records, sample and actor; records a JSON or XML parser reads need no splitter. A kind
-told apart by its format alone is marked `catch_all` (a format's records, its events not told apart; a format's
-`other` rule is listed with only the records its own rules leave, and not at all when they leave none); a high
+told apart by its format alone is marked `catch_all` when it is a format's leftovers (its `other` rule, listed with
+only the records its own rules leave, and not at all when they leave none) or its records say what happened in free
+text (a variant the splitter reads into one event's fields is a kind); a high
 proposal for one is rated medium (`rated_medium`), a proposal of one as Unknown is refused (seen: catch-alls
 proposed as Unknown, their events never put to the user), and the hint says to refine the splitter when its records
 name their event. The build keeps one notes doc: the one named for the source, else the
@@ -2816,7 +2817,8 @@ one it has. One kind (or none told apart), or none left, records nothing pending
 is checked as a catalogue event and kept in the notes block (`proposed`, with its `title` and `product` and the
 kind's sample record kept from the listing, and its place among those of its confidence); the reply's `table`
 (Markdown, which the chat renders, where a form's fields are plain text: asked for by the user, no Markdown in a
-form) is for the agent to show in the chat: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
+form) comes with status `needs_showing`: Stroom AI's chat shows it itself, after the call, and the agent is told not
+to repeat it; another client's agent is told to show it as it is: high-confidence ones as one table `# | Rule | Kind | Mapping` (product,
 title, and action element, Action and outcome, e.g. `Authenticate: Logon (Failure)`); medium- and low-confidence ones
 in detail, each a numbered heading `[product] title`, its record as the sample has it, whole (the sample's line
 holding most of its values; else its fields but its format and time), preformatted, and what the proposal says, each
