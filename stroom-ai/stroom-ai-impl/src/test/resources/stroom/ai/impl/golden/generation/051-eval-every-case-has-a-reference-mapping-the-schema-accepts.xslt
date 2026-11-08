@@ -10,23 +10,21 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="cef_signature_id" select="data[@name='cef_signature_id']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="cef_signature_id" select="data[@name='cef_signature_id']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$cef_signature_id = ('1001', '1002')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
       <xsl:when test="$cef_signature_id = '1003'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="$cef_signature_id = ('2001', '2002')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_web_request"/>
       </xsl:when>
       <xsl:when test="$cef_signature_id = '3001'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_malware"/>
       </xsl:when>
       <xsl:otherwise>

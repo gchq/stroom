@@ -10,19 +10,18 @@
   </xsl:template>
   <xsl:template match="*" mode="event">
     <xsl:variable name="record-no" select="stroom:record-no()"/>
-    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:sequence select="$record-no[string(.) = '#']"/>
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
+    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
     <xsl:choose>
       <xsl:when test="$action = 'create'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_created"/>
       </xsl:when>
       <xsl:when test="$action = 'view'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_viewed"/>
       </xsl:when>
       <xsl:when test="$action = ('update', 'close')">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_updated"/>
       </xsl:when>
       <xsl:otherwise>

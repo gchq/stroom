@@ -282,8 +282,13 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             new TreeMap<>(entry.values()).forEach((name, value) -> pairs.add(List.of(name, value)));
             final List<Object> key = List.of(Objects.toString(entry.rule(), "\u0000"), pairs);
             final Map<String, Object> group = byKey.computeIfAbsent(key, k -> newGroup(entry));
-            group.put("records", (int) group.get("records") + 1);
             @SuppressWarnings("unchecked") final List<Long> rawStreams = (List<Long>) group.get("raw_streams");
+            if (entry.rule() == null) {
+                group.put("records", (int) group.get("records") + 1);
+            } else if (!rawStreams.contains(entry.raw())) {
+                // A kept-Unknown kind is logged once a stream: its streams are counted, not its records.
+                group.put("streams", (int) group.get("streams") + 1);
+            }
             if (!rawStreams.contains(entry.raw()) && rawStreams.size() < 50) {
                 rawStreams.add(entry.raw());
             }
@@ -299,7 +304,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             }
         }
         final List<Map<String, Object>> groups = new ArrayList<>(byKey.values());
-        groups.sort(Comparator.comparingInt(g -> -(int) g.get("records")));
+        groups.sort(Comparator.comparingInt(g -> -size(g)));
         if (mapping != null) {
             // A few raw records for examples; the grouping itself needs none.
             for (final Map<String, Object> group : groups.subList(0, Math.min(10, groups.size()))) {
@@ -417,12 +422,16 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
             return;
         }
         final int total = groups.stream()
-                .mapToInt(g -> (int) g.getOrDefault("records", 0) + (int) g.getOrDefault("events", 0))
+                .mapToInt(g -> counted(g, "records") + counted(g, "events"))
                 .sum();
+        // A kept-Unknown kind is logged once a stream, so its records aren't counted: said apart.
+        final long kept = groups.stream().filter(g -> g.containsKey("streams")).count();
         result.put("tell_user", "Found untranslated events" + soFar + ": " + total + " record(s) of "
-                                + groups.size() + " kind(s) the sample didn't have, in " + affectedIds.size()
-                                + " raw stream(s). The mapping needs a rule for each; then only those streams need "
-                                + "processing again, once the user approves.");
+                                + (groups.size() - kept) + " kind(s) the sample didn't have" + (kept == 0
+                ? ""
+                : ", and " + kept + " kind(s) kept as Unknown (logged once a stream, so not counted)")
+                                + ", in " + affectedIds.size() + " raw stream(s). The mapping needs a rule for "
+                                + "each; then only those streams need processing again, once the user approves.");
         final boolean inBuild = tags(pipeline).contains(WriteGuard.MANAGED);
         final boolean many = affectedIds.size() > EXACT_LIMIT || more != null;
         final String reprocess;
@@ -710,6 +719,20 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         }
     }
 
+    // A group's size, to sort by: its records, or a kept-Unknown kind's streams.
+    private static int size(final Map<String, Object> group) {
+        return group.get("records") instanceof final Integer records
+                ? records
+                : counted(group, "streams");
+    }
+
+    // A count a group holds, 0 when it has none (or the key holds why not).
+    private static int counted(final Map<String, Object> group, final String key) {
+        return group.get(key) instanceof final Integer count
+                ? count
+                : 0;
+    }
+
     private static Map<String, Object> newGroup(final CoverageReads.Logged entry) {
         final Map<String, Object> group = new LinkedHashMap<>();
         group.put("found_as", entry.rule() != null
@@ -718,7 +741,13 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         group.put("kind", entry.values().isEmpty()
                 ? Map.of("values", "not logged (an XSLT saved before they were): see the examples")
                 : new LinkedHashMap<>(entry.values()));
-        group.put("records", 0);
+        if (entry.rule() == null) {
+            group.put("records", 0);
+        } else {
+            // Logged once a stream for each kind (the XSLT's mcp_kept_unknown): its records aren't counted.
+            group.put("streams", 0);
+            group.put("records", "not counted: logged once a stream");
+        }
         group.put("raw_streams", new ArrayList<Long>());
         group.put("examples", new ArrayList<Map<String, Object>>());
         return group;

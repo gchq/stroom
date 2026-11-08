@@ -9,12 +9,16 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
+    <xsl:variable name="action" select="data[@name='action']/@value[normalize-space(.)]"/>
+    <xsl:if test="not(($action = 'keepalive'))">
+      <xsl:call-template name="mcp_unread_fields"/>
+    </xsl:if>
     <xsl:choose>
-      <xsl:when test="data[@name='action']/@value = 'keepalive'">
+      <xsl:when test="$action = 'keepalive'">
         <!-- keepalive: left untranslated on purpose -->
       </xsl:when>
-      <xsl:when test="data[@name='action']/@value = 'login'">
-        <xsl:call-template name="mcp_unread_fields"/>
+      <xsl:when test="$action = 'login'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
     </xsl:choose>

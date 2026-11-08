@@ -65,9 +65,23 @@
       </xsl:when>
       <xsl:otherwise>
         <xsl:apply-templates select="." mode="event_type_other"/>
-        <xsl:sequence select="stroom:log('INFO', concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('category=', string(($category)[1])), concat('action=', string(($action)[1]))), ' | '), ')'))"/>
+        <xsl:call-template name="mcp_kept_unknown">
+          <xsl:with-param name="group" select="concat('other|', string-join((string(($category)[1]), string(($action)[1])), '|'))"/>
+          <xsl:with-param name="line" select="concat('Kept as Unknown by rule ''other'': record ', $record-no, ' (', string-join((concat('category=', string(($category)[1])), concat('action=', string(($action)[1]))), ' | '), ')')"/>
+        </xsl:call-template>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+  <!-- mcp_kept_unknown: a record a rule keeps as Unknown on purpose, logged once a stream for each kind (the rule and
+       the values the rules test) -->
+  <xsl:template name="mcp_kept_unknown">
+    <xsl:param name="group"/>
+    <xsl:param name="line"/>
+    <xsl:variable name="mcp_kept" select="concat('mcp-unknown:', $group)"/>
+    <xsl:if test="not(string(stroom:get($mcp_kept)))">
+      <xsl:value-of select="stroom:put($mcp_kept, 'y')"/>
+      <xsl:sequence select="stroom:log('INFO', $line)"/>
+    </xsl:if>
   </xsl:template>
   <!-- Rule 'auth': records where category = User and action in Login, Login Failed, Logout, MFA Challenge, Account
        Locked. Writes an Authenticate event (TypeId from action) from action, actor, msg_user, item_id, ticket

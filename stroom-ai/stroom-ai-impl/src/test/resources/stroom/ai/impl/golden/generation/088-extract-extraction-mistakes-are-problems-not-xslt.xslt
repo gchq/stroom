@@ -9,14 +9,17 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields), but for records left untranslated on purpose -->
     <xsl:variable name="ts_parts" select="analyze-string(string((*[@key='message'])[1]), '^(\S+) (\S+) (\S+) (.*)$')"/>
+    <xsl:variable name="action" select="$ts_parts/fn:match//fn:group[@nr=3][normalize-space(.)]"/>
+    <xsl:if test="not(((not($ts_parts/fn:match//fn:group[@nr=1][normalize-space(.)])) and not(($action = 'LOGIN') or ($action = 'LOGOUT'))))">
+      <xsl:call-template name="mcp_unread_fields"/>
+    </xsl:if>
     <xsl:choose>
-      <xsl:when test="$ts_parts/fn:match//fn:group[@nr=3] = 'LOGIN'">
-        <xsl:call-template name="mcp_unread_fields"/>
+      <xsl:when test="$action = 'LOGIN'">
         <xsl:apply-templates select="." mode="event_type_logon"/>
       </xsl:when>
-      <xsl:when test="$ts_parts/fn:match//fn:group[@nr=3] = 'LOGOUT'">
-        <xsl:call-template name="mcp_unread_fields"/>
+      <xsl:when test="$action = 'LOGOUT'">
         <xsl:apply-templates select="." mode="event_type_logoff"/>
       </xsl:when>
       <xsl:when test="not($ts_parts/fn:match//fn:group[@nr=1][normalize-space(.)])">

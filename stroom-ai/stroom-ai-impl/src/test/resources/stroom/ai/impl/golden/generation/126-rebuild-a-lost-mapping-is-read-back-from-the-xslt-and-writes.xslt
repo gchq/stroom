@@ -9,13 +9,13 @@
     </Events>
   </xsl:template>
   <xsl:template match="*" mode="event">
+    <!-- Fields of the record no rule reads are logged (mcp_unread_fields) -->
+    <xsl:call-template name="mcp_unread_fields"/>
     <xsl:choose>
       <xsl:when test="mcp:quoted_value(data[@name='msg']/@value, 'dstintfrole') = 'wan'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_deny"/>
       </xsl:when>
       <xsl:when test="mcp:quoted_value(data[@name='msg']/@value, 'dstintfrole') = 'lan'">
-        <xsl:call-template name="mcp_unread_fields"/>
         <xsl:apply-templates select="." mode="event_type_permit"/>
       </xsl:when>
     </xsl:choose>
