@@ -283,6 +283,56 @@ public class Consent {
         return Optional.of(answers);
     }
 
+    /// One question the user answers with the answer suggested (a button) or in their own words, one or the other:
+    /// e.g. accept the classifications shown, or say what to change. Asked for by the user: a yes/no box with a text
+    /// box beside it let them both accept and amend.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `classify_kinds`.
+    /// @param intro     What the form is about, its message.
+    /// @param question  The question, its field's title.
+    /// @param suggested The answer suggested.
+    /// @return The answer, trimmed: the suggested one, or the user's own words; empty when the session can't show a
+    /// form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form or gave no answer.
+    public Optional<String> answer(final ToolCall call,
+                                   final ToolCallContext context,
+                                   final String action,
+                                   final String intro,
+                                   final String question,
+                                   final String suggested) {
+        if (!context.userQuestions().canAsk()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> field = new LinkedHashMap<>();
+        field.put("type", "string");
+        field.put("title", heading(question));
+        // Shown as a button, with a box for the user's own answer under it.
+        field.put("examples", List.of(suggested));
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("required", List.of("answer"));
+        schema.put("properties", Map.of("answer", field));
+        if (unshowable(context, action, intro, schema)) {
+            return Optional.empty();
+        }
+        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + question).substring(0, 16);
+        final ElicitResult answer = context.userQuestions().ask(call.name(),
+                UserQuestions.formCallId(call.id(), "answer-" + digest), intro, schema);
+        final String given = answer.action() == ElicitResult.Action.ACCEPT
+                ? NullSafe.trim(NullSafe.get(NullSafe.map(answer.content()).get("answer"), String::valueOf))
+                : null;
+        auditLogProvider.get().processed(context.session(), null, "answer", action + ": " + heading(question),
+                NullSafe.isBlankString(given)
+                        ? "declined"
+                        : "answered: " + given, NullSafe.isNonBlankString(given));
+        if (NullSafe.isBlankString(given)) {
+            throw new ToolRefusal("The user declined: " + heading(question));
+        }
+        return Optional.of(given);
+    }
+
     // A form too large to show is asked in the chat instead, as when the session can't show forms: shown, it would
     // be refused, stopping the call where the user can never answer it (seen: a stand-ins form of a question for
     // each of ~150 values, and a hand-edit question naming every field of a wide mapping).

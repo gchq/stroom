@@ -79,7 +79,8 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     private static final int MAX_NAME = 200;
     // Where a note came from: the user's documentation (the default), or the agent's own knowledge of the source.
     private static final String DOCUMENTATION = "documentation";
-    private static final String AGENT_KNOWLEDGE = "agent_knowledge";
+    /// A note from the agent's own knowledge of the source, not the user's documentation.
+    static final String AGENT_KNOWLEDGE = "agent_knowledge";
     /// A note the agent proposed and the user confirmed (classify_kinds).
     static final String USER_CONFIRMED = "user_confirmed";
     // The notes block's kinds still to classify (classify_kinds), as field=value.

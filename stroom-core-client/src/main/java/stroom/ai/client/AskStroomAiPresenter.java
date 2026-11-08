@@ -2146,11 +2146,13 @@ public class AskStroomAiPresenter
         final String server = AiToolMessages.getString(json, "server");
         final boolean pending = "PENDING".equals(status);
         final String message = NullSafe.string(AiToolMessages.getString(json, "message"));
-        // Questions from Stroom AI's own agent, asked one at a time, rather than a form from an MCP server.
-        final boolean questions = ASK_USER_TOOL.equals(AiToolMessages.getString(json, "tool"));
         final List<AiElicitationForm.Field> fields = pending
                 ? AiElicitationForm.fields(json)
                 : List.of();
+        // Questions asked one at a time: Stroom AI's own agent's, or a server's form whose every field suggests its
+        // answers (buttons, with a box for the user's own words), rather than a form of fields.
+        final boolean questions = ASK_USER_TOOL.equals(AiToolMessages.getString(json, "tool"))
+                                  || AiElicitationCard.asQuestions(fields);
         // Yes and No buttons are only for a server's form: the agent's questions have answers to choose from.
         final AiElicitationForm.Field yesNo = questions
                 ? null
@@ -2333,7 +2335,9 @@ public class AskStroomAiPresenter
     // A box for free text sized to its lines: one to start, growing with each line added, to the most its style
     // allows (five), past which it scrolls.
     private static void fitToLines(final Element box) {
-        box.getStyle().setProperty("height", "auto");
+        // Measured from its least height (one line, its CSS min-height), not 'auto': a one-row textarea's own
+        // height can be taller than its line, which it would then never shrink below.
+        box.getStyle().setProperty("height", "0");
         final int borders = box.getOffsetHeight() - box.getClientHeight();
         box.getStyle().setHeight(box.getScrollHeight() + borders, Unit.PX);
     }

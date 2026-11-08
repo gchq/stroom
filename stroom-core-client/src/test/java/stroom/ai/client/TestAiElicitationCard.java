@@ -115,6 +115,20 @@ class TestAiElicitationCard {
     }
 
     @Test
+    void aFormWhoseEveryFieldSuggestsItsAnswersIsAskedAsQuestions() {
+        // Seen: classify_kinds' accept-or-amend question shown as a bare text box, with no button to accept.
+        final AiElicitationForm.Field suggested = AiElicitationForm.Field.text("answer", "Accept all 3, or type your "
+                                                                                         + "amendments", null, true);
+        final AiElicitationForm.Field plain = AiElicitationForm.Field.text("text", "Notes", null, false);
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested))).isTrue();
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested, suggested))).isTrue();
+        // A form with a plain field is a form of fields, as before; and no fields, no questions.
+        assertThat(AiElicitationCard.asQuestions(List.of(suggested, plain))).isFalse();
+        assertThat(AiElicitationCard.asQuestions(List.of(plain))).isFalse();
+        assertThat(AiElicitationCard.asQuestions(List.of())).isFalse();
+    }
+
+    @Test
     void theRecommendedOptionsComeFirst() {
         final List<String> values = List.of("3.x", "4.0.2", "4.1.0", "5.0");
 

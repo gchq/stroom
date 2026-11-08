@@ -200,6 +200,29 @@ class TestConsent {
     }
 
     @Test
+    void aQuestionIsAnsweredWithTheSuggestionOrInTheUsersWordsNotBoth() {
+        // One field: the suggested answer as a button, the user's own words in the box under it.
+        final Questions accepted = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("answer", " Accept all 3 ")));
+        assertThat(consent.answer(CALL, accepted.context(), "classify_kinds", "Review them.", "Accept all 3, or "
+                                                                                              + "type amendments",
+                "Accept all 3")).contains("Accept all 3");
+        final Map<?, ?> properties = (Map<?, ?>) accepted.forms.getFirst().get("properties");
+        assertThat(List.copyOf(properties.keySet())).isEqualTo(List.of("answer"));
+        assertThat(((Map<?, ?>) properties.get("answer")).get("examples")).isEqualTo(List.of("Accept all 3"));
+        assertThat(accepted.forms.getFirst().get("required")).isEqualTo(List.of("answer"));
+        // Declined, or sent empty: the call stops.
+        assertThatThrownBy(() -> consent.answer(CALL, new Questions(new ElicitResult(ElicitResult.Action.DECLINE,
+                null)).context(), "classify_kinds", "Review them.", "Accept?", "Accept"))
+                .hasMessage("The user declined: Accept?");
+        assertThatThrownBy(() -> consent.answer(CALL, new Questions(new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("answer", "  "))).context(), "classify_kinds", "Review them.", "Accept?", "Accept"))
+                .isInstanceOf(ToolRefusal.class);
+        // Without a form, the agent asks.
+        assertThat(consent.answer(CALL, textOnly(), "classify_kinds", "Review them.", "Accept?", "Accept")).isEmpty();
+    }
+
+    @Test
     void aChoiceTooLargeForAFormIsLeftToTheAgentRatherThanRefused() {
         // Seen: a question naming every field of a wide mapping, too long for a form; refused, it stopped the call
         // where the user could never answer it.

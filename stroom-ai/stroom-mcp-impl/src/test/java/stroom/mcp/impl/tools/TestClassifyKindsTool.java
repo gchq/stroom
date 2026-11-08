@@ -118,43 +118,48 @@ class TestClassifyKindsTool {
     }
 
     @Test
-    void theHighConfidenceOnesAreAcceptedTogetherThenTheOthersOneByOne() {
-        // Asked for by the user: the high-confidence classifications in one table, accepted or amended in a short
-        // form; then the others in detail, each confirmed on its own.
+    void eachConfidenceIsASetAcceptedTogetherInTurn() {
+        // Asked for by the user: the high-confidence classifications in one table, then the medium and the low ones
+        // in detail, each set numbered from 1 and accepted all together or amended in a short form.
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "i2", false, "text",
-                "noted"));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}",
                 user.context());
         assertThat(String.valueOf(shown.get("table"))).isEqualTo("""
-                ## High-confidence classifications
+                ## High-confidence classifications (1 of 1)
 
                 | # | Rule | Kind | Mapping |
                 | --- | --- | --- | --- |
                 | 1 | Acme app | User logon | Authenticate: Logon |""");
-        assertThat(String.valueOf(shown.get("hint"))).contains("confirm=true", "the others follow in detail");
+        assertThat(String.valueOf(shown.get("hint"))).contains("confirm=true", "high-confidence",
+                "Show only this table");
         assertThat(user.shown()).isEmpty();
 
-        // The high-confidence one accepted (i1); then the others in detail.
-        final Map<String, Object> first = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
-        assertThat(first.get("recorded")).isEqualTo(List.of("action=login"));
-        assertThat(first.get("amendments")).isEqualTo("noted");
-        assertThat(user.shown().getFirst()).isEqualTo("Review the high-confidence classifications shown in the "
-                                                      + "chat: accept them, or suggest amendments.");
-        final String details = String.valueOf(first.get("table"));
-        // Grouped by confidence under headings, as the high-confidence ones are.
-        assertThat(details).startsWith("## Medium-confidence classifications\n\n### 2. A user logged off\n\n```\n")
+        // The high-confidence one accepted; then the medium one in detail, numbered from 1, and only it.
+        final Map<String, Object> high = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        assertThat(high.get("recorded")).isEqualTo(List.of("action=login"));
+        assertThat(user.shown().getLast()).isEqualTo("Review the high-confidence classifications shown in the chat.");
+        final String medium = String.valueOf(high.get("table"));
+        assertThat(medium).startsWith("## Medium-confidence classifications (1 of 1)\n\n### 1. A user logged off\n\n"
+                                     + "```\n")
                 .contains("| Action element | Authenticate |\n| --- | --- |\n| Action | Logoff |")
-                // No title: the description, cut short; no row for what a proposal doesn't say.
-                .contains("## Low-confidence classifications\n\n### 3. Records purged")
-                .doesNotContain("| Outcome |", "| Kind |", "| Confidence |");
+                .doesNotContain("Low-confidence", "Records purged", "| Outcome |", "| Kind |", "| Confidence |");
+        assertThat(String.valueOf(high.get("hint"))).contains("medium-confidence");
 
-        // Each of the others on its own: logout accepted (i1), purge rejected (i2).
+        // The medium one accepted the same way; then the low one, numbered from 1 again.
+        final Map<String, Object> mediumDone = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        assertThat(mediumDone.get("recorded")).isEqualTo(List.of("action=logout"));
+        assertThat(user.shown().getLast()).isEqualTo("Review the medium-confidence classifications shown in the "
+                                                     + "chat.");
+        assertThat(String.valueOf(mediumDone.get("table"))).startsWith("## Low-confidence classifications (1 of 1)"
+                                                                       + "\n\n### 1. Records purged");
+
+        // The low one accepted: every kind classified.
         final Map<String, Object> done = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
-        assertThat(done.get("recorded")).isEqualTo(List.of("action=logout"));
-        assertThat(done.get("rejected")).isEqualTo(List.of("action=purge"));
-        assertThat(done.get("corrections")).isEqualTo("noted");
-        assertThat(user.shown()).hasSize(2);
+        assertThat(done.get("recorded")).isEqualTo(List.of("action=purge"));
+        assertThat(done).doesNotContainKey("table");
+        assertThat(String.valueOf(done.get("hint"))).startsWith("Every kind is classified");
+        assertThat(user.shown()).hasSize(3);
         assertThat(user.shown()).allSatisfy(form -> assertThat(form).doesNotContain("|").hasSizeLessThan(200));
         assertThat(pending()).isEmpty();
         final Map<String, Object> login = list(notes().get("events")).getFirst();
@@ -163,10 +168,24 @@ class TestClassifyKindsTool {
                 .doesNotContainKey("confidence").doesNotContainKey("number");
         assertThat(world.body(String.valueOf(map(done.get("source_notes")).get("uuid"))))
                 .contains("| login | A user logged on | Authenticate |  | agent's proposal, confirmed by the user |");
-        // A rejected kind isn't listed again.
-        final Map<String, Object> again = call("{\"build\": \"acme\", \"stream_ids\": [7]}",
-                BuildToolCalls.context());
-        assertThat(list(again.get("to_classify"))).isEmpty();
+    }
+
+    @Test
+    void aSetOfOneConfidenceIsAmendedNotAccepted() {
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"confirm\": true}", BuildToolCalls.user(Map.of("answer", "Accept it"))
+                .context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "1 is a timeout, not a logoff"));
+        final Map<String, Object> amended = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        // Nothing recorded until the agent sends it as the user said; the low one still to come.
+        assertThat(amended.get("recorded")).isEqualTo(List.of());
+        assertThat(amended.get("amendments")).isEqualTo("1 is a timeout, not a logoff");
+        assertThat(String.valueOf(amended.get("hint"))).contains("medium-confidence", "send it again",
+                "from_user: true");
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED)))
+                .extracting(entry -> entry.get("kind"))
+                .containsExactly("action=logout", "action=purge");
     }
 
     @Test
@@ -196,74 +215,76 @@ class TestClassifyKindsTool {
     }
 
     @Test
-    void aHundredKindsAreClassifiedInRoundsOfOneConfidenceOrMixed() {
-        // Asked for by the user: a source of about a hundred event types, in rounds, some all of one confidence
-        // (only the table of high-confidence ones, or only the detail), one with kinds rejected.
+    void aHundredKindsAreClassifiedInRoundsAndSetsOfTen() {
+        // Asked for by the user: a source of about a hundred event types, in rounds of 18 kinds; each round put to
+        // the user a set at a time, of one confidence, at most ten, each numbered from 1. Some rounds all of one
+        // confidence (two sets of it: ten, then eight), one mixed.
         final List<String> lines = new ArrayList<>();
         for (int i = 0; i < 300; i++) {
             lines.add("time=2026-11-06T09:%02d:%02dZ event_id=E%03d user=user%d".formatted(i / 60, i % 60, i % 100,
                     i % 4));
         }
         samples(10L, String.join("\n", lines) + "\n");
-        final List<String> confidences = List.of("high", "medium", "low", "high", "high", "high");
-        final List<String> rejected = new ArrayList<>();
+        final List<String> rounds = List.of("high", "medium", "low", "mixed", "high", "high");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "yes"));
         int classified = 0;
-        for (int round = 0; round < confidences.size(); round++) {
+        for (int round = 0; round < rounds.size(); round++) {
             final Map<String, Object> listed = call("{\"build\": \"acme\", \"source\": \"Acme app\", "
                                                     + "\"stream_ids\": [10]}", BuildToolCalls.context());
             final List<Map<String, Object>> kinds = list(listed.get("to_classify"));
             assertThat(kinds).as("round %s", round + 1).hasSize(round < 5
                     ? ClassifyKindsTool.BATCH
                     : 100 - 5 * ClassifyKindsTool.BATCH);
-            assertThat(kinds).noneMatch(kind -> rejected.contains(String.valueOf(kind.get("value"))));
-            final String confidence = confidences.get(round);
             final List<Map<String, Object>> proposals = new ArrayList<>();
-            for (final Map<String, Object> kind : kinds) {
-                proposals.add(Map.of("field", kind.get("field"), "value", kind.get("value"), "title",
-                        "Event " + kind.get("value"), "product", "Acme app", "description", "d", "event_detail",
-                        "Alert", "confidence", confidence));
+            for (int k = 0; k < kinds.size(); k++) {
+                final String confidence = "mixed".equals(rounds.get(round))
+                        ? List.of("high", "medium", "low").get(k % 3)
+                        : rounds.get(round);
+                proposals.add(Map.of("field", kinds.get(k).get("field"), "value", kinds.get(k).get("value"),
+                        "title", "Event " + kinds.get(k).get("value"), "product", "Acme app", "description", "d",
+                        "event_detail", "Alert", "confidence", confidence));
             }
-            // Every box yes, but in the round of low confidence the first two kinds.
-            final Map<String, Object> answers = new LinkedHashMap<>();
-            for (int i = 1; i <= kinds.size() + 1; i++) {
-                answers.put("i" + i, !"low".equals(confidence) || i > 2);
-            }
-            final BuildToolCalls.FormUser user = BuildToolCalls.user(answers);
-            final Map<String, Object> shown = call("{\"build\": \"acme\", \"proposals\": "
-                                                   + JsonUtil.writeValueAsString(proposals, false) + "}",
-                    user.context());
-            final String table = String.valueOf(shown.get("table"));
-            final Map<String, Object> done = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
-            if ("high".equals(confidence)) {
-                // Only the table of high-confidence ones: accepted together, nothing in detail after.
-                assertThat(table).startsWith("## High-confidence classifications")
-                        .contains("| " + kinds.size() + " | Acme app | Event ")
-                        .doesNotContain("-confidence classifications\n\n###");
-                assertThat(done).doesNotContainKey("table");
-                assertThat(user.shown()).hasSize(1);
-            } else {
-                // Only the detail, under the one heading of its confidence, each kind its own box: 18 and the
-                // corrections field, within the 20 a form holds, so shown rather than asked in the chat.
-                assertThat(table).startsWith("## " + Character.toUpperCase(confidence.charAt(0))
-                                             + confidence.substring(1) + "-confidence classifications\n\n### 1. "
-                                             + "[Acme app] Event ")
-                        .doesNotContain("High-confidence");
+            final List<String> sets = new ArrayList<>();
+            Map<String, Object> step = call("{\"build\": \"acme\", \"proposals\": "
+                                            + JsonUtil.writeValueAsString(proposals, false) + "}", user.context());
+            while (step.containsKey("table")) {
+                final String table = String.valueOf(step.get("table"));
+                final boolean high = table.startsWith("## High-confidence classifications");
+                final String heading = table.substring(3, table.indexOf('-'));
+                // One confidence a set, at most ten, numbered from 1.
                 assertThat(table.split("-confidence classifications", -1)).hasSize(2);
-                assertThat(done).doesNotContainKey("asked");
-                assertThat(user.shown()).hasSize(1);
+                final int shown = (int) table.lines()
+                        .filter(line -> high
+                                ? line.matches("\\| \\d+ \\| .*")
+                                : line.matches("### \\d+\\. .*"))
+                        .count();
+                assertThat(shown).as("%s", table).isBetween(1, ClassifyKindsTool.SET_SIZE);
+                assertThat(table).contains(high
+                        ? "| 1 | Acme app | Event "
+                        : "### 1. [Acme app] Event ").doesNotContain(high
+                        ? "| " + (shown + 1) + " | Acme app"
+                        : "### " + (shown + 1) + ". ");
+                sets.add(heading + " " + shown + " " + table.substring(table.indexOf('('), table.indexOf(')') + 1));
+                step = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+                classified += JsonValues.strings(step.get("recorded")).size();
             }
-            final List<String> recorded = JsonValues.strings(done.get("recorded"));
-            classified += recorded.size();
-            JsonValues.strings(done.getOrDefault("rejected", List.of()))
-                    .forEach(key -> rejected.add(key.substring(key.indexOf('=') + 1)));
+            assertThat(sets).as("round %s", round + 1).isEqualTo(switch (rounds.get(round)) {
+                case "mixed" -> List.of("High 6 (1-6 of 6)", "Medium 6 (1-6 of 6)", "Low 6 (1-6 of 6)");
+                default -> round < 5
+                        ? List.of(heading(rounds.get(round)) + " 10 (1-10 of 18)",
+                        heading(rounds.get(round)) + " 8 (11-18 of 18)")
+                        : List.of(heading(rounds.get(round)) + " 10 (1-10 of 10)");
+            });
         }
-        assertThat(rejected).hasSize(2);
-        assertThat(classified).isEqualTo(98);
+        assertThat(classified).isEqualTo(100);
         assertThat(pending()).isEmpty();
-        // Nothing left: not those classified, nor those rejected.
         final Map<String, Object> after = call("{\"build\": \"acme\", \"stream_ids\": [10]}",
                 BuildToolCalls.context());
         assertThat(list(after.get("to_classify"))).isEmpty();
+    }
+
+    private static String heading(final String confidence) {
+        return Character.toUpperCase(confidence.charAt(0)) + confidence.substring(1);
     }
 
     @Test
@@ -321,7 +342,7 @@ class TestClassifyKindsTool {
         // nothing to confirm, and no form came.
         notesTool.recordClassified(BuildToolCalls.context(), "acme", "acme", List.of(), List.of(), Map.of());
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "text", ""));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"proposals\": " + PROPOSALS + "}",
                 user.context());
         final Map<String, Object> confirmed = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
@@ -337,7 +358,7 @@ class TestClassifyKindsTool {
     void confirmSentWithTheProposalsWaitsForTheTableToBeShown() {
         // Seen in testing: confirm=true sent with the proposals, and the agent took the table for the end of it.
         call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
-        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("i1", true, "text", ""));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Accept it"));
         final Map<String, Object> shown = call("{\"build\": \"acme\", \"confirm\": true, \"proposals\": "
                                                + PROPOSALS + "}", user.context());
         assertThat(String.valueOf(shown.get("hint"))).startsWith("No form yet: confirm=true is not taken with "
@@ -364,6 +385,57 @@ class TestClassifyKindsTool {
     }
 
     @Test
+    void theHighConfidenceOnesAreAcceptedOrAmendedNotBoth() {
+        // Asked for by the user: a yes/no box beside a text box let them both accept and amend; now one question,
+        // answered with the button or in their own words.
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "1 is Authenticate: Logon "
+                                                                                  + "by the src host"));
+        final Map<String, Object> amended = call("{\"build\": \"acme\", \"confirm\": true}", user.context());
+        // Nothing recorded until the agent sends them as the user said; the others still to confirm.
+        assertThat(amended.get("recorded")).isEqualTo(List.of());
+        assertThat(amended.get("amendments")).isEqualTo("1 is Authenticate: Logon by the src host");
+        assertThat(String.valueOf(amended.get("hint"))).contains("send it again with the amendments applied",
+                "from_user: true");
+        assertThat(JsonValues.maps(notes().get(RecordSourceNotesTool.PROPOSED))).hasSize(3);
+
+        // Sent as the user said: recorded, and the others shown in detail for the next form.
+        final Map<String, Object> sent = call("{\"build\": \"acme\", \"proposals\": [{\"field\": \"action\", "
+                                              + "\"value\": \"login\", \"description\": \"A user logged on\", "
+                                              + "\"event_detail\": \"Authenticate\", \"action\": \"Logon\", "
+                                              + "\"from_user\": true}]}", BuildToolCalls.context());
+        assertThat(sent.get("recorded")).isEqualTo(List.of("action=login"));
+        assertThat(String.valueOf(sent.get("table"))).startsWith("## Medium-confidence classifications");
+        assertThat(String.valueOf(sent.get("hint"))).contains("confirm=true");
+    }
+
+    @Test
+    void theTableOfHighConfidenceOnesShowsEachOutcome() {
+        // Seen in chat 158: a successful and a failed logon both shown as "Authenticate: Logon" in the table
+        // accepted together.
+        final String table = ClassifyKindsTool.summary(List.of(
+                Map.of("number", 1, "product", "Gateway", "title", "Login", "event_detail", "Authenticate",
+                        "action", "Logon", "success", true),
+                Map.of("number", 2, "product", "Gateway", "title", "Login failed", "event_detail", "Authenticate",
+                        "action", "Logon", "success", false),
+                Map.of("number", 3, "product", "AppFirewall", "title", "SQL injection", "event_detail", "Alert")));
+        assertThat(table).contains("| 1 | Gateway | Login | Authenticate: Logon (Success) |",
+                "| 2 | Gateway | Login failed | Authenticate: Logon (Failure) |",
+                // No outcome given, none shown.
+                "| 3 | AppFirewall | SQL injection | Alert |");
+    }
+
+    @Test
+    void anAnswerInWordsThatAcceptsIsTakenAsAccepting() {
+        call("{\"build\": \"acme\", \"source\": \"Acme app\", \"stream_ids\": [7]}", BuildToolCalls.context());
+        call("{\"build\": \"acme\", \"proposals\": " + PROPOSALS + "}", BuildToolCalls.context());
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "accept"));
+        assertThat(call("{\"build\": \"acme\", \"confirm\": true}", user.context()).get("recorded"))
+                .isEqualTo(List.of("action=login"));
+    }
+
+    @Test
     void aCatchAllKindIsAtMostMediumAndShownOnItsOwn() {
         // Asked for by the user: a format whose events the draft can't tell apart is one kind, a catch-all; the
         // agent rated those high in testing, so the user never saw them on their own.
@@ -387,7 +459,8 @@ class TestClassifyKindsTool {
         assertThat(catchAll.getFirst()).containsEntry("value", "syslog").containsEntry("records", 4);
         assertThat(list(listed.get("to_classify"))).filteredOn(kind -> "login".equals(kind.get("value")))
                 .allMatch(kind -> !kind.containsKey("catch_all"));
-        assertThat(String.valueOf(listed.get("hint"))).contains("catch_all", "at most medium");
+        assertThat(String.valueOf(listed.get("hint"))).contains("catch_all", "at most medium",
+                "refine the splitter (build_data_splitter)");
 
         final String field = String.valueOf(catchAll.getFirst().get("field"));
         final String value = String.valueOf(catchAll.getFirst().get("value"));
